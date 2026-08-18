@@ -27,7 +27,9 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialRoute});
+
+  final String? initialRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +69,7 @@ class MyApp extends StatelessWidget {
               child: child ?? const SizedBox.shrink(),
             );
           },
-          initialRoute: RouteNames.splash,
+          initialRoute: initialRoute ?? RouteNames.splash,
           onGenerateRoute: AppRoutes.onGenerateRoute,
         );
       },
