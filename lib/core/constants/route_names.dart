@@ -1,0 +1,33 @@
+class RouteNames {
+  static const home = '/';
+  static const splash = '/splash';
+  static const onboardingHadith = '/onboarding';
+  static const onboardingLanguage = '/onboarding/language';
+  static const onboardingLocation = '/onboarding/location';
+  static const signIn = '/signin';
+  static const signUp = '/signup';
+  static const forgotPassword = '/forgot-password';
+  static const emailVerification = '/email-verification';
+  static const resetPassword = '/reset-password';
+  static const preferences = '/preferences';
+  static const editProfile = '/edit-profile';
+  static const activity = '/activity';
+  static const discover = '/discover';
+  static const leaderboard = '/leaderboard';
+  static const familyRequests = '/family-requests';
+  static const notifications = '/notifications';
+  static const elmNoor = '/elm-noor';
+  static const asma = '/asma';
+  static const hadith = '/hadith';
+  static const dua = '/dua';
+  static const tasbih = '/tasbih';
+  static const zakatCalculator = '/zakat-calculator';
+  static const quran = '/quran';
+  static const prayerTimes = '/prayer-times';
+  static const chat = '/chat';
+  static const islamicCalendar = '/islamic-calendar';
+  static const prayerCompass = '/prayer-compass';
+  static const findMosque = '/find-mosque';
+  static const privacyPolicy = '/privacy-policy';
+  static const about = '/about';
+}

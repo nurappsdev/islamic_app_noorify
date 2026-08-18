@@ -1,0 +1,1 @@
+enum AppRouteTransition { none }

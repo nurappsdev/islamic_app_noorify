@@ -1,0 +1,894 @@
+[
+  {
+    "id": 1,
+    "arabic": "الرَّحْمَنُ",
+    "transliteration": "Ar Rahman",
+    "englishMeaning": "The Most Compassionate",
+    "banglaName": "আর রহমান",
+    "banglaMeaning": "পরম করুণাময়",
+    "audio": null
+  },
+  {
+    "id": 2,
+    "arabic": "الرَّحِيمُ",
+    "transliteration": "Ar Rahim",
+    "englishMeaning": "The Most Merciful",
+    "banglaName": "আর রহীম",
+    "banglaMeaning": "অতিশয় দয়ালু",
+    "audio": null
+  },
+  {
+    "id": 3,
+    "arabic": "الْمَلِكُ",
+    "transliteration": "Al Malik",
+    "englishMeaning": "The King",
+    "banglaName": "আল মালিক",
+    "banglaMeaning": "সর্বময় অধিপতি",
+    "audio": null
+  },
+  {
+    "id": 4,
+    "arabic": "الْقُدُّوسُ",
+    "transliteration": "Al Quddus",
+    "englishMeaning": "The Most Pure",
+    "banglaName": "আল কুদ্দুস",
+    "banglaMeaning": "পরম পবিত্র",
+    "audio": null
+  },
+  {
+    "id": 5,
+    "arabic": "السَّلاَمُ",
+    "transliteration": "As Salam",
+    "englishMeaning": "The Source of Peace",
+    "banglaName": "আস সালাম",
+    "banglaMeaning": "শান্তির উৎস",
+    "audio": null
+  },
+  {
+    "id": 6,
+    "arabic": "الْمُؤْمِنُ",
+    "transliteration": "Al Mu'min",
+    "englishMeaning": "The Giver of Faith",
+    "banglaName": "আল মু’মিন",
+    "banglaMeaning": "নিরাপত্তা প্রদানকারী",
+    "audio": null
+  },
+  {
+    "id": 7,
+    "arabic": "الْمُهَيْمِنُ",
+    "transliteration": "Al Muhaymin",
+    "englishMeaning": "The Guardian",
+    "banglaName": "আল মুহাইমিন",
+    "banglaMeaning": "রক্ষাকর্তা",
+    "audio": null
+  },
+  {
+    "id": 8,
+    "arabic": "الْعَزِيزُ",
+    "transliteration": "Al Aziz",
+    "englishMeaning": "The Almighty",
+    "banglaName": "আল আজিজ",
+    "banglaMeaning": "পরাক্রমশালী",
+    "audio": null
+  },
+  {
+    "id": 9,
+    "arabic": "الْجَبَّارُ",
+    "transliteration": "Al Jabbar",
+    "englishMeaning": "The Compeller",
+    "banglaName": "আল জাব্বার",
+    "banglaMeaning": "প্রবল ক্ষমতাশালী",
+    "audio": null
+  },
+  {
+    "id": 10,
+    "arabic": "الْمُتَكَبِّرُ",
+    "transliteration": "Al Mutakabbir",
+    "englishMeaning": "The Supreme",
+    "banglaName": "আল মুতাকাব্বির",
+    "banglaMeaning": "মহিমাময় মহান",
+    "audio": null
+  },
+  {
+    "id": 11,
+    "arabic": "الْخَالِقُ",
+    "transliteration": "Al Khaliq",
+    "englishMeaning": "The Creator",
+    "banglaName": "আল খালিক",
+    "banglaMeaning": "সৃষ্টিকর্তা",
+    "audio": null
+  },
+  {
+    "id": 12,
+    "arabic": "الْبَارِئُ",
+    "transliteration": "Al Bari",
+    "englishMeaning": "The Maker",
+    "banglaName": "আল বারি",
+    "banglaMeaning": "সৃষ্টি উদ্ভাবনকারী",
+    "audio": null
+  },
+  {
+    "id": 13,
+    "arabic": "الْمُصَوِّرُ",
+    "transliteration": "Al Musawwir",
+    "englishMeaning": "The Fashioner",
+    "banglaName": "আল মুসাওয়ির",
+    "banglaMeaning": "রূপদানকারী",
+    "audio": null
+  },
+  {
+    "id": 14,
+    "arabic": "الْغَفَّارُ",
+    "transliteration": "Al Ghaffar",
+    "englishMeaning": "The Great Forgiver",
+    "banglaName": "আল গাফ্ফার",
+    "banglaMeaning": "অত্যন্ত ক্ষমাশীল",
+    "audio": null
+  },
+  {
+    "id": 15,
+    "arabic": "الْقَهَّارُ",
+    "transliteration": "Al Qahhar",
+    "englishMeaning": "The Subduer",
+    "banglaName": "আল কাহহার",
+    "banglaMeaning": "পরম পরাক্রমশালী",
+    "audio": null
+  },
+  {
+    "id": 16,
+    "arabic": "الْوَهَّابُ",
+    "transliteration": "Al Wahhab",
+    "englishMeaning": "The Bestower",
+    "banglaName": "আল ওয়াহ্হাব",
+    "banglaMeaning": "অপরিসীম দানকারী",
+    "audio": null
+  },
+  {
+    "id": 17,
+    "arabic": "الرَّزَّاقُ",
+    "transliteration": "Ar Razzaq",
+    "englishMeaning": "The Provider",
+    "banglaName": "আর রাজ্জাক",
+    "banglaMeaning": "রিজিক দানকারী",
+    "audio": null
+  },
+  {
+    "id": 18,
+    "arabic": "الْفَتَّاحُ",
+    "transliteration": "Al Fattah",
+    "englishMeaning": "The Opener",
+    "banglaName": "আল ফাত্তাহ",
+    "banglaMeaning": "সমাধানকারী",
+    "audio": null
+  },
+  {
+    "id": 19,
+    "arabic": "اَلْعَلِيْمُ",
+    "transliteration": "Al Alim",
+    "englishMeaning": "The All-Knowing",
+    "banglaName": "আল আলীম",
+    "banglaMeaning": "সর্বজ্ঞ",
+    "audio": null
+  },
+  {
+    "id": 20,
+    "arabic": "الْقَابِضُ",
+    "transliteration": "Al Qabid",
+    "englishMeaning": "The Restrainer",
+    "banglaName": "আল কাবিদ",
+    "banglaMeaning": "সংকোচনকারী",
+    "audio": null
+  },
+  {
+    "id": 21,
+    "arabic": "الْبَاسِطُ",
+    "transliteration": "Al Basit",
+    "englishMeaning": "The Expander",
+    "banglaName": "আল বাসিত",
+    "banglaMeaning": "প্রসারিতকারী",
+    "audio": null
+  },
+  {
+    "id": 22,
+    "arabic": "الْخَافِضُ",
+    "transliteration": "Al Khafid",
+    "englishMeaning": "The Abaser",
+    "banglaName": "আল খাফিদ",
+    "banglaMeaning": "অবনতকারী",
+    "audio": null
+  },
+  {
+    "id": 23,
+    "arabic": "الرَّافِعُ",
+    "transliteration": "Ar Rafi",
+    "englishMeaning": "The Exalter",
+    "banglaName": "আর রাফি",
+    "banglaMeaning": "উন্নতকারী",
+    "audio": null
+  },
+  {
+    "id": 24,
+    "arabic": "الْمُعِزُّ",
+    "transliteration": "Al Muizz",
+    "englishMeaning": "The Honourer",
+    "banglaName": "আল মু’ইজ্জ",
+    "banglaMeaning": "সম্মান দানকারী",
+    "audio": null
+  },
+  {
+    "id": 25,
+    "arabic": "المُذِلُّ",
+    "transliteration": "Al Mudhill",
+    "englishMeaning": "The Dishonourer",
+    "banglaName": "আল মুদিল",
+    "banglaMeaning": "অপমানকারী",
+    "audio": null
+  },
+  {
+    "id": 26,
+    "arabic": "السَّمِيعُ",
+    "transliteration": "As Sami",
+    "englishMeaning": "The All Hearing",
+    "banglaName": "আস সামী",
+    "banglaMeaning": "সর্বশ্রোতা",
+    "audio": null
+  },
+  {
+    "id": 27,
+    "arabic": "الْبَصِيرُ",
+    "transliteration": "Al Basir",
+    "englishMeaning": "The All Seeing",
+    "banglaName": "আল বাসির",
+    "banglaMeaning": "সর্বদ্রষ্টা",
+    "audio": null
+  },
+  {
+    "id": 28,
+    "arabic": "الْحَكَمُ",
+    "transliteration": "Al Hakam",
+    "englishMeaning": "The Judge",
+    "banglaName": "আল হাকাম",
+    "banglaMeaning": "বিচারক",
+    "audio": null
+  },
+  {
+    "id": 29,
+    "arabic": "الْعَدْلُ",
+    "transliteration": "Al Adl",
+    "englishMeaning": "The Just",
+    "banglaName": "আল আদল",
+    "banglaMeaning": "ন্যায়পরায়ণ",
+    "audio": null
+  },
+  {
+    "id": 30,
+    "arabic": "اللَّطِيفُ",
+    "transliteration": "Al Latif",
+    "englishMeaning": "The Subtle One",
+    "banglaName": "আল লতিফ",
+    "banglaMeaning": "অতি সূক্ষ্ম দয়ালু",
+    "audio": null
+  },
+  {
+    "id": 31,
+    "arabic": "الْخَبِيرُ",
+    "transliteration": "Al Khabir",
+    "englishMeaning": "The All Aware",
+    "banglaName": "আল খাবীর",
+    "banglaMeaning": "সবকিছু অবগত",
+    "audio": null
+  },
+  {
+    "id": 32,
+    "arabic": "الْحَلِيمُ",
+    "transliteration": "Al Halim",
+    "englishMeaning": "The Forbearing",
+    "banglaName": "আল হালিম",
+    "banglaMeaning": "সহিষ্ণু",
+    "audio": null
+  },
+  {
+    "id": 33,
+    "arabic": "الْعَظِيمُ",
+    "transliteration": "Al Azim",
+    "englishMeaning": "The Magnificent",
+    "banglaName": "আল আযীম",
+    "banglaMeaning": "মহান",
+    "audio": null
+  },
+  {
+    "id": 34,
+    "arabic": "الْغَفُورُ",
+    "transliteration": "Al Ghafur",
+    "englishMeaning": "The Great Forgiver",
+    "banglaName": "আল গফুর",
+    "banglaMeaning": "মহাক্ষমাশীল",
+    "audio": null
+  },
+  {
+    "id": 35,
+    "arabic": "الشَّكُورُ",
+    "transliteration": "Ash Shakur",
+    "englishMeaning": "The Appreciative",
+    "banglaName": "আশ শাকুর",
+    "banglaMeaning": "কৃতজ্ঞতা গ্রহণকারী",
+    "audio": null
+  },
+
+  {
+    "id": 36,
+    "arabic": "الْعَلِيُّ",
+    "transliteration": "Al Aliyy",
+    "englishMeaning": "The Most High",
+    "banglaName": "আল আলিয়্য",
+    "banglaMeaning": "সর্বোচ্চ",
+    "audio": null
+  },
+  {
+    "id": 37,
+    "arabic": "الْكَبِيرُ",
+    "transliteration": "Al Kabir",
+    "englishMeaning": "The Most Great",
+    "banglaName": "আল কবীর",
+    "banglaMeaning": "মহানতম",
+    "audio": null
+  },
+  {
+    "id": 38,
+    "arabic": "الْحَفِيظُ",
+    "transliteration": "Al Hafiz",
+    "englishMeaning": "The Preserver",
+    "banglaName": "আল হাফিয",
+    "banglaMeaning": "সংরক্ষণকারী",
+    "audio": null
+  },
+  {
+    "id": 39,
+    "arabic": "المُقيِت",
+    "transliteration": "Al Muqit",
+    "englishMeaning": "The Nourisher",
+    "banglaName": "আল মুকীত",
+    "banglaMeaning": "খাদ্যদাতা",
+    "audio": null
+  },
+  {
+    "id": 40,
+    "arabic": "الْحسِيبُ",
+    "transliteration": "Al Hasib",
+    "englishMeaning": "The Reckoner",
+    "banglaName": "আল হাসীব",
+    "banglaMeaning": "হিসাব গ্রহণকারী",
+    "audio": null
+  },
+  {
+    "id": 41,
+    "arabic": "الْجَلِيلُ",
+    "transliteration": "Al Jalil",
+    "englishMeaning": "The Majestic",
+    "banglaName": "আল জলীল",
+    "banglaMeaning": "মহিমান্বিত",
+    "audio": null
+  },
+  {
+    "id": 42,
+    "arabic": "الْكَرِيمُ",
+    "transliteration": "Al Karim",
+    "englishMeaning": "The Generous",
+    "banglaName": "আল কারীম",
+    "banglaMeaning": "অত্যন্ত দয়ালু",
+    "audio": null
+  },
+  {
+    "id": 43,
+    "arabic": "الرَّقِيبُ",
+    "transliteration": "Ar Raqib",
+    "englishMeaning": "The Watchful",
+    "banglaName": "আর রকীব",
+    "banglaMeaning": "সতর্ক পর্যবেক্ষক",
+    "audio": null
+  },
+  {
+    "id": 44,
+    "arabic": "الْمُجِيبُ",
+    "transliteration": "Al Mujib",
+    "englishMeaning": "The Responder",
+    "banglaName": "আল মুজীব",
+    "banglaMeaning": "দোয়া কবুলকারী",
+    "audio": null
+  },
+  {
+    "id": 45,
+    "arabic": "الْوَاسِعُ",
+    "transliteration": "Al Wasi",
+    "englishMeaning": "The All-Encompassing",
+    "banglaName": "আল ওয়াসি",
+    "banglaMeaning": "সর্বব্যাপী",
+    "audio": null
+  },
+  {
+    "id": 46,
+    "arabic": "الْحَكِيمُ",
+    "transliteration": "Al Hakim",
+    "englishMeaning": "The Most Wise",
+    "banglaName": "আল হাকীম",
+    "banglaMeaning": "প্রজ্ঞাময়",
+    "audio": null
+  },
+  {
+    "id": 47,
+    "arabic": "الْوَدُودُ",
+    "transliteration": "Al Wadud",
+    "englishMeaning": "The Loving",
+    "banglaName": "আল ওয়াদুদ",
+    "banglaMeaning": "অত্যন্ত প্রেমময়",
+    "audio": null
+  },
+  {
+    "id": 48,
+    "arabic": "الْمَجِيدُ",
+    "transliteration": "Al Majid",
+    "englishMeaning": "The Glorious",
+    "banglaName": "আল মাজীদ",
+    "banglaMeaning": "মহিমান্বিত",
+    "audio": null
+  },
+  {
+    "id": 49,
+    "arabic": "الْبَاعِثُ",
+    "transliteration": "Al Baith",
+    "englishMeaning": "The Resurrector",
+    "banglaName": "আল বায়িস",
+    "banglaMeaning": "পুনরুত্থানকারী",
+    "audio": null
+  },
+  {
+    "id": 50,
+    "arabic": "الشَّهِيدُ",
+    "transliteration": "Ash Shahid",
+    "englishMeaning": "The Witness",
+    "banglaName": "আশ শহীদ",
+    "banglaMeaning": "সাক্ষী",
+    "audio": null
+  },
+  {
+    "id": 51,
+    "arabic": "الْحَقُّ",
+    "transliteration": "Al Haqq",
+    "englishMeaning": "The Truth",
+    "banglaName": "আল হক",
+    "banglaMeaning": "সত্য",
+    "audio": null
+  },
+  {
+    "id": 52,
+    "arabic": "الْوَكِيلُ",
+    "transliteration": "Al Wakil",
+    "englishMeaning": "The Trustee",
+    "banglaName": "আল ওকীল",
+    "banglaMeaning": "পরম ভরসাস্থল",
+    "audio": null
+  },
+  {
+    "id": 53,
+    "arabic": "الْقَوِيُّ",
+    "transliteration": "Al Qawiyy",
+    "englishMeaning": "The Strong",
+    "banglaName": "আল ক্বাওয়ী",
+    "banglaMeaning": "শক্তিশালী",
+    "audio": null
+  },
+  {
+    "id": 54,
+    "arabic": "الْمَتِينُ",
+    "transliteration": "Al Matin",
+    "englishMeaning": "The Firm",
+    "banglaName": "আল মাতীন",
+    "banglaMeaning": "অটল শক্তিশালী",
+    "audio": null
+  },
+  {
+    "id": 55,
+    "arabic": "الْوَلِيُّ",
+    "transliteration": "Al Waliyy",
+    "englishMeaning": "The Protector",
+    "banglaName": "আল ওয়ালিয়্য",
+    "banglaMeaning": "রক্ষাকারী",
+    "audio": null
+  },
+  {
+    "id": 56,
+    "arabic": "الْحَمِيدُ",
+    "transliteration": "Al Hamid",
+    "englishMeaning": "The Praiseworthy",
+    "banglaName": "আল হামিদ",
+    "banglaMeaning": "প্রশংসিত",
+    "audio": null
+  },
+  {
+    "id": 57,
+    "arabic": "الْمُحْصِي",
+    "transliteration": "Al Muhsi",
+    "englishMeaning": "The Accounter",
+    "banglaName": "আল মুহসি",
+    "banglaMeaning": "সবকিছু গণনাকারী",
+    "audio": null
+  },
+  {
+    "id": 58,
+    "arabic": "الْمُبْدِئُ",
+    "transliteration": "Al Mubdi",
+    "englishMeaning": "The Originator",
+    "banglaName": "আল মুবদি",
+    "banglaMeaning": "প্রথম সৃষ্টিকর্তা",
+    "audio": null
+  },
+  {
+    "id": 59,
+    "arabic": "الْمُعِيدُ",
+    "transliteration": "Al Mu'id",
+    "englishMeaning": "The Restorer",
+    "banglaName": "আল মুঈদ",
+    "banglaMeaning": "পুনরায় সৃষ্টিকারী",
+    "audio": null
+  },
+  {
+    "id": 60,
+    "arabic": "الْمُحْيِي",
+    "transliteration": "Al Muhyi",
+    "englishMeaning": "The Giver of Life",
+    "banglaName": "আল মুহই",
+    "banglaMeaning": "জীবনদাতা",
+    "audio": null
+  },
+  {
+    "id": 61,
+    "arabic": "اَلْمُمِيتُ",
+    "transliteration": "Al Mumit",
+    "englishMeaning": "The Taker of Life",
+    "banglaName": "আল মুমীত",
+    "banglaMeaning": "মৃত্যুদাতা",
+    "audio": null
+  },
+  {
+    "id": 62,
+    "arabic": "الْحَيُّ",
+    "transliteration": "Al Hayy",
+    "englishMeaning": "The Ever Living",
+    "banglaName": "আল হাইয়্য",
+    "banglaMeaning": "চিরঞ্জীব",
+    "audio": null
+  },
+  {
+    "id": 63,
+    "arabic": "الْقَيُّومُ",
+    "transliteration": "Al Qayyum",
+    "englishMeaning": "The Self Subsisting",
+    "banglaName": "আল কাইয়্যুম",
+    "banglaMeaning": "স্বয়ংস্থিত",
+    "audio": null
+  },
+  {
+    "id": 64,
+    "arabic": "الْوَاجِدُ",
+    "transliteration": "Al Wajid",
+    "englishMeaning": "The Finder",
+    "banglaName": "আল ওয়াজিদ",
+    "banglaMeaning": "সর্ববিধ প্রাপ্তিসাধক",
+    "audio": null
+  },
+  {
+    "id": 65,
+    "arabic": "الْمَاجِدُ",
+    "transliteration": "Al Majid",
+    "englishMeaning": "The Noble",
+    "banglaName": "আল মাজিদ",
+    "banglaMeaning": "মহান মর্যাদাশালী",
+    "audio": null
+  },
+  {
+    "id": 66,
+    "arabic": "الْواحِدُ",
+    "transliteration": "Al Wahid",
+    "englishMeaning": "The One",
+    "banglaName": "আল ওয়াহিদ",
+    "banglaMeaning": "একক",
+    "audio": null
+  },
+  {
+    "id": 67,
+    "arabic": "اَلاَحَدُ",
+    "transliteration": "Al Ahad",
+    "englishMeaning": "The Unique",
+    "banglaName": "আল আহাদ",
+    "banglaMeaning": "অদ্বিতীয়",
+    "audio": null
+  },
+  {
+    "id": 68,
+    "arabic": "الصَّمَدُ",
+    "transliteration": "As Samad",
+    "englishMeaning": "The Eternal",
+    "banglaName": "আস সামাদ",
+    "banglaMeaning": "অমুখাপেক্ষী",
+    "audio": null
+  },
+  {
+    "id": 69,
+    "arabic": "الْقَادِرُ",
+    "transliteration": "Al Qadir",
+    "englishMeaning": "The Powerful",
+    "banglaName": "আল কাদির",
+    "banglaMeaning": "সর্বশক্তিমান",
+    "audio": null
+  },
+  {
+    "id": 70,
+    "arabic": "الْمُقْتَدِرُ",
+    "transliteration": "Al Muqtadir",
+    "englishMeaning": "The Determiner",
+    "banglaName": "আল মুকতাদির",
+    "banglaMeaning": "পরম ক্ষমতাবান",
+    "audio": null
+  },
+  {
+    "id": 71,
+    "arabic": "الْمُقَدِّمُ",
+    "transliteration": "Al Muqaddim",
+    "englishMeaning": "The Expediter",
+    "banglaName": "আল মুকাদ্দিম",
+    "banglaMeaning": "অগ্রসরকারী",
+    "audio": null
+  },
+  {
+    "id": 72,
+    "arabic": "الْمُؤَخِّرُ",
+    "transliteration": "Al Mu'akhkhir",
+    "englishMeaning": "The Delayer",
+    "banglaName": "আল মুয়াখখির",
+    "banglaMeaning": "পশ্চাৎকারী",
+    "audio": null
+  },
+  {
+    "id": 73,
+    "arabic": "الأوَّلُ",
+    "transliteration": "Al Awwal",
+    "englishMeaning": "The First",
+    "banglaName": "আল আউয়াল",
+    "banglaMeaning": "প্রথম",
+    "audio": null
+  },
+  {
+    "id": 74,
+    "arabic": "الآخِرُ",
+    "transliteration": "Al Akhir",
+    "englishMeaning": "The Last",
+    "banglaName": "আল আখির",
+    "banglaMeaning": "শেষ",
+    "audio": null
+  },
+  {
+    "id": 75,
+    "arabic": "الظَّاهِرُ",
+    "transliteration": "Az Zahir",
+    "englishMeaning": "The Manifest",
+    "banglaName": "আজ জাহির",
+    "banglaMeaning": "প্রকাশিত",
+    "audio": null
+  },
+  {
+    "id": 76,
+    "arabic": "الْبَاطِنُ",
+    "transliteration": "Al Batin",
+    "englishMeaning": "The Hidden",
+    "banglaName": "আল বাতিন",
+    "banglaMeaning": "অপ্রকাশিত",
+    "audio": null
+  },
+  {
+    "id": 77,
+    "arabic": "الْوَالِي",
+    "transliteration": "Al Wali",
+    "englishMeaning": "The Governor",
+    "banglaName": "আল ওয়ালি",
+    "banglaMeaning": "অভিভাবক",
+    "audio": null
+  },
+  {
+    "id": 78,
+    "arabic": "الْمُتَعَالِي",
+    "transliteration": "Al Muta'ali",
+    "englishMeaning": "The Most Exalted",
+    "banglaName": "আল মুতাআলি",
+    "banglaMeaning": "সর্বোচ্চ মহান",
+    "audio": null
+  },
+  {
+    "id": 79,
+    "arabic": "الْبَرُّ",
+    "transliteration": "Al Barr",
+    "englishMeaning": "The Source of Goodness",
+    "banglaName": "আল বারর",
+    "banglaMeaning": "অত্যন্ত দয়ালু",
+    "audio": null
+  },
+  {
+    "id": 80,
+    "arabic": "التَّوَابُ",
+    "transliteration": "At Tawwab",
+    "englishMeaning": "The Accepter of Repentance",
+    "banglaName": "আত তাওয়াব",
+    "banglaMeaning": "তওবা গ্রহণকারী",
+    "audio": null
+  },
+  {
+    "id": 81,
+    "arabic": "الْمُنْتَقِمُ",
+    "transliteration": "Al Muntaqim",
+    "englishMeaning": "The Avenger",
+    "banglaName": "আল মুনতাকিম",
+    "banglaMeaning": "প্রতিশোধ গ্রহণকারী",
+    "audio": null
+  },
+  {
+    "id": 82,
+    "arabic": "العَفُوُّ",
+    "transliteration": "Al Afuww",
+    "englishMeaning": "The Pardoner",
+    "banglaName": "আল আফু",
+    "banglaMeaning": "ক্ষমাকারী",
+    "audio": null
+  },
+  {
+    "id": 83,
+    "arabic": "الرَّؤُوفُ",
+    "transliteration": "Ar Ra'uf",
+    "englishMeaning": "The Compassionate",
+    "banglaName": "আর রউফ",
+    "banglaMeaning": "অত্যন্ত সদয়",
+    "audio": null
+  },
+  {
+    "id": 84,
+    "arabic": "مَالِكُ الْمُلْكِ",
+    "transliteration": "Malik-ul-Mulk",
+    "englishMeaning": "The Owner of Sovereignty",
+    "banglaName": "মালিকুল মুলক",
+    "banglaMeaning": "সমগ্র রাজ্যের মালিক",
+    "audio": null
+  },
+  {
+    "id": 85,
+    "arabic": "ذُوالْجَلاَلِ وَالإكْرَامِ",
+    "transliteration": "Dhul Jalali Wal Ikram",
+    "englishMeaning": "Lord of Majesty and Honor",
+    "banglaName": "যুল জালালি ওয়াল ইকরাম",
+    "banglaMeaning": "মহিমা ও সম্মানের অধিকারী",
+    "audio": null
+  },
+  {
+    "id": 86,
+    "arabic": "الْمُقْسِطُ",
+    "transliteration": "Al Muqsit",
+    "englishMeaning": "The Just One",
+    "banglaName": "আল মুকসিত",
+    "banglaMeaning": "ন্যায়বিচারকারী",
+    "audio": null
+  },
+  {
+    "id": 87,
+    "arabic": "الْجَامِعُ",
+    "transliteration": "Al Jami",
+    "englishMeaning": "The Gatherer",
+    "banglaName": "আল জামি",
+    "banglaMeaning": "সমবেতকারী",
+    "audio": null
+  },
+  {
+    "id": 88,
+    "arabic": "الْغَنِيُّ",
+    "transliteration": "Al Ghani",
+    "englishMeaning": "The Self-Sufficient",
+    "banglaName": "আল গনি",
+    "banglaMeaning": "অমুখাপেক্ষী",
+    "audio": null
+  },
+  {
+    "id": 89,
+    "arabic": "الْمُغْنِي",
+    "transliteration": "Al Mughni",
+    "englishMeaning": "The Enricher",
+    "banglaName": "আল মুগনি",
+    "banglaMeaning": "সমৃদ্ধকারী",
+    "audio": null
+  },
+  {
+    "id": 90,
+    "arabic": "اَلْمَانِعُ",
+    "transliteration": "Al Mani",
+    "englishMeaning": "The Preventer",
+    "banglaName": "আল মানি",
+    "banglaMeaning": "প্রতিরোধকারী",
+    "audio": null
+  },
+  {
+    "id": 91,
+    "arabic": "الضَّارَّ",
+    "transliteration": "Ad Darr",
+    "englishMeaning": "The Distresser",
+    "banglaName": "আদ দর",
+    "banglaMeaning": "ক্ষতি প্রদানকারী",
+    "audio": null
+  },
+  {
+    "id": 92,
+    "arabic": "النَّافِعُ",
+    "transliteration": "An Nafi",
+    "englishMeaning": "The Benefactor",
+    "banglaName": "আন নাফি",
+    "banglaMeaning": "উপকারকারী",
+    "audio": null
+  },
+  {
+    "id": 93,
+    "arabic": "النُّورُ",
+    "transliteration": "An Nur",
+    "englishMeaning": "The Light",
+    "banglaName": "আন নূর",
+    "banglaMeaning": "আলো",
+    "audio": null
+  },
+  {
+    "id": 94,
+    "arabic": "الْهَادِي",
+    "transliteration": "Al Hadi",
+    "englishMeaning": "The Guide",
+    "banglaName": "আল হাদি",
+    "banglaMeaning": "পথপ্রদর্শক",
+    "audio": null
+  },
+  {
+    "id": 95,
+    "arabic": "الْبَدِيعُ",
+    "transliteration": "Al Badi",
+    "englishMeaning": "The Originator",
+    "banglaName": "আল বাদি",
+    "banglaMeaning": "অদ্বিতীয় সৃষ্টিকর্তা",
+    "audio": null
+  },
+  {
+    "id": 96,
+    "arabic": "اَلْبَاقِي",
+    "transliteration": "Al Baqi",
+    "englishMeaning": "The Everlasting",
+    "banglaName": "আল বাকী",
+    "banglaMeaning": "চিরস্থায়ী",
+    "audio": null
+  },
+  {
+    "id": 97,
+    "arabic": "الْوَارِثُ",
+    "transliteration": "Al Warith",
+    "englishMeaning": "The Inheritor",
+    "banglaName": "আল ওয়ারিস",
+    "banglaMeaning": "উত্তরাধিকারী",
+    "audio": null
+  },
+  {
+    "id": 98,
+    "arabic": "الرَّشِيدُ",
+    "transliteration": "Ar Rashid",
+    "englishMeaning": "The Guide to the Right Path",
+    "banglaName": "আর রশীদ",
+    "banglaMeaning": "সঠিক পথের দিশারী",
+    "audio": null
+  },
+  {
+    "id": 99,
+    "arabic": "الصَّبُورُ",
+    "transliteration": "As Sabur",
+    "englishMeaning": "The Patient",
+    "banglaName": "আস সাবুর",
+    "banglaMeaning": "অত্যন্ত ধৈর্যশীল",
+    "audio": null
+  }
+]
