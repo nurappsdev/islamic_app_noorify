@@ -11,11 +11,14 @@ abstract interface class PrayerTimeService {
 }
 
 class AladhanPrayerTimeService implements PrayerTimeService {
-  AladhanPrayerTimeService({
+  factory AladhanPrayerTimeService({
     required http.Client client,
     required SharedPreferences preferences,
-  }) : _client = client,
-       _preferences = preferences;
+  }) {
+    return AladhanPrayerTimeService._(client, preferences);
+  }
+
+  AladhanPrayerTimeService._(this._client, this._preferences);
 
   static const _fallbackFajr = PrayerClockTime(hour: 5, minute: 0);
   static const _cacheDateKey = 'fajr_date';
@@ -44,9 +47,9 @@ class AladhanPrayerTimeService implements PrayerTimeService {
           'school': '1',
         },
       );
-      final response = await _client.get(uri).timeout(
-        const Duration(seconds: 10),
-      );
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) throw const FormatException();
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;

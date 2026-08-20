@@ -23,17 +23,11 @@ void main() {
 
   test('returns the next exact card update boundary', () {
     expect(
-      nextPrayerThemeBoundary(
-        now: DateTime(2026, 8, 20, 9, 45),
-        fajr: fajr,
-      ),
+      nextPrayerThemeBoundary(now: DateTime(2026, 8, 20, 9, 45), fajr: fajr),
       DateTime(2026, 8, 20, 10, 1),
     );
     expect(
-      nextPrayerThemeBoundary(
-        now: DateTime(2026, 8, 20, 20),
-        fajr: fajr,
-      ),
+      nextPrayerThemeBoundary(now: DateTime(2026, 8, 20, 20), fajr: fajr),
       DateTime(2026, 8, 21),
     );
   });
