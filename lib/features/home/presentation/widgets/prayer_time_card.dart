@@ -237,9 +237,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                 dimension: 36.r,
                 child: IconButton(
                   tooltip: 'View prayer times',
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.prayerTimes),
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(RouteNames.prayerTimes),
                   style: IconButton.styleFrom(
                     padding: EdgeInsets.zero,
                     backgroundColor: const Color(0xFFE7E56C),

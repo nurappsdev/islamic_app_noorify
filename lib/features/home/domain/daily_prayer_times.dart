@@ -50,9 +50,7 @@ class DailyPrayerTimes {
     final dateKey = json['dateKey'];
     final readableDate = json['readableDate'];
     final hijriDate = json['hijriDate'];
-    if (dateKey is! String ||
-        readableDate is! String ||
-        hijriDate is! String) {
+    if (dateKey is! String || readableDate is! String || hijriDate is! String) {
       throw const FormatException('Invalid cached prayer date');
     }
     return DailyPrayerTimes(
