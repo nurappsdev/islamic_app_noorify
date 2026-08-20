@@ -19,7 +19,6 @@ class PrayerTimesScreen extends StatefulWidget {
 
 class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   static const _olive = Color(0xFF8D9B70);
-  static const _darkOlive = Color(0xFF78875D);
 
   DailyPrayerTimes? _times;
   Timer? _clockTimer;
@@ -77,9 +76,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   @override
   Widget build(BuildContext context) {
     final now = _now();
-    final active = _times == null
-        ? null
-        : currentPrayerPeriod(now, _times!);
+    final active = _times == null ? null : currentPrayerPeriod(now, _times!);
     return Scaffold(
       backgroundColor: _olive,
       body: SafeArea(
@@ -319,9 +316,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
       '${date.day.toString().padLeft(2, '0')}-'
       '${date.month.toString().padLeft(2, '0')}-${date.year}';
 
-  static String _formatCurrentTime(DateTime date) => formatPrayerTime(
-    PrayerClockTime(hour: date.hour, minute: date.minute),
-  );
+  static String _formatCurrentTime(DateTime date) =>
+      formatPrayerTime(PrayerClockTime(hour: date.hour, minute: date.minute));
 }
 
 class _EdgeLabel extends StatelessWidget {
@@ -333,9 +329,15 @@ class _EdgeLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Text(title, style: TextStyle(color: Colors.white, fontSize: 9.sp)),
+      Text(
+        title,
+        style: TextStyle(color: Colors.white, fontSize: 9.sp),
+      ),
       SizedBox(height: 4.h),
-      Text(value, style: TextStyle(color: Colors.white, fontSize: 11.sp)),
+      Text(
+        value,
+        style: TextStyle(color: Colors.white, fontSize: 11.sp),
+      ),
     ],
   );
 }
@@ -444,7 +446,10 @@ class _PrayerRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(period.displayName, style: TextStyle(fontSize: 12.sp)),
+                      Text(
+                        period.displayName,
+                        style: TextStyle(fontSize: 12.sp),
+                      ),
                       SizedBox(height: 3.h),
                       FittedBox(
                         fit: BoxFit.scaleDown,

@@ -194,9 +194,7 @@ void main() {
                 child: Padding(
                   padding: EdgeInsets.all(9),
                   child: PrayerTimeCard(
-                    prayerTimeService: _FakePrayerTimeService(
-                      _testPrayerTimes,
-                    ),
+                    prayerTimeService: _FakePrayerTimeService(_testPrayerTimes),
                     now: _noon,
                   ),
                 ),
@@ -304,9 +302,8 @@ void main() {
         builder: (context, child) {
           return MaterialApp(
             routes: {
-              RouteNames.prayerTimes: (_) => const Scaffold(
-                body: Text('Prayer times destination'),
-              ),
+              RouteNames.prayerTimes: (_) =>
+                  const Scaffold(body: Text('Prayer times destination')),
             },
             home: Scaffold(
               body: PrayerTimeCard(
