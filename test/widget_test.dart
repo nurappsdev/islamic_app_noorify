@@ -201,8 +201,25 @@ void main() {
 
     await tester.pump();
 
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                'assets/images/theme2.png',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('24 July 2026'), findsOneWidget);
+    expect(find.text('01:37 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
+    expect(find.text('Sunrise, Trishal'), findsOneWidget);
+    expect(find.text('at 5:23 AM'), findsOneWidget);
+    expect(find.text('Sunset, Trishal'), findsOneWidget);
+    expect(find.text('at 6:54 PM'), findsOneWidget);
     expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) =>

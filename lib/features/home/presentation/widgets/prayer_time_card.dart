@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class PrayerTimeCard extends StatelessWidget {
@@ -9,14 +8,166 @@ class PrayerTimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      padding: EdgeInsets.zero,
-      borderColor: const Color(0xFFE9E4B6),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(11.r),
-        child: Stack(
-          children:[]
-        ),
+    return SizedBox(
+      height: 328.h,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 310.h,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(color: const Color(0xFFD9DEA8)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(23.r),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset('assets/images/theme2.png', fit: BoxFit.cover),
+                    Positioned(
+                      top: 20.h,
+                      left: 20.w,
+                      right: 20.w,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '7 Safar 1444 Hijri',
+                                style: homeSerifStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 28.w),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '7 Srabon 1433',
+                                style: homeSerifStyle(
+                                  fontSize: 14.sp,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 65.h,
+                      left: 34.w,
+                      right: 34.w,
+                      child: SizedBox(
+                        height: 146.h,
+                        child: CustomPaint(painter: _PrayerArcPainter()),
+                      ),
+                    ),
+                    Positioned(
+                      top: 88.h,
+                      right: 51.w,
+                      child: Icon(
+                        Icons.wb_sunny,
+                        size: 40.sp,
+                        color: const Color(0xFFFFA328),
+                      ),
+                    ),
+                    Positioned(
+                      top: 105.h,
+                      left: 0,
+                      right: 0,
+                      child: Column(
+                        children: [
+                          Text(
+                            '24 July 2026',
+                            style: homeSansStyle(
+                              fontSize: 15.sp,
+                              color: const Color(0xFF5B856F),
+                            ),
+                          ),
+                          Text(
+                            '01:37 PM',
+                            style: homeSansStyle(
+                              fontSize: 22.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF557D69),
+                            ),
+                          ),
+                          Text(
+                            'Mymensingh, Bangladesh',
+                            style: homeSansStyle(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF5B856F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 176.h,
+                      left: 0,
+                      right: 0,
+                      child: Center(child: _CurrentPrayerBadge()),
+                    ),
+                    Positioned(
+                      left: 13.w,
+                      right: 13.w,
+                      bottom: 16.h,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: _PrayerEdgeTime(
+                              label: 'Sunrise, Trishal',
+                              time: 'at 5:23 AM',
+                              icon: Icons.wb_sunny_outlined,
+                            ),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: _PrayerEdgeTime(
+                              label: 'Sunset, Trishal',
+                              time: 'at 6:54 PM',
+                              icon: Icons.wb_twilight_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 292.h,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 36.r,
+                height: 36.r,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE7E56C),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.keyboard_arrow_down, size: 24.sp),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -26,47 +177,52 @@ class _CurrentPrayerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      width: 195.w,
+      height: 68.h,
+      padding: EdgeInsets.symmetric(horizontal: 11.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F5D7),
-        borderRadius: BorderRadius.circular(8.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: .08),
-            blurRadius: 5.r,
-            offset: Offset(0, 2.h),
-          ),
-        ],
+        color: const Color(0xFFE4EDB6),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFA2B253), width: 1.2),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 25.r,
-            height: 25.r,
+            width: 40.r,
+            height: 40.r,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(7.r),
+              borderRadius: BorderRadius.circular(10.r),
             ),
             child: Icon(
-              Icons.cloud_queue,
-              color: AppColor.primary,
-              size: 16.sp,
+              Icons.nights_stay_rounded,
+              color: const Color(0xFF638664),
+              size: 24.sp,
             ),
           ),
-          SizedBox(width: 7.w),
-          Column(
-            children: [
-              Text('Dhuhr Prayer Time', style: homeSansStyle(fontSize: 9.sp)),
-              SizedBox(height: 2.h),
-              Text(
-                '12:44 PM - 3:45 PM',
-                style: homeSansStyle(
-                  fontSize: 8.sp,
-                  fontWeight: FontWeight.w600,
+          SizedBox(width: 15.w),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Dhuhr Prayer Time',
+                    style: homeSansStyle(fontSize: 14.sp, color: Colors.black),
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 6.h),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '12:44 PM – 3:45 PM',
+                    style: homeSansStyle(fontSize: 13.sp, color: Colors.black),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -77,12 +233,12 @@ class _CurrentPrayerBadge extends StatelessWidget {
 class _PrayerArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.shortestSide * .085;
+    final strokeWidth = 13.r;
     final rect = Rect.fromLTWH(
       strokeWidth / 2,
-      strokeWidth * .1,
+      0,
       size.width - strokeWidth,
-      size.height * 1.93,
+      size.height * 2,
     );
     final basePaint = Paint()
       ..color = const Color(0xFFECE9D4)
@@ -95,8 +251,8 @@ class _PrayerArcPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawArc(rect, 3.13, 3.0, false, basePaint);
-    canvas.drawArc(rect, 3.13, 2.22, false, activePaint);
+    canvas.drawArc(rect, 3.14, 3.14, false, basePaint);
+    canvas.drawArc(rect, 3.14, 2.32, false, activePaint);
   }
 
   @override
@@ -104,23 +260,43 @@ class _PrayerArcPainter extends CustomPainter {
 }
 
 class _PrayerEdgeTime extends StatelessWidget {
-  const _PrayerEdgeTime({required this.label, required this.time});
+  const _PrayerEdgeTime({
+    required this.label,
+    required this.time,
+    required this.icon,
+  });
 
   final String label;
   final String time;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Icon(Icons.wb_twilight_outlined, color: Colors.white, size: 18.sp),
-        Text(
-          label,
-          style: homeSansStyle(fontSize: 8.sp, color: Colors.white),
-        ),
-        Text(
-          time,
-          style: homeSansStyle(fontSize: 9.sp, color: Colors.white),
+        Icon(icon, color: Colors.white, size: 31.sp),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: homeSansStyle(fontSize: 13.sp, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 7.h),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  time,
+                  style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
