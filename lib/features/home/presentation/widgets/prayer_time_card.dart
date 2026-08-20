@@ -1,10 +1,84 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
+import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
-class PrayerTimeCard extends StatelessWidget {
-  const PrayerTimeCard({super.key});
+class PrayerTimeCard extends StatefulWidget {
+  const PrayerTimeCard({super.key, this.prayerTimeService, this.now});
+
+  final PrayerTimeService? prayerTimeService;
+  final DateTime Function()? now;
+
+  @override
+  State<PrayerTimeCard> createState() => _PrayerTimeCardState();
+}
+
+class _PrayerTimeCardState extends State<PrayerTimeCard> {
+  DailyPrayerTimes? _times;
+  Timer? _boundaryTimer;
+
+  PrayerClockTime get _fajr =>
+      _times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0);
+
+  DateTime _now() => widget.now?.call() ?? bangladeshNow();
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleNextBoundary();
+    _loadFajrAndSchedule();
+  }
+
+  Future<void> _loadFajrAndSchedule() async {
+    try {
+      final service =
+          widget.prayerTimeService ?? await AladhanPrayerTimeService.create();
+      final date = _now();
+      final cachedTimes = service.cachedPrayerTimes(date);
+      if (mounted && cachedTimes != null) {
+        setState(() => _times = cachedTimes);
+      }
+
+      final times = await service.loadPrayerTimes(date);
+      if (!mounted) return;
+      if (times != null) setState(() => _times = times);
+      _scheduleNextBoundary();
+    } catch (_) {
+      if (mounted) _scheduleNextBoundary();
+    }
+  }
+
+  void _scheduleNextBoundary() {
+    _boundaryTimer?.cancel();
+    final now = _now();
+    final boundary = nextPrayerThemeBoundary(now: now, fajr: _fajr);
+    _boundaryTimer = Timer(boundary.difference(now), () {
+      if (!mounted) return;
+      final current = _now();
+      final dateChanged =
+          current.year != now.year ||
+          current.month != now.month ||
+          current.day != now.day;
+      if (dateChanged) {
+        _loadFajrAndSchedule();
+      } else {
+        setState(() {});
+        _scheduleNextBoundary();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _boundaryTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +102,10 @@ class PrayerTimeCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset('assets/images/theme2.png', fit: BoxFit.cover),
+                    Image.asset(
+                      prayerThemeAsset(now: _now(), fajr: _fajr),
+                      fit: BoxFit.cover,
+                    ),
                     Positioned(
                       top: 20.h,
                       left: 20.w,
@@ -156,14 +233,19 @@ class PrayerTimeCard extends StatelessWidget {
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
-                width: 36.r,
-                height: 36.r,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE7E56C),
-                  shape: BoxShape.circle,
+              child: SizedBox.square(
+                dimension: 36.r,
+                child: IconButton(
+                  tooltip: 'View prayer times',
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(RouteNames.prayerTimes),
+                  style: IconButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: const Color(0xFFE7E56C),
+                    foregroundColor: Colors.black,
+                  ),
+                  icon: Icon(Icons.keyboard_arrow_down, size: 24.sp),
                 ),
-                child: Icon(Icons.keyboard_arrow_down, size: 24.sp),
               ),
             ),
           ),

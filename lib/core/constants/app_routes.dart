@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import 'route_names.dart';
 
 class AppRoutes {
@@ -13,6 +14,8 @@ class AppRoutes {
     switch (settings.name) {
       case RouteNames.home:
         return _page(const HomeScreen(), settings);
+      case RouteNames.prayerTimes:
+        return _page(const PrayerTimesScreen(), settings);
       case RouteNames.splash:
       case RouteNames.signIn:
         return _page(const SignInScreen(), settings);
