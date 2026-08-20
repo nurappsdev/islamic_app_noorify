@@ -25,13 +25,20 @@ DateTime nextPrayerThemeBoundary({
   required DateTime now,
   required PrayerClockTime fajr,
 }) {
+  DateTime at(int dayOffset, [int hour = 0, int minute = 0]) {
+    final day = now.day + dayOffset;
+    return now.isUtc
+        ? DateTime.utc(now.year, now.month, day, hour, minute)
+        : DateTime(now.year, now.month, day, hour, minute);
+  }
+
   final candidates = <DateTime>[
-    DateTime(now.year, now.month, now.day, fajr.hour, fajr.minute),
-    DateTime(now.year, now.month, now.day, 10, 1),
-    DateTime(now.year, now.month, now.day, 16, 1),
-    DateTime(now.year, now.month, now.day, 19, 31),
-    DateTime(now.year, now.month, now.day + 1),
-    DateTime(now.year, now.month, now.day + 1, fajr.hour, fajr.minute),
+    at(0, fajr.hour, fajr.minute),
+    at(0, 10, 1),
+    at(0, 16, 1),
+    at(0, 19, 31),
+    at(1),
+    at(1, fajr.hour, fajr.minute),
   ];
   return candidates.firstWhere((candidate) => candidate.isAfter(now));
 }
