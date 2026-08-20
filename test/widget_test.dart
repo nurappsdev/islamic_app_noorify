@@ -217,6 +217,14 @@ void main() {
       ),
       findsOneWidget,
     );
+    final skyFinder = find.byKey(const ValueKey('prayer-time-card-sky'));
+    expect(skyFinder, findsOneWidget);
+    final sky = tester.widget<DecoratedBox>(skyFinder);
+    final skyDecoration = sky.decoration as BoxDecoration;
+    expect((skyDecoration.gradient as LinearGradient).colors, const [
+      Color(0xFFF3EBC7),
+      Color(0xFFFFDFA2),
+    ]);
     expect(find.text('24 July 2026'), findsOneWidget);
     expect(find.text('01:37 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
@@ -224,8 +232,28 @@ void main() {
     expect(find.text('at 5:23 AM'), findsOneWidget);
     expect(find.text('Sunset, Trishal'), findsOneWidget);
     expect(find.text('at 6:54 PM'), findsOneWidget);
-    expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
+    expect(find.byIcon(Icons.wb_sunny), findsNothing);
     expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('prayer-time-card-surface'))),
+      const Size(347, 301),
+    );
+    final dome = find.byKey(const ValueKey('prayer-time-card-notched-dome'));
+    final sunriseEdge = find.byKey(const ValueKey('prayer-edge-sunrise'));
+    final sunsetEdge = find.byKey(const ValueKey('prayer-edge-sunset'));
+    expect(dome, findsOneWidget);
+    expect(sunriseEdge, findsOneWidget);
+    expect(sunsetEdge, findsOneWidget);
+    expect(tester.getSize(dome), const Size(237, 126));
+    expect(
+      tester.getTopLeft(dome) -
+          tester.getTopLeft(
+            find.byKey(const ValueKey('prayer-time-card-surface')),
+          ),
+      const Offset(55, 88),
+    );
+    expect(tester.getSize(sunriseEdge), const Size(153.5, 46));
+    expect(tester.getSize(sunsetEdge), const Size(153.5, 46));
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -233,6 +261,31 @@ void main() {
             widget.painter.runtimeType.toString() == '_PrayerArcPainter',
       ),
       findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() == '_PrayerSunPainter',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() ==
+                '_PrayerBadgeIllustrationPainter',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() == '_HorizonTimeIconPainter',
+      ),
+      findsNWidgets(2),
     );
   });
 
