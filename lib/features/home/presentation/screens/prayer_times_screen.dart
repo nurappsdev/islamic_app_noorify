@@ -147,7 +147,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
       children: [
         Image.asset(
           prayerThemeAsset(now: now, fajr: fajr),
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
         ),
         ColoredBox(color: olive.withValues(alpha: .84)),
         Positioned(
