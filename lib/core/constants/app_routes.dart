@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
+import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
 class AppRoutes {
@@ -17,6 +18,7 @@ class AppRoutes {
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.splash:
+        return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:
         return _page(const SignInScreen(), settings);
       case RouteNames.signUp:
