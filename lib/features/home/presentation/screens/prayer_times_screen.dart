@@ -24,9 +24,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
   Timer? _clockTimer;
 
   DateTime _now() => widget.now?.call() ?? bangladeshNow();
-  PrayerClockTime get _fajr =>
-      _times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0);
-
   @override
   void initState() {
     super.initState();
@@ -89,7 +86,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                 now: now,
                 times: _times,
                 active: active,
-                fajr: _fajr,
                 olive: _olive,
               ),
             ),
@@ -123,14 +119,12 @@ class _PrayerSummaryHeader extends StatelessWidget {
     required this.now,
     required this.times,
     required this.active,
-    required this.fajr,
     required this.olive,
   });
 
   final DateTime now;
   final DailyPrayerTimes? times;
   final PrayerPeriod? active;
-  final PrayerClockTime fajr;
   final Color olive;
 
   @override
@@ -145,11 +139,14 @@ class _PrayerSummaryHeader extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset(
-          prayerThemeAsset(now: now, fajr: fajr),
-          fit: BoxFit.contain,
+        ColoredBox(color: olive),
+        Positioned(
+          top: 110.h,
+          left: 70.w,
+          right: 70.w,
+          height: 120.h,
+          child: Image.asset('assets/images/backImg2.png', fit: BoxFit.fill),
         ),
-        ColoredBox(color: olive.withValues(alpha: .84)),
         Positioned(
           top: 9.h,
           left: 14.w,
@@ -207,11 +204,11 @@ class _PrayerSummaryHeader extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: 89.h,
-          left: 37.w,
-          right: 37.w,
+          top: 90.h,
+          left: 33.w,
+          right: 33.w,
           child: SizedBox(
-            height: 122.h,
+            height: 142.h,
             child: CustomPaint(painter: _SummaryArcPainter()),
           ),
         ),
@@ -500,22 +497,30 @@ class _PrayerRow extends StatelessWidget {
   };
 }
 
+
 class _SummaryArcPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(6, 0, size.width - 12, size.height * 2);
-    final base = Paint()
-      ..color = const Color(0xFFE9EBE4)
+    final strokeWidth = 10.r;
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2,
+      0,
+      size.width - strokeWidth,
+      size.height * 2,
+    );
+    final basePaint = Paint()
+      ..color = const Color(0xFFECE9D4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 10.r
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-    final active = Paint()
-      ..color = const Color(0xFF4F7D67)
+    final activePaint = Paint()
+      ..color = const Color(0xFF5D8067)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 10.r
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
-    canvas.drawArc(rect, 3.14, 3.14, false, base);
-    canvas.drawArc(rect, 3.14, 2.32, false, active);
+
+    canvas.drawArc(rect, 3.14, 3.14, false, basePaint);
+    canvas.drawArc(rect, 3.14, 2.32, false, activePaint);
   }
 
   @override
