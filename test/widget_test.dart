@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/main.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_cubit.dart';
 
@@ -131,5 +132,84 @@ void main() {
 
     expect(find.text('My position in, July'), findsOneWidget);
     expect(find.text('63 %'), findsOneWidget);
+  });
+
+  testWidgets('amal tracker progress uses a painted circular ring', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (context, child) {
+          return const MaterialApp(
+            home: Scaffold(
+              body: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.all(9),
+                  child: AmalTrackerCard(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('86 %'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() == '_AmalProgressRingPainter',
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('prayer time card paints the prayer arc over the theme image', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (context, child) {
+          return const MaterialApp(
+            home: Scaffold(
+              body: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.all(9),
+                  child: PrayerTimeCard(),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    await tester.pump();
+
+    expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
+    expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.painter.runtimeType.toString() == '_PrayerArcPainter',
+      ),
+      findsOneWidget,
+    );
   });
 }
