@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_cubit.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
@@ -190,7 +192,12 @@ void main() {
               body: SafeArea(
                 child: Padding(
                   padding: EdgeInsets.all(9),
-                  child: PrayerTimeCard(),
+                  child: PrayerTimeCard(
+                    prayerTimeService: _FakePrayerTimeService(
+                      PrayerClockTime(hour: 4, minute: 30),
+                    ),
+                    now: _noon,
+                  ),
                 ),
               ),
             ),
@@ -229,4 +236,72 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('prayer time card changes its background at scheduled times', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final cases = <(DateTime, String)>[
+      (DateTime(2026, 8, 20, 8), 'assets/images/theme1.png'),
+      (DateTime(2026, 8, 20, 12), 'assets/images/theme2.png'),
+      (DateTime(2026, 8, 20, 17), 'assets/images/theme3.png'),
+      (DateTime(2026, 8, 20, 22), 'assets/images/theme4.png'),
+    ];
+
+    for (final (now, expectedAsset) in cases) {
+      await tester.pumpWidget(
+        ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (context, child) {
+            return MaterialApp(
+              home: Scaffold(
+                body: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: PrayerTimeCard(
+                      prayerTimeService: _FakePrayerTimeService(
+                        const PrayerClockTime(hour: 4, minute: 30),
+                      ),
+                      now: () => now,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is AssetImage &&
+              (widget.image as AssetImage).assetName == expectedAsset,
+        ),
+        findsOneWidget,
+      );
+    }
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+}
+
+DateTime _noon() => DateTime(2026, 8, 20, 12);
+
+class _FakePrayerTimeService implements PrayerTimeService {
+  const _FakePrayerTimeService(this.fajr);
+
+  final PrayerClockTime fajr;
+
+  @override
+  PrayerClockTime? cachedFajr(DateTime date) => fajr;
+
+  @override
+  Future<PrayerClockTime> loadFajr(DateTime date) async => fajr;
 }

@@ -37,4 +37,13 @@ void main() {
       DateTime(2026, 8, 21),
     );
   });
+
+  test('preserves UTC clock basis when calculating a boundary', () {
+    final now = DateTime.utc(2026, 8, 20, 9, 45);
+
+    final boundary = nextPrayerThemeBoundary(now: now, fajr: fajr);
+
+    expect(boundary, DateTime.utc(2026, 8, 20, 10, 1));
+    expect(boundary.difference(now), const Duration(minutes: 16));
+  });
 }
