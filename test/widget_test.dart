@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_cub
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
@@ -194,7 +195,7 @@ void main() {
                   padding: EdgeInsets.all(9),
                   child: PrayerTimeCard(
                     prayerTimeService: _FakePrayerTimeService(
-                      PrayerClockTime(hour: 4, minute: 30),
+                      _testPrayerTimes,
                     ),
                     now: _noon,
                   ),
@@ -263,8 +264,8 @@ void main() {
                   child: Padding(
                     padding: const EdgeInsets.all(9),
                     child: PrayerTimeCard(
-                      prayerTimeService: _FakePrayerTimeService(
-                        const PrayerClockTime(hour: 4, minute: 30),
+                      prayerTimeService: const _FakePrayerTimeService(
+                        _testPrayerTimes,
                       ),
                       now: () => now,
                     ),
@@ -290,18 +291,67 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets('prayer card arrow opens prayer times route', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (context, child) {
+          return MaterialApp(
+            routes: {
+              RouteNames.prayerTimes: (_) => const Scaffold(
+                body: Text('Prayer times destination'),
+              ),
+            },
+            home: Scaffold(
+              body: PrayerTimeCard(
+                prayerTimeService: const _FakePrayerTimeService(
+                  _testPrayerTimes,
+                ),
+                now: _noon,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Prayer times destination'), findsOneWidget);
+  });
 }
 
 DateTime _noon() => DateTime(2026, 8, 20, 12);
 
 class _FakePrayerTimeService implements PrayerTimeService {
-  const _FakePrayerTimeService(this.fajr);
+  const _FakePrayerTimeService(this.times);
 
-  final PrayerClockTime fajr;
-
-  @override
-  PrayerClockTime? cachedFajr(DateTime date) => fajr;
+  final DailyPrayerTimes times;
 
   @override
-  Future<PrayerClockTime> loadFajr(DateTime date) async => fajr;
+  DailyPrayerTimes? cachedPrayerTimes(DateTime date) => times;
+
+  @override
+  Future<DailyPrayerTimes?> loadPrayerTimes(DateTime date) async => times;
 }
+
+const _testPrayerTimes = DailyPrayerTimes(
+  dateKey: '2026-08-20',
+  readableDate: '20 Aug 2026',
+  hijriDate: '7 Safar 1448 Hijri',
+  fajr: PrayerClockTime(hour: 4, minute: 30),
+  sunrise: PrayerClockTime(hour: 5, minute: 40),
+  dhuhr: PrayerClockTime(hour: 12, minute: 8),
+  asr: PrayerClockTime(hour: 16, minute: 32),
+  maghrib: PrayerClockTime(hour: 18, minute: 35),
+  sunset: PrayerClockTime(hour: 18, minute: 35),
+  isha: PrayerClockTime(hour: 19, minute: 55),
+);

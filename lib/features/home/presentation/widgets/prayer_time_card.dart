@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
@@ -18,8 +20,11 @@ class PrayerTimeCard extends StatefulWidget {
 }
 
 class _PrayerTimeCardState extends State<PrayerTimeCard> {
-  PrayerClockTime _fajr = const PrayerClockTime(hour: 5, minute: 0);
+  DailyPrayerTimes? _times;
   Timer? _boundaryTimer;
+
+  PrayerClockTime get _fajr =>
+      _times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0);
 
   DateTime _now() => widget.now?.call() ?? bangladeshNow();
 
@@ -35,14 +40,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
       final service =
           widget.prayerTimeService ?? await AladhanPrayerTimeService.create();
       final date = _now();
-      final cachedFajr = service.cachedFajr(date);
-      if (mounted && cachedFajr != null) {
-        setState(() => _fajr = cachedFajr);
+      final cachedTimes = service.cachedPrayerTimes(date);
+      if (mounted && cachedTimes != null) {
+        setState(() => _times = cachedTimes);
       }
 
-      final fajr = await service.loadFajr(date);
+      final times = await service.loadPrayerTimes(date);
       if (!mounted) return;
-      setState(() => _fajr = fajr);
+      if (times != null) setState(() => _times = times);
       _scheduleNextBoundary();
     } catch (_) {
       if (mounted) _scheduleNextBoundary();
@@ -228,14 +233,20 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
             left: 0,
             right: 0,
             child: Center(
-              child: Container(
-                width: 36.r,
-                height: 36.r,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE7E56C),
-                  shape: BoxShape.circle,
+              child: SizedBox.square(
+                dimension: 36.r,
+                child: IconButton(
+                  tooltip: 'View prayer times',
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.prayerTimes),
+                  style: IconButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: const Color(0xFFE7E56C),
+                    foregroundColor: Colors.black,
+                  ),
+                  icon: Icon(Icons.keyboard_arrow_down, size: 24.sp),
                 ),
-                child: Icon(Icons.keyboard_arrow_down, size: 24.sp),
               ),
             ),
           ),
