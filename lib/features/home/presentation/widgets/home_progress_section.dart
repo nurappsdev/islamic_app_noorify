@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/features/home/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class HomeProgressSection extends StatelessWidget {
@@ -32,21 +33,33 @@ class HomeProgressSection extends StatelessWidget {
           itemBuilder: (context, index) => _ProgressCard(item: _items[index]),
         ),
         SizedBox(height: 8.h),
-        HomeCard(
-          padding: EdgeInsets.symmetric(vertical: 13.h),
-          child: Column(
-            children: [
-              Text('Nafl & more', style: homeSerifStyle(fontSize: 12.sp)),
-              SizedBox(height: 6.h),
-              const _ProgressBar(value: .58),
-              SizedBox(height: 7.h),
-              Text('0/3', style: homeSansStyle(fontSize: 12.sp)),
-            ],
+        InkWell(
+          borderRadius: BorderRadius.circular(16.r),
+          onTap: () => _openAmolTracking(context, 'Nafl & more'),
+          child: HomeCard(
+            padding: EdgeInsets.symmetric(vertical: 13.h),
+            child: Column(
+              children: [
+                Text('Nafl & more', style: homeSerifStyle(fontSize: 12.sp)),
+                SizedBox(height: 6.h),
+                const _ProgressBar(value: .58),
+                SizedBox(height: 7.h),
+                Text('0/3', style: homeSansStyle(fontSize: 12.sp)),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
+}
+
+void _openAmolTracking(BuildContext context, String category) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => AmolTrackingScreen(initialExpandedCategory: category),
+    ),
+  );
 }
 
 class _ProgressItem {
@@ -64,20 +77,24 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      padding: EdgeInsets.symmetric(vertical: 9.h),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(item.title, style: homeSerifStyle(fontSize: 12.sp)),
-          ),
-          SizedBox(height: 7.h),
-          _ProgressBar(value: item.progress),
-          SizedBox(height: 6.h),
-          Text(item.count, style: homeSansStyle(fontSize: 12.sp)),
-        ],
+    return InkWell(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: () => _openAmolTracking(context, item.title),
+      child: HomeCard(
+        padding: EdgeInsets.symmetric(vertical: 9.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(item.title, style: homeSerifStyle(fontSize: 12.sp)),
+            ),
+            SizedBox(height: 7.h),
+            _ProgressBar(value: item.progress),
+            SizedBox(height: 6.h),
+            Text(item.count, style: homeSansStyle(fontSize: 12.sp)),
+          ],
+        ),
       ),
     );
   }
