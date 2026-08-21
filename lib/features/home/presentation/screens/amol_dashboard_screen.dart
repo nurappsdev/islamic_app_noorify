@@ -338,9 +338,12 @@ class _AmolLineChart extends StatelessWidget {
               ),
               for (final index in competitorIndices)
                 Positioned(
-                  left: points[index].dx - 15.w,
+                  left: points[index].dx,
                   top: (points[index].dy - 32.h).clamp(0.0, height),
-                  child: _CompetitorBubble(label: competitorLabel),
+                  child: FractionalTranslation(
+                    translation: const Offset(-0.5, 0),
+                    child: _CompetitorBubble(label: competitorLabel),
+                  ),
                 ),
             ],
           ),
@@ -375,20 +378,33 @@ class _CompetitorBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30.r,
       height: 22.r,
-      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(horizontal: 7.w),
       decoration: BoxDecoration(
         color: dotColor.withValues(alpha: .55),
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(11.r),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9.sp,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF3F4A32),
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5.r,
+            height: 5.r,
+            decoration: const BoxDecoration(
+              color: Color(0xFF3F4A32),
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 4.w),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF3F4A32),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -408,6 +424,7 @@ class _LineChartPainter extends CustomPainter {
   final double maxY;
 
   static const lineColor = Color(0xFF5D8067);
+  static const _areaFillColor = Color(0xFF7C93D6);
   static const _gridColor = Color(0xFFE7E9DD);
   static const _labelColor = Color(0xFF8C9484);
   static const _ySteps = 4;
@@ -449,8 +466,8 @@ class _LineChartPainter extends CustomPainter {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              lineColor.withValues(alpha: .26),
-              lineColor.withValues(alpha: .02),
+              _areaFillColor.withValues(alpha: .45),
+              _areaFillColor.withValues(alpha: .06),
             ],
           ).createShader(plotRect),
       );
@@ -520,32 +537,39 @@ class _MyPointsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 46.h,
-      padding: EdgeInsets.symmetric(horizontal: 18.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFDDE8AE),
-        borderRadius: BorderRadius.circular(24.r),
+      height: 50.h,
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      decoration: const ShapeDecoration(
+        color: Color(0xFFDCE7AC),
+        shape: StadiumBorder(),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'My points : $points',
-            style: TextStyle(fontSize: 13.sp, color: Colors.black),
-          ),
-          SizedBox(width: 10.w),
-          Container(
-            width: 8.r,
-            height: 8.r,
-            decoration: const BoxDecoration(
-              color: Color(0xFF5D8067),
-              shape: BoxShape.circle,
+          Expanded(
+            child: Center(
+              child: Text(
+                'My points : $points',
+                style: TextStyle(fontSize: 13.sp, color: Colors.black),
+              ),
             ),
           ),
-          SizedBox(width: 5.w),
-          Text(
-            '$points',
-            style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8.r,
+                height: 8.r,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF5D8067),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                '$points',
+                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+              ),
+            ],
           ),
         ],
       ),
