@@ -170,7 +170,7 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is CustomPaint &&
-            widget.painter.runtimeType.toString() == '_AmalProgressRingPainter',
+            widget.painter.runtimeType.toString() == 'AmolProgressRingPainter',
       ),
       findsWidgets,
     );
@@ -258,7 +258,7 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is CustomPaint &&
-            widget.painter.runtimeType.toString() == '_PrayerArcPainter',
+            widget.painter.runtimeType.toString() == 'PrayerArcPainter',
       ),
       findsOneWidget,
     );
@@ -266,7 +266,7 @@ void main() {
       find.byWidgetPredicate(
         (widget) =>
             widget is CustomPaint &&
-            widget.painter.runtimeType.toString() == '_PrayerSunPainter',
+            widget.painter.runtimeType.toString() == 'PrayerSunPainter',
       ),
       findsOneWidget,
     );
