@@ -20,14 +20,6 @@ class AmolTrackingScreen extends StatefulWidget {
   static const _olive = Color(0xFF8D9B70);
   static const _cardGreen = Color(0xFFE3ECAE);
 
-  static const _items = [
-    _AmolItem(title: 'Nafl Salat', fraction: '0/2.5', progress: .52),
-    _AmolItem(title: 'Quran', fraction: '0/11', progress: .55),
-    _AmolItem(title: 'Hadith', fraction: '0/8', progress: .48),
-    _AmolItem(title: 'Quiz', fraction: '0/2.5', progress: .45),
-    _AmolItem(title: 'Nafl & more', fraction: '0/3', progress: .55),
-  ];
-
   static const _weekdayNames = [
     'Monday',
     'Tuesday',
@@ -148,6 +140,101 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     ),
   ];
 
+  var _naflItems = const [
+    _SalahItem(
+      name: 'Tahajjud',
+      icon: Icons.nights_stay,
+      iconColor: Color(0xFF7FA8C9),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Ishraq',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: .5,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Chast',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: .5,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Awabin',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: .5,
+      status: _SalahStatus.locked,
+    ),
+  ];
+
+  var _naflMoreItems = const [
+    _SalahItem(
+      name: 'Sadaqah',
+      icon: Icons.volunteer_activism,
+      iconColor: Color(0xFFE8916B),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Karze Hasanah',
+      icon: Icons.handshake,
+      iconColor: Color(0xFF6FA8D8),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Nafl Fasting',
+      icon: Icons.self_improvement,
+      iconColor: Color(0xFFC9A227),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Physical Exercise',
+      icon: Icons.fitness_center,
+      iconColor: Color(0xFF4FB0C6),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Given Good Ad Vice',
+      icon: Icons.campaign,
+      iconColor: Color(0xFF4FB0C6),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Skill Development',
+      icon: Icons.emoji_objects,
+      iconColor: Color(0xFFFFC83D),
+      points: .5,
+      status: _SalahStatus.available,
+    ),
+  ];
+
+  static const _quranEntry = _InfoEntry(
+    icon: Icons.auto_awesome,
+    iconColor: Color(0xFFFF8A50),
+    name: 'Quran Tilawat',
+    points: 11,
+  );
+  static const _hadithEntry = _InfoEntry(
+    icon: Icons.auto_awesome,
+    iconColor: Color(0xFFFF8A50),
+    name: 'Hadith Reading',
+    points: 8,
+  );
+  static const _quizEntry = _InfoEntry(
+    icon: Icons.quiz,
+    iconColor: Color(0xFFFFC83D),
+    name: 'Giving Quiz',
+    points: 2.5,
+  );
+
   void _toggleCategory(String title) {
     setState(() {
       _expandedCategory = _expandedCategory == title ? null : title;
@@ -160,6 +247,14 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
 
   void _toggleSunnahItem(int index) {
     setState(() => _sunnahItems = _toggledSalah(_sunnahItems, index));
+  }
+
+  void _toggleNaflItem(int index) {
+    setState(() => _naflItems = _toggledSalah(_naflItems, index));
+  }
+
+  void _toggleNaflMoreItem(int index) {
+    setState(() => _naflMoreItems = _toggledSalah(_naflMoreItems, index));
   }
 
   static List<_SalahItem> _toggledSalah(List<_SalahItem> items, int index) {
@@ -223,10 +318,45 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                     onToggleItem: _toggleSunnahItem,
                   ),
                   SizedBox(height: 12.h),
-                  for (final item in AmolTrackingScreen._items) ...[
-                    _AmolRow(item: item),
-                    SizedBox(height: 12.h),
-                  ],
+                  _ExpandableAmolRow(
+                    title: 'Nafl Salat',
+                    items: _naflItems,
+                    expanded: _expandedCategory == 'Nafl Salat',
+                    onToggleExpanded: () => _toggleCategory('Nafl Salat'),
+                    onToggleItem: _toggleNaflItem,
+                  ),
+                  SizedBox(height: 12.h),
+                  _InfoExpandableRow(
+                    title: 'Quran',
+                    fraction: '0/11',
+                    entry: _quranEntry,
+                    expanded: _expandedCategory == 'Quran',
+                    onToggleExpanded: () => _toggleCategory('Quran'),
+                  ),
+                  SizedBox(height: 12.h),
+                  _InfoExpandableRow(
+                    title: 'Hadith',
+                    fraction: '0/8',
+                    entry: _hadithEntry,
+                    expanded: _expandedCategory == 'Hadith',
+                    onToggleExpanded: () => _toggleCategory('Hadith'),
+                  ),
+                  SizedBox(height: 12.h),
+                  _InfoExpandableRow(
+                    title: 'Quiz',
+                    fraction: '0/2.5',
+                    entry: _quizEntry,
+                    expanded: _expandedCategory == 'Quiz',
+                    onToggleExpanded: () => _toggleCategory('Quiz'),
+                  ),
+                  SizedBox(height: 12.h),
+                  _GroupedExpandableRow(
+                    title: 'Nafl & more',
+                    items: _naflMoreItems,
+                    expanded: _expandedCategory == 'Nafl & more',
+                    onToggleExpanded: () => _toggleCategory('Nafl & more'),
+                    onToggleItem: _toggleNaflMoreItem,
+                  ),
                 ],
               ),
             ),
@@ -341,70 +471,6 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _AmolRow extends StatelessWidget {
-  const _AmolRow({required this.item});
-
-  final _AmolItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedCardBorderPainter(radius: 16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontStyle: FontStyle.italic,
-                      fontFamily: 'Times New Roman',
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Expanded(child: _ProgressBar(progress: item.progress)),
-                      SizedBox(width: 10.w),
-                      Text(
-                        item.fraction,
-                        style: TextStyle(fontSize: 12.sp, color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Container(
-              width: 30.r,
-              height: 30.r,
-              decoration: const BoxDecoration(
-                color: Color(0xFFDDEBB5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.chevron_right,
-                size: 18.sp,
-                color: const Color(0xFF7E8C61),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ProgressBar extends StatelessWidget {
   const _ProgressBar({required this.progress});
 
@@ -445,7 +511,7 @@ class _SalahItem {
   final String name;
   final IconData icon;
   final Color iconColor;
-  final int points;
+  final num points;
   final _SalahStatus status;
 
   _SalahItem copyWith({_SalahStatus? status}) => _SalahItem(
@@ -455,6 +521,99 @@ class _SalahItem {
     points: points,
     status: status ?? this.status,
   );
+}
+
+class _AccordionHeader extends StatelessWidget {
+  const _AccordionHeader({
+    required this.title,
+    required this.progress,
+    required this.fractionLabel,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final String title;
+  final double progress;
+  final String fractionLabel;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontStyle: FontStyle.italic,
+                      fontFamily: 'Times New Roman',
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Expanded(child: _ProgressBar(progress: progress)),
+                      SizedBox(width: 10.w),
+                      Text(
+                        fractionLabel,
+                        style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Icon(
+              expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
+              size: 20.sp,
+              color: const Color(0xFF7E8C61),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AccordionCard extends StatelessWidget {
+  const _AccordionCard({required this.expanded, required this.child});
+
+  final bool expanded;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: expanded ? const Color(0xFFF7F7E7) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: expanded
+          ? child
+          : CustomPaint(
+              painter: _DashedCardBorderPainter(radius: 16.r),
+              child: child,
+            ),
+    );
+  }
+}
+
+String _formatPoints(num value) {
+  return value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 }
 
 class _ExpandableAmolRow extends StatelessWidget {
@@ -474,64 +633,21 @@ class _ExpandableAmolRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = items.fold(0, (sum, item) => sum + item.points);
-    final completed = items
+    final num total = items.fold(0, (sum, item) => sum + item.points);
+    final num completed = items
         .where((item) => item.status == _SalahStatus.completed)
         .fold(0, (sum, item) => sum + item.points);
     final progress = total == 0 ? 0.0 : completed / total;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color: expanded ? const Color(0xFFF7F7E7) : Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      clipBehavior: Clip.antiAlias,
+    return _AccordionCard(
+      expanded: expanded,
       child: Column(
         children: [
-          InkWell(
+          _AccordionHeader(
+            title: title,
+            progress: progress,
+            fractionLabel: '${_formatPoints(completed)}/${_formatPoints(total)}',
+            expanded: expanded,
             onTap: onToggleExpanded,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontStyle: FontStyle.italic,
-                            fontFamily: 'Times New Roman',
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        Row(
-                          children: [
-                            Expanded(child: _ProgressBar(progress: progress)),
-                            SizedBox(width: 10.w),
-                            Text(
-                              '$completed/$total',
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Icon(
-                    expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
-                    size: 20.sp,
-                    color: const Color(0xFF7E8C61),
-                  ),
-                ],
-              ),
-            ),
           ),
           if (expanded)
             Padding(
@@ -540,11 +656,179 @@ class _ExpandableAmolRow extends StatelessWidget {
                 children: [
                   for (var i = 0; i < items.length; i++) ...[
                     if (i != 0) SizedBox(height: 6.h),
-                    _SalahRow(
-                      item: items[i],
-                      onTap: () => onToggleItem(i),
-                    ),
+                    _SalahRow(item: items[i], onTap: () => onToggleItem(i)),
                   ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoEntry {
+  const _InfoEntry({
+    required this.icon,
+    required this.iconColor,
+    required this.name,
+    required this.points,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String name;
+  final num points;
+}
+
+class _InfoExpandableRow extends StatelessWidget {
+  const _InfoExpandableRow({
+    required this.title,
+    required this.fraction,
+    required this.entry,
+    required this.expanded,
+    required this.onToggleExpanded,
+  });
+
+  final String title;
+  final String fraction;
+  final _InfoEntry entry;
+  final bool expanded;
+  final VoidCallback onToggleExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return _AccordionCard(
+      expanded: expanded,
+      child: Column(
+        children: [
+          _AccordionHeader(
+            title: title,
+            progress: 0,
+            fractionLabel: fraction,
+            expanded: expanded,
+            onTap: onToggleExpanded,
+          ),
+          if (expanded)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+              child: _InfoEntryRow(entry: entry),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoEntryRow extends StatelessWidget {
+  const _InfoEntryRow({required this.entry});
+
+  final _InfoEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 30.r,
+          height: 30.r,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(9.r),
+          ),
+          child: Icon(entry.icon, color: entry.iconColor, size: 16.sp),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Text(
+            entry.name,
+            style: TextStyle(fontSize: 13.sp, color: Colors.black),
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFDDEBB5),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Text(
+            '+${_formatPoints(entry.points)}',
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF5F6B45),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupedExpandableRow extends StatelessWidget {
+  const _GroupedExpandableRow({
+    required this.title,
+    required this.items,
+    required this.expanded,
+    required this.onToggleExpanded,
+    required this.onToggleItem,
+  });
+
+  final String title;
+  final List<_SalahItem> items;
+  final bool expanded;
+  final VoidCallback onToggleExpanded;
+  final ValueChanged<int> onToggleItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final num total = items.fold(0, (sum, item) => sum + item.points);
+    final num completed = items
+        .where((item) => item.status == _SalahStatus.completed)
+        .fold(0, (sum, item) => sum + item.points);
+    final progress = total == 0 ? 0.0 : completed / total;
+    final mid = (items.length / 2).ceil();
+    final firstGroup = items.sublist(0, mid);
+    final secondGroup = items.sublist(mid);
+
+    Widget group(List<_SalahItem> groupItems, int offset) => Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < groupItems.length; i++) ...[
+            if (i != 0) SizedBox(height: 6.h),
+            _SalahRow(
+              item: groupItems[i],
+              onTap: () => onToggleItem(offset + i),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    return _AccordionCard(
+      expanded: expanded,
+      child: Column(
+        children: [
+          _AccordionHeader(
+            title: title,
+            progress: progress,
+            fractionLabel: '${_formatPoints(completed)}/${_formatPoints(total)}',
+            expanded: expanded,
+            onTap: onToggleExpanded,
+          ),
+          if (expanded)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+              child: Column(
+                children: [
+                  group(firstGroup, 0),
+                  SizedBox(height: 10.h),
+                  group(secondGroup, mid),
                 ],
               ),
             ),
@@ -592,7 +876,7 @@ class _SalahRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
-                '+${item.points}',
+                '+${_formatPoints(item.points)}',
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
@@ -738,16 +1022,4 @@ class _DashboardButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _AmolItem {
-  const _AmolItem({
-    required this.title,
-    required this.fraction,
-    required this.progress,
-  });
-
-  final String title;
-  final String fraction;
-  final double progress;
 }
