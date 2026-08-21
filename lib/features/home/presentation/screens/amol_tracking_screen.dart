@@ -10,12 +10,14 @@ class AmolTrackingScreen extends StatefulWidget {
     this.pointLabel = 'Point : 30/40',
     this.progressLabel = '86 %',
     this.progress = .86,
+    this.initialExpandedCategory = 'Fardh Prayer',
     this.now,
   });
 
   final String pointLabel;
   final String progressLabel;
   final double progress;
+  final String? initialExpandedCategory;
   final DateTime Function()? now;
 
   @override
@@ -23,7 +25,7 @@ class AmolTrackingScreen extends StatefulWidget {
 }
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
-  String? _expandedCategory = 'Fardh Prayer';
+  late String? _expandedCategory = widget.initialExpandedCategory;
 
   var _fardhItems = const [
     _SalahItem(
