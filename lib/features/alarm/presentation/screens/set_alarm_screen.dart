@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
 class SetAlarmScreen extends StatefulWidget {
   const SetAlarmScreen({super.key, required this.period, this.initialTime});

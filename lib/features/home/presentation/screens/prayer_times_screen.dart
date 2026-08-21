@@ -6,8 +6,8 @@ import 'package:islami_app_noorify/features/home/data/services/prayer_time_servi
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/set_alarm_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/set_all_alarm_screen.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
