@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/features/home/presentation/widgets/amol_progress_ring.dart';
+import 'package:islami_app_noorify/features/home/presentation/screens/amol_dashboard_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/amol_shared_widgets.dart';
 
 class AmolTrackingScreen extends StatefulWidget {
   const AmolTrackingScreen({
@@ -16,39 +17,6 @@ class AmolTrackingScreen extends StatefulWidget {
   final String progressLabel;
   final double progress;
   final DateTime Function()? now;
-
-  static const _olive = Color(0xFF8D9B70);
-  static const _cardGreen = Color(0xFFE3ECAE);
-
-  static const _weekdayNames = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
-  static const _monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  static String _formatDate(DateTime date) {
-    final weekday = _weekdayNames[date.weekday - 1];
-    final month = _monthNames[date.month - 1];
-    return '$weekday ${date.day} $month, ${date.year}';
-  }
 
   @override
   State<AmolTrackingScreen> createState() => _AmolTrackingScreenState();
@@ -281,19 +249,19 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _Header(),
+            const AmolHeader(title: 'Amol Tracking'),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
                 children: [
-                  _SummaryCard(
+                  AmolSummaryCard(
                     pointLabel: widget.pointLabel,
                     progressLabel: widget.progressLabel,
                     progress: widget.progress,
                   ),
                   SizedBox(height: 18.h),
                   Text(
-                    AmolTrackingScreen._formatDate(today),
+                    formatAmolDate(today),
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -371,106 +339,6 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   }
 }
 
-class _Header extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(14.w, 9.h, 14.w, 0),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              tooltip: 'Back',
-              onPressed: () => Navigator.of(context).pop(),
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F5CE),
-                foregroundColor: const Color(0xFF526044),
-              ),
-              icon: const Icon(Icons.chevron_left),
-            ),
-          ),
-          Text(
-            'Amol Tracking',
-            style: TextStyle(
-              fontSize: 17.sp,
-              fontWeight: FontWeight.w600,
-              color: AmolTrackingScreen._olive,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.pointLabel,
-    required this.progressLabel,
-    required this.progress,
-  });
-
-  final String pointLabel;
-  final String progressLabel;
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: AmolTrackingScreen._cardGreen,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52.r,
-            height: 52.r,
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F8E8),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Image.asset(
-              'assets/noorifyLogo.png',
-              fit: BoxFit.contain,
-              color: const Color(0xFF879461),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Todays Amol track',
-                  style: TextStyle(fontSize: 14.sp, color: Colors.black),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  pointLabel,
-                  style: TextStyle(fontSize: 11.sp, color: Colors.black87),
-                ),
-              ],
-            ),
-          ),
-          AmolProgressRing(
-            label: progressLabel,
-            progress: progress,
-            dimension: 74.r,
-            holeDimension: 50.r,
-            holeColor: AmolTrackingScreen._cardGreen,
-            labelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProgressBar extends StatelessWidget {
   const _ProgressBar({required this.progress});
 
@@ -488,7 +356,7 @@ class _ProgressBar extends StatelessWidget {
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: progress.clamp(0.0, 1.0),
-              child: const ColoredBox(color: AmolTrackingScreen._olive),
+              child: const ColoredBox(color: amolOlive),
             ),
           ],
         ),
@@ -906,7 +774,7 @@ class _ActionCircle extends StatelessWidget {
           width: 26.r,
           height: 26.r,
           decoration: const BoxDecoration(
-            color: AmolTrackingScreen._olive,
+            color: amolOlive,
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.check, size: 15.sp, color: Colors.white),
@@ -918,12 +786,12 @@ class _ActionCircle extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: AmolTrackingScreen._olive, width: 1.4),
+            border: Border.all(color: amolOlive, width: 1.4),
           ),
           child: Icon(
             Icons.check,
             size: 13.sp,
-            color: AmolTrackingScreen._olive,
+            color: amolOlive,
           ),
         );
       case _SalahStatus.locked:
@@ -986,39 +854,50 @@ class _DashedCardBorderPainter extends CustomPainter {
 class _DashboardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 54.h,
-      padding: EdgeInsets.symmetric(horizontal: 22.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFA3B06B),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'View in dashboard',
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const AmolDashboardScreen(),
           ),
-          SizedBox(width: 10.w),
-          Container(
-            width: 26.r,
-            height: 26.r,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .18),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Icon(
-              Icons.grid_view_rounded,
-              size: 15.sp,
-              color: Colors.white,
-            ),
+        ),
+        child: Container(
+          height: 54.h,
+          padding: EdgeInsets.symmetric(horizontal: 22.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFFA3B06B),
+            borderRadius: BorderRadius.circular(30.r),
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'View in dashboard',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Container(
+                width: 26.r,
+                height: 26.r,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .18),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Icons.grid_view_rounded,
+                  size: 15.sp,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
