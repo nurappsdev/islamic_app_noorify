@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/alarm_settings_widgets.dart';
 
 class SetAlarmScreen extends StatefulWidget {
   const SetAlarmScreen({super.key, required this.period, this.initialTime});
@@ -62,7 +63,7 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _Header(title: 'Set Alarm', period: widget.period),
+            AlarmBackHeader(title: 'Set Alarm', subtitle: widget.period.displayName),
             SizedBox(height: 20.h),
             _TimeWheel(
               hourController: _hourController,
@@ -82,23 +83,23 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _ToggleRow(
+                    AlarmToggleRow(
                       label: 'Vibrate and ring',
                       value: _vibrateAndRing,
                       onChanged: (v) => setState(() => _vibrateAndRing = v),
                     ),
                     SizedBox(height: 22.h),
-                    Text('Set Ringtone', style: _italicStyle(14.sp)),
+                    Text('Set Ringtone', style: alarmItalicStyle(14.sp)),
                     SizedBox(height: 10.h),
-                    _RingtoneSearchField(),
+                    const RingtoneSearchField(),
                     SizedBox(height: 22.h),
-                    _ToggleRow(
+                    AlarmToggleRow(
                       label: 'Vibrate',
                       value: _vibrate,
                       onChanged: (v) => setState(() => _vibrate = v),
                     ),
                     SizedBox(height: 18.h),
-                    _ToggleRow(
+                    AlarmToggleRow(
                       label: 'Ring',
                       value: _ring,
                       onChanged: (v) => setState(() => _ring = v),
@@ -110,58 +111,6 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-TextStyle _italicStyle(double size, {Color color = Colors.black}) => TextStyle(
-  color: color,
-  fontSize: size,
-  fontFamily: 'Times New Roman',
-  fontStyle: FontStyle.italic,
-);
-
-class _Header extends StatelessWidget {
-  const _Header({required this.title, required this.period});
-
-  final String title;
-  final PrayerPeriod period;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(14.w, 9.h, 14.w, 0),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              tooltip: 'Back',
-              onPressed: () => Navigator.of(context).pop(),
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F5CE),
-                foregroundColor: const Color(0xFF526044),
-              ),
-              icon: const Icon(Icons.chevron_left),
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w500),
-              ),
-              SizedBox(height: 3.h),
-              Text(
-                period.displayName,
-                style: _italicStyle(11.sp, color: const Color(0xFF9AA687)),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
@@ -329,57 +278,3 @@ class _Wheel extends StatelessWidget {
   }
 }
 
-class _ToggleRow extends StatelessWidget {
-  const _ToggleRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: _italicStyle(14.sp)),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: const Color(0xFF8D9B70),
-          activeTrackColor: const Color(0xFFDCE9B8),
-          inactiveThumbColor: const Color(0xFFBDBDBD),
-          inactiveTrackColor: const Color(0xFFE0E0E0),
-        ),
-      ],
-    );
-  }
-}
-
-class _RingtoneSearchField extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 44.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: const Color(0xFFDCE9B8)),
-      ),
-      child: Center(
-        child: TextField(
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            isDense: true,
-            hintText: 'Search Here . . .',
-            hintStyle: _italicStyle(13.sp, color: const Color(0xFF9AA687)),
-          ),
-          style: _italicStyle(13.sp),
-        ),
-      ),
-    );
-  }
-}
