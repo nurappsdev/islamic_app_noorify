@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/features/home/presentation/widgets/amol_progress_ring.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 const amolOlive = Color(0xFF8D9B70);
 const amolCardGreen = Color(0xFFE3ECAE);

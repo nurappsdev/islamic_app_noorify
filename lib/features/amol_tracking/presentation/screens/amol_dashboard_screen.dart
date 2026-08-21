@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/features/home/presentation/widgets/amol_shared_widgets.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 

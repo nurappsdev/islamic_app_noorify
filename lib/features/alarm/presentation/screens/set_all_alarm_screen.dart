@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/set_alarm_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
 class SetAllAlarmScreen extends StatefulWidget {
   const SetAllAlarmScreen({super.key, this.times});

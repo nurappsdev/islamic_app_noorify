@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/features/home/presentation/screens/amol_dashboard_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/amol_shared_widgets.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 class AmolTrackingScreen extends StatefulWidget {
   const AmolTrackingScreen({
