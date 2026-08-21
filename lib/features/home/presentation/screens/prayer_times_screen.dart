@@ -7,6 +7,8 @@ import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/set_alarm_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/screens/set_all_alarm_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
@@ -162,6 +164,23 @@ class _PrayerSummaryHeader extends StatelessWidget {
           ),
         ),
         Positioned(
+          top: 9.h,
+          right: 14.w,
+          child: IconButton(
+            tooltip: 'Set All Alarm',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SetAllAlarmScreen(times: times),
+              ),
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF7F5CE),
+              foregroundColor: const Color(0xFF526044),
+            ),
+            icon: const Icon(Icons.alarm_add_outlined),
+          ),
+        ),
+        Positioned(
           top: 18.h,
           left: 0,
           right: 0,
@@ -210,13 +229,16 @@ class _PrayerSummaryHeader extends StatelessWidget {
           right: 33.w,
           child: SizedBox(
             height: 142.h,
-            child: CustomPaint(painter: _SummaryArcPainter()),
+            child: const CustomPaint(painter: PrayerArcPainter()),
           ),
         ),
         Positioned(
-          top: 105.h,
-          right: 93.w,
-          child: Icon(Icons.wb_sunny, size: 30.sp, color: Color(0xFFFFB33C)),
+          top: 102.h,
+          right: 48.w,
+          child: SizedBox.square(
+            dimension: 43.r,
+            child: const CustomPaint(painter: PrayerSunPainter()),
+          ),
         ),
         Positioned(
           top: 121.h,
@@ -501,34 +523,4 @@ class _PrayerRow extends StatelessWidget {
     PrayerPeriod.maghrib => const Color(0xFFFF8E4A),
     PrayerPeriod.isha => const Color(0xFFEACB2B),
   };
-}
-
-
-class _SummaryArcPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokeWidth = 10.r;
-    final rect = Rect.fromLTWH(
-      strokeWidth / 2,
-      0,
-      size.width - strokeWidth,
-      size.height * 2,
-    );
-    final basePaint = Paint()
-      ..color = const Color(0xFFECE9D4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    final activePaint = Paint()
-      ..color = const Color(0xFF5D8067)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(rect, 3.14, 3.14, false, basePaint);
-    canvas.drawArc(rect, 3.14, 2.32, false, activePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

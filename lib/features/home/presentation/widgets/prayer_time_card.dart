@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/home/data/services/prayer_time_servi
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
 part 'prayer_time_card_widgets.dart';
 part 'prayer_time_card_painters.dart';
@@ -189,7 +190,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 33.w,
                         child: SizedBox(
                           height: 142.h,
-                          child: CustomPaint(painter: _PrayerArcPainter()),
+                          child: const CustomPaint(painter: PrayerArcPainter()),
                         ),
                       ),
 
@@ -199,7 +200,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 48.w,
                         child: SizedBox.square(
                           dimension: 43.r,
-                          child: CustomPaint(painter: _PrayerSunPainter()),
+                          child: const CustomPaint(painter: PrayerSunPainter()),
                         ),
                       ),
 
