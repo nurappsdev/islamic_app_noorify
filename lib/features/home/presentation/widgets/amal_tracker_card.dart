@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/features/home/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/amol_progress_ring.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});
@@ -107,7 +108,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             itemBuilder: (context, index) {
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 2.w),
-                child: _AmalSlide(item: _items[index]),
+                child: _AmalSlide(item: _items[index], isTodaysTrack: index == 0),
               );
             },
           ),
@@ -132,13 +133,14 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 }
 
 class _AmalSlide extends StatelessWidget {
-  const _AmalSlide({required this.item});
+  const _AmalSlide({required this.item, required this.isTodaysTrack});
 
   final _AmalTrackerItem item;
+  final bool isTodaysTrack;
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
+    final card = HomeCard(
       padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
       backgroundColor: const Color(0xFFDDE8AE),
       borderColor: const Color(0xFFDDE8AE),
@@ -168,94 +170,32 @@ class _AmalSlide extends StatelessWidget {
             ),
           ),
           SizedBox(width: 4.w),
-          Container(
-            width: 90.r,
-            height: 90.r,
-            alignment: Alignment.center,
-            child: _ContainerProgressRing(
-              label: item.progressLabel,
-              progress: item.progress,
-            ),
+          AmolProgressRing(
+            label: item.progressLabel,
+            progress: item.progress,
+            dimension: 84.r,
+            holeDimension: 57.r,
+            labelStyle: homeSansStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
           ),
         ],
       ),
     );
-  }
-}
 
-class _ContainerProgressRing extends StatelessWidget {
-  const _ContainerProgressRing({required this.label, required this.progress});
+    if (!isTodaysTrack) return card;
 
-  final String label;
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: 84.r,
-      child: CustomPaint(
-        painter: _AmalProgressRingPainter(progress: progress),
-        child: Center(
-          child: Container(
-            width: 57.r,
-            height: 57.r,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFDDE8AE),
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              label,
-              style: homeSansStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18.r),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AmolTrackingScreen(
+            pointLabel: item.subtitle,
+            progressLabel: item.progressLabel,
+            progress: item.progress,
           ),
         ),
       ),
+      child: card,
     );
-  }
-}
-
-class _AmalProgressRingPainter extends CustomPainter {
-  const _AmalProgressRingPainter({required this.progress});
-
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.shortestSide * .12;
-    final ringRect =
-        Offset(strokeWidth / 2, strokeWidth / 2) &
-        Size(size.width - strokeWidth, size.height - strokeWidth);
-    final clampedProgress = progress.clamp(0.0, 1.0);
-
-    final trackPaint = Paint()
-      ..color = const Color(0xFFF0EE74)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final progressPaint = Paint()
-      ..color = const Color(0xFF879461)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(ringRect, 0, math.pi * 2, false, trackPaint);
-    canvas.drawArc(
-      ringRect,
-      -math.pi / 2,
-      math.pi * 2 * clampedProgress,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _AmalProgressRingPainter oldDelegate) {
-    return oldDelegate.progress != progress;
   }
 }
 
