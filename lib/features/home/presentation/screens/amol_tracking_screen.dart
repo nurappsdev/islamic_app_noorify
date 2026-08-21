@@ -21,7 +21,6 @@ class AmolTrackingScreen extends StatelessWidget {
   static const _cardGreen = Color(0xFFE3ECAE);
 
   static const _items = [
-    _AmolItem(title: 'Fardh Prayer', fraction: '0/7', progress: .58),
     _AmolItem(title: 'Sunnah and Witr', fraction: '0/6', progress: .5),
     _AmolItem(title: 'Nafl Salat', fraction: '0/2.5', progress: .52),
     _AmolItem(title: 'Quran', fraction: '0/11', progress: .55),
@@ -57,6 +56,8 @@ class AmolTrackingScreen extends StatelessWidget {
                       color: Colors.black,
                     ),
                   ),
+                  SizedBox(height: 12.h),
+                  const _FardhPrayerRow(),
                   SizedBox(height: 12.h),
                   for (final item in _items) ...[
                     _AmolRow(item: item),
@@ -238,26 +239,7 @@ class _AmolRow extends StatelessWidget {
                   SizedBox(height: 8.h),
                   Row(
                     children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6.r),
-                          child: SizedBox(
-                            height: 7.h,
-                            child: Stack(
-                              children: [
-                                const ColoredBox(color: Color(0xFFDDE0D0)),
-                                FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: item.progress.clamp(0.0, 1.0),
-                                  child: const ColoredBox(
-                                    color: AmolTrackingScreen._olive,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _ProgressBar(progress: item.progress)),
                       SizedBox(width: 10.w),
                       Text(
                         item.fraction,
@@ -286,6 +268,315 @@ class _AmolRow extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6.r),
+      child: SizedBox(
+        height: 7.h,
+        child: Stack(
+          children: [
+            const ColoredBox(color: Color(0xFFDDE0D0)),
+            FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress.clamp(0.0, 1.0),
+              child: const ColoredBox(color: AmolTrackingScreen._olive),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _SalahStatus { locked, available, completed }
+
+class _SalahItem {
+  const _SalahItem({
+    required this.name,
+    required this.icon,
+    required this.iconColor,
+    required this.points,
+    required this.status,
+  });
+
+  final String name;
+  final IconData icon;
+  final Color iconColor;
+  final int points;
+  final _SalahStatus status;
+
+  _SalahItem copyWith({_SalahStatus? status}) => _SalahItem(
+    name: name,
+    icon: icon,
+    iconColor: iconColor,
+    points: points,
+    status: status ?? this.status,
+  );
+}
+
+class _FardhPrayerRow extends StatefulWidget {
+  const _FardhPrayerRow();
+
+  @override
+  State<_FardhPrayerRow> createState() => _FardhPrayerRowState();
+}
+
+class _FardhPrayerRowState extends State<_FardhPrayerRow> {
+  var _expanded = true;
+  var _salah = const [
+    _SalahItem(
+      name: 'Fajr',
+      icon: Icons.wb_twilight,
+      iconColor: Color(0xFFFFC83D),
+      points: 2,
+      status: _SalahStatus.completed,
+    ),
+    _SalahItem(
+      name: 'Duhr',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: 1,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Asr',
+      icon: Icons.sunny,
+      iconColor: Color(0xFFFFAA2C),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Magrib',
+      icon: Icons.wb_twilight_outlined,
+      iconColor: Color(0xFFFF8E4A),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Esa',
+      icon: Icons.nights_stay,
+      iconColor: Color(0xFFEACB2B),
+      points: 2,
+      status: _SalahStatus.locked,
+    ),
+  ];
+
+  int get _totalPoints => _salah.fold(0, (sum, item) => sum + item.points);
+
+  int get _completedPoints => _salah
+      .where((item) => item.status == _SalahStatus.completed)
+      .fold(0, (sum, item) => sum + item.points);
+
+  void _toggle(int index) {
+    final item = _salah[index];
+    if (item.status == _SalahStatus.locked) return;
+    setState(() {
+      _salah = [
+        for (var i = 0; i < _salah.length; i++)
+          if (i == index)
+            item.copyWith(
+              status: item.status == _SalahStatus.completed
+                  ? _SalahStatus.available
+                  : _SalahStatus.completed,
+            )
+          else
+            _salah[i],
+      ];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _totalPoints;
+    final completed = _completedPoints;
+    final progress = total == 0 ? 0.0 : completed / total;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: _expanded ? const Color(0xFFF7F7E7) : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Fardh Prayer',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontStyle: FontStyle.italic,
+                            fontFamily: 'Times New Roman',
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Row(
+                          children: [
+                            Expanded(child: _ProgressBar(progress: progress)),
+                            SizedBox(width: 10.w),
+                            Text(
+                              '$completed/$total',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_down
+                        : Icons.chevron_right,
+                    size: 20.sp,
+                    color: const Color(0xFF7E8C61),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+              child: Column(
+                children: [
+                  for (var i = 0; i < _salah.length; i++) ...[
+                    if (i != 0) SizedBox(height: 6.h),
+                    _SalahRow(item: _salah[i], onTap: () => _toggle(i)),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SalahRow extends StatelessWidget {
+  const _SalahRow({required this.item, required this.onTap});
+
+  final _SalahItem item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: item.status == _SalahStatus.locked ? null : onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 6.h),
+        child: Row(
+          children: [
+            Container(
+              width: 30.r,
+              height: 30.r,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(9.r),
+              ),
+              child: Icon(item.icon, color: item.iconColor, size: 17.sp),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                item.name,
+                style: TextStyle(fontSize: 13.sp, color: Colors.black),
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDEBB5),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Text(
+                '+${item.points}',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5F6B45),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            _ActionCircle(status: item.status),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionCircle extends StatelessWidget {
+  const _ActionCircle({required this.status});
+
+  final _SalahStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (status) {
+      case _SalahStatus.completed:
+        return Container(
+          width: 26.r,
+          height: 26.r,
+          decoration: const BoxDecoration(
+            color: AmolTrackingScreen._olive,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.check, size: 15.sp, color: Colors.white),
+        );
+      case _SalahStatus.available:
+        return Container(
+          width: 26.r,
+          height: 26.r,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: AmolTrackingScreen._olive, width: 1.4),
+          ),
+          child: Icon(
+            Icons.check,
+            size: 13.sp,
+            color: AmolTrackingScreen._olive,
+          ),
+        );
+      case _SalahStatus.locked:
+        return Container(
+          width: 26.r,
+          height: 26.r,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFDADDC6), width: 1.2),
+          ),
+          child: Icon(
+            Icons.lock_outline,
+            size: 13.sp,
+            color: const Color(0xFFB7BBA0),
+          ),
+        );
+    }
   }
 }
 
