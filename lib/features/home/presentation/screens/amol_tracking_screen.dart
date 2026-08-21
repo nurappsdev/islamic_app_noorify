@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/presentation/widgets/amol_progress_ring.dart';
 
-class AmolTrackingScreen extends StatelessWidget {
+class AmolTrackingScreen extends StatefulWidget {
   const AmolTrackingScreen({
     super.key,
     this.pointLabel = 'Point : 30/40',
@@ -21,60 +21,12 @@ class AmolTrackingScreen extends StatelessWidget {
   static const _cardGreen = Color(0xFFE3ECAE);
 
   static const _items = [
-    _AmolItem(title: 'Sunnah and Witr', fraction: '0/6', progress: .5),
     _AmolItem(title: 'Nafl Salat', fraction: '0/2.5', progress: .52),
     _AmolItem(title: 'Quran', fraction: '0/11', progress: .55),
     _AmolItem(title: 'Hadith', fraction: '0/8', progress: .48),
     _AmolItem(title: 'Quiz', fraction: '0/2.5', progress: .45),
     _AmolItem(title: 'Nafl & more', fraction: '0/3', progress: .55),
   ];
-
-  @override
-  Widget build(BuildContext context) {
-    final today = (now ?? DateTime.now)();
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _Header(),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
-                children: [
-                  _SummaryCard(
-                    pointLabel: pointLabel,
-                    progressLabel: progressLabel,
-                    progress: progress,
-                  ),
-                  SizedBox(height: 18.h),
-                  Text(
-                    _formatDate(today),
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  const _FardhPrayerRow(),
-                  SizedBox(height: 12.h),
-                  for (final item in _items) ...[
-                    _AmolRow(item: item),
-                    SizedBox(height: 12.h),
-                  ],
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(15.w, 0, 15.w, 12.h),
-              child: _DashboardButton(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   static const _weekdayNames = [
     'Monday',
@@ -104,6 +56,188 @@ class AmolTrackingScreen extends StatelessWidget {
     final weekday = _weekdayNames[date.weekday - 1];
     final month = _monthNames[date.month - 1];
     return '$weekday ${date.day} $month, ${date.year}';
+  }
+
+  @override
+  State<AmolTrackingScreen> createState() => _AmolTrackingScreenState();
+}
+
+class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
+  String? _expandedCategory = 'Fardh Prayer';
+
+  var _fardhItems = const [
+    _SalahItem(
+      name: 'Fajr',
+      icon: Icons.wb_twilight,
+      iconColor: Color(0xFFFFC83D),
+      points: 2,
+      status: _SalahStatus.completed,
+    ),
+    _SalahItem(
+      name: 'Duhr',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: 1,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Asr',
+      icon: Icons.sunny,
+      iconColor: Color(0xFFFFAA2C),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Magrib',
+      icon: Icons.wb_twilight_outlined,
+      iconColor: Color(0xFFFF8E4A),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Esa',
+      icon: Icons.nights_stay,
+      iconColor: Color(0xFFEACB2B),
+      points: 2,
+      status: _SalahStatus.locked,
+    ),
+  ];
+
+  var _sunnahItems = const [
+    _SalahItem(
+      name: 'Fajr Sunnah',
+      icon: Icons.wb_twilight,
+      iconColor: Color(0xFFFFC83D),
+      points: 1,
+      status: _SalahStatus.completed,
+    ),
+    _SalahItem(
+      name: 'Duhr Sunnah',
+      icon: Icons.wb_sunny,
+      iconColor: Color(0xFFFFC83D),
+      points: 1,
+      status: _SalahStatus.available,
+    ),
+    _SalahItem(
+      name: 'Asr Sunnah',
+      icon: Icons.sunny,
+      iconColor: Color(0xFFFFAA2C),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Magrib Sunnah',
+      icon: Icons.wb_twilight_outlined,
+      iconColor: Color(0xFFFF8E4A),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Esa Sunnah',
+      icon: Icons.nights_stay,
+      iconColor: Color(0xFFEACB2B),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+    _SalahItem(
+      name: 'Witr',
+      icon: Icons.nightlight_round,
+      iconColor: Color(0xFFEACB2B),
+      points: 1,
+      status: _SalahStatus.locked,
+    ),
+  ];
+
+  void _toggleCategory(String title) {
+    setState(() {
+      _expandedCategory = _expandedCategory == title ? null : title;
+    });
+  }
+
+  void _toggleFardhItem(int index) {
+    setState(() => _fardhItems = _toggledSalah(_fardhItems, index));
+  }
+
+  void _toggleSunnahItem(int index) {
+    setState(() => _sunnahItems = _toggledSalah(_sunnahItems, index));
+  }
+
+  static List<_SalahItem> _toggledSalah(List<_SalahItem> items, int index) {
+    final item = items[index];
+    if (item.status == _SalahStatus.locked) return items;
+    return [
+      for (var i = 0; i < items.length; i++)
+        if (i == index)
+          item.copyWith(
+            status: item.status == _SalahStatus.completed
+                ? _SalahStatus.available
+                : _SalahStatus.completed,
+          )
+        else
+          items[i],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final today = (widget.now ?? DateTime.now)();
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _Header(),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+                children: [
+                  _SummaryCard(
+                    pointLabel: widget.pointLabel,
+                    progressLabel: widget.progressLabel,
+                    progress: widget.progress,
+                  ),
+                  SizedBox(height: 18.h),
+                  Text(
+                    AmolTrackingScreen._formatDate(today),
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  _ExpandableAmolRow(
+                    title: 'Fardh Prayer',
+                    items: _fardhItems,
+                    expanded: _expandedCategory == 'Fardh Prayer',
+                    onToggleExpanded: () => _toggleCategory('Fardh Prayer'),
+                    onToggleItem: _toggleFardhItem,
+                  ),
+                  SizedBox(height: 12.h),
+                  _ExpandableAmolRow(
+                    title: 'Sunnah and Witr',
+                    items: _sunnahItems,
+                    expanded: _expandedCategory == 'Sunnah and Witr',
+                    onToggleExpanded: () =>
+                        _toggleCategory('Sunnah and Witr'),
+                    onToggleItem: _toggleSunnahItem,
+                  ),
+                  SizedBox(height: 12.h),
+                  for (final item in AmolTrackingScreen._items) ...[
+                    _AmolRow(item: item),
+                    SizedBox(height: 12.h),
+                  ],
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(15.w, 0, 15.w, 12.h),
+              child: _DashboardButton(),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -323,93 +457,39 @@ class _SalahItem {
   );
 }
 
-class _FardhPrayerRow extends StatefulWidget {
-  const _FardhPrayerRow();
+class _ExpandableAmolRow extends StatelessWidget {
+  const _ExpandableAmolRow({
+    required this.title,
+    required this.items,
+    required this.expanded,
+    required this.onToggleExpanded,
+    required this.onToggleItem,
+  });
 
-  @override
-  State<_FardhPrayerRow> createState() => _FardhPrayerRowState();
-}
-
-class _FardhPrayerRowState extends State<_FardhPrayerRow> {
-  var _expanded = true;
-  var _salah = const [
-    _SalahItem(
-      name: 'Fajr',
-      icon: Icons.wb_twilight,
-      iconColor: Color(0xFFFFC83D),
-      points: 2,
-      status: _SalahStatus.completed,
-    ),
-    _SalahItem(
-      name: 'Duhr',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: 1,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Asr',
-      icon: Icons.sunny,
-      iconColor: Color(0xFFFFAA2C),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Magrib',
-      icon: Icons.wb_twilight_outlined,
-      iconColor: Color(0xFFFF8E4A),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Esa',
-      icon: Icons.nights_stay,
-      iconColor: Color(0xFFEACB2B),
-      points: 2,
-      status: _SalahStatus.locked,
-    ),
-  ];
-
-  int get _totalPoints => _salah.fold(0, (sum, item) => sum + item.points);
-
-  int get _completedPoints => _salah
-      .where((item) => item.status == _SalahStatus.completed)
-      .fold(0, (sum, item) => sum + item.points);
-
-  void _toggle(int index) {
-    final item = _salah[index];
-    if (item.status == _SalahStatus.locked) return;
-    setState(() {
-      _salah = [
-        for (var i = 0; i < _salah.length; i++)
-          if (i == index)
-            item.copyWith(
-              status: item.status == _SalahStatus.completed
-                  ? _SalahStatus.available
-                  : _SalahStatus.completed,
-            )
-          else
-            _salah[i],
-      ];
-    });
-  }
+  final String title;
+  final List<_SalahItem> items;
+  final bool expanded;
+  final VoidCallback onToggleExpanded;
+  final ValueChanged<int> onToggleItem;
 
   @override
   Widget build(BuildContext context) {
-    final total = _totalPoints;
-    final completed = _completedPoints;
+    final total = items.fold(0, (sum, item) => sum + item.points);
+    final completed = items
+        .where((item) => item.status == _SalahStatus.completed)
+        .fold(0, (sum, item) => sum + item.points);
     final progress = total == 0 ? 0.0 : completed / total;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: _expanded ? const Color(0xFFF7F7E7) : Colors.white,
+        color: expanded ? const Color(0xFFF7F7E7) : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
+            onTap: onToggleExpanded,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               child: Row(
@@ -419,7 +499,7 @@ class _FardhPrayerRowState extends State<_FardhPrayerRow> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Fardh Prayer',
+                          title,
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontStyle: FontStyle.italic,
@@ -445,9 +525,7 @@ class _FardhPrayerRowState extends State<_FardhPrayerRow> {
                   ),
                   SizedBox(width: 10.w),
                   Icon(
-                    _expanded
-                        ? Icons.keyboard_arrow_down
-                        : Icons.chevron_right,
+                    expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
                     size: 20.sp,
                     color: const Color(0xFF7E8C61),
                   ),
@@ -455,14 +533,17 @@ class _FardhPrayerRowState extends State<_FardhPrayerRow> {
               ),
             ),
           ),
-          if (_expanded)
+          if (expanded)
             Padding(
               padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
               child: Column(
                 children: [
-                  for (var i = 0; i < _salah.length; i++) ...[
+                  for (var i = 0; i < items.length; i++) ...[
                     if (i != 0) SizedBox(height: 6.h),
-                    _SalahRow(item: _salah[i], onTap: () => _toggle(i)),
+                    _SalahRow(
+                      item: items[i],
+                      onTap: () => onToggleItem(i),
+                    ),
                   ],
                 ],
               ),
