@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/home/data/services/prayer_time_servi
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/features/home/presentation/screens/set_alarm_screen.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
@@ -459,17 +460,22 @@ class _PrayerRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                Semantics(
-                  hint: 'Alarm scheduling coming later',
-                  child: Tooltip(
-                    message: 'Alarm scheduling coming later',
-                    child: IconButton(
-                      key: const ValueKey('alarm-control'),
-                      onPressed: null,
-                      icon: Icon(Icons.alarm, size: 19.sp),
-                      color: const Color(0xFF7E8C61),
-                      disabledColor: const Color(0xFF7E8C61),
+                Tooltip(
+                  message: 'Set alarm for ${period.displayName}',
+                  child: IconButton(
+                    key: const ValueKey('alarm-control'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SetAlarmScreen(
+                          period: period,
+                          initialTime: times == null
+                              ? null
+                              : prayerStart(period, times!),
+                        ),
+                      ),
                     ),
+                    icon: Icon(Icons.alarm, size: 19.sp),
+                    color: const Color(0xFF7E8C61),
                   ),
                 ),
               ],
