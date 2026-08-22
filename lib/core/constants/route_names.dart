@@ -9,6 +9,7 @@ class RouteNames {
   static const plannerDetails = '/planner/details';
   static const createPlan = '/planner/create';
   static const quizDashboard = '/quiz/dashboard';
+  static const completedHistory = '/quiz/completed-history';
   static const learningArticles = '/learning/articles';
   static const learningArticleDetails = '/learning/articles/details';
   static const learningTest = '/learning/test';

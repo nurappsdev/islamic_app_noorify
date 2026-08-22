@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
@@ -87,7 +88,18 @@ class _QuizDashboardScreenState extends State<QuizDashboardScreen> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    Text('See All', style: TextStyle(fontSize: 13.sp)),
+                    TextButton(
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.completedHistory),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        minimumSize: Size.zero,
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text('See All', style: TextStyle(fontSize: 13.sp)),
+                    ),
                   ],
                 ),
                 SizedBox(height: 25.h),

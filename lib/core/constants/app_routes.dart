@@ -11,6 +11,7 @@ import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
+import '../../features/quiz/presentation/screens/completed_history_screen.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
@@ -55,6 +56,8 @@ class AppRoutes {
         return _page(const CreatePlanScreen(), settings);
       case RouteNames.quizDashboard:
         return _page(const QuizDashboardScreen(), settings);
+      case RouteNames.completedHistory:
+        return _page(const CompletedHistoryScreen(), settings);
       case RouteNames.learningArticles:
         return _page(const ArticlesScreen(), settings);
       case RouteNames.learningArticleDetails:
