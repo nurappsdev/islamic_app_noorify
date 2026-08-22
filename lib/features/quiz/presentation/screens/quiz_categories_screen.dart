@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
@@ -49,7 +50,9 @@ class QuizCategoriesScreen extends StatelessWidget {
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamed(RouteNames.quizList),
                         child: Text(
                           'See All',
                           style: TextStyle(
@@ -133,7 +136,9 @@ class _QuizHero extends StatelessWidget {
                   ),
                   SizedBox(height: 20.h),
                   FilledButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.quizQuestion),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColor.primary,
                       padding: EdgeInsets.symmetric(
