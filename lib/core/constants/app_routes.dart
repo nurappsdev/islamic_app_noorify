@@ -15,6 +15,7 @@ import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
 import '../../features/planner/presentation/screens/create_plan_screen.dart';
+import '../../features/dashboard/presentation/screens/quiz_dashboard_screen.dart';
 import '../../features/planner/presentation/models/planner_plan.dart';
 import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
@@ -52,6 +53,8 @@ class AppRoutes {
         return _page(PlannerDetailScreen(plan: plan), settings);
       case RouteNames.createPlan:
         return _page(const CreatePlanScreen(), settings);
+      case RouteNames.quizDashboard:
+        return _page(const QuizDashboardScreen(), settings);
       case RouteNames.learningArticles:
         return _page(const ArticlesScreen(), settings);
       case RouteNames.learningArticleDetails:

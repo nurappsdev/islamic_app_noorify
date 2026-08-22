@@ -65,8 +65,13 @@ class QuizBottomNav extends StatelessWidget {
             ),
             _QuizNavItem(
               icon: Icons.grid_view_rounded,
-              onPressed: () =>
-                  Navigator.of(context).pushReplacementNamed(RouteNames.home),
+              label: 'Dashboard',
+              selected: selectedIndex == 3,
+              onPressed: selectedIndex == 3
+                  ? null
+                  : () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed(RouteNames.quizDashboard),
             ),
           ],
         ),
