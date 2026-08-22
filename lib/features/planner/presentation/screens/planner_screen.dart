@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// The user's active plans, reached from index 2 of the Quiz navigation bar.
-class PlannerScreen extends StatefulWidget {
+class PlannerScreen extends StatelessWidget {
   const PlannerScreen({super.key});
 
   @override
-  State<PlannerScreen> createState() => _PlannerScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => PlannerCubit(),
+      child: const _PlannerView(),
+    );
+  }
 }
 
-class _PlannerScreenState extends State<PlannerScreen> {
-  var _showCompletedPlans = false;
+class _PlannerView extends StatelessWidget {
+  const _PlannerView();
 
   static const _plans = [
     PlannerPlan(title: 'Plan 1', quizCount: 10, detailQuizCount: 4),
@@ -23,6 +30,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<PlannerCubit>().state;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -31,14 +39,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
             Column(
               children: [
                 _PlanTabs(
-                  showCompletedPlans: _showCompletedPlans,
-                  onTabChanged: (showCompletedPlans) {
-                    setState(() => _showCompletedPlans = showCompletedPlans);
-                  },
+                  showCompletedPlans: state.showCompletedPlans,
+                  onTabChanged: context.read<PlannerCubit>().showCompletedPlans,
                 ),
                 SizedBox(height: 12.h),
                 Expanded(
-                  child: _showCompletedPlans
+                  child: state.showCompletedPlans
                       ? Transform.translate(
                           offset: Offset(0, -34.h),
                           child: const _EmptyCompletedPlans(),
@@ -68,7 +74,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
               alignment: Alignment.bottomCenter,
               child: QuizBottomNav(selectedIndex: 2),
             ),
-            if (!_showCompletedPlans)
+            if (!state.showCompletedPlans)
               Positioned(
                 right: 58.w,
                 bottom: 104.h,

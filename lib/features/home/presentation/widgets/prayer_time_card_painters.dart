@@ -141,5 +141,3 @@ class _HorizonTimeIconPainter extends CustomPainter {
   bool shouldRepaint(covariant _HorizonTimeIconPainter oldDelegate) =>
       oldDelegate.isSunrise != isSunrise;
 }
-
-

@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/cubit/alarm_cubit.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
-class SetAlarmScreen extends StatefulWidget {
+class SetAlarmScreen extends StatelessWidget {
   const SetAlarmScreen({super.key, required this.period, this.initialTime});
 
   final PrayerPeriod period;
   final PrayerClockTime? initialTime;
 
   @override
-  State<SetAlarmScreen> createState() => _SetAlarmScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AlarmCubit(initialTime: initialTime),
+      child: _SetAlarmView(period: period),
+    );
+  }
 }
 
 const _olive = Color(0xFF8D9B70);
@@ -21,31 +28,31 @@ const _fadedFar = Color(0xFFE3E6D3);
 const _hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const _periods = ['AM', 'PM'];
 
-class _SetAlarmScreenState extends State<SetAlarmScreen> {
+class _SetAlarmView extends StatefulWidget {
+  const _SetAlarmView({required this.period});
+
+  final PrayerPeriod period;
+
+  @override
+  State<_SetAlarmView> createState() => _SetAlarmViewState();
+}
+
+class _SetAlarmViewState extends State<_SetAlarmView> {
   late final FixedExtentScrollController _hourController;
   late final FixedExtentScrollController _minuteController;
   late final FixedExtentScrollController _periodController;
 
-  late int _hourIndex;
-  late int _minuteIndex;
-  late int _periodIndex;
-
-  bool _vibrateAndRing = true;
-  bool _vibrate = false;
-  bool _ring = false;
-
   @override
   void initState() {
     super.initState();
-    final time = widget.initialTime ?? const PrayerClockTime(hour: 10, minute: 0);
-    final isPm = time.hour >= 12;
-    final hour12 = time.hour % 12 == 0 ? 12 : time.hour % 12;
-    _hourIndex = hour12 - 1;
-    _minuteIndex = time.minute;
-    _periodIndex = isPm ? 1 : 0;
-    _hourController = FixedExtentScrollController(initialItem: _hourIndex);
-    _minuteController = FixedExtentScrollController(initialItem: _minuteIndex);
-    _periodController = FixedExtentScrollController(initialItem: _periodIndex);
+    final state = context.read<AlarmCubit>().state;
+    _hourController = FixedExtentScrollController(initialItem: state.hourIndex);
+    _minuteController = FixedExtentScrollController(
+      initialItem: state.minuteIndex,
+    );
+    _periodController = FixedExtentScrollController(
+      initialItem: state.periodIndex,
+    );
   }
 
   @override
@@ -58,23 +65,27 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AlarmCubit>().state;
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
       body: SafeArea(
         child: Column(
           children: [
-            AlarmBackHeader(title: 'Set Alarm', subtitle: widget.period.displayName),
+            AlarmBackHeader(
+              title: 'Set Alarm',
+              subtitle: widget.period.displayName,
+            ),
             SizedBox(height: 20.h),
             _TimeWheel(
               hourController: _hourController,
               minuteController: _minuteController,
               periodController: _periodController,
-              hourIndex: _hourIndex,
-              minuteIndex: _minuteIndex,
-              periodIndex: _periodIndex,
-              onHourChanged: (i) => setState(() => _hourIndex = i),
-              onMinuteChanged: (i) => setState(() => _minuteIndex = i),
-              onPeriodChanged: (i) => setState(() => _periodIndex = i),
+              hourIndex: state.hourIndex,
+              minuteIndex: state.minuteIndex,
+              periodIndex: state.periodIndex,
+              onHourChanged: context.read<AlarmCubit>().selectHour,
+              onMinuteChanged: context.read<AlarmCubit>().selectMinute,
+              onPeriodChanged: context.read<AlarmCubit>().selectPeriod,
             ),
             SizedBox(height: 26.h),
             Expanded(
@@ -85,8 +96,8 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
                   children: [
                     AlarmToggleRow(
                       label: 'Vibrate and ring',
-                      value: _vibrateAndRing,
-                      onChanged: (v) => setState(() => _vibrateAndRing = v),
+                      value: state.vibrateAndRing,
+                      onChanged: context.read<AlarmCubit>().setVibrateAndRing,
                     ),
                     SizedBox(height: 22.h),
                     Text('Set Ringtone', style: alarmItalicStyle(14.sp)),
@@ -95,14 +106,14 @@ class _SetAlarmScreenState extends State<SetAlarmScreen> {
                     SizedBox(height: 22.h),
                     AlarmToggleRow(
                       label: 'Vibrate',
-                      value: _vibrate,
-                      onChanged: (v) => setState(() => _vibrate = v),
+                      value: state.vibrate,
+                      onChanged: context.read<AlarmCubit>().setVibrate,
                     ),
                     SizedBox(height: 18.h),
                     AlarmToggleRow(
                       label: 'Ring',
-                      value: _ring,
-                      onChanged: (v) => setState(() => _ring = v),
+                      value: state.ring,
+                      onChanged: context.read<AlarmCubit>().setRing,
                     ),
                     SizedBox(height: 24.h),
                   ],
@@ -267,8 +278,8 @@ class _Wheel extends StatelessWidget {
                 color: isSelected
                     ? _olive
                     : distance == 1
-                        ? _fadedNear
-                        : _fadedFar,
+                    ? _fadedNear
+                    : _fadedFar,
               ),
             ),
           );
@@ -277,4 +288,3 @@ class _Wheel extends StatelessWidget {
     );
   }
 }
-

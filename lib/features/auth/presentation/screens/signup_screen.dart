@@ -12,7 +12,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/services/auth_service.dart';
 import 'package:islami_app_noorify/features/auth/domain/usecases/sign_up_usecase.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_cubit.dart';
+import 'package:islami_app_noorify/features/auth/presentation/cubit/sign_up/sign_up_cubit.dart';
 import 'package:islami_app_noorify/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';

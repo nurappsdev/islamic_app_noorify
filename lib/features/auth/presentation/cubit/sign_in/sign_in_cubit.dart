@@ -12,7 +12,6 @@ class SignInCubit extends Cubit<SignInState> {
   }
 
   void setLoading(bool value) {
-    if (state.isLoading == value) return;
-    emit(state.copyWith(isLoading: value));
+    if (state.isLoading != value) emit(state.copyWith(isLoading: value));
   }
 }

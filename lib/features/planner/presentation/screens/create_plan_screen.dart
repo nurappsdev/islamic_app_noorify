@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
 
 /// Create-plan form and its added-quiz summary state.
-class CreatePlanScreen extends StatefulWidget {
+class CreatePlanScreen extends StatelessWidget {
   const CreatePlanScreen({super.key});
 
   @override
-  State<CreatePlanScreen> createState() => _CreatePlanScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => PlannerCubit(),
+      child: const _CreatePlanView(),
+    );
+  }
 }
 
-class _CreatePlanScreenState extends State<CreatePlanScreen> {
+class _CreatePlanView extends StatefulWidget {
+  const _CreatePlanView();
+
+  @override
+  State<_CreatePlanView> createState() => _CreatePlanViewState();
+}
+
+class _CreatePlanViewState extends State<_CreatePlanView> {
   final _planNameController = TextEditingController();
-  var _hasAddedQuiz = false;
 
   @override
   void dispose() {
@@ -19,13 +32,9 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
     super.dispose();
   }
 
-  String get _planName {
-    final name = _planNameController.text.trim();
-    return name.isEmpty ? 'Plan 1' : name;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<PlannerCubit>().state;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -33,14 +42,16 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           children: [
             _CreatePlanHeader(onBack: () => Navigator.of(context).pop()),
             Expanded(
-              child: _hasAddedQuiz
+              child: state.hasAddedQuiz
                   ? _AddedQuizView(
-                      planName: _planName,
-                      onAddMore: () => setState(() => _hasAddedQuiz = false),
+                      planName: state.planName,
+                      onAddMore: context.read<PlannerCubit>().addMoreQuizzes,
                     )
                   : _PlanForm(
                       controller: _planNameController,
-                      onAdd: () => setState(() => _hasAddedQuiz = true),
+                      onAdd: () => context.read<PlannerCubit>().addQuiz(
+                        _planNameController.text,
+                      ),
                     ),
             ),
             Padding(

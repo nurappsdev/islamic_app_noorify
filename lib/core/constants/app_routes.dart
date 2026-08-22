@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../features/auth/presentation/screens/email_verification_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -12,6 +13,10 @@ import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
 import '../../features/quiz/presentation/screens/completed_history_screen.dart';
+import '../../features/quiz/data/datasources/quiz_local_data_source.dart';
+import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
+import '../../features/quiz/domain/usecases/get_completed_quiz_history.dart';
+import '../../features/quiz/presentation/cubit/quiz_cubit.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
@@ -57,7 +62,17 @@ class AppRoutes {
       case RouteNames.quizDashboard:
         return _page(const QuizDashboardScreen(), settings);
       case RouteNames.completedHistory:
-        return _page(const CompletedHistoryScreen(), settings);
+        return _page(
+          BlocProvider(
+            create: (_) => QuizCubit(
+              GetCompletedQuizHistory(
+                QuizRepositoryImpl(const QuizLocalDataSourceImpl()),
+              ),
+            )..loadCompletedQuizHistory(),
+            child: const CompletedHistoryScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learningArticles:
         return _page(const ArticlesScreen(), settings);
       case RouteNames.learningArticleDetails:

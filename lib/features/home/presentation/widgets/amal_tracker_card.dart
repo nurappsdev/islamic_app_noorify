@@ -108,7 +108,10 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             itemBuilder: (context, index) {
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 2.w),
-                child: _AmalSlide(item: _items[index], isTodaysTrack: index == 0),
+                child: _AmalSlide(
+                  item: _items[index],
+                  isTodaysTrack: index == 0,
+                ),
               );
             },
           ),
@@ -175,7 +178,10 @@ class _AmalSlide extends StatelessWidget {
             progress: item.progress,
             dimension: 84.r,
             holeDimension: 57.r,
-            labelStyle: homeSansStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+            labelStyle: homeSansStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
