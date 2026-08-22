@@ -53,7 +53,16 @@ class QuizBottomNav extends StatelessWidget {
                       context,
                     ).pushReplacementNamed(RouteNames.learning),
             ),
-            const _QuizNavItem(icon: Icons.fact_check_outlined),
+            _QuizNavItem(
+              icon: Icons.fact_check_outlined,
+              label: 'Planner',
+              selected: selectedIndex == 2,
+              onPressed: selectedIndex == 2
+                  ? null
+                  : () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed(RouteNames.planner),
+            ),
             _QuizNavItem(
               icon: Icons.grid_view_rounded,
               onPressed: () =>
