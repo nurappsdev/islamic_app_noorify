@@ -12,6 +12,10 @@ import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
+import '../../features/planner/presentation/screens/planner_screen.dart';
+import '../../features/planner/presentation/screens/planner_detail_screen.dart';
+import '../../features/planner/presentation/screens/create_plan_screen.dart';
+import '../../features/planner/presentation/models/planner_plan.dart';
 import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
@@ -35,6 +39,19 @@ class AppRoutes {
         return _page(const QuizListScreen(), settings);
       case RouteNames.learning:
         return _page(const LearningScreen(), settings);
+      case RouteNames.planner:
+        return _page(const PlannerScreen(), settings);
+      case RouteNames.plannerDetails:
+        final plan =
+            settings.arguments as PlannerPlan? ??
+            const PlannerPlan(
+              title: 'Plan 1',
+              quizCount: 10,
+              detailQuizCount: 4,
+            );
+        return _page(PlannerDetailScreen(plan: plan), settings);
+      case RouteNames.createPlan:
+        return _page(const CreatePlanScreen(), settings);
       case RouteNames.learningArticles:
         return _page(const ArticlesScreen(), settings);
       case RouteNames.learningArticleDetails:
