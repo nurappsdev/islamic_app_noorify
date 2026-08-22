@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
@@ -12,7 +13,12 @@ class HomeFeatureGrid extends StatelessWidget {
     _HomeFeature('Dua', Icons.volunteer_activism, Color(0xFFFF7D67)),
     _HomeFeature('Dijpr', Icons.nightlight_round, Color(0xFFFFD21E)),
     _HomeFeature('Asma-ul Husna', Icons.workspace_premium, Color(0xFF37C915)),
-    _HomeFeature('Find Mosque', Icons.mosque, Color(0xFFFF9D13)),
+    _HomeFeature(
+      'Quiz & Learn',
+      Icons.quiz_outlined,
+      Color(0xFFFF9D13),
+      routeName: RouteNames.winQuiz,
+    ),
   ];
 
   @override
@@ -50,11 +56,12 @@ class HomeFeatureGrid extends StatelessWidget {
 }
 
 class _HomeFeature {
-  const _HomeFeature(this.title, this.icon, this.color);
+  const _HomeFeature(this.title, this.icon, this.color, {this.routeName});
 
   final String title;
   final IconData icon;
   final Color color;
+  final String? routeName;
 }
 
 class _FeatureTile extends StatelessWidget {
@@ -64,17 +71,25 @@ class _FeatureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      padding: EdgeInsets.symmetric(vertical: 13.h),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(feature.icon, color: feature.color, size: 28.sp),
-          SizedBox(height: 9.h),
-          Text(feature.title, style: homeSerifStyle(fontSize: 12.sp)),
-          SizedBox(height: 10.h),
-          const HomeCircleButton(icon: Icons.chevron_right),
-        ],
+    final navigate = feature.routeName == null
+        ? null
+        : () => Navigator.of(context).pushNamed(feature.routeName!);
+
+    return InkWell(
+      onTap: navigate,
+      borderRadius: BorderRadius.circular(11.r),
+      child: HomeCard(
+        padding: EdgeInsets.symmetric(vertical: 13.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(feature.icon, color: feature.color, size: 28.sp),
+            SizedBox(height: 9.h),
+            Text(feature.title, style: homeSerifStyle(fontSize: 12.sp)),
+            SizedBox(height: 10.h),
+            HomeCircleButton(icon: Icons.chevron_right, onPressed: navigate),
+          ],
+        ),
       ),
     );
   }

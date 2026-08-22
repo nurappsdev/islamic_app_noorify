@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/app_color.dart';
 
-/// Navigation bar shown on the app's main Home screen.
-class HomeBottomNav extends StatelessWidget {
-  const HomeBottomNav({super.key});
+/// Navigation bar dedicated to the Quiz & Learn flow.
+///
+/// Quiz Categories is the Quiz flow's Home destination, at index 0.
+class QuizBottomNav extends StatelessWidget {
+  const QuizBottomNav({super.key, this.selectedIndex = 0});
+
+  final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -29,20 +33,19 @@ class HomeBottomNav extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _NavItem(
+            _QuizNavItem(
               icon: Icons.home_outlined,
               label: 'Home',
-              selected: true,
-              onPressed: () => _goTo(context, RouteNames.home),
+              selected: selectedIndex == 0,
+              onPressed: () {},
             ),
-            _NavItem(
-              icon: Icons.lightbulb_outline_rounded,
-              label: 'Win Quiz',
-              selected: false,
-              onPressed: () => _goTo(context, RouteNames.winQuiz),
+            const _QuizNavItem(icon: Icons.lightbulb_outline_rounded),
+            const _QuizNavItem(icon: Icons.fact_check_outlined),
+            _QuizNavItem(
+              icon: Icons.grid_view_rounded,
+              onPressed: () =>
+                  Navigator.of(context).pushReplacementNamed(RouteNames.home),
             ),
-            const _NavItem(icon: Icons.fact_check_outlined),
-            const _NavItem(icon: Icons.grid_view_rounded),
           ],
         ),
       ),
@@ -50,14 +53,8 @@ class HomeBottomNav extends StatelessWidget {
   }
 }
 
-void _goTo(BuildContext context, String routeName) {
-  if (ModalRoute.of(context)?.settings.name != routeName) {
-    Navigator.of(context).pushReplacementNamed(routeName);
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class _QuizNavItem extends StatelessWidget {
+  const _QuizNavItem({
     required this.icon,
     this.label,
     this.selected = false,

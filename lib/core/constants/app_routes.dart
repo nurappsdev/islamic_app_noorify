@@ -7,6 +7,7 @@ import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -15,6 +16,8 @@ class AppRoutes {
     switch (settings.name) {
       case RouteNames.home:
         return _page(const HomeScreen(), settings);
+      case RouteNames.winQuiz:
+        return _page(const QuizCategoriesScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.splash:
