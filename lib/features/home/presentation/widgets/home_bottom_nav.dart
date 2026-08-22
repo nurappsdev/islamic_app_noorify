@@ -6,7 +6,9 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 
 /// Navigation bar shown on the app's main Home screen.
 class HomeBottomNav extends StatelessWidget {
-  const HomeBottomNav({super.key});
+  const HomeBottomNav({super.key, this.selectedIndex = 0});
+
+  final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +34,14 @@ class HomeBottomNav extends StatelessWidget {
             _NavItem(
               icon: Icons.home_outlined,
               label: 'Home',
-              selected: true,
+              selected: selectedIndex == 0,
               onPressed: () => _goTo(context, RouteNames.home),
             ),
             _NavItem(
-              icon: Icons.lightbulb_outline_rounded,
-              label: 'Win Quiz',
-              selected: false,
-              onPressed: () => _goTo(context, RouteNames.winQuiz),
+              icon: Icons.menu_book_outlined,
+              label: 'Quran',
+              selected: selectedIndex == 1,
+              onPressed: () => _goTo(context, RouteNames.quran),
             ),
             const _NavItem(icon: Icons.fact_check_outlined),
             const _NavItem(icon: Icons.grid_view_rounded),

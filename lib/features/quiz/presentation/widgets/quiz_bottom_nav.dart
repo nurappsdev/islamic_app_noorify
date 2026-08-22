@@ -37,9 +37,22 @@ class QuizBottomNav extends StatelessWidget {
               icon: Icons.home_outlined,
               label: 'Home',
               selected: selectedIndex == 0,
-              onPressed: () {},
+              onPressed: selectedIndex == 0
+                  ? null
+                  : () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed(RouteNames.winQuiz),
             ),
-            const _QuizNavItem(icon: Icons.lightbulb_outline_rounded),
+            _QuizNavItem(
+              icon: Icons.lightbulb_outline_rounded,
+              label: 'Learn',
+              selected: selectedIndex == 1,
+              onPressed: selectedIndex == 1
+                  ? null
+                  : () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed(RouteNames.learning),
+            ),
             const _QuizNavItem(icon: Icons.fact_check_outlined),
             _QuizNavItem(
               icon: Icons.grid_view_rounded,

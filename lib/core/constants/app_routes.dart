@@ -8,6 +8,11 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
+import '../../features/learning/presentation/screens/learning_screen.dart';
+import '../../features/quran/presentation/screens/quran_screen.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -18,6 +23,16 @@ class AppRoutes {
         return _page(const HomeScreen(), settings);
       case RouteNames.winQuiz:
         return _page(const QuizCategoriesScreen(), settings);
+      case RouteNames.quizQuestion:
+        return _page(const QuizQuestionScreen(), settings);
+      case RouteNames.quizComplete:
+        return _page(const QuizCompletionScreen(), settings);
+      case RouteNames.quizList:
+        return _page(const QuizListScreen(), settings);
+      case RouteNames.learning:
+        return _page(const LearningScreen(), settings);
+      case RouteNames.quran:
+        return _page(const QuranScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.splash:
