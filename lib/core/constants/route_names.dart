@@ -5,6 +5,10 @@ class RouteNames {
   static const quizComplete = '/win-quiz/complete';
   static const quizList = '/win-quiz/list';
   static const learning = '/learning';
+  static const learningArticles = '/learning/articles';
+  static const learningArticleDetails = '/learning/articles/details';
+  static const learningTest = '/learning/test';
+  static const learningTestResult = '/learning/test/result';
   static const splash = '/splash';
   static const onboardingHadith = '/onboarding';
   static const onboardingLanguage = '/onboarding/language';
