@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
@@ -34,7 +35,12 @@ class LearningScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 21.h),
-                const _SectionTitle('Recent articles'),
+                _SectionTitle(
+                  'Recent articles',
+                  onSeeAll: () => Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.learningArticles),
+                ),
                 SizedBox(height: 17.h),
                 const _ArticleCard(),
               ],
@@ -81,8 +87,9 @@ class _LearningHeader extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
+  const _SectionTitle(this.title, {this.onSeeAll});
   final String title;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -93,7 +100,7 @@ class _SectionTitle extends StatelessWidget {
         style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w500),
       ),
       TextButton(
-        onPressed: () {},
+        onPressed: onSeeAll ?? () {},
         child: Text(
           'See All',
           style: TextStyle(color: Colors.black, fontSize: 12.sp),
