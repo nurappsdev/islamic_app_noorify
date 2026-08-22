@@ -45,7 +45,10 @@ class AlarmBackHeader extends StatelessWidget {
                 SizedBox(height: 3.h),
                 Text(
                   subtitle!,
-                  style: alarmItalicStyle(11.sp, color: const Color(0xFF9AA687)),
+                  style: alarmItalicStyle(
+                    11.sp,
+                    color: const Color(0xFF9AA687),
+                  ),
                 ),
               ],
             ],

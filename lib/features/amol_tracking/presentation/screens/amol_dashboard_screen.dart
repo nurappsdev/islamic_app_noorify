@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/features/amol_tracking/presentation/cubit/amol_dashboard_cubit.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
@@ -19,16 +21,23 @@ extension on _AmolPeriod {
   };
 }
 
-class AmolDashboardScreen extends StatefulWidget {
+class AmolDashboardScreen extends StatelessWidget {
   const AmolDashboardScreen({super.key, this.now});
 
   final DateTime Function()? now;
 
   @override
-  State<AmolDashboardScreen> createState() => _AmolDashboardScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AmolDashboardCubit(now: now),
+      child: const _AmolDashboardView(),
+    );
+  }
 }
 
-class _AmolDashboardScreenState extends State<AmolDashboardScreen> {
+class _AmolDashboardView extends StatelessWidget {
+  const _AmolDashboardView();
+
   static const _categories = [
     'Fardh Prayer',
     'Sunnah and Witr',
@@ -42,21 +51,10 @@ class _AmolDashboardScreenState extends State<AmolDashboardScreen> {
   static const _competitorIndices = [0, 1, 3, 5];
   static const _myPoints = 27;
 
-  _AmolPeriod _period = _AmolPeriod.daily;
-  late DateTime _date;
-
-  @override
-  void initState() {
-    super.initState();
-    _date = (widget.now ?? DateTime.now)();
-  }
-
-  void _shiftDate(int direction) {
-    setState(() => _date = _date.add(_period.step * direction));
-  }
-
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AmolDashboardCubit>().state;
+    final period = _AmolPeriod.values[state.selectedPeriod];
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -68,8 +66,10 @@ class _AmolDashboardScreenState extends State<AmolDashboardScreen> {
                 padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 20.h),
                 children: [
                   _PeriodTabs(
-                    period: _period,
-                    onChanged: (period) => setState(() => _period = period),
+                    period: period,
+                    onChanged: (value) => context
+                        .read<AmolDashboardCubit>()
+                        .selectPeriod(value.index),
                   ),
                   SizedBox(height: 16.h),
                   const AmolSummaryCard(
@@ -79,10 +79,15 @@ class _AmolDashboardScreenState extends State<AmolDashboardScreen> {
                   ),
                   SizedBox(height: 14.h),
                   _DateNavigator(
-                    label: formatAmolDate(_date),
-                    subtitle: '${_period.label} Amol Track',
-                    onPrevious: () => _shiftDate(-1),
-                    onNext: () => _shiftDate(1),
+                    label: formatAmolDate(state.date),
+                    subtitle: '${period.label} Amol Track',
+                    onPrevious: () => context
+                        .read<AmolDashboardCubit>()
+                        .shiftDate(period.step, -1),
+                    onNext: () => context.read<AmolDashboardCubit>().shiftDate(
+                      period.step,
+                      1,
+                    ),
                   ),
                   SizedBox(height: 18.h),
                   RichText(
@@ -208,7 +213,10 @@ class _DateNavigator extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                Text(label, style: TextStyle(fontSize: 13.sp, color: Colors.black)),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.black),
+                ),
                 SizedBox(height: 2.h),
                 Text(
                   subtitle,
@@ -282,7 +290,10 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 6.w),
-        Text(label, style: TextStyle(fontSize: 11.sp, color: Colors.black87)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11.sp, color: Colors.black87),
+        ),
       ],
     );
   }

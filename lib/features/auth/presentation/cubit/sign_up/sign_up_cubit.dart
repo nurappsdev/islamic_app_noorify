@@ -16,12 +16,10 @@ class SignUpCubit extends Cubit<SignUpState> {
   }
 
   void setSaveInfo(bool value) {
-    if (state.saveInfo == value) return;
-    emit(state.copyWith(saveInfo: value));
+    if (state.saveInfo != value) emit(state.copyWith(saveInfo: value));
   }
 
   void setLoading(bool value) {
-    if (state.isLoading == value) return;
-    emit(state.copyWith(isLoading: value));
+    if (state.isLoading != value) emit(state.copyWith(isLoading: value));
   }
 }

@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/cubit/alarm_cubit.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
-class SetAllAlarmScreen extends StatefulWidget {
+class SetAllAlarmScreen extends StatelessWidget {
   const SetAllAlarmScreen({super.key, this.times});
 
   final DailyPrayerTimes? times;
 
   @override
-  State<SetAllAlarmScreen> createState() => _SetAllAlarmScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AlarmCubit(),
+      child: _SetAllAlarmView(times: times),
+    );
+  }
 }
 
-class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
+class _SetAllAlarmView extends StatelessWidget {
+  const _SetAllAlarmView({this.times});
+
+  final DailyPrayerTimes? times;
+
   static const _offsetOptions = [
     'At prayer time',
     'Before 5 Min',
@@ -27,12 +38,8 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
     'Before 60 Min',
   ];
 
-  String _offset = 'Before 40 Min';
-  bool _vibrate = false;
-  bool _ring = true;
-  bool _vibrateAndRing = false;
-
-  Future<void> _pickOffset() async {
+  Future<void> _pickOffset(BuildContext context) async {
+    final selectedOffset = context.read<AlarmCubit>().state.offset;
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFFFCFDF8),
@@ -46,7 +53,7 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
             for (final option in _offsetOptions)
               ListTile(
                 title: Text(option, style: alarmItalicStyle(14.sp)),
-                trailing: option == _offset
+                trailing: option == selectedOffset
                     ? const Icon(Icons.check, color: Color(0xFF8D9B70))
                     : null,
                 onTap: () => Navigator.of(context).pop(option),
@@ -55,11 +62,14 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
         ),
       ),
     );
-    if (selected != null) setState(() => _offset = selected);
+    if (selected != null && context.mounted) {
+      context.read<AlarmCubit>().selectOffset(selected);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AlarmCubit>().state;
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
       body: SafeArea(
@@ -70,10 +80,13 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
               child: ListView(
                 padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 24.h),
                 children: [
-                  Text('Set Alarm Before Prayer', style: alarmItalicStyle(14.sp)),
+                  Text(
+                    'Set Alarm Before Prayer',
+                    style: alarmItalicStyle(14.sp),
+                  ),
                   SizedBox(height: 10.h),
                   InkWell(
-                    onTap: _pickOffset,
+                    onTap: () => _pickOffset(context),
                     borderRadius: BorderRadius.circular(22.r),
                     child: Container(
                       height: 46.h,
@@ -85,7 +98,7 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(_offset, style: alarmItalicStyle(14.sp)),
+                          Text(state.offset, style: alarmItalicStyle(14.sp)),
                           const Icon(
                             Icons.chevron_right,
                             color: Color(0xFF9AA687),
@@ -97,14 +110,14 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
                   SizedBox(height: 22.h),
                   AlarmToggleRow(
                     label: 'Vibrate',
-                    value: _vibrate,
-                    onChanged: (v) => setState(() => _vibrate = v),
+                    value: state.vibrate,
+                    onChanged: context.read<AlarmCubit>().setVibrate,
                   ),
                   SizedBox(height: 18.h),
                   AlarmToggleRow(
                     label: 'Ring',
-                    value: _ring,
-                    onChanged: (v) => setState(() => _ring = v),
+                    value: state.ring,
+                    onChanged: context.read<AlarmCubit>().setRing,
                   ),
                   SizedBox(height: 22.h),
                   Text('Set Ringtone', style: alarmItalicStyle(14.sp)),
@@ -113,12 +126,12 @@ class _SetAllAlarmScreenState extends State<SetAllAlarmScreen> {
                   SizedBox(height: 22.h),
                   AlarmToggleRow(
                     label: 'Vibrate and ring',
-                    value: _vibrateAndRing,
-                    onChanged: (v) => setState(() => _vibrateAndRing = v),
+                    value: state.vibrateAndRing,
+                    onChanged: context.read<AlarmCubit>().setVibrateAndRing,
                   ),
                   SizedBox(height: 26.h),
                   for (final period in PrayerPeriod.values) ...[
-                    _AllAlarmRow(period: period, times: widget.times),
+                    _AllAlarmRow(period: period, times: times),
                     SizedBox(height: 14.h),
                   ],
                 ],
@@ -194,7 +207,10 @@ class _AllAlarmRow extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           '$start – $end',
-                          style: TextStyle(fontSize: 9.sp, color: Colors.black54),
+                          style: TextStyle(
+                            fontSize: 9.sp,
+                            color: Colors.black54,
+                          ),
                         ),
                       ),
                     ],

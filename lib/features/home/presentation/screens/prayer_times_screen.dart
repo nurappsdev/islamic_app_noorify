@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
@@ -8,75 +7,42 @@ import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart'
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/cubit/prayer_times_cubit.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
-class PrayerTimesScreen extends StatefulWidget {
+class PrayerTimesScreen extends StatelessWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
 
   final PrayerTimeService? prayerTimeService;
   final DateTime Function()? now;
 
   @override
-  State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) {
+        final cubit = PrayerTimesCubit(
+          prayerTimeService: prayerTimeService,
+          now: now,
+        )..loadPrayerTimes();
+        if (now == null) cubit.startClock();
+        return cubit;
+      },
+      child: const _PrayerTimesView(),
+    );
+  }
 }
 
-class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
+class _PrayerTimesView extends StatelessWidget {
+  const _PrayerTimesView();
+
   static const _olive = Color(0xFF8D9B70);
-
-  DailyPrayerTimes? _times;
-  Timer? _clockTimer;
-
-  DateTime _now() => widget.now?.call() ?? bangladeshNow();
-  @override
-  void initState() {
-    super.initState();
-    _loadTimes();
-    if (widget.now == null) _scheduleClockTick();
-  }
-
-  Future<void> _loadTimes() async {
-    try {
-      final service =
-          widget.prayerTimeService ?? await AladhanPrayerTimeService.create();
-      final date = _now();
-      final cached = service.cachedPrayerTimes(date);
-      if (mounted && cached != null) setState(() => _times = cached);
-      final fresh = await service.loadPrayerTimes(date);
-      if (mounted && fresh != null) setState(() => _times = fresh);
-    } catch (_) {
-      // The designed empty state remains visible when storage/network fails.
-    }
-  }
-
-  void _scheduleClockTick() {
-    _clockTimer?.cancel();
-    final now = _now();
-    final nextMinute = DateTime.utc(
-      now.year,
-      now.month,
-      now.day,
-      now.hour,
-      now.minute + 1,
-    );
-    _clockTimer = Timer(nextMinute.difference(now), () {
-      if (!mounted) return;
-      final current = _now();
-      if (_times?.dateKey != _dateKey(current)) _loadTimes();
-      setState(() {});
-      _scheduleClockTick();
-    });
-  }
-
-  @override
-  void dispose() {
-    _clockTimer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final now = _now();
-    final active = _times == null ? null : currentPrayerPeriod(now, _times!);
+    final state = context.watch<PrayerTimesCubit>().state;
+    final active = state.times == null
+        ? null
+        : currentPrayerPeriod(state.now, state.times!);
     return Scaffold(
       backgroundColor: _olive,
       body: SafeArea(
@@ -86,8 +52,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
             SizedBox(
               height: 306.h,
               child: _PrayerSummaryHeader(
-                now: now,
-                times: _times,
+                now: state.now,
+                times: state.times,
                 active: active,
                 olive: _olive,
               ),
@@ -102,18 +68,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
                     top: Radius.circular(27.r),
                   ),
                 ),
-                child: _PrayerList(times: _times, active: active),
+                child: _PrayerList(times: state.times, active: active),
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  static String _dateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
-        '${date.day.toString().padLeft(2, '0')}';
   }
 }
 

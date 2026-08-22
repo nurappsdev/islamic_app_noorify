@@ -1,25 +1,32 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/features/dashboard/presentation/cubit/quiz_dashboard_cubit.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
-class QuizDashboardScreen extends StatefulWidget {
+class QuizDashboardScreen extends StatelessWidget {
   const QuizDashboardScreen({super.key});
 
   @override
-  State<QuizDashboardScreen> createState() => _QuizDashboardScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => QuizDashboardCubit(),
+      child: const _QuizDashboardView(),
+    );
+  }
 }
 
-class _QuizDashboardScreenState extends State<QuizDashboardScreen> {
-  var _selectedPeriod = 0;
-  var _showCompetitor = true;
+class _QuizDashboardView extends StatelessWidget {
+  const _QuizDashboardView();
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<QuizDashboardCubit>().state;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -31,8 +38,8 @@ class _QuizDashboardScreenState extends State<QuizDashboardScreen> {
                 _DashboardHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 10.h),
                 _PeriodTabs(
-                  selectedPeriod: _selectedPeriod,
-                  onChanged: (value) => setState(() => _selectedPeriod = value),
+                  selectedPeriod: state.selectedPeriod,
+                  onChanged: context.read<QuizDashboardCubit>().selectPeriod,
                 ),
                 SizedBox(height: 13.h),
                 const _DateSelector(),
@@ -64,13 +71,14 @@ class _QuizDashboardScreenState extends State<QuizDashboardScreen> {
                     alignment: Alignment.center,
                     children: [
                       const _ScoreDonut(),
-                      if (_showCompetitor)
+                      if (state.showCompetitor)
                         Positioned(
                           top: 11.h,
                           right: 6.w,
                           child: _CompetitorCard(
-                            onClose: () =>
-                                setState(() => _showCompetitor = false),
+                            onClose: context
+                                .read<QuizDashboardCubit>()
+                                .dismissCompetitor,
                           ),
                         ),
                     ],

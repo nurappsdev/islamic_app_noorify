@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/features/learning/presentation/cubit/learning_test_cubit.dart';
 
-class LearningTestScreen extends StatefulWidget {
+class LearningTestScreen extends StatelessWidget {
   const LearningTestScreen({super.key});
 
   @override
-  State<LearningTestScreen> createState() => _LearningTestScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => LearningTestCubit(),
+      child: const _LearningTestView(),
+    );
+  }
 }
 
-class _LearningTestScreenState extends State<LearningTestScreen> {
-  final Set<int> _selected = {};
+class _LearningTestView extends StatelessWidget {
+  const _LearningTestView();
 
   @override
   Widget build(BuildContext context) {
+    final selected = context.watch<LearningTestCubit>().state.selectedAnswers;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -38,14 +46,9 @@ class _LearningTestScreenState extends State<LearningTestScreen> {
                 _TestAnswer(
                   letter: String.fromCharCode(97 + index),
                   label: 'Answer ${index + 1}',
-                  selected: _selected.contains(index),
-                  onTap: () => setState(() {
-                    if (_selected.contains(index)) {
-                      _selected.remove(index);
-                    } else {
-                      _selected.add(index);
-                    }
-                  }),
+                  selected: selected.contains(index),
+                  onTap: () =>
+                      context.read<LearningTestCubit>().toggleAnswer(index),
                 ),
                 SizedBox(height: 6.h),
               ],
@@ -81,7 +84,7 @@ class _LearningTestScreenState extends State<LearningTestScreen> {
                   SizedBox(width: 8.w),
                   Expanded(
                     child: FilledButton(
-                      onPressed: _selected.isEmpty
+                      onPressed: selected.isEmpty
                           ? null
                           : () => Navigator.of(context).pushReplacementNamed(
                               RouteNames.learningTestResult,

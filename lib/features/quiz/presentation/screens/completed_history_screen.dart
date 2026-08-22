@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_history_item.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/cubit/quiz_cubit.dart';
 
 /// Shows the complete list of quizzes a learner has finished.
 class CompletedHistoryScreen extends StatelessWidget {
   const CompletedHistoryScreen({super.key});
-
-  static const _results = [
-    _QuizResult(title: 'Quiz 1 ( Quranic Science )', score: .67),
-    _QuizResult(title: 'Quiz 2 ( Quranic Science )', score: .60),
-    _QuizResult(title: 'Quiz 3 ( Quranic Science )', score: .60),
-    _QuizResult(title: 'Quiz 4 ( Quranic Science )', score: .60),
-    _QuizResult(title: 'Quiz 5 ( Quranic Science )', score: .60),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +19,10 @@ class CompletedHistoryScreen extends StatelessWidget {
         centerTitle: true,
         toolbarHeight: 69.h,
         leadingWidth: 58.w,
-        leading:
-        Align(
+        leading: Align(
           alignment: Alignment.centerLeft,
           child: IconButton(
-            onPressed:  () => Navigator.maybePop(context),
+            onPressed: () => Navigator.maybePop(context),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
               foregroundColor: const Color(0xFF303629),
@@ -46,12 +40,26 @@ class CompletedHistoryScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView.separated(
-        padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 24.h),
-        itemCount: _results.length,
-        separatorBuilder: (_, _) => SizedBox(height: 8.h),
-        itemBuilder: (context, index) =>
-            _CompletedQuizCard(result: _results[index]),
+      body: BlocBuilder<QuizCubit, QuizState>(
+        builder: (context, state) {
+          switch (state.status) {
+            case QuizStatus.initial:
+            case QuizStatus.loading:
+              return const Center(child: CircularProgressIndicator());
+            case QuizStatus.failure:
+              return _HistoryLoadFailure(
+                message: state.errorMessage ?? 'Unable to load quiz history.',
+              );
+            case QuizStatus.success:
+              return ListView.separated(
+                padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 24.h),
+                itemCount: state.completedHistory.length,
+                separatorBuilder: (_, _) => SizedBox(height: 8.h),
+                itemBuilder: (context, index) =>
+                    _CompletedQuizCard(result: state.completedHistory[index]),
+              );
+          }
+        },
       ),
     );
   }
@@ -60,7 +68,7 @@ class CompletedHistoryScreen extends StatelessWidget {
 class _CompletedQuizCard extends StatelessWidget {
   const _CompletedQuizCard({required this.result});
 
-  final _QuizResult result;
+  final QuizHistoryItem result;
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +103,7 @@ class _CompletedQuizCard extends StatelessWidget {
                 Text(result.title, style: TextStyle(fontSize: 14.sp)),
                 SizedBox(height: 6.h),
                 Text(
-                  '20 Questions',
+                  '${result.questionCount} Questions',
                   style: TextStyle(
                     color: const Color(0xFFA1AD59),
                     fontSize: 12.sp,
@@ -141,9 +149,29 @@ class _HistoryScoreProgress extends StatelessWidget {
   }
 }
 
-class _QuizResult {
-  const _QuizResult({required this.title, required this.score});
+class _HistoryLoadFailure extends StatelessWidget {
+  const _HistoryLoadFailure({required this.message});
 
-  final String title;
-  final double score;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(message, textAlign: TextAlign.center),
+            SizedBox(height: 12.h),
+            OutlinedButton(
+              onPressed: () =>
+                  context.read<QuizCubit>().loadCompletedQuizHistory(),
+              child: const Text('Try again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

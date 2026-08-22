@@ -283,8 +283,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                     title: 'Sunnah and Witr',
                     items: _sunnahItems,
                     expanded: _expandedCategory == 'Sunnah and Witr',
-                    onToggleExpanded: () =>
-                        _toggleCategory('Sunnah and Witr'),
+                    onToggleExpanded: () => _toggleCategory('Sunnah and Witr'),
                     onToggleItem: _toggleSunnahItem,
                   ),
                   SizedBox(height: 12.h),
@@ -435,7 +434,10 @@ class _AccordionHeader extends StatelessWidget {
                       SizedBox(width: 10.w),
                       Text(
                         fractionLabel,
-                        style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.black54,
+                        ),
                       ),
                     ],
                   ),
@@ -515,7 +517,8 @@ class _ExpandableAmolRow extends StatelessWidget {
           _AccordionHeader(
             title: title,
             progress: progress,
-            fractionLabel: '${_formatPoints(completed)}/${_formatPoints(total)}',
+            fractionLabel:
+                '${_formatPoints(completed)}/${_formatPoints(total)}',
             expanded: expanded,
             onTap: onToggleExpanded,
           ),
@@ -687,7 +690,8 @@ class _GroupedExpandableRow extends StatelessWidget {
           _AccordionHeader(
             title: title,
             progress: progress,
-            fractionLabel: '${_formatPoints(completed)}/${_formatPoints(total)}',
+            fractionLabel:
+                '${_formatPoints(completed)}/${_formatPoints(total)}',
             expanded: expanded,
             onTap: onToggleExpanded,
           ),
@@ -790,11 +794,7 @@ class _ActionCircle extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: amolOlive, width: 1.4),
           ),
-          child: Icon(
-            Icons.check,
-            size: 13.sp,
-            color: amolOlive,
-          ),
+          child: Icon(Icons.check, size: 13.sp, color: amolOlive),
         );
       case _SalahStatus.locked:
         return Container(
@@ -861,9 +861,7 @@ class _DashboardButton extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const AmolDashboardScreen(),
-          ),
+          MaterialPageRoute<void>(builder: (_) => const AmolDashboardScreen()),
         ),
         child: Container(
           height: 54.h,
