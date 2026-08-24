@@ -16,7 +16,7 @@ class AlarmCubit extends Cubit<AlarmState> {
   void selectHour(int index) => emit(state.copyWith(hourIndex: index));
   void selectMinute(int index) => emit(state.copyWith(minuteIndex: index));
   void selectPeriod(int index) => emit(state.copyWith(periodIndex: index));
-  void selectOffset(String offset) => emit(state.copyWith(offset: offset));
+  void selectOffset(int index) => emit(state.copyWith(offsetIndex: index));
   void setVibrateAndRing(bool value) =>
       emit(state.copyWith(vibrateAndRing: value));
   void setVibrate(bool value) => emit(state.copyWith(vibrate: value));

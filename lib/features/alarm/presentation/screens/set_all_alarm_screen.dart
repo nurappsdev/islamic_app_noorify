@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
@@ -27,20 +28,11 @@ class _SetAllAlarmView extends StatelessWidget {
 
   final DailyPrayerTimes? times;
 
-  static const _offsetOptions = [
-    'At prayer time',
-    'Before 5 Min',
-    'Before 10 Min',
-    'Before 15 Min',
-    'Before 20 Min',
-    'Before 30 Min',
-    'Before 40 Min',
-    'Before 60 Min',
-  ];
-
   Future<void> _pickOffset(BuildContext context) async {
-    final selectedOffset = context.read<AlarmCubit>().state.offset;
-    final selected = await showModalBottomSheet<String>(
+    final appText = AppText.of(context);
+    final offsetOptions = appText.alarmOffsetOptions;
+    final selectedIndex = context.read<AlarmCubit>().state.offsetIndex;
+    final selected = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: const Color(0xFFFCFDF8),
       shape: RoundedRectangleBorder(
@@ -50,13 +42,13 @@ class _SetAllAlarmView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            for (final option in _offsetOptions)
+            for (var i = 0; i < offsetOptions.length; i++)
               ListTile(
-                title: Text(option, style: alarmItalicStyle(14.sp)),
-                trailing: option == selectedOffset
+                title: Text(offsetOptions[i], style: alarmItalicStyle(14.sp)),
+                trailing: i == selectedIndex
                     ? const Icon(Icons.check, color: Color(0xFF8D9B70))
                     : null,
-                onTap: () => Navigator.of(context).pop(option),
+                onTap: () => Navigator.of(context).pop(i),
               ),
           ],
         ),
@@ -70,18 +62,19 @@ class _SetAllAlarmView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AlarmCubit>().state;
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
       body: SafeArea(
         child: Column(
           children: [
-            const AlarmBackHeader(title: 'Set All Alarm'),
+            AlarmBackHeader(title: appText.setAllAlarm),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 24.h),
                 children: [
                   Text(
-                    'Set Alarm Before Prayer',
+                    appText.setAlarmBeforePrayer,
                     style: alarmItalicStyle(14.sp),
                   ),
                   SizedBox(height: 10.h),
@@ -98,7 +91,10 @@ class _SetAllAlarmView extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(state.offset, style: alarmItalicStyle(14.sp)),
+                          Text(
+                            appText.alarmOffsetOptions[state.offsetIndex],
+                            style: alarmItalicStyle(14.sp),
+                          ),
                           const Icon(
                             Icons.chevron_right,
                             color: Color(0xFF9AA687),
@@ -109,23 +105,23 @@ class _SetAllAlarmView extends StatelessWidget {
                   ),
                   SizedBox(height: 22.h),
                   AlarmToggleRow(
-                    label: 'Vibrate',
+                    label: appText.vibrate,
                     value: state.vibrate,
                     onChanged: context.read<AlarmCubit>().setVibrate,
                   ),
                   SizedBox(height: 18.h),
                   AlarmToggleRow(
-                    label: 'Ring',
+                    label: appText.ring,
                     value: state.ring,
                     onChanged: context.read<AlarmCubit>().setRing,
                   ),
                   SizedBox(height: 22.h),
-                  Text('Set Ringtone', style: alarmItalicStyle(14.sp)),
+                  Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
                   SizedBox(height: 10.h),
                   const RingtoneSearchField(),
                   SizedBox(height: 22.h),
                   AlarmToggleRow(
-                    label: 'Vibrate and ring',
+                    label: appText.vibrateAndRing,
                     value: state.vibrateAndRing,
                     onChanged: context.read<AlarmCubit>().setVibrateAndRing,
                   ),
@@ -152,6 +148,7 @@ class _AllAlarmRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     final start = times == null
         ? '--:--'
         : formatPrayerTime(prayerStart(period, times!));
@@ -217,7 +214,7 @@ class _AllAlarmRow extends StatelessWidget {
                   ),
                 ),
                 Tooltip(
-                  message: 'Set alarm for ${period.displayName}',
+                  message: '${appText.setAlarmFor} ${period.displayName}',
                   child: IconButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(

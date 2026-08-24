@@ -5,7 +5,7 @@ class AlarmState {
     this.hourIndex = 9,
     this.minuteIndex = 0,
     this.periodIndex = 0,
-    this.offset = 'Before 40 Min',
+    this.offsetIndex = 6,
     this.vibrateAndRing = true,
     this.vibrate = false,
     this.ring = false,
@@ -14,7 +14,7 @@ class AlarmState {
   final int hourIndex;
   final int minuteIndex;
   final int periodIndex;
-  final String offset;
+  final int offsetIndex;
   final bool vibrateAndRing;
   final bool vibrate;
   final bool ring;
@@ -33,7 +33,7 @@ class AlarmState {
     int? hourIndex,
     int? minuteIndex,
     int? periodIndex,
-    String? offset,
+    int? offsetIndex,
     bool? vibrateAndRing,
     bool? vibrate,
     bool? ring,
@@ -42,7 +42,7 @@ class AlarmState {
       hourIndex: hourIndex ?? this.hourIndex,
       minuteIndex: minuteIndex ?? this.minuteIndex,
       periodIndex: periodIndex ?? this.periodIndex,
-      offset: offset ?? this.offset,
+      offsetIndex: offsetIndex ?? this.offsetIndex,
       vibrateAndRing: vibrateAndRing ?? this.vibrateAndRing,
       vibrate: vibrate ?? this.vibrate,
       ring: ring ?? this.ring,

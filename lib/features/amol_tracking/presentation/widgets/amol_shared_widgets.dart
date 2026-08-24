@@ -1,38 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 const amolOlive = Color(0xFF8D9B70);
 const amolCardGreen = Color(0xFFE3ECAE);
 
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-String formatAmolDate(DateTime date) {
-  final weekday = _weekdayNames[date.weekday - 1];
-  final month = _monthNames[date.month - 1];
+String formatAmolDate(DateTime date, AppText appText) {
+  final weekday = appText.weekdayNames[date.weekday - 1];
+  final month = appText.monthNames[date.month - 1];
   return '$weekday ${date.day} $month, ${date.year}';
 }
 
@@ -51,7 +28,7 @@ class AmolHeader extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              tooltip: 'Back',
+              tooltip: AppText.of(context).back,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFF7F5CE),
@@ -116,7 +93,7 @@ class AmolSummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Todays Amol track',
+                  AppText.of(context).todaysAmolTrack,
                   style: TextStyle(fontSize: 14.sp, color: Colors.black),
                 ),
                 SizedBox(height: 5.h),
