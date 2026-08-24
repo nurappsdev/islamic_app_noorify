@@ -130,6 +130,7 @@ class _SignupViewState extends State<_SignupView> {
   }
 
   Future<void> _signUpWithGoogle() async {
+    final appText = AppText.of(context);
     _auth.setLoading(true);
     try {
       final route =
@@ -138,11 +139,11 @@ class _SignupViewState extends State<_SignupView> {
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } on GoogleSignInException catch (e) {
-      _showMessage(AuthService.instance.messageForGoogleException(e));
+      _showMessage(AuthService.instance.messageForGoogleException(e, appText));
     } on FirebaseAuthException catch (e) {
-      _showMessage(AuthService.instance.messageForException(e));
+      _showMessage(AuthService.instance.messageForException(e, appText));
     } catch (_) {
-      _showMessage('Google sign-in failed. Please try again.');
+      _showMessage(appText.googleAuthErrorGeneric);
     } finally {
       if (mounted) {
         _auth.setLoading(false);
@@ -258,7 +259,7 @@ class _SignupViewState extends State<_SignupView> {
           children: [
             _socialIconButton(
               key: const Key('signup_google_button'),
-              tooltip: 'Google',
+              tooltip: appText.google,
               onPressed: _isLoading ? null : _signUpWithGoogle,
               child: Text(
                 'G',
@@ -272,7 +273,7 @@ class _SignupViewState extends State<_SignupView> {
             SizedBox(width: 18.w),
             _socialIconButton(
               key: const Key('signup_facebook_button'),
-              tooltip: 'Facebook',
+              tooltip: appText.facebook,
               onPressed: () {},
               child: Icon(
                 Icons.facebook,

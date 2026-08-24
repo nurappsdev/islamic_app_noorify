@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class HomeHeader extends StatelessWidget {
@@ -9,6 +10,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Row(
       children: [
         CircleAvatar(
@@ -22,7 +24,7 @@ class HomeHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Abdullah Al-Aziz',
+                appText.competitorName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: homeSansStyle(
@@ -32,7 +34,7 @@ class HomeHeader extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
               Text(
-                'Assalamu Alaikum Wa Rahmatullah',
+                appText.greeting,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: homeSansStyle(fontSize: 8.sp),
@@ -43,7 +45,7 @@ class HomeHeader extends StatelessWidget {
         SizedBox.square(
           dimension: 32.r,
           child: IconButton(
-            tooltip: 'Timer',
+            tooltip: appText.timer,
             onPressed: () {},
             padding: EdgeInsets.zero,
             icon: Icon(
@@ -59,7 +61,7 @@ class HomeHeader extends StatelessWidget {
             SizedBox.square(
               dimension: 36.r,
               child: IconButton(
-                tooltip: 'Notifications',
+                tooltip: appText.notifications,
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(

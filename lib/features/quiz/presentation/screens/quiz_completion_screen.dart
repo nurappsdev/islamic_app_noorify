@@ -3,18 +3,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
   const QuizCompletionScreen({super.key});
 
-  static const _categories = [
-    _CompletedCategory('Quranic Sciences', '120 Quizzes', '950'),
-    _CompletedCategory('Seerah & History', '85 Quizzes', '810'),
+  static List<_CompletedCategory> _categories(AppText appText) => [
+    _CompletedCategory(
+      appText.exploreQuranicSciences,
+      '120 ${appText.quizzesCountLabel}',
+      '950',
+    ),
+    _CompletedCategory(
+      appText.seerahAndHistory,
+      '85 ${appText.quizzesCountLabel}',
+      '810',
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final categories = _categories(appText);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -30,7 +41,7 @@ class QuizCompletionScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Categories',
+                        appText.categories,
                         style: TextStyle(
                           fontSize: 19.sp,
                           fontWeight: FontWeight.w500,
@@ -41,7 +52,7 @@ class QuizCompletionScreen extends StatelessWidget {
                           context,
                         ).pushNamed(RouteNames.quizList),
                         child: Text(
-                          'See All',
+                          appText.seeAll,
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 12.sp,
@@ -55,7 +66,7 @@ class QuizCompletionScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 13.w),
                   child: Column(
                     children: [
-                      for (final category in _categories) ...[
+                      for (final category in categories) ...[
                         _CompletedCategoryCard(category: category),
                         SizedBox(height: 9.h),
                       ],
@@ -80,66 +91,72 @@ class _CompletionHero extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 246.h,
-    padding: EdgeInsets.fromLTRB(19.w, 16.h, 24.w, 28.h),
-    decoration: BoxDecoration(
-      color: const Color(0xFFE4ECC5),
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(37.r),
-        bottomRight: Radius.circular(37.r),
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Container(
+      height: 246.h,
+      padding: EdgeInsets.fromLTRB(19.w, 16.h, 24.w, 28.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE4ECC5),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(37.r),
+          bottomRight: Radius.circular(37.r),
+        ),
       ),
-    ),
-    child: Stack(
-      children: [
-        Align(
-          alignment: Alignment.topLeft,
-          child: IconButton(
-            onPressed: onBack,
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: IconButton(
+              onPressed: onBack,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFDFDE68),
+                foregroundColor: const Color(0xFF303629),
+              ),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
-        ),
-        Positioned(
-          left: 20.w,
-          bottom: 23.h,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'You completed your\ntodays challenge',
-                style: TextStyle(
-                  color: AppColor.primary,
-                  fontSize: 22.sp,
-                  height: 1.28,
-                  fontWeight: FontWeight.w500,
+          Positioned(
+            left: 20.w,
+            bottom: 23.h,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appText.youCompletedTodaysChallenge,
+                  style: TextStyle(
+                    color: AppColor.primary,
+                    fontSize: 22.sp,
+                    height: 1.28,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              SizedBox(height: 28.h),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.workspace_premium_rounded,
-                    color: Color(0xFF31555D),
-                    size: 31,
-                  ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    'Todays points : 0.5',
-                    style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
-                  ),
-                ],
-              ),
-            ],
+                SizedBox(height: 28.h),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: Color(0xFF31555D),
+                      size: 31,
+                    ),
+                    SizedBox(width: 10.w),
+                    Text(
+                      '${appText.todaysPointsLabel} : 0.5',
+                      style: TextStyle(
+                        color: AppColor.primary,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        Positioned(right: 0, bottom: 6.h, child: const _SuccessMark()),
-      ],
-    ),
-  );
+          Positioned(right: 0, bottom: 6.h, child: const _SuccessMark()),
+        ],
+      ),
+    );
+  }
 }
 
 class _SuccessMark extends StatelessWidget {
@@ -222,7 +239,7 @@ class _CompletedCategoryCard extends StatelessWidget {
               onPressed: () {},
               iconAlignment: IconAlignment.end,
               icon: Icon(Icons.north_east_rounded, size: 17.sp),
-              label: const Text('Explore'),
+              label: Text(AppText.of(context).explore),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4D5542),
                 side: const BorderSide(color: AppColor.primary),
@@ -247,7 +264,7 @@ class _CompletedCategoryCard extends StatelessWidget {
         Row(
           children: [
             Text(
-              'High Score',
+              AppText.of(context).highScore,
               style: TextStyle(fontSize: 12.sp, color: const Color(0xFF697269)),
             ),
             SizedBox(width: 10.w),

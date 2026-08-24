@@ -2,33 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
   const HomeFeatureGrid({super.key});
 
-  static const _features = [
-    _HomeFeature('Quran', Icons.menu_book_outlined, Color(0xFFA5B58F)),
-    _HomeFeature('Hadith', Icons.local_library, Color(0xFF20B20F)),
-    _HomeFeature('Dua', Icons.volunteer_activism, Color(0xFFFF7D67)),
-    _HomeFeature('Dijpr', Icons.nightlight_round, Color(0xFFFFD21E)),
-    _HomeFeature('Asma-ul Husna', Icons.workspace_premium, Color(0xFF37C915)),
+  static List<_HomeFeature> _features(AppText appText) => [
     _HomeFeature(
-      'Quiz & Learn',
+      appText.categoryQuran,
+      Icons.menu_book_outlined,
+      const Color(0xFFA5B58F),
+    ),
+    _HomeFeature(
+      appText.categoryHadith,
+      Icons.local_library,
+      const Color(0xFF20B20F),
+    ),
+    _HomeFeature(
+      appText.featureDua,
+      Icons.volunteer_activism,
+      const Color(0xFFFF7D67),
+    ),
+    _HomeFeature(
+      appText.featureDijpr,
+      Icons.nightlight_round,
+      const Color(0xFFFFD21E),
+    ),
+    _HomeFeature(
+      appText.featureAsmaUlHusna,
+      Icons.workspace_premium,
+      const Color(0xFF37C915),
+    ),
+    _HomeFeature(
+      appText.featureQuizAndLearn,
       Icons.quiz_outlined,
-      Color(0xFFFF9D13),
+      const Color(0xFFFF9D13),
       routeName: RouteNames.winQuiz,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final features = _features(appText);
     return Column(
       children: [
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _features.length,
+          itemCount: features.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisExtent: 128.h,
@@ -36,19 +59,19 @@ class HomeFeatureGrid extends StatelessWidget {
             mainAxisSpacing: 12.h,
           ),
           itemBuilder: (context, index) =>
-              _FeatureTile(feature: _features[index]),
+              _FeatureTile(feature: features[index]),
         ),
         SizedBox(height: 12.h),
-        const _LinkTile(
-          title: 'Zakat Calculator',
+        _LinkTile(
+          title: appText.zakatCalculator,
           icon: Icons.price_check,
-          iconColor: Color(0xFF0DA334),
+          iconColor: const Color(0xFF0DA334),
         ),
         SizedBox(height: 6.h),
-        const _LinkTile(
-          title: 'Age Calculate',
+        _LinkTile(
+          title: appText.ageCalculate,
           icon: Icons.calculate,
-          iconColor: Color(0xFFAAB781),
+          iconColor: const Color(0xFFAAB781),
         ),
       ],
     );

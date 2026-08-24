@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dashboard/presentation/cubit/quiz_dashboard_cubit.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
@@ -27,6 +28,7 @@ class _QuizDashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<QuizDashboardCubit>().state;
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -56,14 +58,14 @@ class _QuizDashboardView extends StatelessWidget {
                     ).style.copyWith(color: Colors.black, fontSize: 16.sp),
                     children: [
                       TextSpan(
-                        text: 'Todays - ',
+                        text: '${appText.todays} - ',
                         style: TextStyle(
                           fontFamily: 'serif',
                           fontSize: 22.sp,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
-                      const TextSpan(text: 'average value'),
+                      TextSpan(text: appText.averageValue),
                     ],
                   ),
                 ),
@@ -95,7 +97,7 @@ class _QuizDashboardView extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Quiz history',
+                      appText.quizHistory,
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w400,
@@ -111,7 +113,10 @@ class _QuizDashboardView extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: Text('See All', style: TextStyle(fontSize: 13.sp)),
+                      child: Text(
+                        appText.seeAll,
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
                     ),
                   ],
                 ),
@@ -160,7 +165,7 @@ class _DashboardHeader extends StatelessWidget {
           //   ),
           // ),
           Text(
-            'Dashboard',
+            AppText.of(context).dashboard,
             style: TextStyle(
               color: const Color(0xFF84945F),
               fontSize: 20.sp,
@@ -181,7 +186,8 @@ class _PeriodTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['Daily', 'Weekly', 'Monthly'];
+    final appText = AppText.of(context);
+    final labels = [appText.daily, appText.weekly, appText.monthly];
     return SizedBox(
       height: 44.h,
       child: Row(
@@ -222,31 +228,6 @@ class _PeriodTabs extends StatelessWidget {
   }
 }
 
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
 class _DateSelector extends StatelessWidget {
   const _DateSelector({
     required this.selectedPeriod,
@@ -260,7 +241,8 @@ class _DateSelector extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
 
-  String get _label {
+  String _label(AppText appText) {
+    final monthNames = appText.monthNames;
     switch (selectedPeriod) {
       case 1: // Weekly
         final startOfWeek = selectedDate.subtract(
@@ -270,31 +252,32 @@ class _DateSelector extends StatelessWidget {
         final sameMonth = startOfWeek.month == endOfWeek.month;
         final startLabel = sameMonth
             ? '${startOfWeek.day}'
-            : '${startOfWeek.day} ${_monthNames[startOfWeek.month - 1]}';
+            : '${startOfWeek.day} ${monthNames[startOfWeek.month - 1]}';
         return '$startLabel - ${endOfWeek.day} '
-            '${_monthNames[endOfWeek.month - 1]}, ${endOfWeek.year}';
+            '${monthNames[endOfWeek.month - 1]}, ${endOfWeek.year}';
       case 2: // Monthly
-        return '${_monthNames[selectedDate.month - 1]}, ${selectedDate.year}';
+        return '${monthNames[selectedDate.month - 1]}, ${selectedDate.year}';
       default: // Daily
-        return '${_weekdayNames[selectedDate.weekday - 1]} '
-            '${selectedDate.day} ${_monthNames[selectedDate.month - 1]}, '
+        return '${appText.weekdayNames[selectedDate.weekday - 1]} '
+            '${selectedDate.day} ${monthNames[selectedDate.month - 1]}, '
             '${selectedDate.year}';
     }
   }
 
-  String get _subLabel {
+  String _subLabel(AppText appText) {
     switch (selectedPeriod) {
       case 1:
-        return 'Weekly Quiz Value';
+        return appText.weeklyQuizValue;
       case 2:
-        return 'Monthly Quiz Value';
+        return appText.monthlyQuizValue;
       default:
-        return 'Daily Quiz Value';
+        return appText.dailyQuizValue;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       height: 84.h,
       padding: EdgeInsets.symmetric(horizontal: 11.w),
@@ -309,9 +292,9 @@ class _DateSelector extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_label, style: TextStyle(fontSize: 16.sp)),
+                Text(_label(appText), style: TextStyle(fontSize: 16.sp)),
                 SizedBox(height: 8.h),
-                Text(_subLabel, style: TextStyle(fontSize: 14.sp)),
+                Text(_subLabel(appText), style: TextStyle(fontSize: 14.sp)),
               ],
             ),
           ),
@@ -351,14 +334,15 @@ class _DashboardLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Wrap(
       spacing: 27.w,
       runSpacing: 8.h,
-      children: const [
-        _LegendItem(color: Color(0xFF5D896D), label: 'My Position'),
+      children: [
+        _LegendItem(color: const Color(0xFF5D896D), label: appText.myPosition),
         _LegendItem(
-          color: Color(0xFFA9B258),
-          label: 'My Nearest Or Competitor',
+          color: const Color(0xFFA9B258),
+          label: appText.myNearestOrCompetitor,
         ),
       ],
     );
@@ -453,9 +437,15 @@ class _CompetitorCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Abdullah Al-Aziz', style: TextStyle(fontSize: 14.sp)),
+              Text(
+                AppText.of(context).competitorName,
+                style: TextStyle(fontSize: 14.sp),
+              ),
               SizedBox(height: 16.h),
-              Text('Point :1.5/1.0', style: TextStyle(fontSize: 12.sp)),
+              Text(
+                '${AppText.of(context).point} :1.5/1.0',
+                style: TextStyle(fontSize: 12.sp),
+              ),
             ],
           ),
           Positioned(
@@ -499,7 +489,10 @@ class _PointsSummary extends StatelessWidget {
                 color: const Color(0xFFDDE8BA),
                 borderRadius: BorderRadius.circular(26.r),
               ),
-              child: Text('My points : 1.0', style: TextStyle(fontSize: 16.sp)),
+              child: Text(
+                '${AppText.of(context).myPoints} : 1.0',
+                style: TextStyle(fontSize: 16.sp),
+              ),
             ),
           ),
           Padding(
@@ -532,6 +525,7 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       height: 84.h,
       padding: EdgeInsets.symmetric(horizontal: 11.w),
@@ -561,12 +555,12 @@ class _HistoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Quiz $index ( Quranic Science )',
+                  '${appText.categoryQuiz} $index ( ${appText.quranicScience} )',
                   style: TextStyle(fontSize: 14.sp),
                 ),
                 SizedBox(height: 7.h),
                 Text(
-                  '20 Questions',
+                  appText.questionsCountLabel,
                   style: TextStyle(
                     color: const Color(0xFFA1AD59),
                     fontSize: 12.sp,

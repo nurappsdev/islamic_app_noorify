@@ -3,12 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class ArticleDetailsScreen extends StatelessWidget {
   const ArticleDetailsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,7 +24,7 @@ class ArticleDetailsScreen extends StatelessWidget {
                   _DetailsHeader(onBack: () => Navigator.maybePop(context)),
                   SizedBox(height: 22.h),
                   Text(
-                    'The Power of Sabr in Islam',
+                    appText.articleTitleSabr,
                     style: TextStyle(color: AppColor.primary, fontSize: 15.sp),
                   ),
                   SizedBox(height: 9.h),
@@ -36,13 +38,13 @@ class ArticleDetailsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15.r),
                     ),
                     child: Text(
-                      'Islamic Guidance',
+                      appText.articleTagIslamicGuidance,
                       style: TextStyle(fontSize: 11.sp),
                     ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Post Date: August 17, 2026   10:00 AM',
+                    appText.postDatePlaceholder,
                     style: TextStyle(color: AppColor.primary, fontSize: 12.sp),
                   ),
                   SizedBox(height: 9.h),
@@ -57,7 +59,7 @@ class ArticleDetailsScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 10.h),
                   Text(
-                    _articleText,
+                    appText.articleFullTextSabr,
                     style: TextStyle(fontSize: 12.sp, height: 1.45),
                   ),
                 ],
@@ -75,7 +77,7 @@ class ArticleDetailsScreen extends StatelessWidget {
                     minimumSize: Size(double.infinity, 55.h),
                   ),
                   child: Text(
-                    'Test learning',
+                    appText.testLearning,
                     style: TextStyle(fontSize: 14.sp),
                   ),
                 ),
@@ -87,13 +89,6 @@ class ArticleDetailsScreen extends StatelessWidget {
     );
   }
 }
-
-const _articleText =
-    '''Sabr, or patience, is one of the most important virtues in Islam. It teaches believers to remain steadfast during hardships, control their emotions, and continue trusting in Allah’s wisdom and plan. Life brings challenges, tests, and moments of uncertainty, but Sabr helps Muslims face these difficulties with faith, hope, and perseverance.
-
-Patience does not mean giving up or simply waiting for problems to disappear. It means continuing to do what is right, maintaining faith during difficult moments, and seeking Allah’s guidance when facing challenges. Through Sabr, a believer learns to respond to hardship with strength rather than despair.
-
-The Quran reminds believers that Allah is with those who are patient. This gives Muslims comfort during difficult times and encourages them to remain hopeful.''';
 
 class _DetailsHeader extends StatelessWidget {
   const _DetailsHeader({required this.onBack});
@@ -117,7 +112,7 @@ class _DetailsHeader extends StatelessWidget {
           ),
         ),
         Text(
-          'Articles Details',
+          AppText.of(context).articlesDetails,
           style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
         ),
       ],

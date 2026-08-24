@@ -1,15 +1,16 @@
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 
 enum PrayerPeriod { fajr, dhuhr, asr, maghrib, isha }
 
 extension PrayerPeriodLabel on PrayerPeriod {
-  String get displayName => switch (this) {
-    PrayerPeriod.fajr => 'Fajr',
-    PrayerPeriod.dhuhr => 'Dhuhr',
-    PrayerPeriod.asr => 'Asr',
-    PrayerPeriod.maghrib => 'Maghrib & Iftar',
-    PrayerPeriod.isha => 'Isha',
+  String displayName(AppText appText) => switch (this) {
+    PrayerPeriod.fajr => appText.prayerFajr,
+    PrayerPeriod.dhuhr => appText.prayerDhuhr,
+    PrayerPeriod.asr => appText.prayerAsr,
+    PrayerPeriod.maghrib => appText.prayerMaghribAndIftar,
+    PrayerPeriod.isha => appText.prayerIsha,
   };
 }
 

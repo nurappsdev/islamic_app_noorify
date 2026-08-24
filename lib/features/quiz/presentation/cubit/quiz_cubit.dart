@@ -17,12 +17,7 @@ class QuizCubit extends Cubit<QuizState> {
       final history = await _getCompletedQuizHistory();
       emit(QuizState(status: QuizStatus.success, completedHistory: history));
     } catch (_) {
-      emit(
-        const QuizState(
-          status: QuizStatus.failure,
-          errorMessage: 'Unable to load completed quiz history.',
-        ),
-      );
+      emit(const QuizState(status: QuizStatus.failure));
     }
   }
 }

@@ -3,6 +3,7 @@ part of 'prayer_time_card.dart';
 class _CurrentPrayerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       width: 190.w,
       height: 66.h,
@@ -35,7 +36,7 @@ class _CurrentPrayerBadge extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    'Dhuhr Prayer Time',
+                    appText.dhuhrPrayerTime,
                     style: homeSansStyle(fontSize: 14.sp, color: Colors.black),
                   ),
                 ),

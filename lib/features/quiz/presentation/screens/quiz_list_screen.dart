@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class QuizListScreen extends StatelessWidget {
   const QuizListScreen({super.key});
@@ -60,7 +61,7 @@ class _QuizListHeader extends StatelessWidget {
           ),
         ),
         Text(
-          'Quranic Science',
+          AppText.of(context).quranicScience,
           style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
         ),
       ],
@@ -74,50 +75,59 @@ class _QuizListTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22.r),
-    child: InkWell(
-      onTap: onTap,
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Material(
+      color: Colors.white,
       borderRadius: BorderRadius.circular(22.r),
-      child: Container(
-        height: 75.h,
-        padding: EdgeInsets.symmetric(horizontal: 12.w),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFDDE8B5)),
-          borderRadius: BorderRadius.circular(22.r),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48.r,
-              height: 48.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFDDE8B5)),
-              ),
-              child: Icon(
-                Icons.image_outlined,
-                color: AppColor.primary,
-                size: 24.sp,
-              ),
-            ),
-            SizedBox(width: 16.w),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Quiz $quizNumber', style: TextStyle(fontSize: 14.sp)),
-                SizedBox(height: 7.h),
-                Text(
-                  '20 Questions',
-                  style: TextStyle(fontSize: 13.sp, color: AppColor.primary),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22.r),
+        child: Container(
+          height: 75.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFDDE8B5)),
+            borderRadius: BorderRadius.circular(22.r),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48.r,
+                height: 48.r,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFDDE8B5)),
                 ),
-              ],
-            ),
-          ],
+                child: Icon(
+                  Icons.image_outlined,
+                  color: AppColor.primary,
+                  size: 24.sp,
+                ),
+              ),
+              SizedBox(width: 16.w),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${appText.categoryQuiz} $quizNumber',
+                    style: TextStyle(fontSize: 14.sp),
+                  ),
+                  SizedBox(height: 7.h),
+                  Text(
+                    appText.questionsCountLabel,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColor.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

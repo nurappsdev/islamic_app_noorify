@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class ArticlesScreen extends StatelessWidget {
   const ArticlesScreen({super.key});
@@ -18,7 +19,7 @@ class ArticlesScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 24.h),
               children: [
                 _ArticleHeader(
-                  title: 'All articles',
+                  title: AppText.of(context).allArticles,
                   onBack: () => Navigator.maybePop(context),
                 ),
                 SizedBox(height: 21.h),
@@ -96,69 +97,75 @@ class _ArticlePreview extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(11.r),
-    child: InkWell(
-      onTap: onTap,
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Material(
+      color: Colors.white,
       borderRadius: BorderRadius.circular(11.r),
-      child: Container(
-        padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 10.h),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFDDE8B5)),
-          borderRadius: BorderRadius.circular(11.r),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'The Power of Sabr in Islam',
-              style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
-            ),
-            SizedBox(height: 7.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFDDE8B5)),
-                borderRadius: BorderRadius.circular(15.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(11.r),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 10.h),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFDDE8B5)),
+            borderRadius: BorderRadius.circular(11.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                appText.articleTitleSabr,
+                style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
               ),
-              child: Text(
-                'Islamic Guidance',
-                style: TextStyle(fontSize: 11.sp),
+              SizedBox(height: 7.h),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10.w,
+                  vertical: 4.h,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFDDE8B5)),
+                  borderRadius: BorderRadius.circular(15.r),
+                ),
+                child: Text(
+                  appText.articleTagIslamicGuidance,
+                  style: TextStyle(fontSize: 11.sp),
+                ),
               ),
-            ),
-            SizedBox(height: 7.h),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: Image.asset(
-                'assets/islamicImg.png',
-                width: double.infinity,
-                height: 170.h,
-                fit: BoxFit.cover,
+              SizedBox(height: 7.h),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.r),
+                child: Image.asset(
+                  'assets/islamicImg.png',
+                  width: double.infinity,
+                  height: 170.h,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Learn how patience helps Muslims remain steadfast\nthrough difficulties and strengthens their trust in Allah.',
-              style: TextStyle(fontSize: 11.sp, height: 1.4),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'See More . . .',
-              style: TextStyle(
-                color: AppColor.primary,
-                decoration: TextDecoration.underline,
-                fontSize: 12.sp,
+              SizedBox(height: 8.h),
+              Text(
+                appText.articleExcerptSabr,
+                style: TextStyle(fontSize: 11.sp, height: 1.4),
               ),
-            ),
-            SizedBox(height: 9.h),
-            Text(
-              'Post Date: August 17, 2026   10:00 AM',
-              style: TextStyle(color: AppColor.primary, fontSize: 11.sp),
-            ),
-          ],
+              SizedBox(height: 8.h),
+              Text(
+                appText.seeMore,
+                style: TextStyle(
+                  color: AppColor.primary,
+                  decoration: TextDecoration.underline,
+                  fontSize: 12.sp,
+                ),
+              ),
+              SizedBox(height: 9.h),
+              Text(
+                appText.postDatePlaceholder,
+                style: TextStyle(color: AppColor.primary, fontSize: 11.sp),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 
 /// Navigation bar shown on the app's main Home screen.
@@ -12,6 +13,7 @@ class HomeBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
       child: Container(
@@ -33,13 +35,13 @@ class HomeBottomNav extends StatelessWidget {
           children: [
             _NavItem(
               icon: Icons.home_outlined,
-              label: 'Home',
+              label: appText.home,
               selected: selectedIndex == 0,
               onPressed: () => _goTo(context, RouteNames.home),
             ),
             _NavItem(
               icon: Icons.menu_book_outlined,
-              label: 'Quran',
+              label: appText.categoryQuran,
               selected: selectedIndex == 1,
               onPressed: () => _goTo(context, RouteNames.quran),
             ),

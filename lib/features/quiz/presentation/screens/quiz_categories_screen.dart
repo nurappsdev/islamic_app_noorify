@@ -3,31 +3,34 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 class QuizCategoriesScreen extends StatelessWidget {
   const QuizCategoriesScreen({super.key});
 
-  static const _categories = [
+  static List<_QuizCategory> _categories(AppText appText) => [
     _QuizCategory(
-      title: 'Quranic Sciences',
-      quizzes: '120 Quizzes',
+      title: appText.exploreQuranicSciences,
+      quizzes: '120 ${appText.quizzesCountLabel}',
       score: '950',
     ),
     _QuizCategory(
-      title: 'Seerah & History',
-      quizzes: '85 Quizzes',
+      title: appText.seerahAndHistory,
+      quizzes: '85 ${appText.quizzesCountLabel}',
       score: '810',
     ),
     _QuizCategory(
-      title: 'Islamic Manners',
-      quizzes: '60 Quizzes',
+      title: appText.islamicManners,
+      quizzes: '60 ${appText.quizzesCountLabel}',
       score: '720',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final categories = _categories(appText);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -43,7 +46,7 @@ class QuizCategoriesScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Categories',
+                        appText.categories,
                         style: TextStyle(
                           fontSize: 19.sp,
                           fontWeight: FontWeight.w500,
@@ -54,7 +57,7 @@ class QuizCategoriesScreen extends StatelessWidget {
                           context,
                         ).pushNamed(RouteNames.quizList),
                         child: Text(
-                          'See All',
+                          appText.seeAll,
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 12.sp,
@@ -68,7 +71,7 @@ class QuizCategoriesScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   child: Column(
                     children: [
-                      for (final category in _categories) ...[
+                      for (final category in categories) ...[
                         _CategoryCard(category: category),
                         SizedBox(height: 9.h),
                       ],
@@ -93,6 +96,7 @@ class _QuizHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       height: 250.h,
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 26.w, 30.h),
@@ -126,7 +130,7 @@ class _QuizHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Complete your todays\nchallenge',
+                    appText.completeTodaysChallenge,
                     style: TextStyle(
                       color: AppColor.primary,
                       fontSize: 22.sp,
@@ -147,7 +151,7 @@ class _QuizHero extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Lets Get Start',
+                      appText.letsGetStart,
                       style: TextStyle(fontSize: 11.sp),
                     ),
                   ),
@@ -276,7 +280,7 @@ class _CategoryCard extends StatelessWidget {
               onPressed: () {},
               iconAlignment: IconAlignment.end,
               icon: Icon(Icons.north_east_rounded, size: 17.sp),
-              label: const Text('Explore'),
+              label: Text(AppText.of(context).explore),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4D5542),
                 side: const BorderSide(color: AppColor.primary),
@@ -301,7 +305,7 @@ class _CategoryCard extends StatelessWidget {
         Row(
           children: [
             Text(
-              'High Score',
+              AppText.of(context).highScore,
               style: TextStyle(fontSize: 12.sp, color: const Color(0xFF697269)),
             ),
             SizedBox(width: 10.w),

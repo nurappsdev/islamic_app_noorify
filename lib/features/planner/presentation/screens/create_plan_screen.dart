@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
 
 /// Create-plan form and its added-quiz summary state.
@@ -69,7 +70,7 @@ class _CreatePlanViewState extends State<_CreatePlanView> {
                     ),
                   ),
                   child: Text(
-                    'Create',
+                    AppText.of(context).create,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w400,
@@ -112,7 +113,7 @@ class _CreatePlanHeader extends StatelessWidget {
             ),
           ),
           Text(
-            'Create plan',
+            AppText.of(context).createPlanHeader,
             style: TextStyle(
               color: const Color(0xFF84945F),
               fontSize: 18.sp,
@@ -133,18 +134,19 @@ class _PlanForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return ListView(
       padding: EdgeInsets.fromLTRB(15.w, 5.h, 15.w, 20.h),
       children: [
         Padding(
           padding: EdgeInsets.only(left: 4.w),
-          child: Text('Plan name', style: TextStyle(fontSize: 14.sp)),
+          child: Text(appText.planNameLabel, style: TextStyle(fontSize: 14.sp)),
         ),
         SizedBox(height: 9.h),
         TextField(
           controller: controller,
           style: TextStyle(fontSize: 13.sp),
-          decoration: _fieldDecoration('Write Here . . .'),
+          decoration: _fieldDecoration(appText.writeHereHint),
         ),
         SizedBox(height: 14.h),
         Container(
@@ -157,13 +159,16 @@ class _PlanForm extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Select quiz category', style: TextStyle(fontSize: 14.sp)),
+              Text(
+                appText.selectQuizCategory,
+                style: TextStyle(fontSize: 14.sp),
+              ),
               SizedBox(height: 16.h),
-              const _SelectionField(hint: 'Eg : Quranic science'),
+              _SelectionField(hint: appText.egQuranicScienceHint),
               SizedBox(height: 19.h),
-              Text('Select quiz', style: TextStyle(fontSize: 14.sp)),
+              Text(appText.selectQuiz, style: TextStyle(fontSize: 14.sp)),
               SizedBox(height: 16.h),
-              const _SelectionField(hint: 'Eg : Quiz 1'),
+              _SelectionField(hint: appText.egQuiz1Hint),
             ],
           ),
         ),
@@ -182,7 +187,7 @@ class _PlanForm extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20.r),
                 ),
               ),
-              child: Text('Add', style: TextStyle(fontSize: 14.sp)),
+              child: Text(appText.add, style: TextStyle(fontSize: 14.sp)),
             ),
           ),
         ),
@@ -271,7 +276,10 @@ class _AddedQuizView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                 ),
-                child: Text('Add More', style: TextStyle(fontSize: 14.sp)),
+                child: Text(
+                  AppText.of(context).addMore,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
               ),
             ),
           ),
@@ -286,6 +294,7 @@ class _AddedQuizCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       height: 76.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -314,12 +323,12 @@ class _AddedQuizCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Quiz 1 ( Quranic Science )',
+                '${appText.categoryQuiz} 1 ( ${appText.quranicScience} )',
                 style: TextStyle(fontSize: 14.sp),
               ),
               SizedBox(height: 7.h),
               Text(
-                '20 Questions',
+                appText.questionsCountLabel,
                 style: TextStyle(
                   color: const Color(0xFFA1AD59),
                   fontSize: 12.sp,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
@@ -93,6 +94,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     final summaryPeriod = active ?? PrayerPeriod.dhuhr;
     final summaryStart = times == null
         ? '--:--'
@@ -115,7 +117,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
           top: 9.h,
           left: 14.w,
           child: IconButton(
-            tooltip: 'Back',
+            tooltip: appText.back,
             onPressed: () => Navigator.of(context).pop(),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFF7F5CE),
@@ -128,7 +130,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
           top: 9.h,
           right: 14.w,
           child: IconButton(
-            tooltip: 'Set All Alarm',
+            tooltip: appText.setAllAlarm,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => SetAllAlarmScreen(times: times),
@@ -147,7 +149,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
           right: 0,
           child: IgnorePointer(
             child: Text(
-              'Prayer times',
+              appText.prayerTimesTitle,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 15.sp),
             ),
@@ -165,7 +167,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    times?.hijriDate ?? 'Hijri date unavailable',
+                    times?.hijriDate ?? appText.hijriDateUnavailable,
                     style: _italicStyle(10.sp),
                   ),
                 ),
@@ -220,7 +222,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'Mymensingh, Bangladesh',
+                appText.locationPlaceholder,
                 style: TextStyle(color: Colors.white70, fontSize: 9.sp),
               ),
             ],
@@ -242,8 +244,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
                 children: [
                   Text(
                     active == null
-                        ? 'Next: ${summaryPeriod.displayName}'
-                        : '${summaryPeriod.displayName} Prayer Time',
+                        ? '${appText.nextPrefix} ${summaryPeriod.displayName(appText)}'
+                        : '${summaryPeriod.displayName(appText)} ${appText.prayerTimeSuffix}',
                     style: TextStyle(fontSize: 11.sp),
                   ),
                   Text(
@@ -264,7 +266,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: _EdgeLabel(
-                  title: 'Sunrise, Trishal',
+                  title: '${appText.sunrise}, ${appText.trishal}',
                   value: times == null
                       ? '--:--'
                       : formatPrayerTime(times!.sunrise),
@@ -273,7 +275,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
               SizedBox(width: 20.w),
               Expanded(
                 child: _EdgeLabel(
-                  title: 'Sunset, Trishal',
+                  title: '${appText.sunset}, ${appText.trishal}',
                   value: times == null
                       ? '--:--'
                       : formatPrayerTime(times!.sunset),
@@ -362,6 +364,7 @@ class _PrayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     final start = times == null
         ? '--:--'
         : formatPrayerTime(prayerStart(period, times!));
@@ -428,7 +431,7 @@ class _PrayerRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        period.displayName,
+                        period.displayName(appText),
                         style: TextStyle(fontSize: 12.sp),
                       ),
                       SizedBox(height: 3.h),
@@ -444,7 +447,8 @@ class _PrayerRow extends StatelessWidget {
                   ),
                 ),
                 Tooltip(
-                  message: 'Set alarm for ${period.displayName}',
+                  message:
+                      '${appText.setAlarmFor} ${period.displayName(appText)}',
                   child: IconButton(
                     key: const ValueKey('alarm-control'),
                     onPressed: () => Navigator.of(context).push(
