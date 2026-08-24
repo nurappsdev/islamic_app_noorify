@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
 
 /// Quiz list shown after selecting Get Start on a plan card.
@@ -103,12 +104,13 @@ class _PlanQuizCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Quiz $index ( Quranic Science )',
+                '${AppText.of(context).categoryQuiz} $index '
+                '( ${AppText.of(context).quranicScience} )',
                 style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w400),
               ),
               SizedBox(height: 7.h),
               Text(
-                '20 Questions',
+                AppText.of(context).questionsCountLabel,
                 style: TextStyle(
                   color: const Color(0xFFA1AD59),
                   fontSize: 12.sp,

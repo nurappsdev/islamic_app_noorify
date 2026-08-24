@@ -124,6 +124,151 @@ class AppText {
     required this.monthOctober,
     required this.monthNovember,
     required this.monthDecember,
+    required this.google,
+    required this.facebook,
+    required this.authErrorInvalidEmail,
+    required this.authErrorUserDisabled,
+    required this.authErrorWrongCredentials,
+    required this.authErrorAccountNotPasswordBased,
+    required this.authErrorEmailInUse,
+    required this.authErrorWeakPassword,
+    required this.authErrorOperationNotAllowed,
+    required this.authErrorRequiresRecentLogin,
+    required this.authErrorAccountExistsDifferentCredential,
+    required this.authErrorCredentialAlreadyInUse,
+    required this.authErrorTooManyRequests,
+    required this.authErrorNetworkFailed,
+    required this.authErrorGeneric,
+    required this.googleAuthErrorNotConfigured,
+    required this.googleAuthErrorUiUnavailable,
+    required this.googleAuthErrorInterrupted,
+    required this.googleAuthErrorGeneric,
+    required this.dashboard,
+    required this.quizHistory,
+    required this.seeAll,
+    required this.averageValue,
+    required this.dailyQuizValue,
+    required this.weeklyQuizValue,
+    required this.monthlyQuizValue,
+    required this.competitorName,
+    required this.quranicScience,
+    required this.questionsCountLabel,
+    required this.greeting,
+    required this.timer,
+    required this.notifications,
+    required this.featureDua,
+    required this.featureDijpr,
+    required this.featureAsmaUlHusna,
+    required this.featureQuizAndLearn,
+    required this.zakatCalculator,
+    required this.ageCalculate,
+    required this.home,
+    required this.todaysHighestValue,
+    required this.todays2ndHighest,
+    required this.yesterdaysHighest,
+    required this.khalidSaifullah,
+    required this.myPositionInMonth,
+    required this.firstInTheMonth,
+    required this.secondInTheMonth,
+    required this.lastMonthWinner,
+    required this.sehri,
+    required this.iftar,
+    required this.hijriDatePlaceholder,
+    required this.bengaliDatePlaceholder,
+    required this.gregorianDatePlaceholder,
+    required this.locationPlaceholder,
+    required this.viewPrayerTimes,
+    required this.sunrise,
+    required this.sunset,
+    required this.trishal,
+    required this.sunriseTimePlaceholder,
+    required this.sunsetTimePlaceholder,
+    required this.dhuhrPrayerTime,
+    required this.prohibitedPrayerTimes,
+    required this.jawaal,
+    required this.prayerTimesTitle,
+    required this.hijriDateUnavailable,
+    required this.nextPrefix,
+    required this.prayerTimeSuffix,
+    required this.prayerFajr,
+    required this.prayerDhuhr,
+    required this.prayerAsr,
+    required this.prayerMaghribAndIftar,
+    required this.prayerIsha,
+    required this.learning,
+    required this.explore,
+    required this.exploreQuranicSciences,
+    required this.exploreDailyLife,
+    required this.exploreIslamicHistory,
+    required this.articlesCountLabel,
+    required this.recentArticles,
+    required this.articleTitleSabr,
+    required this.articleTagIslamicGuidance,
+    required this.articleExcerptSabr,
+    required this.seeMore,
+    required this.postDatePlaceholder,
+    required this.allArticles,
+    required this.articlesDetails,
+    required this.testLearning,
+    required this.articleFullTextSabr,
+    required this.questionProgressLabel,
+    required this.questionsTitlePlaceholder,
+    required this.answerLabelPrefix,
+    required this.quizTimingProgress,
+    required this.previous,
+    required this.next,
+    required this.timesRemainingLabel,
+    required this.quizScore,
+    required this.testSubjectSabr,
+    required this.excellentWorkMessage,
+    required this.timeSpent,
+    required this.accuracy,
+    required this.accuracyHigh,
+    required this.whatsNext,
+    required this.whatsNextMessage,
+    required this.continueToNext,
+    required this.retryQuiz,
+    required this.overallScore,
+    required this.correctAnswers,
+    required this.incorrectAnswers,
+    required this.correctAnswersMessage,
+    required this.incorrectAnswersMessage,
+    required this.viewCorrectAnswer,
+    required this.viewIncorrectAnswer,
+    required this.plannerPlanOne,
+    required this.plannerPlanTwo,
+    required this.createPlan,
+    required this.myPlan,
+    required this.completePlan,
+    required this.noCompletedPlansMessage,
+    required this.getStart,
+    required this.createPlanHeader,
+    required this.planNameLabel,
+    required this.writeHereHint,
+    required this.selectQuizCategory,
+    required this.egQuranicScienceHint,
+    required this.selectQuiz,
+    required this.egQuiz1Hint,
+    required this.add,
+    required this.create,
+    required this.addMore,
+    required this.categories,
+    required this.quizzesCountLabel,
+    required this.seerahAndHistory,
+    required this.islamicManners,
+    required this.completeTodaysChallenge,
+    required this.letsGetStart,
+    required this.highScore,
+    required this.quizQuestionProgressLabel,
+    required this.fiftyFiftyChance,
+    required this.youCompletedTodaysChallenge,
+    required this.todaysPointsLabel,
+    required this.completedHistory,
+    required this.unableToLoadQuizHistory,
+    required this.tryAgain,
+    required this.questionsWord,
+    required this.learn,
+    required this.planner,
   });
 
   final String noorify;
@@ -246,6 +391,186 @@ class AppText {
   final String monthOctober;
   final String monthNovember;
   final String monthDecember;
+
+  // Shared social labels
+  final String google;
+  final String facebook;
+
+  // Auth error messages
+  final String authErrorInvalidEmail;
+  final String authErrorUserDisabled;
+  final String authErrorWrongCredentials;
+  final String authErrorAccountNotPasswordBased;
+  final String authErrorEmailInUse;
+  final String authErrorWeakPassword;
+  final String authErrorOperationNotAllowed;
+  final String authErrorRequiresRecentLogin;
+  final String authErrorAccountExistsDifferentCredential;
+  final String authErrorCredentialAlreadyInUse;
+  final String authErrorTooManyRequests;
+  final String authErrorNetworkFailed;
+  final String authErrorGeneric;
+  final String googleAuthErrorNotConfigured;
+  final String googleAuthErrorUiUnavailable;
+  final String googleAuthErrorInterrupted;
+  final String googleAuthErrorGeneric;
+
+  // Dashboard feature
+  final String dashboard;
+  final String quizHistory;
+  final String seeAll;
+  final String averageValue;
+  final String dailyQuizValue;
+  final String weeklyQuizValue;
+  final String monthlyQuizValue;
+  final String competitorName;
+  final String quranicScience;
+  final String questionsCountLabel;
+
+  // Home feature
+  final String greeting;
+  final String timer;
+  final String notifications;
+  final String featureDua;
+  final String featureDijpr;
+  final String featureAsmaUlHusna;
+  final String featureQuizAndLearn;
+  final String zakatCalculator;
+  final String ageCalculate;
+  final String home;
+  final String todaysHighestValue;
+  final String todays2ndHighest;
+  final String yesterdaysHighest;
+  final String khalidSaifullah;
+  final String myPositionInMonth;
+  final String firstInTheMonth;
+  final String secondInTheMonth;
+  final String lastMonthWinner;
+  final String sehri;
+  final String iftar;
+  final String hijriDatePlaceholder;
+  final String bengaliDatePlaceholder;
+  final String gregorianDatePlaceholder;
+  final String locationPlaceholder;
+  final String viewPrayerTimes;
+  final String sunrise;
+  final String sunset;
+  final String trishal;
+  final String sunriseTimePlaceholder;
+  final String sunsetTimePlaceholder;
+  final String dhuhrPrayerTime;
+  final String prohibitedPrayerTimes;
+  final String jawaal;
+  final String prayerTimesTitle;
+  final String hijriDateUnavailable;
+  final String nextPrefix;
+  final String prayerTimeSuffix;
+  final String prayerFajr;
+  final String prayerDhuhr;
+  final String prayerAsr;
+  final String prayerMaghribAndIftar;
+  final String prayerIsha;
+
+  // Learning feature
+  final String learning;
+  final String explore;
+  final String exploreQuranicSciences;
+  final String exploreDailyLife;
+  final String exploreIslamicHistory;
+  final String articlesCountLabel;
+  final String recentArticles;
+  final String articleTitleSabr;
+  final String articleTagIslamicGuidance;
+  final String articleExcerptSabr;
+  final String seeMore;
+  final String postDatePlaceholder;
+  final String allArticles;
+  final String articlesDetails;
+  final String testLearning;
+  final String articleFullTextSabr;
+  final String questionProgressLabel;
+  final String questionsTitlePlaceholder;
+  final String answerLabelPrefix;
+  final String quizTimingProgress;
+  final String previous;
+  final String next;
+  final String timesRemainingLabel;
+  final String quizScore;
+  final String testSubjectSabr;
+  final String excellentWorkMessage;
+  final String timeSpent;
+  final String accuracy;
+  final String accuracyHigh;
+  final String whatsNext;
+  final String whatsNextMessage;
+  final String continueToNext;
+  final String retryQuiz;
+  final String overallScore;
+  final String correctAnswers;
+  final String incorrectAnswers;
+  final String correctAnswersMessage;
+  final String incorrectAnswersMessage;
+  final String viewCorrectAnswer;
+  final String viewIncorrectAnswer;
+
+  // Planner feature
+  final String plannerPlanOne;
+  final String plannerPlanTwo;
+  final String createPlan;
+  final String myPlan;
+  final String completePlan;
+  final String noCompletedPlansMessage;
+  final String getStart;
+  final String createPlanHeader;
+  final String planNameLabel;
+  final String writeHereHint;
+  final String selectQuizCategory;
+  final String egQuranicScienceHint;
+  final String selectQuiz;
+  final String egQuiz1Hint;
+  final String add;
+  final String create;
+  final String addMore;
+
+  // Quiz feature
+  final String categories;
+  final String quizzesCountLabel;
+  final String seerahAndHistory;
+  final String islamicManners;
+  final String completeTodaysChallenge;
+  final String letsGetStart;
+  final String highScore;
+  final String quizQuestionProgressLabel;
+  final String fiftyFiftyChance;
+  final String youCompletedTodaysChallenge;
+  final String todaysPointsLabel;
+  final String completedHistory;
+  final String unableToLoadQuizHistory;
+  final String tryAgain;
+  final String questionsWord;
+  final String learn;
+  final String planner;
+
+  String categoryLabel(String key) {
+    switch (key) {
+      case 'Fardh Prayer':
+        return categoryFardhPrayer;
+      case 'Sunnah and Witr':
+        return categorySunnahAndWitr;
+      case 'Quran':
+        return categoryQuran;
+      case 'Nafl Salat':
+        return categoryNaflSalat;
+      case 'Hadith':
+        return categoryHadith;
+      case 'Quiz':
+        return categoryQuiz;
+      case 'Nafl & more':
+        return categoryNaflAndMore;
+      default:
+        return key;
+    }
+  }
 
   List<String> get weekdayNames => [
     weekdayMonday,
@@ -603,6 +928,555 @@ class AppText {
         'monthDecember',
         fallback?.monthDecember ?? '',
       ),
+      google: _read(map, 'google', fallback?.google ?? ''),
+      facebook: _read(map, 'facebook', fallback?.facebook ?? ''),
+      authErrorInvalidEmail: _read(
+        map,
+        'authErrorInvalidEmail',
+        fallback?.authErrorInvalidEmail ?? '',
+      ),
+      authErrorUserDisabled: _read(
+        map,
+        'authErrorUserDisabled',
+        fallback?.authErrorUserDisabled ?? '',
+      ),
+      authErrorWrongCredentials: _read(
+        map,
+        'authErrorWrongCredentials',
+        fallback?.authErrorWrongCredentials ?? '',
+      ),
+      authErrorAccountNotPasswordBased: _read(
+        map,
+        'authErrorAccountNotPasswordBased',
+        fallback?.authErrorAccountNotPasswordBased ?? '',
+      ),
+      authErrorEmailInUse: _read(
+        map,
+        'authErrorEmailInUse',
+        fallback?.authErrorEmailInUse ?? '',
+      ),
+      authErrorWeakPassword: _read(
+        map,
+        'authErrorWeakPassword',
+        fallback?.authErrorWeakPassword ?? '',
+      ),
+      authErrorOperationNotAllowed: _read(
+        map,
+        'authErrorOperationNotAllowed',
+        fallback?.authErrorOperationNotAllowed ?? '',
+      ),
+      authErrorRequiresRecentLogin: _read(
+        map,
+        'authErrorRequiresRecentLogin',
+        fallback?.authErrorRequiresRecentLogin ?? '',
+      ),
+      authErrorAccountExistsDifferentCredential: _read(
+        map,
+        'authErrorAccountExistsDifferentCredential',
+        fallback?.authErrorAccountExistsDifferentCredential ?? '',
+      ),
+      authErrorCredentialAlreadyInUse: _read(
+        map,
+        'authErrorCredentialAlreadyInUse',
+        fallback?.authErrorCredentialAlreadyInUse ?? '',
+      ),
+      authErrorTooManyRequests: _read(
+        map,
+        'authErrorTooManyRequests',
+        fallback?.authErrorTooManyRequests ?? '',
+      ),
+      authErrorNetworkFailed: _read(
+        map,
+        'authErrorNetworkFailed',
+        fallback?.authErrorNetworkFailed ?? '',
+      ),
+      authErrorGeneric: _read(
+        map,
+        'authErrorGeneric',
+        fallback?.authErrorGeneric ?? '',
+      ),
+      googleAuthErrorNotConfigured: _read(
+        map,
+        'googleAuthErrorNotConfigured',
+        fallback?.googleAuthErrorNotConfigured ?? '',
+      ),
+      googleAuthErrorUiUnavailable: _read(
+        map,
+        'googleAuthErrorUiUnavailable',
+        fallback?.googleAuthErrorUiUnavailable ?? '',
+      ),
+      googleAuthErrorInterrupted: _read(
+        map,
+        'googleAuthErrorInterrupted',
+        fallback?.googleAuthErrorInterrupted ?? '',
+      ),
+      googleAuthErrorGeneric: _read(
+        map,
+        'googleAuthErrorGeneric',
+        fallback?.googleAuthErrorGeneric ?? '',
+      ),
+      dashboard: _read(map, 'dashboard', fallback?.dashboard ?? ''),
+      quizHistory: _read(map, 'quizHistory', fallback?.quizHistory ?? ''),
+      seeAll: _read(map, 'seeAll', fallback?.seeAll ?? ''),
+      averageValue: _read(map, 'averageValue', fallback?.averageValue ?? ''),
+      dailyQuizValue: _read(
+        map,
+        'dailyQuizValue',
+        fallback?.dailyQuizValue ?? '',
+      ),
+      weeklyQuizValue: _read(
+        map,
+        'weeklyQuizValue',
+        fallback?.weeklyQuizValue ?? '',
+      ),
+      monthlyQuizValue: _read(
+        map,
+        'monthlyQuizValue',
+        fallback?.monthlyQuizValue ?? '',
+      ),
+      competitorName: _read(
+        map,
+        'competitorName',
+        fallback?.competitorName ?? '',
+      ),
+      quranicScience: _read(
+        map,
+        'quranicScience',
+        fallback?.quranicScience ?? '',
+      ),
+      questionsCountLabel: _read(
+        map,
+        'questionsCountLabel',
+        fallback?.questionsCountLabel ?? '',
+      ),
+      greeting: _read(map, 'greeting', fallback?.greeting ?? ''),
+      timer: _read(map, 'timer', fallback?.timer ?? ''),
+      notifications: _read(
+        map,
+        'notifications',
+        fallback?.notifications ?? '',
+      ),
+      featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
+      featureDijpr: _read(map, 'featureDijpr', fallback?.featureDijpr ?? ''),
+      featureAsmaUlHusna: _read(
+        map,
+        'featureAsmaUlHusna',
+        fallback?.featureAsmaUlHusna ?? '',
+      ),
+      featureQuizAndLearn: _read(
+        map,
+        'featureQuizAndLearn',
+        fallback?.featureQuizAndLearn ?? '',
+      ),
+      zakatCalculator: _read(
+        map,
+        'zakatCalculator',
+        fallback?.zakatCalculator ?? '',
+      ),
+      ageCalculate: _read(
+        map,
+        'ageCalculate',
+        fallback?.ageCalculate ?? '',
+      ),
+      home: _read(map, 'home', fallback?.home ?? ''),
+      todaysHighestValue: _read(
+        map,
+        'todaysHighestValue',
+        fallback?.todaysHighestValue ?? '',
+      ),
+      todays2ndHighest: _read(
+        map,
+        'todays2ndHighest',
+        fallback?.todays2ndHighest ?? '',
+      ),
+      yesterdaysHighest: _read(
+        map,
+        'yesterdaysHighest',
+        fallback?.yesterdaysHighest ?? '',
+      ),
+      khalidSaifullah: _read(
+        map,
+        'khalidSaifullah',
+        fallback?.khalidSaifullah ?? '',
+      ),
+      myPositionInMonth: _read(
+        map,
+        'myPositionInMonth',
+        fallback?.myPositionInMonth ?? '',
+      ),
+      firstInTheMonth: _read(
+        map,
+        'firstInTheMonth',
+        fallback?.firstInTheMonth ?? '',
+      ),
+      secondInTheMonth: _read(
+        map,
+        'secondInTheMonth',
+        fallback?.secondInTheMonth ?? '',
+      ),
+      lastMonthWinner: _read(
+        map,
+        'lastMonthWinner',
+        fallback?.lastMonthWinner ?? '',
+      ),
+      sehri: _read(map, 'sehri', fallback?.sehri ?? ''),
+      iftar: _read(map, 'iftar', fallback?.iftar ?? ''),
+      hijriDatePlaceholder: _read(
+        map,
+        'hijriDatePlaceholder',
+        fallback?.hijriDatePlaceholder ?? '',
+      ),
+      bengaliDatePlaceholder: _read(
+        map,
+        'bengaliDatePlaceholder',
+        fallback?.bengaliDatePlaceholder ?? '',
+      ),
+      gregorianDatePlaceholder: _read(
+        map,
+        'gregorianDatePlaceholder',
+        fallback?.gregorianDatePlaceholder ?? '',
+      ),
+      locationPlaceholder: _read(
+        map,
+        'locationPlaceholder',
+        fallback?.locationPlaceholder ?? '',
+      ),
+      viewPrayerTimes: _read(
+        map,
+        'viewPrayerTimes',
+        fallback?.viewPrayerTimes ?? '',
+      ),
+      sunrise: _read(map, 'sunrise', fallback?.sunrise ?? ''),
+      sunset: _read(map, 'sunset', fallback?.sunset ?? ''),
+      trishal: _read(map, 'trishal', fallback?.trishal ?? ''),
+      sunriseTimePlaceholder: _read(
+        map,
+        'sunriseTimePlaceholder',
+        fallback?.sunriseTimePlaceholder ?? '',
+      ),
+      sunsetTimePlaceholder: _read(
+        map,
+        'sunsetTimePlaceholder',
+        fallback?.sunsetTimePlaceholder ?? '',
+      ),
+      dhuhrPrayerTime: _read(
+        map,
+        'dhuhrPrayerTime',
+        fallback?.dhuhrPrayerTime ?? '',
+      ),
+      prohibitedPrayerTimes: _read(
+        map,
+        'prohibitedPrayerTimes',
+        fallback?.prohibitedPrayerTimes ?? '',
+      ),
+      jawaal: _read(map, 'jawaal', fallback?.jawaal ?? ''),
+      prayerTimesTitle: _read(
+        map,
+        'prayerTimesTitle',
+        fallback?.prayerTimesTitle ?? '',
+      ),
+      hijriDateUnavailable: _read(
+        map,
+        'hijriDateUnavailable',
+        fallback?.hijriDateUnavailable ?? '',
+      ),
+      nextPrefix: _read(map, 'nextPrefix', fallback?.nextPrefix ?? ''),
+      prayerTimeSuffix: _read(
+        map,
+        'prayerTimeSuffix',
+        fallback?.prayerTimeSuffix ?? '',
+      ),
+      prayerFajr: _read(map, 'prayerFajr', fallback?.prayerFajr ?? ''),
+      prayerDhuhr: _read(map, 'prayerDhuhr', fallback?.prayerDhuhr ?? ''),
+      prayerAsr: _read(map, 'prayerAsr', fallback?.prayerAsr ?? ''),
+      prayerMaghribAndIftar: _read(
+        map,
+        'prayerMaghribAndIftar',
+        fallback?.prayerMaghribAndIftar ?? '',
+      ),
+      prayerIsha: _read(map, 'prayerIsha', fallback?.prayerIsha ?? ''),
+      learning: _read(map, 'learning', fallback?.learning ?? ''),
+      explore: _read(map, 'explore', fallback?.explore ?? ''),
+      exploreQuranicSciences: _read(
+        map,
+        'exploreQuranicSciences',
+        fallback?.exploreQuranicSciences ?? '',
+      ),
+      exploreDailyLife: _read(
+        map,
+        'exploreDailyLife',
+        fallback?.exploreDailyLife ?? '',
+      ),
+      exploreIslamicHistory: _read(
+        map,
+        'exploreIslamicHistory',
+        fallback?.exploreIslamicHistory ?? '',
+      ),
+      articlesCountLabel: _read(
+        map,
+        'articlesCountLabel',
+        fallback?.articlesCountLabel ?? '',
+      ),
+      recentArticles: _read(
+        map,
+        'recentArticles',
+        fallback?.recentArticles ?? '',
+      ),
+      articleTitleSabr: _read(
+        map,
+        'articleTitleSabr',
+        fallback?.articleTitleSabr ?? '',
+      ),
+      articleTagIslamicGuidance: _read(
+        map,
+        'articleTagIslamicGuidance',
+        fallback?.articleTagIslamicGuidance ?? '',
+      ),
+      articleExcerptSabr: _read(
+        map,
+        'articleExcerptSabr',
+        fallback?.articleExcerptSabr ?? '',
+      ),
+      seeMore: _read(map, 'seeMore', fallback?.seeMore ?? ''),
+      postDatePlaceholder: _read(
+        map,
+        'postDatePlaceholder',
+        fallback?.postDatePlaceholder ?? '',
+      ),
+      allArticles: _read(
+        map,
+        'allArticles',
+        fallback?.allArticles ?? '',
+      ),
+      articlesDetails: _read(
+        map,
+        'articlesDetails',
+        fallback?.articlesDetails ?? '',
+      ),
+      testLearning: _read(
+        map,
+        'testLearning',
+        fallback?.testLearning ?? '',
+      ),
+      articleFullTextSabr: _read(
+        map,
+        'articleFullTextSabr',
+        fallback?.articleFullTextSabr ?? '',
+      ),
+      questionProgressLabel: _read(
+        map,
+        'questionProgressLabel',
+        fallback?.questionProgressLabel ?? '',
+      ),
+      questionsTitlePlaceholder: _read(
+        map,
+        'questionsTitlePlaceholder',
+        fallback?.questionsTitlePlaceholder ?? '',
+      ),
+      answerLabelPrefix: _read(
+        map,
+        'answerLabelPrefix',
+        fallback?.answerLabelPrefix ?? '',
+      ),
+      quizTimingProgress: _read(
+        map,
+        'quizTimingProgress',
+        fallback?.quizTimingProgress ?? '',
+      ),
+      previous: _read(map, 'previous', fallback?.previous ?? ''),
+      next: _read(map, 'next', fallback?.next ?? ''),
+      timesRemainingLabel: _read(
+        map,
+        'timesRemainingLabel',
+        fallback?.timesRemainingLabel ?? '',
+      ),
+      quizScore: _read(map, 'quizScore', fallback?.quizScore ?? ''),
+      testSubjectSabr: _read(
+        map,
+        'testSubjectSabr',
+        fallback?.testSubjectSabr ?? '',
+      ),
+      excellentWorkMessage: _read(
+        map,
+        'excellentWorkMessage',
+        fallback?.excellentWorkMessage ?? '',
+      ),
+      timeSpent: _read(map, 'timeSpent', fallback?.timeSpent ?? ''),
+      accuracy: _read(map, 'accuracy', fallback?.accuracy ?? ''),
+      accuracyHigh: _read(
+        map,
+        'accuracyHigh',
+        fallback?.accuracyHigh ?? '',
+      ),
+      whatsNext: _read(map, 'whatsNext', fallback?.whatsNext ?? ''),
+      whatsNextMessage: _read(
+        map,
+        'whatsNextMessage',
+        fallback?.whatsNextMessage ?? '',
+      ),
+      continueToNext: _read(
+        map,
+        'continueToNext',
+        fallback?.continueToNext ?? '',
+      ),
+      retryQuiz: _read(map, 'retryQuiz', fallback?.retryQuiz ?? ''),
+      overallScore: _read(
+        map,
+        'overallScore',
+        fallback?.overallScore ?? '',
+      ),
+      correctAnswers: _read(
+        map,
+        'correctAnswers',
+        fallback?.correctAnswers ?? '',
+      ),
+      incorrectAnswers: _read(
+        map,
+        'incorrectAnswers',
+        fallback?.incorrectAnswers ?? '',
+      ),
+      correctAnswersMessage: _read(
+        map,
+        'correctAnswersMessage',
+        fallback?.correctAnswersMessage ?? '',
+      ),
+      incorrectAnswersMessage: _read(
+        map,
+        'incorrectAnswersMessage',
+        fallback?.incorrectAnswersMessage ?? '',
+      ),
+      viewCorrectAnswer: _read(
+        map,
+        'viewCorrectAnswer',
+        fallback?.viewCorrectAnswer ?? '',
+      ),
+      viewIncorrectAnswer: _read(
+        map,
+        'viewIncorrectAnswer',
+        fallback?.viewIncorrectAnswer ?? '',
+      ),
+      plannerPlanOne: _read(
+        map,
+        'plannerPlanOne',
+        fallback?.plannerPlanOne ?? '',
+      ),
+      plannerPlanTwo: _read(
+        map,
+        'plannerPlanTwo',
+        fallback?.plannerPlanTwo ?? '',
+      ),
+      createPlan: _read(map, 'createPlan', fallback?.createPlan ?? ''),
+      myPlan: _read(map, 'myPlan', fallback?.myPlan ?? ''),
+      completePlan: _read(
+        map,
+        'completePlan',
+        fallback?.completePlan ?? '',
+      ),
+      noCompletedPlansMessage: _read(
+        map,
+        'noCompletedPlansMessage',
+        fallback?.noCompletedPlansMessage ?? '',
+      ),
+      getStart: _read(map, 'getStart', fallback?.getStart ?? ''),
+      createPlanHeader: _read(
+        map,
+        'createPlanHeader',
+        fallback?.createPlanHeader ?? '',
+      ),
+      planNameLabel: _read(
+        map,
+        'planNameLabel',
+        fallback?.planNameLabel ?? '',
+      ),
+      writeHereHint: _read(
+        map,
+        'writeHereHint',
+        fallback?.writeHereHint ?? '',
+      ),
+      selectQuizCategory: _read(
+        map,
+        'selectQuizCategory',
+        fallback?.selectQuizCategory ?? '',
+      ),
+      egQuranicScienceHint: _read(
+        map,
+        'egQuranicScienceHint',
+        fallback?.egQuranicScienceHint ?? '',
+      ),
+      selectQuiz: _read(map, 'selectQuiz', fallback?.selectQuiz ?? ''),
+      egQuiz1Hint: _read(
+        map,
+        'egQuiz1Hint',
+        fallback?.egQuiz1Hint ?? '',
+      ),
+      add: _read(map, 'add', fallback?.add ?? ''),
+      create: _read(map, 'create', fallback?.create ?? ''),
+      addMore: _read(map, 'addMore', fallback?.addMore ?? ''),
+      categories: _read(map, 'categories', fallback?.categories ?? ''),
+      quizzesCountLabel: _read(
+        map,
+        'quizzesCountLabel',
+        fallback?.quizzesCountLabel ?? '',
+      ),
+      seerahAndHistory: _read(
+        map,
+        'seerahAndHistory',
+        fallback?.seerahAndHistory ?? '',
+      ),
+      islamicManners: _read(
+        map,
+        'islamicManners',
+        fallback?.islamicManners ?? '',
+      ),
+      completeTodaysChallenge: _read(
+        map,
+        'completeTodaysChallenge',
+        fallback?.completeTodaysChallenge ?? '',
+      ),
+      letsGetStart: _read(
+        map,
+        'letsGetStart',
+        fallback?.letsGetStart ?? '',
+      ),
+      highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
+      quizQuestionProgressLabel: _read(
+        map,
+        'quizQuestionProgressLabel',
+        fallback?.quizQuestionProgressLabel ?? '',
+      ),
+      fiftyFiftyChance: _read(
+        map,
+        'fiftyFiftyChance',
+        fallback?.fiftyFiftyChance ?? '',
+      ),
+      youCompletedTodaysChallenge: _read(
+        map,
+        'youCompletedTodaysChallenge',
+        fallback?.youCompletedTodaysChallenge ?? '',
+      ),
+      todaysPointsLabel: _read(
+        map,
+        'todaysPointsLabel',
+        fallback?.todaysPointsLabel ?? '',
+      ),
+      completedHistory: _read(
+        map,
+        'completedHistory',
+        fallback?.completedHistory ?? '',
+      ),
+      unableToLoadQuizHistory: _read(
+        map,
+        'unableToLoadQuizHistory',
+        fallback?.unableToLoadQuizHistory ?? '',
+      ),
+      tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
+      questionsWord: _read(
+        map,
+        'questionsWord',
+        fallback?.questionsWord ?? '',
+      ),
+      learn: _read(map, 'learn', fallback?.learn ?? ''),
+      planner: _read(map, 'planner', fallback?.planner ?? ''),
     );
   }
 

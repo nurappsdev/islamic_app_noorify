@@ -75,7 +75,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
           children: [
             AlarmBackHeader(
               title: appText.setAlarm,
-              subtitle: widget.period.displayName,
+              subtitle: widget.period.displayName(appText),
             ),
             SizedBox(height: 20.h),
             _TimeWheel(

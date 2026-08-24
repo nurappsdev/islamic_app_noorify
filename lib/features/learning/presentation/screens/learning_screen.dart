@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 class LearningScreen extends StatelessWidget {
@@ -10,6 +11,7 @@ class LearningScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -20,23 +22,32 @@ class LearningScreen extends StatelessWidget {
               children: [
                 _LearningHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 22.h),
-                const _SectionTitle('Explore'),
+                _SectionTitle(appText.explore),
                 SizedBox(height: 15.h),
                 SizedBox(
                   height: 129.h,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     clipBehavior: Clip.none,
-                    children: const [
-                      _ExploreCard('Quranic Sciences', '7 Articles'),
-                      _ExploreCard('Daily life', '5 Articles'),
-                      _ExploreCard('Islamic history', '8 Articles'),
+                    children: [
+                      _ExploreCard(
+                        appText.exploreQuranicSciences,
+                        '7 ${appText.articlesCountLabel}',
+                      ),
+                      _ExploreCard(
+                        appText.exploreDailyLife,
+                        '5 ${appText.articlesCountLabel}',
+                      ),
+                      _ExploreCard(
+                        appText.exploreIslamicHistory,
+                        '8 ${appText.articlesCountLabel}',
+                      ),
                     ],
                   ),
                 ),
                 SizedBox(height: 21.h),
                 _SectionTitle(
-                  'Recent articles',
+                  appText.recentArticles,
                   onSeeAll: () => Navigator.of(
                     context,
                   ).pushNamed(RouteNames.learningArticles),
@@ -78,7 +89,7 @@ class _LearningHeader extends StatelessWidget {
           ),
         ),
         Text(
-          'Learning',
+          AppText.of(context).learning,
           style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
         ),
       ],
@@ -102,7 +113,7 @@ class _SectionTitle extends StatelessWidget {
       TextButton(
         onPressed: onSeeAll ?? () {},
         child: Text(
-          'See All',
+          AppText.of(context).seeAll,
           style: TextStyle(color: Colors.black, fontSize: 12.sp),
         ),
       ),
@@ -138,7 +149,7 @@ class _ExploreCard extends StatelessWidget {
           onPressed: () {},
           iconAlignment: IconAlignment.end,
           icon: Icon(Icons.north_east_rounded, size: 16.sp),
-          label: const Text('Explore'),
+          label: Text(AppText.of(context).explore),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF637354),
             side: const BorderSide(color: AppColor.primary),
@@ -158,63 +169,69 @@ class _ArticleCard extends StatelessWidget {
   const _ArticleCard();
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 9.h),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF2F6E7),
-      border: Border.all(color: const Color(0xFFDDE8B5)),
-      borderRadius: BorderRadius.circular(12.r),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 3.w),
-          child: Text(
-            'The Power of Sabr in Islam',
-            style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Container(
+      padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 9.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F6E7),
+        border: Border.all(color: const Color(0xFFDDE8B5)),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 3.w),
+            child: Text(
+              appText.articleTitleSabr,
+              style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
+            ),
           ),
-        ),
-        SizedBox(height: 7.h),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFDDE8B5)),
-            borderRadius: BorderRadius.circular(14.r),
+          SizedBox(height: 7.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFDDE8B5)),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Text(
+              appText.articleTagIslamicGuidance,
+              style: TextStyle(fontSize: 11.sp),
+            ),
           ),
-          child: Text('Islamic Guidance', style: TextStyle(fontSize: 11.sp)),
-        ),
-        SizedBox(height: 7.h),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(11.r),
-          child: Image.asset(
-            'assets/islamicImg.png',
-            width: double.infinity,
-            height: 160.h,
-            fit: BoxFit.cover,
+          SizedBox(height: 7.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(11.r),
+            child: Image.asset(
+              'assets/islamicImg.png',
+              width: double.infinity,
+              height: 160.h,
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        SizedBox(height: 7.h),
-        Text(
-          'Learn how patience helps Muslims remain steadfast\nthrough difficulties and strengthens their trust in Allah.',
-          style: TextStyle(fontSize: 11.sp, height: 1.45),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          'See More...',
-          style: TextStyle(
-            color: AppColor.primary,
-            decoration: TextDecoration.underline,
-            fontSize: 12.sp,
+          SizedBox(height: 7.h),
+          Text(
+            appText.articleExcerptSabr,
+            style: TextStyle(fontSize: 11.sp, height: 1.45),
           ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          'Post Date: August 17, 2026   10:00 AM',
-          style: TextStyle(color: const Color(0xFFB0C573), fontSize: 11.sp),
-        ),
-      ],
-    ),
-  );
+          SizedBox(height: 8.h),
+          Text(
+            appText.seeMore,
+            style: TextStyle(
+              color: AppColor.primary,
+              decoration: TextDecoration.underline,
+              fontSize: 12.sp,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            appText.postDatePlaceholder,
+            style: TextStyle(color: const Color(0xFFB0C573), fontSize: 11.sp),
+          ),
+        ],
+      ),
+    );
+  }
 }

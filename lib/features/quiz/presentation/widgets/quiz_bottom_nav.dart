@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 /// Navigation bar dedicated to the Quiz & Learn flow.
 ///
@@ -14,6 +15,7 @@ class QuizBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
       child: Container(
@@ -35,7 +37,7 @@ class QuizBottomNav extends StatelessWidget {
           children: [
             _QuizNavItem(
               icon: Icons.home_outlined,
-              label: 'Home',
+              label: appText.home,
               selected: selectedIndex == 0,
               onPressed: selectedIndex == 0
                   ? null
@@ -45,7 +47,7 @@ class QuizBottomNav extends StatelessWidget {
             ),
             _QuizNavItem(
               icon: Icons.lightbulb_outline_rounded,
-              label: 'Learn',
+              label: appText.learn,
               selected: selectedIndex == 1,
               onPressed: selectedIndex == 1
                   ? null
@@ -55,7 +57,7 @@ class QuizBottomNav extends StatelessWidget {
             ),
             _QuizNavItem(
               icon: Icons.fact_check_outlined,
-              label: 'Planner',
+              label: appText.planner,
               selected: selectedIndex == 2,
               onPressed: selectedIndex == 2
                   ? null
@@ -65,7 +67,7 @@ class QuizBottomNav extends StatelessWidget {
             ),
             _QuizNavItem(
               icon: Icons.grid_view_rounded,
-              label: 'Dashboard',
+              label: appText.dashboard,
               selected: selectedIndex == 3,
               onPressed: selectedIndex == 3
                   ? null

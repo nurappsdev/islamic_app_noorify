@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/learning/presentation/cubit/learning_test_cubit.dart';
 
 class LearningTestScreen extends StatelessWidget {
@@ -24,6 +25,7 @@ class _LearningTestView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selected = context.watch<LearningTestCubit>().state.selectedAnswers;
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -36,16 +38,22 @@ class _LearningTestView extends StatelessWidget {
               SizedBox(height: 20.h),
               const Center(child: _TestTimer()),
               SizedBox(height: 17.h),
-              Text('Question 12 of 20', style: TextStyle(fontSize: 13.sp)),
+              Text(
+                appText.questionProgressLabel,
+                style: TextStyle(fontSize: 13.sp),
+              ),
               SizedBox(height: 14.h),
               const _TestProgress(),
               SizedBox(height: 17.h),
-              Text('Questions title', style: TextStyle(fontSize: 13.sp)),
+              Text(
+                appText.questionsTitlePlaceholder,
+                style: TextStyle(fontSize: 13.sp),
+              ),
               SizedBox(height: 10.h),
               for (var index = 0; index < 5; index++) ...[
                 _TestAnswer(
                   letter: String.fromCharCode(97 + index),
-                  label: 'Answer ${index + 1}',
+                  label: '${appText.answerLabelPrefix} ${index + 1}',
                   selected: selected.contains(index),
                   onTap: () =>
                       context.read<LearningTestCubit>().toggleAnswer(index),
@@ -55,7 +63,7 @@ class _LearningTestView extends StatelessWidget {
               const Spacer(),
               Center(
                 child: Text(
-                  'This quiz timing progress',
+                  appText.quizTimingProgress,
                   style: TextStyle(
                     color: const Color(0xFF5D876A),
                     fontSize: 14.sp,
@@ -76,7 +84,7 @@ class _LearningTestView extends StatelessWidget {
                         side: const BorderSide(color: Color(0xFFD6D6D6)),
                       ),
                       child: Text(
-                        'Previous',
+                        appText.previous,
                         style: TextStyle(fontSize: 13.sp),
                       ),
                     ),
@@ -94,7 +102,10 @@ class _LearningTestView extends StatelessWidget {
                         disabledBackgroundColor: const Color(0xFFE2E2E2),
                         minimumSize: Size.fromHeight(42.h),
                       ),
-                      child: Text('Next', style: TextStyle(fontSize: 13.sp)),
+                      child: Text(
+                        appText.next,
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
                     ),
                   ),
                 ],
@@ -128,7 +139,7 @@ class _TestHeader extends StatelessWidget {
           ),
         ),
         Text(
-          'Quiz',
+          AppText.of(context).categoryQuiz,
           style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
         ),
       ],
@@ -151,7 +162,7 @@ class _TestTimer extends StatelessWidget {
         Icon(Icons.access_time_rounded, color: Colors.white, size: 21.sp),
         SizedBox(width: 9.w),
         Text(
-          'Times remaining : 07 : 03 sec',
+          AppText.of(context).timesRemainingLabel,
           style: TextStyle(color: Colors.white, fontSize: 13.sp),
         ),
       ],

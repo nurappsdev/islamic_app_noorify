@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/cubit/quiz_question_cubit.dart';
 
 class QuizQuestionScreen extends StatelessWidget {
@@ -21,7 +22,10 @@ class QuizQuestionScreen extends StatelessWidget {
 class _QuizQuestionView extends StatelessWidget {
   const _QuizQuestionView();
 
-  static const _answers = ['Answer 1', 'Answer 2', 'Answer 3', 'Answer 4'];
+  static List<String> _answers(AppText appText) => List.generate(
+    4,
+    (index) => '${appText.answerLabelPrefix} ${index + 1}',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,8 @@ class _QuizQuestionView extends StatelessWidget {
         .state
         .selectedAnswer;
     final canContinue = selectedAnswer != null;
+    final appText = AppText.of(context);
+    final answers = _answers(appText);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -43,16 +49,22 @@ class _QuizQuestionView extends StatelessWidget {
               SizedBox(height: 19.h),
               Center(child: const _TimerPill()),
               SizedBox(height: 18.h),
-              Text('Question 8 of 12', style: TextStyle(fontSize: 14.sp)),
+              Text(
+                appText.quizQuestionProgressLabel,
+                style: TextStyle(fontSize: 14.sp),
+              ),
               SizedBox(height: 14.h),
               const _QuestionProgress(),
               SizedBox(height: 17.h),
-              Text('Questions title', style: TextStyle(fontSize: 14.sp)),
+              Text(
+                appText.questionsTitlePlaceholder,
+                style: TextStyle(fontSize: 14.sp),
+              ),
               SizedBox(height: 10.h),
-              for (var index = 0; index < _answers.length; index++) ...[
+              for (var index = 0; index < answers.length; index++) ...[
                 _AnswerTile(
                   label: String.fromCharCode(97 + index),
-                  answer: _answers[index],
+                  answer: answers[index],
                   selected: selectedAnswer == index,
                   onTap: () =>
                       context.read<QuizQuestionCubit>().selectAnswer(index),
@@ -71,7 +83,7 @@ class _QuizQuestionView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(28.r),
                   ),
                   child: Text(
-                    '50/50  CHANCE',
+                    appText.fiftyFiftyChance,
                     style: TextStyle(
                       color: const Color(0xFF5F8671),
                       fontSize: 18.sp,
@@ -82,7 +94,7 @@ class _QuizQuestionView extends StatelessWidget {
               SizedBox(height: 21.h),
               Center(
                 child: Text(
-                  'This quiz timing progress',
+                  appText.quizTimingProgress,
                   style: TextStyle(
                     color: const Color(0xFF5D876A),
                     fontSize: 13.sp,
@@ -103,7 +115,7 @@ class _QuizQuestionView extends StatelessWidget {
                         side: BorderSide(color: const Color(0xFFE0E0E0)),
                       ),
                       child: Text(
-                        'Previous',
+                        appText.previous,
                         style: TextStyle(fontSize: 13.sp),
                       ),
                     ),
@@ -121,7 +133,10 @@ class _QuizQuestionView extends StatelessWidget {
                         disabledBackgroundColor: const Color(0xFFE2E2E2),
                         minimumSize: Size.fromHeight(45.h),
                       ),
-                      child: Text('Next', style: TextStyle(fontSize: 13.sp)),
+                      child: Text(
+                        appText.next,
+                        style: TextStyle(fontSize: 13.sp),
+                      ),
                     ),
                   ),
                 ],
@@ -156,7 +171,7 @@ class _QuizAppBar extends StatelessWidget {
           ),
         ),
         Text(
-          'Quiz',
+          AppText.of(context).categoryQuiz,
           style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
         ),
       ],
@@ -180,7 +195,7 @@ class _TimerPill extends StatelessWidget {
         Icon(Icons.access_time_rounded, color: Colors.white, size: 22.sp),
         SizedBox(width: 10.w),
         Text(
-          'Times remaining : 07 : 03 sec',
+          AppText.of(context).timesRemainingLabel,
           style: TextStyle(color: Colors.white, fontSize: 14.sp),
         ),
       ],

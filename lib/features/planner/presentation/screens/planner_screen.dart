@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
@@ -23,14 +24,24 @@ class PlannerScreen extends StatelessWidget {
 class _PlannerView extends StatelessWidget {
   const _PlannerView();
 
-  static const _plans = [
-    PlannerPlan(title: 'Plan 1', quizCount: 10, detailQuizCount: 4),
-    PlannerPlan(title: 'Plan 2', quizCount: 3, detailQuizCount: 3),
+  static List<PlannerPlan> _plans(AppText appText) => [
+    PlannerPlan(
+      title: appText.plannerPlanOne,
+      quizCount: 10,
+      detailQuizCount: 4,
+    ),
+    PlannerPlan(
+      title: appText.plannerPlanTwo,
+      quizCount: 3,
+      detailQuizCount: 3,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<PlannerCubit>().state;
+    final appText = AppText.of(context);
+    final plans = _plans(appText);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -53,7 +64,7 @@ class _PlannerView extends StatelessWidget {
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: Column(
                             children: [
-                              for (final plan in _plans) ...[
+                              for (final plan in plans) ...[
                                 _PlanCard(
                                   plan: plan,
                                   onGetStarted: () =>
@@ -92,7 +103,7 @@ class _PlannerView extends StatelessWidget {
                   ),
                   icon: Icon(Icons.edit_outlined, size: 20.sp),
                   label: Text(
-                    'Create Plan',
+                    appText.createPlan,
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
@@ -118,6 +129,7 @@ class _PlanTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Padding(
       padding: EdgeInsets.fromLTRB(72.w, 7.h, 72.w, 0),
       child: SizedBox(
@@ -125,7 +137,7 @@ class _PlanTabs extends StatelessWidget {
         child: Row(
           children: [
             _PlanTab(
-              label: 'My Plan',
+              label: appText.myPlan,
               selected: !showCompletedPlans,
               onPressed: () => onTabChanged(false),
             ),
@@ -142,7 +154,7 @@ class _PlanTabs extends StatelessWidget {
                   Align(
                     alignment: Alignment.center,
                     child: _PlanTab(
-                      label: 'Complete Plan',
+                      label: appText.completePlan,
                       selected: showCompletedPlans,
                       onPressed: () => onTabChanged(true),
                     ),
@@ -238,7 +250,7 @@ class _EmptyCompletedPlans extends StatelessWidget {
           ),
           SizedBox(height: 13.h),
           Text(
-            'You cannot complete any\nplan yet !',
+            AppText.of(context).noCompletedPlansMessage,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: const Color(0xFF989898),
@@ -260,6 +272,7 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       height: 76.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -286,7 +299,7 @@ class _PlanCard extends StatelessWidget {
                 ),
                 SizedBox(height: 7.h),
                 Text(
-                  '${plan.quizCount} Quiz',
+                  '${plan.quizCount} ${appText.categoryQuiz}',
                   style: TextStyle(
                     color: const Color(0xFF929BB6),
                     fontSize: 12.sp,
@@ -306,7 +319,7 @@ class _PlanCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
             ),
-            child: Text('Get Start', style: TextStyle(fontSize: 12.sp)),
+            child: Text(appText.getStart, style: TextStyle(fontSize: 12.sp)),
           ),
           SizedBox(width: 8.w),
           Icon(Icons.more_vert_rounded, color: Colors.black, size: 20.sp),

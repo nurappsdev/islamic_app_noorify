@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
@@ -87,6 +88,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return SizedBox(
       height: 319.h,
       child: Padding(
@@ -155,7 +157,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  '7 Safar 1444 Hijri',
+                                  appText.hijriDatePlaceholder,
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: Colors.black,
@@ -171,7 +173,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerRight,
                                 child: Text(
-                                  '7 Srabon 1433',
+                                  appText.bengaliDatePlaceholder,
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: Colors.black,
@@ -212,7 +214,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         child: Column(
                           children: [
                             Text(
-                              '24 July 2026',
+                              appText.gregorianDatePlaceholder,
                               style: homeSansStyle(
                                 fontSize: 15.sp,
                                 color: const Color(0xFF5B856F),
@@ -229,7 +231,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             ),
 
                             Text(
-                              'Mymensingh, Bangladesh',
+                              appText.locationPlaceholder,
                               style: homeSansStyle(
                                 fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
@@ -257,8 +259,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                           children: [
                             Expanded(
                               child: _PrayerEdgeTime(
-                                label: 'Sunrise, Trishal',
-                                time: 'at 5:23 AM',
+                                label: '${appText.sunrise}, ${appText.trishal}',
+                                time: appText.sunriseTimePlaceholder,
                                 isSunrise: true,
                               ),
                             ),
@@ -267,8 +269,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                             Expanded(
                               child: _PrayerEdgeTime(
-                                label: 'Sunset, Trishal',
-                                time: 'at 6:54 PM',
+                                label: '${appText.sunset}, ${appText.trishal}',
+                                time: appText.sunsetTimePlaceholder,
                                 isSunrise: false,
                               ),
                             ),
@@ -290,7 +292,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                 child: SizedBox.square(
                   dimension: 36.r,
                   child: IconButton(
-                    tooltip: 'View prayer times',
+                    tooltip: appText.viewPrayerTimes,
                     onPressed: () =>
                         Navigator.of(context).pushNamed(RouteNames.prayerTimes),
 

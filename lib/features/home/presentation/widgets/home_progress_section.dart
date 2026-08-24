@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
@@ -18,6 +19,7 @@ class HomeProgressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Column(
       children: [
         GridView.builder(
@@ -40,7 +42,10 @@ class HomeProgressSection extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 13.h),
             child: Column(
               children: [
-                Text('Nafl & more', style: homeSerifStyle(fontSize: 12.sp)),
+                Text(
+                  appText.categoryNaflAndMore,
+                  style: homeSerifStyle(fontSize: 12.sp),
+                ),
                 SizedBox(height: 6.h),
                 const _ProgressBar(value: .58),
                 SizedBox(height: 7.h),
@@ -77,6 +82,7 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return InkWell(
       borderRadius: BorderRadius.circular(16.r),
       onTap: () => _openAmolTracking(context, item.title),
@@ -87,7 +93,10 @@ class _ProgressCard extends StatelessWidget {
           children: [
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(item.title, style: homeSerifStyle(fontSize: 12.sp)),
+              child: Text(
+                appText.categoryLabel(item.title),
+                style: homeSerifStyle(fontSize: 12.sp),
+              ),
             ),
             SizedBox(height: 7.h),
             _ProgressBar(value: item.progress),

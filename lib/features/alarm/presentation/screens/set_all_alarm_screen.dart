@@ -192,7 +192,7 @@ class _AllAlarmRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        period.displayName,
+                        period.displayName(appText),
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
@@ -214,7 +214,8 @@ class _AllAlarmRow extends StatelessWidget {
                   ),
                 ),
                 Tooltip(
-                  message: '${appText.setAlarmFor} ${period.displayName}',
+                  message:
+                      '${appText.setAlarmFor} ${period.displayName(appText)}',
                   child: IconButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(

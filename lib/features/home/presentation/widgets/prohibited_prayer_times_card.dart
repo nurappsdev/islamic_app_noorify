@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class ProhibitedPrayerTimesCard extends StatelessWidget {
@@ -8,6 +9,7 @@ class ProhibitedPrayerTimesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return HomeCard(
       padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 9.h),
       backgroundColor: const Color(0xFFFFF4F4),
@@ -15,15 +17,21 @@ class ProhibitedPrayerTimesCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Prohibited Prayer Times',
+            appText.prohibitedPrayerTimes,
             style: homeSansStyle(fontSize: 12.sp),
           ),
           SizedBox(height: 9.h),
           Row(
-            children: const [
-              _ForbiddenTime(title: 'Sunrise', value: '05:21 - 05:36 PM'),
-              _ForbiddenTime(title: 'Jawaal', value: '12:03 - 12:05 PM'),
-              _ForbiddenTime(title: 'Sunset', value: '06:34 - 06:48 PM'),
+            children: [
+              _ForbiddenTime(
+                title: appText.sunrise,
+                value: '05:21 - 05:36 PM',
+              ),
+              _ForbiddenTime(title: appText.jawaal, value: '12:03 - 12:05 PM'),
+              _ForbiddenTime(
+                title: appText.sunset,
+                value: '06:34 - 06:48 PM',
+              ),
             ],
           ),
         ],

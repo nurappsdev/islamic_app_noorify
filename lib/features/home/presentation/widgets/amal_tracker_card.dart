@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
@@ -15,52 +16,54 @@ class AmalTrackerCard extends StatefulWidget {
 }
 
 class _AmalTrackerCardState extends State<AmalTrackerCard> {
-  static const _items = [
+  static const _itemCount = 8;
+
+  static List<_AmalTrackerItem> _items(AppText appText) => [
     _AmalTrackerItem(
-      title: 'Todays Amol track',
-      subtitle: 'Point : 30/40',
+      title: appText.todaysAmolTrack,
+      subtitle: '${appText.point} : 30/40',
       progressLabel: '86 %',
       progress: .86,
     ),
     _AmalTrackerItem(
-      title: 'Todays highest value',
-      subtitle: 'Point : 30.5/40',
+      title: appText.todaysHighestValue,
+      subtitle: '${appText.point} : 30.5/40',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'Todays 2nd highest',
-      subtitle: 'Point : 30.5/40',
+      title: appText.todays2ndHighest,
+      subtitle: '${appText.point} : 30.5/40',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'Yesterdays highest',
-      subtitle: 'Point : 30.5/40',
+      title: appText.yesterdaysHighest,
+      subtitle: '${appText.point} : 30.5/40',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'Abdullah Al-aziz',
-      subtitle: '1st In The Month\nPoint : 432/560',
+      title: appText.competitorName,
+      subtitle: '${appText.firstInTheMonth}\n${appText.point} : 432/560',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'Khalid Saifullah',
-      subtitle: '2nd In The Month\nPoint : 421/560',
+      title: appText.khalidSaifullah,
+      subtitle: '${appText.secondInTheMonth}\n${appText.point} : 421/560',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'Abdullah Al-aziz',
-      subtitle: 'Last Month Winner\nPoint : 930/1240',
+      title: appText.competitorName,
+      subtitle: '${appText.lastMonthWinner}\n${appText.point} : 930/1240',
       progressLabel: '86.9 %',
       progress: .869,
     ),
     _AmalTrackerItem(
-      title: 'My position in, July',
-      subtitle: 'Point : 30.5/40',
+      title: appText.myPositionInMonth,
+      subtitle: '${appText.point} : 30.5/40',
       progressLabel: '63 %',
       progress: .63,
       leadingText: '13',
@@ -77,7 +80,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     _pageController = PageController(viewportFraction: .98);
     _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!mounted || !_pageController.hasClients) return;
-      _currentPage = (_currentPage + 1) % _items.length;
+      _currentPage = (_currentPage + 1) % _itemCount;
       _pageController.animateToPage(
         _currentPage,
         duration: const Duration(milliseconds: 450),
@@ -95,6 +98,8 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final items = _items(appText);
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
@@ -103,13 +108,13 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
           height: 108.h,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: _items.length,
+            itemCount: items.length,
             onPageChanged: (index) => _currentPage = index,
             itemBuilder: (context, index) {
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 2.w),
                 child: _AmalSlide(
-                  item: _items[index],
+                  item: items[index],
                   isTodaysTrack: index == 0,
                 ),
               );
@@ -125,7 +130,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(6.r)),
             ),
             child: Text(
-              'Sehri : 4:09 AM     Iftar : 6:33 PM',
+              '${appText.sehri} : 4:09 AM     ${appText.iftar} : 6:33 PM',
               style: homeSansStyle(fontSize: 9.sp, color: Colors.white),
             ),
           ),

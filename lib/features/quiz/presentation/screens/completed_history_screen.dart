@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_history_item.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/cubit/quiz_cubit.dart';
 
@@ -10,6 +11,7 @@ class CompletedHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -32,7 +34,7 @@ class CompletedHistoryScreen extends StatelessWidget {
         ),
 
         title: Text(
-          'Completed History',
+          appText.completedHistory,
           style: TextStyle(
             color: const Color(0xFF84945F),
             fontSize: 20.sp,
@@ -48,7 +50,7 @@ class CompletedHistoryScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             case QuizStatus.failure:
               return _HistoryLoadFailure(
-                message: state.errorMessage ?? 'Unable to load quiz history.',
+                message: state.errorMessage ?? appText.unableToLoadQuizHistory,
               );
             case QuizStatus.success:
               return ListView.separated(
@@ -103,7 +105,7 @@ class _CompletedQuizCard extends StatelessWidget {
                 Text(result.title, style: TextStyle(fontSize: 14.sp)),
                 SizedBox(height: 6.h),
                 Text(
-                  '${result.questionCount} Questions',
+                  '${result.questionCount} ${AppText.of(context).questionsWord}',
                   style: TextStyle(
                     color: const Color(0xFFA1AD59),
                     fontSize: 12.sp,
@@ -167,7 +169,7 @@ class _HistoryLoadFailure extends StatelessWidget {
             OutlinedButton(
               onPressed: () =>
                   context.read<QuizCubit>().loadCompletedQuizHistory(),
-              child: const Text('Try again'),
+              child: Text(AppText.of(context).tryAgain),
             ),
           ],
         ),
