@@ -59,11 +59,16 @@ class ProfileScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(
-                      appText.seeAll,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        decoration: TextDecoration.underline,
+                    GestureDetector(
+                      onTap: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.familyMembers),
+                      child: Text(
+                        appText.seeAll,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],

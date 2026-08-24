@@ -289,6 +289,13 @@ class AppText {
     required this.appLanguage,
     required this.changePassword,
     required this.deleteAccount,
+    required this.languageTitle,
+    required this.bangla,
+    required this.english,
+    required this.defaultLabel,
+    required this.allFamilyMembers,
+    required this.familyMemberNameZulfikur,
+    required this.familyMemberNameAsif,
   });
 
   final String noorify;
@@ -594,6 +601,15 @@ class AppText {
   final String appLanguage;
   final String changePassword;
   final String deleteAccount;
+
+  // App language feature
+  final String languageTitle;
+  final String bangla;
+  final String english;
+  final String defaultLabel;
+  final String allFamilyMembers;
+  final String familyMemberNameZulfikur;
+  final String familyMemberNameAsif;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1588,6 +1604,33 @@ class AppText {
         map,
         'deleteAccount',
         fallback?.deleteAccount ?? '',
+      ),
+      languageTitle: _read(
+        map,
+        'languageTitle',
+        fallback?.languageTitle ?? '',
+      ),
+      bangla: _read(map, 'bangla', fallback?.bangla ?? ''),
+      english: _read(map, 'english', fallback?.english ?? ''),
+      defaultLabel: _read(
+        map,
+        'defaultLabel',
+        fallback?.defaultLabel ?? '',
+      ),
+      allFamilyMembers: _read(
+        map,
+        'allFamilyMembers',
+        fallback?.allFamilyMembers ?? '',
+      ),
+      familyMemberNameZulfikur: _read(
+        map,
+        'familyMemberNameZulfikur',
+        fallback?.familyMemberNameZulfikur ?? '',
+      ),
+      familyMemberNameAsif: _read(
+        map,
+        'familyMemberNameAsif',
+        fallback?.familyMemberNameAsif ?? '',
       ),
     );
   }

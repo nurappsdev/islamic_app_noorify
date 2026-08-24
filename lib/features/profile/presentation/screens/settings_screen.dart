@@ -1,27 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  static List<_SettingsItem> _items(AppText appText) => [
+  static List<_SettingsItem> _items(BuildContext context, AppText appText) => [
     _SettingsItem(appText.aboutUs, Icons.person_outline),
     _SettingsItem(appText.ourProducts, Icons.eco_outlined),
     _SettingsItem(appText.privacyPolicy, Icons.privacy_tip_outlined),
     _SettingsItem(appText.termsOfServices, Icons.description_outlined),
     _SettingsItem(appText.adminSupport, Icons.support_agent_outlined),
     _SettingsItem(appText.feedback, Icons.feedback_outlined),
-    _SettingsItem(appText.appLanguage, Icons.translate_outlined),
+    _SettingsItem(
+      appText.appLanguage,
+      Icons.translate_outlined,
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.appLanguage),
+    ),
     _SettingsItem(appText.changePassword, Icons.sync_alt_rounded),
   ];
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final items = _items(appText);
+    final items = _items(context, appText);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -90,10 +95,11 @@ class _SettingsHeader extends StatelessWidget {
 }
 
 class _SettingsItem {
-  const _SettingsItem(this.label, this.icon);
+  const _SettingsItem(this.label, this.icon, {this.onTap});
 
   final String label;
   final IconData icon;
+  final VoidCallback? onTap;
 }
 
 class _SettingsRow extends StatelessWidget {
@@ -107,7 +113,7 @@ class _SettingsRow extends StatelessWidget {
       color: Colors.white,
       borderRadius: BorderRadius.circular(20.r),
       child: InkWell(
-        onTap: () {},
+        onTap: item.onTap ?? () {},
         borderRadius: BorderRadius.circular(20.r),
         child: Container(
           height: 54.h,

@@ -321,4 +321,13 @@ const Map<String, String> appTextBn = <String, String>{
   'appLanguage': 'অ্যাপের ভাষা',
   'changePassword': 'পাসওয়ার্ড পরিবর্তন করুন',
   'deleteAccount': 'অ্যাকাউন্ট মুছুন',
+
+  // App language feature
+  'languageTitle': 'ভাষা',
+  'bangla': 'বাংলা',
+  'english': 'ইংরেজি',
+  'defaultLabel': 'ডিফল্ট',
+  'allFamilyMembers': 'সকল পরিবারের সদস্য',
+  'familyMemberNameZulfikur': 'জুলফিকার',
+  'familyMemberNameAsif': 'আসিফ',
 };

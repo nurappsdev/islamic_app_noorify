@@ -277,5 +277,12 @@
   "feedback": "Feedback",
   "appLanguage": "App language",
   "changePassword": "Change password",
-  "deleteAccount": "Delete account"
+  "deleteAccount": "Delete account",
+  "languageTitle": "Language",
+  "bangla": "Bangla",
+  "english": "English",
+  "defaultLabel": "Default",
+  "allFamilyMembers": "All Family Members",
+  "familyMemberNameZulfikur": "Zulfikur",
+  "familyMemberNameAsif": "Asif"
 }
