@@ -281,6 +281,14 @@ class AppText {
     required this.familyMemberNameSabit,
     required this.familyMemberNameAli,
     required this.logout,
+    required this.settingsTitle,
+    required this.aboutUs,
+    required this.ourProducts,
+    required this.adminSupport,
+    required this.feedback,
+    required this.appLanguage,
+    required this.changePassword,
+    required this.deleteAccount,
   });
 
   final String noorify;
@@ -576,6 +584,16 @@ class AppText {
   final String familyMemberNameSabit;
   final String familyMemberNameAli;
   final String logout;
+
+  // Settings feature
+  final String settingsTitle;
+  final String aboutUs;
+  final String ourProducts;
+  final String adminSupport;
+  final String feedback;
+  final String appLanguage;
+  final String changePassword;
+  final String deleteAccount;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1539,6 +1557,38 @@ class AppText {
         fallback?.familyMemberNameAli ?? '',
       ),
       logout: _read(map, 'logout', fallback?.logout ?? ''),
+      settingsTitle: _read(
+        map,
+        'settingsTitle',
+        fallback?.settingsTitle ?? '',
+      ),
+      aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
+      ourProducts: _read(
+        map,
+        'ourProducts',
+        fallback?.ourProducts ?? '',
+      ),
+      adminSupport: _read(
+        map,
+        'adminSupport',
+        fallback?.adminSupport ?? '',
+      ),
+      feedback: _read(map, 'feedback', fallback?.feedback ?? ''),
+      appLanguage: _read(
+        map,
+        'appLanguage',
+        fallback?.appLanguage ?? '',
+      ),
+      changePassword: _read(
+        map,
+        'changePassword',
+        fallback?.changePassword ?? '',
+      ),
+      deleteAccount: _read(
+        map,
+        'deleteAccount',
+        fallback?.deleteAccount ?? '',
+      ),
     );
   }
 

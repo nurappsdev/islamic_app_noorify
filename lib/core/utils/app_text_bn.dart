@@ -311,4 +311,14 @@ const Map<String, String> appTextBn = <String, String>{
   'familyMemberNameSabit': 'সাবিত',
   'familyMemberNameAli': 'আলী',
   'logout': 'লগআউট',
+
+  // Settings feature
+  'settingsTitle': 'সেটিংস',
+  'aboutUs': 'আমাদের সম্পর্কে',
+  'ourProducts': 'আমাদের পণ্য',
+  'adminSupport': 'অ্যাডমিন সাপোর্ট',
+  'feedback': 'মতামত',
+  'appLanguage': 'অ্যাপের ভাষা',
+  'changePassword': 'পাসওয়ার্ড পরিবর্তন করুন',
+  'deleteAccount': 'অ্যাকাউন্ট মুছুন',
 };

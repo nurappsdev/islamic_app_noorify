@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
@@ -128,7 +129,8 @@ class _ProfileHeader extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
-              onPressed: () {},
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(RouteNames.settings),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
                 foregroundColor: const Color(0xFF303629),
