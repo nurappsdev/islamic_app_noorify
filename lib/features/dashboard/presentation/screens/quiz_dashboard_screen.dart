@@ -42,7 +42,12 @@ class _QuizDashboardView extends StatelessWidget {
                   onChanged: context.read<QuizDashboardCubit>().selectPeriod,
                 ),
                 SizedBox(height: 13.h),
-                const _DateSelector(),
+                _DateSelector(
+                  selectedPeriod: state.selectedPeriod,
+                  selectedDate: state.selectedDate,
+                  onPrevious: context.read<QuizDashboardCubit>().goToPreviousDate,
+                  onNext: context.read<QuizDashboardCubit>().goToNextDate,
+                ),
                 SizedBox(height: 20.h),
                 RichText(
                   text: TextSpan(
@@ -140,20 +145,20 @@ class _DashboardHeader extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(
-            left: 3.w,
-            top: 6.h,
-            child: IconButton(
-              onPressed: onBack,
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
-                minimumSize: Size(33.w, 33.w),
-                padding: EdgeInsets.zero,
-              ),
-              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
-            ),
-          ),
+          // Positioned(
+          //   left: 3.w,
+          //   top: 6.h,
+          //   child: IconButton(
+          //     onPressed: onBack,
+          //     style: IconButton.styleFrom(
+          //       backgroundColor: const Color(0xFFDFDE68),
+          //       foregroundColor: const Color(0xFF303629),
+          //       minimumSize: Size(33.w, 33.w),
+          //       padding: EdgeInsets.zero,
+          //     ),
+          //     icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
+          //   ),
+          // ),
           Text(
             'Dashboard',
             style: TextStyle(
@@ -217,8 +222,76 @@ class _PeriodTabs extends StatelessWidget {
   }
 }
 
+const _weekdayNames = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const _monthNames = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 class _DateSelector extends StatelessWidget {
-  const _DateSelector();
+  const _DateSelector({
+    required this.selectedPeriod,
+    required this.selectedDate,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final int selectedPeriod;
+  final DateTime selectedDate;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  String get _label {
+    switch (selectedPeriod) {
+      case 1: // Weekly
+        final startOfWeek = selectedDate.subtract(
+          Duration(days: selectedDate.weekday - 1),
+        );
+        final endOfWeek = startOfWeek.add(const Duration(days: 6));
+        final sameMonth = startOfWeek.month == endOfWeek.month;
+        final startLabel = sameMonth
+            ? '${startOfWeek.day}'
+            : '${startOfWeek.day} ${_monthNames[startOfWeek.month - 1]}';
+        return '$startLabel - ${endOfWeek.day} '
+            '${_monthNames[endOfWeek.month - 1]}, ${endOfWeek.year}';
+      case 2: // Monthly
+        return '${_monthNames[selectedDate.month - 1]}, ${selectedDate.year}';
+      default: // Daily
+        return '${_weekdayNames[selectedDate.weekday - 1]} '
+            '${selectedDate.day} ${_monthNames[selectedDate.month - 1]}, '
+            '${selectedDate.year}';
+    }
+  }
+
+  String get _subLabel {
+    switch (selectedPeriod) {
+      case 1:
+        return 'Weekly Quiz Value';
+      case 2:
+        return 'Monthly Quiz Value';
+      default:
+        return 'Daily Quiz Value';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,21 +304,18 @@ class _DateSelector extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const _DateArrow(icon: Icons.arrow_back_rounded),
+          _DateArrow(icon: Icons.arrow_back_rounded, onTap: onPrevious),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Friday 14 August, 2026',
-                  style: TextStyle(fontSize: 16.sp),
-                ),
+                Text(_label, style: TextStyle(fontSize: 16.sp)),
                 SizedBox(height: 8.h),
-                Text('Daily Quiz Value', style: TextStyle(fontSize: 14.sp)),
+                Text(_subLabel, style: TextStyle(fontSize: 14.sp)),
               ],
             ),
           ),
-          const _DateArrow(icon: Icons.arrow_forward_rounded),
+          _DateArrow(icon: Icons.arrow_forward_rounded, onTap: onNext),
         ],
       ),
     );
@@ -253,20 +323,25 @@ class _DateSelector extends StatelessWidget {
 }
 
 class _DateArrow extends StatelessWidget {
-  const _DateArrow({required this.icon});
+  const _DateArrow({required this.icon, required this.onTap});
 
   final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 36.w,
-      height: 36.w,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFA1AD59)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18.w),
+      child: Container(
+        width: 36.w,
+        height: 36.w,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFA1AD59)),
+        ),
+        child: Icon(icon, color: const Color(0xFFA1AD59), size: 20.sp),
       ),
-      child: Icon(icon, color: const Color(0xFFA1AD59), size: 20.sp),
     );
   }
 }
