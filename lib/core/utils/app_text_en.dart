@@ -299,4 +299,18 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'questionsWord': 'Questions',
   'learn': 'Learn',
   'planner': 'Planner',
+
+  // Profile feature
+  'profileTitle': 'Profile',
+  'percentCompleteSuffix': 'complete',
+  'mymensingh': 'Mymensingh',
+  'badgeLabel': 'Badge',
+  'position': 'Position',
+  'pointsWord': 'Points',
+  'familyMember': 'Family Member',
+  'brother': 'Brother',
+  'familyMemberNameAbdullah': 'Abdullah',
+  'familyMemberNameSabit': 'Sabit',
+  'familyMemberNameAli': 'Ali',
+  'logout': 'Logout',
 };

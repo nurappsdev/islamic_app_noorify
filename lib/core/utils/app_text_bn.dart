@@ -297,4 +297,18 @@ const Map<String, String> appTextBn = <String, String>{
   'questionsWord': 'প্রশ্ন',
   'learn': 'শিখুন',
   'planner': 'পরিকল্পনাকারী',
+
+  // Profile feature
+  'profileTitle': 'প্রোফাইল',
+  'percentCompleteSuffix': 'সম্পন্ন',
+  'mymensingh': 'ময়মনসিংহ',
+  'badgeLabel': 'ব্যাজ',
+  'position': 'অবস্থান',
+  'pointsWord': 'পয়েন্ট',
+  'familyMember': 'পরিবারের সদস্য',
+  'brother': 'ভাই',
+  'familyMemberNameAbdullah': 'আব্দুল্লাহ',
+  'familyMemberNameSabit': 'সাবিত',
+  'familyMemberNameAli': 'আলী',
+  'logout': 'লগআউট',
 };

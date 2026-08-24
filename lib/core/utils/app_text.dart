@@ -269,6 +269,18 @@ class AppText {
     required this.questionsWord,
     required this.learn,
     required this.planner,
+    required this.profileTitle,
+    required this.percentCompleteSuffix,
+    required this.mymensingh,
+    required this.badgeLabel,
+    required this.position,
+    required this.pointsWord,
+    required this.familyMember,
+    required this.brother,
+    required this.familyMemberNameAbdullah,
+    required this.familyMemberNameSabit,
+    required this.familyMemberNameAli,
+    required this.logout,
   });
 
   final String noorify;
@@ -550,6 +562,20 @@ class AppText {
   final String questionsWord;
   final String learn;
   final String planner;
+
+  // Profile feature
+  final String profileTitle;
+  final String percentCompleteSuffix;
+  final String mymensingh;
+  final String badgeLabel;
+  final String position;
+  final String pointsWord;
+  final String familyMember;
+  final String brother;
+  final String familyMemberNameAbdullah;
+  final String familyMemberNameSabit;
+  final String familyMemberNameAli;
+  final String logout;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1477,6 +1503,42 @@ class AppText {
       ),
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),
+      profileTitle: _read(
+        map,
+        'profileTitle',
+        fallback?.profileTitle ?? '',
+      ),
+      percentCompleteSuffix: _read(
+        map,
+        'percentCompleteSuffix',
+        fallback?.percentCompleteSuffix ?? '',
+      ),
+      mymensingh: _read(map, 'mymensingh', fallback?.mymensingh ?? ''),
+      badgeLabel: _read(map, 'badgeLabel', fallback?.badgeLabel ?? ''),
+      position: _read(map, 'position', fallback?.position ?? ''),
+      pointsWord: _read(map, 'pointsWord', fallback?.pointsWord ?? ''),
+      familyMember: _read(
+        map,
+        'familyMember',
+        fallback?.familyMember ?? '',
+      ),
+      brother: _read(map, 'brother', fallback?.brother ?? ''),
+      familyMemberNameAbdullah: _read(
+        map,
+        'familyMemberNameAbdullah',
+        fallback?.familyMemberNameAbdullah ?? '',
+      ),
+      familyMemberNameSabit: _read(
+        map,
+        'familyMemberNameSabit',
+        fallback?.familyMemberNameSabit ?? '',
+      ),
+      familyMemberNameAli: _read(
+        map,
+        'familyMemberNameAli',
+        fallback?.familyMemberNameAli ?? '',
+      ),
+      logout: _read(map, 'logout', fallback?.logout ?? ''),
     );
   }
 

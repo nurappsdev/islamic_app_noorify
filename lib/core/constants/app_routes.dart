@@ -8,6 +8,7 @@ import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
+import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
@@ -36,6 +37,8 @@ class AppRoutes {
     switch (settings.name) {
       case RouteNames.home:
         return _page(const HomeScreen(), settings);
+      case RouteNames.profile:
+        return _page(const ProfileScreen(), settings);
       case RouteNames.winQuiz:
         return _page(const QuizCategoriesScreen(), settings);
       case RouteNames.quizQuestion:

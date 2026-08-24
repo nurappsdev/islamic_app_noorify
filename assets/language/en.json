@@ -257,5 +257,17 @@
   "tryAgain": "Try again",
   "questionsWord": "Questions",
   "learn": "Learn",
-  "planner": "Planner"
+  "planner": "Planner",
+  "profileTitle": "Profile",
+  "percentCompleteSuffix": "complete",
+  "mymensingh": "Mymensingh",
+  "badgeLabel": "Badge",
+  "position": "Position",
+  "pointsWord": "Points",
+  "familyMember": "Family Member",
+  "brother": "Brother",
+  "familyMemberNameAbdullah": "Abdullah",
+  "familyMemberNameSabit": "Sabit",
+  "familyMemberNameAli": "Ali",
+  "logout": "Logout"
 }
