@@ -323,4 +323,13 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'appLanguage': 'App language',
   'changePassword': 'Change password',
   'deleteAccount': 'Delete account',
+
+  // App language feature
+  'languageTitle': 'Language',
+  'bangla': 'Bangla',
+  'english': 'English',
+  'defaultLabel': 'Default',
+  'allFamilyMembers': 'All Family Members',
+  'familyMemberNameZulfikur': 'Zulfikur',
+  'familyMemberNameAsif': 'Asif',
 };

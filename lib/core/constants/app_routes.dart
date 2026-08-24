@@ -10,6 +10,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/app_language_screen.dart';
+import '../../features/profile/presentation/screens/family_members_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
@@ -42,6 +44,10 @@ class AppRoutes {
         return _page(const ProfileScreen(), settings);
       case RouteNames.settings:
         return _page(const SettingsScreen(), settings);
+      case RouteNames.appLanguage:
+        return _page(const AppLanguageScreen(), settings);
+      case RouteNames.familyMembers:
+        return _page(const FamilyMembersScreen(), settings);
       case RouteNames.winQuiz:
         return _page(const QuizCategoriesScreen(), settings);
       case RouteNames.quizQuestion:

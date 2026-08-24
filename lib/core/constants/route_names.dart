@@ -2,6 +2,8 @@ class RouteNames {
   static const home = '/';
   static const profile = '/profile';
   static const settings = '/settings';
+  static const appLanguage = '/settings/app-language';
+  static const familyMembers = '/profile/family-members';
   static const winQuiz = '/win-quiz';
   static const quizQuestion = '/win-quiz/question';
   static const quizComplete = '/win-quiz/complete';
