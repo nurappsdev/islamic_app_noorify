@@ -1,5 +1,6 @@
 class RouteNames {
   static const home = '/';
+  static const profile = '/profile';
   static const winQuiz = '/win-quiz';
   static const quizQuestion = '/win-quiz/question';
   static const quizComplete = '/win-quiz/complete';

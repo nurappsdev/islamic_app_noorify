@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
@@ -13,10 +14,13 @@ class HomeHeader extends StatelessWidget {
     final appText = AppText.of(context);
     return Row(
       children: [
-        CircleAvatar(
-          radius: 19.r,
-          backgroundColor: const Color(0xFFE8EBC9),
-          backgroundImage: const AssetImage('assets/images/logo.png'),
+        GestureDetector(
+          onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
+          child: CircleAvatar(
+            radius: 19.r,
+            backgroundColor: const Color(0xFFE8EBC9),
+            backgroundImage: const AssetImage('assets/images/logo.png'),
+          ),
         ),
         SizedBox(width: 7.w),
         Expanded(
