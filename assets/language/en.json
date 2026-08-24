@@ -269,5 +269,13 @@
   "familyMemberNameAbdullah": "Abdullah",
   "familyMemberNameSabit": "Sabit",
   "familyMemberNameAli": "Ali",
-  "logout": "Logout"
+  "logout": "Logout",
+  "settingsTitle": "Settings",
+  "aboutUs": "About us",
+  "ourProducts": "Our products",
+  "adminSupport": "Admin support",
+  "feedback": "Feedback",
+  "appLanguage": "App language",
+  "changePassword": "Change password",
+  "deleteAccount": "Delete account"
 }
