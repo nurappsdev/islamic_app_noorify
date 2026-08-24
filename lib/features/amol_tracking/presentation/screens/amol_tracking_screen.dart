@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
@@ -246,12 +247,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final today = (widget.now ?? DateTime.now)();
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            const AmolHeader(title: 'Amol Tracking'),
+            AmolHeader(title: appText.amolTracking),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
@@ -263,7 +265,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 18.h),
                   Text(
-                    formatAmolDate(today),
+                    formatAmolDate(today, appText),
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -272,7 +274,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _ExpandableAmolRow(
-                    title: 'Fardh Prayer',
+                    title: appText.categoryFardhPrayer,
                     items: _fardhItems,
                     expanded: _expandedCategory == 'Fardh Prayer',
                     onToggleExpanded: () => _toggleCategory('Fardh Prayer'),
@@ -280,7 +282,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _ExpandableAmolRow(
-                    title: 'Sunnah and Witr',
+                    title: appText.categorySunnahAndWitr,
                     items: _sunnahItems,
                     expanded: _expandedCategory == 'Sunnah and Witr',
                     onToggleExpanded: () => _toggleCategory('Sunnah and Witr'),
@@ -288,7 +290,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _ExpandableAmolRow(
-                    title: 'Nafl Salat',
+                    title: appText.categoryNaflSalat,
                     items: _naflItems,
                     expanded: _expandedCategory == 'Nafl Salat',
                     onToggleExpanded: () => _toggleCategory('Nafl Salat'),
@@ -296,7 +298,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _InfoExpandableRow(
-                    title: 'Quran',
+                    title: appText.categoryQuran,
                     fraction: '0/11',
                     entry: _quranEntry,
                     expanded: _expandedCategory == 'Quran',
@@ -304,7 +306,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _InfoExpandableRow(
-                    title: 'Hadith',
+                    title: appText.categoryHadith,
                     fraction: '0/8',
                     entry: _hadithEntry,
                     expanded: _expandedCategory == 'Hadith',
@@ -312,7 +314,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _InfoExpandableRow(
-                    title: 'Quiz',
+                    title: appText.categoryQuiz,
                     fraction: '0/2.5',
                     entry: _quizEntry,
                     expanded: _expandedCategory == 'Quiz',
@@ -320,7 +322,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                   ),
                   SizedBox(height: 12.h),
                   _GroupedExpandableRow(
-                    title: 'Nafl & more',
+                    title: appText.categoryNaflAndMore,
                     items: _naflMoreItems,
                     expanded: _expandedCategory == 'Nafl & more',
                     onToggleExpanded: () => _toggleCategory('Nafl & more'),
@@ -337,6 +339,61 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
         ),
       ),
     );
+  }
+}
+
+String _localizedItemName(AppText appText, String key) {
+  switch (key) {
+    case 'Fajr':
+      return appText.salahFajr;
+    case 'Duhr':
+      return appText.salahDuhr;
+    case 'Asr':
+      return appText.salahAsr;
+    case 'Magrib':
+      return appText.salahMagrib;
+    case 'Esa':
+      return appText.salahEsa;
+    case 'Fajr Sunnah':
+      return appText.salahFajrSunnah;
+    case 'Duhr Sunnah':
+      return appText.salahDuhrSunnah;
+    case 'Asr Sunnah':
+      return appText.salahAsrSunnah;
+    case 'Magrib Sunnah':
+      return appText.salahMagribSunnah;
+    case 'Esa Sunnah':
+      return appText.salahEsaSunnah;
+    case 'Witr':
+      return appText.salahWitr;
+    case 'Tahajjud':
+      return appText.naflTahajjud;
+    case 'Ishraq':
+      return appText.naflIshraq;
+    case 'Chast':
+      return appText.naflChast;
+    case 'Awabin':
+      return appText.naflAwabin;
+    case 'Sadaqah':
+      return appText.moreSadaqah;
+    case 'Karze Hasanah':
+      return appText.moreKarzeHasanah;
+    case 'Nafl Fasting':
+      return appText.moreNaflFasting;
+    case 'Physical Exercise':
+      return appText.morePhysicalExercise;
+    case 'Given Good Ad Vice':
+      return appText.moreGivenGoodAdvice;
+    case 'Skill Development':
+      return appText.moreSkillDevelopment;
+    case 'Quran Tilawat':
+      return appText.infoQuranTilawat;
+    case 'Hadith Reading':
+      return appText.infoHadithReading;
+    case 'Giving Quiz':
+      return appText.infoGivingQuiz;
+    default:
+      return key;
   }
 }
 
@@ -614,7 +671,7 @@ class _InfoEntryRow extends StatelessWidget {
         SizedBox(width: 10.w),
         Expanded(
           child: Text(
-            entry.name,
+            _localizedItemName(AppText.of(context), entry.name),
             style: TextStyle(fontSize: 13.sp, color: Colors.black),
           ),
         ),
@@ -739,7 +796,7 @@ class _SalahRow extends StatelessWidget {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                item.name,
+                _localizedItemName(AppText.of(context), item.name),
                 style: TextStyle(fontSize: 13.sp, color: Colors.black),
               ),
             ),
@@ -874,7 +931,7 @@ class _DashboardButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'View in dashboard',
+                AppText.of(context).viewInDashboard,
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,

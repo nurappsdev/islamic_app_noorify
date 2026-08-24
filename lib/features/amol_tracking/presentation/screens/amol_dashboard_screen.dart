@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/cubit/amol_dashboard_cubit.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 
 extension on _AmolPeriod {
-  String get label => switch (this) {
-    _AmolPeriod.daily => 'Daily',
-    _AmolPeriod.weekly => 'Weekly',
-    _AmolPeriod.monthly => 'Monthly',
+  String label(AppText appText) => switch (this) {
+    _AmolPeriod.daily => appText.daily,
+    _AmolPeriod.weekly => appText.weekly,
+    _AmolPeriod.monthly => appText.monthly,
   };
 
   Duration get step => switch (this) {
@@ -38,15 +39,6 @@ class AmolDashboardScreen extends StatelessWidget {
 class _AmolDashboardView extends StatelessWidget {
   const _AmolDashboardView();
 
-  static const _categories = [
-    'Fardh Prayer',
-    'Sunnah and Witr',
-    'Quran',
-    'Nafl Salat',
-    'Hadith',
-    'Quiz',
-    'Nafl & more',
-  ];
   static const _myPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
   static const _competitorIndices = [0, 1, 3, 5];
   static const _myPoints = 27;
@@ -54,13 +46,23 @@ class _AmolDashboardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AmolDashboardCubit>().state;
+    final appText = AppText.of(context);
     final period = _AmolPeriod.values[state.selectedPeriod];
+    final categories = [
+      appText.categoryFardhPrayer,
+      appText.categorySunnahAndWitr,
+      appText.categoryQuran,
+      appText.categoryNaflSalat,
+      appText.categoryHadith,
+      appText.categoryQuiz,
+      appText.categoryNaflAndMore,
+    ];
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            const AmolHeader(title: 'Amol Tracking'),
+            AmolHeader(title: appText.amolTracking),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 20.h),
@@ -72,15 +74,15 @@ class _AmolDashboardView extends StatelessWidget {
                         .selectPeriod(value.index),
                   ),
                   SizedBox(height: 16.h),
-                  const AmolSummaryCard(
-                    pointLabel: 'Point : 30/40',
+                  AmolSummaryCard(
+                    pointLabel: '${appText.point} : 30/40',
                     progressLabel: '86 %',
                     progress: .86,
                   ),
                   SizedBox(height: 14.h),
                   _DateNavigator(
-                    label: formatAmolDate(state.date),
-                    subtitle: '${period.label} Amol Track',
+                    label: formatAmolDate(state.date, appText),
+                    subtitle: '${period.label(appText)} ${appText.amolTrack}',
                     onPrevious: () => context
                         .read<AmolDashboardCubit>()
                         .shiftDate(period.step, -1),
@@ -94,7 +96,7 @@ class _AmolDashboardView extends StatelessWidget {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: 'Todays',
+                          text: appText.todays,
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 15.sp,
@@ -104,7 +106,7 @@ class _AmolDashboardView extends StatelessWidget {
                           ),
                         ),
                         TextSpan(
-                          text: ' –  average todays days.',
+                          text: ' ${appText.averageTodaysDays}',
                           style: TextStyle(
                             color: Colors.black87,
                             fontSize: 13.sp,
@@ -117,10 +119,10 @@ class _AmolDashboardView extends StatelessWidget {
                   const _Legend(),
                   SizedBox(height: 10.h),
                   _AmolLineChart(
-                    categories: _categories,
+                    categories: categories,
                     values: _myPosition,
                     competitorIndices: _competitorIndices,
-                    competitorLabel: 'Ab',
+                    competitorLabel: appText.competitorInitials,
                     maxY: 12,
                   ),
                   SizedBox(height: 18.h),
@@ -143,6 +145,7 @@ class _PeriodTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
@@ -166,7 +169,7 @@ class _PeriodTabs extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
-                    value.label,
+                    value.label(appText),
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: value == period
@@ -260,13 +263,17 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Row(
       children: [
-        _LegendDot(color: _LineChartPainter.lineColor, label: 'My Position'),
+        _LegendDot(
+          color: _LineChartPainter.lineColor,
+          label: appText.myPosition,
+        ),
         SizedBox(width: 18.w),
         _LegendDot(
           color: _CompetitorBubble.dotColor,
-          label: 'My Nearest Or Competitor',
+          label: appText.myNearestOrCompetitor,
         ),
       ],
     );
@@ -559,7 +566,7 @@ class _MyPointsBar extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                'My points : $points',
+                '${AppText.of(context).myPoints} : $points',
                 style: TextStyle(fontSize: 13.sp, color: Colors.black),
               ),
             ),

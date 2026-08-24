@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/cubit/alarm_cubit.dart';
@@ -66,13 +67,14 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AlarmCubit>().state;
+    final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
       body: SafeArea(
         child: Column(
           children: [
             AlarmBackHeader(
-              title: 'Set Alarm',
+              title: appText.setAlarm,
               subtitle: widget.period.displayName,
             ),
             SizedBox(height: 20.h),
@@ -95,23 +97,23 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AlarmToggleRow(
-                      label: 'Vibrate and ring',
+                      label: appText.vibrateAndRing,
                       value: state.vibrateAndRing,
                       onChanged: context.read<AlarmCubit>().setVibrateAndRing,
                     ),
                     SizedBox(height: 22.h),
-                    Text('Set Ringtone', style: alarmItalicStyle(14.sp)),
+                    Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
                     SizedBox(height: 10.h),
                     const RingtoneSearchField(),
                     SizedBox(height: 22.h),
                     AlarmToggleRow(
-                      label: 'Vibrate',
+                      label: appText.vibrate,
                       value: state.vibrate,
                       onChanged: context.read<AlarmCubit>().setVibrate,
                     ),
                     SizedBox(height: 18.h),
                     AlarmToggleRow(
-                      label: 'Ring',
+                      label: appText.ring,
                       value: state.ring,
                       onChanged: context.read<AlarmCubit>().setRing,
                     ),

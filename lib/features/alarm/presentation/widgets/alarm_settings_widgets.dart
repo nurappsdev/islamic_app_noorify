@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+
 TextStyle alarmItalicStyle(double size, {Color color = Colors.black}) =>
     TextStyle(
       color: color,
@@ -25,7 +27,7 @@ class AlarmBackHeader extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              tooltip: 'Back',
+              tooltip: AppText.of(context).back,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFF7F5CE),
@@ -107,7 +109,7 @@ class RingtoneSearchField extends StatelessWidget {
           decoration: InputDecoration(
             border: InputBorder.none,
             isDense: true,
-            hintText: 'Search Here . . .',
+            hintText: AppText.of(context).searchHere,
             hintStyle: alarmItalicStyle(13.sp, color: const Color(0xFF9AA687)),
           ),
           style: alarmItalicStyle(13.sp),
