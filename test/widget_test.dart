@@ -58,8 +58,10 @@ void main() {
 
     expect(find.text('Todays Amol Track'), findsOneWidget);
     expect(find.text('Todays Highest Value'), findsOneWidget);
-    expect(find.text('Sehri : 4:09 AM'), findsOneWidget);
-    expect(find.text('Iftar : 6:33 PM'), findsOneWidget);
+    expect(find.text('Sehri'), findsOneWidget);
+    expect(find.text('4:09 AM'), findsOneWidget);
+    expect(find.text('Iftar'), findsOneWidget);
+    expect(find.text('6:33 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
   });
@@ -189,14 +191,17 @@ void main() {
       ScreenUtilInit(
         designSize: const Size(375, 812),
         builder: (context, child) {
-          return const MaterialApp(
-            home: Scaffold(
-              body: SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.all(9),
-                  child: PrayerTimeCard(
-                    prayerTimeService: _FakePrayerTimeService(_testPrayerTimes),
-                    now: _noon,
+          return BlocProvider(
+            create: (_) => LanguageBloc(),
+            child: const MaterialApp(
+              home: Scaffold(
+                body: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.all(9),
+                    child: PrayerTimeCard(
+                      prayerTimeService: _FakePrayerTimeService(_testPrayerTimes),
+                      now: _noon,
+                    ),
                   ),
                 ),
               ),
@@ -229,6 +234,11 @@ void main() {
     expect(find.text('24 July 2026'), findsOneWidget);
     expect(find.text('01:37 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
+    expect(find.text('Sehri'), findsOneWidget);
+    expect(find.text('4:09 AM'), findsOneWidget);
+    expect(find.text('Iftar'), findsOneWidget);
+    expect(find.text('6:33 PM'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
     expect(find.text('Sunrise, Trishal'), findsOneWidget);
     expect(find.text('at 5:23 AM'), findsOneWidget);
     expect(find.text('Sunset, Trishal'), findsOneWidget);
@@ -251,7 +261,7 @@ void main() {
           tester.getTopLeft(
             find.byKey(const ValueKey('prayer-time-card-surface')),
           ),
-      const Offset(55, 88),
+      const Offset(55, 91),
     );
     expect(tester.getSize(sunriseEdge), const Size(153.5, 46));
     expect(tester.getSize(sunsetEdge), const Size(153.5, 46));

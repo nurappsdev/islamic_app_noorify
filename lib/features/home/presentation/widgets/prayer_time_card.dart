@@ -28,6 +28,8 @@ class PrayerTimeCard extends StatefulWidget {
 class _PrayerTimeCardState extends State<PrayerTimeCard> {
   DailyPrayerTimes? _times;
   Timer? _boundaryTimer;
+  Timer? _edgeTimeTimer;
+  bool _showSunriseAndSunset = false;
 
   PrayerClockTime get _fajr =>
       _times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0);
@@ -39,6 +41,10 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
     super.initState();
     _scheduleNextBoundary();
     _loadFajrAndSchedule();
+    _edgeTimeTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      setState(() => _showSunriseAndSunset = !_showSunriseAndSunset);
+    });
   }
 
   Future<void> _loadFajrAndSchedule() async {
@@ -83,6 +89,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   @override
   void dispose() {
     _boundaryTimer?.cancel();
+    _edgeTimeTimer?.cancel();
     super.dispose();
   }
 
@@ -243,7 +250,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Current Prayer Badge
                       Positioned(
-                        top: 156.h,
+                        top: 171.h,
                         left: 0,
                         right: 0,
                         child: Center(child: _CurrentPrayerBadge()),
@@ -253,7 +260,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       Positioned(
                         left: 13.w,
                         right: 13.w,
-                        bottom: 10.h,
+                        bottom: 15.h,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -264,6 +271,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 isSunrise: true,
                                 secondaryLabel: appText.sehri,
                                 secondaryTime: '4:09 AM',
+                                showPrimary: _showSunriseAndSunset,
                               ),
                             ),
 
@@ -276,6 +284,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 isSunrise: false,
                                 secondaryLabel: appText.iftar,
                                 secondaryTime: '6:33 PM',
+                                showPrimary: _showSunriseAndSunset,
                               ),
                             ),
                           ],
