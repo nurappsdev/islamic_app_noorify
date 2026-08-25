@@ -56,8 +56,8 @@ void main() {
 
     await tester.pump();
 
-    expect(find.text('Todays Amol track'), findsOneWidget);
-    expect(find.text('Todays highest value'), findsOneWidget);
+    expect(find.text('Todays Amol Track'), findsOneWidget);
+    expect(find.text('Todays Highest Value'), findsOneWidget);
     expect(find.text('Sehri : 4:09 AM     Iftar : 6:33 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
@@ -91,7 +91,7 @@ void main() {
 
     await tester.pump();
 
-    final secondSlide = find.text('Todays highest value');
+    final secondSlide = find.text('Todays Highest Value');
     expect(tester.getCenter(secondSlide).dx, greaterThan(375));
 
     await tester.pump(const Duration(seconds: 3));
