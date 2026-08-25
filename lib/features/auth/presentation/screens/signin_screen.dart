@@ -7,7 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_cubit.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
@@ -16,8 +16,8 @@ class SignInScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SignInCubit>(
-      create: (_) => SignInCubit(),
+    return BlocProvider<SignInBloc>(
+      create: (_) => SignInBloc(),
       child: const _SignInView(),
     );
   }
@@ -36,7 +36,7 @@ class _SignInViewState extends State<_SignInView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  SignInCubit get _auth => context.read<SignInCubit>();
+  SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
   bool get _isLoading => _authState.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
@@ -93,7 +93,7 @@ class _SignInViewState extends State<_SignInView> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    context.watch<SignInCubit>();
+    context.watch<SignInBloc>();
 
     return Scaffold(
       backgroundColor: AppColor.authBackground,
@@ -175,7 +175,8 @@ class _SignInViewState extends State<_SignInView> {
                         prefixIcon: Icons.key_outlined,
                         suffixIcon: IconButton(
                           tooltip: appText.togglePassword,
-                          onPressed: () => _auth.toggleObscurePassword(),
+                          onPressed: () =>
+                              _auth.add(const ToggleObscurePassword()),
                           icon: Icon(
                             _obscurePassword
                                 ? Icons.visibility_off_outlined
