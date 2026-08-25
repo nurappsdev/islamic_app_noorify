@@ -32,6 +32,10 @@ import '../../features/learning/presentation/screens/article_details_screen.dart
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
 import '../../features/quran/presentation/screens/quran_screen.dart';
+import '../../features/quran/presentation/screens/surah_list_screen.dart';
+import '../../features/quran/presentation/screens/surah_detail_screen.dart';
+import '../../features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
+import '../../features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -95,6 +99,24 @@ class AppRoutes {
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
         return _page(const QuranScreen(), settings);
+      case RouteNames.quranSurahs:
+        return _page(
+          BlocProvider(
+            create: (_) => SurahListBloc()..add(const LoadSurahs()),
+            child: const SurahListScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.quranSurahDetail:
+        final surahNo = settings.arguments as int? ?? 1;
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+            child: SurahDetailScreen(surahNo: surahNo),
+          ),
+          settings,
+        );
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.splash:

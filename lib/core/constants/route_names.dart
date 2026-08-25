@@ -41,6 +41,8 @@ class RouteNames {
   static const tasbih = '/tasbih';
   static const zakatCalculator = '/zakat-calculator';
   static const quran = '/quran';
+  static const quranSurahs = '/quran/surahs';
+  static const quranSurahDetail = '/quran/surahs/detail';
   static const prayerTimes = '/prayer-times';
   static const chat = '/chat';
   static const islamicCalendar = '/islamic-calendar';
