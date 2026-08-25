@@ -1,26 +1,9 @@
 part of 'prayer_time_card.dart';
 
 class _CurrentPrayerBadge extends StatelessWidget {
-  const _CurrentPrayerBadge({required this.times, required this.now});
-
-  final DailyPrayerTimes? times;
-  final DateTime now;
-
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final times = this.times;
-    final period = times == null ? null : currentPrayerPeriod(now, times);
-    final label = times == null
-        ? '—'
-        : (period?.displayName(appText) ?? appText.naflIshraq);
-    final rangeText = times == null
-        ? '—'
-        : period != null
-        ? '${formatPrayerTime(prayerStart(period, times))} – '
-              '${formatPrayerTime(prayerEnd(period, times))}'
-        : '${formatPrayerTime(times.sunrise)} – '
-              '${formatPrayerTime(times.dhuhr)}';
     return Container(
       width: 190.w,
       height: 66.h,
@@ -53,7 +36,7 @@ class _CurrentPrayerBadge extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    label,
+                    appText.dhuhrPrayerTime,
                     style: homeSansStyle(fontSize: 14.sp, color: Colors.black),
                   ),
                 ),
@@ -61,7 +44,7 @@ class _CurrentPrayerBadge extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    rangeText,
+                    '12:44 PM – 3:45 PM',
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.black),
                   ),
                 ),
@@ -81,7 +64,6 @@ class _PrayerEdgeTime extends StatelessWidget {
     required this.isSunrise,
     required this.secondaryLabel,
     required this.secondaryTime,
-    required this.showPrimary,
   });
 
   final String label;
@@ -89,15 +71,12 @@ class _PrayerEdgeTime extends StatelessWidget {
   final bool isSunrise;
   final String secondaryLabel;
   final String secondaryTime;
-  final bool showPrimary;
 
   @override
   Widget build(BuildContext context) {
-    final displayLabel = showPrimary ? label : secondaryLabel;
-    final displayTime = showPrimary ? time : secondaryTime;
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 46.h,
+      height: 64.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -118,7 +97,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    displayLabel,
+                    label,
                     maxLines: 1,
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.white),
                   ),
@@ -128,9 +107,19 @@ class _PrayerEdgeTime extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    displayTime,
+                    time,
                     maxLines: 1,
                     style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '$secondaryLabel : $secondaryTime',
+                    maxLines: 1,
+                    style: homeSansStyle(fontSize: 10.sp, color: Colors.white),
                   ),
                 ),
               ],
