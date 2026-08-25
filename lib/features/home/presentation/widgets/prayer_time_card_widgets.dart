@@ -64,6 +64,7 @@ class _PrayerEdgeTime extends StatelessWidget {
     required this.isSunrise,
     required this.secondaryLabel,
     required this.secondaryTime,
+    required this.showPrimary,
   });
 
   final String label;
@@ -71,12 +72,15 @@ class _PrayerEdgeTime extends StatelessWidget {
   final bool isSunrise;
   final String secondaryLabel;
   final String secondaryTime;
+  final bool showPrimary;
 
   @override
   Widget build(BuildContext context) {
+    final displayLabel = showPrimary ? label : secondaryLabel;
+    final displayTime = showPrimary ? time : secondaryTime;
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 64.h,
+      height: 46.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -97,7 +101,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    label,
+                    displayLabel,
                     maxLines: 1,
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.white),
                   ),
@@ -107,19 +111,9 @@ class _PrayerEdgeTime extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    time,
+                    displayTime,
                     maxLines: 1,
                     style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
-                  ),
-                ),
-                SizedBox(height: 3.h),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '$secondaryLabel : $secondaryTime',
-                    maxLines: 1,
-                    style: homeSansStyle(fontSize: 10.sp, color: Colors.white),
                   ),
                 ),
               ],
