@@ -339,4 +339,6 @@ const Map<String, String> appTextBn = <String, String>{
   'surahMeaningCow': 'গাভী',
   'surahMeaningFamilyOfImran': 'ইমরান পরিবার',
   'surahMeaningWomen': 'নারী',
+  'quranIntroSubtitle': 'কুরআন শিখুন এবং প্রতিদিন তিলাওয়াত করুন',
+  'quranLoadError': 'কুরআন লোড করা যায়নি। আপনার সংযোগ পরীক্ষা করুন।',
 };

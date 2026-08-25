@@ -341,4 +341,6 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'surahMeaningCow': 'The Cow',
   'surahMeaningFamilyOfImran': 'The Family of Imran',
   'surahMeaningWomen': 'The Women',
+  'quranIntroSubtitle': 'Learn Quran and Recite once everyday',
+  'quranLoadError': "Couldn't load the Quran. Please check your connection.",
 };

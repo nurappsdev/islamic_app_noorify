@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
 
 class QuranScreen extends StatelessWidget {
   const QuranScreen({super.key});
 
-  static List<_Surah> _surahs(AppText appText) => [
-    _Surah('Al-Fatihah', appText.surahMeaningOpening, 7),
-    _Surah('Al-Baqarah', appText.surahMeaningCow, 286),
-    _Surah('Al-Imran', appText.surahMeaningFamilyOfImran, 200),
-    _Surah('An-Nisa', appText.surahMeaningWomen, 176),
-  ];
+  void _goToHome(BuildContext context) {
+    if (ModalRoute.of(context)?.settings.name != RouteNames.home) {
+      Navigator.of(context).pushReplacementNamed(RouteNames.home);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final surahs = _surahs(appText);
     return Scaffold(
       body: Stack(
         children: [
@@ -29,87 +27,87 @@ class QuranScreen extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(18.w, 12.h, 18.w, 92.h),
+            child: Column(
               children: [
-                Center(
-                  child: Text(
-                    appText.categoryQuran,
-                    style: TextStyle(
-                      color: AppColor.primary,
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w600,
+                SizedBox(height: 8.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 18.w),
+                    child: IconButton(
+                      onPressed: () => _goToHome(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFEDE7A6),
+                        foregroundColor: AppColor.authLogo,
+                      ),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
                     ),
                   ),
                 ),
-                SizedBox(height: 18.h),
-                Center(
-                  child: Image.asset(
-                    'assets/images/bismillah.png',
-                    height: 34.h,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                SizedBox(height: 14.h),
-                Center(
-                  child: Image.asset(
-                    'assets/images/Quran.png',
-                    height: 148.h,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                SizedBox(height: 22.h),
-                TextField(
-                  style: TextStyle(fontSize: 13.sp),
-                  decoration: InputDecoration(
-                    hintText: appText.searchSurah,
-                    hintStyle: TextStyle(
-                      color: const Color(0xFFB8B8B8),
-                      fontSize: 13.sp,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: AppColor.primary,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.r),
-                      borderSide: const BorderSide(color: AppColor.primary),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20.h),
+                        Image.asset(
+                          'assets/images/bismillah.png',
+                          height: 34.h,
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: 20.h),
+                        Text(
+                          appText.categoryQuran,
+                          style: TextStyle(
+                            color: AppColor.primary,
+                            fontSize: 28.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          appText.quranIntroSubtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColor.authLogo,
+                            fontSize: 13.sp,
+                            height: 1.4,
+                          ),
+                        ),
+                        SizedBox(height: 30.h),
+                        const _QuranArtwork(),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 22.h),
-                Text(
-                  appText.surahsTitle,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
+                Padding(
+                  padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 20.h),
+                  child: SizedBox(
+                    height: 54.h,
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.quranSurahs),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(29.r),
+                        ),
+                      ),
+                      child: Text(
+                        appText.letsGetStart,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                SizedBox(height: 12.h),
-                for (var index = 0; index < surahs.length; index++) ...[
-                  _SurahTile(
-                    number: index + 1,
-                    surah: surahs[index],
-                    ayahWord: appText.ayahWord,
-                  ),
-                  SizedBox(height: 9.h),
-                ],
               ],
             ),
-          ),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: HomeBottomNav(selectedIndex: 1),
           ),
         ],
       ),
@@ -117,61 +115,44 @@ class QuranScreen extends StatelessWidget {
   }
 }
 
-class _Surah {
-  const _Surah(this.name, this.meaning, this.ayahCount);
+class _QuranArtwork extends StatelessWidget {
+  const _QuranArtwork();
 
-  final String name;
-  final String meaning;
-  final int ayahCount;
-}
+  Widget _cloud({required double size}) {
+    return Icon(Icons.cloud_rounded, color: Colors.white, size: size);
+  }
 
-class _SurahTile extends StatelessWidget {
-  const _SurahTile({
-    required this.number,
-    required this.surah,
-    required this.ayahWord,
-  });
-
-  final int number;
-  final _Surah surah;
-  final String ayahWord;
+  Widget _sparkle({required double size}) {
+    return Icon(
+      Icons.auto_awesome,
+      color: const Color(0xFFDCE7A6),
+      size: size,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .85),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFDDE8C1)),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 230.h,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        clipBehavior: Clip.none,
         children: [
-          CircleAvatar(
-            radius: 17.r,
-            backgroundColor: const Color(0xFFDFE9B9),
-            child: Text(
-              '$number',
-              style: TextStyle(color: AppColor.primary, fontSize: 12.sp),
+          Positioned(left: 6.w, top: 40.h, child: _cloud(size: 34.sp)),
+          Positioned(right: 4.w, top: 62.h, child: _cloud(size: 26.sp)),
+          Positioned(left: 30.w, top: 4.h, child: _sparkle(size: 16.sp)),
+          Positioned(right: 30.w, top: 20.h, child: _sparkle(size: 12.sp)),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 14.h,
+            child: Center(
+              child: Image.asset(
+                'assets/images/Quran.png',
+                height: 150.h,
+                fit: BoxFit.contain,
+              ),
             ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(surah.name, style: TextStyle(fontSize: 15.sp)),
-                SizedBox(height: 3.h),
-                Text(
-                  surah.meaning,
-                  style: TextStyle(color: Colors.grey, fontSize: 12.sp),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${surah.ayahCount} $ayahWord',
-            style: TextStyle(color: AppColor.primary, fontSize: 12.sp),
           ),
         ],
       ),

@@ -303,6 +303,8 @@ class AppText {
     required this.surahMeaningCow,
     required this.surahMeaningFamilyOfImran,
     required this.surahMeaningWomen,
+    required this.quranIntroSubtitle,
+    required this.quranLoadError,
   });
 
   final String noorify;
@@ -626,6 +628,8 @@ class AppText {
   final String surahMeaningCow;
   final String surahMeaningFamilyOfImran;
   final String surahMeaningWomen;
+  final String quranIntroSubtitle;
+  final String quranLoadError;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1574,6 +1578,16 @@ class AppText {
         map,
         'surahMeaningWomen',
         fallback?.surahMeaningWomen ?? '',
+      ),
+      quranIntroSubtitle: _read(
+        map,
+        'quranIntroSubtitle',
+        fallback?.quranIntroSubtitle ?? '',
+      ),
+      quranLoadError: _read(
+        map,
+        'quranLoadError',
+        fallback?.quranLoadError ?? '',
       ),
     );
   }
