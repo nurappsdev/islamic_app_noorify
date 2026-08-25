@@ -34,6 +34,7 @@ import '../../features/learning/presentation/screens/learning_test_result_screen
 import '../../features/quran/presentation/screens/quran_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_detail_screen.dart';
+import '../../features/quran/presentation/screens/full_surah_screen.dart';
 import '../../features/quran/presentation/screens/verse_reader_screen.dart';
 import '../../features/quran/presentation/screens/bookmarks_screen.dart';
 import '../../features/quran/presentation/screens/reading_history_screen.dart';
@@ -44,6 +45,7 @@ import '../../features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
 import '../../features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
 import '../../features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import '../../features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
+import '../../features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -130,6 +132,24 @@ class AppRoutes {
               BlocProvider(create: (_) => AyahAudioBloc()),
             ],
             child: SurahDetailScreen(surahNo: surahNo),
+          ),
+          settings,
+        );
+      case RouteNames.quranFullSurah:
+        final surahNo = settings.arguments as int? ?? 1;
+        return _page(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+              ),
+              BlocProvider(
+                create: (_) => ReciterBloc()..add(const LoadReciters()),
+              ),
+              BlocProvider(create: (_) => SurahPlaybackBloc()),
+            ],
+            child: FullSurahScreen(surahNo: surahNo),
           ),
           settings,
         );

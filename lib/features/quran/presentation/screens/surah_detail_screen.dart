@@ -2,35 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-
-String revelationPlaceLabel(AppText appText, String rawPlace) {
-  final normalized = rawPlace.toLowerCase();
-  if (normalized.startsWith('mecc') || normalized.startsWith('makk')) {
-    return appText.meccan;
-  }
-  if (normalized.startsWith('madin') || normalized.startsWith('medin')) {
-    return appText.medinian;
-  }
-  return rawPlace;
-}
-
-String _formatReadingTime(AppText appText, List<String> arabicAyahs) {
-  final wordCount = arabicAyahs.fold<int>(
-    0,
-    (sum, ayah) => sum + ayah.trim().split(RegExp(r'\s+')).length,
-  );
-  final totalSeconds = (wordCount * 0.45).round();
-  final minutes = totalSeconds ~/ 60;
-  final seconds = totalSeconds % 60;
-  return '$minutes ${appText.minLabel} $seconds ${appText.secLabel}';
-}
 
 class SurahDetailScreen extends StatefulWidget {
   const SurahDetailScreen({super.key, required this.surahNo});
@@ -43,7 +24,6 @@ class SurahDetailScreen extends StatefulWidget {
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   bool _recorded = false;
-  final ScrollController _scrollController = ScrollController();
 
   void _recordLastRead(SurahDetail detail) {
     if (_recorded) return;
@@ -54,20 +34,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         surahName: detail.name,
       );
     });
-  }
-
-  void _scrollToAyahs() {
-    _scrollController.animateTo(
-      340.h,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOut,
-    );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -154,19 +120,22 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                         ? detail.bengaliAyahs
                         : detail.englishAyahs;
                     return ListView(
-                      controller: _scrollController,
                       padding: EdgeInsets.only(top: 4.h, bottom: 24.h),
                       children: [
-                        _SurahHeroCard(
+                        SurahHeroCard(
                           appText: appText,
                           detail: detail,
-                          onViewFullSura: _scrollToAyahs,
+                          actionLabel: appText.viewFullSura,
+                          onAction: () => Navigator.of(context).pushNamed(
+                            RouteNames.quranFullSurah,
+                            arguments: detail.number,
+                          ),
                         ),
                         SizedBox(height: 10.h),
                         Center(
                           child: Text(
                             '${appText.yourReadingTimeIs} '
-                            '${_formatReadingTime(appText, detail.arabicAyahs)}',
+                            '${formatReadingTime(appText, detail.arabicAyahs)}',
                             style: TextStyle(
                               color: AppColor.primary,
                               fontSize: 12.sp,
@@ -199,123 +168,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SurahHeroCard extends StatelessWidget {
-  const _SurahHeroCard({
-    required this.appText,
-    required this.detail,
-    required this.onViewFullSura,
-  });
-
-  final AppText appText;
-  final SurahDetail detail;
-  final VoidCallback onViewFullSura;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 16.h),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF8FA05C), Color(0xFF56682F)],
-        ),
-        borderRadius: BorderRadius.circular(22.r),
-      ),
-      child: Column(
-        children: [
-          Text(
-            detail.name,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22.sp,
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            detail.translation,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 13.sp),
-          ),
-          SizedBox(height: 10.h),
-          Container(height: 1, color: Colors.white24),
-          SizedBox(height: 10.h),
-          Text(
-            '${revelationPlaceLabel(appText, detail.revelationPlace).toUpperCase()} • '
-            '${detail.totalAyah} ${appText.ayahWord.toUpperCase()}',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 11.sp,
-              letterSpacing: 1,
-            ),
-          ),
-          SizedBox(height: 14.h),
-          ColorFiltered(
-            colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn,
-            ),
-            child: Image.asset(
-              'assets/images/bismillah.png',
-              height: 30.h,
-              fit: BoxFit.contain,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onViewFullSura,
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: .12),
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 10.h),
-                  ),
-                  child: Text(
-                    appText.viewFullSura,
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                  ),
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.auto_awesome, color: Colors.amber, size: 14.sp),
-                    SizedBox(width: 6.w),
-                    Text(
-                      '${appText.pointsLabel} : '
-                      '${detail.totalAyah.toString().padLeft(2, '0')}',
-                      style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

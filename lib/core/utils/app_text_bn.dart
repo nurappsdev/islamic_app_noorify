@@ -357,6 +357,7 @@ const Map<String, String> appTextBn = <String, String>{
   'noReadingHistoryYet': 'এখনো কোনো পঠন ইতিহাস নেই',
   'startReadingPrompt': 'শুরু করতে নিচের একটি সূরা নির্বাচন করুন',
   'viewFullSura': 'সম্পূর্ণ সূরা দেখুন',
+  'viewInAyat': 'আয়াত আকারে দেখুন',
   'pointsLabel': 'পয়েন্ট',
   'yourReadingTimeIs': 'আপনার পঠন সময়',
   'minLabel': 'মিনিট',
