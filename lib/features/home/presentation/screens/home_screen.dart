@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
                   const HomeHeader(),
                   SizedBox(height: 10.h),
                   const AmalTrackerCard(),
-                  SizedBox(height: 36.h),
+                  SizedBox(height: 16.h),
                   const PrayerTimeCard(),
                   SizedBox(height: 24.h),
                   const ProhibitedPrayerTimesCard(),
