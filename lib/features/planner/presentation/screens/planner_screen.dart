@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
+import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
@@ -15,7 +15,7 @@ class PlannerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PlannerCubit(),
+      create: (_) => PlannerBloc(),
       child: const _PlannerView(),
     );
   }
@@ -39,7 +39,8 @@ class _PlannerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<PlannerCubit>().state;
+    final state = context.watch<PlannerBloc>().state;
+    final bloc = context.read<PlannerBloc>();
     final appText = AppText.of(context);
     final plans = _plans(appText);
     return Scaffold(
@@ -51,7 +52,7 @@ class _PlannerView extends StatelessWidget {
               children: [
                 _PlanTabs(
                   showCompletedPlans: state.showCompletedPlans,
-                  onTabChanged: context.read<PlannerCubit>().showCompletedPlans,
+                  onTabChanged: (value) => bloc.add(ShowCompletedPlans(value)),
                 ),
                 SizedBox(height: 12.h),
                 Expanded(

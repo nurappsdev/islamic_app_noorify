@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dashboard/presentation/cubit/quiz_dashboard_cubit.dart';
+import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
@@ -16,7 +16,7 @@ class QuizDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => QuizDashboardCubit(),
+      create: (_) => QuizDashboardBloc(),
       child: const _QuizDashboardView(),
     );
   }
@@ -27,7 +27,8 @@ class _QuizDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<QuizDashboardCubit>().state;
+    final state = context.watch<QuizDashboardBloc>().state;
+    final bloc = context.read<QuizDashboardBloc>();
     final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -41,14 +42,14 @@ class _QuizDashboardView extends StatelessWidget {
                 SizedBox(height: 10.h),
                 _PeriodTabs(
                   selectedPeriod: state.selectedPeriod,
-                  onChanged: context.read<QuizDashboardCubit>().selectPeriod,
+                  onChanged: (period) => bloc.add(SelectPeriod(period)),
                 ),
                 SizedBox(height: 13.h),
                 _DateSelector(
                   selectedPeriod: state.selectedPeriod,
                   selectedDate: state.selectedDate,
-                  onPrevious: context.read<QuizDashboardCubit>().goToPreviousDate,
-                  onNext: context.read<QuizDashboardCubit>().goToNextDate,
+                  onPrevious: () => bloc.add(const GoToPreviousDate()),
+                  onNext: () => bloc.add(const GoToNextDate()),
                 ),
                 SizedBox(height: 20.h),
                 RichText(
@@ -83,9 +84,7 @@ class _QuizDashboardView extends StatelessWidget {
                           top: 11.h,
                           right: 6.w,
                           child: _CompetitorCard(
-                            onClose: context
-                                .read<QuizDashboardCubit>()
-                                .dismissCompetitor,
+                            onClose: () => bloc.add(const DismissCompetitor()),
                           ),
                         ),
                     ],

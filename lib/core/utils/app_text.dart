@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text_bn.dart';
 import 'package:islami_app_noorify/core/utils/app_text_en.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_cubit.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class AppText {
   const AppText({
@@ -977,11 +977,7 @@ class AppText {
       ),
       weekdaySunday: _read(map, 'weekdaySunday', fallback?.weekdaySunday ?? ''),
       monthJanuary: _read(map, 'monthJanuary', fallback?.monthJanuary ?? ''),
-      monthFebruary: _read(
-        map,
-        'monthFebruary',
-        fallback?.monthFebruary ?? '',
-      ),
+      monthFebruary: _read(map, 'monthFebruary', fallback?.monthFebruary ?? ''),
       monthMarch: _read(map, 'monthMarch', fallback?.monthMarch ?? ''),
       monthApril: _read(map, 'monthApril', fallback?.monthApril ?? ''),
       monthMay: _read(map, 'monthMay', fallback?.monthMay ?? ''),
@@ -994,16 +990,8 @@ class AppText {
         fallback?.monthSeptember ?? '',
       ),
       monthOctober: _read(map, 'monthOctober', fallback?.monthOctober ?? ''),
-      monthNovember: _read(
-        map,
-        'monthNovember',
-        fallback?.monthNovember ?? '',
-      ),
-      monthDecember: _read(
-        map,
-        'monthDecember',
-        fallback?.monthDecember ?? '',
-      ),
+      monthNovember: _read(map, 'monthNovember', fallback?.monthNovember ?? ''),
+      monthDecember: _read(map, 'monthDecember', fallback?.monthDecember ?? ''),
       google: _read(map, 'google', fallback?.google ?? ''),
       facebook: _read(map, 'facebook', fallback?.facebook ?? ''),
       authErrorInvalidEmail: _read(
@@ -1127,11 +1115,7 @@ class AppText {
       ),
       greeting: _read(map, 'greeting', fallback?.greeting ?? ''),
       timer: _read(map, 'timer', fallback?.timer ?? ''),
-      notifications: _read(
-        map,
-        'notifications',
-        fallback?.notifications ?? '',
-      ),
+      notifications: _read(map, 'notifications', fallback?.notifications ?? ''),
       featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
       featureDijpr: _read(map, 'featureDijpr', fallback?.featureDijpr ?? ''),
       featureAsmaUlHusna: _read(
@@ -1149,11 +1133,7 @@ class AppText {
         'zakatCalculator',
         fallback?.zakatCalculator ?? '',
       ),
-      ageCalculate: _read(
-        map,
-        'ageCalculate',
-        fallback?.ageCalculate ?? '',
-      ),
+      ageCalculate: _read(map, 'ageCalculate', fallback?.ageCalculate ?? ''),
       home: _read(map, 'home', fallback?.home ?? ''),
       todaysHighestValue: _read(
         map,
@@ -1319,21 +1299,13 @@ class AppText {
         'postDatePlaceholder',
         fallback?.postDatePlaceholder ?? '',
       ),
-      allArticles: _read(
-        map,
-        'allArticles',
-        fallback?.allArticles ?? '',
-      ),
+      allArticles: _read(map, 'allArticles', fallback?.allArticles ?? ''),
       articlesDetails: _read(
         map,
         'articlesDetails',
         fallback?.articlesDetails ?? '',
       ),
-      testLearning: _read(
-        map,
-        'testLearning',
-        fallback?.testLearning ?? '',
-      ),
+      testLearning: _read(map, 'testLearning', fallback?.testLearning ?? ''),
       articleFullTextSabr: _read(
         map,
         'articleFullTextSabr',
@@ -1379,11 +1351,7 @@ class AppText {
       ),
       timeSpent: _read(map, 'timeSpent', fallback?.timeSpent ?? ''),
       accuracy: _read(map, 'accuracy', fallback?.accuracy ?? ''),
-      accuracyHigh: _read(
-        map,
-        'accuracyHigh',
-        fallback?.accuracyHigh ?? '',
-      ),
+      accuracyHigh: _read(map, 'accuracyHigh', fallback?.accuracyHigh ?? ''),
       whatsNext: _read(map, 'whatsNext', fallback?.whatsNext ?? ''),
       whatsNextMessage: _read(
         map,
@@ -1396,11 +1364,7 @@ class AppText {
         fallback?.continueToNext ?? '',
       ),
       retryQuiz: _read(map, 'retryQuiz', fallback?.retryQuiz ?? ''),
-      overallScore: _read(
-        map,
-        'overallScore',
-        fallback?.overallScore ?? '',
-      ),
+      overallScore: _read(map, 'overallScore', fallback?.overallScore ?? ''),
       correctAnswers: _read(
         map,
         'correctAnswers',
@@ -1443,11 +1407,7 @@ class AppText {
       ),
       createPlan: _read(map, 'createPlan', fallback?.createPlan ?? ''),
       myPlan: _read(map, 'myPlan', fallback?.myPlan ?? ''),
-      completePlan: _read(
-        map,
-        'completePlan',
-        fallback?.completePlan ?? '',
-      ),
+      completePlan: _read(map, 'completePlan', fallback?.completePlan ?? ''),
       noCompletedPlansMessage: _read(
         map,
         'noCompletedPlansMessage',
@@ -1459,16 +1419,8 @@ class AppText {
         'createPlanHeader',
         fallback?.createPlanHeader ?? '',
       ),
-      planNameLabel: _read(
-        map,
-        'planNameLabel',
-        fallback?.planNameLabel ?? '',
-      ),
-      writeHereHint: _read(
-        map,
-        'writeHereHint',
-        fallback?.writeHereHint ?? '',
-      ),
+      planNameLabel: _read(map, 'planNameLabel', fallback?.planNameLabel ?? ''),
+      writeHereHint: _read(map, 'writeHereHint', fallback?.writeHereHint ?? ''),
       selectQuizCategory: _read(
         map,
         'selectQuizCategory',
@@ -1480,11 +1432,7 @@ class AppText {
         fallback?.egQuranicScienceHint ?? '',
       ),
       selectQuiz: _read(map, 'selectQuiz', fallback?.selectQuiz ?? ''),
-      egQuiz1Hint: _read(
-        map,
-        'egQuiz1Hint',
-        fallback?.egQuiz1Hint ?? '',
-      ),
+      egQuiz1Hint: _read(map, 'egQuiz1Hint', fallback?.egQuiz1Hint ?? ''),
       add: _read(map, 'add', fallback?.add ?? ''),
       create: _read(map, 'create', fallback?.create ?? ''),
       addMore: _read(map, 'addMore', fallback?.addMore ?? ''),
@@ -1509,11 +1457,7 @@ class AppText {
         'completeTodaysChallenge',
         fallback?.completeTodaysChallenge ?? '',
       ),
-      letsGetStart: _read(
-        map,
-        'letsGetStart',
-        fallback?.letsGetStart ?? '',
-      ),
+      letsGetStart: _read(map, 'letsGetStart', fallback?.letsGetStart ?? ''),
       highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
       quizQuestionProgressLabel: _read(
         map,
@@ -1546,18 +1490,10 @@ class AppText {
         fallback?.unableToLoadQuizHistory ?? '',
       ),
       tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
-      questionsWord: _read(
-        map,
-        'questionsWord',
-        fallback?.questionsWord ?? '',
-      ),
+      questionsWord: _read(map, 'questionsWord', fallback?.questionsWord ?? ''),
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),
-      profileTitle: _read(
-        map,
-        'profileTitle',
-        fallback?.profileTitle ?? '',
-      ),
+      profileTitle: _read(map, 'profileTitle', fallback?.profileTitle ?? ''),
       percentCompleteSuffix: _read(
         map,
         'percentCompleteSuffix',
@@ -1567,11 +1503,7 @@ class AppText {
       badgeLabel: _read(map, 'badgeLabel', fallback?.badgeLabel ?? ''),
       position: _read(map, 'position', fallback?.position ?? ''),
       pointsWord: _read(map, 'pointsWord', fallback?.pointsWord ?? ''),
-      familyMember: _read(
-        map,
-        'familyMember',
-        fallback?.familyMember ?? '',
-      ),
+      familyMember: _read(map, 'familyMember', fallback?.familyMember ?? ''),
       brother: _read(map, 'brother', fallback?.brother ?? ''),
       familyMemberNameAbdullah: _read(
         map,
@@ -1589,50 +1521,22 @@ class AppText {
         fallback?.familyMemberNameAli ?? '',
       ),
       logout: _read(map, 'logout', fallback?.logout ?? ''),
-      settingsTitle: _read(
-        map,
-        'settingsTitle',
-        fallback?.settingsTitle ?? '',
-      ),
+      settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
-      ourProducts: _read(
-        map,
-        'ourProducts',
-        fallback?.ourProducts ?? '',
-      ),
-      adminSupport: _read(
-        map,
-        'adminSupport',
-        fallback?.adminSupport ?? '',
-      ),
+      ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),
+      adminSupport: _read(map, 'adminSupport', fallback?.adminSupport ?? ''),
       feedback: _read(map, 'feedback', fallback?.feedback ?? ''),
-      appLanguage: _read(
-        map,
-        'appLanguage',
-        fallback?.appLanguage ?? '',
-      ),
+      appLanguage: _read(map, 'appLanguage', fallback?.appLanguage ?? ''),
       changePassword: _read(
         map,
         'changePassword',
         fallback?.changePassword ?? '',
       ),
-      deleteAccount: _read(
-        map,
-        'deleteAccount',
-        fallback?.deleteAccount ?? '',
-      ),
-      languageTitle: _read(
-        map,
-        'languageTitle',
-        fallback?.languageTitle ?? '',
-      ),
+      deleteAccount: _read(map, 'deleteAccount', fallback?.deleteAccount ?? ''),
+      languageTitle: _read(map, 'languageTitle', fallback?.languageTitle ?? ''),
       bangla: _read(map, 'bangla', fallback?.bangla ?? ''),
       english: _read(map, 'english', fallback?.english ?? ''),
-      defaultLabel: _read(
-        map,
-        'defaultLabel',
-        fallback?.defaultLabel ?? '',
-      ),
+      defaultLabel: _read(map, 'defaultLabel', fallback?.defaultLabel ?? ''),
       allFamilyMembers: _read(
         map,
         'allFamilyMembers',
@@ -1649,11 +1553,7 @@ class AppText {
         fallback?.familyMemberNameAsif ?? '',
       ),
       searchSurah: _read(map, 'searchSurah', fallback?.searchSurah ?? ''),
-      surahsTitle: _read(
-        map,
-        'surahsTitle',
-        fallback?.surahsTitle ?? '',
-      ),
+      surahsTitle: _read(map, 'surahsTitle', fallback?.surahsTitle ?? ''),
       ayahWord: _read(map, 'ayahWord', fallback?.ayahWord ?? ''),
       surahMeaningOpening: _read(
         map,
@@ -1698,7 +1598,7 @@ class AppText {
   }
 
   static AppText of(BuildContext context) {
-    final language = context.watch<LanguageCubit>().state.language;
+    final language = context.watch<LanguageBloc>().state.language;
     return forLanguage(language);
   }
 

@@ -20,7 +20,7 @@ import '../../features/quiz/presentation/screens/completed_history_screen.dart';
 import '../../features/quiz/data/datasources/quiz_local_data_source.dart';
 import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
 import '../../features/quiz/domain/usecases/get_completed_quiz_history.dart';
-import '../../features/quiz/presentation/cubit/quiz_cubit.dart';
+import '../../features/quiz/presentation/bloc/quiz_bloc.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
@@ -76,11 +76,11 @@ class AppRoutes {
       case RouteNames.completedHistory:
         return _page(
           BlocProvider(
-            create: (_) => QuizCubit(
+            create: (_) => QuizBloc(
               GetCompletedQuizHistory(
                 QuizRepositoryImpl(const QuizLocalDataSourceImpl()),
               ),
-            )..loadCompletedQuizHistory(),
+            )..add(const LoadCompletedQuizHistory()),
             child: const CompletedHistoryScreen(),
           ),
           settings,

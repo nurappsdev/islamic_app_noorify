@@ -5,10 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
-import 'core/bloc/app_preferences/app_preferences_cubit.dart';
+import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/brand_colors.dart';
 import 'core/utils/app_text.dart';
-import 'shared/bloc/language/language_cubit.dart';
+import 'shared/bloc/language/language_bloc.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -18,8 +18,8 @@ Future<void> main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageCubit()),
-        BlocProvider(create: (_) => AppPreferencesCubit()),
+        BlocProvider(create: (_) => LanguageBloc()),
+        BlocProvider(create: (_) => AppPreferencesBloc()),
       ],
       child: const MyApp(),
     ),
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appPreferences = context.watch<AppPreferencesCubit>().state;
+    final appPreferences = context.watch<AppPreferencesBloc>().state;
 
     return ScreenUtilInit(
       designSize: const Size(375, 812), // Adjust this to your design size
