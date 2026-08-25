@@ -12,7 +12,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/services/auth_service.dart';
 import 'package:islami_app_noorify/features/auth/domain/usecases/sign_up_usecase.dart';
-import 'package:islami_app_noorify/features/auth/presentation/cubit/sign_up/sign_up_cubit.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
@@ -26,8 +26,8 @@ class SignupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SignUpCubit>(
-      create: (_) => SignUpCubit(),
+    return BlocProvider<SignUpBloc>(
+      create: (_) => SignUpBloc(),
       child: _SignupView(googleSignUpRouteResolver: googleSignUpRouteResolver),
     );
   }
@@ -50,7 +50,7 @@ class _SignupViewState extends State<_SignupView> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  SignUpCubit get _auth => context.read<SignUpCubit>();
+  SignUpBloc get _auth => context.read<SignUpBloc>();
   SignUpState get _authState => _auth.state;
   bool get _isLoading => _authState.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
@@ -131,7 +131,7 @@ class _SignupViewState extends State<_SignupView> {
 
   Future<void> _signUpWithGoogle() async {
     final appText = AppText.of(context);
-    _auth.setLoading(true);
+    _auth.add(const SetLoading(true));
     try {
       final route =
           await (widget.googleSignUpRouteResolver ??
@@ -146,7 +146,7 @@ class _SignupViewState extends State<_SignupView> {
       _showMessage(appText.googleAuthErrorGeneric);
     } finally {
       if (mounted) {
-        _auth.setLoading(false);
+        _auth.add(const SetLoading(false));
       }
     }
   }
@@ -206,7 +206,7 @@ class _SignupViewState extends State<_SignupView> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4.r),
             ),
-            onChanged: (value) => _auth.setSaveInfo(value ?? false),
+            onChanged: (value) => _auth.add(SetSaveInfo(value ?? false)),
           ),
         ),
         SizedBox(width: 8.w),
@@ -313,7 +313,7 @@ class _SignupViewState extends State<_SignupView> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    context.watch<SignUpCubit>();
+    context.watch<SignUpBloc>();
 
     return Scaffold(
       backgroundColor: AppColor.authBackground,
@@ -423,7 +423,7 @@ class _SignupViewState extends State<_SignupView> {
                   suffixIcon: _passwordVisibilityButton(
                     appText: appText,
                     obscure: _obscurePassword,
-                    onPressed: () => _auth.toggleObscurePassword(),
+                    onPressed: () => _auth.add(const ToggleObscurePassword()),
                   ),
                 ),
                 SizedBox(height: 9.h),
@@ -436,7 +436,7 @@ class _SignupViewState extends State<_SignupView> {
                   suffixIcon: _passwordVisibilityButton(
                     appText: appText,
                     obscure: _obscureConfirm,
-                    onPressed: () => _auth.toggleObscureConfirm(),
+                    onPressed: () => _auth.add(const ToggleObscureConfirm()),
                   ),
                 ),
                 SizedBox(height: 28.h),

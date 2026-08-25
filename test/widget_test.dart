@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_cubit.dart';
+import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
@@ -13,14 +13,14 @@ import 'package:islami_app_noorify/features/home/presentation/screens/home_scree
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/main.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_cubit.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 void main() {
   Widget appUnderTest({String? initialRoute}) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageCubit()),
-        BlocProvider(create: (_) => AppPreferencesCubit()),
+        BlocProvider(create: (_) => LanguageBloc()),
+        BlocProvider(create: (_) => AppPreferencesBloc()),
       ],
       child: MyApp(initialRoute: initialRoute),
     );

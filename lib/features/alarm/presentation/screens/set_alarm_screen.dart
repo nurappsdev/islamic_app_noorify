@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/cubit/alarm_cubit.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
 class SetAlarmScreen extends StatelessWidget {
@@ -17,7 +17,7 @@ class SetAlarmScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AlarmCubit(initialTime: initialTime),
+      create: (_) => AlarmBloc(initialTime: initialTime),
       child: _SetAlarmView(period: period),
     );
   }
@@ -46,7 +46,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
   @override
   void initState() {
     super.initState();
-    final state = context.read<AlarmCubit>().state;
+    final state = context.read<AlarmBloc>().state;
     _hourController = FixedExtentScrollController(initialItem: state.hourIndex);
     _minuteController = FixedExtentScrollController(
       initialItem: state.minuteIndex,
@@ -66,7 +66,8 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AlarmCubit>().state;
+    final state = context.watch<AlarmBloc>().state;
+    final bloc = context.read<AlarmBloc>();
     final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
@@ -85,9 +86,9 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
               hourIndex: state.hourIndex,
               minuteIndex: state.minuteIndex,
               periodIndex: state.periodIndex,
-              onHourChanged: context.read<AlarmCubit>().selectHour,
-              onMinuteChanged: context.read<AlarmCubit>().selectMinute,
-              onPeriodChanged: context.read<AlarmCubit>().selectPeriod,
+              onHourChanged: (index) => bloc.add(SelectHour(index)),
+              onMinuteChanged: (index) => bloc.add(SelectMinute(index)),
+              onPeriodChanged: (index) => bloc.add(SelectPeriod(index)),
             ),
             SizedBox(height: 26.h),
             Expanded(
@@ -99,7 +100,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                     AlarmToggleRow(
                       label: appText.vibrateAndRing,
                       value: state.vibrateAndRing,
-                      onChanged: context.read<AlarmCubit>().setVibrateAndRing,
+                      onChanged: (value) => bloc.add(SetVibrateAndRing(value)),
                     ),
                     SizedBox(height: 22.h),
                     Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
@@ -109,13 +110,13 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                     AlarmToggleRow(
                       label: appText.vibrate,
                       value: state.vibrate,
-                      onChanged: context.read<AlarmCubit>().setVibrate,
+                      onChanged: (value) => bloc.add(SetVibrate(value)),
                     ),
                     SizedBox(height: 18.h),
                     AlarmToggleRow(
                       label: appText.ring,
                       value: state.ring,
-                      onChanged: context.read<AlarmCubit>().setRing,
+                      onChanged: (value) => bloc.add(SetRing(value)),
                     ),
                     SizedBox(height: 24.h),
                   ],

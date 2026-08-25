@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/learning/presentation/cubit/learning_test_cubit.dart';
+import 'package:islami_app_noorify/features/learning/presentation/bloc/learning_test_bloc.dart';
 
 class LearningTestScreen extends StatelessWidget {
   const LearningTestScreen({super.key});
@@ -13,7 +13,7 @@ class LearningTestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => LearningTestCubit(),
+      create: (_) => LearningTestBloc(),
       child: const _LearningTestView(),
     );
   }
@@ -24,7 +24,7 @@ class _LearningTestView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selected = context.watch<LearningTestCubit>().state.selectedAnswers;
+    final selected = context.watch<LearningTestBloc>().state.selectedAnswers;
     final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -56,7 +56,7 @@ class _LearningTestView extends StatelessWidget {
                   label: '${appText.answerLabelPrefix} ${index + 1}',
                   selected: selected.contains(index),
                   onTap: () =>
-                      context.read<LearningTestCubit>().toggleAnswer(index),
+                      context.read<LearningTestBloc>().add(ToggleAnswer(index)),
                 ),
                 SizedBox(height: 6.h),
               ],

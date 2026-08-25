@@ -6,7 +6,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/cubit/alarm_cubit.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 
 class SetAllAlarmScreen extends StatelessWidget {
@@ -17,7 +17,7 @@ class SetAllAlarmScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AlarmCubit(),
+      create: (_) => AlarmBloc(),
       child: _SetAllAlarmView(times: times),
     );
   }
@@ -31,7 +31,7 @@ class _SetAllAlarmView extends StatelessWidget {
   Future<void> _pickOffset(BuildContext context) async {
     final appText = AppText.of(context);
     final offsetOptions = appText.alarmOffsetOptions;
-    final selectedIndex = context.read<AlarmCubit>().state.offsetIndex;
+    final selectedIndex = context.read<AlarmBloc>().state.offsetIndex;
     final selected = await showModalBottomSheet<int>(
       context: context,
       backgroundColor: const Color(0xFFFCFDF8),
@@ -55,13 +55,14 @@ class _SetAllAlarmView extends StatelessWidget {
       ),
     );
     if (selected != null && context.mounted) {
-      context.read<AlarmCubit>().selectOffset(selected);
+      context.read<AlarmBloc>().add(SelectOffset(selected));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AlarmCubit>().state;
+    final state = context.watch<AlarmBloc>().state;
+    final bloc = context.read<AlarmBloc>();
     final appText = AppText.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFFCFDF8),
@@ -107,13 +108,13 @@ class _SetAllAlarmView extends StatelessWidget {
                   AlarmToggleRow(
                     label: appText.vibrate,
                     value: state.vibrate,
-                    onChanged: context.read<AlarmCubit>().setVibrate,
+                    onChanged: (value) => bloc.add(SetVibrate(value)),
                   ),
                   SizedBox(height: 18.h),
                   AlarmToggleRow(
                     label: appText.ring,
                     value: state.ring,
-                    onChanged: context.read<AlarmCubit>().setRing,
+                    onChanged: (value) => bloc.add(SetRing(value)),
                   ),
                   SizedBox(height: 22.h),
                   Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
@@ -123,7 +124,7 @@ class _SetAllAlarmView extends StatelessWidget {
                   AlarmToggleRow(
                     label: appText.vibrateAndRing,
                     value: state.vibrateAndRing,
-                    onChanged: context.read<AlarmCubit>().setVibrateAndRing,
+                    onChanged: (value) => bloc.add(SetVibrateAndRing(value)),
                   ),
                   SizedBox(height: 26.h),
                   for (final period in PrayerPeriod.values) ...[

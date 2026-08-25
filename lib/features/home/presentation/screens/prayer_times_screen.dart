@@ -8,7 +8,7 @@ import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart'
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/cubit/prayer_times_cubit.dart';
+import 'package:islami_app_noorify/features/home/presentation/bloc/prayer_times_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
@@ -21,12 +21,12 @@ class PrayerTimesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) {
-        final cubit = PrayerTimesCubit(
+        final bloc = PrayerTimesBloc(
           prayerTimeService: prayerTimeService,
           now: now,
-        )..loadPrayerTimes();
-        if (now == null) cubit.startClock();
-        return cubit;
+        )..add(const LoadPrayerTimes());
+        if (now == null) bloc.add(const StartClock());
+        return bloc;
       },
       child: const _PrayerTimesView(),
     );
@@ -40,7 +40,7 @@ class _PrayerTimesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<PrayerTimesCubit>().state;
+    final state = context.watch<PrayerTimesBloc>().state;
     final active = state.times == null
         ? null
         : currentPrayerPeriod(state.now, state.times!);

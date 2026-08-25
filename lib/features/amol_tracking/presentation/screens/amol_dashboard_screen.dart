@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/cubit/amol_dashboard_cubit.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
@@ -30,7 +30,7 @@ class AmolDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AmolDashboardCubit(now: now),
+      create: (_) => AmolDashboardBloc(now: now),
       child: const _AmolDashboardView(),
     );
   }
@@ -45,7 +45,8 @@ class _AmolDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AmolDashboardCubit>().state;
+    final state = context.watch<AmolDashboardBloc>().state;
+    final bloc = context.read<AmolDashboardBloc>();
     final appText = AppText.of(context);
     final period = _AmolPeriod.values[state.selectedPeriod];
     final categories = [
@@ -69,9 +70,7 @@ class _AmolDashboardView extends StatelessWidget {
                 children: [
                   _PeriodTabs(
                     period: period,
-                    onChanged: (value) => context
-                        .read<AmolDashboardCubit>()
-                        .selectPeriod(value.index),
+                    onChanged: (value) => bloc.add(SelectPeriod(value.index)),
                   ),
                   SizedBox(height: 16.h),
                   AmolSummaryCard(
@@ -83,13 +82,8 @@ class _AmolDashboardView extends StatelessWidget {
                   _DateNavigator(
                     label: formatAmolDate(state.date, appText),
                     subtitle: '${period.label(appText)} ${appText.amolTrack}',
-                    onPrevious: () => context
-                        .read<AmolDashboardCubit>()
-                        .shiftDate(period.step, -1),
-                    onNext: () => context.read<AmolDashboardCubit>().shiftDate(
-                      period.step,
-                      1,
-                    ),
+                    onPrevious: () => bloc.add(ShiftDate(period.step, -1)),
+                    onNext: () => bloc.add(ShiftDate(period.step, 1)),
                   ),
                   SizedBox(height: 18.h),
                   RichText(

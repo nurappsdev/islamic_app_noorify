@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_cubit.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class AppLanguageScreen extends StatelessWidget {
   const AppLanguageScreen({super.key});
@@ -12,7 +12,8 @@ class AppLanguageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final selected = context.watch<LanguageCubit>().state.language;
+    final selected = context.watch<LanguageBloc>().state.language;
+    final bloc = context.read<LanguageBloc>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -28,15 +29,14 @@ class AppLanguageScreen extends StatelessWidget {
                     subtitle: appText.defaultLabel,
                     selected: selected == AppLanguage.bangla,
                     onTap: () =>
-                        context.read<LanguageCubit>().update(AppLanguage.bangla),
+                        bloc.add(const UpdateLanguage(AppLanguage.bangla)),
                   ),
                   SizedBox(height: 12.h),
                   _LanguageOption(
                     title: appText.english,
                     selected: selected == AppLanguage.english,
-                    onTap: () => context
-                        .read<LanguageCubit>()
-                        .update(AppLanguage.english),
+                    onTap: () =>
+                        bloc.add(const UpdateLanguage(AppLanguage.english)),
                   ),
                 ],
               ),
@@ -146,7 +146,9 @@ class _LanguageOption extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected ? const Color(0xFFEDEFD8) : Colors.transparent,
+                  color: selected
+                      ? const Color(0xFFEDEFD8)
+                      : Colors.transparent,
                   border: Border.all(
                     color: selected
                         ? AppColor.primary

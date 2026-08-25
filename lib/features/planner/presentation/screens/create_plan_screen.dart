@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/planner/presentation/cubit/planner_cubit.dart';
+import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
 
 /// Create-plan form and its added-quiz summary state.
 class CreatePlanScreen extends StatelessWidget {
@@ -11,7 +11,7 @@ class CreatePlanScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => PlannerCubit(),
+      create: (_) => PlannerBloc(),
       child: const _CreatePlanView(),
     );
   }
@@ -35,7 +35,8 @@ class _CreatePlanViewState extends State<_CreatePlanView> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<PlannerCubit>().state;
+    final state = context.watch<PlannerBloc>().state;
+    final bloc = context.read<PlannerBloc>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -46,13 +47,11 @@ class _CreatePlanViewState extends State<_CreatePlanView> {
               child: state.hasAddedQuiz
                   ? _AddedQuizView(
                       planName: state.planName,
-                      onAddMore: context.read<PlannerCubit>().addMoreQuizzes,
+                      onAddMore: () => bloc.add(const AddMoreQuizzes()),
                     )
                   : _PlanForm(
                       controller: _planNameController,
-                      onAdd: () => context.read<PlannerCubit>().addQuiz(
-                        _planNameController.text,
-                      ),
+                      onAdd: () => bloc.add(AddQuiz(_planNameController.text)),
                     ),
             ),
             Padding(

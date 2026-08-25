@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/cubit/quiz_question_cubit.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_question_bloc.dart';
 
 class QuizQuestionScreen extends StatelessWidget {
   const QuizQuestionScreen({super.key});
@@ -13,7 +13,7 @@ class QuizQuestionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => QuizQuestionCubit(),
+      create: (_) => QuizQuestionBloc(),
       child: const _QuizQuestionView(),
     );
   }
@@ -22,15 +22,13 @@ class QuizQuestionScreen extends StatelessWidget {
 class _QuizQuestionView extends StatelessWidget {
   const _QuizQuestionView();
 
-  static List<String> _answers(AppText appText) => List.generate(
-    4,
-    (index) => '${appText.answerLabelPrefix} ${index + 1}',
-  );
+  static List<String> _answers(AppText appText) =>
+      List.generate(4, (index) => '${appText.answerLabelPrefix} ${index + 1}');
 
   @override
   Widget build(BuildContext context) {
     final selectedAnswer = context
-        .watch<QuizQuestionCubit>()
+        .watch<QuizQuestionBloc>()
         .state
         .selectedAnswer;
     final canContinue = selectedAnswer != null;
@@ -67,7 +65,7 @@ class _QuizQuestionView extends StatelessWidget {
                   answer: answers[index],
                   selected: selectedAnswer == index,
                   onTap: () =>
-                      context.read<QuizQuestionCubit>().selectAnswer(index),
+                      context.read<QuizQuestionBloc>().add(SelectAnswer(index)),
                 ),
                 SizedBox(height: 5.h),
               ],

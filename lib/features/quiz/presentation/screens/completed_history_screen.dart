@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_history_item.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/cubit/quiz_cubit.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
 
 /// Shows the complete list of quizzes a learner has finished.
 class CompletedHistoryScreen extends StatelessWidget {
@@ -42,7 +42,7 @@ class CompletedHistoryScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: BlocBuilder<QuizCubit, QuizState>(
+      body: BlocBuilder<QuizBloc, QuizState>(
         builder: (context, state) {
           switch (state.status) {
             case QuizStatus.initial:
@@ -167,8 +167,9 @@ class _HistoryLoadFailure extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             SizedBox(height: 12.h),
             OutlinedButton(
-              onPressed: () =>
-                  context.read<QuizCubit>().loadCompletedQuizHistory(),
+              onPressed: () => context.read<QuizBloc>().add(
+                const LoadCompletedQuizHistory(),
+              ),
               child: Text(AppText.of(context).tryAgain),
             ),
           ],
