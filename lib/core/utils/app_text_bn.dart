@@ -330,4 +330,13 @@ const Map<String, String> appTextBn = <String, String>{
   'allFamilyMembers': 'সকল পরিবারের সদস্য',
   'familyMemberNameZulfikur': 'জুলফিকার',
   'familyMemberNameAsif': 'আসিফ',
+
+  // Quran feature
+  'searchSurah': 'সূরা খুঁজুন',
+  'surahsTitle': 'সূরাসমূহ',
+  'ayahWord': 'আয়াত',
+  'surahMeaningOpening': 'সূচনা',
+  'surahMeaningCow': 'গাভী',
+  'surahMeaningFamilyOfImran': 'ইমরান পরিবার',
+  'surahMeaningWomen': 'নারী',
 };

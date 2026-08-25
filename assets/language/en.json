@@ -284,5 +284,12 @@
   "defaultLabel": "Default",
   "allFamilyMembers": "All Family Members",
   "familyMemberNameZulfikur": "Zulfikur",
-  "familyMemberNameAsif": "Asif"
+  "familyMemberNameAsif": "Asif",
+  "searchSurah": "Search surah",
+  "surahsTitle": "Surahs",
+  "ayahWord": "Ayahs",
+  "surahMeaningOpening": "The Opening",
+  "surahMeaningCow": "The Cow",
+  "surahMeaningFamilyOfImran": "The Family of Imran",
+  "surahMeaningWomen": "The Women"
 }

@@ -332,4 +332,13 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'allFamilyMembers': 'All Family Members',
   'familyMemberNameZulfikur': 'Zulfikur',
   'familyMemberNameAsif': 'Asif',
+
+  // Quran feature
+  'searchSurah': 'Search surah',
+  'surahsTitle': 'Surahs',
+  'ayahWord': 'Ayahs',
+  'surahMeaningOpening': 'The Opening',
+  'surahMeaningCow': 'The Cow',
+  'surahMeaningFamilyOfImran': 'The Family of Imran',
+  'surahMeaningWomen': 'The Women',
 };
