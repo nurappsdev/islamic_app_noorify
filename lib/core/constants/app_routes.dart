@@ -34,8 +34,16 @@ import '../../features/learning/presentation/screens/learning_test_result_screen
 import '../../features/quran/presentation/screens/quran_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_detail_screen.dart';
-import '../../features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
+import '../../features/quran/presentation/screens/verse_reader_screen.dart';
+import '../../features/quran/presentation/screens/bookmarks_screen.dart';
+import '../../features/quran/presentation/screens/reading_history_screen.dart';
 import '../../features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
+import '../../features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
+import '../../features/quran/presentation/bloc/last_read/last_read_bloc.dart';
+import '../../features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
+import '../../features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
+import '../../features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import '../../features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -102,7 +110,7 @@ class AppRoutes {
       case RouteNames.quranSurahs:
         return _page(
           BlocProvider(
-            create: (_) => SurahListBloc()..add(const LoadSurahs()),
+            create: (_) => LastReadBloc()..add(const LoadLastRead()),
             child: const SurahListScreen(),
           ),
           settings,
@@ -110,10 +118,44 @@ class AppRoutes {
       case RouteNames.quranSurahDetail:
         final surahNo = settings.arguments as int? ?? 1;
         return _page(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+              ),
+              BlocProvider(
+                create: (_) => ReciterBloc()..add(const LoadReciters()),
+              ),
+              BlocProvider(create: (_) => AyahAudioBloc()),
+            ],
+            child: SurahDetailScreen(surahNo: surahNo),
+          ),
+          settings,
+        );
+      case RouteNames.quranJuzReader:
+        final juzNumber = settings.arguments as int? ?? 1;
+        return _page(
+          BlocProvider(
+            create: (_) => VerseReaderBloc()..add(LoadJuzVerses(juzNumber)),
+            child: VerseReaderScreen(juzNumber: juzNumber),
+          ),
+          settings,
+        );
+      case RouteNames.quranBookmarks:
+        return _page(
+          BlocProvider(
+            create: (_) => BookmarksBloc()..add(const LoadBookmarks()),
+            child: const BookmarksScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.quranReadingHistory:
+        return _page(
           BlocProvider(
             create: (_) =>
-                SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
-            child: SurahDetailScreen(surahNo: surahNo),
+                ReadingHistoryBloc()..add(const LoadReadingHistory()),
+            child: const ReadingHistoryScreen(),
           ),
           settings,
         );

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: appNavigatorKey,
+          navigatorObservers: [appRouteObserver],
           title: 'Noorify',
           theme: ThemeData(
             useMaterial3: true,

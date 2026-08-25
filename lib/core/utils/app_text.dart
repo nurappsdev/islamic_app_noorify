@@ -305,6 +305,29 @@ class AppText {
     required this.surahMeaningWomen,
     required this.quranIntroSubtitle,
     required this.quranLoadError,
+    required this.hifjoQuranTitle,
+    required this.lastReadLabel,
+    required this.viewReadingHistory,
+    required this.ayahNoLabel,
+    required this.tabSurah,
+    required this.tabPara,
+    required this.meccan,
+    required this.medinian,
+    required this.juzWord,
+    required this.startsLabel,
+    required this.bookmarksTitle,
+    required this.noBookmarksYet,
+    required this.readingHistoryTitle,
+    required this.noReadingHistoryYet,
+    required this.startReadingPrompt,
+    required this.viewFullSura,
+    required this.pointsLabel,
+    required this.yourReadingTimeIs,
+    required this.minLabel,
+    required this.secLabel,
+    required this.viewQuranTafsir,
+    required this.selectReciterTitle,
+    required this.tafsirTitle,
   });
 
   final String noorify;
@@ -630,6 +653,29 @@ class AppText {
   final String surahMeaningWomen;
   final String quranIntroSubtitle;
   final String quranLoadError;
+  final String hifjoQuranTitle;
+  final String lastReadLabel;
+  final String viewReadingHistory;
+  final String ayahNoLabel;
+  final String tabSurah;
+  final String tabPara;
+  final String meccan;
+  final String medinian;
+  final String juzWord;
+  final String startsLabel;
+  final String bookmarksTitle;
+  final String noBookmarksYet;
+  final String readingHistoryTitle;
+  final String noReadingHistoryYet;
+  final String startReadingPrompt;
+  final String viewFullSura;
+  final String pointsLabel;
+  final String yourReadingTimeIs;
+  final String minLabel;
+  final String secLabel;
+  final String viewQuranTafsir;
+  final String selectReciterTitle;
+  final String tafsirTitle;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1589,6 +1635,73 @@ class AppText {
         'quranLoadError',
         fallback?.quranLoadError ?? '',
       ),
+      hifjoQuranTitle: _read(
+        map,
+        'hifjoQuranTitle',
+        fallback?.hifjoQuranTitle ?? '',
+      ),
+      lastReadLabel: _read(
+        map,
+        'lastReadLabel',
+        fallback?.lastReadLabel ?? '',
+      ),
+      viewReadingHistory: _read(
+        map,
+        'viewReadingHistory',
+        fallback?.viewReadingHistory ?? '',
+      ),
+      ayahNoLabel: _read(map, 'ayahNoLabel', fallback?.ayahNoLabel ?? ''),
+      tabSurah: _read(map, 'tabSurah', fallback?.tabSurah ?? ''),
+      tabPara: _read(map, 'tabPara', fallback?.tabPara ?? ''),
+      meccan: _read(map, 'meccan', fallback?.meccan ?? ''),
+      medinian: _read(map, 'medinian', fallback?.medinian ?? ''),
+      juzWord: _read(map, 'juzWord', fallback?.juzWord ?? ''),
+      startsLabel: _read(map, 'startsLabel', fallback?.startsLabel ?? ''),
+      bookmarksTitle: _read(
+        map,
+        'bookmarksTitle',
+        fallback?.bookmarksTitle ?? '',
+      ),
+      noBookmarksYet: _read(
+        map,
+        'noBookmarksYet',
+        fallback?.noBookmarksYet ?? '',
+      ),
+      readingHistoryTitle: _read(
+        map,
+        'readingHistoryTitle',
+        fallback?.readingHistoryTitle ?? '',
+      ),
+      noReadingHistoryYet: _read(
+        map,
+        'noReadingHistoryYet',
+        fallback?.noReadingHistoryYet ?? '',
+      ),
+      startReadingPrompt: _read(
+        map,
+        'startReadingPrompt',
+        fallback?.startReadingPrompt ?? '',
+      ),
+      viewFullSura: _read(map, 'viewFullSura', fallback?.viewFullSura ?? ''),
+      pointsLabel: _read(map, 'pointsLabel', fallback?.pointsLabel ?? ''),
+      yourReadingTimeIs: _read(
+        map,
+        'yourReadingTimeIs',
+        fallback?.yourReadingTimeIs ?? '',
+      ),
+      minLabel: _read(map, 'minLabel', fallback?.minLabel ?? ''),
+      secLabel: _read(map, 'secLabel', fallback?.secLabel ?? ''),
+      viewQuranTafsir: _read(
+        map,
+        'viewQuranTafsir',
+        fallback?.viewQuranTafsir ?? '',
+      ),
+      selectReciterTitle: _read(
+        map,
+        'selectReciterTitle',
+        fallback?.selectReciterTitle ?? '',
+      ),
+      tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
     );
   }
 
