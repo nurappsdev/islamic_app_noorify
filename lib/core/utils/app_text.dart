@@ -321,6 +321,7 @@ class AppText {
     required this.noReadingHistoryYet,
     required this.startReadingPrompt,
     required this.viewFullSura,
+    required this.viewInAyat,
     required this.pointsLabel,
     required this.yourReadingTimeIs,
     required this.minLabel,
@@ -669,6 +670,7 @@ class AppText {
   final String noReadingHistoryYet;
   final String startReadingPrompt;
   final String viewFullSura;
+  final String viewInAyat;
   final String pointsLabel;
   final String yourReadingTimeIs;
   final String minLabel;
@@ -1683,6 +1685,7 @@ class AppText {
         fallback?.startReadingPrompt ?? '',
       ),
       viewFullSura: _read(map, 'viewFullSura', fallback?.viewFullSura ?? ''),
+      viewInAyat: _read(map, 'viewInAyat', fallback?.viewInAyat ?? ''),
       pointsLabel: _read(map, 'pointsLabel', fallback?.pointsLabel ?? ''),
       yourReadingTimeIs: _read(
         map,

@@ -359,6 +359,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'noReadingHistoryYet': 'No reading history yet',
   'startReadingPrompt': 'Tap a surah below to begin',
   'viewFullSura': 'View Full Sura',
+  'viewInAyat': 'View in Ayat',
   'pointsLabel': 'Points',
   'yourReadingTimeIs': 'Your reading time is',
   'minLabel': 'min',

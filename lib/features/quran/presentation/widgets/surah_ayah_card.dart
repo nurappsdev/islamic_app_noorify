@@ -7,7 +7,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsir_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 
 class SurahAyahCard extends StatelessWidget {
   const SurahAyahCard({
@@ -28,33 +28,6 @@ class SurahAyahCard extends StatelessWidget {
   final bool isBangla;
 
   String get _verseKey => '$surahNo:$ayahNo';
-
-  void _openReciterPicker(BuildContext context) {
-    final reciterBloc = context.read<ReciterBloc>();
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => BlocProvider.value(
-        value: reciterBloc,
-        child: const _ReciterPickerSheet(),
-      ),
-    );
-  }
-
-  void _openTafsir(BuildContext context) {
-    final resourceId = isBangla
-        ? banglaTafsirResourceId
-        : englishTafsirResourceId;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => BlocProvider(
-        create: (_) =>
-            TafsirBloc(tafsirResourceId: resourceId)
-              ..add(LoadTafsir(_verseKey)),
-        child: const _TafsirSheet(),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +75,10 @@ class SurahAyahCard extends StatelessWidget {
                     builder: (context, reciterState) {
                       final name = reciterState.selectedName;
                       return InkWell(
-                        onTap: () => _openReciterPicker(context),
+                        onTap: () => openReciterPicker(
+                          context,
+                          context.read<ReciterBloc>(),
+                        ),
                         borderRadius: BorderRadius.circular(18.r),
                         child: Container(
                           padding: EdgeInsets.symmetric(
@@ -245,7 +221,7 @@ class SurahAyahCard extends StatelessWidget {
             ],
             SizedBox(height: 6.h),
             GestureDetector(
-              onTap: () => _openTafsir(context),
+              onTap: () => openTafsirSheet(context, _verseKey, isBangla),
               child: Text(
                 appText.viewQuranTafsir,
                 style: TextStyle(
@@ -253,140 +229,6 @@ class SurahAyahCard extends StatelessWidget {
                   color: AppColor.primary,
                   decoration: TextDecoration.underline,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ReciterPickerSheet extends StatelessWidget {
-  const _ReciterPickerSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appText.selectReciterTitle,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10.h),
-            BlocBuilder<ReciterBloc, ReciterState>(
-              builder: (context, state) {
-                if (state.isLoading && state.reciters.isEmpty) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.h),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColor.primary,
-                      ),
-                    ),
-                  );
-                }
-                return ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 360.h),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: state.reciters.length,
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      color: const Color(0xFFE3ECC5),
-                    ),
-                    itemBuilder: (context, index) {
-                      final reciter = state.reciters[index];
-                      final selected = reciter.id == state.selectedId;
-                      return ListTile(
-                        title: Text(
-                          reciter.name,
-                          style: TextStyle(fontSize: 14.sp),
-                        ),
-                        trailing: selected
-                            ? const Icon(
-                                Icons.check_circle,
-                                color: AppColor.primary,
-                              )
-                            : null,
-                        onTap: () {
-                          context.read<ReciterBloc>().add(
-                            SelectReciter(reciter.id),
-                          );
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TafsirSheet extends StatelessWidget {
-  const _TafsirSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appText.tafsirTitle,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10.h),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 420.h),
-              child: BlocBuilder<TafsirBloc, TafsirState>(
-                builder: (context, state) {
-                  if (state.isLoading) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColor.primary,
-                        ),
-                      ),
-                    );
-                  }
-                  if (state.hasError) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: Center(
-                        child: Text(
-                          appText.quranLoadError,
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return SingleChildScrollView(
-                    child: Text(
-                      state.text,
-                      style: TextStyle(fontSize: 13.sp, height: 1.5),
-                    ),
-                  );
-                },
               ),
             ),
           ],
