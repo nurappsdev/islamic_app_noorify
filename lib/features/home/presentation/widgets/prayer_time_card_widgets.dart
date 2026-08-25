@@ -62,17 +62,21 @@ class _PrayerEdgeTime extends StatelessWidget {
     required this.label,
     required this.time,
     required this.isSunrise,
+    required this.secondaryLabel,
+    required this.secondaryTime,
   });
 
   final String label;
   final String time;
   final bool isSunrise;
+  final String secondaryLabel;
+  final String secondaryTime;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 46.h,
+      height: 64.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -106,6 +110,16 @@ class _PrayerEdgeTime extends StatelessWidget {
                     time,
                     maxLines: 1,
                     style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '$secondaryLabel : $secondaryTime',
+                    maxLines: 1,
+                    style: homeSansStyle(fontSize: 10.sp, color: Colors.white),
                   ),
                 ),
               ],
