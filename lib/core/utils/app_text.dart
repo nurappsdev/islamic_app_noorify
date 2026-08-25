@@ -296,6 +296,13 @@ class AppText {
     required this.allFamilyMembers,
     required this.familyMemberNameZulfikur,
     required this.familyMemberNameAsif,
+    required this.searchSurah,
+    required this.surahsTitle,
+    required this.ayahWord,
+    required this.surahMeaningOpening,
+    required this.surahMeaningCow,
+    required this.surahMeaningFamilyOfImran,
+    required this.surahMeaningWomen,
   });
 
   final String noorify;
@@ -610,6 +617,15 @@ class AppText {
   final String allFamilyMembers;
   final String familyMemberNameZulfikur;
   final String familyMemberNameAsif;
+
+  // Quran feature
+  final String searchSurah;
+  final String surahsTitle;
+  final String ayahWord;
+  final String surahMeaningOpening;
+  final String surahMeaningCow;
+  final String surahMeaningFamilyOfImran;
+  final String surahMeaningWomen;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1631,6 +1647,33 @@ class AppText {
         map,
         'familyMemberNameAsif',
         fallback?.familyMemberNameAsif ?? '',
+      ),
+      searchSurah: _read(map, 'searchSurah', fallback?.searchSurah ?? ''),
+      surahsTitle: _read(
+        map,
+        'surahsTitle',
+        fallback?.surahsTitle ?? '',
+      ),
+      ayahWord: _read(map, 'ayahWord', fallback?.ayahWord ?? ''),
+      surahMeaningOpening: _read(
+        map,
+        'surahMeaningOpening',
+        fallback?.surahMeaningOpening ?? '',
+      ),
+      surahMeaningCow: _read(
+        map,
+        'surahMeaningCow',
+        fallback?.surahMeaningCow ?? '',
+      ),
+      surahMeaningFamilyOfImran: _read(
+        map,
+        'surahMeaningFamilyOfImran',
+        fallback?.surahMeaningFamilyOfImran ?? '',
+      ),
+      surahMeaningWomen: _read(
+        map,
+        'surahMeaningWomen',
+        fallback?.surahMeaningWomen ?? '',
       ),
     );
   }

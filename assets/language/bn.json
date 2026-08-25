@@ -284,5 +284,12 @@
   "defaultLabel": "ডিফল্ট",
   "allFamilyMembers": "সকল পরিবারের সদস্য",
   "familyMemberNameZulfikur": "জুলফিকার",
-  "familyMemberNameAsif": "আসিফ"
+  "familyMemberNameAsif": "আসিফ",
+  "searchSurah": "সূরা খুঁজুন",
+  "surahsTitle": "সূরাসমূহ",
+  "ayahWord": "আয়াত",
+  "surahMeaningOpening": "সূচনা",
+  "surahMeaningCow": "গাভী",
+  "surahMeaningFamilyOfImran": "ইমরান পরিবার",
+  "surahMeaningWomen": "নারী"
 }
