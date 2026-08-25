@@ -1,5 +1,23 @@
 class RouteNames {
   static const home = '/';
+  static const profile = '/profile';
+  static const settings = '/settings';
+  static const appLanguage = '/settings/app-language';
+  static const familyMembers = '/profile/family-members';
+  static const winQuiz = '/win-quiz';
+  static const quizQuestion = '/win-quiz/question';
+  static const quizComplete = '/win-quiz/complete';
+  static const quizList = '/win-quiz/list';
+  static const learning = '/learning';
+  static const planner = '/planner';
+  static const plannerDetails = '/planner/details';
+  static const createPlan = '/planner/create';
+  static const quizDashboard = '/quiz/dashboard';
+  static const completedHistory = '/quiz/completed-history';
+  static const learningArticles = '/learning/articles';
+  static const learningArticleDetails = '/learning/articles/details';
+  static const learningTest = '/learning/test';
+  static const learningTestResult = '/learning/test/result';
   static const splash = '/splash';
   static const onboardingHadith = '/onboarding';
   static const onboardingLanguage = '/onboarding/language';
@@ -23,6 +41,12 @@ class RouteNames {
   static const tasbih = '/tasbih';
   static const zakatCalculator = '/zakat-calculator';
   static const quran = '/quran';
+  static const quranSurahs = '/quran/surahs';
+  static const quranSurahDetail = '/quran/surahs/detail';
+  static const quranFullSurah = '/quran/surahs/full';
+  static const quranJuzReader = '/quran/juz';
+  static const quranBookmarks = '/quran/bookmarks';
+  static const quranReadingHistory = '/quran/history';
   static const prayerTimes = '/prayer-times';
   static const chat = '/chat';
   static const islamicCalendar = '/islamic-calendar';
