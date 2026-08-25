@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/services/fcm_token_service.dart';
 
@@ -191,52 +192,52 @@ class AuthService {
     }
   }
 
-  String messageForException(FirebaseAuthException error) {
+  String messageForException(FirebaseAuthException error, AppText appText) {
     switch (error.code) {
       case 'invalid-email':
-        return 'Please enter a valid email address.';
+        return appText.authErrorInvalidEmail;
       case 'user-disabled':
-        return 'This account has been disabled.';
+        return appText.authErrorUserDisabled;
       case 'user-not-found':
       case 'wrong-password':
       case 'invalid-credential':
-        return 'Email or password is incorrect.';
+        return appText.authErrorWrongCredentials;
       case 'account-not-password-based':
-        return 'This account uses Google sign-in. Password change is unavailable.';
+        return appText.authErrorAccountNotPasswordBased;
       case 'email-already-in-use':
-        return 'This email is already in use. Please sign in.';
+        return appText.authErrorEmailInUse;
       case 'weak-password':
-        return 'Password is too weak. Use at least 6 characters.';
+        return appText.authErrorWeakPassword;
       case 'operation-not-allowed':
-        return 'This sign-in method is not enabled in Firebase.';
+        return appText.authErrorOperationNotAllowed;
       case 'requires-recent-login':
-        return 'Please sign in again before changing password.';
+        return appText.authErrorRequiresRecentLogin;
       case 'account-exists-with-different-credential':
-        return 'An account already exists with a different sign-in method.';
+        return appText.authErrorAccountExistsDifferentCredential;
       case 'credential-already-in-use':
-        return 'This Google account is already linked with another user.';
+        return appText.authErrorCredentialAlreadyInUse;
       case 'too-many-requests':
-        return 'Too many attempts. Try again later.';
+        return appText.authErrorTooManyRequests;
       case 'network-request-failed':
-        return 'Network error. Please check your internet connection.';
+        return appText.authErrorNetworkFailed;
       default:
-        return error.message ?? 'Authentication failed. Please try again.';
+        return error.message ?? appText.authErrorGeneric;
     }
   }
 
-  String messageForGoogleException(GoogleSignInException error) {
+  String messageForGoogleException(GoogleSignInException error, AppText appText) {
     switch (error.code) {
       case GoogleSignInExceptionCode.canceled:
         return '';
       case GoogleSignInExceptionCode.clientConfigurationError:
       case GoogleSignInExceptionCode.providerConfigurationError:
-        return 'Google sign-in is not configured correctly yet.';
+        return appText.googleAuthErrorNotConfigured;
       case GoogleSignInExceptionCode.uiUnavailable:
-        return 'Google sign-in is currently unavailable on this device.';
+        return appText.googleAuthErrorUiUnavailable;
       case GoogleSignInExceptionCode.interrupted:
-        return 'Google sign-in was interrupted. Please try again.';
+        return appText.googleAuthErrorInterrupted;
       default:
-        return error.description ?? 'Google sign-in failed. Please try again.';
+        return error.description ?? appText.googleAuthErrorGeneric;
     }
   }
 }
