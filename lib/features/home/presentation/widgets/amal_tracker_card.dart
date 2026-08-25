@@ -121,20 +121,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             },
           ),
         ),
-        Positioned(
-          bottom: -23.h,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFAAB85D),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(6.r)),
-            ),
-            child: Text(
-              '${appText.sehri} : 4:09 AM     ${appText.iftar} : 6:33 PM',
-              style: homeSansStyle(fontSize: 9.sp, color: Colors.white),
-            ),
-          ),
-        ),
       ],
     );
   }

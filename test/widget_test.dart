@@ -58,7 +58,8 @@ void main() {
 
     expect(find.text('Todays Amol Track'), findsOneWidget);
     expect(find.text('Todays Highest Value'), findsOneWidget);
-    expect(find.text('Sehri : 4:09 AM     Iftar : 6:33 PM'), findsOneWidget);
+    expect(find.text('Sehri : 4:09 AM'), findsOneWidget);
+    expect(find.text('Iftar : 6:33 PM'), findsOneWidget);
     expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
   });
