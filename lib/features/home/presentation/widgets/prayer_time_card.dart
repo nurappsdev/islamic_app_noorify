@@ -243,7 +243,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Current Prayer Badge
                       Positioned(
-                        top: 171.h,
+                        top: 156.h,
                         left: 0,
                         right: 0,
                         child: Center(child: _CurrentPrayerBadge()),
@@ -253,7 +253,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       Positioned(
                         left: 13.w,
                         right: 13.w,
-                        bottom: 15.h,
+                        bottom: 10.h,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -262,6 +262,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 label: '${appText.sunrise}, ${appText.trishal}',
                                 time: appText.sunriseTimePlaceholder,
                                 isSunrise: true,
+                                secondaryLabel: appText.sehri,
+                                secondaryTime: '4:09 AM',
                               ),
                             ),
 
@@ -272,6 +274,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 label: '${appText.sunset}, ${appText.trishal}',
                                 time: appText.sunsetTimePlaceholder,
                                 isSunrise: false,
+                                secondaryLabel: appText.iftar,
+                                secondaryTime: '6:33 PM',
                               ),
                             ),
                           ],
