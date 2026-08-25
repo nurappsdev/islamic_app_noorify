@@ -45,7 +45,11 @@ class HomeBottomNav extends StatelessWidget {
               selected: selectedIndex == 1,
               onPressed: () => _goTo(context, RouteNames.quran),
             ),
-            const _NavItem(icon: Icons.fact_check_outlined),
+            _NavItem(
+              icon: Icons.bookmark_border_rounded,
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
+            ),
             const _NavItem(icon: Icons.grid_view_rounded),
           ],
         ),
