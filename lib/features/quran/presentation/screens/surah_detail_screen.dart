@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/quran/data/services/quran_local_stor
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -83,11 +84,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                 child: BlocBuilder<SurahDetailBloc, SurahDetailState>(
                   builder: (context, state) {
                     if (state.isLoading && state.detail == null) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColor.primary,
-                        ),
-                      );
+                      return const SurahDetailShimmer();
                     }
                     if (state.hasError && state.detail == null) {
                       return Center(
