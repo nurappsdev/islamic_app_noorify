@@ -11,6 +11,7 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -67,11 +68,7 @@ class FullSurahScreen extends StatelessWidget {
               child: BlocBuilder<SurahDetailBloc, SurahDetailState>(
                 builder: (context, state) {
                   if (state.isLoading && state.detail == null) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColor.primary,
-                      ),
-                    );
+                    return const FullSurahShimmer();
                   }
                   if (state.hasError && state.detail == null) {
                     return Center(
