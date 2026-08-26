@@ -31,6 +31,7 @@ import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
+import '../../features/quran/presentation/quran_route_args.dart';
 import '../../features/quran/presentation/screens/quran_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_detail_screen.dart';
@@ -118,7 +119,11 @@ class AppRoutes {
           settings,
         );
       case RouteNames.quranSurahDetail:
-        final surahNo = settings.arguments as int? ?? 1;
+        final args = settings.arguments;
+        final surahNo = args is SurahRouteArgs
+            ? args.surahNo
+            : (args as int? ?? 1);
+        final surahName = args is SurahRouteArgs ? args.surahName : '';
         return _page(
           MultiBlocProvider(
             providers: [
@@ -131,7 +136,7 @@ class AppRoutes {
               ),
               BlocProvider(create: (_) => AyahAudioBloc()),
             ],
-            child: SurahDetailScreen(surahNo: surahNo),
+            child: SurahDetailScreen(surahNo: surahNo, surahName: surahName),
           ),
           settings,
         );
