@@ -140,26 +140,47 @@ class _ContinuousAyahText extends StatelessWidget {
 
   final List<String> arabicAyahs;
 
+  static const _readColor = Color(0xFFB9C79A);
+
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.right,
-      text: TextSpan(
-        style: TextStyle(color: Colors.black87, fontSize: 19.sp, height: 2.0),
-        children: [
-          for (var i = 0; i < arabicAyahs.length; i++)
-            TextSpan(
-              children: [
-                TextSpan(text: '${arabicAyahs[i]} '),
-                TextSpan(
-                  text: '﴿${i + 1}﴾  ',
-                  style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
-                ),
-              ],
+    return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
+      builder: (context, playState) {
+        final currentAyahNo = playState.currentAyahNo;
+        return RichText(
+          textDirection: TextDirection.rtl,
+          textAlign: TextAlign.right,
+          text: TextSpan(
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 19.sp,
+              height: 2.0,
             ),
-        ],
-      ),
+            children: [
+              for (var i = 0; i < arabicAyahs.length; i++)
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${arabicAyahs[i]} ',
+                      style: i + 1 < currentAyahNo
+                          ? const TextStyle(color: _readColor)
+                          : null,
+                    ),
+                    TextSpan(
+                      text: '﴿${i + 1}﴾  ',
+                      style: TextStyle(
+                        color: i + 1 < currentAyahNo
+                            ? _readColor
+                            : AppColor.primary,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
