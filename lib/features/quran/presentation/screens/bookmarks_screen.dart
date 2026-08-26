@@ -6,7 +6,6 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class BookmarksScreen extends StatelessWidget {
@@ -92,10 +91,7 @@ class BookmarksScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16.r),
                                 onTap: () => Navigator.of(context).pushNamed(
                                   RouteNames.quranSurahDetail,
-                                  arguments: SurahRouteArgs(
-                                    surahNo: bookmark.surahNo,
-                                    surahName: bookmark.surahName,
-                                  ),
+                                  arguments: bookmark.surahNo,
                                 ),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
@@ -123,14 +119,13 @@ class BookmarksScreen extends StatelessWidget {
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            if (bookmark
-                                                .snippet
-                                                .isNotEmpty) ...[
+                                            if (bookmark.snippet.isNotEmpty) ...[
                                               SizedBox(height: 4.h),
                                               Text(
                                                 bookmark.snippet,
                                                 maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                   fontSize: 12.sp,

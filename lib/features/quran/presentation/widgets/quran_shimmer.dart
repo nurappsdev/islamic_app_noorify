@@ -19,7 +19,11 @@ class QuranShimmer extends StatelessWidget {
 }
 
 class _ShimmerBox extends StatelessWidget {
-  const _ShimmerBox({this.width, this.height = 12, this.radius = 6});
+  const _ShimmerBox({
+    this.width,
+    this.height = 12,
+    this.radius = 6,
+  });
 
   final double? width;
   final double height;
@@ -171,9 +175,7 @@ class SurahDetailShimmer extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10.h),
-          Center(
-            child: _ShimmerBox(width: 140.w, height: 12.h, radius: 4.r),
-          ),
+          Center(child: _ShimmerBox(width: 140.w, height: 12.h, radius: 4.r)),
           SizedBox(height: 18.h),
           for (var i = 0; i < cardCount; i++) ...[
             Container(
@@ -214,9 +216,7 @@ class FullSurahShimmer extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10.h),
-          Center(
-            child: _ShimmerBox(width: 140.w, height: 12.h, radius: 4.r),
-          ),
+          Center(child: _ShimmerBox(width: 140.w, height: 12.h, radius: 4.r)),
           SizedBox(height: 18.h),
           Container(
             width: double.infinity,
