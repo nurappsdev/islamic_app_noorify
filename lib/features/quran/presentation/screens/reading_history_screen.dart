@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class ReadingHistoryScreen extends StatelessWidget {
@@ -91,7 +92,10 @@ class ReadingHistoryScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16.r),
                                 onTap: () => Navigator.of(context).pushNamed(
                                   RouteNames.quranSurahDetail,
-                                  arguments: entry.surahNo,
+                                  arguments: SurahRouteArgs(
+                                    surahNo: entry.surahNo,
+                                    surahName: entry.surahName,
+                                  ),
                                 ),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
