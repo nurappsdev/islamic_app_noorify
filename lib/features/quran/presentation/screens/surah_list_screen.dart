@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/juz_list/juz
 import 'package:islami_app_noorify/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class SurahListScreen extends StatefulWidget {
@@ -208,7 +209,10 @@ class _LastReadCard extends StatelessWidget {
               ? null
               : () => Navigator.of(context).pushNamed(
                   RouteNames.quranSurahDetail,
-                  arguments: lastRead.surahNo,
+                  arguments: SurahRouteArgs(
+                    surahNo: lastRead.surahNo,
+                    surahName: lastRead.surahName,
+                  ),
                 ),
           child: Container(
             width: double.infinity,
@@ -494,7 +498,10 @@ class _SurahTabView extends StatelessWidget {
               trailingArabic: surah.nameArabic,
               onTap: () => Navigator.of(context).pushNamed(
                 RouteNames.quranSurahDetail,
-                arguments: surah.number,
+                arguments: SurahRouteArgs(
+                  surahNo: surah.number,
+                  surahName: surah.name,
+                ),
               ),
             ),
           );
