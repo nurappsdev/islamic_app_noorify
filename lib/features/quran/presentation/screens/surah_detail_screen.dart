@@ -15,9 +15,14 @@ import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_her
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class SurahDetailScreen extends StatefulWidget {
-  const SurahDetailScreen({super.key, required this.surahNo});
+  const SurahDetailScreen({
+    super.key,
+    required this.surahNo,
+    this.surahName = '',
+  });
 
   final int surahNo;
+  final String surahName;
 
   @override
   State<SurahDetailScreen> createState() => _SurahDetailScreenState();
@@ -70,7 +75,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       ),
                     ),
                     Text(
-                      appText.categoryQuran,
+                      widget.surahName.isNotEmpty
+                          ? widget.surahName
+                          : appText.categoryQuran,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: const Color(0xFF6B7458),
                         fontSize: 17.sp,
