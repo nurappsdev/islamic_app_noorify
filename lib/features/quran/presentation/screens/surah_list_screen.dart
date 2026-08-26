@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/juz_list/juz
 import 'package:islami_app_noorify/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -470,9 +471,7 @@ class _SurahTabView extends StatelessWidget {
       child: BlocBuilder<SurahListBloc, SurahListState>(
         builder: (context, state) {
           if (state.isLoading && state.surahs.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColor.primary),
-            );
+            return const SurahListShimmer();
           }
           if (state.hasError && state.surahs.isEmpty) {
             return _LoadingOrError(
@@ -516,9 +515,7 @@ class _ParaTabView extends StatelessWidget {
       child: BlocBuilder<JuzListBloc, JuzListState>(
         builder: (context, state) {
           if (state.isLoading && state.juzs.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColor.primary),
-            );
+            return const SurahListShimmer();
           }
           if (state.hasError && state.juzs.isEmpty) {
             return _LoadingOrError(
@@ -627,12 +624,7 @@ class _PaginatedListState<T> extends State<_PaginatedList<T>> {
           const Divider(height: 1, color: Color(0xFFE3ECC5)),
       itemBuilder: (context, index) {
         if (index >= visibleItems.length) {
-          return Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppColor.primary),
-            ),
-          );
+          return const SurahListRowShimmer();
         }
         return widget.itemBuilder(context, visibleItems[index]);
       },
