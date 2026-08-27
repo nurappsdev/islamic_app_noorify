@@ -271,23 +271,6 @@ class AppText {
     required this.offlineQuranDownloadIntro,
     required this.quranDownloadSurahAudio,
     required this.quranAudioDownloaded,
-    required this.quranReadButton,
-    required this.quranAudioModalTitle,
-    required this.quranAudioModalBody,
-    required this.quranAudioModalDownloadCta,
-    required this.quranAudioDownloadFailed,
-    required this.quranReaderSettingsTitle,
-    required this.quranArabicLabel,
-    required this.quranArabicSizeLabel,
-    required this.quranTranslationSizeLabel,
-    required this.quranDownloadEditionCta,
-    required this.quranEditionDownloading,
-    required this.quranShowTranslationLabel,
-    required this.quranAyahRepeatLabel,
-    required this.quranAyahRepeatTitle,
-    required this.quranAyahRepeatHint,
-    required this.repeatOff,
-    required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
     required this.fiftyFiftyChance,
@@ -359,7 +342,6 @@ class AppText {
     required this.viewQuranTafsir,
     required this.selectReciterTitle,
     required this.tafsirTitle,
-    required this.repeatLabel,
   });
 
   final String noorify;
@@ -643,23 +625,6 @@ class AppText {
   final String offlineQuranDownloadIntro;
   final String quranDownloadSurahAudio;
   final String quranAudioDownloaded;
-  final String quranReadButton;
-  final String quranAudioModalTitle;
-  final String quranAudioModalBody;
-  final String quranAudioModalDownloadCta;
-  final String quranAudioDownloadFailed;
-  final String quranReaderSettingsTitle;
-  final String quranArabicLabel;
-  final String quranArabicSizeLabel;
-  final String quranTranslationSizeLabel;
-  final String quranDownloadEditionCta;
-  final String quranEditionDownloading;
-  final String quranShowTranslationLabel;
-  final String quranAyahRepeatLabel;
-  final String quranAyahRepeatTitle;
-  final String quranAyahRepeatHint;
-  final String repeatOff;
-  final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
   final String fiftyFiftyChance;
@@ -739,7 +704,6 @@ class AppText {
   final String viewQuranTafsir;
   final String selectReciterTitle;
   final String tafsirTitle;
-  final String repeatLabel;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1637,87 +1601,6 @@ class AppText {
         'quranAudioDownloaded',
         fallback?.quranAudioDownloaded ?? '',
       ),
-      quranReadButton: _read(
-        map,
-        'quranReadButton',
-        fallback?.quranReadButton ?? '',
-      ),
-      quranAudioModalTitle: _read(
-        map,
-        'quranAudioModalTitle',
-        fallback?.quranAudioModalTitle ?? '',
-      ),
-      quranAudioModalBody: _read(
-        map,
-        'quranAudioModalBody',
-        fallback?.quranAudioModalBody ?? '',
-      ),
-      quranAudioModalDownloadCta: _read(
-        map,
-        'quranAudioModalDownloadCta',
-        fallback?.quranAudioModalDownloadCta ?? '',
-      ),
-      quranAudioDownloadFailed: _read(
-        map,
-        'quranAudioDownloadFailed',
-        fallback?.quranAudioDownloadFailed ?? '',
-      ),
-      quranReaderSettingsTitle: _read(
-        map,
-        'quranReaderSettingsTitle',
-        fallback?.quranReaderSettingsTitle ?? '',
-      ),
-      quranArabicLabel: _read(
-        map,
-        'quranArabicLabel',
-        fallback?.quranArabicLabel ?? '',
-      ),
-      quranArabicSizeLabel: _read(
-        map,
-        'quranArabicSizeLabel',
-        fallback?.quranArabicSizeLabel ?? '',
-      ),
-      quranTranslationSizeLabel: _read(
-        map,
-        'quranTranslationSizeLabel',
-        fallback?.quranTranslationSizeLabel ?? '',
-      ),
-      quranDownloadEditionCta: _read(
-        map,
-        'quranDownloadEditionCta',
-        fallback?.quranDownloadEditionCta ?? '',
-      ),
-      quranEditionDownloading: _read(
-        map,
-        'quranEditionDownloading',
-        fallback?.quranEditionDownloading ?? '',
-      ),
-      quranShowTranslationLabel: _read(
-        map,
-        'quranShowTranslationLabel',
-        fallback?.quranShowTranslationLabel ?? '',
-      ),
-      quranAyahRepeatLabel: _read(
-        map,
-        'quranAyahRepeatLabel',
-        fallback?.quranAyahRepeatLabel ?? '',
-      ),
-      quranAyahRepeatTitle: _read(
-        map,
-        'quranAyahRepeatTitle',
-        fallback?.quranAyahRepeatTitle ?? '',
-      ),
-      quranAyahRepeatHint: _read(
-        map,
-        'quranAyahRepeatHint',
-        fallback?.quranAyahRepeatHint ?? '',
-      ),
-      repeatOff: _read(map, 'repeatOff', fallback?.repeatOff ?? ''),
-      quranTranslationLabel: _read(
-        map,
-        'quranTranslationLabel',
-        fallback?.quranTranslationLabel ?? '',
-      ),
       highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
       quizQuestionProgressLabel: _read(
         map,
@@ -1850,7 +1733,11 @@ class AppText {
         'hifjoQuranTitle',
         fallback?.hifjoQuranTitle ?? '',
       ),
-      lastReadLabel: _read(map, 'lastReadLabel', fallback?.lastReadLabel ?? ''),
+      lastReadLabel: _read(
+        map,
+        'lastReadLabel',
+        fallback?.lastReadLabel ?? '',
+      ),
       viewReadingHistory: _read(
         map,
         'viewReadingHistory',
@@ -1909,7 +1796,6 @@ class AppText {
         fallback?.selectReciterTitle ?? '',
       ),
       tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
-      repeatLabel: _read(map, 'repeatLabel', fallback?.repeatLabel ?? ''),
     );
   }
 

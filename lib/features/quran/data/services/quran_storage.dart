@@ -30,14 +30,6 @@ class QuranStorage {
     return p.join(dir.path, '$ayahNo.mp3');
   }
 
-  /// Final path for a reciter's Bismillah clip, shared by every surah that
-  /// opens with the Basmala. Stored once per reciter (may not exist yet).
-  Future<String> bismillahFilePath(int reciterId) async {
-    final dir = Directory(p.join((await _root()).path, '$reciterId'));
-    if (!await dir.exists()) await dir.create(recursive: true);
-    return p.join(dir.path, 'bismillah.mp3');
-  }
-
   /// Removes every downloaded audio file (metadata rows are cleared separately).
   Future<void> clearAll() async {
     final root = await _root();

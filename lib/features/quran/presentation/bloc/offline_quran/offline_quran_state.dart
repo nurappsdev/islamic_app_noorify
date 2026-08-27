@@ -31,7 +31,8 @@ class OfflineQuranState {
   final String? errorMessage;
 
   /// Setup completion in 0..1, or null while the total is unknown.
-  double? get progress => total > 0 ? (done / total).clamp(0.0, 1.0) : null;
+  double? get progress =>
+      total > 0 ? (done / total).clamp(0.0, 1.0) : null;
 
   OfflineQuranState copyWith({
     OfflineQuranStatus? status,

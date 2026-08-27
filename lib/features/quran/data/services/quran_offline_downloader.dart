@@ -17,11 +17,9 @@ import 'quran_offline_database.dart';
 /// yet complete. Every write replaces on a UNIQUE key, so retries never create
 /// duplicate rows.
 class QuranOfflineDownloader {
-  QuranOfflineDownloader({
-    QuranApiService? apiService,
-    QuranOfflineDatabase? database,
-  }) : _api = apiService ?? QuranApiPagesService(),
-       _db = database ?? QuranOfflineDatabase();
+  QuranOfflineDownloader({QuranApiService? apiService, QuranOfflineDatabase? database})
+    : _api = apiService ?? QuranApiPagesService(),
+      _db = database ?? QuranOfflineDatabase();
 
   static const _assetMetaPath = 'assets/database/surah_meta.json';
 
