@@ -35,22 +35,11 @@ class SurahAyahCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final tState = context.watch<QuranTranslationBloc>().state;
-    final lang = tState.langForAyah(ayahNo);
+    final lang = context.select<QuranTranslationBloc, AppLanguage>(
+      (bloc) => bloc.state.langForAyah(ayahNo),
+    );
     final isBangla = lang == AppLanguage.bangla;
-    final usingCustom = tState.usingCustomEdition;
-    final editionReady = usingCustom && tState.editionTextSurahNo == surahNo;
-    final String translation;
-    if (editionReady) {
-      translation = tState.surahEditionText[ayahNo] ?? '';
-    } else if (usingCustom) {
-      translation = '';
-    } else {
-      translation = isBangla ? bengaliTranslation : englishTranslation;
-    }
-    final arabicScale = tState.arabicFontScale;
-    final translationScale = tState.translationFontScale;
-    final showTranslation = tState.showTranslation;
+    final translation = isBangla ? bengaliTranslation : englishTranslation;
     return BlocProvider(
       create: (_) => AyahBookmarkBloc(
         surahNo: surahNo,
@@ -137,45 +126,6 @@ class SurahAyahCard extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 InkWell(
-                  onTap: () => showAyahRepeatSheet(
-                    context,
-                    bloc: context.read<AyahAudioBloc>(),
-                    verseKey: _verseKey,
-                  ),
-                  borderRadius: BorderRadius.circular(16.r),
-                  child: Padding(
-                    padding: EdgeInsets.all(4.w),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.repeat_rounded,
-                          color: AppColor.primary,
-                          size: 18.sp,
-                        ),
-                        BlocBuilder<AyahAudioBloc, AyahAudioState>(
-                          buildWhen: (p, c) =>
-                              p.repeatCountFor(_verseKey) !=
-                              c.repeatCountFor(_verseKey),
-                          builder: (context, state) {
-                            final n = state.repeatCountFor(_verseKey);
-                            return n <= 1
-                                ? const SizedBox.shrink()
-                                : Text(
-                                    '$n',
-                                    style: TextStyle(
-                                      color: AppColor.primary,
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
                   onTap: () {
                     final recitationId =
                         context.read<ReciterBloc>().state.selectedId ??
@@ -260,26 +210,18 @@ class SurahAyahCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12.h),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                arabic,
-                textAlign: TextAlign.right,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontSize: 19.sp * arabicScale,
-                  height: 1.8,
-                ),
-              ),
+            Text(
+              arabic,
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+              style: TextStyle(fontSize: 19.sp, height: 1.8),
             ),
-            if (showTranslation && translation.isNotEmpty) ...[
+            if (translation.isNotEmpty) ...[
               SizedBox(height: 8.h),
               Text(
                 translation,
-                textAlign: TextAlign.left,
-                textDirection: TextDirection.ltr,
                 style: TextStyle(
-                  fontSize: 13.sp * translationScale,
+                  fontSize: 13.sp,
                   height: 1.4,
                   color: const Color(0xFF444444),
                 ),
@@ -300,7 +242,7 @@ class SurahAyahCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                if (!usingCustom) AyahTranslationToggle(ayahNo: ayahNo),
+                AyahTranslationToggle(ayahNo: ayahNo),
               ],
             ),
           ],
