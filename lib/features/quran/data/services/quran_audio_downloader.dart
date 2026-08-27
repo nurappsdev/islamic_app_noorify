@@ -12,7 +12,8 @@ class AudioDownloadProgress {
   final int done;
   final int total;
 
-  double? get fraction => total > 0 ? (done / total).clamp(0.0, 1.0) : null;
+  double? get fraction =>
+      total > 0 ? (done / total).clamp(0.0, 1.0) : null;
 }
 
 class AudioDownloadException implements Exception {
@@ -46,12 +47,6 @@ class QuranAudioDownloader {
   final QuranStorage storage;
   final http.Client _client;
 
-  /// Al-Fatiha and At-Tawbah are the two surahs that do not open with the
-  /// Basmala, so no separate Bismillah clip is downloaded or played for them.
-  static const _surahsWithoutBismillah = {1, 9};
-
-  static const _bismillahVerseKey = 'bismillah';
-
   Stream<AudioDownloadProgress> downloadSurah({
     required int reciterId,
     required int surahNo,
@@ -68,24 +63,17 @@ class QuranAudioDownloader {
       throw const AudioDownloadException('No audio available for this surah.');
     }
 
-    final needsBismillah = !_surahsWithoutBismillah.contains(surahNo);
-    final total = files.length + (needsBismillah ? 1 : 0);
+    final total = files.length;
     var done = 0;
     yield AudioDownloadProgress(done, total);
 
-    if (needsBismillah) {
-      await _downloadBismillah(reciterId);
-      done++;
-      yield AudioDownloadProgress(done, total);
-    }
-
     for (final file in files) {
       final ayahNo = _ayahOf(file.verseKey);
-      final finalPath = await storage.ayahFilePath(reciterId, surahNo, ayahNo);
+      final finalPath =
+          await storage.ayahFilePath(reciterId, surahNo, ayahNo);
 
       final existing = await _db.audioRow(reciterId, file.verseKey);
-      final alreadyDone =
-          existing != null &&
+      final alreadyDone = existing != null &&
           existing['status'] == 'complete' &&
           await File(existing['local_path'] as String? ?? finalPath).exists();
       if (alreadyDone) {
@@ -118,9 +106,9 @@ class QuranAudioDownloader {
     final partFile = File('$finalPath.part');
     try {
       final request = http.Request('GET', Uri.parse(remoteUrl));
-      final response = await _client
-          .send(request)
-          .timeout(const Duration(seconds: 30));
+      final response = await _client.send(request).timeout(
+            const Duration(seconds: 30),
+          );
       if (response.statusCode != 200) {
         throw AudioDownloadException('Audio download failed ($verseKey).');
       }
@@ -154,34 +142,6 @@ class QuranAudioDownloader {
     }
   }
 
-  /// Downloads the reciter's Bismillah clip once (Al-Fatiha 1:1 is the
-  /// Basmala). Re-runs are a no-op once the file is on disk.
-  Future<void> _downloadBismillah(int reciterId) async {
-    final finalPath = await storage.bismillahFilePath(reciterId);
-    final existing = await _db.audioRow(reciterId, _bismillahVerseKey);
-    if (existing != null &&
-        existing['status'] == 'complete' &&
-        await File(existing['local_path'] as String? ?? finalPath).exists()) {
-      return;
-    }
-    final String url;
-    try {
-      url = await _reader.loadAyahAudioUrl(reciterId, '1:1');
-    } catch (_) {
-      throw const AudioDownloadException(
-        'Could not reach the audio server. Check your connection.',
-      );
-    }
-    await _downloadOne(
-      reciterId: reciterId,
-      surahNo: 0,
-      ayahNo: 0,
-      verseKey: _bismillahVerseKey,
-      remoteUrl: url,
-      finalPath: finalPath,
-    );
-  }
-
   /// Local file path for a downloaded ayah, or null if it must be streamed.
   Future<String?> localPathFor({
     required int reciterId,
@@ -194,10 +154,6 @@ class QuranAudioDownloader {
     return await File(path).exists() ? path : null;
   }
 
-  /// Local path to the reciter's Bismillah clip, or null if not downloaded.
-  Future<String?> localBismillahPath(int reciterId) =>
-      localPathFor(reciterId: reciterId, verseKey: _bismillahVerseKey);
-
   Future<AudioDownloadProgress> surahStatus({
     required int reciterId,
     required int surahNo,
@@ -205,20 +161,6 @@ class QuranAudioDownloader {
   }) async {
     final done = await _db.completedAudioCount(reciterId, surahNo);
     return AudioDownloadProgress(done, totalAyah);
-  }
-
-  /// Whether every ayah of the surah — plus the reciter's Bismillah clip,
-  /// where the surah opens with the Basmala — is on the device.
-  Future<bool> isSurahComplete({
-    required int reciterId,
-    required int surahNo,
-    required int totalAyah,
-  }) async {
-    if (totalAyah <= 0) return false;
-    final done = await _db.completedAudioCount(reciterId, surahNo);
-    if (done < totalAyah) return false;
-    if (_surahsWithoutBismillah.contains(surahNo)) return true;
-    return await localBismillahPath(reciterId) != null;
   }
 
   static int _ayahOf(String verseKey) {

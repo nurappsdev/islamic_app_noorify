@@ -1,4 +1,10 @@
-enum SurahAudioDownloadStatus { idle, checking, downloading, complete, failed }
+enum SurahAudioDownloadStatus {
+  idle,
+  checking,
+  downloading,
+  complete,
+  failed,
+}
 
 class SurahAudioDownloadState {
   const SurahAudioDownloadState({
@@ -17,7 +23,8 @@ class SurahAudioDownloadState {
       status == SurahAudioDownloadStatus.downloading ||
       status == SurahAudioDownloadStatus.checking;
 
-  double? get progress => total > 0 ? (done / total).clamp(0.0, 1.0) : null;
+  double? get progress =>
+      total > 0 ? (done / total).clamp(0.0, 1.0) : null;
 
   SurahAudioDownloadState copyWith({
     SurahAudioDownloadStatus? status,

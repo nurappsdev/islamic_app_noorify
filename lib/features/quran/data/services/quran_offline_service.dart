@@ -2,10 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
 
 import 'quran_api_service.dart';
 import 'quran_offline_database.dart';
@@ -21,7 +19,6 @@ class QuranOfflineService implements QuranApiService {
     : _db = database ?? QuranOfflineDatabase();
 
   static const _assetMetaPath = 'assets/database/surah_meta.json';
-  static const _assetJuzPath = 'assets/database/juz_boundaries.json';
 
   final QuranOfflineDatabase _db;
 
@@ -69,81 +66,6 @@ class QuranOfflineService implements QuranApiService {
     );
   }
 
-  /// The 30 juz as [JuzSummary], derived from the bundled boundary table.
-  /// No network — the boundaries are fixed data.
-  Future<List<JuzSummary>> loadJuzList() async {
-    final bounds = await _juzBoundaries();
-    return [
-      for (final b in bounds)
-        JuzSummary(
-          number: b.juz,
-          versesCount: b.versesCount,
-          startSurahNo: b.startSurah,
-          startAyah: b.startAyah,
-        ),
-    ];
-  }
-
-  /// Every ayah of one juz (Arabic + English translation), read from the
-  /// on-device database. Throws if the database has no rows for the range yet.
-  Future<List<VerseItem>> loadVersesByJuz(int juzNumber) async {
-    final bounds = await _juzBoundaries();
-    final b = bounds.firstWhere(
-      (e) => e.juz == juzNumber,
-      orElse: () => throw const FormatException('Unknown juz'),
-    );
-
-    final verses = <VerseItem>[];
-    for (var surahNo = b.startSurah; surahNo <= b.endSurah; surahNo++) {
-      final rows = await _db.surahTextRows(surahNo);
-      for (final row in rows) {
-        final ayahNo = (row['ayah_number'] as num?)?.toInt() ?? 0;
-        if (surahNo == b.startSurah && ayahNo < b.startAyah) continue;
-        if (surahNo == b.endSurah && ayahNo > b.endAyah) continue;
-        verses.add(
-          VerseItem(
-            surahNo: surahNo,
-            ayahNo: ayahNo,
-            arabic: row['text_ar'] as String? ?? '',
-            translation: row['text_en'] as String? ?? '',
-          ),
-        );
-      }
-    }
-    if (verses.isEmpty) {
-      throw const FormatException('Juz not found in offline database');
-    }
-    return verses;
-  }
-
-  /// One downloaded translation edition's text for a surah: ayah number ->
-  /// text. Empty if the edition has no rows for this surah yet.
-  Future<Map<int, String>> editionSurahText(
-    String editionId,
-    int surahNo,
-  ) async {
-    final rows = await _db.editionSurahTextRows(editionId, surahNo);
-    return {
-      for (final row in rows)
-        (row['ayah_number'] as num).toInt(): row['text'] as String? ?? '',
-    };
-  }
-
-  Future<List<_JuzBound>> _juzBoundaries() async {
-    final raw = await rootBundle.loadString(_assetJuzPath);
-    return [
-      for (final e in (jsonDecode(raw) as List).cast<Map<String, dynamic>>())
-        _JuzBound(
-          juz: (e['juz'] as num).toInt(),
-          startSurah: (e['startSurah'] as num).toInt(),
-          startAyah: (e['startAyah'] as num).toInt(),
-          endSurah: (e['endSurah'] as num).toInt(),
-          endAyah: (e['endAyah'] as num).toInt(),
-          versesCount: (e['versesCount'] as num?)?.toInt() ?? 0,
-        ),
-    ];
-  }
-
   Future<List<SurahSummary>> _bundledMeta() async {
     final raw = await rootBundle.loadString(_assetMetaPath);
     return [
@@ -159,22 +81,4 @@ class QuranOfflineService implements QuranApiService {
         ),
     ];
   }
-}
-
-class _JuzBound {
-  const _JuzBound({
-    required this.juz,
-    required this.startSurah,
-    required this.startAyah,
-    required this.endSurah,
-    required this.endAyah,
-    required this.versesCount,
-  });
-
-  final int juz;
-  final int startSurah;
-  final int startAyah;
-  final int endSurah;
-  final int endAyah;
-  final int versesCount;
 }
