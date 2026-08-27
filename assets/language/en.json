@@ -260,6 +260,7 @@
   "offlineQuranDownloadIntro": "Download the full Quran with English and Bengali translations for offline reading. It needs the internet once and then works with no connection.",
   "quranDownloadSurahAudio": "Download recitation",
   "quranAudioDownloaded": "Recitation saved for offline",
+  "quranTranslationLabel": "Translation",
   "highScore": "High Score",
   "quizQuestionProgressLabel": "Question 8 of 12",
   "fiftyFiftyChance": "50/50  CHANCE",

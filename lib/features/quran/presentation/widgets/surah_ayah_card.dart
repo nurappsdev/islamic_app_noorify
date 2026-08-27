@@ -6,8 +6,11 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class SurahAyahCard extends StatelessWidget {
   const SurahAyahCard({
@@ -16,22 +19,27 @@ class SurahAyahCard extends StatelessWidget {
     required this.ayahNo,
     required this.surahName,
     required this.arabic,
-    required this.translation,
-    required this.isBangla,
+    required this.englishTranslation,
+    required this.bengaliTranslation,
   });
 
   final int surahNo;
   final int ayahNo;
   final String surahName;
   final String arabic;
-  final String translation;
-  final bool isBangla;
+  final String englishTranslation;
+  final String bengaliTranslation;
 
   String get _verseKey => '$surahNo:$ayahNo';
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final lang = context.select<QuranTranslationBloc, AppLanguage>(
+      (bloc) => bloc.state.langForAyah(ayahNo),
+    );
+    final isBangla = lang == AppLanguage.bangla;
+    final translation = isBangla ? bengaliTranslation : englishTranslation;
     return BlocProvider(
       create: (_) => AyahBookmarkBloc(
         surahNo: surahNo,
@@ -219,17 +227,23 @@ class SurahAyahCard extends StatelessWidget {
                 ),
               ),
             ],
-            SizedBox(height: 6.h),
-            GestureDetector(
-              onTap: () => openTafsirSheet(context, _verseKey, isBangla),
-              child: Text(
-                appText.viewQuranTafsir,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColor.primary,
-                  decoration: TextDecoration.underline,
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => openTafsirSheet(context, _verseKey, isBangla),
+                  child: Text(
+                    appText.viewQuranTafsir,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColor.primary,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
-              ),
+                const Spacer(),
+                AyahTranslationToggle(ayahNo: ayahNo),
+              ],
             ),
           ],
         ),

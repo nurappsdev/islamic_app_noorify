@@ -271,6 +271,7 @@ class AppText {
     required this.offlineQuranDownloadIntro,
     required this.quranDownloadSurahAudio,
     required this.quranAudioDownloaded,
+    required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
     required this.fiftyFiftyChance,
@@ -625,6 +626,7 @@ class AppText {
   final String offlineQuranDownloadIntro;
   final String quranDownloadSurahAudio;
   final String quranAudioDownloaded;
+  final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
   final String fiftyFiftyChance;
@@ -1600,6 +1602,11 @@ class AppText {
         map,
         'quranAudioDownloaded',
         fallback?.quranAudioDownloaded ?? '',
+      ),
+      quranTranslationLabel: _read(
+        map,
+        'quranTranslationLabel',
+        fallback?.quranTranslationLabel ?? '',
       ),
       highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
       quizQuestionProgressLabel: _read(

@@ -7,11 +7,13 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -52,8 +54,17 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final isBangla =
-        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    return BlocProvider(
+      create: (context) {
+        final uiLang = context.read<LanguageBloc>().state.language;
+        return QuranTranslationBloc(initial: uiLang)
+          ..add(LoadTranslationPreference(uiLang));
+      },
+      child: _buildScaffold(context, appText),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, AppText appText) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7EA),
       body: SafeArea(
@@ -129,9 +140,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     }
                     final detail = state.detail!;
                     _recordLastRead(detail);
-                    final translations = isBangla
-                        ? detail.bengaliAyahs
-                        : detail.englishAyahs;
                     return ListView(
                       padding: EdgeInsets.only(top: 4.h, bottom: 24.h),
                       children: [
@@ -166,7 +174,21 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                             totalAyah: detail.arabicAyahs.length,
                           ),
                         ],
-                        SizedBox(height: 18.h),
+                        SizedBox(height: 14.h),
+                        Row(
+                          children: [
+                            Text(
+                              appText.quranTranslationLabel,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: const Color(0xFF6B7458),
+                              ),
+                            ),
+                            const Spacer(),
+                            const SurahTranslationSwitch(),
+                          ],
+                        ),
+                        SizedBox(height: 16.h),
                         for (
                           var i = 0;
                           i < detail.arabicAyahs.length;
@@ -177,10 +199,12 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                             ayahNo: i + 1,
                             surahName: detail.name,
                             arabic: detail.arabicAyahs[i],
-                            translation: i < translations.length
-                                ? translations[i]
+                            englishTranslation: i < detail.englishAyahs.length
+                                ? detail.englishAyahs[i]
                                 : '',
-                            isBangla: isBangla,
+                            bengaliTranslation: i < detail.bengaliAyahs.length
+                                ? detail.bengaliAyahs[i]
+                                : '',
                           ),
                           SizedBox(height: 10.h),
                         ],
