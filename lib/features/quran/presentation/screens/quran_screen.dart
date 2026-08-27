@@ -82,28 +82,59 @@ class QuranScreen extends StatelessWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 20.h),
-                  child: SizedBox(
-                    height: 54.h,
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(
-                        context,
-                      ).pushNamed(RouteNames.quranSurahs),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(29.r),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 54.h,
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => Navigator.of(
+                            context,
+                          ).pushNamed(RouteNames.quranSurahs),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(29.r),
+                            ),
+                          ),
+                          icon: const Icon(Icons.cloud_outlined, size: 18),
+                          label: Text(
+                            appText.quranOnlineButton,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        appText.letsGetStart,
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
+                      SizedBox(height: 12.h),
+                      SizedBox(
+                        height: 54.h,
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.of(
+                            context,
+                          ).pushNamed(RouteNames.quranOfflineSurahs),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColor.primary,
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: AppColor.primary),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(29.r),
+                            ),
+                          ),
+                          icon: const Icon(Icons.download_done_rounded, size: 18),
+                          label: Text(
+                            appText.quranOfflineButton,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
