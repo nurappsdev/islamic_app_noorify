@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
 import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/juz_list/juz_list_bloc.dart';
@@ -17,7 +18,11 @@ import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class SurahListScreen extends StatefulWidget {
-  const SurahListScreen({super.key});
+  const SurahListScreen({super.key, this.offline = false});
+
+  /// When true, the surah list is served from the bundled offline database
+  /// and the Para (juz) tab — which needs the network — is hidden.
+  final bool offline;
 
   @override
   State<SurahListScreen> createState() => _SurahListScreenState();
@@ -32,7 +37,10 @@ class _SurahListScreenState extends State<SurahListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: widget.offline ? 1 : 2,
+      vsync: this,
+    );
   }
 
   @override
@@ -71,36 +79,39 @@ class _SurahListScreenState extends State<SurahListScreen>
                     children: [
                       _TopBar(appText: appText),
                       SizedBox(height: 14.h),
-                      _LastReadCard(appText: appText),
+                      _LastReadCard(appText: appText, offline: widget.offline),
                       SizedBox(height: 8.h),
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: AppColor.primary,
-                        unselectedLabelColor: Colors.grey,
-                        indicatorColor: AppColor.primary,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        labelStyle: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
+                      if (!widget.offline)
+                        TabBar(
+                          controller: _tabController,
+                          labelColor: AppColor.primary,
+                          unselectedLabelColor: Colors.grey,
+                          indicatorColor: AppColor.primary,
+                          indicatorSize: TabBarIndicatorSize.label,
+                          labelStyle: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          tabs: [
+                            Tab(text: appText.tabSurah),
+                            Tab(text: appText.tabPara),
+                          ],
                         ),
-                        tabs: [
-                          Tab(text: appText.tabSurah),
-                          Tab(text: appText.tabPara),
-                        ],
-                      ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: const [
-                        _SurahTabView(),
-                        _ParaTabView(),
-                      ],
-                    ),
+                    child: widget.offline
+                        ? const _SurahTabView(offline: true)
+                        : TabBarView(
+                            controller: _tabController,
+                            children: const [
+                              _SurahTabView(),
+                              _ParaTabView(),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -195,9 +206,10 @@ class _TopBar extends StatelessWidget {
 }
 
 class _LastReadCard extends StatelessWidget {
-  const _LastReadCard({required this.appText});
+  const _LastReadCard({required this.appText, this.offline = false});
 
   final AppText appText;
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +220,9 @@ class _LastReadCard extends StatelessWidget {
           onTap: lastRead == null
               ? null
               : () => Navigator.of(context).pushNamed(
-                  RouteNames.quranSurahDetail,
+                  offline
+                      ? RouteNames.quranOfflineSurahDetail
+                      : RouteNames.quranSurahDetail,
                   arguments: SurahRouteArgs(
                     surahNo: lastRead.surahNo,
                     surahName: lastRead.surahName,
@@ -465,13 +479,17 @@ class _LoadingOrError extends StatelessWidget {
 }
 
 class _SurahTabView extends StatelessWidget {
-  const _SurahTabView();
+  const _SurahTabView({this.offline = false});
+
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return BlocProvider(
-      create: (_) => SurahListBloc()..add(const LoadSurahs()),
+      create: (_) => SurahListBloc(
+        apiService: offline ? QuranOfflineService() : null,
+      )..add(const LoadSurahs()),
       child: BlocBuilder<SurahListBloc, SurahListState>(
         builder: (context, state) {
           if (state.isLoading && state.surahs.isEmpty) {
@@ -497,7 +515,9 @@ class _SurahTabView extends StatelessWidget {
               subtitleRight: '${surah.totalAyah} ${appText.ayahWord}',
               trailingArabic: surah.nameArabic,
               onTap: () => Navigator.of(context).pushNamed(
-                RouteNames.quranSurahDetail,
+                offline
+                    ? RouteNames.quranOfflineSurahDetail
+                    : RouteNames.quranSurahDetail,
                 arguments: SurahRouteArgs(
                   surahNo: surah.number,
                   surahName: surah.name,

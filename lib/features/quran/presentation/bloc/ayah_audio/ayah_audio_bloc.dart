@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 
+import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
 
 import 'ayah_audio_event.dart';
@@ -11,7 +12,7 @@ export 'ayah_audio_state.dart';
 
 /// One shared instance per surah screen so only one ayah plays at a time.
 class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
-  AyahAudioBloc({QuranReaderService? readerService})
+  AyahAudioBloc({QuranReaderService? readerService, this.downloader})
     : _readerService = readerService ?? QuranComReaderService(),
       super(const AyahAudioState()) {
     _player.onPlayerComplete.listen((_) => add(const StopAyahAudio()));
@@ -20,6 +21,9 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
   }
 
   final QuranReaderService _readerService;
+
+  /// When set, a downloaded local file is preferred over streaming.
+  final QuranAudioDownloader? downloader;
   final AudioPlayer _player = AudioPlayer();
 
   Future<void> _onPlay(
@@ -33,6 +37,16 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     }
     emit(AyahAudioState(playingVerseKey: event.verseKey, isBuffering: true));
     try {
+      final localPath = await downloader?.localPathFor(
+        reciterId: event.recitationId,
+        verseKey: event.verseKey,
+      );
+      if (state.playingVerseKey != event.verseKey) return;
+      if (localPath != null) {
+        await _player.play(DeviceFileSource(localPath));
+        emit(AyahAudioState(playingVerseKey: event.verseKey));
+        return;
+      }
       final url = await _readerService.loadAyahAudioUrl(
         event.recitationId,
         event.verseKey,
