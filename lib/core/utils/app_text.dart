@@ -258,6 +258,19 @@ class AppText {
     required this.islamicManners,
     required this.completeTodaysChallenge,
     required this.letsGetStart,
+    required this.quranOnlineButton,
+    required this.quranOfflineButton,
+    required this.offlineQuranTitle,
+    required this.offlineQuranSetupPrompt,
+    required this.offlineQuranPreparing,
+    required this.offlineQuranSetupAction,
+    required this.offlineQuranNotNow,
+    required this.offlineQuranSetupFailed,
+    required this.offlineQuranDownloadAction,
+    required this.offlineQuranResume,
+    required this.offlineQuranDownloadIntro,
+    required this.quranDownloadSurahAudio,
+    required this.quranAudioDownloaded,
     required this.highScore,
     required this.quizQuestionProgressLabel,
     required this.fiftyFiftyChance,
@@ -599,6 +612,19 @@ class AppText {
   final String islamicManners;
   final String completeTodaysChallenge;
   final String letsGetStart;
+  final String quranOnlineButton;
+  final String quranOfflineButton;
+  final String offlineQuranTitle;
+  final String offlineQuranSetupPrompt;
+  final String offlineQuranPreparing;
+  final String offlineQuranSetupAction;
+  final String offlineQuranNotNow;
+  final String offlineQuranSetupFailed;
+  final String offlineQuranDownloadAction;
+  final String offlineQuranResume;
+  final String offlineQuranDownloadIntro;
+  final String quranDownloadSurahAudio;
+  final String quranAudioDownloaded;
   final String highScore;
   final String quizQuestionProgressLabel;
   final String fiftyFiftyChance;
@@ -1510,6 +1536,71 @@ class AppText {
         fallback?.completeTodaysChallenge ?? '',
       ),
       letsGetStart: _read(map, 'letsGetStart', fallback?.letsGetStart ?? ''),
+      quranOnlineButton: _read(
+        map,
+        'quranOnlineButton',
+        fallback?.quranOnlineButton ?? '',
+      ),
+      quranOfflineButton: _read(
+        map,
+        'quranOfflineButton',
+        fallback?.quranOfflineButton ?? '',
+      ),
+      offlineQuranTitle: _read(
+        map,
+        'offlineQuranTitle',
+        fallback?.offlineQuranTitle ?? '',
+      ),
+      offlineQuranSetupPrompt: _read(
+        map,
+        'offlineQuranSetupPrompt',
+        fallback?.offlineQuranSetupPrompt ?? '',
+      ),
+      offlineQuranPreparing: _read(
+        map,
+        'offlineQuranPreparing',
+        fallback?.offlineQuranPreparing ?? '',
+      ),
+      offlineQuranSetupAction: _read(
+        map,
+        'offlineQuranSetupAction',
+        fallback?.offlineQuranSetupAction ?? '',
+      ),
+      offlineQuranNotNow: _read(
+        map,
+        'offlineQuranNotNow',
+        fallback?.offlineQuranNotNow ?? '',
+      ),
+      offlineQuranSetupFailed: _read(
+        map,
+        'offlineQuranSetupFailed',
+        fallback?.offlineQuranSetupFailed ?? '',
+      ),
+      offlineQuranDownloadAction: _read(
+        map,
+        'offlineQuranDownloadAction',
+        fallback?.offlineQuranDownloadAction ?? '',
+      ),
+      offlineQuranResume: _read(
+        map,
+        'offlineQuranResume',
+        fallback?.offlineQuranResume ?? '',
+      ),
+      offlineQuranDownloadIntro: _read(
+        map,
+        'offlineQuranDownloadIntro',
+        fallback?.offlineQuranDownloadIntro ?? '',
+      ),
+      quranDownloadSurahAudio: _read(
+        map,
+        'quranDownloadSurahAudio',
+        fallback?.quranDownloadSurahAudio ?? '',
+      ),
+      quranAudioDownloaded: _read(
+        map,
+        'quranAudioDownloaded',
+        fallback?.quranAudioDownloaded ?? '',
+      ),
       highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
       quizQuestionProgressLabel: _read(
         map,
