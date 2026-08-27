@@ -6,12 +6,14 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -23,8 +25,17 @@ class FullSurahScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final isBangla =
-        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    return BlocProvider(
+      create: (context) {
+        final uiLang = context.read<LanguageBloc>().state.language;
+        return QuranTranslationBloc(initial: uiLang)
+          ..add(LoadTranslationPreference(uiLang));
+      },
+      child: _buildScaffold(context, appText),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, AppText appText) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7EA),
       body: SafeArea(
@@ -83,6 +94,11 @@ class FullSurahScreen extends StatelessWidget {
                     );
                   }
                   final detail = state.detail!;
+                  final isBangla =
+                      context.select<QuranTranslationBloc, AppLanguage>(
+                        (bloc) => bloc.state.surahLang,
+                      ) ==
+                      AppLanguage.bangla;
                   final translations = isBangla
                       ? detail.bengaliAyahs
                       : detail.englishAyahs;
@@ -109,7 +125,21 @@ class FullSurahScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            SizedBox(height: 18.h),
+                            SizedBox(height: 14.h),
+                            Row(
+                              children: [
+                                Text(
+                                  appText.quranTranslationLabel,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFF6B7458),
+                                  ),
+                                ),
+                                const Spacer(),
+                                const SurahTranslationSwitch(),
+                              ],
+                            ),
+                            SizedBox(height: 16.h),
                             _ContinuousAyahText(
                               arabicAyahs: detail.arabicAyahs,
                             ),
