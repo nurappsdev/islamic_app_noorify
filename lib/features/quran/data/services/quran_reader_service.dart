@@ -16,6 +16,13 @@ abstract interface class QuranReaderService {
 
   Future<String> loadAyahAudioUrl(int recitationId, String verseKey);
 
+  /// Every ayah audio file for a whole surah in one request, as
+  /// `(verseKey, absoluteUrl)` pairs. Used to download a surah for offline use.
+  Future<List<({String verseKey, String url})>> loadChapterAudioFiles(
+    int recitationId,
+    int surahNo,
+  );
+
   Future<String> loadTafsir(int tafsirResourceId, String verseKey);
 }
 
@@ -99,8 +106,43 @@ class QuranComReaderService implements QuranReaderService {
       throw const FormatException('No audio available for this ayah');
     }
     final relativeUrl = (files.first as Map<String, dynamic>)['url'] as String;
-    return 'https://verses.quran.com/$relativeUrl';
+    return _absoluteAudioUrl(relativeUrl);
   }
+
+  @override
+  Future<List<({String verseKey, String url})>> loadChapterAudioFiles(
+    int recitationId,
+    int surahNo,
+  ) async {
+    final uri = Uri.https(
+      _host,
+      '/api/v4/recitations/$recitationId/by_chapter/$surahNo',
+      {'per_page': '300'},
+    );
+    final response = await _client
+        .get(uri)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw const FormatException('Failed to load chapter audio');
+    }
+    final body = jsonDecode(response.body);
+    if (body is! Map<String, dynamic> || body['audio_files'] is! List) {
+      throw const FormatException('Invalid chapter audio response');
+    }
+    return [
+      for (final raw in (body['audio_files'] as List))
+        if (raw is Map<String, dynamic> &&
+            raw['verse_key'] is String &&
+            raw['url'] is String)
+          (
+            verseKey: raw['verse_key'] as String,
+            url: _absoluteAudioUrl(raw['url'] as String),
+          ),
+    ];
+  }
+
+  static String _absoluteAudioUrl(String url) =>
+      url.startsWith('http') ? url : 'https://verses.quran.com/$url';
 
   @override
   Future<String> loadTafsir(int tafsirResourceId, String verseKey) async {

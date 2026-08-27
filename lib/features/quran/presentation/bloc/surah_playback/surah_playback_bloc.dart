@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 
+import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart'
     show defaultRecitationId;
@@ -18,7 +19,7 @@ class _AdvanceAyah extends SurahPlaybackEvent {
 /// Plays a surah sequentially, ayah by ayah, auto-advancing when each
 /// ayah's audio finishes.
 class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
-  SurahPlaybackBloc({QuranReaderService? readerService})
+  SurahPlaybackBloc({QuranReaderService? readerService, this.downloader})
     : _readerService = readerService ?? QuranComReaderService(),
       super(const SurahPlaybackState()) {
     _player.onPlayerComplete.listen((_) => add(const _AdvanceAyah()));
@@ -32,6 +33,7 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
   }
 
   final QuranReaderService _readerService;
+  final QuranAudioDownloader? downloader;
   final AudioPlayer _player = AudioPlayer();
   int _surahNo = 0;
   int _totalAyah = 0;
@@ -78,9 +80,20 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
       ),
     );
     try {
+      final verseKey = '$_surahNo:$ayahNo';
+      final localPath = await downloader?.localPathFor(
+        reciterId: _recitationId,
+        verseKey: verseKey,
+      );
+      if (!state.isPlaying || state.currentAyahNo != ayahNo) return;
+      if (localPath != null) {
+        await _player.play(DeviceFileSource(localPath));
+        emit(state.copyWith(isBuffering: false));
+        return;
+      }
       final url = await _readerService.loadAyahAudioUrl(
         _recitationId,
-        '$_surahNo:$ayahNo',
+        verseKey,
       );
       if (!state.isPlaying || state.currentAyahNo != ayahNo) return;
       await _player.play(UrlSource(url));
