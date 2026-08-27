@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:islami_app_noorify/features/quran/domain/bookmark.dart';
 import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class QuranLocalStore {
   QuranLocalStore(this._preferences);
@@ -11,6 +12,7 @@ class QuranLocalStore {
   static const _lastReadKey = 'quran_last_read';
   static const _historyKey = 'quran_reading_history';
   static const _bookmarksKey = 'quran_bookmarks';
+  static const _translationLangKey = 'quran_translation_lang';
   static const _maxHistory = 50;
 
   final SharedPreferences _preferences;
@@ -126,5 +128,19 @@ class QuranLocalStore {
       _bookmarksKey,
       jsonEncode(marks.map((b) => b.toJson()).toList()),
     );
+  }
+
+  /// Translation language chosen for the Quran reader, independent of the app
+  /// UI language. Null until the user has picked one.
+  AppLanguage? translationLanguage() {
+    final raw = _preferences.getString(_translationLangKey);
+    for (final lang in AppLanguage.values) {
+      if (lang.name == raw) return lang;
+    }
+    return null;
+  }
+
+  Future<void> setTranslationLanguage(AppLanguage lang) async {
+    await _preferences.setString(_translationLangKey, lang.name);
   }
 }
