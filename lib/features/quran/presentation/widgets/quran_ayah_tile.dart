@@ -151,7 +151,9 @@ class _AyahDivider extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(color: Colors.grey.shade300, height: 1),
+          ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Text(
@@ -159,7 +161,9 @@ class _AyahDivider extends StatelessWidget {
               style: TextStyle(color: Colors.grey.shade400, fontSize: 12.sp),
             ),
           ),
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(color: Colors.grey.shade300, height: 1),
+          ),
         ],
       ),
     );
