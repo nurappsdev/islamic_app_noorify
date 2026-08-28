@@ -365,4 +365,5 @@ const Map<String, String> appTextBn = <String, String>{
   'viewQuranTafsir': 'কুরআন তাফসীর দেখুন',
   'selectReciterTitle': 'ক্বারী নির্বাচন করুন',
   'tafsirTitle': 'তাফসীর',
+  'repeatLabel': 'পুনরাবৃত্তি',
 };
