@@ -282,6 +282,7 @@ class AppText {
     required this.quranTranslationSizeLabel,
     required this.quranDownloadEditionCta,
     required this.quranEditionDownloading,
+    required this.quranShowTranslationLabel,
     required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
@@ -649,6 +650,7 @@ class AppText {
   final String quranTranslationSizeLabel;
   final String quranDownloadEditionCta;
   final String quranEditionDownloading;
+  final String quranShowTranslationLabel;
   final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
@@ -1681,6 +1683,11 @@ class AppText {
         map,
         'quranEditionDownloading',
         fallback?.quranEditionDownloading ?? '',
+      ),
+      quranShowTranslationLabel: _read(
+        map,
+        'quranShowTranslationLabel',
+        fallback?.quranShowTranslationLabel ?? '',
       ),
       quranTranslationLabel: _read(
         map,

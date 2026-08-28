@@ -284,9 +284,9 @@ class _ContinuousAyahText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tState = context.watch<QuranTranslationBloc>().state;
-    if (!tState.showArabic) return const SizedBox.shrink();
-    final multiplier = tState.arabicFontScale;
+    final multiplier = context.select<QuranTranslationBloc, double>(
+      (bloc) => bloc.state.arabicFontScale,
+    );
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
         final currentAyahNo = playState.currentAyahNo;
