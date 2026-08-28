@@ -27,3 +27,10 @@ class SetAyahTranslationLang extends QuranTranslationEvent {
   final int ayahNo;
   final AppLanguage lang;
 }
+
+/// Updates the zoom level for the Quran reader (persisted).
+class SetFontSizeMultiplier extends QuranTranslationEvent {
+  const SetFontSizeMultiplier(this.multiplier);
+
+  final double multiplier;
+}
