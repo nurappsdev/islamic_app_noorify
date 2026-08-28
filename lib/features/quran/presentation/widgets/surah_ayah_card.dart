@@ -40,6 +40,9 @@ class SurahAyahCard extends StatelessWidget {
     );
     final isBangla = lang == AppLanguage.bangla;
     final translation = isBangla ? bengaliTranslation : englishTranslation;
+    final multiplier = context.select<QuranTranslationBloc, double>(
+      (bloc) => bloc.state.fontSizeMultiplier,
+    );
     return BlocProvider(
       create: (_) => AyahBookmarkBloc(
         surahNo: surahNo,
@@ -214,14 +217,14 @@ class SurahAyahCard extends StatelessWidget {
               arabic,
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
-              style: TextStyle(fontSize: 19.sp, height: 1.8),
+              style: TextStyle(fontSize: 19.sp * multiplier, height: 1.8),
             ),
             if (translation.isNotEmpty) ...[
               SizedBox(height: 8.h),
               Text(
                 translation,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 13.sp * multiplier,
                   height: 1.4,
                   color: const Color(0xFF444444),
                 ),
