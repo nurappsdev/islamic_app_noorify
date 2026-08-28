@@ -4,9 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsir_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
 /// user pick one. Pass the ancestor's [ReciterBloc] explicitly since a
@@ -332,6 +335,232 @@ class _SurahAudioSheet extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Reader display settings: separate Arabic / translation zoom, visibility
+/// toggles, and the translation-edition picker (with per-edition download).
+/// Pass the ancestor [QuranTranslationBloc] explicitly — a bottom sheet is a
+/// separate route.
+void showQuranReaderSettingsSheet(
+  BuildContext context, {
+  required QuranTranslationBloc bloc,
+}) {
+  bloc.add(const LoadTranslationEditions());
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => BlocProvider.value(
+      value: bloc,
+      child: const _QuranReaderSettingsSheet(),
+    ),
+  );
+}
+
+class _QuranReaderSettingsSheet extends StatelessWidget {
+  const _QuranReaderSettingsSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return SafeArea(
+      child: BlocBuilder<QuranTranslationBloc, QuranTranslationState>(
+        builder: (context, state) {
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: 560.h),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 20.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    appText.quranReaderSettingsTitle,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColor.primary,
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  _SettingLabel(appText.quranArabicSizeLabel),
+                  const QuranZoomControl(target: QuranZoomTarget.arabic),
+                  SizedBox(height: 8.h),
+                  _SettingLabel(appText.quranTranslationSizeLabel),
+                  const QuranZoomControl(target: QuranZoomTarget.translation),
+                  SizedBox(height: 6.h),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                    activeColor: AppColor.primary,
+                    title: Text(
+                      appText.quranArabicLabel,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                    value: state.showArabic,
+                    onChanged: (v) => context.read<QuranTranslationBloc>().add(
+                      SetShowArabic(v ?? true),
+                    ),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                    activeColor: AppColor.primary,
+                    title: Text(
+                      appText.quranTranslationLabel,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                    value: state.showTranslation,
+                    onChanged: (v) => context.read<QuranTranslationBloc>().add(
+                      SetShowTranslation(v ?? true),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  _SettingLabel(appText.quranTranslationLabel),
+                  SizedBox(height: 4.h),
+                  for (final edition in kTranslationEditions)
+                    _EditionRow(edition: edition, state: state),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SettingLabel extends StatelessWidget {
+  const _SettingLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 2.h),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF5A6350),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditionRow extends StatelessWidget {
+  const _EditionRow({required this.edition, required this.state});
+
+  final TranslationEdition edition;
+  final QuranTranslationState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final bloc = context.read<QuranTranslationBloc>();
+    final selected = state.selectedEditionId == edition.id;
+    final downloaded =
+        edition.isBuiltIn || state.downloadedEditionIds.contains(edition.id);
+    final dl = state.editionDownload?.editionId == edition.id
+        ? state.editionDownload
+        : null;
+    final isDownloading = dl != null && !dl.failed;
+
+    Widget trailing;
+    if (isDownloading) {
+      final pct = dl.fraction == null ? 0 : (dl.fraction! * 100).round();
+      trailing = Text(
+        '${appText.quranEditionDownloading} $pct%',
+        style: TextStyle(fontSize: 11.sp, color: AppColor.primary),
+      );
+    } else if (!downloaded) {
+      trailing = TextButton(
+        onPressed: () => bloc.add(DownloadTranslationEdition(edition)),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          dl?.failed == true
+              ? appText.tryAgain
+              : appText.quranDownloadEditionCta,
+          style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
+        ),
+      );
+    } else if (selected) {
+      trailing = const Icon(Icons.check_circle, color: AppColor.primary);
+    } else if (!edition.isBuiltIn) {
+      trailing = InkWell(
+        onTap: () => bloc.add(DeleteTranslationEdition(edition.id)),
+        child: Padding(
+          padding: EdgeInsets.all(4.w),
+          child: Icon(
+            Icons.delete_outline_rounded,
+            size: 18.sp,
+            color: const Color(0xFF9AA187),
+          ),
+        ),
+      );
+    } else {
+      trailing = const SizedBox.shrink();
+    }
+
+    return InkWell(
+      onTap: downloaded && !isDownloading
+          ? () => bloc.add(SelectTranslationEdition(edition.id))
+          : null,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    edition.name,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                      color: selected
+                          ? AppColor.primary
+                          : const Color(0xFF3A4032),
+                    ),
+                  ),
+                  Text(
+                    edition.languageName,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: const Color(0xFF9AA187),
+                    ),
+                  ),
+                  if (isDownloading) ...[
+                    SizedBox(height: 6.h),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6.r),
+                      child: LinearProgressIndicator(
+                        value: dl.fraction,
+                        minHeight: 4.h,
+                        backgroundColor: const Color(0xFFE0E6CC),
+                        color: AppColor.primary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            trailing,
+          ],
+        ),
+      ),
     );
   }
 }

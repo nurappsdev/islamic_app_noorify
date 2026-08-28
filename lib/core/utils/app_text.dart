@@ -276,6 +276,12 @@ class AppText {
     required this.quranAudioModalBody,
     required this.quranAudioModalDownloadCta,
     required this.quranAudioDownloadFailed,
+    required this.quranReaderSettingsTitle,
+    required this.quranArabicLabel,
+    required this.quranArabicSizeLabel,
+    required this.quranTranslationSizeLabel,
+    required this.quranDownloadEditionCta,
+    required this.quranEditionDownloading,
     required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
@@ -637,6 +643,12 @@ class AppText {
   final String quranAudioModalBody;
   final String quranAudioModalDownloadCta;
   final String quranAudioDownloadFailed;
+  final String quranReaderSettingsTitle;
+  final String quranArabicLabel;
+  final String quranArabicSizeLabel;
+  final String quranTranslationSizeLabel;
+  final String quranDownloadEditionCta;
+  final String quranEditionDownloading;
   final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
@@ -1639,6 +1651,36 @@ class AppText {
         map,
         'quranAudioDownloadFailed',
         fallback?.quranAudioDownloadFailed ?? '',
+      ),
+      quranReaderSettingsTitle: _read(
+        map,
+        'quranReaderSettingsTitle',
+        fallback?.quranReaderSettingsTitle ?? '',
+      ),
+      quranArabicLabel: _read(
+        map,
+        'quranArabicLabel',
+        fallback?.quranArabicLabel ?? '',
+      ),
+      quranArabicSizeLabel: _read(
+        map,
+        'quranArabicSizeLabel',
+        fallback?.quranArabicSizeLabel ?? '',
+      ),
+      quranTranslationSizeLabel: _read(
+        map,
+        'quranTranslationSizeLabel',
+        fallback?.quranTranslationSizeLabel ?? '',
+      ),
+      quranDownloadEditionCta: _read(
+        map,
+        'quranDownloadEditionCta',
+        fallback?.quranDownloadEditionCta ?? '',
+      ),
+      quranEditionDownloading: _read(
+        map,
+        'quranEditionDownloading',
+        fallback?.quranEditionDownloading ?? '',
       ),
       quranTranslationLabel: _read(
         map,
