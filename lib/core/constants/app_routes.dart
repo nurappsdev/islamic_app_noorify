@@ -49,9 +49,7 @@ import '../../features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
-import '../../features/quran/presentation/screens/offline_quran_gate_screen.dart';
 import '../../features/quran/data/services/quran_audio_downloader.dart';
-import '../../features/quran/data/services/quran_offline_service.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -117,14 +115,6 @@ class AppRoutes {
         return _page(const QuranScreen(), settings);
       case RouteNames.quranSurahs:
         return _page(
-          BlocProvider(
-            create: (_) => LastReadBloc()..add(const LoadLastRead()),
-            child: const SurahListScreen(),
-          ),
-          settings,
-        );
-      case RouteNames.quranOfflineSurahs:
-        return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
@@ -135,7 +125,7 @@ class AppRoutes {
                     OfflineQuranBloc()..add(const CheckOfflineQuran()),
               ),
             ],
-            child: const OfflineQuranGateScreen(),
+            child: const SurahListScreen(),
           ),
           settings,
         );
@@ -145,71 +135,49 @@ class AppRoutes {
             ? args.surahNo
             : (args as int? ?? 1);
         final surahName = args is SurahRouteArgs ? args.surahName : '';
+        final detailAudioDownloader = QuranAudioDownloader();
         return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) =>
-                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
               ),
               BlocProvider(
                 create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
-              BlocProvider(create: (_) => AyahAudioBloc()),
+              BlocProvider(
+                create: (_) => AyahAudioBloc(downloader: detailAudioDownloader),
+              ),
+              BlocProvider(
+                create: (_) =>
+                    SurahAudioDownloadBloc(downloader: detailAudioDownloader),
+              ),
             ],
             child: SurahDetailScreen(surahNo: surahNo, surahName: surahName),
           ),
           settings,
         );
-      case RouteNames.quranOfflineSurahDetail:
-        final args = settings.arguments;
-        final surahNo = args is SurahRouteArgs
-            ? args.surahNo
-            : (args as int? ?? 1);
-        final surahName = args is SurahRouteArgs ? args.surahName : '';
-        final offlineAudioDownloader = QuranAudioDownloader();
+      case RouteNames.quranFullSurah:
+        final surahNo = settings.arguments as int? ?? 1;
+        final fullSurahAudioDownloader = QuranAudioDownloader();
         return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) =>
-                    SurahDetailBloc(apiService: QuranOfflineService())
-                      ..add(LoadSurahDetail(surahNo)),
+                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
               ),
               BlocProvider(
                 create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
               BlocProvider(
                 create: (_) =>
-                    AyahAudioBloc(downloader: offlineAudioDownloader),
+                    SurahPlaybackBloc(downloader: fullSurahAudioDownloader),
               ),
               BlocProvider(
                 create: (_) => SurahAudioDownloadBloc(
-                  downloader: offlineAudioDownloader,
+                  downloader: fullSurahAudioDownloader,
                 ),
               ),
-            ],
-            child: SurahDetailScreen(
-              surahNo: surahNo,
-              surahName: surahName,
-              offline: true,
-            ),
-          ),
-          settings,
-        );
-      case RouteNames.quranFullSurah:
-        final surahNo = settings.arguments as int? ?? 1;
-        return _page(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) =>
-                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
-              ),
-              BlocProvider(
-                create: (_) => ReciterBloc()..add(const LoadReciters()),
-              ),
-              BlocProvider(create: (_) => SurahPlaybackBloc()),
             ],
             child: FullSurahScreen(surahNo: surahNo),
           ),

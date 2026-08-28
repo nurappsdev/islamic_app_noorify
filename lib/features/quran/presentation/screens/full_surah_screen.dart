@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
@@ -102,58 +103,61 @@ class FullSurahScreen extends StatelessWidget {
                   final translations = isBangla
                       ? detail.bengaliAyahs
                       : detail.englishAyahs;
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding: EdgeInsets.fromLTRB(18.w, 4.h, 18.w, 12.h),
-                          children: [
-                            SurahHeroCard(
-                              appText: appText,
-                              detail: detail,
-                              actionLabel: appText.viewInAyat,
-                              onAction: () => Navigator.maybePop(context),
-                            ),
-                            SizedBox(height: 10.h),
-                            Center(
-                              child: Text(
-                                '${appText.yourReadingTimeIs} '
-                                '${formatReadingTime(appText, detail.arabicAyahs)}',
-                                style: TextStyle(
-                                  color: AppColor.primary,
-                                  fontSize: 12.sp,
-                                ),
+                  return _PlaybackAudioGate(
+                    detail: detail,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding: EdgeInsets.fromLTRB(18.w, 4.h, 18.w, 12.h),
+                            children: [
+                              SurahHeroCard(
+                                appText: appText,
+                                detail: detail,
+                                actionLabel: appText.viewInAyat,
+                                onAction: () => Navigator.maybePop(context),
                               ),
-                            ),
-                            SizedBox(height: 14.h),
-                            Row(
-                              children: [
-                                Text(
-                                  appText.quranTranslationLabel,
+                              SizedBox(height: 10.h),
+                              Center(
+                                child: Text(
+                                  '${appText.yourReadingTimeIs} '
+                                  '${formatReadingTime(appText, detail.arabicAyahs)}',
                                   style: TextStyle(
+                                    color: AppColor.primary,
                                     fontSize: 12.sp,
-                                    color: const Color(0xFF6B7458),
                                   ),
                                 ),
-                                const Spacer(),
-                                const SurahTranslationSwitch(),
-                              ],
-                            ),
-                            SizedBox(height: 16.h),
-                            _ContinuousAyahText(
-                              arabicAyahs: detail.arabicAyahs,
-                            ),
-                            SizedBox(height: 16.h),
-                            _CurrentAyahDetails(
-                              surahNo: detail.number,
-                              translations: translations,
-                              isBangla: isBangla,
-                            ),
-                          ],
+                              ),
+                              SizedBox(height: 14.h),
+                              Row(
+                                children: [
+                                  Text(
+                                    appText.quranTranslationLabel,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: const Color(0xFF6B7458),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  const SurahTranslationSwitch(),
+                                ],
+                              ),
+                              SizedBox(height: 16.h),
+                              _ContinuousAyahText(
+                                arabicAyahs: detail.arabicAyahs,
+                              ),
+                              SizedBox(height: 16.h),
+                              _CurrentAyahDetails(
+                                surahNo: detail.number,
+                                translations: translations,
+                                isBangla: isBangla,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      _NowPlayingBar(detail: detail),
-                    ],
+                        _NowPlayingBar(detail: detail),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -161,6 +165,79 @@ class FullSurahScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Wraps the full-surah player: keeps the surah's audio-download status in
+/// sync with the reciter and, when the user presses play before the audio is
+/// downloaded, shows the download modal and resumes playback afterwards.
+class _PlaybackAudioGate extends StatefulWidget {
+  const _PlaybackAudioGate({required this.detail, required this.child});
+
+  final SurahDetail detail;
+  final Widget child;
+
+  @override
+  State<_PlaybackAudioGate> createState() => _PlaybackAudioGateState();
+}
+
+class _PlaybackAudioGateState extends State<_PlaybackAudioGate> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refreshStatus();
+    });
+  }
+
+  int get _reciterId =>
+      context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
+
+  void _refreshStatus() {
+    context.read<SurahAudioDownloadBloc>().add(
+      CheckSurahAudioStatus(
+        reciterId: _reciterId,
+        surahNo: widget.detail.number,
+        totalAyah: widget.detail.totalAyah,
+      ),
+    );
+  }
+
+  Future<void> _promptDownload() async {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    final saved = await showSurahAudioSheet(
+      context,
+      downloadBloc: context.read<SurahAudioDownloadBloc>(),
+      reciterId: _reciterId,
+      surahNo: widget.detail.number,
+      totalAyah: widget.detail.totalAyah,
+    );
+    if (saved && mounted) {
+      context.read<SurahPlaybackBloc>().add(
+        PlaySurah(
+          surahNo: widget.detail.number,
+          totalAyah: widget.detail.totalAyah,
+          recitationId: _reciterId,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ReciterBloc, ReciterState>(
+          listenWhen: (p, c) => p.selectedId != c.selectedId,
+          listener: (context, _) => _refreshStatus(),
+        ),
+        BlocListener<SurahPlaybackBloc, SurahPlaybackState>(
+          listenWhen: (p, c) => !p.needsDownload && c.needsDownload,
+          listener: (context, _) => _promptDownload(),
+        ),
+      ],
+      child: widget.child,
     );
   }
 }
@@ -231,7 +308,11 @@ class _CurrentAyahDetails extends StatelessWidget {
     final appText = AppText.of(context);
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
-        final index = playState.currentAyahNo - 1;
+        // currentAyahNo == 0 is the opening Bismillah; show ayah 1's details.
+        final displayAyah = playState.currentAyahNo < 1
+            ? 1
+            : playState.currentAyahNo;
+        final index = displayAyah - 1;
         final translation = index >= 0 && index < translations.length
             ? translations[index]
             : '';
@@ -249,11 +330,8 @@ class _CurrentAyahDetails extends StatelessWidget {
               ),
             SizedBox(height: 6.h),
             GestureDetector(
-              onTap: () => openTafsirSheet(
-                context,
-                '$surahNo:${playState.currentAyahNo}',
-                isBangla,
-              ),
+              onTap: () =>
+                  openTafsirSheet(context, '$surahNo:$displayAyah', isBangla),
               child: Text(
                 appText.viewQuranTafsir,
                 style: TextStyle(
@@ -289,7 +367,10 @@ class _NowPlayingBar extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 10.h),
           child: BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
             builder: (context, playState) {
-              final ayahNo = playState.currentAyahNo;
+              // ayah 0 is the opening Bismillah — treat it as ayah 1 here.
+              final ayahNo = playState.currentAyahNo < 1
+                  ? 1
+                  : playState.currentAyahNo;
               return BlocProvider<AyahBookmarkBloc>(
                 key: ValueKey(ayahNo),
                 create: (_) => AyahBookmarkBloc(

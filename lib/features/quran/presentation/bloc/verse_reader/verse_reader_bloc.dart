@@ -1,6 +1,8 @@
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_api_service.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_offline_first_service.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
 import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
 
@@ -11,26 +13,25 @@ export 'verse_reader_event.dart';
 export 'verse_reader_state.dart';
 
 class VerseReaderBloc extends Bloc<VerseReaderEvent, VerseReaderState> {
-  VerseReaderBloc({QuranReaderService? readerService, QuranApiService? apiService})
-    : _readerService = readerService ?? QuranComReaderService(),
-      _apiService = apiService ?? QuranApiPagesService(),
-      super(const VerseReaderState()) {
-    on<LoadJuzVerses>(
-      (event, emit) =>
-          _load(emit, () => _readerService.loadVersesByJuz(event.juzNumber)),
-    );
+  VerseReaderBloc({
+    QuranOfflineService? offlineService,
+    QuranReaderService? readerService,
+    QuranApiService? apiService,
+  }) : _offlineService = offlineService ?? QuranOfflineService(),
+       _readerService = readerService ?? QuranComReaderService(),
+       _apiService = apiService ?? QuranOfflineFirstService(),
+       super(const VerseReaderState()) {
+    on<LoadJuzVerses>((event, emit) => _load(emit, event.juzNumber));
   }
 
+  final QuranOfflineService _offlineService;
   final QuranReaderService _readerService;
   final QuranApiService _apiService;
 
-  Future<void> _load(
-    Emitter<VerseReaderState> emit,
-    Future<List<VerseItem>> Function() loader,
-  ) async {
+  Future<void> _load(Emitter<VerseReaderState> emit, int juzNumber) async {
     emit(state.copyWith(isLoading: true, hasError: false));
     try {
-      final verses = await loader();
+      final verses = await _loadVerses(juzNumber);
       final surahs = await _apiService.loadSurahList();
       emit(
         state.copyWith(
@@ -42,5 +43,15 @@ class VerseReaderBloc extends Bloc<VerseReaderEvent, VerseReaderState> {
     } catch (_) {
       emit(state.copyWith(isLoading: false, hasError: true));
     }
+  }
+
+  Future<List<VerseItem>> _loadVerses(int juzNumber) async {
+    try {
+      final verses = await _offlineService.loadVersesByJuz(juzNumber);
+      if (verses.isNotEmpty) return verses;
+    } catch (_) {
+      // fall through to the network
+    }
+    return _readerService.loadVersesByJuz(juzNumber);
   }
 }

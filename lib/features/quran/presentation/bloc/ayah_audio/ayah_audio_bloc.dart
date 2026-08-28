@@ -2,7 +2,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
 
 import 'ayah_audio_event.dart';
 import 'ayah_audio_state.dart';
@@ -11,19 +10,21 @@ export 'ayah_audio_event.dart';
 export 'ayah_audio_state.dart';
 
 /// One shared instance per surah screen so only one ayah plays at a time.
+///
+/// Playback is offline-only: an ayah plays from its downloaded file, and if
+/// the surah's audio has not been downloaded yet the bloc reports
+/// [AyahAudioState.needsDownloadForVerseKey] so the screen can prompt a
+/// download instead of streaming.
 class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
-  AyahAudioBloc({QuranReaderService? readerService, this.downloader})
-    : _readerService = readerService ?? QuranComReaderService(),
+  AyahAudioBloc({QuranAudioDownloader? downloader})
+    : downloader = downloader ?? QuranAudioDownloader(),
       super(const AyahAudioState()) {
     _player.onPlayerComplete.listen((_) => add(const StopAyahAudio()));
     on<PlayAyahAudio>(_onPlay);
     on<StopAyahAudio>(_onStop);
   }
 
-  final QuranReaderService _readerService;
-
-  /// When set, a downloaded local file is preferred over streaming.
-  final QuranAudioDownloader? downloader;
+  final QuranAudioDownloader downloader;
   final AudioPlayer _player = AudioPlayer();
 
   Future<void> _onPlay(
@@ -37,22 +38,19 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     }
     emit(AyahAudioState(playingVerseKey: event.verseKey, isBuffering: true));
     try {
-      final localPath = await downloader?.localPathFor(
+      final localPath = await downloader.localPathFor(
         reciterId: event.recitationId,
         verseKey: event.verseKey,
       );
       if (state.playingVerseKey != event.verseKey) return;
-      if (localPath != null) {
-        await _player.play(DeviceFileSource(localPath));
-        emit(AyahAudioState(playingVerseKey: event.verseKey));
+      if (localPath == null) {
+        // Pulse the flag so a repeat tap on the same ayah re-triggers the
+        // screen's download prompt, then settle back to idle.
+        emit(AyahAudioState(needsDownloadForVerseKey: event.verseKey));
+        emit(const AyahAudioState());
         return;
       }
-      final url = await _readerService.loadAyahAudioUrl(
-        event.recitationId,
-        event.verseKey,
-      );
-      if (state.playingVerseKey != event.verseKey) return;
-      await _player.play(UrlSource(url));
+      await _player.play(DeviceFileSource(localPath));
       emit(AyahAudioState(playingVerseKey: event.verseKey));
     } catch (_) {
       emit(const AyahAudioState());
