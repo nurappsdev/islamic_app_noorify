@@ -396,21 +396,7 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                     dense: true,
                     activeColor: AppColor.primary,
                     title: Text(
-                      appText.quranArabicLabel,
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
-                    value: state.showArabic,
-                    onChanged: (v) => context.read<QuranTranslationBloc>().add(
-                      SetShowArabic(v ?? true),
-                    ),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    dense: true,
-                    activeColor: AppColor.primary,
-                    title: Text(
-                      appText.quranTranslationLabel,
+                      appText.quranShowTranslationLabel,
                       style: TextStyle(fontSize: 13.sp),
                     ),
                     value: state.showTranslation,
