@@ -13,8 +13,7 @@ class QuranSetupProgress {
   final int done;
   final int total;
 
-  double? get fraction =>
-      total > 0 ? (done / total).clamp(0.0, 1.0) : null;
+  double? get fraction => total > 0 ? (done / total).clamp(0.0, 1.0) : null;
 }
 
 class QuranSetupException implements Exception {
@@ -42,7 +41,7 @@ class QuranOfflineDatabase {
   static final QuranOfflineDatabase _instance = QuranOfflineDatabase._();
 
   static const _fileName = 'quran_offline.db';
-  static const _version = 2;
+  static const _version = 3;
   static const _expectedAyahCount = 6236;
   static const surahCount = 114;
 
@@ -63,12 +62,17 @@ class QuranOfflineDatabase {
       version: _version,
       onCreate: (db, version) => _createSchema(db),
       onUpgrade: (db, oldVersion, newVersion) async {
-        // v1 was an XML-derived, Arabic-only build with no translations.
-        // The data is fully re-downloadable, so recreate from scratch.
-        await db.execute('DROP TABLE IF EXISTS quran_text');
-        await db.execute('DROP TABLE IF EXISTS surah_meta');
-        await db.execute('DROP TABLE IF EXISTS audio_downloads');
-        await _createSchema(db);
+        if (oldVersion < 2) {
+          // v1 was an XML-derived, Arabic-only build with no translations.
+          // The data is fully re-downloadable, so recreate from scratch.
+          await db.execute('DROP TABLE IF EXISTS quran_text');
+          await db.execute('DROP TABLE IF EXISTS surah_meta');
+          await db.execute('DROP TABLE IF EXISTS audio_downloads');
+          await _createSchema(db);
+          return;
+        }
+        // v2 -> v3: additive — downloadable translation editions.
+        await _createTranslationTables(db);
       },
     );
   }
@@ -110,6 +114,33 @@ class QuranOfflineDatabase {
         status TEXT NOT NULL,
         updated_at INTEGER NOT NULL,
         UNIQUE(reciter_id, surah_id, ayah_number)
+      )
+    ''');
+    await _createTranslationTables(db);
+  }
+
+  Future<void> _createTranslationTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS translation_text (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        edition_id TEXT NOT NULL,
+        surah_id INTEGER NOT NULL,
+        ayah_number INTEGER NOT NULL,
+        text TEXT NOT NULL,
+        UNIQUE(edition_id, surah_id, ayah_number)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_translation_edition_surah '
+      'ON translation_text(edition_id, surah_id)',
+    );
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS translation_editions (
+        edition_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        language TEXT NOT NULL,
+        status TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
       )
     ''');
   }
@@ -217,10 +248,7 @@ class QuranOfflineDatabase {
     );
   }
 
-  Future<Map<String, Object?>?> audioRow(
-    int reciterId,
-    String verseKey,
-  ) async {
+  Future<Map<String, Object?>?> audioRow(int reciterId, String verseKey) async {
     final db = await open();
     final rows = await db.query(
       'audio_downloads',
@@ -263,6 +291,116 @@ class QuranOfflineDatabase {
           ),
         ) ??
         0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Downloadable translation editions
+  // ---------------------------------------------------------------------------
+
+  /// Writes every ayah of one surah for one edition in a single transaction.
+  /// [ayahText] is ayah number -> translated text.
+  Future<void> upsertEditionSurahText(
+    String editionId,
+    int surahId,
+    Map<int, String> ayahText,
+  ) async {
+    final db = await open();
+    await db.transaction((txn) async {
+      for (final entry in ayahText.entries) {
+        await txn.insert('translation_text', {
+          'edition_id': editionId,
+          'surah_id': surahId,
+          'ayah_number': entry.key,
+          'text': entry.value,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  Future<List<Map<String, Object?>>> editionSurahTextRows(
+    String editionId,
+    int surahId,
+  ) async {
+    final db = await open();
+    return db.query(
+      'translation_text',
+      columns: ['ayah_number', 'text'],
+      where: 'edition_id = ? AND surah_id = ?',
+      whereArgs: [editionId, surahId],
+      orderBy: 'ayah_number ASC',
+    );
+  }
+
+  /// Surah numbers of [editionId] whose rows are all written (resume support).
+  Future<Set<int>> completedEditionSurahIds(String editionId) async {
+    final db = await open();
+    final rows = await db.rawQuery(
+      '''
+      SELECT m.number AS number FROM surah_meta m
+      WHERE m.total_ayah > 0 AND m.total_ayah =
+        (SELECT COUNT(*) FROM translation_text t
+         WHERE t.edition_id = ? AND t.surah_id = m.number)
+      ''',
+      [editionId],
+    );
+    return {for (final row in rows) row['number'] as int};
+  }
+
+  Future<bool> isEditionComplete(String editionId) async {
+    final row = await editionMeta(editionId);
+    return row != null && row['status'] == 'complete';
+  }
+
+  Future<Map<String, Object?>?> editionMeta(String editionId) async {
+    final db = await open();
+    final rows = await db.query(
+      'translation_editions',
+      where: 'edition_id = ?',
+      whereArgs: [editionId],
+      limit: 1,
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  Future<void> upsertEditionMeta({
+    required String editionId,
+    required String name,
+    required String language,
+    required String status,
+  }) async {
+    final db = await open();
+    await db.insert('translation_editions', {
+      'edition_id': editionId,
+      'name': name,
+      'language': language,
+      'status': status,
+      'updated_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Edition ids marked `complete` on this device.
+  Future<Set<String>> downloadedEditionIds() async {
+    final db = await open();
+    final rows = await db.query(
+      'translation_editions',
+      columns: ['edition_id'],
+      where: "status = 'complete'",
+    );
+    return {for (final row in rows) row['edition_id'] as String};
+  }
+
+  Future<void> deleteEdition(String editionId) async {
+    final db = await open();
+    await db.delete(
+      'translation_text',
+      where: 'edition_id = ?',
+      whereArgs: [editionId],
+    );
+    await db.delete(
+      'translation_editions',
+      where: 'edition_id = ?',
+      whereArgs: [editionId],
+    );
   }
 
   /// Removes the built database (used to fully reset offline data).
