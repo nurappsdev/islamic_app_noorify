@@ -31,9 +31,10 @@ class FullSurahScreen extends StatelessWidget {
       create: (context) {
         final uiLang = context.read<LanguageBloc>().state.language;
         return QuranTranslationBloc(initial: uiLang)
-          ..add(LoadTranslationPreference(uiLang));
+          ..add(LoadTranslationPreference(uiLang))
+          ..add(const LoadTranslationEditions());
       },
-      child: _buildScaffold(context, appText),
+      child: Builder(builder: (context) => _buildScaffold(context, appText)),
     );
   }
 
@@ -74,6 +75,23 @@ class FullSurahScreen extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 18.w),
+                      child: IconButton(
+                        onPressed: () => showQuranReaderSettingsSheet(
+                          context,
+                          bloc: context.read<QuranTranslationBloc>(),
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEDE7A6),
+                          foregroundColor: AppColor.authLogo,
+                        ),
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -96,14 +114,17 @@ class FullSurahScreen extends StatelessWidget {
                     );
                   }
                   final detail = state.detail!;
-                  final isBangla =
-                      context.select<QuranTranslationBloc, AppLanguage>(
-                        (bloc) => bloc.state.surahLang,
-                      ) ==
-                      AppLanguage.bangla;
-                  final translations = isBangla
-                      ? detail.bengaliAyahs
-                      : detail.englishAyahs;
+                  final tState = context.watch<QuranTranslationBloc>().state;
+                  final isBangla = tState.surahLang == AppLanguage.bangla;
+                  final editionReady =
+                      tState.usingCustomEdition &&
+                      tState.editionTextSurahNo == detail.number;
+                  final translations = editionReady
+                      ? [
+                          for (var i = 1; i <= detail.arabicAyahs.length; i++)
+                            tState.surahEditionText[i] ?? '',
+                        ]
+                      : (isBangla ? detail.bengaliAyahs : detail.englishAyahs);
                   return _PlaybackAudioGate(
                     detail: detail,
                     child: Column(
@@ -189,6 +210,9 @@ class _PlaybackAudioGateState extends State<_PlaybackAudioGate> {
   @override
   void initState() {
     super.initState();
+    context.read<QuranTranslationBloc>().add(
+      LoadSurahEditionText(widget.detail.number),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _refreshStatus();
     });
@@ -239,6 +263,12 @@ class _PlaybackAudioGateState extends State<_PlaybackAudioGate> {
           listenWhen: (p, c) => !p.needsDownload && c.needsDownload,
           listener: (context, _) => _promptDownload(),
         ),
+        BlocListener<QuranTranslationBloc, QuranTranslationState>(
+          listenWhen: (p, c) => p.selectedEditionId != c.selectedEditionId,
+          listener: (context, _) => context.read<QuranTranslationBloc>().add(
+            LoadSurahEditionText(widget.detail.number),
+          ),
+        ),
       ],
       child: widget.child,
     );
@@ -254,12 +284,12 @@ class _ContinuousAyahText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tState = context.watch<QuranTranslationBloc>().state;
+    if (!tState.showArabic) return const SizedBox.shrink();
+    final multiplier = tState.arabicFontScale;
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
         final currentAyahNo = playState.currentAyahNo;
-        final multiplier = context.select<QuranTranslationBloc, double>(
-          (bloc) => bloc.state.fontSizeMultiplier,
-        );
         return RichText(
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.right,
@@ -312,9 +342,9 @@ class _CurrentAyahDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final multiplier = context.select<QuranTranslationBloc, double>(
-      (bloc) => bloc.state.fontSizeMultiplier,
-    );
+    final tState = context.watch<QuranTranslationBloc>().state;
+    final multiplier = tState.translationFontScale;
+    final showTranslation = tState.showTranslation;
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
         // currentAyahNo == 0 is the opening Bismillah; show ayah 1's details.
@@ -328,7 +358,7 @@ class _CurrentAyahDetails extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (translation.isNotEmpty)
+            if (showTranslation && translation.isNotEmpty)
               Text(
                 translation,
                 style: TextStyle(
@@ -457,16 +487,17 @@ class _NowPlayingBar extends StatelessWidget {
                     SizedBox(width: 4.w),
                     InkWell(
                       onTap: () {
-                        final current =
-                            context.read<SurahPlaybackBloc>().state.repeatCount;
-                        final next =
-                            current == 1
-                                ? 2
-                                : current == 2
-                                ? 3
-                                : current == 3
-                                ? 5
-                                : 1;
+                        final current = context
+                            .read<SurahPlaybackBloc>()
+                            .state
+                            .repeatCount;
+                        final next = current == 1
+                            ? 2
+                            : current == 2
+                            ? 3
+                            : current == 3
+                            ? 5
+                            : 1;
                         context.read<SurahPlaybackBloc>().add(
                           SetRepeatCount(next),
                         );
