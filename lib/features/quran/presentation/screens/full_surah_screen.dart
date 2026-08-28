@@ -445,6 +445,55 @@ class _NowPlayingBar extends StatelessWidget {
                         },
                       ),
                     ),
+                    SizedBox(width: 4.w),
+                    InkWell(
+                      onTap: () {
+                        final current =
+                            context.read<SurahPlaybackBloc>().state.repeatCount;
+                        final next =
+                            current == 1
+                                ? 2
+                                : current == 2
+                                ? 3
+                                : current == 3
+                                ? 5
+                                : 1;
+                        context.read<SurahPlaybackBloc>().add(
+                          SetRepeatCount(next),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(16.r),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4.w,
+                          vertical: 4.h,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.repeat_rounded,
+                              color: AppColor.primary,
+                              size: 18.sp,
+                            ),
+                            BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
+                              builder: (context, state) {
+                                if (state.repeatCount <= 1) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Text(
+                                  '${state.repeatCount}',
+                                  style: TextStyle(
+                                    color: AppColor.primary,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     InkWell(
                       onTap: () {
                         context.read<SurahPlaybackBloc>().add(
