@@ -140,6 +140,7 @@ class SurahAyahCard extends StatelessWidget {
                   onTap: () => showAyahRepeatSheet(
                     context,
                     bloc: context.read<AyahAudioBloc>(),
+                    verseKey: _verseKey,
                   ),
                   borderRadius: BorderRadius.circular(16.r),
                   child: Padding(
@@ -153,17 +154,22 @@ class SurahAyahCard extends StatelessWidget {
                           size: 18.sp,
                         ),
                         BlocBuilder<AyahAudioBloc, AyahAudioState>(
-                          buildWhen: (p, c) => p.repeatCount != c.repeatCount,
-                          builder: (context, state) => state.repeatCount <= 1
-                              ? const SizedBox.shrink()
-                              : Text(
-                                  '${state.repeatCount}',
-                                  style: TextStyle(
-                                    color: AppColor.primary,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
+                          buildWhen: (p, c) =>
+                              p.repeatCountFor(_verseKey) !=
+                              c.repeatCountFor(_verseKey),
+                          builder: (context, state) {
+                            final n = state.repeatCountFor(_verseKey);
+                            return n <= 1
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    '$n',
+                                    style: TextStyle(
+                                      color: AppColor.primary,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  );
+                          },
                         ),
                       ],
                     ),

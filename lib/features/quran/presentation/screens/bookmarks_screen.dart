@@ -123,13 +123,14 @@ class BookmarksScreen extends StatelessWidget {
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            if (bookmark.snippet.isNotEmpty) ...[
+                                            if (bookmark
+                                                .snippet
+                                                .isNotEmpty) ...[
                                               SizedBox(height: 4.h),
                                               Text(
                                                 bookmark.snippet,
                                                 maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                   fontSize: 12.sp,
