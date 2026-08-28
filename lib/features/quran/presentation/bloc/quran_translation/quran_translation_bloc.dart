@@ -19,6 +19,7 @@ class QuranTranslationBloc
     on<LoadTranslationPreference>(_onLoad);
     on<SetSurahTranslationLang>(_onSetSurah);
     on<SetAyahTranslationLang>(_onSetAyah);
+    on<SetFontSizeMultiplier>(_onSetFontSize);
   }
 
   QuranLocalStore? _store;
@@ -34,6 +35,7 @@ class QuranTranslationBloc
     emit(
       state.copyWith(
         surahLang: store.translationLanguage() ?? event.uiFallback,
+        fontSizeMultiplier: store.fontSizeMultiplier(),
         ayahOverrides: const {},
         loaded: true,
       ),
@@ -65,5 +67,14 @@ class QuranTranslationBloc
       overrides[event.ayahNo] = event.lang;
     }
     emit(state.copyWith(ayahOverrides: overrides));
+  }
+
+  Future<void> _onSetFontSize(
+    SetFontSizeMultiplier event,
+    Emitter<QuranTranslationState> emit,
+  ) async {
+    emit(state.copyWith(fontSizeMultiplier: event.multiplier));
+    final store = await _resolveStore();
+    await store.setFontSizeMultiplier(event.multiplier);
   }
 }
