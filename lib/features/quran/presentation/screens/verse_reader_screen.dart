@@ -87,8 +87,7 @@ class VerseReaderScreen extends StatelessWidget {
                           itemCount: verses.length,
                           itemBuilder: (context, index) {
                             final verse = verses[index];
-                            final showHeader =
-                                verse.surahNo != previousSurahNo;
+                            final showHeader = verse.surahNo != previousSurahNo;
                             previousSurahNo = verse.surahNo;
                             final surahName =
                                 state.surahNames[verse.surahNo] ?? '';

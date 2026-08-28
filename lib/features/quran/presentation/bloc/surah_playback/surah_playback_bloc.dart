@@ -34,7 +34,9 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
       (event, emit) => emit(
         state.copyWith(
           repeatCount: event.count,
-          remainingRepeats: state.isPlaying ? state.remainingRepeats : event.count,
+          remainingRepeats: state.isPlaying
+              ? state.remainingRepeats
+              : event.count,
         ),
       ),
     );

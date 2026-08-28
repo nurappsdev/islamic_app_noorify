@@ -23,8 +23,8 @@ class ReadingHistoryEntry {
       surahNo: (json['surahNo'] as num).toInt(),
       ayahNo: (json['ayahNo'] as num).toInt(),
       surahName: json['surahName'] as String? ?? '',
-      readAt: DateTime.tryParse(json['readAt'] as String? ?? '') ??
-          DateTime.now(),
+      readAt:
+          DateTime.tryParse(json['readAt'] as String? ?? '') ?? DateTime.now(),
     );
   }
 }
