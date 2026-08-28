@@ -26,3 +26,10 @@ class SetActiveAyah extends SurahPlaybackEvent {
 
   final int ayahNo;
 }
+
+/// Updates how many times the surah should play.
+class SetRepeatCount extends SurahPlaybackEvent {
+  const SetRepeatCount(this.count);
+
+  final int count;
+}

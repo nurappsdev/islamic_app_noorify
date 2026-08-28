@@ -367,4 +367,5 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'viewQuranTafsir': 'View Quran Tafsir',
   'selectReciterTitle': 'Select Reciter',
   'tafsirTitle': 'Tafsir',
+  'repeatLabel': 'Repeat',
 };
