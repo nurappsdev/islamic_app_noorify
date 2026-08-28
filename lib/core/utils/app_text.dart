@@ -348,6 +348,7 @@ class AppText {
     required this.viewQuranTafsir,
     required this.selectReciterTitle,
     required this.tafsirTitle,
+    required this.repeatLabel,
   });
 
   final String noorify;
@@ -716,6 +717,7 @@ class AppText {
   final String viewQuranTafsir;
   final String selectReciterTitle;
   final String tafsirTitle;
+  final String repeatLabel;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1834,6 +1836,7 @@ class AppText {
         fallback?.selectReciterTitle ?? '',
       ),
       tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
+      repeatLabel: _read(map, 'repeatLabel', fallback?.repeatLabel ?? ''),
     );
   }
 
