@@ -283,6 +283,10 @@ class AppText {
     required this.quranDownloadEditionCta,
     required this.quranEditionDownloading,
     required this.quranShowTranslationLabel,
+    required this.quranAyahRepeatLabel,
+    required this.quranAyahRepeatTitle,
+    required this.quranAyahRepeatHint,
+    required this.repeatOff,
     required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
@@ -651,6 +655,10 @@ class AppText {
   final String quranDownloadEditionCta;
   final String quranEditionDownloading;
   final String quranShowTranslationLabel;
+  final String quranAyahRepeatLabel;
+  final String quranAyahRepeatTitle;
+  final String quranAyahRepeatHint;
+  final String repeatOff;
   final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
@@ -1689,6 +1697,22 @@ class AppText {
         'quranShowTranslationLabel',
         fallback?.quranShowTranslationLabel ?? '',
       ),
+      quranAyahRepeatLabel: _read(
+        map,
+        'quranAyahRepeatLabel',
+        fallback?.quranAyahRepeatLabel ?? '',
+      ),
+      quranAyahRepeatTitle: _read(
+        map,
+        'quranAyahRepeatTitle',
+        fallback?.quranAyahRepeatTitle ?? '',
+      ),
+      quranAyahRepeatHint: _read(
+        map,
+        'quranAyahRepeatHint',
+        fallback?.quranAyahRepeatHint ?? '',
+      ),
+      repeatOff: _read(map, 'repeatOff', fallback?.repeatOff ?? ''),
       quranTranslationLabel: _read(
         map,
         'quranTranslationLabel',
