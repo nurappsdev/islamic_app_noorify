@@ -18,8 +18,7 @@ class VerseItem {
     final parts = verseKey.split(':');
     final translations = json['translations'] as List?;
     final translationText = translations != null && translations.isNotEmpty
-        ? (translations.first as Map<String, dynamic>)['text'] as String? ??
-              ''
+        ? (translations.first as Map<String, dynamic>)['text'] as String? ?? ''
         : '';
     return VerseItem(
       surahNo: int.tryParse(parts[0]) ?? 0,
