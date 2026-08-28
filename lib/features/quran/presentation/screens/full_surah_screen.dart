@@ -15,6 +15,7 @@ import 'package:islami_app_noorify/features/quran/presentation/quran_format_help
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -142,6 +143,8 @@ class FullSurahScreen extends StatelessWidget {
                                   const SurahTranslationSwitch(),
                                 ],
                               ),
+                              SizedBox(height: 12.h),
+                              const QuranZoomControl(),
                               SizedBox(height: 16.h),
                               _ContinuousAyahText(
                                 arabicAyahs: detail.arabicAyahs,
@@ -254,13 +257,16 @@ class _ContinuousAyahText extends StatelessWidget {
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
         final currentAyahNo = playState.currentAyahNo;
+        final multiplier = context.select<QuranTranslationBloc, double>(
+          (bloc) => bloc.state.fontSizeMultiplier,
+        );
         return RichText(
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.right,
           text: TextSpan(
             style: TextStyle(
               color: Colors.black87,
-              fontSize: 19.sp,
+              fontSize: 19.sp * multiplier,
               height: 2.0,
             ),
             children: [
@@ -279,7 +285,7 @@ class _ContinuousAyahText extends StatelessWidget {
                         color: i + 1 < currentAyahNo
                             ? _readColor
                             : AppColor.primary,
-                        fontSize: 14.sp,
+                        fontSize: 14.sp * multiplier,
                       ),
                     ),
                   ],
@@ -306,6 +312,9 @@ class _CurrentAyahDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final multiplier = context.select<QuranTranslationBloc, double>(
+      (bloc) => bloc.state.fontSizeMultiplier,
+    );
     return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
       builder: (context, playState) {
         // currentAyahNo == 0 is the opening Bismillah; show ayah 1's details.
@@ -323,7 +332,7 @@ class _CurrentAyahDetails extends StatelessWidget {
               Text(
                 translation,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 13.sp * multiplier,
                   height: 1.4,
                   color: const Color(0xFF444444),
                 ),
