@@ -21,3 +21,10 @@ class PlayAyahAudio extends AyahAudioEvent {
 class StopAyahAudio extends AyahAudioEvent {
   const StopAyahAudio();
 }
+
+/// Updates how many times a tapped ayah is played before playback stops.
+class SetAyahRepeatCount extends AyahAudioEvent {
+  const SetAyahRepeatCount(this.count);
+
+  final int count;
+}
