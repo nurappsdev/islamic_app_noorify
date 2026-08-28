@@ -64,10 +64,7 @@ class SurahHeroCard extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           ColorFiltered(
-            colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn,
-            ),
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             child: Image.asset(
               'assets/images/bismillah.png',
               height: 30.h,
@@ -99,10 +96,7 @@ class SurahHeroCard extends StatelessWidget {
               ] else
                 const Spacer(),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(20.r),
