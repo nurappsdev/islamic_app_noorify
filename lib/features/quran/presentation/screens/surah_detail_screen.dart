@@ -16,6 +16,7 @@ import 'package:islami_app_noorify/features/quran/presentation/quran_format_help
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -221,6 +222,8 @@ class _SurahBody extends StatelessWidget {
               const SurahTranslationSwitch(),
             ],
           ),
+          SizedBox(height: 12.h),
+          const QuranZoomControl(),
           SizedBox(height: 16.h),
           for (var i = 0; i < detail.arabicAyahs.length; i++) ...[
             SurahAyahCard(
