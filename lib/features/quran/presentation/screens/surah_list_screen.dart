@@ -7,22 +7,18 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
 import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/juz_list/juz_list_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class SurahListScreen extends StatefulWidget {
-  const SurahListScreen({super.key, this.offline = false});
-
-  /// When true, the surah list is served from the bundled offline database
-  /// and the Para (juz) tab — which needs the network — is hidden.
-  final bool offline;
+  const SurahListScreen({super.key});
 
   @override
   State<SurahListScreen> createState() => _SurahListScreenState();
@@ -37,10 +33,21 @@ class _SurahListScreenState extends State<SurahListScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: widget.offline ? 1 : 2,
-      vsync: this,
-    );
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  bool _offlineBuildKicked = false;
+
+  /// Kicks off the one-time offline build the moment we learn it isn't ready.
+  /// Reading keeps working via the network fallback while it runs. Tried once
+  /// per visit so a persistent failure (e.g. no network) doesn't loop.
+  void _maybeStartOfflineBuild(OfflineQuranState state) {
+    if (_offlineBuildKicked) return;
+    if (state.status == OfflineQuranStatus.needsSetup ||
+        state.status == OfflineQuranStatus.failed) {
+      _offlineBuildKicked = true;
+      context.read<OfflineQuranBloc>().add(const PrepareOfflineQuran());
+    }
   }
 
   @override
@@ -53,8 +60,7 @@ class _SurahListScreenState extends State<SurahListScreen>
   }
 
   @override
-  void didPopNext() =>
-      context.read<LastReadBloc>().add(const LoadLastRead());
+  void didPopNext() => context.read<LastReadBloc>().add(const LoadLastRead());
 
   @override
   void dispose() {
@@ -79,39 +85,39 @@ class _SurahListScreenState extends State<SurahListScreen>
                     children: [
                       _TopBar(appText: appText),
                       SizedBox(height: 14.h),
-                      _LastReadCard(appText: appText, offline: widget.offline),
+                      const _LastReadCard(),
                       SizedBox(height: 8.h),
-                      if (!widget.offline)
-                        TabBar(
-                          controller: _tabController,
-                          labelColor: AppColor.primary,
-                          unselectedLabelColor: Colors.grey,
-                          indicatorColor: AppColor.primary,
-                          indicatorSize: TabBarIndicatorSize.label,
-                          labelStyle: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          tabs: [
-                            Tab(text: appText.tabSurah),
-                            Tab(text: appText.tabPara),
-                          ],
+                      BlocConsumer<OfflineQuranBloc, OfflineQuranState>(
+                        listener: (context, state) =>
+                            _maybeStartOfflineBuild(state),
+                        builder: (context, state) =>
+                            _OfflineBuildStrip(state: state, appText: appText),
+                      ),
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: AppColor.primary,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: AppColor.primary,
+                        indicatorSize: TabBarIndicatorSize.label,
+                        labelStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
                         ),
+                        tabs: [
+                          Tab(text: appText.tabSurah),
+                          Tab(text: appText.tabPara),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: widget.offline
-                        ? const _SurahTabView(offline: true)
-                        : TabBarView(
-                            controller: _tabController,
-                            children: const [
-                              _SurahTabView(),
-                              _ParaTabView(),
-                            ],
-                          ),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: const [_SurahTabView(), _ParaTabView()],
+                    ),
                   ),
                 ),
               ],
@@ -120,6 +126,51 @@ class _SurahListScreenState extends State<SurahListScreen>
           const Align(
             alignment: Alignment.bottomCenter,
             child: HomeBottomNav(selectedIndex: 1),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Thin, self-hiding banner shown only while the one-time offline Quran build
+/// is running. Reading is unaffected — this is just a progress hint.
+class _OfflineBuildStrip extends StatelessWidget {
+  const _OfflineBuildStrip({required this.state, required this.appText});
+
+  final OfflineQuranState state;
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.status != OfflineQuranStatus.preparing) {
+      return const SizedBox.shrink();
+    }
+    final percent = state.progress == null
+        ? null
+        : (state.progress! * 100).round();
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 13.sp,
+            height: 13.sp,
+            child: const CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColor.primary,
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              percent == null
+                  ? appText.offlineQuranPreparing
+                  : '${appText.offlineQuranPreparing}  $percent%',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF7A8368)),
+            ),
           ),
         ],
       ),
@@ -206,13 +257,11 @@ class _TopBar extends StatelessWidget {
 }
 
 class _LastReadCard extends StatelessWidget {
-  const _LastReadCard({required this.appText, this.offline = false});
-
-  final AppText appText;
-  final bool offline;
+  const _LastReadCard();
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return BlocBuilder<LastReadBloc, LastReadState>(
       builder: (context, state) {
         final lastRead = state.entry;
@@ -220,9 +269,7 @@ class _LastReadCard extends StatelessWidget {
           onTap: lastRead == null
               ? null
               : () => Navigator.of(context).pushNamed(
-                  offline
-                      ? RouteNames.quranOfflineSurahDetail
-                      : RouteNames.quranSurahDetail,
+                  RouteNames.quranSurahDetail,
                   arguments: SurahRouteArgs(
                     surahNo: lastRead.surahNo,
                     surahName: lastRead.surahName,
@@ -283,9 +330,9 @@ class _LastReadCard extends StatelessWidget {
                           ),
                           if (lastRead != null)
                             GestureDetector(
-                              onTap: () => Navigator.of(context).pushNamed(
-                                RouteNames.quranReadingHistory,
-                              ),
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.quranReadingHistory),
                               child: Row(
                                 children: [
                                   Text(
@@ -453,7 +500,11 @@ class _ListRow extends StatelessWidget {
 }
 
 class _LoadingOrError extends StatelessWidget {
-  const _LoadingOrError({required this.message, required this.actionLabel, required this.onRetry});
+  const _LoadingOrError({
+    required this.message,
+    required this.actionLabel,
+    required this.onRetry,
+  });
 
   final String message;
   final String actionLabel;
@@ -479,17 +530,13 @@ class _LoadingOrError extends StatelessWidget {
 }
 
 class _SurahTabView extends StatelessWidget {
-  const _SurahTabView({this.offline = false});
-
-  final bool offline;
+  const _SurahTabView();
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return BlocProvider(
-      create: (_) => SurahListBloc(
-        apiService: offline ? QuranOfflineService() : null,
-      )..add(const LoadSurahs()),
+      create: (_) => SurahListBloc()..add(const LoadSurahs()),
       child: BlocBuilder<SurahListBloc, SurahListState>(
         builder: (context, state) {
           if (state.isLoading && state.surahs.isEmpty) {
@@ -515,9 +562,7 @@ class _SurahTabView extends StatelessWidget {
               subtitleRight: '${surah.totalAyah} ${appText.ayahWord}',
               trailingArabic: surah.nameArabic,
               onTap: () => Navigator.of(context).pushNamed(
-                offline
-                    ? RouteNames.quranOfflineSurahDetail
-                    : RouteNames.quranSurahDetail,
+                RouteNames.quranSurahDetail,
                 arguments: SurahRouteArgs(
                   surahNo: surah.number,
                   surahName: surah.name,
@@ -561,10 +606,9 @@ class _ParaTabView extends StatelessWidget {
                 title: '${appText.juzWord} ${juz.number}',
                 subtitleLeft:
                     '${appText.startsLabel}: $surahName ${juz.startAyah}',
-                onTap: () => Navigator.of(context).pushNamed(
-                  RouteNames.quranJuzReader,
-                  arguments: juz.number,
-                ),
+                onTap: () => Navigator.of(
+                  context,
+                ).pushNamed(RouteNames.quranJuzReader, arguments: juz.number),
               );
             },
           );
@@ -597,8 +641,7 @@ class _PaginatedListState<T> extends State<_PaginatedList<T>> {
   late int _visibleCount = _initialVisibleCount;
   bool _isLoadingMore = false;
 
-  int get _initialVisibleCount =>
-      widget.items.length < widget.pageSize
+  int get _initialVisibleCount => widget.items.length < widget.pageSize
       ? widget.items.length
       : widget.pageSize;
 
