@@ -7,11 +7,13 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
@@ -23,15 +25,10 @@ class SurahDetailScreen extends StatefulWidget {
     super.key,
     required this.surahNo,
     this.surahName = '',
-    this.offline = false,
   });
 
   final int surahNo;
   final String surahName;
-
-  /// When true the screen renders from the bundled offline database: no
-  /// per-ayah audio/reciter controls and no "view full surah" action.
-  final bool offline;
 
   @override
   State<SurahDetailScreen> createState() => _SurahDetailScreenState();
@@ -128,10 +125,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                             ),
                             SizedBox(height: 12.h),
                             TextButton(
-                              onPressed: () =>
-                                  context.read<SurahDetailBloc>().add(
-                                    LoadSurahDetail(widget.surahNo),
-                                  ),
+                              onPressed: () => context
+                                  .read<SurahDetailBloc>()
+                                  .add(LoadSurahDetail(widget.surahNo)),
                               child: Text(appText.tryAgain),
                             ),
                           ],
@@ -140,76 +136,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     }
                     final detail = state.detail!;
                     _recordLastRead(detail);
-                    return ListView(
-                      padding: EdgeInsets.only(top: 4.h, bottom: 24.h),
-                      children: [
-                        SurahHeroCard(
-                          appText: appText,
-                          detail: detail,
-                          actionLabel: widget.offline
-                              ? null
-                              : appText.viewFullSura,
-                          onAction: widget.offline
-                              ? null
-                              : () => Navigator.of(context).pushNamed(
-                                  RouteNames.quranFullSurah,
-                                  arguments: detail.number,
-                                ),
-                        ),
-                        SizedBox(height: 10.h),
-                        Center(
-                          child: Text(
-                            '${appText.yourReadingTimeIs} '
-                            '${formatReadingTime(appText, detail.arabicAyahs)}',
-                            style: TextStyle(
-                              color: AppColor.primary,
-                              fontSize: 12.sp,
-                            ),
-                          ),
-                        ),
-                        if (widget.offline) ...[
-                          SizedBox(height: 12.h),
-                          _OfflineAudioDownload(
-                            surahNo: detail.number,
-                            totalAyah: detail.arabicAyahs.length,
-                          ),
-                        ],
-                        SizedBox(height: 14.h),
-                        Row(
-                          children: [
-                            Text(
-                              appText.quranTranslationLabel,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: const Color(0xFF6B7458),
-                              ),
-                            ),
-                            const Spacer(),
-                            const SurahTranslationSwitch(),
-                          ],
-                        ),
-                        SizedBox(height: 16.h),
-                        for (
-                          var i = 0;
-                          i < detail.arabicAyahs.length;
-                          i++
-                        ) ...[
-                          SurahAyahCard(
-                            surahNo: detail.number,
-                            ayahNo: i + 1,
-                            surahName: detail.name,
-                            arabic: detail.arabicAyahs[i],
-                            englishTranslation: i < detail.englishAyahs.length
-                                ? detail.englishAyahs[i]
-                                : '',
-                            bengaliTranslation: i < detail.bengaliAyahs.length
-                                ? detail.bengaliAyahs[i]
-                                : '',
-                          ),
-                          SizedBox(height: 10.h),
-                        ],
-                      ],
-                    );
+                    return _SurahBody(detail: detail, appText: appText);
                   },
                 ),
               ),
@@ -221,124 +148,97 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 }
 
-/// Offline-only strip: downloads the whole surah's recitation (for the
-/// currently selected reciter) so it plays without a connection.
-class _OfflineAudioDownload extends StatefulWidget {
-  const _OfflineAudioDownload({
-    required this.surahNo,
-    required this.totalAyah,
-  });
+/// The loaded surah. Turns a "needs download" play attempt into the download
+/// modal, then resumes playback once the recitation is saved.
+class _SurahBody extends StatelessWidget {
+  const _SurahBody({required this.detail, required this.appText});
 
-  final int surahNo;
-  final int totalAyah;
+  final SurahDetail detail;
+  final AppText appText;
 
-  @override
-  State<_OfflineAudioDownload> createState() => _OfflineAudioDownloadState();
-}
+  int _reciterId(BuildContext context) =>
+      context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
 
-class _OfflineAudioDownloadState extends State<_OfflineAudioDownload> {
-  int? _checkedForReciter;
-
-  void _check(int reciterId) {
-    if (_checkedForReciter == reciterId) return;
-    _checkedForReciter = reciterId;
-    context.read<SurahAudioDownloadBloc>().add(
-      CheckSurahAudioStatus(
-        reciterId: reciterId,
-        surahNo: widget.surahNo,
-        totalAyah: widget.totalAyah,
-      ),
+  Future<void> _promptDownload(BuildContext context, String verseKey) async {
+    // Ignore repeat triggers while the sheet is already up.
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    final saved = await showSurahAudioSheet(
+      context,
+      downloadBloc: context.read<SurahAudioDownloadBloc>(),
+      reciterId: _reciterId(context),
+      surahNo: detail.number,
+      totalAyah: detail.totalAyah,
     );
+    if (saved && context.mounted) {
+      context.read<AyahAudioBloc>().add(
+        PlayAyahAudio(
+          verseKey: verseKey,
+          recitationId: _reciterId(context),
+          restart: true,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final reciterId =
-        context.watch<ReciterBloc>().state.selectedId ?? defaultRecitationId;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _check(reciterId);
-    });
-
-    return BlocBuilder<SurahAudioDownloadBloc, SurahAudioDownloadState>(
-      builder: (context, state) {
-        final percent = state.progress == null
-            ? null
-            : (state.progress! * 100).round();
-
-        Widget content;
-        switch (state.status) {
-          case SurahAudioDownloadStatus.downloading:
-            content = Row(
-              children: [
-                SizedBox(
-                  width: 16.sp,
-                  height: 16.sp,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColor.primary,
-                  ),
+    return BlocListener<AyahAudioBloc, AyahAudioState>(
+      listenWhen: (p, c) =>
+          c.needsDownloadForVerseKey != null &&
+          p.needsDownloadForVerseKey != c.needsDownloadForVerseKey,
+      listener: (context, state) =>
+          _promptDownload(context, state.needsDownloadForVerseKey!),
+      child: ListView(
+        padding: EdgeInsets.only(top: 4.h, bottom: 24.h),
+        children: [
+          SurahHeroCard(
+            appText: appText,
+            detail: detail,
+            actionLabel: appText.viewFullSura,
+            onAction: () => Navigator.of(
+              context,
+            ).pushNamed(RouteNames.quranFullSurah, arguments: detail.number),
+          ),
+          SizedBox(height: 10.h),
+          Center(
+            child: Text(
+              '${appText.yourReadingTimeIs} '
+              '${formatReadingTime(appText, detail.arabicAyahs)}',
+              style: TextStyle(color: AppColor.primary, fontSize: 12.sp),
+            ),
+          ),
+          SizedBox(height: 14.h),
+          Row(
+            children: [
+              Text(
+                appText.quranTranslationLabel,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: const Color(0xFF6B7458),
                 ),
-                SizedBox(width: 10.w),
-                Text(
-                  '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
-                  style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
-                ),
-              ],
-            );
-          case SurahAudioDownloadStatus.complete:
-            content = Row(
-              children: [
-                Icon(
-                  Icons.download_done_rounded,
-                  size: 16.sp,
-                  color: AppColor.primary,
-                ),
-                SizedBox(width: 8.w),
-                Text(
-                  appText.quranAudioDownloaded,
-                  style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
-                ),
-              ],
-            );
-          case SurahAudioDownloadStatus.idle:
-          case SurahAudioDownloadStatus.checking:
-          case SurahAudioDownloadStatus.failed:
-            content = InkWell(
-              onTap: state.status == SurahAudioDownloadStatus.checking
-                  ? null
-                  : () => context.read<SurahAudioDownloadBloc>().add(
-                      StartSurahAudioDownload(
-                        reciterId: reciterId,
-                        surahNo: widget.surahNo,
-                        totalAyah: widget.totalAyah,
-                      ),
-                    ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.download_rounded,
-                    size: 16.sp,
-                    color: AppColor.primary,
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    state.status == SurahAudioDownloadStatus.failed
-                        ? '${appText.quranDownloadSurahAudio} · ${appText.tryAgain}'
-                        : appText.quranDownloadSurahAudio,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColor.primary,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ],
               ),
-            );
-        }
-
-        return Center(child: content);
-      },
+              const Spacer(),
+              const SurahTranslationSwitch(),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          for (var i = 0; i < detail.arabicAyahs.length; i++) ...[
+            SurahAyahCard(
+              surahNo: detail.number,
+              ayahNo: i + 1,
+              surahName: detail.name,
+              arabic: detail.arabicAyahs[i],
+              englishTranslation: i < detail.englishAyahs.length
+                  ? detail.englishAyahs[i]
+                  : '',
+              bengaliTranslation: i < detail.bengaliAyahs.length
+                  ? detail.bengaliAyahs[i]
+                  : '',
+            ),
+            SizedBox(height: 10.h),
+          ],
+        ],
+      ),
     );
   }
 }
