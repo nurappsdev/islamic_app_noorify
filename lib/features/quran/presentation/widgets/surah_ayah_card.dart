@@ -137,6 +137,39 @@ class SurahAyahCard extends StatelessWidget {
                 ),
                 SizedBox(width: 6.w),
                 InkWell(
+                  onTap: () => showAyahRepeatSheet(
+                    context,
+                    bloc: context.read<AyahAudioBloc>(),
+                  ),
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: Padding(
+                    padding: EdgeInsets.all(4.w),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.repeat_rounded,
+                          color: AppColor.primary,
+                          size: 18.sp,
+                        ),
+                        BlocBuilder<AyahAudioBloc, AyahAudioState>(
+                          buildWhen: (p, c) => p.repeatCount != c.repeatCount,
+                          builder: (context, state) => state.repeatCount <= 1
+                              ? const SizedBox.shrink()
+                              : Text(
+                                  '${state.repeatCount}',
+                                  style: TextStyle(
+                                    color: AppColor.primary,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                InkWell(
                   onTap: () {
                     final recitationId =
                         context.read<ReciterBloc>().state.selectedId ??
