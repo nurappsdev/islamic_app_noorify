@@ -21,7 +21,10 @@ class BookmarksBloc extends Bloc<BookmarksEvent, BookmarksState> {
   Future<QuranLocalStore> _resolveStore() async =>
       _store ??= await QuranLocalStore.create();
 
-  Future<void> _onLoad(LoadBookmarks event, Emitter<BookmarksState> emit) async {
+  Future<void> _onLoad(
+    LoadBookmarks event,
+    Emitter<BookmarksState> emit,
+  ) async {
     final store = await _resolveStore();
     final bookmarks = await store.bookmarks();
     emit(state.copyWith(isLoading: false, bookmarks: bookmarks));

@@ -552,18 +552,27 @@ class _EditionRow extends StatelessWidget {
   }
 }
 
-/// Lets the listener choose how many times a tapped ayah repeats before
-/// playback stops. Pass the ancestor [AyahAudioBloc] explicitly.
-void showAyahRepeatSheet(BuildContext context, {required AyahAudioBloc bloc}) {
+/// Lets the listener choose how many times a single ayah ([verseKey], e.g.
+/// "2:5") repeats before playback stops. Pass the ancestor [AyahAudioBloc]
+/// explicitly.
+void showAyahRepeatSheet(
+  BuildContext context, {
+  required AyahAudioBloc bloc,
+  required String verseKey,
+}) {
   showModalBottomSheet(
     context: context,
-    builder: (_) =>
-        BlocProvider.value(value: bloc, child: const _AyahRepeatSheet()),
+    builder: (_) => BlocProvider.value(
+      value: bloc,
+      child: _AyahRepeatSheet(verseKey: verseKey),
+    ),
   );
 }
 
 class _AyahRepeatSheet extends StatelessWidget {
-  const _AyahRepeatSheet();
+  const _AyahRepeatSheet({required this.verseKey});
+
+  final String verseKey;
 
   static const _min = 1;
   static const _max = 10;
@@ -575,11 +584,12 @@ class _AyahRepeatSheet extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 22.h),
         child: BlocBuilder<AyahAudioBloc, AyahAudioState>(
-          buildWhen: (p, c) => p.repeatCount != c.repeatCount,
+          buildWhen: (p, c) =>
+              p.repeatCountFor(verseKey) != c.repeatCountFor(verseKey),
           builder: (context, state) {
-            final count = state.repeatCount;
+            final count = state.repeatCountFor(verseKey);
             void set(int value) => context.read<AyahAudioBloc>().add(
-              SetAyahRepeatCount(value.clamp(_min, _max)),
+              SetAyahRepeatCount(verseKey, value.clamp(_min, _max)),
             );
             return Column(
               mainAxisSize: MainAxisSize.min,

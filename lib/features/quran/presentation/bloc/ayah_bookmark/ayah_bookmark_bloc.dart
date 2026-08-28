@@ -19,7 +19,6 @@ class AyahBookmarkBloc extends Bloc<AyahBookmarkEvent, AyahBookmarkState> {
     QuranLocalStore? store,
   }) : _store = store,
        super(const AyahBookmarkState()) {
-
     on<LoadBookmarkStatus>(_onLoad);
     on<ToggleAyahBookmark>(_onToggle);
   }

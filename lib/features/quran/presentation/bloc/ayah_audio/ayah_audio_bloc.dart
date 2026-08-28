@@ -18,8 +18,9 @@ class _AyahCompleted extends AyahAudioEvent {
 /// Playback is offline-only: an ayah plays from its downloaded file, and if
 /// the surah's audio has not been downloaded yet the bloc reports
 /// [AyahAudioState.needsDownloadForVerseKey] so the screen can prompt a
-/// download instead of streaming. A tapped ayah repeats
-/// [AyahAudioState.repeatCount] times before playback stops.
+/// download instead of streaming. Each ayah has its own repeat count
+/// ([AyahAudioState.repeatCounts]); a played ayah repeats that many times
+/// before playback stops.
 class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
   AyahAudioBloc({QuranAudioDownloader? downloader})
     : downloader = downloader ?? QuranAudioDownloader(),
@@ -27,17 +28,34 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     _player.onPlayerComplete.listen((_) => add(const _AyahCompleted()));
     on<PlayAyahAudio>(_onPlay);
     on<StopAyahAudio>(_onStop);
-    on<SetAyahRepeatCount>(
-      (event, emit) => emit(
-        state.copyWith(repeatCount: event.count, remainingRepeats: event.count),
-      ),
-    );
+    on<SetAyahRepeatCount>(_onSetRepeatCount);
     on<_AyahCompleted>(_onCompleted);
   }
 
   final QuranAudioDownloader downloader;
   final AudioPlayer _player = AudioPlayer();
   int _recitationId = 0;
+
+  void _onSetRepeatCount(
+    SetAyahRepeatCount event,
+    Emitter<AyahAudioState> emit,
+  ) {
+    final counts = Map<String, int>.from(state.repeatCounts);
+    if (event.count <= 1) {
+      counts.remove(event.verseKey);
+    } else {
+      counts[event.verseKey] = event.count;
+    }
+    emit(
+      state.copyWith(
+        repeatCounts: counts,
+        // Apply immediately if this ayah is the one playing.
+        remainingRepeats: state.playingVerseKey == event.verseKey
+            ? event.count
+            : null,
+      ),
+    );
+  }
 
   Future<void> _onPlay(
     PlayAyahAudio event,
@@ -49,7 +67,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
         state.copyWith(
           clearPlayingVerseKey: true,
           isBuffering: false,
-          remainingRepeats: state.repeatCount,
+          remainingRepeats: 1,
         ),
       );
       return;
@@ -59,7 +77,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
       state.copyWith(
         playingVerseKey: event.verseKey,
         isBuffering: true,
-        remainingRepeats: state.repeatCount,
+        remainingRepeats: state.repeatCountFor(event.verseKey),
       ),
     );
     try {
@@ -125,7 +143,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
       state.copyWith(
         clearPlayingVerseKey: true,
         isBuffering: false,
-        remainingRepeats: state.repeatCount,
+        remainingRepeats: 1,
       ),
     );
   }
@@ -139,7 +157,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
       state.copyWith(
         clearPlayingVerseKey: true,
         isBuffering: false,
-        remainingRepeats: state.repeatCount,
+        remainingRepeats: 1,
       ),
     );
   }

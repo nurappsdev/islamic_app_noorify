@@ -13,7 +13,8 @@ abstract interface class QuranApiService {
 }
 
 class QuranApiPagesService implements QuranApiService {
-  QuranApiPagesService({http.Client? client}) : _client = client ?? http.Client();
+  QuranApiPagesService({http.Client? client})
+    : _client = client ?? http.Client();
 
   static const _host = 'quranapi.pages.dev';
 

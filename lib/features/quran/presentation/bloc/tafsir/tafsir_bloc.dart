@@ -15,9 +15,11 @@ const englishTafsirResourceId = 169;
 const banglaTafsirResourceId = 165;
 
 class TafsirBloc extends Bloc<TafsirEvent, TafsirState> {
-  TafsirBloc({required this.tafsirResourceId, QuranReaderService? readerService})
-    : _readerService = readerService ?? QuranComReaderService(),
-      super(const TafsirState()) {
+  TafsirBloc({
+    required this.tafsirResourceId,
+    QuranReaderService? readerService,
+  }) : _readerService = readerService ?? QuranComReaderService(),
+       super(const TafsirState()) {
     on<LoadTafsir>(_onLoad);
   }
 
