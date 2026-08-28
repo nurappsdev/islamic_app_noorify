@@ -42,9 +42,7 @@ class RouteNames {
   static const zakatCalculator = '/zakat-calculator';
   static const quran = '/quran';
   static const quranSurahs = '/quran/surahs';
-  static const quranOfflineSurahs = '/quran/offline/surahs';
   static const quranSurahDetail = '/quran/surahs/detail';
-  static const quranOfflineSurahDetail = '/quran/offline/surahs/detail';
   static const quranFullSurah = '/quran/surahs/full';
   static const quranJuzReader = '/quran/juz';
   static const quranBookmarks = '/quran/bookmarks';
