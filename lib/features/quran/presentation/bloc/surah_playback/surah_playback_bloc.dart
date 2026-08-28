@@ -30,6 +30,14 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
       (event, emit) =>
           emit(state.copyWith(currentAyahNo: event.ayahNo, isPlaying: false)),
     );
+    on<SetRepeatCount>(
+      (event, emit) => emit(
+        state.copyWith(
+          repeatCount: event.count,
+          remainingRepeats: state.isPlaying ? state.remainingRepeats : event.count,
+        ),
+      ),
+    );
     on<_AdvanceAyah>(_onAdvance);
   }
 
@@ -71,6 +79,8 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
       return;
     }
 
+    emit(state.copyWith(remainingRepeats: state.repeatCount));
+
     // Start from the Bismillah (ayah 0) when playing a surah from the top.
     final startAt = state.currentAyahNo <= 1 && _hasBismillah
         ? 0
@@ -93,7 +103,13 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     if (!state.isPlaying) return;
     final next = state.currentAyahNo + 1;
     if (next > _totalAyah) {
-      emit(state.copyWith(isPlaying: false));
+      if (state.remainingRepeats > 1) {
+        emit(state.copyWith(remainingRepeats: state.remainingRepeats - 1));
+        final startAt = _hasBismillah ? 0 : 1;
+        await _playAyah(startAt, emit);
+      } else {
+        emit(state.copyWith(isPlaying: false, remainingRepeats: 1));
+      }
       return;
     }
     await _playAyah(next, emit);
