@@ -56,9 +56,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       create: (context) {
         final uiLang = context.read<LanguageBloc>().state.language;
         return QuranTranslationBloc(initial: uiLang)
-          ..add(LoadTranslationPreference(uiLang));
+          ..add(LoadTranslationPreference(uiLang))
+          ..add(const LoadTranslationEditions());
       },
-      child: _buildScaffold(context, appText),
+      child: Builder(builder: (context) => _buildScaffold(context, appText)),
     );
   }
 
@@ -100,6 +101,20 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                         color: const Color(0xFF6B7458),
                         fontSize: 17.sp,
                         fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        onPressed: () => showQuranReaderSettingsSheet(
+                          context,
+                          bloc: context.read<QuranTranslationBloc>(),
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEDE7A6),
+                          foregroundColor: AppColor.authLogo,
+                        ),
+                        icon: const Icon(Icons.tune_rounded, size: 18),
                       ),
                     ),
                   ],
@@ -150,12 +165,29 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 }
 
 /// The loaded surah. Turns a "needs download" play attempt into the download
-/// modal, then resumes playback once the recitation is saved.
-class _SurahBody extends StatelessWidget {
+/// modal, then resumes playback once the recitation is saved. Also keeps the
+/// selected translation edition's text loaded for this surah.
+class _SurahBody extends StatefulWidget {
   const _SurahBody({required this.detail, required this.appText});
 
   final SurahDetail detail;
   final AppText appText;
+
+  @override
+  State<_SurahBody> createState() => _SurahBodyState();
+}
+
+class _SurahBodyState extends State<_SurahBody> {
+  SurahDetail get detail => widget.detail;
+  AppText get appText => widget.appText;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<QuranTranslationBloc>().add(
+      LoadSurahEditionText(detail.number),
+    );
+  }
 
   int _reciterId(BuildContext context) =>
       context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
@@ -183,12 +215,22 @@ class _SurahBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AyahAudioBloc, AyahAudioState>(
-      listenWhen: (p, c) =>
-          c.needsDownloadForVerseKey != null &&
-          p.needsDownloadForVerseKey != c.needsDownloadForVerseKey,
-      listener: (context, state) =>
-          _promptDownload(context, state.needsDownloadForVerseKey!),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AyahAudioBloc, AyahAudioState>(
+          listenWhen: (p, c) =>
+              c.needsDownloadForVerseKey != null &&
+              p.needsDownloadForVerseKey != c.needsDownloadForVerseKey,
+          listener: (context, state) =>
+              _promptDownload(context, state.needsDownloadForVerseKey!),
+        ),
+        BlocListener<QuranTranslationBloc, QuranTranslationState>(
+          listenWhen: (p, c) => p.selectedEditionId != c.selectedEditionId,
+          listener: (context, _) => context.read<QuranTranslationBloc>().add(
+            LoadSurahEditionText(detail.number),
+          ),
+        ),
+      ],
       child: ListView(
         padding: EdgeInsets.only(top: 4.h, bottom: 24.h),
         children: [

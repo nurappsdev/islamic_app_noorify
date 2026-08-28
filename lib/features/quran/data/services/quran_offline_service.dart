@@ -116,6 +116,19 @@ class QuranOfflineService implements QuranApiService {
     return verses;
   }
 
+  /// One downloaded translation edition's text for a surah: ayah number ->
+  /// text. Empty if the edition has no rows for this surah yet.
+  Future<Map<int, String>> editionSurahText(
+    String editionId,
+    int surahNo,
+  ) async {
+    final rows = await _db.editionSurahTextRows(editionId, surahNo);
+    return {
+      for (final row in rows)
+        (row['ayah_number'] as num).toInt(): row['text'] as String? ?? '',
+    };
+  }
+
   Future<List<_JuzBound>> _juzBoundaries() async {
     final raw = await rootBundle.loadString(_assetJuzPath);
     return [
