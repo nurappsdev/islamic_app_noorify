@@ -13,6 +13,7 @@ class QuranLocalStore {
   static const _historyKey = 'quran_reading_history';
   static const _bookmarksKey = 'quran_bookmarks';
   static const _translationLangKey = 'quran_translation_lang';
+  static const _fontSizeKey = 'quran_font_size_multiplier';
   static const _maxHistory = 50;
 
   final SharedPreferences _preferences;
@@ -142,5 +143,13 @@ class QuranLocalStore {
 
   Future<void> setTranslationLanguage(AppLanguage lang) async {
     await _preferences.setString(_translationLangKey, lang.name);
+  }
+
+  double fontSizeMultiplier() {
+    return _preferences.getDouble(_fontSizeKey) ?? 1.0;
+  }
+
+  Future<void> setFontSizeMultiplier(double multiplier) async {
+    await _preferences.setDouble(_fontSizeKey, multiplier);
   }
 }
