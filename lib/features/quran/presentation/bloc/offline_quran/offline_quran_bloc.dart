@@ -56,9 +56,7 @@ class OfflineQuranBloc extends Bloc<OfflineQuranEvent, OfflineQuranState> {
       final ready = await _database.isReady();
       emit(
         OfflineQuranState(
-          status: ready
-              ? OfflineQuranStatus.ready
-              : OfflineQuranStatus.failed,
+          status: ready ? OfflineQuranStatus.ready : OfflineQuranStatus.failed,
         ),
       );
     } catch (error) {

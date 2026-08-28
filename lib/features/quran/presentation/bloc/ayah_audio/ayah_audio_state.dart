@@ -3,7 +3,7 @@ class AyahAudioState {
     this.playingVerseKey,
     this.isBuffering = false,
     this.needsDownloadForVerseKey,
-    this.repeatCount = 1,
+    this.repeatCounts = const {},
     this.remainingRepeats = 1,
   });
 
@@ -14,12 +14,15 @@ class AyahAudioState {
   /// is not on the device yet. The screen reacts by prompting a download.
   final String? needsDownloadForVerseKey;
 
-  /// How many times a tapped ayah is played before playback stops
-  /// (user-set; 1 = play once).
-  final int repeatCount;
+  /// Per-ayah repeat setting: verse key (e.g. "2:5") -> how many times that
+  /// ayah plays before playback stops (user-set; absent / 1 = play once).
+  final Map<String, int> repeatCounts;
 
   /// Plays left for the ayah currently sounding.
   final int remainingRepeats;
+
+  /// Repeat count set for [verseKey] (1 when none has been set).
+  int repeatCountFor(String verseKey) => repeatCounts[verseKey] ?? 1;
 
   AyahAudioState copyWith({
     String? playingVerseKey,
@@ -27,7 +30,7 @@ class AyahAudioState {
     bool? isBuffering,
     String? needsDownloadForVerseKey,
     bool clearNeedsDownload = false,
-    int? repeatCount,
+    Map<String, int>? repeatCounts,
     int? remainingRepeats,
   }) {
     return AyahAudioState(
@@ -38,7 +41,7 @@ class AyahAudioState {
       needsDownloadForVerseKey: clearNeedsDownload
           ? null
           : (needsDownloadForVerseKey ?? this.needsDownloadForVerseKey),
-      repeatCount: repeatCount ?? this.repeatCount,
+      repeatCounts: repeatCounts ?? this.repeatCounts,
       remainingRepeats: remainingRepeats ?? this.remainingRepeats,
     );
   }
