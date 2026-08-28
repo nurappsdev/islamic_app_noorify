@@ -2,7 +2,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart'
     show defaultRecitationId;
 
@@ -16,11 +15,13 @@ class _AdvanceAyah extends SurahPlaybackEvent {
   const _AdvanceAyah();
 }
 
-/// Plays a surah sequentially, ayah by ayah, auto-advancing when each
-/// ayah's audio finishes.
+/// Plays a surah continuously from downloaded files: the opening Bismillah
+/// clip (where the surah has one) followed by every ayah, auto-advancing as
+/// each file finishes. If the surah's audio is not on the device the bloc
+/// reports [SurahPlaybackState.needsDownload] instead of streaming.
 class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
-  SurahPlaybackBloc({QuranReaderService? readerService, this.downloader})
-    : _readerService = readerService ?? QuranComReaderService(),
+  SurahPlaybackBloc({QuranAudioDownloader? downloader})
+    : _downloader = downloader ?? QuranAudioDownloader(),
       super(const SurahPlaybackState()) {
     _player.onPlayerComplete.listen((_) => add(const _AdvanceAyah()));
     on<PlaySurah>(_onPlay);
@@ -32,12 +33,25 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     on<_AdvanceAyah>(_onAdvance);
   }
 
-  final QuranReaderService _readerService;
-  final QuranAudioDownloader? downloader;
+  /// Al-Fatiha and At-Tawbah do not open with the Basmala.
+  static const _surahsWithoutBismillah = {1, 9};
+
+  final QuranAudioDownloader _downloader;
   final AudioPlayer _player = AudioPlayer();
   int _surahNo = 0;
   int _totalAyah = 0;
   int _recitationId = defaultRecitationId;
+
+  bool get _hasBismillah => !_surahsWithoutBismillah.contains(_surahNo);
+
+  /// Briefly raises [SurahPlaybackState.needsDownload] so a listener fires,
+  /// then lowers it — a repeat play tap re-triggers the download prompt.
+  void _pulseNeedsDownload(Emitter<SurahPlaybackState> emit) {
+    emit(
+      state.copyWith(isPlaying: false, isBuffering: false, needsDownload: true),
+    );
+    emit(state.copyWith(needsDownload: false));
+  }
 
   Future<void> _onPlay(
     PlaySurah event,
@@ -46,7 +60,22 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     _surahNo = event.surahNo;
     _totalAyah = event.totalAyah;
     _recitationId = event.recitationId;
-    await _playAyah(state.currentAyahNo, emit);
+
+    final complete = await _downloader.isSurahComplete(
+      reciterId: _recitationId,
+      surahNo: _surahNo,
+      totalAyah: _totalAyah,
+    );
+    if (!complete) {
+      _pulseNeedsDownload(emit);
+      return;
+    }
+
+    // Start from the Bismillah (ayah 0) when playing a surah from the top.
+    final startAt = state.currentAyahNo <= 1 && _hasBismillah
+        ? 0
+        : state.currentAyahNo;
+    await _playAyah(startAt, emit);
   }
 
   Future<void> _onPause(
@@ -77,26 +106,27 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         currentAyahNo: ayahNo,
         isPlaying: true,
         isBuffering: true,
+        needsDownload: false,
       ),
     );
     try {
-      final verseKey = '$_surahNo:$ayahNo';
-      final localPath = await downloader?.localPathFor(
-        reciterId: _recitationId,
-        verseKey: verseKey,
-      );
+      final localPath = ayahNo == 0
+          ? await _downloader.localBismillahPath(_recitationId)
+          : await _downloader.localPathFor(
+              reciterId: _recitationId,
+              verseKey: '$_surahNo:$ayahNo',
+            );
       if (!state.isPlaying || state.currentAyahNo != ayahNo) return;
-      if (localPath != null) {
-        await _player.play(DeviceFileSource(localPath));
-        emit(state.copyWith(isBuffering: false));
+      if (localPath == null) {
+        // A missing Bismillah file should not block the recitation itself.
+        if (ayahNo == 0) {
+          await _playAyah(1, emit);
+          return;
+        }
+        _pulseNeedsDownload(emit);
         return;
       }
-      final url = await _readerService.loadAyahAudioUrl(
-        _recitationId,
-        verseKey,
-      );
-      if (!state.isPlaying || state.currentAyahNo != ayahNo) return;
-      await _player.play(UrlSource(url));
+      await _player.play(DeviceFileSource(localPath));
       emit(state.copyWith(isBuffering: false));
     } catch (_) {
       emit(state.copyWith(isPlaying: false, isBuffering: false));

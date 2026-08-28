@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsir_bloc.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
@@ -13,8 +14,10 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsi
 void openReciterPicker(BuildContext context, ReciterBloc reciterBloc) {
   showModalBottomSheet(
     context: context,
-    builder: (_) =>
-        BlocProvider.value(value: reciterBloc, child: const ReciterPickerSheet()),
+    builder: (_) => BlocProvider.value(
+      value: reciterBloc,
+      child: const ReciterPickerSheet(),
+    ),
   );
 }
 
@@ -42,9 +45,7 @@ class ReciterPickerSheet extends StatelessWidget {
                   return Padding(
                     padding: EdgeInsets.symmetric(vertical: 24.h),
                     child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColor.primary,
-                      ),
+                      child: CircularProgressIndicator(color: AppColor.primary),
                     ),
                   );
                 }
@@ -163,6 +164,174 @@ class TafsirSheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Shown when the user tries to play recitation that is not on the device.
+/// Explains that a connection is needed, downloads the whole surah (Bismillah
+/// included) on confirmation, and resolves to `true` once the audio is saved
+/// so the caller can start playback.
+Future<bool> showSurahAudioSheet(
+  BuildContext context, {
+  required SurahAudioDownloadBloc downloadBloc,
+  required int reciterId,
+  required int surahNo,
+  required int totalAyah,
+}) async {
+  final result = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => BlocProvider.value(
+      value: downloadBloc,
+      child: _SurahAudioSheet(
+        reciterId: reciterId,
+        surahNo: surahNo,
+        totalAyah: totalAyah,
+      ),
+    ),
+  );
+  return result ?? false;
+}
+
+class _SurahAudioSheet extends StatelessWidget {
+  const _SurahAudioSheet({
+    required this.reciterId,
+    required this.surahNo,
+    required this.totalAyah,
+  });
+
+  final int reciterId;
+  final int surahNo;
+  final int totalAyah;
+
+  void _start(BuildContext context) {
+    context.read<SurahAudioDownloadBloc>().add(
+      StartSurahAudioDownload(
+        reciterId: reciterId,
+        surahNo: surahNo,
+        totalAyah: totalAyah,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return BlocConsumer<SurahAudioDownloadBloc, SurahAudioDownloadState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          current.status == SurahAudioDownloadStatus.complete,
+      listener: (context, state) => Navigator.of(context).pop(true),
+      builder: (context, state) {
+        final isDownloading =
+            state.status == SurahAudioDownloadStatus.downloading;
+        final hasFailed = state.status == SurahAudioDownloadStatus.failed;
+        final percent = state.progress == null
+            ? null
+            : (state.progress! * 100).round();
+
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 20.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.wifi_rounded,
+                      color: AppColor.primary,
+                      size: 20.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      appText.quranAudioModalTitle,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColor.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  appText.quranAudioModalBody,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    height: 1.5,
+                    color: const Color(0xFF5A6350),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                if (isDownloading) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: LinearProgressIndicator(
+                      value: state.progress,
+                      minHeight: 8.h,
+                      backgroundColor: const Color(0xFFE0E6CC),
+                      color: AppColor.primary,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
+                    style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
+                  ),
+                ] else ...[
+                  if (hasFailed) ...[
+                    Text(
+                      appText.quranAudioDownloadFailed,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.red.shade400,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: FilledButton(
+                      onPressed: () => _start(context),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26.r),
+                        ),
+                      ),
+                      child: Text(
+                        hasFailed
+                            ? appText.tryAgain
+                            : appText.quranAudioModalDownloadCta,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      appText.offlineQuranNotNow,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: const Color(0xFF7A8368),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

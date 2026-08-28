@@ -271,6 +271,11 @@ class AppText {
     required this.offlineQuranDownloadIntro,
     required this.quranDownloadSurahAudio,
     required this.quranAudioDownloaded,
+    required this.quranReadButton,
+    required this.quranAudioModalTitle,
+    required this.quranAudioModalBody,
+    required this.quranAudioModalDownloadCta,
+    required this.quranAudioDownloadFailed,
     required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
@@ -626,6 +631,11 @@ class AppText {
   final String offlineQuranDownloadIntro;
   final String quranDownloadSurahAudio;
   final String quranAudioDownloaded;
+  final String quranReadButton;
+  final String quranAudioModalTitle;
+  final String quranAudioModalBody;
+  final String quranAudioModalDownloadCta;
+  final String quranAudioDownloadFailed;
   final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
@@ -1603,6 +1613,31 @@ class AppText {
         'quranAudioDownloaded',
         fallback?.quranAudioDownloaded ?? '',
       ),
+      quranReadButton: _read(
+        map,
+        'quranReadButton',
+        fallback?.quranReadButton ?? '',
+      ),
+      quranAudioModalTitle: _read(
+        map,
+        'quranAudioModalTitle',
+        fallback?.quranAudioModalTitle ?? '',
+      ),
+      quranAudioModalBody: _read(
+        map,
+        'quranAudioModalBody',
+        fallback?.quranAudioModalBody ?? '',
+      ),
+      quranAudioModalDownloadCta: _read(
+        map,
+        'quranAudioModalDownloadCta',
+        fallback?.quranAudioModalDownloadCta ?? '',
+      ),
+      quranAudioDownloadFailed: _read(
+        map,
+        'quranAudioDownloadFailed',
+        fallback?.quranAudioDownloadFailed ?? '',
+      ),
       quranTranslationLabel: _read(
         map,
         'quranTranslationLabel',
@@ -1740,11 +1775,7 @@ class AppText {
         'hifjoQuranTitle',
         fallback?.hifjoQuranTitle ?? '',
       ),
-      lastReadLabel: _read(
-        map,
-        'lastReadLabel',
-        fallback?.lastReadLabel ?? '',
-      ),
+      lastReadLabel: _read(map, 'lastReadLabel', fallback?.lastReadLabel ?? ''),
       viewReadingHistory: _read(
         map,
         'viewReadingHistory',
