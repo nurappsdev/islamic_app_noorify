@@ -1,5 +1,9 @@
 class TafsirState {
-  const TafsirState({this.isLoading = true, this.text = '', this.hasError = false});
+  const TafsirState({
+    this.isLoading = true,
+    this.text = '',
+    this.hasError = false,
+  });
 
   final bool isLoading;
   final String text;
