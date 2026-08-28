@@ -30,8 +30,11 @@ class SurahAudioDownloadBloc
       surahNo: event.surahNo,
       totalAyah: event.totalAyah,
     );
-    final complete =
-        progress.total > 0 && progress.done >= progress.total;
+    final complete = await _downloader.isSurahComplete(
+      reciterId: event.reciterId,
+      surahNo: event.surahNo,
+      totalAyah: event.totalAyah,
+    );
     emit(
       SurahAudioDownloadState(
         status: complete
