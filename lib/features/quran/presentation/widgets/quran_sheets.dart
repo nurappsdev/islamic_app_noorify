@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
@@ -545,6 +546,125 @@ class _EditionRow extends StatelessWidget {
             SizedBox(width: 8.w),
             trailing,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Lets the listener choose how many times a tapped ayah repeats before
+/// playback stops. Pass the ancestor [AyahAudioBloc] explicitly.
+void showAyahRepeatSheet(BuildContext context, {required AyahAudioBloc bloc}) {
+  showModalBottomSheet(
+    context: context,
+    builder: (_) =>
+        BlocProvider.value(value: bloc, child: const _AyahRepeatSheet()),
+  );
+}
+
+class _AyahRepeatSheet extends StatelessWidget {
+  const _AyahRepeatSheet();
+
+  static const _min = 1;
+  static const _max = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 22.h),
+        child: BlocBuilder<AyahAudioBloc, AyahAudioState>(
+          buildWhen: (p, c) => p.repeatCount != c.repeatCount,
+          builder: (context, state) {
+            final count = state.repeatCount;
+            void set(int value) => context.read<AyahAudioBloc>().add(
+              SetAyahRepeatCount(value.clamp(_min, _max)),
+            );
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appText.quranAyahRepeatTitle,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.primary,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  appText.quranAyahRepeatHint,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    height: 1.4,
+                    color: const Color(0xFF5A6350),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _StepButton(
+                      icon: Icons.remove_rounded,
+                      enabled: count > _min,
+                      onTap: () => set(count - 1),
+                    ),
+                    SizedBox(width: 24.w),
+                    Text(
+                      count <= 1 ? appText.repeatOff : '$count×',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF3A4032),
+                      ),
+                    ),
+                    SizedBox(width: 24.w),
+                    _StepButton(
+                      icon: Icons.add_rounded,
+                      enabled: count < _max,
+                      onTap: () => set(count + 1),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        width: 40.w,
+        height: 40.w,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: enabled ? const Color(0xFFE7EECB) : const Color(0xFFEDEEE6),
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Icon(
+          icon,
+          size: 20.sp,
+          color: enabled ? AppColor.primary : const Color(0xFFB4BBA6),
         ),
       ),
     );
