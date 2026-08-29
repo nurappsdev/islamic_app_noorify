@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
@@ -29,12 +30,27 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   DailyPrayerTimes? _times;
   Timer? _boundaryTimer;
   Timer? _edgeTimeTimer;
+  Timer? _clockTimer;
   bool _showSunriseAndSunset = false;
 
   PrayerClockTime get _fajr =>
       _times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0);
 
   DateTime _now() => widget.now?.call() ?? bangladeshNow();
+
+  double get _dayProgress {
+    final times = _times;
+    return times == null ? 0 : dayProgress(_now(), times);
+  }
+
+  String _formattedDate(AppText appText) {
+    final now = _now();
+    return '${now.day} ${appText.monthNames[now.month - 1]} ${now.year}';
+  }
+
+  String _formattedTime() => formatPrayerTime(
+    PrayerClockTime(hour: _now().hour, minute: _now().minute),
+  );
 
   @override
   void initState() {
@@ -44,6 +60,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
     _edgeTimeTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
       setState(() => _showSunriseAndSunset = !_showSunriseAndSunset);
+    });
+    // Keeps the live clock and sun-progress indicator in sync with the
+    // device's system clock.
+    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() {});
     });
   }
 
@@ -90,6 +112,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   void dispose() {
     _boundaryTimer?.cancel();
     _edgeTimeTimer?.cancel();
+    _clockTimer?.cancel();
     super.dispose();
   }
 
@@ -164,7 +187,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  appText.hijriDatePlaceholder,
+                                  _times?.hijriDate ??
+                                      appText.hijriDatePlaceholder,
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: Colors.black,
@@ -192,24 +216,15 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         ),
                       ),
 
-                      // Prayer Arc
+                      // Prayer Arc + Sun (position/progress track the actual
+                      // time of day between sunrise and sunset).
                       Positioned(
                         top: 72.h,
                         left: 33.w,
                         right: 33.w,
                         child: SizedBox(
                           height: 142.h,
-                          child: const CustomPaint(painter: PrayerArcPainter()),
-                        ),
-                      ),
-
-                      // Sun
-                      Positioned(
-                        top: 84.h,
-                        right: 48.w,
-                        child: SizedBox.square(
-                          dimension: 43.r,
-                          child: const CustomPaint(painter: PrayerSunPainter()),
+                          child: PrayerDayProgress(progress: _dayProgress),
                         ),
                       ),
 
@@ -221,7 +236,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         child: Column(
                           children: [
                             Text(
-                              appText.gregorianDatePlaceholder,
+                              _formattedDate(appText),
                               style: homeSansStyle(
                                 fontSize: 15.sp,
                                 color: const Color(0xFF5B856F),
@@ -229,7 +244,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             ),
 
                             Text(
-                              '01:37 PM',
+                              _formattedTime(),
                               style: homeSansStyle(
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.w700,
@@ -253,7 +268,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         top: 171.h,
                         left: 0,
                         right: 0,
-                        child: Center(child: _CurrentPrayerBadge()),
+                        child: Center(
+                          child: _CurrentPrayerBadge(
+                            times: _times,
+                            now: _now(),
+                          ),
+                        ),
                       ),
 
                       // Sunrise Sunset
@@ -267,10 +287,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             Expanded(
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunrise}, ${appText.trishal}',
-                                time: appText.sunriseTimePlaceholder,
+                                time: _times != null
+                                    ? formatPrayerTime(_times!.sunrise)
+                                    : appText.sunriseTimePlaceholder,
                                 isSunrise: true,
                                 secondaryLabel: appText.sehri,
-                                secondaryTime: '4:09 AM',
+                                secondaryTime: _times != null
+                                    ? formatPrayerTime(_times!.fajr)
+                                    : appText.sunriseTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),
                             ),
@@ -280,10 +304,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             Expanded(
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunset}, ${appText.trishal}',
-                                time: appText.sunsetTimePlaceholder,
+                                time: _times != null
+                                    ? formatPrayerTime(_times!.sunset)
+                                    : appText.sunsetTimePlaceholder,
                                 isSunrise: false,
                                 secondaryLabel: appText.iftar,
-                                secondaryTime: '6:33 PM',
+                                secondaryTime: _times != null
+                                    ? formatPrayerTime(_times!.maghrib)
+                                    : appText.sunsetTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),
                             ),
