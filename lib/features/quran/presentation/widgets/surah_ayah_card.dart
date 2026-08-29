@@ -260,16 +260,24 @@ class SurahAyahCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12.h),
-            Text(
-              arabic,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              style: TextStyle(fontSize: 19.sp * arabicScale, height: 1.8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                arabic,
+                textAlign: TextAlign.right,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 19.sp * arabicScale,
+                  height: 1.8,
+                ),
+              ),
             ),
             if (showTranslation && translation.isNotEmpty) ...[
               SizedBox(height: 8.h),
               Text(
                 translation,
+                textAlign: TextAlign.left,
+                textDirection: TextDirection.ltr,
                 style: TextStyle(
                   fontSize: 13.sp * translationScale,
                   height: 1.4,
