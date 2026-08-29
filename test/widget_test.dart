@@ -231,18 +231,24 @@ void main() {
       Color(0xFFF3EBC7),
       Color(0xFFFFDFA2),
     ]);
-    expect(find.text('24 July 2026'), findsOneWidget);
-    expect(find.text('01:37 PM'), findsOneWidget);
-    expect(find.text('Dhuhr Prayer Time'), findsOneWidget);
+    // Current date/time come from the injected clock (device clock in the
+    // real app); prayer-related values come from the fake prayer-time API
+    // response (_testPrayerTimes).
+    expect(find.text('20 August 2026'), findsOneWidget);
+    expect(find.text('12:00 PM'), findsOneWidget);
+    // At exactly noon (before 12:08 PM dhuhr) the active period is the
+    // Ishraq gap between sunrise and dhuhr.
+    expect(find.text('Ishraq'), findsOneWidget);
+    expect(find.text('5:40 AM – 12:08 PM'), findsOneWidget);
     expect(find.text('Sehri'), findsOneWidget);
-    expect(find.text('4:09 AM'), findsOneWidget);
+    expect(find.text('4:30 AM'), findsOneWidget);
     expect(find.text('Iftar'), findsOneWidget);
-    expect(find.text('6:33 PM'), findsOneWidget);
+    expect(find.text('6:35 PM'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
     expect(find.text('Sunrise, Trishal'), findsOneWidget);
-    expect(find.text('at 5:23 AM'), findsOneWidget);
+    expect(find.text('5:40 AM'), findsOneWidget);
     expect(find.text('Sunset, Trishal'), findsOneWidget);
-    expect(find.text('at 6:54 PM'), findsOneWidget);
+    expect(find.text('6:35 PM'), findsOneWidget);
     expect(find.byIcon(Icons.wb_sunny), findsNothing);
     expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
     expect(
