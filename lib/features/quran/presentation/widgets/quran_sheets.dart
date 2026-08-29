@@ -34,59 +34,63 @@ class ReciterPickerSheet extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appText.selectReciterTitle,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10.h),
-            BlocBuilder<ReciterBloc, ReciterState>(
-              builder: (context, state) {
-                if (state.isLoading && state.reciters.isEmpty) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.h),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColor.primary),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                appText.selectReciterTitle,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 10.h),
+              BlocBuilder<ReciterBloc, ReciterState>(
+                builder: (context, state) {
+                  if (state.isLoading && state.reciters.isEmpty) {
+                    return Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColor.primary,
+                        ),
+                      ),
+                    );
+                  }
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 360.h),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: state.reciters.length,
+                      separatorBuilder: (_, _) =>
+                          Divider(height: 1, color: const Color(0xFFE3ECC5)),
+                      itemBuilder: (context, index) {
+                        final reciter = state.reciters[index];
+                        final selected = reciter.id == state.selectedId;
+                        return ListTile(
+                          title: Text(
+                            reciter.name,
+                            style: TextStyle(fontSize: 14.sp),
+                          ),
+                          trailing: selected
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: AppColor.primary,
+                                )
+                              : null,
+                          onTap: () {
+                            context.read<ReciterBloc>().add(
+                              SelectReciter(reciter.id),
+                            );
+                            Navigator.of(context).pop();
+                          },
+                        );
+                      },
                     ),
                   );
-                }
-                return ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 360.h),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: state.reciters.length,
-                    separatorBuilder: (_, _) =>
-                        Divider(height: 1, color: const Color(0xFFE3ECC5)),
-                    itemBuilder: (context, index) {
-                      final reciter = state.reciters[index];
-                      final selected = reciter.id == state.selectedId;
-                      return ListTile(
-                        title: Text(
-                          reciter.name,
-                          style: TextStyle(fontSize: 14.sp),
-                        ),
-                        trailing: selected
-                            ? const Icon(
-                                Icons.check_circle,
-                                color: AppColor.primary,
-                              )
-                            : null,
-                        onTap: () {
-                          context.read<ReciterBloc>().add(
-                            SelectReciter(reciter.id),
-                          );
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
