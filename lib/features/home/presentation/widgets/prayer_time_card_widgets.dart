@@ -1,9 +1,26 @@
 part of 'prayer_time_card.dart';
 
 class _CurrentPrayerBadge extends StatelessWidget {
+  const _CurrentPrayerBadge({required this.times, required this.now});
+
+  final DailyPrayerTimes? times;
+  final DateTime now;
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final times = this.times;
+    final period = times == null ? null : currentPrayerPeriod(now, times);
+    final label = times == null
+        ? '—'
+        : (period?.displayName(appText) ?? appText.naflIshraq);
+    final rangeText = times == null
+        ? '—'
+        : period != null
+        ? '${formatPrayerTime(prayerStart(period, times))} – '
+              '${formatPrayerTime(prayerEnd(period, times))}'
+        : '${formatPrayerTime(times.sunrise)} – '
+              '${formatPrayerTime(times.dhuhr)}';
     return Container(
       width: 190.w,
       height: 66.h,
@@ -36,7 +53,7 @@ class _CurrentPrayerBadge extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    appText.dhuhrPrayerTime,
+                    label,
                     style: homeSansStyle(fontSize: 14.sp, color: Colors.black),
                   ),
                 ),
@@ -44,7 +61,7 @@ class _CurrentPrayerBadge extends StatelessWidget {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    '12:44 PM – 3:45 PM',
+                    rangeText,
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.black),
                   ),
                 ),
