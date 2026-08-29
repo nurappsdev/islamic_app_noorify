@@ -192,15 +192,9 @@ class _PrayerSummaryHeader extends StatelessWidget {
           right: 33.w,
           child: SizedBox(
             height: 142.h,
-            child: const CustomPaint(painter: PrayerArcPainter()),
-          ),
-        ),
-        Positioned(
-          top: 102.h,
-          right: 48.w,
-          child: SizedBox.square(
-            dimension: 43.r,
-            child: const CustomPaint(painter: PrayerSunPainter()),
+            child: PrayerDayProgress(
+              progress: times == null ? 0 : dayProgress(now, times!),
+            ),
           ),
         ),
         Positioned(
