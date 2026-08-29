@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -275,22 +276,85 @@ class _PlaybackAudioGateState extends State<_PlaybackAudioGate> {
   }
 }
 
-class _ContinuousAyahText extends StatelessWidget {
+class _AyahRange {
+  const _AyahRange(this.start, this.end);
+
+  final int start;
+  final int end;
+}
+
+class _ContinuousAyahText extends StatefulWidget {
   const _ContinuousAyahText({required this.arabicAyahs});
 
   final List<String> arabicAyahs;
 
+  @override
+  State<_ContinuousAyahText> createState() => _ContinuousAyahTextState();
+}
+
+class _ContinuousAyahTextState extends State<_ContinuousAyahText> {
   static const _readColor = Color(0xFFB9C79A);
+  static final Color _highlightColor = AppColor.primary.withValues(alpha: .16);
+
+  final GlobalKey _textKey = GlobalKey();
+
+  String _segmentFor(int i) => '${widget.arabicAyahs[i]} ﴿${i + 1}﴾  ';
+
+  List<_AyahRange> _buildRanges() {
+    final ranges = <_AyahRange>[];
+    var offset = 0;
+    for (var i = 0; i < widget.arabicAyahs.length; i++) {
+      final length = _segmentFor(i).length;
+      ranges.add(_AyahRange(offset, offset + length));
+      offset += length;
+    }
+    return ranges;
+  }
+
+  void _scrollToAyah(int ayahNo) {
+    if (ayahNo < 1 || ayahNo > widget.arabicAyahs.length) return;
+    final renderObject = _textKey.currentContext?.findRenderObject();
+    if (renderObject is! RenderParagraph) return;
+    final range = _buildRanges()[ayahNo - 1];
+    final boxes = renderObject.getBoxesForSelection(
+      TextSelection(baseOffset: range.start, extentOffset: range.end),
+    );
+    if (boxes.isEmpty) return;
+    final scrollableState = Scrollable.maybeOf(context);
+    final viewportBox = scrollableState?.context.findRenderObject();
+    if (scrollableState == null || viewportBox is! RenderBox) return;
+    final position = scrollableState.position;
+    final topLeft = renderObject.localToGlobal(
+      Offset(0, boxes.first.toRect().top),
+    );
+    final localOffset = viewportBox.globalToLocal(topLeft);
+    final target = (position.pixels + localOffset.dy - 140.h).clamp(
+      0.0,
+      position.maxScrollExtent,
+    );
+    position.animateTo(
+      target,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final multiplier = context.select<QuranTranslationBloc, double>(
       (bloc) => bloc.state.arabicFontScale,
     );
-    return BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
+    return BlocConsumer<SurahPlaybackBloc, SurahPlaybackState>(
+      listenWhen: (p, c) => p.currentAyahNo != c.currentAyahNo,
+      listener: (context, state) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _scrollToAyah(state.currentAyahNo);
+        });
+      },
       builder: (context, playState) {
         final currentAyahNo = playState.currentAyahNo;
         return RichText(
+          key: _textKey,
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.right,
           text: TextSpan(
@@ -300,12 +364,17 @@ class _ContinuousAyahText extends StatelessWidget {
               height: 2.0,
             ),
             children: [
-              for (var i = 0; i < arabicAyahs.length; i++)
+              for (var i = 0; i < widget.arabicAyahs.length; i++)
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: '${arabicAyahs[i]} ',
-                      style: i + 1 < currentAyahNo
+                      text: '${widget.arabicAyahs[i]} ',
+                      style: i + 1 == currentAyahNo
+                          ? TextStyle(
+                              backgroundColor: _highlightColor,
+                              fontWeight: FontWeight.w600,
+                            )
+                          : i + 1 < currentAyahNo
                           ? const TextStyle(color: _readColor)
                           : null,
                     ),
@@ -316,6 +385,9 @@ class _ContinuousAyahText extends StatelessWidget {
                             ? _readColor
                             : AppColor.primary,
                         fontSize: 14.sp * multiplier,
+                        backgroundColor: i + 1 == currentAyahNo
+                            ? _highlightColor
+                            : null,
                       ),
                     ),
                   ],
