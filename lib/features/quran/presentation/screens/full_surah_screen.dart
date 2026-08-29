@@ -361,6 +361,8 @@ class _CurrentAyahDetails extends StatelessWidget {
             if (showTranslation && translation.isNotEmpty)
               Text(
                 translation,
+                textAlign: TextAlign.left,
+                textDirection: TextDirection.ltr,
                 style: TextStyle(
                   fontSize: 13.sp * multiplier,
                   height: 1.4,
