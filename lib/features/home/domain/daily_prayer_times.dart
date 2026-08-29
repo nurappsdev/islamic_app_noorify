@@ -74,3 +74,14 @@ String formatPrayerTime(PrayerClockTime time) {
   final period = time.hour < 12 ? 'AM' : 'PM';
   return '$hour:$minute $period';
 }
+
+/// Fraction (0..1) of daylight elapsed between [DailyPrayerTimes.sunrise] and
+/// [DailyPrayerTimes.sunset] at [now] — 0 at/before sunrise, 1 at/after
+/// sunset.
+double dayProgress(DateTime now, DailyPrayerTimes times) {
+  final sunrise = times.sunrise.totalMinutes;
+  final sunset = times.sunset.totalMinutes;
+  if (sunset <= sunrise) return 0;
+  final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
+  return ((nowMinutes - sunrise) / (sunset - sunrise)).clamp(0.0, 1.0);
+}
