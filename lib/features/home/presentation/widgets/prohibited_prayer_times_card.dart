@@ -18,7 +18,7 @@ class ProhibitedPrayerTimesCard extends StatelessWidget {
         children: [
           Text(
             appText.prohibitedPrayerTimes,
-            style: homeSansStyle(fontSize: 12.sp),
+            style: homeSansStyle(fontSize: 14.sp),
           ),
           SizedBox(height: 9.h),
           Row(
