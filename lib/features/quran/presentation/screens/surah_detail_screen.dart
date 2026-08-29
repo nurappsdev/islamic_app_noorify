@@ -264,8 +264,8 @@ class _SurahBodyState extends State<_SurahBody> {
               const SurahTranslationSwitch(),
             ],
           ),
-          SizedBox(height: 12.h),
-          const QuranZoomControl(),
+          // SizedBox(height: 12.h),
+          // const QuranZoomControl(),
           SizedBox(height: 16.h),
           for (var i = 0; i < detail.arabicAyahs.length; i++) ...[
             SurahAyahCard(
