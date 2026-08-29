@@ -1,7 +1,10 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'dart:async';
+
+import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
 
 import 'ayah_audio_event.dart';
 import 'ayah_audio_state.dart';
@@ -22,10 +25,13 @@ class _AyahCompleted extends AyahAudioEvent {
 /// ([AyahAudioState.repeatCounts]); a played ayah repeats that many times
 /// before playback stops.
 class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
-  AyahAudioBloc({QuranAudioDownloader? downloader})
+  AyahAudioBloc({QuranAudioDownloader? downloader, QuranAudioHandler? audio})
     : downloader = downloader ?? QuranAudioDownloader(),
+      _audio = audio ?? quranAudioHandler,
       super(const AyahAudioState()) {
-    _player.onPlayerComplete.listen((_) => add(const _AyahCompleted()));
+    _completedSub = _audio.onCompleted.listen(
+      (_) => add(const _AyahCompleted()),
+    );
     on<PlayAyahAudio>(_onPlay);
     on<StopAyahAudio>(_onStop);
     on<SetAyahRepeatCount>(_onSetRepeatCount);
@@ -33,7 +39,8 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
   }
 
   final QuranAudioDownloader downloader;
-  final AudioPlayer _player = AudioPlayer();
+  final QuranAudioHandler _audio;
+  late final StreamSubscription<void> _completedSub;
   int _recitationId = 0;
 
   void _onSetRepeatCount(
@@ -61,7 +68,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     PlayAyahAudio event,
     Emitter<AyahAudioState> emit,
   ) async {
-    await _player.stop();
+    await _audio.stopCurrent();
     if (!event.restart && state.playingVerseKey == event.verseKey) {
       emit(
         state.copyWith(
@@ -99,7 +106,10 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
         emit(state.copyWith(clearNeedsDownload: true));
         return;
       }
-      await _player.play(DeviceFileSource(localPath));
+      await _audio.playFile(
+        localPath,
+        item: MediaItem(id: event.verseKey, title: 'Ayah ${event.verseKey}'),
+      );
       emit(state.copyWith(playingVerseKey: event.verseKey, isBuffering: false));
     } catch (_) {
       emit(state.copyWith(clearPlayingVerseKey: true, isBuffering: false));
@@ -130,7 +140,10 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
           emit(state.copyWith(clearPlayingVerseKey: true, isBuffering: false));
           return;
         }
-        await _player.play(DeviceFileSource(localPath));
+        await _audio.playFile(
+          localPath,
+          item: MediaItem(id: verseKey, title: 'Ayah $verseKey'),
+        );
         emit(state.copyWith(isBuffering: false));
       } catch (_) {
         emit(state.copyWith(clearPlayingVerseKey: true, isBuffering: false));
@@ -138,7 +151,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
       return;
     }
 
-    await _player.stop();
+    await _audio.stopCurrent();
     emit(
       state.copyWith(
         clearPlayingVerseKey: true,
@@ -152,7 +165,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     StopAyahAudio event,
     Emitter<AyahAudioState> emit,
   ) async {
-    await _player.stop();
+    await _audio.stopCurrent();
     emit(
       state.copyWith(
         clearPlayingVerseKey: true,
@@ -164,7 +177,11 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
 
   @override
   Future<void> close() {
-    _player.dispose();
+    _completedSub.cancel();
+    // Only tear down the shared engine if this bloc was the one driving it —
+    // another screen (e.g. continuous surah playback) may have taken it over
+    // since, and shouldn't be cut off by this bloc closing.
+    if (state.playingVerseKey != null) _audio.stop();
     return super.close();
   }
 }
