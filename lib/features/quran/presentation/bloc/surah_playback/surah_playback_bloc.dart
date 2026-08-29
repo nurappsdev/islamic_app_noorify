@@ -1,7 +1,10 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'dart:async';
+
+import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart'
     show defaultRecitationId;
 
@@ -20,10 +23,13 @@ class _AdvanceAyah extends SurahPlaybackEvent {
 /// each file finishes. If the surah's audio is not on the device the bloc
 /// reports [SurahPlaybackState.needsDownload] instead of streaming.
 class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
-  SurahPlaybackBloc({QuranAudioDownloader? downloader})
-    : _downloader = downloader ?? QuranAudioDownloader(),
-      super(const SurahPlaybackState()) {
-    _player.onPlayerComplete.listen((_) => add(const _AdvanceAyah()));
+  SurahPlaybackBloc({
+    QuranAudioDownloader? downloader,
+    QuranAudioHandler? audio,
+  }) : _downloader = downloader ?? QuranAudioDownloader(),
+       _audio = audio ?? quranAudioHandler,
+       super(const SurahPlaybackState()) {
+    _completedSub = _audio.onCompleted.listen((_) => add(const _AdvanceAyah()));
     on<PlaySurah>(_onPlay);
     on<PauseSurah>(_onPause);
     on<SetActiveAyah>(
@@ -47,7 +53,8 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
   static const _surahsWithoutBismillah = {1, 9};
 
   final QuranAudioDownloader _downloader;
-  final AudioPlayer _player = AudioPlayer();
+  final QuranAudioHandler _audio;
+  late final StreamSubscription<void> _completedSub;
   int _surahNo = 0;
   int _totalAyah = 0;
   int _recitationId = defaultRecitationId;
@@ -94,7 +101,7 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     PauseSurah event,
     Emitter<SurahPlaybackState> emit,
   ) async {
-    await _player.pause();
+    await _audio.pause();
     emit(state.copyWith(isPlaying: false));
   }
 
@@ -118,7 +125,6 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
   }
 
   Future<void> _playAyah(int ayahNo, Emitter<SurahPlaybackState> emit) async {
-    await _player.stop();
     emit(
       state.copyWith(
         currentAyahNo: ayahNo,
@@ -144,7 +150,14 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         _pulseNeedsDownload(emit);
         return;
       }
-      await _player.play(DeviceFileSource(localPath));
+      await _audio.playFile(
+        localPath,
+        item: MediaItem(
+          id: '$_surahNo:$ayahNo',
+          title: ayahNo == 0 ? 'Bismillah' : 'Ayah $ayahNo',
+          album: 'Surah $_surahNo',
+        ),
+      );
       emit(state.copyWith(isBuffering: false));
     } catch (_) {
       emit(state.copyWith(isPlaying: false, isBuffering: false));
@@ -153,7 +166,11 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
 
   @override
   Future<void> close() {
-    _player.dispose();
+    _completedSub.cancel();
+    // Only tear down the shared engine if this bloc was the one driving it —
+    // another screen (e.g. a single-ayah preview) may have taken it over
+    // since, and its playback shouldn't be cut off by this bloc closing.
+    if (state.isPlaying) _audio.stop();
     return super.close();
   }
 }
