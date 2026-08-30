@@ -97,6 +97,7 @@ class AppText {
     required this.hadithSwipeNext,
     required this.hadithCopy,
     required this.hadithCopied,
+    required this.hadithShare,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -473,6 +474,7 @@ class AppText {
   final String hadithSwipeNext;
   final String hadithCopy;
   final String hadithCopied;
+  final String hadithShare;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1099,6 +1101,7 @@ class AppText {
       ),
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
+      hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,
