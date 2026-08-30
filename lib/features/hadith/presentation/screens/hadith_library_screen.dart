@@ -1,0 +1,338 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+
+/// Hadith library landing screen.
+///
+/// Reached from the "Let's Get Start" button on [HadithIntroScreen]. Shows a
+/// summary header, the collection library and a shelf of e-books.
+class HadithLibraryScreen extends StatelessWidget {
+  const HadithLibraryScreen({super.key});
+
+  static const _collections = <_HadithCollection>[
+    _HadithCollection(name: 'Sahih  Bukhari', total: 1327),
+    _HadithCollection(name: 'Riadus salehin', total: 761),
+    _HadithCollection(name: 'Sahih Muslim', total: 1172),
+    _HadithCollection(name: 'Abu Dawud', total: 940),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          ListView(
+            padding: EdgeInsets.only(bottom: 92.h),
+            children: [
+              _HadithHeader(appText: appText),
+              SizedBox(height: 22.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _SectionTitle(appText.hadithLibrary),
+              ),
+              SizedBox(height: 14.h),
+              SizedBox(
+                height: 150.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  itemCount: _collections.length,
+                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
+                  itemBuilder: (context, index) => _CollectionCard(
+                    collection: _collections[index],
+                    appText: appText,
+                  ),
+                ),
+              ),
+              SizedBox(height: 26.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _SectionTitle(appText.hadithEbook),
+              ),
+              SizedBox(height: 14.h),
+              SizedBox(
+                height: 168.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  itemCount: 4,
+                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
+                  itemBuilder: (context, index) => const _EbookCard(),
+                ),
+              ),
+            ],
+          ),
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: HomeBottomNav(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HadithCollection {
+  const _HadithCollection({required this.name, required this.total});
+
+  final String name;
+  final int total;
+}
+
+class _HadithHeader extends StatelessWidget {
+  const _HadithHeader({required this.appText});
+
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF8FA45C), Color(0xFF4F7A43)],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26.r)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(18.w, 8.h, 18.w, 22.h),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 40.h,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: () => Navigator.maybePop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFEDE7A6),
+                          foregroundColor: AppColor.authLogo,
+                        ),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      appText.categoryHadith,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Image.asset(
+                'assets/images/bismillah.png',
+                height: 26.h,
+                fit: BoxFit.contain,
+                color: Colors.white,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                appText.hadithTotalHadith,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .9),
+                  fontSize: 14.sp,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                '1,76,337',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 34.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _LastReadPill(appText: appText),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LastReadPill extends StatelessWidget {
+  const _LastReadPill({required this.appText});
+
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white.withValues(alpha: .55)),
+        borderRadius: BorderRadius.circular(30.r),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${appText.hadithLastRead} :  ',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13.sp,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'Riadus -Salehin ( 71 )',
+              style: TextStyle(color: Colors.white, fontSize: 13.sp),
+            ),
+          ),
+          Container(
+            width: 30.r,
+            height: 30.r,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: .7)),
+            ),
+            child: Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.white,
+              size: 18.sp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          AppText.of(context).seeAll,
+          style: TextStyle(color: Colors.black, fontSize: 12.sp),
+        ),
+      ],
+    );
+  }
+}
+
+class _CollectionCard extends StatelessWidget {
+  const _CollectionCard({required this.collection, required this.appText});
+
+  final _HadithCollection collection;
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 210.w,
+      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDDE8AE),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(7.r),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF9BAE6C)),
+                  borderRadius: BorderRadius.circular(9.r),
+                ),
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  size: 18.sp,
+                  color: const Color(0xFF5F6E3E),
+                ),
+              ),
+              const Spacer(),
+              OutlinedButton.icon(
+                onPressed: () {},
+                iconAlignment: IconAlignment.end,
+                icon: Icon(Icons.north_east_rounded, size: 14.sp),
+                label: Text(appText.explore),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF4C5A34),
+                  side: const BorderSide(color: Color(0xFF9BAE6C)),
+                  padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  minimumSize: Size(0, 32.h),
+                  textStyle: TextStyle(fontSize: 12.sp),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(9.r),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            collection.name,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF2C3320),
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            '${appText.hadithTotalHadith} : ${collection.total}',
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: const Color(0xFF5D6B44),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EbookCard extends StatelessWidget {
+  const _EbookCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14.r),
+      child: Container(
+        width: 132.w,
+        color: const Color(0xFFF0F3E4),
+        child: Image.asset(
+          'assets/islamicImg.png',
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+}

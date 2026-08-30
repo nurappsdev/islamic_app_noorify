@@ -6,6 +6,8 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
@@ -211,6 +213,10 @@ class AppRoutes {
         );
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
+      case RouteNames.hadith:
+        return _page(const HadithIntroScreen(), settings);
+      case RouteNames.hadithLibrary:
+        return _page(const HadithLibraryScreen(), settings);
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:
