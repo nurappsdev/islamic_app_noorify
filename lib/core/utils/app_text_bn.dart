@@ -93,6 +93,8 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithBookComingSoon': 'শীঘ্রই আসছে',
   'hadithBookReference': 'তথ্যসূত্র',
   'hadithSwipeNext': 'পরবর্তী হাদিসের জন্য সোয়াইপ করুন',
+  'hadithCopy': 'হাদিস কপি করুন',
+  'hadithCopied': 'হাদিস কপি হয়েছে',
   'categoryQuiz': 'কুইজ',
   'categoryNaflAndMore': 'নফল ও আরও',
   'salahFajr': 'ফজর',
