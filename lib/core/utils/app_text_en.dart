@@ -94,6 +94,8 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithBookComingSoon': 'Coming soon',
   'hadithBookReference': 'Reference',
   'hadithSwipeNext': 'Swipe for the next hadith',
+  'hadithCopy': 'Copy hadith',
+  'hadithCopied': 'Hadith copied',
   'categoryQuiz': 'Quiz',
   'categoryNaflAndMore': 'Nafl & More',
   'salahFajr': 'Fajr',
