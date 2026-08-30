@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Hadith library landing screen.
 ///
@@ -63,17 +68,7 @@ class HadithLibraryScreen extends StatelessWidget {
                 child: _SectionTitle(appText.hadithEbook),
               ),
               SizedBox(height: 14.h),
-              SizedBox(
-                height: 168.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: 4,
-                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
-                  itemBuilder: (context, index) => const _EbookCard(),
-                ),
-              ),
+              const _EbookShelf(),
             ],
           ),
           const SafeArea(
@@ -336,21 +331,171 @@ class _CollectionCard extends StatelessWidget {
   }
 }
 
-class _EbookCard extends StatelessWidget {
-  const _EbookCard();
+/// Horizontal shelf of hadith e-books. Tracks which books are already saved on
+/// the device so a downloaded book shows an "offline" badge and opens straight
+/// into the reader.
+class _EbookShelf extends StatefulWidget {
+  const _EbookShelf();
+
+  @override
+  State<_EbookShelf> createState() => _EbookShelfState();
+}
+
+class _EbookShelfState extends State<_EbookShelf> {
+  Set<String> _downloaded = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final slugs = await HadithDatabase().downloadedSlugs();
+    if (mounted) setState(() => _downloaded = slugs);
+  }
+
+  Future<void> _open(HadithBook book) async {
+    if (!book.isAvailable) {
+      final appText = AppText.forLanguage(
+        context.read<LanguageBloc>().state.language,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(appText.hadithBookComingSoon)),
+      );
+      return;
+    }
+    await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
+    _refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14.r),
-      child: Container(
-        width: 132.w,
-        color: const Color(0xFFF0F3E4),
-        child: Image.asset(
-          'assets/images/book.png',
-          fit: BoxFit.cover,
+    final books = HadithBookCatalog.all;
+    return SizedBox(
+      height: 208.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        itemCount: books.length,
+        separatorBuilder: (_, _) => SizedBox(width: 12.w),
+        itemBuilder: (context, index) => _EbookCard(
+          book: books[index],
+          downloaded: _downloaded.contains(books[index].slug),
+          onTap: () => _open(books[index]),
         ),
       ),
+    );
+  }
+}
+
+class _EbookCard extends StatelessWidget {
+  const _EbookCard({
+    required this.book,
+    required this.downloaded,
+    required this.onTap,
+  });
+
+  final HadithBook book;
+  final bool downloaded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    final title = isBangla ? book.titleBn : book.titleEn;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 128.w,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14.r),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 128.w,
+                    height: 140.h,
+                    color: const Color(0xFFF0F3E4),
+                    child: Opacity(
+                      opacity: book.isAvailable ? 1 : .45,
+                      child: Image.asset(
+                        'assets/images/book.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 6.h,
+                    right: 6.w,
+                    child: _StatusBadge(
+                      book: book,
+                      downloaded: downloaded,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF2C3320),
+                height: 1.3,
+              ),
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              book.isAvailable
+                  ? '${book.hadithCount} ${appText.categoryHadith}'
+                  : appText.hadithBookComingSoon,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: const Color(0xFF9BA85B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.book, required this.downloaded});
+
+  final HadithBook book;
+  final bool downloaded;
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData icon, Color bg) = switch ((book.isAvailable, downloaded)) {
+      (false, _) => (Icons.lock_outline_rounded, const Color(0xFF9AA37E)),
+      (true, true) => (Icons.check_rounded, const Color(0xFF5F8B3E)),
+      (true, false) => (Icons.download_rounded, const Color(0xFF7C8A48)),
+    };
+    return Container(
+      padding: EdgeInsets.all(4.r),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Icon(icon, size: 13.sp, color: Colors.white),
     );
   }
 }
