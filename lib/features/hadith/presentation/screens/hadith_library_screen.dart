@@ -22,12 +22,13 @@ class HadithLibraryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
           ListView(
-            padding: EdgeInsets.only(bottom: 92.h),
+            padding: EdgeInsets.only(bottom: 92.h + bottomInset),
             children: [
               _HadithHeader(appText: appText),
               SizedBox(height: 22.h),
@@ -69,9 +70,12 @@ class HadithLibraryScreen extends StatelessWidget {
               ),
             ],
           ),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: HomeBottomNav(),
+          const SafeArea(
+            top: false,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: HomeBottomNav(),
+            ),
           ),
         ],
       ),
