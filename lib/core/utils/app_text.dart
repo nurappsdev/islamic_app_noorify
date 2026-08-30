@@ -86,6 +86,8 @@ class AppText {
     required this.hadithLastRead,
     required this.hadithLibrary,
     required this.hadithEbook,
+    required this.hadithLibraryTitle,
+    required this.hadithCategory,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -451,6 +453,8 @@ class AppText {
   final String hadithLastRead;
   final String hadithLibrary;
   final String hadithEbook;
+  final String hadithLibraryTitle;
+  final String hadithCategory;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1030,6 +1034,16 @@ class AppText {
         fallback?.hadithLibrary ?? '',
       ),
       hadithEbook: _read(map, 'hadithEbook', fallback?.hadithEbook ?? ''),
+      hadithLibraryTitle: _read(
+        map,
+        'hadithLibraryTitle',
+        fallback?.hadithLibraryTitle ?? '',
+      ),
+      hadithCategory: _read(
+        map,
+        'hadithCategory',
+        fallback?.hadithCategory ?? '',
+      ),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,

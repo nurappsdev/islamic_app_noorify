@@ -83,6 +83,8 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithLastRead': 'সর্বশেষ পঠিত',
   'hadithLibrary': 'হাদিস লাইব্রেরি',
   'hadithEbook': 'ই-বুক',
+  'hadithLibraryTitle': 'হাদিস লাইব্রেরি',
+  'hadithCategory': 'হাদিস ক্যাটাগরি',
   'categoryQuiz': 'কুইজ',
   'categoryNaflAndMore': 'নফল ও আরও',
   'salahFajr': 'ফজর',

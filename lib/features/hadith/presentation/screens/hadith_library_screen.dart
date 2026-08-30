@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
@@ -34,7 +35,12 @@ class HadithLibraryScreen extends StatelessWidget {
               SizedBox(height: 22.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(appText.hadithLibrary),
+                child: _SectionTitle(
+                  appText.hadithLibrary,
+                  onSeeAll: () => Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.hadithLibraryList),
+                ),
               ),
               SizedBox(height: 14.h),
               SizedBox(
@@ -226,9 +232,10 @@ class _LastReadPill extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
+  const _SectionTitle(this.title, {this.onSeeAll});
 
   final String title;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
@@ -239,9 +246,13 @@ class _SectionTitle extends StatelessWidget {
           title,
           style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
         ),
-        Text(
-          AppText.of(context).seeAll,
-          style: TextStyle(color: Colors.black, fontSize: 12.sp),
+        GestureDetector(
+          onTap: onSeeAll,
+          behavior: HitTestBehavior.opaque,
+          child: Text(
+            AppText.of(context).seeAll,
+            style: TextStyle(color: Colors.black, fontSize: 12.sp),
+          ),
         ),
       ],
     );
@@ -282,7 +293,10 @@ class _CollectionCard extends StatelessWidget {
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () => Navigator.of(context).pushNamed(
+                  RouteNames.hadithCategory,
+                  arguments: collection.name,
+                ),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 14.sp),
                 label: Text(appText.explore),
