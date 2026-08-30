@@ -88,6 +88,12 @@ class AppText {
     required this.hadithEbook,
     required this.hadithLibraryTitle,
     required this.hadithCategory,
+    required this.hadithBookDownloadTitle,
+    required this.hadithBookDownloadBody,
+    required this.hadithBookDownloadAction,
+    required this.hadithBookDownloading,
+    required this.hadithBookComingSoon,
+    required this.hadithBookReference,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -455,6 +461,12 @@ class AppText {
   final String hadithEbook;
   final String hadithLibraryTitle;
   final String hadithCategory;
+  final String hadithBookDownloadTitle;
+  final String hadithBookDownloadBody;
+  final String hadithBookDownloadAction;
+  final String hadithBookDownloading;
+  final String hadithBookComingSoon;
+  final String hadithBookReference;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1043,6 +1055,36 @@ class AppText {
         map,
         'hadithCategory',
         fallback?.hadithCategory ?? '',
+      ),
+      hadithBookDownloadTitle: _read(
+        map,
+        'hadithBookDownloadTitle',
+        fallback?.hadithBookDownloadTitle ?? '',
+      ),
+      hadithBookDownloadBody: _read(
+        map,
+        'hadithBookDownloadBody',
+        fallback?.hadithBookDownloadBody ?? '',
+      ),
+      hadithBookDownloadAction: _read(
+        map,
+        'hadithBookDownloadAction',
+        fallback?.hadithBookDownloadAction ?? '',
+      ),
+      hadithBookDownloading: _read(
+        map,
+        'hadithBookDownloading',
+        fallback?.hadithBookDownloading ?? '',
+      ),
+      hadithBookComingSoon: _read(
+        map,
+        'hadithBookComingSoon',
+        fallback?.hadithBookComingSoon ?? '',
+      ),
+      hadithBookReference: _read(
+        map,
+        'hadithBookReference',
+        fallback?.hadithBookReference ?? '',
       ),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
