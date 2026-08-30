@@ -6,6 +6,9 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/hadith/data/hadith_book_catalog.dart';
+import '../../features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
+import '../../features/hadith/presentation/screens/hadith_book_reader_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
@@ -226,6 +229,20 @@ class AppRoutes {
             ? settings.arguments as String
             : null;
         return _page(HadithCategoryScreen(collectionName: title), settings);
+      case RouteNames.hadithBookReader:
+        final slug = settings.arguments is String
+            ? settings.arguments as String
+            : HadithBookCatalog.nawawi40.slug;
+        final book =
+            HadithBookCatalog.bySlug(slug) ?? HadithBookCatalog.nawawi40;
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                HadithBookBloc(book: book)..add(const CheckHadithBook()),
+            child: HadithBookReaderScreen(book: book),
+          ),
+          settings,
+        );
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:
