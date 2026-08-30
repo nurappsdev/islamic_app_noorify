@@ -79,6 +79,13 @@ class AppText {
     required this.categoryQuran,
     required this.categoryNaflSalat,
     required this.categoryHadith,
+    required this.hadithIntroTitle,
+    required this.hadithIntroSubtitle,
+    required this.hadithIntroStartButton,
+    required this.hadithTotalHadith,
+    required this.hadithLastRead,
+    required this.hadithLibrary,
+    required this.hadithEbook,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -437,6 +444,13 @@ class AppText {
   final String categoryQuran;
   final String categoryNaflSalat;
   final String categoryHadith;
+  final String hadithIntroTitle;
+  final String hadithIntroSubtitle;
+  final String hadithIntroStartButton;
+  final String hadithTotalHadith;
+  final String hadithLastRead;
+  final String hadithLibrary;
+  final String hadithEbook;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -985,6 +999,37 @@ class AppText {
         'categoryHadith',
         fallback?.categoryHadith ?? '',
       ),
+      hadithIntroTitle: _read(
+        map,
+        'hadithIntroTitle',
+        fallback?.hadithIntroTitle ?? '',
+      ),
+      hadithIntroSubtitle: _read(
+        map,
+        'hadithIntroSubtitle',
+        fallback?.hadithIntroSubtitle ?? '',
+      ),
+      hadithIntroStartButton: _read(
+        map,
+        'hadithIntroStartButton',
+        fallback?.hadithIntroStartButton ?? '',
+      ),
+      hadithTotalHadith: _read(
+        map,
+        'hadithTotalHadith',
+        fallback?.hadithTotalHadith ?? '',
+      ),
+      hadithLastRead: _read(
+        map,
+        'hadithLastRead',
+        fallback?.hadithLastRead ?? '',
+      ),
+      hadithLibrary: _read(
+        map,
+        'hadithLibrary',
+        fallback?.hadithLibrary ?? '',
+      ),
+      hadithEbook: _read(map, 'hadithEbook', fallback?.hadithEbook ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,

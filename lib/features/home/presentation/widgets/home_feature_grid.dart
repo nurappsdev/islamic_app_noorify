@@ -18,6 +18,7 @@ class HomeFeatureGrid extends StatelessWidget {
       appText.categoryHadith,
       Icons.local_library,
       const Color(0xFF20B20F),
+      routeName: RouteNames.hadith,
     ),
     _HomeFeature(
       appText.featureDua,
