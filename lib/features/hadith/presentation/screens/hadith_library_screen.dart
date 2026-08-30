@@ -347,7 +347,7 @@ class _EbookCard extends StatelessWidget {
         width: 132.w,
         color: const Color(0xFFF0F3E4),
         child: Image.asset(
-          'assets/islamicImg.png',
+          'assets/images/book.png',
           fit: BoxFit.cover,
         ),
       ),
