@@ -6,7 +6,9 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
@@ -217,6 +219,13 @@ class AppRoutes {
         return _page(const HadithIntroScreen(), settings);
       case RouteNames.hadithLibrary:
         return _page(const HadithLibraryScreen(), settings);
+      case RouteNames.hadithLibraryList:
+        return _page(const HadithLibraryListScreen(), settings);
+      case RouteNames.hadithCategory:
+        final title = settings.arguments is String
+            ? settings.arguments as String
+            : null;
+        return _page(HadithCategoryScreen(collectionName: title), settings);
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:
