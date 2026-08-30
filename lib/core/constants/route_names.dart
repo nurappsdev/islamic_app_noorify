@@ -37,6 +37,7 @@ class RouteNames {
   static const elmNoor = '/elm-noor';
   static const asma = '/asma';
   static const hadith = '/hadith';
+  static const hadithLibrary = '/hadith/library';
   static const dua = '/dua';
   static const tasbih = '/tasbih';
   static const zakatCalculator = '/zakat-calculator';
