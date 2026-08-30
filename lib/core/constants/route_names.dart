@@ -38,6 +38,8 @@ class RouteNames {
   static const asma = '/asma';
   static const hadith = '/hadith';
   static const hadithLibrary = '/hadith/library';
+  static const hadithLibraryList = '/hadith/library/all';
+  static const hadithCategory = '/hadith/category';
   static const dua = '/dua';
   static const tasbih = '/tasbih';
   static const zakatCalculator = '/zakat-calculator';

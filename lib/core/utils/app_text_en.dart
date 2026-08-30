@@ -84,6 +84,8 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithLastRead': 'Last read',
   'hadithLibrary': 'Hadith library',
   'hadithEbook': 'E-book',
+  'hadithLibraryTitle': 'Hadith Library',
+  'hadithCategory': 'Hadith Category',
   'categoryQuiz': 'Quiz',
   'categoryNaflAndMore': 'Nafl & More',
   'salahFajr': 'Fajr',
