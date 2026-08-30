@@ -92,6 +92,7 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithBookDownloading': 'বই ডাউনলোড হচ্ছে',
   'hadithBookComingSoon': 'শীঘ্রই আসছে',
   'hadithBookReference': 'তথ্যসূত্র',
+  'hadithSwipeNext': 'পরবর্তী হাদিসের জন্য সোয়াইপ করুন',
   'categoryQuiz': 'কুইজ',
   'categoryNaflAndMore': 'নফল ও আরও',
   'salahFajr': 'ফজর',

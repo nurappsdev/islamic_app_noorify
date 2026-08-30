@@ -94,6 +94,7 @@ class AppText {
     required this.hadithBookDownloading,
     required this.hadithBookComingSoon,
     required this.hadithBookReference,
+    required this.hadithSwipeNext,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -467,6 +468,7 @@ class AppText {
   final String hadithBookDownloading;
   final String hadithBookComingSoon;
   final String hadithBookReference;
+  final String hadithSwipeNext;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1085,6 +1087,11 @@ class AppText {
         map,
         'hadithBookReference',
         fallback?.hadithBookReference ?? '',
+      ),
+      hadithSwipeNext: _read(
+        map,
+        'hadithSwipeNext',
+        fallback?.hadithSwipeNext ?? '',
       ),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
