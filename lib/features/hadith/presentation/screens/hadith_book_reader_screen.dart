@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -572,6 +573,9 @@ class _HadithCard extends StatelessWidget {
     return buffer.toString().trim();
   }
 
+  String get _shareSubject =>
+      entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr;
+
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: _plainText));
     if (!context.mounted) return;
@@ -579,6 +583,70 @@ class _HadithCard extends StatelessWidget {
       SnackBar(
         content: Text(appText.hadithCopied),
         duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
+  Future<void> _share(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: _plainText,
+        subject: _shareSubject,
+        sharePositionOrigin: box != null && box.hasSize
+            ? box.localToGlobal(Offset.zero) & box.size
+            : null,
+      ),
+    );
+  }
+
+  /// Bottom sheet with "Copy" and "Share to another app" for this hadith.
+  void _showActions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 10.h),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCE3C4),
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            SizedBox(height: 6.h),
+            ListTile(
+              leading: const Icon(
+                Icons.copy_rounded,
+                color: Color(0xFF4C5A34),
+              ),
+              title: Text(appText.hadithCopy),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _copy(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.ios_share_rounded,
+                color: Color(0xFF4C5A34),
+              ),
+              title: Text(appText.hadithShare),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _share(context);
+              },
+            ),
+            SizedBox(height: 8.h),
+          ],
+        ),
       ),
     );
   }
@@ -630,9 +698,11 @@ class _HadithCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 8.w),
-              _CopyButton(
-                tooltip: appText.hadithCopy,
-                onTap: () => _copy(context),
+              Builder(
+                builder: (buttonContext) => _CopyButton(
+                  tooltip: appText.hadithCopy,
+                  onTap: () => _showActions(buttonContext),
+                ),
               ),
             ],
           ),
