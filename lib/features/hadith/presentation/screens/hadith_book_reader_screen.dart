@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -542,6 +543,46 @@ class _HadithCard extends StatelessWidget {
   final AppText appText;
   final bool isLast;
 
+  /// The whole hadith (title, Arabic, narrator, translation, reference) as
+  /// plain text for the clipboard.
+  String get _plainText {
+    final buffer = StringBuffer();
+    final title = entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr;
+    if (title.isNotEmpty) buffer.writeln('${entry.hadithNo}. $title');
+    if (entry.arabicText.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(entry.arabicText);
+    }
+    if (entry.banglaNarrator.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(entry.banglaNarrator);
+    }
+    if (entry.banglaText.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(entry.banglaText);
+    }
+    if (entry.referencesText.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('${appText.hadithBookReference}: ${entry.referencesText}');
+    }
+    return buffer.toString().trim();
+  }
+
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: _plainText));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(appText.hadithCopied),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -555,6 +596,7 @@ class _HadithCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 30.r,
@@ -575,71 +617,89 @@ class _HadithCard extends StatelessWidget {
               ),
               SizedBox(width: 10.w),
               Expanded(
-                child: Text(
-                  entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr,
-                  style: TextStyle(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3320),
+                child: Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr,
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF2C3320),
+                    ),
                   ),
                 ),
               ),
+              SizedBox(width: 8.w),
+              _CopyButton(
+                tooltip: appText.hadithCopy,
+                onTap: () => _copy(context),
+              ),
             ],
           ),
-          if (entry.arabicText.isNotEmpty) ...[
-            SizedBox(height: 14.h),
-            Text(
-              entry.arabicText,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize: 17.sp,
-                height: 1.9,
-                color: const Color(0xFF283016),
-              ),
+          SelectionArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (entry.arabicText.isNotEmpty) ...[
+                  SizedBox(height: 14.h),
+                  Text(
+                    entry.arabicText,
+                    textAlign: TextAlign.right,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      height: 1.9,
+                      color: const Color(0xFF283016),
+                    ),
+                  ),
+                ],
+                if (entry.banglaNarrator.isNotEmpty) ...[
+                  SizedBox(height: 14.h),
+                  Text(
+                    entry.banglaNarrator,
+                    style: TextStyle(
+                      fontSize: 12.5.sp,
+                      height: 1.6,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF4C5A34),
+                    ),
+                  ),
+                ],
+                if (entry.banglaText.isNotEmpty) ...[
+                  SizedBox(height: 8.h),
+                  Text(
+                    entry.banglaText,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      height: 1.75,
+                      color: const Color(0xFF3B4430),
+                    ),
+                  ),
+                ],
+                if (entry.referencesText.isNotEmpty) ...[
+                  SizedBox(height: 12.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECF0DC),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text(
+                      '${appText.hadithBookReference}: ${entry.referencesText}',
+                      style: TextStyle(
+                        fontSize: 11.5.sp,
+                        height: 1.5,
+                        color: const Color(0xFF5D6B44),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-          if (entry.banglaNarrator.isNotEmpty) ...[
-            SizedBox(height: 14.h),
-            Text(
-              entry.banglaNarrator,
-              style: TextStyle(
-                fontSize: 12.5.sp,
-                height: 1.6,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF4C5A34),
-              ),
-            ),
-          ],
-          if (entry.banglaText.isNotEmpty) ...[
-            SizedBox(height: 8.h),
-            Text(
-              entry.banglaText,
-              style: TextStyle(
-                fontSize: 13.sp,
-                height: 1.75,
-                color: const Color(0xFF3B4430),
-              ),
-            ),
-          ],
-          if (entry.referencesText.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECF0DC),
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Text(
-                '${appText.hadithBookReference}: ${entry.referencesText}',
-                style: TextStyle(
-                  fontSize: 11.5.sp,
-                  height: 1.5,
-                  color: const Color(0xFF5D6B44),
-                ),
-              ),
-            ),
-          ],
+          ),
           if (!isLast) ...[
             SizedBox(height: 18.h),
             Row(
@@ -663,6 +723,37 @@ class _HadithCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _CopyButton extends StatelessWidget {
+  const _CopyButton({required this.tooltip, required this.onTap});
+
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9.r),
+        child: Container(
+          padding: EdgeInsets.all(6.r),
+          decoration: BoxDecoration(
+            color: const Color(0xFFECF0DC),
+            borderRadius: BorderRadius.circular(9.r),
+            border: Border.all(color: const Color(0xFFDCE3C4)),
+          ),
+          child: Icon(
+            Icons.copy_rounded,
+            size: 15.sp,
+            color: const Color(0xFF4C5A34),
+          ),
+        ),
       ),
     );
   }
