@@ -43,7 +43,7 @@ class HadithLibraryScreen extends StatelessWidget {
               ),
               SizedBox(height: 14.h),
               SizedBox(
-                height: 150.h,
+                height: 170.h,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
@@ -252,7 +252,7 @@ class _CollectionCard extends StatelessWidget {
     final isBangla =
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     return Container(
-      width: 210.w,
+      width: 218.w,
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
       decoration: BoxDecoration(
         color: const Color(0xFFDDE8AE),
@@ -260,6 +260,7 @@ class _CollectionCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -294,16 +295,19 @@ class _CollectionCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 12.h),
           Text(
             isBangla ? book.titleBn : book.titleEn,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
+              height: 1.2,
               color: const Color(0xFF2C3320),
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 6.h),
           Text(
             '${appText.hadithTotalHadith} : ${book.hadithCount}',
             style: TextStyle(

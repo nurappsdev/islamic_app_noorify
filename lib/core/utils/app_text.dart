@@ -109,6 +109,8 @@ class AppText {
     required this.hadithRefYear,
     required this.savedHadithTitle,
     required this.saved,
+    required this.noSavedHadithMessage,
+    required this.noResultsFound,
     required this.hadithNoLabel,
     required this.totalSavedLabel,
     required this.newFolder,
@@ -509,6 +511,8 @@ class AppText {
   final String hadithRefYear;
   final String savedHadithTitle;
   final String saved;
+  final String noSavedHadithMessage;
+  final String noResultsFound;
   final String hadithNoLabel;
   final String totalSavedLabel;
   final String newFolder;
@@ -1175,6 +1179,16 @@ class AppText {
         fallback?.savedHadithTitle ?? '',
       ),
       saved: _read(map, 'saved', fallback?.saved ?? ''),
+      noSavedHadithMessage: _read(
+        map,
+        'noSavedHadithMessage',
+        fallback?.noSavedHadithMessage ?? '',
+      ),
+      noResultsFound: _read(
+        map,
+        'noResultsFound',
+        fallback?.noResultsFound ?? '',
+      ),
       hadithNoLabel: _read(
         map,
         'hadithNoLabel',
