@@ -254,21 +254,21 @@ class _Header extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 14.w),
-              child: IconButton(
-                onPressed: onBack,
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: const Color(0xFF303629),
-                  minimumSize: Size(38.r, 38.r),
-                ),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
-              ),
-            ),
-          ),
+          // Align(
+          //   alignment: Alignment.centerLeft,
+          //   child: Padding(
+          //     padding: EdgeInsets.only(left: 14.w),
+          //     child: IconButton(
+          //       onPressed: onBack,
+          //       style: IconButton.styleFrom(
+          //         backgroundColor: const Color(0xFFCBD16B),
+          //         foregroundColor: const Color(0xFF303629),
+          //         minimumSize: Size(38.r, 38.r),
+          //       ),
+          //       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
+          //     ),
+          //   ),
+          // ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 64.w),
             child: Text(
