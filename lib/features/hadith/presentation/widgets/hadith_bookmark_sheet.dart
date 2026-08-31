@@ -97,14 +97,22 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
         ? _folders
         : _folders.where((f) => f.toLowerCase().contains(_query)).toList();
 
+    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
+
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: viewInsets),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFDCE6BE),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
-        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 18.h),
+        padding: EdgeInsets.fromLTRB(
+          20.w,
+          12.h,
+          20.w,
+          18.h + (viewInsets > 0 ? 0 : safeBottom),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
