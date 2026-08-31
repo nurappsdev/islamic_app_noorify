@@ -14,6 +14,7 @@ class HadithBookCatalog {
     authorEn: 'Imam an-Nawawi',
     hadithCount: 42,
     assetXmlPath: 'assets/hadith/hadiths.xml',
+    assetReferenceXmlPath: 'assets/hadith/fourty_hadith_ref.xml',
   );
 
   static const all = <HadithBook>[
