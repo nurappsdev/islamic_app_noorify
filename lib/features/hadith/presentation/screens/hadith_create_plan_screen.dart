@@ -254,22 +254,24 @@ class _CreatePlanHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 62.h,
+      height: 44.h,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(
-            left: 19.w,
-            top: 6.h,
-            child: IconButton(
-              onPressed: onBack,
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFCBD16B),
-                foregroundColor: const Color(0xFF303629),
-                minimumSize: Size(38.r, 38.r),
-                padding: EdgeInsets.zero,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 14.w),
+              child: IconButton(
+                onPressed: onBack,
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFCBD16B),
+                  foregroundColor: const Color(0xFF303629),
+                  minimumSize: Size(38.r, 38.r),
+                  padding: EdgeInsets.zero,
+                ),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
               ),
-              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
             ),
           ),
           Text(
