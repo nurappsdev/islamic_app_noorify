@@ -108,6 +108,8 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithRefYear': 'Year',
   'savedHadithTitle': 'Saved Hadith',
   'saved': 'Saved',
+  'noSavedHadithMessage': 'You haven’t saved any\nhadith yet !',
+  'noResultsFound': 'No results found',
   'hadithNoLabel': 'Hadith No',
   'totalSavedLabel': 'Total Saved',
   'newFolder': 'New folder',

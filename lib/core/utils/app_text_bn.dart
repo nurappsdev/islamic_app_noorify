@@ -107,6 +107,8 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithRefYear': 'সাল',
   'savedHadithTitle': 'সংরক্ষিত হাদিস',
   'saved': 'সংরক্ষিত',
+  'noSavedHadithMessage': 'আপনি এখনও কোনো\nহাদিস সংরক্ষণ করেননি!',
+  'noResultsFound': 'কোনো ফলাফল পাওয়া যায়নি',
   'hadithNoLabel': 'হাদিস নং',
   'totalSavedLabel': 'মোট সংরক্ষিত',
   'newFolder': 'নতুন ফোল্ডার',

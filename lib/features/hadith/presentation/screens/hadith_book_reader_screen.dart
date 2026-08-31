@@ -810,7 +810,7 @@ class _HadithCard extends StatelessWidget {
               _BookmarkButton(
                 key: ValueKey('hadith-bookmark-$bookSlug-${entry.hadithNo}'),
                 bookSlug: bookSlug,
-                hadithNo: entry.hadithNo,
+                entry: entry,
                 appText: appText,
               ),
               SizedBox(width: 6.w),
@@ -918,12 +918,12 @@ class _BookmarkButton extends StatefulWidget {
   const _BookmarkButton({
     super.key,
     required this.bookSlug,
-    required this.hadithNo,
+    required this.entry,
     required this.appText,
   });
 
   final String bookSlug;
-  final int hadithNo;
+  final HadithEntry entry;
   final AppText appText;
 
   @override
@@ -941,12 +941,23 @@ class _BookmarkButtonState extends State<_BookmarkButton> {
   }
 
   Future<void> _load() async {
-    final value = await _store.isBookmarked(widget.bookSlug, widget.hadithNo);
+    final value = await _store.isBookmarked(
+      widget.bookSlug,
+      widget.entry.hadithNo,
+    );
     if (mounted) setState(() => _bookmarked = value);
   }
 
   Future<void> _toggle() async {
-    final nowOn = await _store.toggle(widget.bookSlug, widget.hadithNo);
+    final nowOn = await _store.toggle(
+      HadithBookmark(
+        bookSlug: widget.bookSlug,
+        hadithNo: widget.entry.hadithNo,
+        titleAr: widget.entry.titleAr,
+        titleBn: widget.entry.titleBn,
+        savedAt: DateTime.now(),
+      ),
+    );
     if (!mounted) return;
     setState(() => _bookmarked = nowOn);
     ScaffoldMessenger.of(context).showSnackBar(
