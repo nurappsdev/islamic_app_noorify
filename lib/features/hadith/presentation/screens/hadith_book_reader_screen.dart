@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
@@ -118,6 +119,7 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
                       controller: _pageController,
                       entries: state.entries,
                       appText: appText,
+                      bookSlug: widget.book.slug,
                       onPageChanged: (i) =>
                           setState(() => _currentPage = i),
                     ),
@@ -212,12 +214,14 @@ class _HadithPager extends StatelessWidget {
     required this.controller,
     required this.entries,
     required this.appText,
+    required this.bookSlug,
     required this.onPageChanged,
   });
 
   final PageController controller;
   final List<HadithEntry> entries;
   final AppText appText;
+  final String bookSlug;
   final ValueChanged<int> onPageChanged;
 
   @override
@@ -231,6 +235,7 @@ class _HadithPager extends StatelessWidget {
         child: _HadithCard(
           entry: entries[index],
           appText: appText,
+          bookSlug: bookSlug,
           isLast: index == entries.length - 1,
         ),
       ),
@@ -639,11 +644,13 @@ class _HadithCard extends StatelessWidget {
   const _HadithCard({
     required this.entry,
     required this.appText,
+    required this.bookSlug,
     this.isLast = false,
   });
 
   final HadithEntry entry;
   final AppText appText;
+  final String bookSlug;
   final bool isLast;
 
   /// The whole hadith (title, Arabic, narrator, translation, reference) as
@@ -800,6 +807,13 @@ class _HadithCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 8.w),
+              _BookmarkButton(
+                key: ValueKey('hadith-bookmark-$bookSlug-${entry.hadithNo}'),
+                bookSlug: bookSlug,
+                hadithNo: entry.hadithNo,
+                appText: appText,
+              ),
+              SizedBox(width: 6.w),
               Builder(
                 builder: (buttonContext) => _CopyButton(
                   tooltip: appText.hadithCopy,
@@ -895,6 +909,82 @@ class _HadithCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _BookmarkButton extends StatefulWidget {
+  const _BookmarkButton({
+    super.key,
+    required this.bookSlug,
+    required this.hadithNo,
+    required this.appText,
+  });
+
+  final String bookSlug;
+  final int hadithNo;
+  final AppText appText;
+
+  @override
+  State<_BookmarkButton> createState() => _BookmarkButtonState();
+}
+
+class _BookmarkButtonState extends State<_BookmarkButton> {
+  final _store = HadithBookmarkStore();
+  bool _bookmarked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final value = await _store.isBookmarked(widget.bookSlug, widget.hadithNo);
+    if (mounted) setState(() => _bookmarked = value);
+  }
+
+  Future<void> _toggle() async {
+    final nowOn = await _store.toggle(widget.bookSlug, widget.hadithNo);
+    if (!mounted) return;
+    setState(() => _bookmarked = nowOn);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nowOn
+              ? widget.appText.hadithBookmarkAdded
+              : widget.appText.hadithBookmarkRemoved,
+        ),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.appText.hadithBookmark,
+      child: InkWell(
+        onTap: _toggle,
+        borderRadius: BorderRadius.circular(9.r),
+        child: Container(
+          padding: EdgeInsets.all(6.r),
+          decoration: BoxDecoration(
+            color: _bookmarked
+                ? const Color(0xFF8B9A4B)
+                : const Color(0xFFECF0DC),
+            borderRadius: BorderRadius.circular(9.r),
+            border: Border.all(color: const Color(0xFFDCE3C4)),
+          ),
+          child: Icon(
+            _bookmarked
+                ? Icons.bookmark_rounded
+                : Icons.bookmark_border_rounded,
+            size: 15.sp,
+            color: _bookmarked ? Colors.white : const Color(0xFF4C5A34),
+          ),
+        ),
       ),
     );
   }
