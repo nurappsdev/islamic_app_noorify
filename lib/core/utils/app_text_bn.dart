@@ -312,6 +312,8 @@ const Map<String, String> appTextBn = <String, String>{
   'selectCategory': 'বিভাগ নির্বাচন করুন',
   'egSahihBukhariHint': 'যেমন : সহিহ বুখারি',
   'egHadithCategoryHint': 'যেমন : উত্তম চরিত্র',
+  'hadithCategorySample': 'উত্তম চরিত্র',
+  'hadithCountSample': 'হাদিস ৭',
 
   // Quiz feature
   'categories': 'বিভাগসমূহ',

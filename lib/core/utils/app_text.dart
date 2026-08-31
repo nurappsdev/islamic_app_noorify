@@ -284,6 +284,8 @@ class AppText {
     required this.selectCategory,
     required this.egSahihBukhariHint,
     required this.egHadithCategoryHint,
+    required this.hadithCategorySample,
+    required this.hadithCountSample,
     required this.categories,
     required this.quizzesCountLabel,
     required this.seerahAndHistory,
@@ -686,6 +688,8 @@ class AppText {
   final String selectCategory;
   final String egSahihBukhariHint;
   final String egHadithCategoryHint;
+  final String hadithCategorySample;
+  final String hadithCountSample;
 
   // Quiz feature
   final String categories;
@@ -1733,6 +1737,16 @@ class AppText {
         map,
         'egHadithCategoryHint',
         fallback?.egHadithCategoryHint ?? '',
+      ),
+      hadithCategorySample: _read(
+        map,
+        'hadithCategorySample',
+        fallback?.hadithCategorySample ?? '',
+      ),
+      hadithCountSample: _read(
+        map,
+        'hadithCountSample',
+        fallback?.hadithCountSample ?? '',
       ),
       categories: _read(map, 'categories', fallback?.categories ?? ''),
       quizzesCountLabel: _read(
