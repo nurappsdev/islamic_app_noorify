@@ -120,6 +120,10 @@ class AppText {
     required this.savedTabHadith,
     required this.savedTabFolder,
     required this.noFoldersMessage,
+    required this.totalReadingHadith,
+    required this.totalReadingTime,
+    required this.ebookLabel,
+    required this.noReadingHistory,
     required this.hadithNoLabel,
     required this.totalSavedLabel,
     required this.newFolder,
@@ -531,6 +535,10 @@ class AppText {
   final String savedTabHadith;
   final String savedTabFolder;
   final String noFoldersMessage;
+  final String totalReadingHadith;
+  final String totalReadingTime;
+  final String ebookLabel;
+  final String noReadingHistory;
   final String hadithNoLabel;
   final String totalSavedLabel;
   final String newFolder;
@@ -1247,6 +1255,22 @@ class AppText {
         map,
         'noFoldersMessage',
         fallback?.noFoldersMessage ?? '',
+      ),
+      totalReadingHadith: _read(
+        map,
+        'totalReadingHadith',
+        fallback?.totalReadingHadith ?? '',
+      ),
+      totalReadingTime: _read(
+        map,
+        'totalReadingTime',
+        fallback?.totalReadingTime ?? '',
+      ),
+      ebookLabel: _read(map, 'ebookLabel', fallback?.ebookLabel ?? ''),
+      noReadingHistory: _read(
+        map,
+        'noReadingHistory',
+        fallback?.noReadingHistory ?? '',
       ),
       hadithNoLabel: _read(
         map,

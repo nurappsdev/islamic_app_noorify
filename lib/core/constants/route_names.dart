@@ -43,6 +43,8 @@ class RouteNames {
   static const hadithPlanner = '/hadith/planner';
   static const hadithCreatePlan = '/hadith/planner/create';
   static const hadithSaved = '/hadith/saved';
+  static const hadithDashboard = '/hadith/dashboard';
+  static const hadithReadingHistory = '/hadith/reading-history';
   static const hadithBookReader = '/hadith/book';
   static const dua = '/dua';
   static const tasbih = '/tasbih';
