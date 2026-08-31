@@ -294,6 +294,8 @@ const Map<String, String> appTextBn = <String, String>{
   'myPlan': 'আমার পরিকল্পনা',
   'completePlan': 'সম্পূর্ণ পরিকল্পনা',
   'noCompletedPlansMessage': 'আপনি এখনও কোনো\nপরিকল্পনা সম্পূর্ণ করতে পারেননি!',
+  'noPlansYetMessage': 'আপনি এখনও কোনো\nপরিকল্পনা তৈরি করেননি!',
+  'planStatusComplete': 'সম্পূর্ণ',
   'getStart': 'শুরু করুন',
   'createPlanHeader': 'পরিকল্পনা তৈরি করুন',
   'planNameLabel': 'পরিকল্পনার নাম',

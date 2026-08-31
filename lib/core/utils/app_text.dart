@@ -266,6 +266,8 @@ class AppText {
     required this.myPlan,
     required this.completePlan,
     required this.noCompletedPlansMessage,
+    required this.noPlansYetMessage,
+    required this.planStatusComplete,
     required this.getStart,
     required this.createPlanHeader,
     required this.planNameLabel,
@@ -661,6 +663,8 @@ class AppText {
   final String myPlan;
   final String completePlan;
   final String noCompletedPlansMessage;
+  final String noPlansYetMessage;
+  final String planStatusComplete;
   final String getStart;
   final String createPlanHeader;
   final String planNameLabel;
@@ -1661,6 +1665,16 @@ class AppText {
         map,
         'noCompletedPlansMessage',
         fallback?.noCompletedPlansMessage ?? '',
+      ),
+      noPlansYetMessage: _read(
+        map,
+        'noPlansYetMessage',
+        fallback?.noPlansYetMessage ?? '',
+      ),
+      planStatusComplete: _read(
+        map,
+        'planStatusComplete',
+        fallback?.planStatusComplete ?? '',
       ),
       getStart: _read(map, 'getStart', fallback?.getStart ?? ''),
       createPlanHeader: _read(
