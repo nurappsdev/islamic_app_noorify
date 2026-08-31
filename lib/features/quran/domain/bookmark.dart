@@ -27,8 +27,8 @@ class Bookmark {
       ayahNo: (json['ayahNo'] as num).toInt(),
       surahName: json['surahName'] as String? ?? '',
       snippet: json['snippet'] as String? ?? '',
-      savedAt: DateTime.tryParse(json['savedAt'] as String? ?? '') ??
-          DateTime.now(),
+      savedAt:
+          DateTime.tryParse(json['savedAt'] as String? ?? '') ?? DateTime.now(),
     );
   }
 }

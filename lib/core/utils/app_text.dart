@@ -79,6 +79,31 @@ class AppText {
     required this.categoryQuran,
     required this.categoryNaflSalat,
     required this.categoryHadith,
+    required this.hadithIntroTitle,
+    required this.hadithIntroSubtitle,
+    required this.hadithIntroStartButton,
+    required this.hadithTotalHadith,
+    required this.hadithLastRead,
+    required this.hadithLibrary,
+    required this.hadithEbook,
+    required this.hadithLibraryTitle,
+    required this.hadithCategory,
+    required this.hadithBookDownloadTitle,
+    required this.hadithBookDownloadBody,
+    required this.hadithBookDownloadAction,
+    required this.hadithBookDownloading,
+    required this.hadithBookComingSoon,
+    required this.hadithBookReference,
+    required this.hadithSwipeNext,
+    required this.hadithCopy,
+    required this.hadithCopied,
+    required this.hadithShare,
+    required this.hadithBookRef,
+    required this.hadithRefAuthor,
+    required this.hadithRefTranslator,
+    required this.hadithRefEditors,
+    required this.hadithRefPublisher,
+    required this.hadithRefYear,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -258,6 +283,36 @@ class AppText {
     required this.islamicManners,
     required this.completeTodaysChallenge,
     required this.letsGetStart,
+    required this.quranOnlineButton,
+    required this.quranOfflineButton,
+    required this.offlineQuranTitle,
+    required this.offlineQuranSetupPrompt,
+    required this.offlineQuranPreparing,
+    required this.offlineQuranSetupAction,
+    required this.offlineQuranNotNow,
+    required this.offlineQuranSetupFailed,
+    required this.offlineQuranDownloadAction,
+    required this.offlineQuranResume,
+    required this.offlineQuranDownloadIntro,
+    required this.quranDownloadSurahAudio,
+    required this.quranAudioDownloaded,
+    required this.quranReadButton,
+    required this.quranAudioModalTitle,
+    required this.quranAudioModalBody,
+    required this.quranAudioModalDownloadCta,
+    required this.quranAudioDownloadFailed,
+    required this.quranReaderSettingsTitle,
+    required this.quranArabicLabel,
+    required this.quranArabicSizeLabel,
+    required this.quranTranslationSizeLabel,
+    required this.quranDownloadEditionCta,
+    required this.quranEditionDownloading,
+    required this.quranShowTranslationLabel,
+    required this.quranAyahRepeatLabel,
+    required this.quranAyahRepeatTitle,
+    required this.quranAyahRepeatHint,
+    required this.repeatOff,
+    required this.quranTranslationLabel,
     required this.highScore,
     required this.quizQuestionProgressLabel,
     required this.fiftyFiftyChance,
@@ -329,6 +384,7 @@ class AppText {
     required this.viewQuranTafsir,
     required this.selectReciterTitle,
     required this.tafsirTitle,
+    required this.repeatLabel,
   });
 
   final String noorify;
@@ -406,6 +462,31 @@ class AppText {
   final String categoryQuran;
   final String categoryNaflSalat;
   final String categoryHadith;
+  final String hadithIntroTitle;
+  final String hadithIntroSubtitle;
+  final String hadithIntroStartButton;
+  final String hadithTotalHadith;
+  final String hadithLastRead;
+  final String hadithLibrary;
+  final String hadithEbook;
+  final String hadithLibraryTitle;
+  final String hadithCategory;
+  final String hadithBookDownloadTitle;
+  final String hadithBookDownloadBody;
+  final String hadithBookDownloadAction;
+  final String hadithBookDownloading;
+  final String hadithBookComingSoon;
+  final String hadithBookReference;
+  final String hadithSwipeNext;
+  final String hadithCopy;
+  final String hadithCopied;
+  final String hadithShare;
+  final String hadithBookRef;
+  final String hadithRefAuthor;
+  final String hadithRefTranslator;
+  final String hadithRefEditors;
+  final String hadithRefPublisher;
+  final String hadithRefYear;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -599,6 +680,36 @@ class AppText {
   final String islamicManners;
   final String completeTodaysChallenge;
   final String letsGetStart;
+  final String quranOnlineButton;
+  final String quranOfflineButton;
+  final String offlineQuranTitle;
+  final String offlineQuranSetupPrompt;
+  final String offlineQuranPreparing;
+  final String offlineQuranSetupAction;
+  final String offlineQuranNotNow;
+  final String offlineQuranSetupFailed;
+  final String offlineQuranDownloadAction;
+  final String offlineQuranResume;
+  final String offlineQuranDownloadIntro;
+  final String quranDownloadSurahAudio;
+  final String quranAudioDownloaded;
+  final String quranReadButton;
+  final String quranAudioModalTitle;
+  final String quranAudioModalBody;
+  final String quranAudioModalDownloadCta;
+  final String quranAudioDownloadFailed;
+  final String quranReaderSettingsTitle;
+  final String quranArabicLabel;
+  final String quranArabicSizeLabel;
+  final String quranTranslationSizeLabel;
+  final String quranDownloadEditionCta;
+  final String quranEditionDownloading;
+  final String quranShowTranslationLabel;
+  final String quranAyahRepeatLabel;
+  final String quranAyahRepeatTitle;
+  final String quranAyahRepeatHint;
+  final String repeatOff;
+  final String quranTranslationLabel;
   final String highScore;
   final String quizQuestionProgressLabel;
   final String fiftyFiftyChance;
@@ -678,6 +789,7 @@ class AppText {
   final String viewQuranTafsir;
   final String selectReciterTitle;
   final String tafsirTitle;
+  final String repeatLabel;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -923,6 +1035,91 @@ class AppText {
         'categoryHadith',
         fallback?.categoryHadith ?? '',
       ),
+      hadithIntroTitle: _read(
+        map,
+        'hadithIntroTitle',
+        fallback?.hadithIntroTitle ?? '',
+      ),
+      hadithIntroSubtitle: _read(
+        map,
+        'hadithIntroSubtitle',
+        fallback?.hadithIntroSubtitle ?? '',
+      ),
+      hadithIntroStartButton: _read(
+        map,
+        'hadithIntroStartButton',
+        fallback?.hadithIntroStartButton ?? '',
+      ),
+      hadithTotalHadith: _read(
+        map,
+        'hadithTotalHadith',
+        fallback?.hadithTotalHadith ?? '',
+      ),
+      hadithLastRead: _read(
+        map,
+        'hadithLastRead',
+        fallback?.hadithLastRead ?? '',
+      ),
+      hadithLibrary: _read(
+        map,
+        'hadithLibrary',
+        fallback?.hadithLibrary ?? '',
+      ),
+      hadithEbook: _read(map, 'hadithEbook', fallback?.hadithEbook ?? ''),
+      hadithLibraryTitle: _read(
+        map,
+        'hadithLibraryTitle',
+        fallback?.hadithLibraryTitle ?? '',
+      ),
+      hadithCategory: _read(
+        map,
+        'hadithCategory',
+        fallback?.hadithCategory ?? '',
+      ),
+      hadithBookDownloadTitle: _read(
+        map,
+        'hadithBookDownloadTitle',
+        fallback?.hadithBookDownloadTitle ?? '',
+      ),
+      hadithBookDownloadBody: _read(
+        map,
+        'hadithBookDownloadBody',
+        fallback?.hadithBookDownloadBody ?? '',
+      ),
+      hadithBookDownloadAction: _read(
+        map,
+        'hadithBookDownloadAction',
+        fallback?.hadithBookDownloadAction ?? '',
+      ),
+      hadithBookDownloading: _read(
+        map,
+        'hadithBookDownloading',
+        fallback?.hadithBookDownloading ?? '',
+      ),
+      hadithBookComingSoon: _read(
+        map,
+        'hadithBookComingSoon',
+        fallback?.hadithBookComingSoon ?? '',
+      ),
+      hadithBookReference: _read(
+        map,
+        'hadithBookReference',
+        fallback?.hadithBookReference ?? '',
+      ),
+      hadithSwipeNext: _read(
+        map,
+        'hadithSwipeNext',
+        fallback?.hadithSwipeNext ?? '',
+      ),
+      hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
+      hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
+      hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
+      hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
+      hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),
+      hadithRefTranslator: _read(map, 'hadithRefTranslator', fallback?.hadithRefTranslator ?? ''),
+      hadithRefEditors: _read(map, 'hadithRefEditors', fallback?.hadithRefEditors ?? ''),
+      hadithRefPublisher: _read(map, 'hadithRefPublisher', fallback?.hadithRefPublisher ?? ''),
+      hadithRefYear: _read(map, 'hadithRefYear', fallback?.hadithRefYear ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,
@@ -1510,6 +1707,152 @@ class AppText {
         fallback?.completeTodaysChallenge ?? '',
       ),
       letsGetStart: _read(map, 'letsGetStart', fallback?.letsGetStart ?? ''),
+      quranOnlineButton: _read(
+        map,
+        'quranOnlineButton',
+        fallback?.quranOnlineButton ?? '',
+      ),
+      quranOfflineButton: _read(
+        map,
+        'quranOfflineButton',
+        fallback?.quranOfflineButton ?? '',
+      ),
+      offlineQuranTitle: _read(
+        map,
+        'offlineQuranTitle',
+        fallback?.offlineQuranTitle ?? '',
+      ),
+      offlineQuranSetupPrompt: _read(
+        map,
+        'offlineQuranSetupPrompt',
+        fallback?.offlineQuranSetupPrompt ?? '',
+      ),
+      offlineQuranPreparing: _read(
+        map,
+        'offlineQuranPreparing',
+        fallback?.offlineQuranPreparing ?? '',
+      ),
+      offlineQuranSetupAction: _read(
+        map,
+        'offlineQuranSetupAction',
+        fallback?.offlineQuranSetupAction ?? '',
+      ),
+      offlineQuranNotNow: _read(
+        map,
+        'offlineQuranNotNow',
+        fallback?.offlineQuranNotNow ?? '',
+      ),
+      offlineQuranSetupFailed: _read(
+        map,
+        'offlineQuranSetupFailed',
+        fallback?.offlineQuranSetupFailed ?? '',
+      ),
+      offlineQuranDownloadAction: _read(
+        map,
+        'offlineQuranDownloadAction',
+        fallback?.offlineQuranDownloadAction ?? '',
+      ),
+      offlineQuranResume: _read(
+        map,
+        'offlineQuranResume',
+        fallback?.offlineQuranResume ?? '',
+      ),
+      offlineQuranDownloadIntro: _read(
+        map,
+        'offlineQuranDownloadIntro',
+        fallback?.offlineQuranDownloadIntro ?? '',
+      ),
+      quranDownloadSurahAudio: _read(
+        map,
+        'quranDownloadSurahAudio',
+        fallback?.quranDownloadSurahAudio ?? '',
+      ),
+      quranAudioDownloaded: _read(
+        map,
+        'quranAudioDownloaded',
+        fallback?.quranAudioDownloaded ?? '',
+      ),
+      quranReadButton: _read(
+        map,
+        'quranReadButton',
+        fallback?.quranReadButton ?? '',
+      ),
+      quranAudioModalTitle: _read(
+        map,
+        'quranAudioModalTitle',
+        fallback?.quranAudioModalTitle ?? '',
+      ),
+      quranAudioModalBody: _read(
+        map,
+        'quranAudioModalBody',
+        fallback?.quranAudioModalBody ?? '',
+      ),
+      quranAudioModalDownloadCta: _read(
+        map,
+        'quranAudioModalDownloadCta',
+        fallback?.quranAudioModalDownloadCta ?? '',
+      ),
+      quranAudioDownloadFailed: _read(
+        map,
+        'quranAudioDownloadFailed',
+        fallback?.quranAudioDownloadFailed ?? '',
+      ),
+      quranReaderSettingsTitle: _read(
+        map,
+        'quranReaderSettingsTitle',
+        fallback?.quranReaderSettingsTitle ?? '',
+      ),
+      quranArabicLabel: _read(
+        map,
+        'quranArabicLabel',
+        fallback?.quranArabicLabel ?? '',
+      ),
+      quranArabicSizeLabel: _read(
+        map,
+        'quranArabicSizeLabel',
+        fallback?.quranArabicSizeLabel ?? '',
+      ),
+      quranTranslationSizeLabel: _read(
+        map,
+        'quranTranslationSizeLabel',
+        fallback?.quranTranslationSizeLabel ?? '',
+      ),
+      quranDownloadEditionCta: _read(
+        map,
+        'quranDownloadEditionCta',
+        fallback?.quranDownloadEditionCta ?? '',
+      ),
+      quranEditionDownloading: _read(
+        map,
+        'quranEditionDownloading',
+        fallback?.quranEditionDownloading ?? '',
+      ),
+      quranShowTranslationLabel: _read(
+        map,
+        'quranShowTranslationLabel',
+        fallback?.quranShowTranslationLabel ?? '',
+      ),
+      quranAyahRepeatLabel: _read(
+        map,
+        'quranAyahRepeatLabel',
+        fallback?.quranAyahRepeatLabel ?? '',
+      ),
+      quranAyahRepeatTitle: _read(
+        map,
+        'quranAyahRepeatTitle',
+        fallback?.quranAyahRepeatTitle ?? '',
+      ),
+      quranAyahRepeatHint: _read(
+        map,
+        'quranAyahRepeatHint',
+        fallback?.quranAyahRepeatHint ?? '',
+      ),
+      repeatOff: _read(map, 'repeatOff', fallback?.repeatOff ?? ''),
+      quranTranslationLabel: _read(
+        map,
+        'quranTranslationLabel',
+        fallback?.quranTranslationLabel ?? '',
+      ),
       highScore: _read(map, 'highScore', fallback?.highScore ?? ''),
       quizQuestionProgressLabel: _read(
         map,
@@ -1642,11 +1985,7 @@ class AppText {
         'hifjoQuranTitle',
         fallback?.hifjoQuranTitle ?? '',
       ),
-      lastReadLabel: _read(
-        map,
-        'lastReadLabel',
-        fallback?.lastReadLabel ?? '',
-      ),
+      lastReadLabel: _read(map, 'lastReadLabel', fallback?.lastReadLabel ?? ''),
       viewReadingHistory: _read(
         map,
         'viewReadingHistory',
@@ -1705,6 +2044,7 @@ class AppText {
         fallback?.selectReciterTitle ?? '',
       ),
       tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
+      repeatLabel: _read(map, 'repeatLabel', fallback?.repeatLabel ?? ''),
     );
   }
 

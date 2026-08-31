@@ -6,6 +6,8 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class BookmarksScreen extends StatelessWidget {
   const BookmarksScreen({super.key});
@@ -63,11 +65,7 @@ class BookmarksScreen extends StatelessWidget {
                     child: BlocBuilder<BookmarksBloc, BookmarksState>(
                       builder: (context, state) {
                         if (state.isLoading && state.bookmarks.isEmpty) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColor.primary,
-                            ),
-                          );
+                          return const QuranCardListShimmer();
                         }
                         final bookmarks = state.bookmarks;
                         if (bookmarks.isEmpty) {
@@ -94,7 +92,10 @@ class BookmarksScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16.r),
                                 onTap: () => Navigator.of(context).pushNamed(
                                   RouteNames.quranSurahDetail,
-                                  arguments: bookmark.surahNo,
+                                  arguments: SurahRouteArgs(
+                                    surahNo: bookmark.surahNo,
+                                    surahName: bookmark.surahName,
+                                  ),
                                 ),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
@@ -122,13 +123,14 @@ class BookmarksScreen extends StatelessWidget {
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                            if (bookmark.snippet.isNotEmpty) ...[
+                                            if (bookmark
+                                                .snippet
+                                                .isNotEmpty) ...[
                                               SizedBox(height: 4.h),
                                               Text(
                                                 bookmark.snippet,
                                                 maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
                                                   color: Colors.grey,
                                                   fontSize: 12.sp,

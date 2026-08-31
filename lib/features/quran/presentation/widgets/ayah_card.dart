@@ -85,6 +85,8 @@ class AyahCard extends StatelessWidget {
               SizedBox(height: 10.h),
               Text(
                 translation,
+                textAlign: TextAlign.left,
+                textDirection: TextDirection.ltr,
                 style: TextStyle(
                   fontSize: 13.sp,
                   height: 1.4,

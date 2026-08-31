@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +10,7 @@ import 'core/constants/route_names.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/brand_colors.dart';
 import 'core/utils/app_text.dart';
+import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
@@ -16,6 +18,15 @@ final appNavigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppText.load();
+  quranAudioHandler = await AudioService.init(
+    builder: QuranAudioHandler.new,
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.islami_app_noorify.quran.audio',
+      androidNotificationChannelName: 'Quran recitation',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
+    ),
+  );
   runApp(
     MultiBlocProvider(
       providers: [

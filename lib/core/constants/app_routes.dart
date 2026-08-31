@@ -6,6 +6,13 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_screen.dart';
 import '../../features/auth/presentation/screens/signin_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/hadith/data/hadith_book_catalog.dart';
+import '../../features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
+import '../../features/hadith/presentation/screens/hadith_book_reader_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
@@ -31,6 +38,7 @@ import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
+import '../../features/quran/presentation/quran_route_args.dart';
 import '../../features/quran/presentation/screens/quran_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_detail_screen.dart';
@@ -46,6 +54,9 @@ import '../../features/quran/presentation/bloc/reading_history/reading_history_b
 import '../../features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import '../../features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
+import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
+import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
+import '../../features/quran/data/services/quran_audio_downloader.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import 'route_names.dart';
 
@@ -111,43 +122,69 @@ class AppRoutes {
         return _page(const QuranScreen(), settings);
       case RouteNames.quranSurahs:
         return _page(
-          BlocProvider(
-            create: (_) => LastReadBloc()..add(const LoadLastRead()),
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => LastReadBloc()..add(const LoadLastRead()),
+              ),
+              BlocProvider(
+                create: (_) =>
+                    OfflineQuranBloc()..add(const CheckOfflineQuran()),
+              ),
+            ],
             child: const SurahListScreen(),
           ),
           settings,
         );
       case RouteNames.quranSurahDetail:
-        final surahNo = settings.arguments as int? ?? 1;
+        final args = settings.arguments;
+        final surahNo = args is SurahRouteArgs
+            ? args.surahNo
+            : (args as int? ?? 1);
+        final surahName = args is SurahRouteArgs ? args.surahName : '';
+        final detailAudioDownloader = QuranAudioDownloader();
         return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) =>
-                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
               ),
               BlocProvider(
                 create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
-              BlocProvider(create: (_) => AyahAudioBloc()),
+              BlocProvider(
+                create: (_) => AyahAudioBloc(downloader: detailAudioDownloader),
+              ),
+              BlocProvider(
+                create: (_) =>
+                    SurahAudioDownloadBloc(downloader: detailAudioDownloader),
+              ),
             ],
-            child: SurahDetailScreen(surahNo: surahNo),
+            child: SurahDetailScreen(surahNo: surahNo, surahName: surahName),
           ),
           settings,
         );
       case RouteNames.quranFullSurah:
         final surahNo = settings.arguments as int? ?? 1;
+        final fullSurahAudioDownloader = QuranAudioDownloader();
         return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) =>
-                    SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
+                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
               ),
               BlocProvider(
                 create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
-              BlocProvider(create: (_) => SurahPlaybackBloc()),
+              BlocProvider(
+                create: (_) =>
+                    SurahPlaybackBloc(downloader: fullSurahAudioDownloader),
+              ),
+              BlocProvider(
+                create: (_) => SurahAudioDownloadBloc(
+                  downloader: fullSurahAudioDownloader,
+                ),
+              ),
             ],
             child: FullSurahScreen(surahNo: surahNo),
           ),
@@ -181,6 +218,31 @@ class AppRoutes {
         );
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
+      case RouteNames.hadith:
+        return _page(const HadithIntroScreen(), settings);
+      case RouteNames.hadithLibrary:
+        return _page(const HadithLibraryScreen(), settings);
+      case RouteNames.hadithLibraryList:
+        return _page(const HadithLibraryListScreen(), settings);
+      case RouteNames.hadithCategory:
+        final title = settings.arguments is String
+            ? settings.arguments as String
+            : null;
+        return _page(HadithCategoryScreen(collectionName: title), settings);
+      case RouteNames.hadithBookReader:
+        final slug = settings.arguments is String
+            ? settings.arguments as String
+            : HadithBookCatalog.nawawi40.slug;
+        final book =
+            HadithBookCatalog.bySlug(slug) ?? HadithBookCatalog.nawawi40;
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                HadithBookBloc(book: book)..add(const CheckHadithBook()),
+            child: HadithBookReaderScreen(book: book),
+          ),
+          settings,
+        );
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:

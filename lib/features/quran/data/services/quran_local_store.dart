@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:islami_app_noorify/features/quran/domain/bookmark.dart';
 import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class QuranLocalStore {
   QuranLocalStore(this._preferences);
@@ -11,6 +12,12 @@ class QuranLocalStore {
   static const _lastReadKey = 'quran_last_read';
   static const _historyKey = 'quran_reading_history';
   static const _bookmarksKey = 'quran_bookmarks';
+  static const _translationLangKey = 'quran_translation_lang';
+  static const _fontSizeKey = 'quran_font_size_multiplier'; // Arabic text scale
+  static const _translationFontSizeKey = 'quran_translation_font_scale';
+  static const _selectedEditionKey = 'quran_selected_translation_edition';
+  static const _showArabicKey = 'quran_show_arabic';
+  static const _showTranslationKey = 'quran_show_translation';
   static const _maxHistory = 50;
 
   final SharedPreferences _preferences;
@@ -33,9 +40,7 @@ class QuranLocalStore {
     await _preferences.setString(_lastReadKey, jsonEncode(entry.toJson()));
 
     final entries = await history();
-    entries.removeWhere(
-      (e) => e.surahNo == surahNo && e.ayahNo == ayahNo,
-    );
+    entries.removeWhere((e) => e.surahNo == surahNo && e.ayahNo == ayahNo);
     entries.insert(0, entry);
     final capped = entries.take(_maxHistory).toList();
     await _preferences.setString(
@@ -126,5 +131,56 @@ class QuranLocalStore {
       _bookmarksKey,
       jsonEncode(marks.map((b) => b.toJson()).toList()),
     );
+  }
+
+  /// Translation language chosen for the Quran reader, independent of the app
+  /// UI language. Null until the user has picked one.
+  AppLanguage? translationLanguage() {
+    final raw = _preferences.getString(_translationLangKey);
+    for (final lang in AppLanguage.values) {
+      if (lang.name == raw) return lang;
+    }
+    return null;
+  }
+
+  Future<void> setTranslationLanguage(AppLanguage lang) async {
+    await _preferences.setString(_translationLangKey, lang.name);
+  }
+
+  /// Zoom applied to the Arabic ayah text. Defaults to 1.0.
+  double arabicFontScale() => _preferences.getDouble(_fontSizeKey) ?? 1.0;
+
+  Future<void> setArabicFontScale(double value) async {
+    await _preferences.setDouble(_fontSizeKey, value);
+  }
+
+  /// Zoom applied to the translation text. Defaults to 1.0.
+  double translationFontScale() =>
+      _preferences.getDouble(_translationFontSizeKey) ?? 1.0;
+
+  Future<void> setTranslationFontScale(double value) async {
+    await _preferences.setDouble(_translationFontSizeKey, value);
+  }
+
+  /// Whether the Arabic ayah text is shown in the reader. Defaults to true.
+  bool showArabic() => _preferences.getBool(_showArabicKey) ?? true;
+
+  Future<void> setShowArabic(bool value) async {
+    await _preferences.setBool(_showArabicKey, value);
+  }
+
+  /// Whether the translation text is shown in the reader. Defaults to true.
+  bool showTranslation() => _preferences.getBool(_showTranslationKey) ?? true;
+
+  Future<void> setShowTranslation(bool value) async {
+    await _preferences.setBool(_showTranslationKey, value);
+  }
+
+  /// Id of the selected translation edition (see `translation_edition.dart`).
+  String selectedTranslationEditionId() =>
+      _preferences.getString(_selectedEditionKey) ?? 'english';
+
+  Future<void> setSelectedTranslationEditionId(String id) async {
+    await _preferences.setString(_selectedEditionKey, id);
   }
 }

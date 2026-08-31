@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/ayah_card.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class VerseReaderScreen extends StatelessWidget {
   const VerseReaderScreen({super.key, required this.juzNumber});
@@ -65,11 +66,7 @@ class VerseReaderScreen extends StatelessWidget {
                     child: BlocBuilder<VerseReaderBloc, VerseReaderState>(
                       builder: (context, state) {
                         if (state.isLoading && state.verses.isEmpty) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: AppColor.primary,
-                            ),
-                          );
+                          return const VerseReaderShimmer();
                         }
                         if (state.hasError && state.verses.isEmpty) {
                           return Center(
@@ -90,8 +87,7 @@ class VerseReaderScreen extends StatelessWidget {
                           itemCount: verses.length,
                           itemBuilder: (context, index) {
                             final verse = verses[index];
-                            final showHeader =
-                                verse.surahNo != previousSurahNo;
+                            final showHeader = verse.surahNo != previousSurahNo;
                             previousSurahNo = verse.surahNo;
                             final surahName =
                                 state.surahNames[verse.surahNo] ?? '';

@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_api_service.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_offline_first_service.dart';
 
 import 'surah_list_event.dart';
 import 'surah_list_state.dart';
@@ -10,7 +11,7 @@ export 'surah_list_state.dart';
 
 class SurahListBloc extends Bloc<SurahListEvent, SurahListState> {
   SurahListBloc({QuranApiService? apiService})
-    : _apiService = apiService ?? QuranApiPagesService(),
+    : _apiService = apiService ?? QuranOfflineFirstService(),
       super(const SurahListState()) {
     on<LoadSurahs>(_onLoad);
   }

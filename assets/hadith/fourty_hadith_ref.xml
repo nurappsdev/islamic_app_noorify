@@ -1,0 +1,19 @@
+<root>
+    <row>
+        <id>1</id>
+        <title_bn>আন-নওয়াবীর চল্লিশ হাদীস</title_bn>
+        <title_ar>الأربعون النووية</title_ar>
+        <title_en>An-Nawawi&apos;s Forty Hadiths</title_en>
+        <author_bn>ইমাম আবু যাকারিয়া ইয়াহিয়া ইবন শরফ আন-নওয়াবী</author_bn>
+        <author_ar>الإمام أبو زكريا يحيى بن شرف النووي</author_ar>
+        <translator_bn>নিযামুদ্দিন মোল্লা</translator_bn>
+        <translator_ar>نظام الدين ملا</translator_ar>
+        <editors_bn>মোহাম্মদ মতিউল ইসলাম, ড. আবু বকর মুহাম্মাদ যাকারিয়া</editors_bn>
+        <editors_ar>أبو سلمان محمد مطيع الإسلام بن علي أحمد, أبو بكر محمد زكريا</editors_ar>
+        <publisher>IslamHouse.com</publisher>
+        <year_gregorian>2011</year_gregorian>
+        <year_hijri>1432</year_hijri>
+        <total_hadiths>42</total_hadiths>
+        <created_at>2026-08-30 06:19:19</created_at>
+    </row>
+</root>

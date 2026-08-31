@@ -10,14 +10,14 @@ class SurahHeroCard extends StatelessWidget {
     super.key,
     required this.appText,
     required this.detail,
-    required this.actionLabel,
-    required this.onAction,
+    this.actionLabel,
+    this.onAction,
   });
 
   final AppText appText;
   final SurahDetail detail;
-  final String actionLabel;
-  final VoidCallback onAction;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +64,7 @@ class SurahHeroCard extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           ColorFiltered(
-            colorFilter: const ColorFilter.mode(
-              Colors.white,
-              BlendMode.srcIn,
-            ),
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
             child: Image.asset(
               'assets/images/bismillah.png',
               height: 30.h,
@@ -77,29 +74,29 @@ class SurahHeroCard extends StatelessWidget {
           SizedBox(height: 16.h),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onAction,
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: .12),
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.r),
+              if (actionLabel != null && onAction != null) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onAction,
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: .12),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 10.h),
-                  ),
-                  child: Text(
-                    actionLabel,
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                    child: Text(
+                      actionLabel!,
+                      style: TextStyle(color: Colors.white, fontSize: 12.sp),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 10.w),
+                SizedBox(width: 10.w),
+              ] else
+                const Spacer(),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .12),
                   borderRadius: BorderRadius.circular(20.r),
