@@ -56,7 +56,16 @@ class HadithBottomNav extends StatelessWidget {
                       context,
                     ).pushReplacementNamed(RouteNames.hadithPlanner),
             ),
-            const _HadithNavItem(icon: Icons.bookmark_border_rounded),
+            _HadithNavItem(
+              icon: Icons.bookmark_border_rounded,
+              label: appText.saved,
+              selected: selectedIndex == 2,
+              onPressed: selectedIndex == 2
+                  ? null
+                  : () => Navigator.of(
+                      context,
+                    ).pushReplacementNamed(RouteNames.hadithSaved),
+            ),
             const _HadithNavItem(icon: Icons.grid_view_rounded),
           ],
         ),

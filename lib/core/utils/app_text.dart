@@ -104,6 +104,11 @@ class AppText {
     required this.hadithRefEditors,
     required this.hadithRefPublisher,
     required this.hadithRefYear,
+    required this.savedHadithTitle,
+    required this.saved,
+    required this.hadithNoLabel,
+    required this.totalSavedLabel,
+    required this.newFolder,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -496,6 +501,11 @@ class AppText {
   final String hadithRefEditors;
   final String hadithRefPublisher;
   final String hadithRefYear;
+  final String savedHadithTitle;
+  final String saved;
+  final String hadithNoLabel;
+  final String totalSavedLabel;
+  final String newFolder;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1138,6 +1148,23 @@ class AppText {
       hadithRefEditors: _read(map, 'hadithRefEditors', fallback?.hadithRefEditors ?? ''),
       hadithRefPublisher: _read(map, 'hadithRefPublisher', fallback?.hadithRefPublisher ?? ''),
       hadithRefYear: _read(map, 'hadithRefYear', fallback?.hadithRefYear ?? ''),
+      savedHadithTitle: _read(
+        map,
+        'savedHadithTitle',
+        fallback?.savedHadithTitle ?? '',
+      ),
+      saved: _read(map, 'saved', fallback?.saved ?? ''),
+      hadithNoLabel: _read(
+        map,
+        'hadithNoLabel',
+        fallback?.hadithNoLabel ?? '',
+      ),
+      totalSavedLabel: _read(
+        map,
+        'totalSavedLabel',
+        fallback?.totalSavedLabel ?? '',
+      ),
+      newFolder: _read(map, 'newFolder', fallback?.newFolder ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,
