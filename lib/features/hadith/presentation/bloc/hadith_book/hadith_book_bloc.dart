@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_book_downloader.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
 
 import 'hadith_book_event.dart';
 import 'hadith_book_state.dart';
@@ -26,6 +27,11 @@ class HadithBookBloc extends Bloc<HadithBookEvent, HadithBookState> {
   final HadithDatabase _database;
   final HadithBookDownloader _downloader;
 
+  Future<HadithBookReference?> _loadReference() async {
+    final path = book.assetReferenceXmlPath;
+    return path == null ? null : HadithBookReference.load(path);
+  }
+
   Future<void> _onCheck(
     CheckHadithBook event,
     Emitter<HadithBookState> emit,
@@ -36,6 +42,7 @@ class HadithBookBloc extends Bloc<HadithBookEvent, HadithBookState> {
         HadithBookState(
           status: HadithBookStatus.ready,
           entries: await _database.entries(book.slug),
+          reference: await _loadReference(),
         ),
       );
     } else {
@@ -63,6 +70,7 @@ class HadithBookBloc extends Bloc<HadithBookEvent, HadithBookState> {
           HadithBookState(
             status: HadithBookStatus.ready,
             entries: await _database.entries(book.slug),
+            reference: await _loadReference(),
           ),
         );
       } else {
