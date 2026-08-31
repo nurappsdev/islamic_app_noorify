@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart
 import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Hadith library landing screen.
@@ -17,13 +18,6 @@ import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 /// summary header, the collection library and a shelf of e-books.
 class HadithLibraryScreen extends StatelessWidget {
   const HadithLibraryScreen({super.key});
-
-  static const _collections = <_HadithCollection>[
-    _HadithCollection(name: 'Sahih  Bukhari', total: 1327),
-    _HadithCollection(name: 'Riadus salehin', total: 761),
-    _HadithCollection(name: 'Sahih Muslim', total: 1172),
-    _HadithCollection(name: 'Abu Dawud', total: 940),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -54,10 +48,10 @@ class HadithLibraryScreen extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: _collections.length,
+                  itemCount: HadithBookCatalog.libraryCollections.length,
                   separatorBuilder: (_, _) => SizedBox(width: 12.w),
                   itemBuilder: (context, index) => _CollectionCard(
-                    collection: _collections[index],
+                    book: HadithBookCatalog.libraryCollections[index],
                     appText: appText,
                   ),
                 ),
@@ -82,13 +76,6 @@ class HadithLibraryScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _HadithCollection {
-  const _HadithCollection({required this.name, required this.total});
-
-  final String name;
-  final int total;
 }
 
 class _HadithHeader extends StatelessWidget {
@@ -255,13 +242,15 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _CollectionCard extends StatelessWidget {
-  const _CollectionCard({required this.collection, required this.appText});
+  const _CollectionCard({required this.book, required this.appText});
 
-  final _HadithCollection collection;
+  final HadithBook book;
   final AppText appText;
 
   @override
   Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     return Container(
       width: 210.w,
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
@@ -288,10 +277,7 @@ class _CollectionCard extends StatelessWidget {
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pushNamed(
-                  RouteNames.hadithCategory,
-                  arguments: collection.name,
-                ),
+                onPressed: () => openHadithCollection(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 14.sp),
                 label: Text(appText.explore),
@@ -310,7 +296,7 @@ class _CollectionCard extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Text(
-            collection.name,
+            isBangla ? book.titleBn : book.titleEn,
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
@@ -319,7 +305,7 @@ class _CollectionCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '${appText.hadithTotalHadith} : ${collection.total}',
+            '${appText.hadithTotalHadith} : ${book.hadithCount}',
             style: TextStyle(
               fontSize: 12.sp,
               color: const Color(0xFF5D6B44),

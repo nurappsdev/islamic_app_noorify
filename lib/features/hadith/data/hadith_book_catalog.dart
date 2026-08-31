@@ -9,7 +9,7 @@ class HadithBookCatalog {
 
   static const nawawi40 = HadithBook(
     slug: 'nawawi-40',
-    titleEn: '40 Hadith an-Nawawi',
+    titleEn: '40 Hadith An-Nawawi',
     titleBn: 'চল্লিশ হাদিস (আন-নববী)',
     authorEn: 'Imam an-Nawawi',
     hadithCount: 42,
@@ -17,15 +17,20 @@ class HadithBookCatalog {
     assetReferenceXmlPath: 'assets/hadith/fourty_hadith_ref.xml',
   );
 
+  static const riyadusSalihin = HadithBook(
+    slug: 'riyadus-salihin',
+    titleEn: 'Riyadus Saliheen – An-Nawawi',
+    titleBn: 'রিয়াদুস সালেহীন (আন-নববী)',
+    authorEn: 'Imam an-Nawawi',
+    hadithCount: 1896,
+  );
+
+  /// Collections listed under "Hadith library" (and its "See All" list).
+  static const libraryCollections = <HadithBook>[nawawi40, riyadusSalihin];
+
   static const all = <HadithBook>[
     nawawi40,
-    HadithBook(
-      slug: 'riyadus-salihin',
-      titleEn: 'Riyad as-Salihin',
-      titleBn: 'রিয়াদুস সালেহীন',
-      authorEn: 'Imam an-Nawawi',
-      hadithCount: 1896,
-    ),
+    riyadusSalihin,
     HadithBook(
       slug: 'bukhari-shareef',
       titleEn: 'Sahih al-Bukhari',
