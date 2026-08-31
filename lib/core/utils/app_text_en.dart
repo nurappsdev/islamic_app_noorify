@@ -296,6 +296,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'myPlan': 'My Plan',
   'completePlan': 'Complete Plan',
   'noCompletedPlansMessage': 'You cannot complete any\nplan yet !',
+  'noPlansYetMessage': 'You don’t create any\nplan yet !',
+  'planStatusComplete': 'Complete',
   'getStart': 'Get Start',
   'createPlanHeader': 'Create Plan',
   'planNameLabel': 'Plan Name',

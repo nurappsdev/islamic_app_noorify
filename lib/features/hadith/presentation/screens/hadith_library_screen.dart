@@ -8,7 +8,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Hadith library landing screen.
@@ -75,7 +75,7 @@ class HadithLibraryScreen extends StatelessWidget {
             top: false,
             child: Align(
               alignment: Alignment.bottomCenter,
-              child: HomeBottomNav(),
+              child: HadithBottomNav(selectedIndex: 0),
             ),
           ),
         ],
