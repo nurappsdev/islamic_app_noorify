@@ -98,6 +98,9 @@ class AppText {
     required this.hadithCopy,
     required this.hadithCopied,
     required this.hadithShare,
+    required this.hadithBookmark,
+    required this.hadithBookmarkAdded,
+    required this.hadithBookmarkRemoved,
     required this.hadithBookRef,
     required this.hadithRefAuthor,
     required this.hadithRefTranslator,
@@ -495,6 +498,9 @@ class AppText {
   final String hadithCopy;
   final String hadithCopied;
   final String hadithShare;
+  final String hadithBookmark;
+  final String hadithBookmarkAdded;
+  final String hadithBookmarkRemoved;
   final String hadithBookRef;
   final String hadithRefAuthor;
   final String hadithRefTranslator;
@@ -1142,6 +1148,21 @@ class AppText {
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
       hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
+      hadithBookmark: _read(
+        map,
+        'hadithBookmark',
+        fallback?.hadithBookmark ?? '',
+      ),
+      hadithBookmarkAdded: _read(
+        map,
+        'hadithBookmarkAdded',
+        fallback?.hadithBookmarkAdded ?? '',
+      ),
+      hadithBookmarkRemoved: _read(
+        map,
+        'hadithBookmarkRemoved',
+        fallback?.hadithBookmarkRemoved ?? '',
+      ),
       hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
       hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),
       hadithRefTranslator: _read(map, 'hadithRefTranslator', fallback?.hadithRefTranslator ?? ''),
