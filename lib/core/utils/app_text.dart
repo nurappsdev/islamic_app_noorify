@@ -98,6 +98,12 @@ class AppText {
     required this.hadithCopy,
     required this.hadithCopied,
     required this.hadithShare,
+    required this.hadithBookRef,
+    required this.hadithRefAuthor,
+    required this.hadithRefTranslator,
+    required this.hadithRefEditors,
+    required this.hadithRefPublisher,
+    required this.hadithRefYear,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
     required this.salahFajr,
@@ -475,6 +481,12 @@ class AppText {
   final String hadithCopy;
   final String hadithCopied;
   final String hadithShare;
+  final String hadithBookRef;
+  final String hadithRefAuthor;
+  final String hadithRefTranslator;
+  final String hadithRefEditors;
+  final String hadithRefPublisher;
+  final String hadithRefYear;
   final String categoryQuiz;
   final String categoryNaflAndMore;
   final String salahFajr;
@@ -1102,6 +1114,12 @@ class AppText {
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
       hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
+      hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
+      hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),
+      hadithRefTranslator: _read(map, 'hadithRefTranslator', fallback?.hadithRefTranslator ?? ''),
+      hadithRefEditors: _read(map, 'hadithRefEditors', fallback?.hadithRefEditors ?? ''),
+      hadithRefPublisher: _read(map, 'hadithRefPublisher', fallback?.hadithRefPublisher ?? ''),
+      hadithRefYear: _read(map, 'hadithRefYear', fallback?.hadithRefYear ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,
