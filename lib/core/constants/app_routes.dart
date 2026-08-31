@@ -12,6 +12,7 @@ import '../../features/hadith/presentation/screens/hadith_book_reader_screen.dar
 import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_create_plan_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_planner_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -227,6 +228,11 @@ class AppRoutes {
         return _page(const HadithLibraryListScreen(), settings);
       case RouteNames.hadithPlanner:
         return _page(const HadithPlannerScreen(), settings);
+      case RouteNames.hadithCreatePlan:
+        return MaterialPageRoute<String>(
+          builder: (_) => const HadithCreatePlanScreen(),
+          settings: settings,
+        );
       case RouteNames.hadithCategory:
         final title = settings.arguments is String
             ? settings.arguments as String

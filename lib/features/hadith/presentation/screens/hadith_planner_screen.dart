@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 
@@ -28,12 +29,17 @@ class _HadithPlannerScreenState extends State<HadithPlannerScreen> {
     _HadithPlan(title: 'Plan 2', hadithCount: 19),
   ];
 
-  void _createPlan() {
+  Future<void> _createPlan() async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.hadithCreatePlan);
+    if (!mounted || result is! String) return;
+    final name = result.trim();
+    final next = _myPlans.length + 1;
     setState(() {
-      final next = _myPlans.length + 1;
       _myPlans.add(
         _HadithPlan(
-          title: 'Plan $next',
+          title: name.isEmpty ? 'Plan $next' : name,
           hadithCount: _hadithCounts[(next - 1) % _hadithCounts.length],
         ),
       );

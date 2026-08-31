@@ -41,6 +41,7 @@ class RouteNames {
   static const hadithLibraryList = '/hadith/library/all';
   static const hadithCategory = '/hadith/category';
   static const hadithPlanner = '/hadith/planner';
+  static const hadithCreatePlan = '/hadith/planner/create';
   static const hadithBookReader = '/hadith/book';
   static const dua = '/dua';
   static const tasbih = '/tasbih';

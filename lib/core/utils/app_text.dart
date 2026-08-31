@@ -279,6 +279,11 @@ class AppText {
     required this.add,
     required this.create,
     required this.addMore,
+    required this.hadithCreatePlanTitle,
+    required this.selectHadithBook,
+    required this.selectCategory,
+    required this.egSahihBukhariHint,
+    required this.egHadithCategoryHint,
     required this.categories,
     required this.quizzesCountLabel,
     required this.seerahAndHistory,
@@ -676,6 +681,11 @@ class AppText {
   final String add;
   final String create;
   final String addMore;
+  final String hadithCreatePlanTitle;
+  final String selectHadithBook;
+  final String selectCategory;
+  final String egSahihBukhariHint;
+  final String egHadithCategoryHint;
 
   // Quiz feature
   final String categories;
@@ -1699,6 +1709,31 @@ class AppText {
       add: _read(map, 'add', fallback?.add ?? ''),
       create: _read(map, 'create', fallback?.create ?? ''),
       addMore: _read(map, 'addMore', fallback?.addMore ?? ''),
+      hadithCreatePlanTitle: _read(
+        map,
+        'hadithCreatePlanTitle',
+        fallback?.hadithCreatePlanTitle ?? '',
+      ),
+      selectHadithBook: _read(
+        map,
+        'selectHadithBook',
+        fallback?.selectHadithBook ?? '',
+      ),
+      selectCategory: _read(
+        map,
+        'selectCategory',
+        fallback?.selectCategory ?? '',
+      ),
+      egSahihBukhariHint: _read(
+        map,
+        'egSahihBukhariHint',
+        fallback?.egSahihBukhariHint ?? '',
+      ),
+      egHadithCategoryHint: _read(
+        map,
+        'egHadithCategoryHint',
+        fallback?.egHadithCategoryHint ?? '',
+      ),
       categories: _read(map, 'categories', fallback?.categories ?? ''),
       quizzesCountLabel: _read(
         map,

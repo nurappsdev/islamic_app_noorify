@@ -307,6 +307,11 @@ const Map<String, String> appTextBn = <String, String>{
   'add': 'যোগ করুন',
   'create': 'তৈরি করুন',
   'addMore': 'আরও যোগ করুন',
+  'hadithCreatePlanTitle': 'পরিকল্পনা তৈরি করুন',
+  'selectHadithBook': 'হাদিস গ্রন্থ নির্বাচন করুন',
+  'selectCategory': 'বিভাগ নির্বাচন করুন',
+  'egSahihBukhariHint': 'যেমন : সহিহ বুখারি',
+  'egHadithCategoryHint': 'যেমন : উত্তম চরিত্র',
 
   // Quiz feature
   'categories': 'বিভাগসমূহ',
