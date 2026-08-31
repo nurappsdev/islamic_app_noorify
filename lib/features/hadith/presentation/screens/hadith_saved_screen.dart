@@ -80,8 +80,17 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
     setState(() => _openFolder = null);
   }
 
-  Future<void> _remove(HadithBookmark bookmark) async {
-    await _store.remove(bookmark.bookSlug, bookmark.hadithNo);
+  Future<void> _removeHadith(HadithBookmark bookmark) async {
+    final folder = _openFolder;
+    if (folder == null) {
+      await _store.removeSingle(bookmark.bookSlug, bookmark.hadithNo);
+    } else {
+      await _store.removeFromFolder(
+        bookmark.bookSlug,
+        bookmark.hadithNo,
+        folder,
+      );
+    }
     await _load();
   }
 
@@ -195,9 +204,9 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
       );
     }
 
-    // Hadith list — either the "single hadith" tab or a single folder's hadith.
+    // Hadith list — either the per-hadith bookmarks or one folder's hadith.
     final source = _openFolder == null
-        ? _bookmarks
+        ? _bookmarks.where((b) => b.isSingleBookmarked).toList()
         : _bookmarks.where((b) => b.folders.contains(_openFolder)).toList();
     final visible = source.where(_matchesHadith).toList();
 
@@ -225,7 +234,7 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
           bookTitle: bookTitle,
           hadithNoLabel: appText.hadithNoLabel,
           onTap: () => _open(bookmark),
-          onRemove: () => _remove(bookmark),
+          onRemove: () => _removeHadith(bookmark),
         );
       },
     );

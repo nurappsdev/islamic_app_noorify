@@ -989,7 +989,7 @@ class _BookmarkButtonState extends State<_BookmarkButton> {
   }
 
   Future<void> _load() async {
-    final value = await _store.isBookmarked(
+    final value = await _store.isSingleBookmarked(
       widget.bookSlug,
       widget.entry.hadithNo,
     );
@@ -997,7 +997,7 @@ class _BookmarkButtonState extends State<_BookmarkButton> {
   }
 
   Future<void> _toggle() async {
-    final nowOn = await _store.toggle(
+    final nowOn = await _store.toggleSingle(
       HadithBookmark(
         bookSlug: widget.bookSlug,
         hadithNo: widget.entry.hadithNo,
