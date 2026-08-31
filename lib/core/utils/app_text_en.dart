@@ -313,7 +313,9 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'selectHadithBook': 'Select Hadith book',
   'selectCategory': 'Select Category',
   'egSahihBukhariHint': 'Eg : Sahih Bukhari',
-  'egHadithCategoryHint': 'Eg : Good Manners',
+  'egHadithCategoryHint': 'Eg : Ohir Sucona',
+  'hadithCategorySample': 'Ohir Sucona',
+  'hadithCountSample': 'Hadith 7',
 
   // Quiz feature
   'categories': 'Categories',

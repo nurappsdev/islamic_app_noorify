@@ -16,6 +16,7 @@ class HadithCreatePlanScreen extends StatefulWidget {
 
 class _HadithCreatePlanScreenState extends State<HadithCreatePlanScreen> {
   final _planNameController = TextEditingController();
+  bool _added = false;
 
   @override
   void dispose() {
@@ -23,9 +24,12 @@ class _HadithCreatePlanScreenState extends State<HadithCreatePlanScreen> {
     super.dispose();
   }
 
-  void _create() {
-    Navigator.of(context).pop(_planNameController.text.trim());
+  String get _planName {
+    final name = _planNameController.text.trim();
+    return name.isEmpty ? 'Plan 1' : name;
   }
+
+  void _create() => Navigator.of(context).pop(_planName);
 
   @override
   Widget build(BuildContext context) {
@@ -40,78 +44,15 @@ class _HadithCreatePlanScreenState extends State<HadithCreatePlanScreen> {
               onBack: () => Navigator.of(context).pop(),
             ),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(15.w, 5.h, 15.w, 20.h),
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 4.w),
-                    child: Text(
-                      appText.planNameLabel,
-                      style: TextStyle(fontSize: 14.sp),
+              child: _added
+                  ? _AddedView(
+                      planName: _planName,
+                      onAddMore: () => setState(() => _added = false),
+                    )
+                  : _PlanForm(
+                      controller: _planNameController,
+                      onAdd: () => setState(() => _added = true),
                     ),
-                  ),
-                  SizedBox(height: 9.h),
-                  TextField(
-                    controller: _planNameController,
-                    style: TextStyle(fontSize: 13.sp),
-                    decoration: _fieldDecoration(appText.writeHereHint),
-                  ),
-                  SizedBox(height: 14.h),
-                  Container(
-                    padding: EdgeInsets.fromLTRB(23.w, 28.h, 23.w, 28.h),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFCBD16B)),
-                      borderRadius: BorderRadius.circular(27.r),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          appText.selectHadithBook,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        _SelectionField(hint: appText.egSahihBukhariHint),
-                        SizedBox(height: 22.h),
-                        Text(
-                          appText.selectCategory,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        _SelectionField(hint: appText.egHadithCategoryHint),
-                      ],
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 14.h, right: 2.w),
-                      child: OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFA1AD59),
-                          minimumSize: Size(69.w, 38.h),
-                          padding: EdgeInsets.zero,
-                          side: const BorderSide(color: Color(0xFFA1AD59)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.r),
-                          ),
-                        ),
-                        child: Text(
-                          appText.add,
-                          style: TextStyle(fontSize: 14.sp),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 9.h),
@@ -140,6 +81,166 @@ class _HadithCreatePlanScreenState extends State<HadithCreatePlanScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PlanForm extends StatelessWidget {
+  const _PlanForm({required this.controller, required this.onAdd});
+
+  final TextEditingController controller;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return ListView(
+      padding: EdgeInsets.fromLTRB(15.w, 5.h, 15.w, 20.h),
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 4.w),
+          child: Text(
+            appText.planNameLabel,
+            style: TextStyle(fontSize: 14.sp),
+          ),
+        ),
+        SizedBox(height: 9.h),
+        TextField(
+          controller: controller,
+          style: TextStyle(fontSize: 13.sp),
+          decoration: _fieldDecoration(appText.writeHereHint),
+        ),
+        SizedBox(height: 14.h),
+        Container(
+          padding: EdgeInsets.fromLTRB(23.w, 28.h, 23.w, 28.h),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFCBD16B)),
+            borderRadius: BorderRadius.circular(27.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                appText.selectHadithBook,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
+              ),
+              SizedBox(height: 16.h),
+              _SelectionField(hint: appText.egSahihBukhariHint),
+              SizedBox(height: 22.h),
+              Text(
+                appText.selectCategory,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
+              ),
+              SizedBox(height: 16.h),
+              _SelectionField(hint: appText.egHadithCategoryHint),
+            ],
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: EdgeInsets.only(top: 14.h, right: 2.w),
+            child: OutlinedButton(
+              onPressed: onAdd,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFA1AD59),
+                minimumSize: Size(69.w, 38.h),
+                padding: EdgeInsets.zero,
+                side: const BorderSide(color: Color(0xFFA1AD59)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+              ),
+              child: Text(appText.add, style: TextStyle(fontSize: 14.sp)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AddedView extends StatelessWidget {
+  const _AddedView({required this.planName, required this.onAddMore});
+
+  final String planName;
+  final VoidCallback onAddMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 7.h, 16.w, 20.h),
+      children: [
+        Text(planName, style: TextStyle(fontSize: 14.sp)),
+        SizedBox(height: 16.h),
+        Container(
+          height: 76.h,
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFDDE8C1)),
+            borderRadius: BorderRadius.circular(21.r),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 47.w,
+                height: 47.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFDDE8C1)),
+                ),
+                child: Icon(
+                  Icons.menu_book_outlined,
+                  color: const Color(0xFF8B9865),
+                  size: 22.sp,
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    appText.hadithCategorySample,
+                    style: TextStyle(
+                      color: const Color(0xFF332B57),
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                  SizedBox(height: 7.h),
+                  Text(
+                    appText.hadithCountSample,
+                    style: TextStyle(
+                      color: const Color(0xFFA1AD59),
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: EdgeInsets.only(top: 11.h, right: 1.w),
+            child: OutlinedButton(
+              onPressed: onAddMore,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFA1AD59),
+                minimumSize: Size(99.w, 38.h),
+                padding: EdgeInsets.zero,
+                side: const BorderSide(color: Color(0xFFA1AD59)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+              ),
+              child: Text(appText.addMore, style: TextStyle(fontSize: 14.sp)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
