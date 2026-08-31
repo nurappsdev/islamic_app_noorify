@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Full "Hadith Library" collection list.
 ///
 /// Reached from the "See All" action next to the Hadith Library section on
-/// [HadithLibraryScreen]. Each card's "Explore" action opens the
-/// [HadithCategoryScreen] for that collection.
+/// [HadithLibraryScreen]. Each card's "Explore" action opens the book reader
+/// for that collection.
 class HadithLibraryListScreen extends StatelessWidget {
   const HadithLibraryListScreen({super.key});
-
-  static const _collections = <_LibraryCollection>[
-    _LibraryCollection(name: 'Sahih  Bukhari', total: 1327),
-    _LibraryCollection(name: 'Riadus salehin', total: 761),
-    _LibraryCollection(name: 'Sahih Muslim', total: 1172),
-    _LibraryCollection(name: 'Abu Dawud', total: 940),
-    _LibraryCollection(name: 'Jami at-Tirmidhi', total: 856),
-    _LibraryCollection(name: 'Sunan an-Nasai', total: 812),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +22,8 @@ class HadithLibraryListScreen extends StatelessWidget {
     return HadithListScaffold(
       title: appText.hadithLibraryTitle,
       children: [
-        for (final collection in _collections) ...[
-          _LibraryCard(collection: collection, appText: appText),
+        for (final book in HadithBookCatalog.libraryCollections) ...[
+          _LibraryCard(book: book, appText: appText),
           SizedBox(height: 14.h),
         ],
       ],
@@ -37,21 +31,16 @@ class HadithLibraryListScreen extends StatelessWidget {
   }
 }
 
-class _LibraryCollection {
-  const _LibraryCollection({required this.name, required this.total});
-
-  final String name;
-  final int total;
-}
-
 class _LibraryCard extends StatelessWidget {
-  const _LibraryCard({required this.collection, required this.appText});
+  const _LibraryCard({required this.book, required this.appText});
 
-  final _LibraryCollection collection;
+  final HadithBook book;
   final AppText appText;
 
   @override
   Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
       decoration: BoxDecoration(
@@ -77,10 +66,7 @@ class _LibraryCard extends StatelessWidget {
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pushNamed(
-                  RouteNames.hadithCategory,
-                  arguments: collection.name,
-                ),
+                onPressed: () => openHadithCollection(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 15.sp),
                 label: Text(appText.explore),
@@ -102,7 +88,7 @@ class _LibraryCard extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
           Text(
-            collection.name,
+            isBangla ? book.titleBn : book.titleEn,
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
@@ -111,7 +97,7 @@ class _LibraryCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '${appText.hadithTotalHadith} : ${collection.total}',
+            '${appText.hadithTotalHadith} : ${book.hadithCount}',
             style: TextStyle(fontSize: 12.sp, color: const Color(0xFF5D6B44)),
           ),
         ],

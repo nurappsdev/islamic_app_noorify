@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+
+/// Opens the reader for a Hadith library collection. Books without bundled
+/// content ([HadithBook.isAvailable] is false) show a "coming soon" notice
+/// instead.
+void openHadithCollection(BuildContext context, HadithBook book) {
+  if (!book.isAvailable) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppText.of(context).hadithBookComingSoon)),
+    );
+    return;
+  }
+  Navigator.of(
+    context,
+  ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
+}
 
 /// Shared shell for the Hadith list screens (library "See All" and the
 /// per-collection category list). Renders the centered title with a pill back
