@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -76,6 +77,8 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
               ? _HadithIndexDrawer(
                   bookTitle: title,
                   entries: state.entries,
+                  reference: state.reference,
+                  isBangla: isBangla,
                   currentIndex: _currentPage,
                   appText: appText,
                   onSelect: _goToHadith,
@@ -239,6 +242,8 @@ class _HadithIndexDrawer extends StatelessWidget {
   const _HadithIndexDrawer({
     required this.bookTitle,
     required this.entries,
+    required this.reference,
+    required this.isBangla,
     required this.currentIndex,
     required this.appText,
     required this.onSelect,
@@ -246,6 +251,8 @@ class _HadithIndexDrawer extends StatelessWidget {
 
   final String bookTitle;
   final List<HadithEntry> entries;
+  final HadithBookReference? reference;
+  final bool isBangla;
   final int currentIndex;
   final AppText appText;
   final ValueChanged<int> onSelect;
@@ -284,6 +291,12 @@ class _HadithIndexDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: Color(0xFFE3E7D3)),
+            if (reference != null)
+              _BookReferenceTile(
+                reference: reference!,
+                isBangla: isBangla,
+                appText: appText,
+              ),
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.symmetric(vertical: 6.h),
@@ -351,6 +364,95 @@ class _HadithIndexDrawer extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Collapsible "Book reference" panel in the drawer — the book's author,
+/// translator, editors, publisher and year, parsed from its bundled
+/// reference file.
+class _BookReferenceTile extends StatelessWidget {
+  const _BookReferenceTile({
+    required this.reference,
+    required this.isBangla,
+    required this.appText,
+  });
+
+  final HadithBookReference reference;
+  final bool isBangla;
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    final year = [
+      reference.yearGregorian,
+      if (reference.yearHijri.isNotEmpty) '${reference.yearHijri} AH',
+    ].where((v) => v.isNotEmpty).join(' / ');
+
+    final rows = <(String, String)>[
+      (
+        appText.hadithRefAuthor,
+        isBangla ? reference.authorBn : reference.authorAr,
+      ),
+      (
+        appText.hadithRefTranslator,
+        isBangla ? reference.translatorBn : reference.translatorAr,
+      ),
+      (
+        appText.hadithRefEditors,
+        isBangla ? reference.editorsBn : reference.editorsAr,
+      ),
+      (appText.hadithRefPublisher, reference.publisher),
+      (appText.hadithRefYear, year),
+    ].where((r) => r.$2.trim().isNotEmpty).toList();
+
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.symmetric(horizontal: 16.w),
+        childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+        leading: Icon(
+          Icons.info_outline_rounded,
+          size: 18.sp,
+          color: const Color(0xFF9BA85B),
+        ),
+        title: Text(
+          appText.hadithBookRef,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF2C3320),
+          ),
+        ),
+        children: [
+          for (final row in rows)
+            Padding(
+              padding: EdgeInsets.only(bottom: 9.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    row.$1,
+                    style: TextStyle(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF9BA85B),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    row.$2,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      height: 1.45,
+                      color: const Color(0xFF3B4430),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -11,6 +11,7 @@ class HadithBook {
     required this.authorEn,
     required this.hadithCount,
     this.assetXmlPath,
+    this.assetReferenceXmlPath,
   });
 
   final String slug;
@@ -19,6 +20,10 @@ class HadithBook {
   final String authorEn;
   final int hadithCount;
   final String? assetXmlPath;
+
+  /// Optional bundled file with the book's publication details (author,
+  /// translator, editors, publisher, year) shown in the reader drawer.
+  final String? assetReferenceXmlPath;
 
   bool get isAvailable => assetXmlPath != null;
 }
