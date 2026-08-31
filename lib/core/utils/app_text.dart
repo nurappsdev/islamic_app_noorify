@@ -101,6 +101,12 @@ class AppText {
     required this.hadithBookmark,
     required this.hadithBookmarkAdded,
     required this.hadithBookmarkRemoved,
+    required this.bookmarkSheetTitle,
+    required this.searchFolderHint,
+    required this.createFolderAction,
+    required this.saveAction,
+    required this.favoriteFolder,
+    required this.folderNameHint,
     required this.hadithBookRef,
     required this.hadithRefAuthor,
     required this.hadithRefTranslator,
@@ -503,6 +509,12 @@ class AppText {
   final String hadithBookmark;
   final String hadithBookmarkAdded;
   final String hadithBookmarkRemoved;
+  final String bookmarkSheetTitle;
+  final String searchFolderHint;
+  final String createFolderAction;
+  final String saveAction;
+  final String favoriteFolder;
+  final String folderNameHint;
   final String hadithBookRef;
   final String hadithRefAuthor;
   final String hadithRefTranslator;
@@ -1166,6 +1178,32 @@ class AppText {
         map,
         'hadithBookmarkRemoved',
         fallback?.hadithBookmarkRemoved ?? '',
+      ),
+      bookmarkSheetTitle: _read(
+        map,
+        'bookmarkSheetTitle',
+        fallback?.bookmarkSheetTitle ?? '',
+      ),
+      searchFolderHint: _read(
+        map,
+        'searchFolderHint',
+        fallback?.searchFolderHint ?? '',
+      ),
+      createFolderAction: _read(
+        map,
+        'createFolderAction',
+        fallback?.createFolderAction ?? '',
+      ),
+      saveAction: _read(map, 'saveAction', fallback?.saveAction ?? ''),
+      favoriteFolder: _read(
+        map,
+        'favoriteFolder',
+        fallback?.favoriteFolder ?? '',
+      ),
+      folderNameHint: _read(
+        map,
+        'folderNameHint',
+        fallback?.folderNameHint ?? '',
       ),
       hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
       hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),

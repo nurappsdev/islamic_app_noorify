@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
@@ -43,6 +44,35 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
   }
 
   void _openIndex() => _scaffoldKey.currentState?.openEndDrawer();
+
+  Future<void> _showBookmarkSheet(HadithEntry entry) async {
+    final appText = AppText.forLanguage(
+      context.read<LanguageBloc>().state.language,
+    );
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => HadithBookmarkSheet(
+        appText: appText,
+        bookmark: HadithBookmark(
+          bookSlug: widget.book.slug,
+          hadithNo: entry.hadithNo,
+          titleAr: entry.titleAr,
+          titleBn: entry.titleBn,
+          savedAt: DateTime.now(),
+        ),
+      ),
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(appText.hadithBookmarkAdded),
+          duration: const Duration(milliseconds: 1200),
+        ),
+      );
+    }
+  }
 
   void _goToHadith(int index) {
     _scaffoldKey.currentState?.closeEndDrawer();
@@ -97,6 +127,9 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
                   onOpenIndex: isReady && state.entries.isNotEmpty
                       ? _openIndex
                       : null,
+                  onBookmark: isReady && state.entries.isNotEmpty
+                      ? () => _showBookmarkSheet(state.entries[_currentPage])
+                      : null,
                 ),
                 Expanded(
                   child: switch (state.status) {
@@ -139,11 +172,13 @@ class _ReaderHeader extends StatelessWidget {
     required this.title,
     this.counter,
     this.onOpenIndex,
+    this.onBookmark,
   });
 
   final String title;
   final String? counter;
   final VoidCallback? onOpenIndex;
+  final VoidCallback? onBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -190,6 +225,19 @@ class _ReaderHeader extends StatelessWidget {
             ),
           ),
           SizedBox(width: 8.w),
+          if (onBookmark != null) ...[
+            IconButton(
+              onPressed: onBookmark,
+              tooltip: AppText.of(context).hadithBookmark,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFEDF1DE),
+                foregroundColor: const Color(0xFF4C5A34),
+                minimumSize: Size(38.r, 38.r),
+              ),
+              icon: const Icon(Icons.bookmark_border_rounded, size: 18),
+            ),
+            SizedBox(width: 6.w),
+          ],
           if (onOpenIndex != null)
             IconButton(
               onPressed: onOpenIndex,
