@@ -10,7 +10,8 @@ import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_botto
 /// Zikr planner (design `devImg/img_20.png`), reached from index 1 ("Planner")
 /// of [ZikrBottomNav].
 ///
-/// UI only. Every tab starts empty; "Create Plan" opens the New Zikr flow.
+/// UI only. "My Plan" collects the plans made this session via "Create Plan";
+/// "Complete Plan" shows a static mock list.
 class ZikrPlannerScreen extends StatefulWidget {
   const ZikrPlannerScreen({super.key});
 
@@ -20,6 +21,18 @@ class ZikrPlannerScreen extends StatefulWidget {
 
 class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
   int _tab = 0; // 0 = My Plan, 1 = Search Plan, 2 = Complete Plan
+  final List<ZikrPlan> _myPlans = [];
+
+  Future<void> _createPlan() async {
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.zikrPlanCreate);
+    if (!mounted || result is! ZikrPlan) return;
+    setState(() {
+      _myPlans.add(result);
+      _tab = 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,22 +83,7 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
                     ),
                   ),
                 ],
-                Expanded(
-                  child: _tab == 2
-                      ? _CompletePlanList(
-                          plans: ZikrCatalog.mockCompletedPlans,
-                          statusLabel: appText.zikrPlanComplete,
-                          daysLabel: appText.zikrPlanDays.toLowerCase(),
-                        )
-                      : Center(
-                          child: Transform.translate(
-                            offset: Offset(0, -20.h),
-                            child: _EmptyPlans(
-                              message: appText.noPlansYetMessage,
-                            ),
-                          ),
-                        ),
-                ),
+                Expanded(child: _buildTabBody(appText)),
               ],
             ),
             if (_tab != 2)
@@ -93,9 +91,7 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
                 right: 24.w,
                 bottom: 78.h + bottomInset,
                 child: FilledButton.icon(
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.zikrPlanCreate),
+                  onPressed: _createPlan,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF9AAA63),
                     foregroundColor: Colors.white,
@@ -129,18 +125,38 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
       ),
     );
   }
+
+  Widget _buildTabBody(AppText appText) {
+    final daysLabel = appText.zikrPlanDays.toLowerCase();
+    if (_tab == 2) {
+      return _PlanList(
+        plans: ZikrCatalog.mockCompletedPlans,
+        daysLabel: daysLabel,
+        statusLabel: appText.zikrPlanComplete,
+      );
+    }
+    if (_tab == 0 && _myPlans.isNotEmpty) {
+      return _PlanList(plans: _myPlans, daysLabel: daysLabel);
+    }
+    return Center(
+      child: Transform.translate(
+        offset: Offset(0, -20.h),
+        child: _EmptyPlans(message: appText.noPlansYetMessage),
+      ),
+    );
+  }
 }
 
-class _CompletePlanList extends StatelessWidget {
-  const _CompletePlanList({
+class _PlanList extends StatelessWidget {
+  const _PlanList({
     required this.plans,
-    required this.statusLabel,
     required this.daysLabel,
+    this.statusLabel,
   });
 
   final List<ZikrPlan> plans;
-  final String statusLabel;
   final String daysLabel;
+  final String? statusLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -196,15 +212,17 @@ class _CompletePlanList extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(width: 8.w),
-              Text(
-                statusLabel,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFFA1AD59),
+              if (statusLabel != null) ...[
+                SizedBox(width: 8.w),
+                Text(
+                  statusLabel!,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFA1AD59),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         );
