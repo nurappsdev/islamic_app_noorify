@@ -25,50 +25,88 @@ class ZikrCounterScreen extends StatefulWidget {
 }
 
 class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
-  int _count = 0;
+  late final List<int> _counts = List<int>.filled(_items.length, 0);
+  late final PageController _pageController = PageController(
+    viewportFraction: 0.44,
+  );
+  int _index = 0;
 
   List<ZikrItem> get _items => widget.args.items;
   int get _totalTarget => widget.args.totalTarget;
 
-  /// Index of the zikr currently being counted, and how many of it are done.
-  ({ZikrItem item, int done}) get _current {
-    var remaining = _count;
-    for (var i = 0; i < _items.length; i++) {
-      final item = _items[i];
-      if (remaining < item.target || i == _items.length - 1) {
-        return (item: item, done: remaining.clamp(0, item.target));
-      }
-      remaining -= item.target;
-    }
-    return (item: _items.last, done: _items.last.target);
+  ZikrItem get _item => _items[_index];
+  int get _done => _counts[_index];
+  int get _total => _counts.fold(0, (sum, c) => sum + c);
+  bool get _itemDone => _done >= _item.target;
+  bool get _finished => _totalTarget > 0 && _total >= _totalTarget;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
-  bool get _finished => _totalTarget > 0 && _count >= _totalTarget;
-
-  void _tap() {
-    if (_finished) return;
-    HapticFeedback.selectionClick();
-    setState(() => _count++);
-    final current = _current;
-    if (current.done == current.item.target || _finished) {
-      HapticFeedback.mediumImpact();
+  /// The next zikr in the sequence that still needs counting, or null if every
+  /// zikr is complete.
+  int? _nextIncomplete() {
+    for (var step = 1; step <= _items.length; step++) {
+      final i = (_index + step) % _items.length;
+      if (_counts[i] < _items[i].target) return i;
     }
+    return null;
+  }
+
+  void _goToZikr(int index) {
+    if (!_pageController.hasClients) {
+      setState(() => _index = index);
+      return;
+    }
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _count() {
+    if (_itemDone) {
+      _switchZikr();
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _counts[_index]++);
+    if (_itemDone) {
+      HapticFeedback.mediumImpact();
+      final next = _nextIncomplete();
+      if (next != null) _goToZikr(next);
+    }
+  }
+
+  /// Move to the next zikr — used by tapping the zikr card itself.
+  void _switchZikr() {
+    if (_items.length < 2) return;
+    HapticFeedback.selectionClick();
+    _goToZikr((_index + 1) % _items.length);
   }
 
   void _reset() {
     HapticFeedback.lightImpact();
-    setState(() => _count = 0);
+    setState(() {
+      for (var i = 0; i < _counts.length; i++) {
+        _counts[i] = 0;
+      }
+    });
+    _goToZikr(0);
   }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final current = _current;
-    final ringProgress = current.item.target > 0
-        ? (current.done / current.item.target).clamp(0.0, 1.0)
+    final ringProgress = _item.target > 0
+        ? (_done / _item.target).clamp(0.0, 1.0)
         : 0.0;
     final barProgress = _totalTarget > 0
-        ? (_count / _totalTarget).clamp(0.0, 1.0)
+        ? (_total / _totalTarget).clamp(0.0, 1.0)
         : 0.0;
 
     return Scaffold(
@@ -76,30 +114,53 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       body: ListView(
         padding: EdgeInsets.only(bottom: 30.h),
         children: [
-          ZikrGradientHeader(title: widget.args.title, total: _count),
+          ZikrGradientHeader(title: widget.args.title, total: _total),
           Transform.translate(
-            offset: Offset(0, -22.h),
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 320),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  final slide = Tween<Offset>(
-                    begin: const Offset(0, 0.45),
-                    end: Offset.zero,
-                  ).animate(animation);
-                  return ClipRect(
-                    child: SlideTransition(
-                      position: slide,
-                      child: FadeTransition(opacity: animation, child: child),
+            offset: Offset(0, -18.h),
+            child: SizedBox(
+              height: 154.h,
+              child: PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                physics: _items.length > 1
+                    ? const BouncingScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                onPageChanged: (i) => setState(() => _index = i),
+                itemCount: _items.length,
+                itemBuilder: (context, i) {
+                  return AnimatedBuilder(
+                    animation: _pageController,
+                    builder: (context, child) {
+                      var delta = (_index - i).toDouble();
+                      if (_pageController.hasClients &&
+                          _pageController.position.haveDimensions) {
+                        delta = (_pageController.page ?? _index.toDouble()) - i;
+                      }
+                      final t = (1 - delta.abs()).clamp(0.0, 1.0);
+                      return Center(
+                        child: OverflowBox(
+                          minHeight: 0,
+                          maxHeight: double.infinity,
+                          child: Opacity(
+                            opacity: 0.18 + 0.82 * t,
+                            child: Transform.scale(
+                              scale: 0.78 + 0.22 * t,
+                              child: child,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _switchZikr,
+                      child: _CurrentZikrCard(
+                        item: _items[i],
+                        done: _counts[i],
+                      ),
                     ),
                   );
                 },
-                child: _CurrentZikrCard(
-                  key: ValueKey(current.item.name),
-                  item: current.item,
-                ),
               ),
             ),
           ),
@@ -108,7 +169,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
             child: _TapButton(
               progress: ringProgress.toDouble(),
               label: _finished ? appText.zikrCompleted : appText.zikrTapToCount,
-              onTap: _tap,
+              onTap: _count,
             ),
           ),
           SizedBox(height: 40.h),
@@ -149,15 +210,16 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 }
 
 class _CurrentZikrCard extends StatelessWidget {
-  const _CurrentZikrCard({super.key, required this.item});
+  const _CurrentZikrCard({required this.item, required this.done});
 
   final ZikrItem item;
+  final int done;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 40.w),
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 12.w, 12.h),
+      padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),
       decoration: BoxDecoration(
         color: const Color(0xFFDCE8C4),
         borderRadius: BorderRadius.circular(20.r),
@@ -186,21 +248,29 @@ class _CurrentZikrCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10.w),
-          Container(
-            width: 42.r,
-            height: 42.r,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF9AAA63)),
-            ),
-            child: Text(
-              '${item.target}',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF4C5A34),
-              ),
+          SizedBox(
+            width: 44.r,
+            height: 44.r,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: item.target > 0
+                      ? (done / item.target).clamp(0.0, 1.0)
+                      : 0.0,
+                  strokeWidth: 3,
+                  backgroundColor: const Color(0xFFC4D6A0),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF6E8B3D)),
+                ),
+                Text(
+                  '$done/${item.target}',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4C5A34),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
