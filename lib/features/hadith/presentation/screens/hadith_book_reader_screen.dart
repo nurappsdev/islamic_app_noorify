@@ -1,7 +1,12 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -153,6 +158,7 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
                       entries: state.entries,
                       appText: appText,
                       bookSlug: widget.book.slug,
+                      bookName: title,
                       onPageChanged: (i) =>
                           setState(() => _currentPage = i),
                     ),
@@ -263,6 +269,7 @@ class _HadithPager extends StatelessWidget {
     required this.entries,
     required this.appText,
     required this.bookSlug,
+    required this.bookName,
     required this.onPageChanged,
   });
 
@@ -270,6 +277,7 @@ class _HadithPager extends StatelessWidget {
   final List<HadithEntry> entries;
   final AppText appText;
   final String bookSlug;
+  final String bookName;
   final ValueChanged<int> onPageChanged;
 
   @override
@@ -284,6 +292,7 @@ class _HadithPager extends StatelessWidget {
           entry: entries[index],
           appText: appText,
           bookSlug: bookSlug,
+          bookName: bookName,
           isLast: index == entries.length - 1,
         ),
       ),
@@ -688,18 +697,30 @@ class _FailedView extends StatelessWidget {
   }
 }
 
-class _HadithCard extends StatelessWidget {
+class _HadithCard extends StatefulWidget {
   const _HadithCard({
     required this.entry,
     required this.appText,
     required this.bookSlug,
+    required this.bookName,
     this.isLast = false,
   });
 
   final HadithEntry entry;
   final AppText appText;
   final String bookSlug;
+  final String bookName;
   final bool isLast;
+
+  @override
+  State<_HadithCard> createState() => _HadithCardState();
+}
+
+class _HadithCardState extends State<_HadithCard> {
+  final GlobalKey _boundaryKey = GlobalKey();
+
+  HadithEntry get entry => widget.entry;
+  AppText get appText => widget.appText;
 
   /// The whole hadith (title, Arabic, narrator, translation, reference) as
   /// plain text for the clipboard.
@@ -730,151 +751,220 @@ class _HadithCard extends StatelessWidget {
     return buffer.toString().trim();
   }
 
+  /// Just the Bangla narrator and translation.
+  String get _translationText {
+    final buffer = StringBuffer();
+    if (entry.banglaNarrator.isNotEmpty) buffer.writeln(entry.banglaNarrator);
+    if (entry.banglaText.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.writeln();
+      buffer.writeln(entry.banglaText);
+    }
+    return buffer.toString().trim();
+  }
+
   String get _shareSubject =>
       entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr;
 
-  Future<void> _copy(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: _plainText));
-    if (!context.mounted) return;
+  Rect? get _originRect {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(appText.hadithCopied),
+        content: Text(message),
         duration: const Duration(milliseconds: 1200),
       ),
     );
   }
 
-  Future<void> _share(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
+  Future<void> _copyValue(String text) async {
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    _toast(appText.hadithCopied);
+  }
+
+  Future<void> _shareScreenshot() async {
+    try {
+      final boundary =
+          _boundaryKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (data == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/hadith_${widget.bookSlug}_${entry.hadithNo}.png',
+      );
+      await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: _shareSubject,
+          sharePositionOrigin: _originRect,
+        ),
+      );
+    } catch (_) {
+      _toast(appText.hadithShareFailed);
+    }
+  }
+
+  Future<void> _report() async {
+    final where = widget.bookName.isNotEmpty
+        ? '${widget.bookName} — ${appText.categoryHadith} ${entry.hadithNo}'
+        : '${appText.categoryHadith} ${entry.hadithNo}';
     await SharePlus.instance.share(
       ShareParams(
-        text: _plainText,
-        subject: _shareSubject,
-        sharePositionOrigin: box != null && box.hasSize
-            ? box.localToGlobal(Offset.zero) & box.size
-            : null,
+        text: '${appText.hadithReportMessage}$where\n\n$_plainText',
+        subject: appText.hadithReport,
+        sharePositionOrigin: _originRect,
       ),
     );
   }
 
-  /// Bottom sheet with "Copy" and "Share to another app" for this hadith.
-  void _showActions(BuildContext context) {
+  /// Bottom sheet with the per-hadith copy / share / report actions.
+  void _showActions(BuildContext buttonContext) {
     showModalBottomSheet<void>(
-      context: context,
+      context: buttonContext,
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(height: 10.h),
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCE3C4),
-                borderRadius: BorderRadius.circular(2.r),
+      builder: (sheetContext) {
+        Widget tile({
+          required IconData icon,
+          required String label,
+          required VoidCallback onTap,
+          Color color = const Color(0xFF4C5A34),
+        }) {
+          return ListTile(
+            leading: Icon(icon, color: color),
+            title: Text(label, style: TextStyle(color: color)),
+            onTap: () {
+              Navigator.pop(sheetContext);
+              onTap();
+            },
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCE3C4),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
               ),
-            ),
-            SizedBox(height: 6.h),
-            ListTile(
-              leading: const Icon(
-                Icons.copy_rounded,
-                color: Color(0xFF4C5A34),
+              SizedBox(height: 6.h),
+              if (entry.banglaText.isNotEmpty || entry.banglaNarrator.isNotEmpty)
+                tile(
+                  icon: Icons.translate_rounded,
+                  label: appText.hadithCopyTranslation,
+                  onTap: () => _copyValue(_translationText),
+                ),
+              if (entry.arabicText.isNotEmpty)
+                tile(
+                  icon: Icons.menu_book_rounded,
+                  label: appText.hadithCopyArabic,
+                  onTap: () => _copyValue(entry.arabicText),
+                ),
+              tile(
+                icon: Icons.copy_rounded,
+                label: appText.hadithCopyFull,
+                onTap: () => _copyValue(_plainText),
               ),
-              title: Text(appText.hadithCopy),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _copy(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.ios_share_rounded,
-                color: Color(0xFF4C5A34),
+              tile(
+                icon: Icons.ios_share_rounded,
+                label: appText.hadithShareScreenshot,
+                onTap: _shareScreenshot,
               ),
-              title: Text(appText.hadithShare),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                _share(context);
-              },
-            ),
-            SizedBox(height: 8.h),
-          ],
-        ),
-      ),
+              tile(
+                icon: Icons.flag_outlined,
+                label: appText.hadithReport,
+                color: const Color(0xFFC15B4B),
+                onTap: _report,
+              ),
+              SizedBox(height: 8.h),
+            ],
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F9EF),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFE3E7D3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 30.r,
-                height: 30.r,
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF8B9A4B),
-                  shape: BoxShape.circle,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          children: [
+            RepaintBoundary(
+              key: _boundaryKey,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF7F9EF),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: const Color(0xFFE3E7D3)),
                 ),
-                child: Text(
-                  '${entry.hadithNo}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 4.h),
-                  child: Text(
-                    entry.titleBn.isNotEmpty ? entry.titleBn : entry.titleAr,
-                    style: TextStyle(
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3320),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 30.r,
+                          height: 30.r,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8B9A4B),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${entry.hadithNo}',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 4.h),
+                            child: Text(
+                              entry.titleBn.isNotEmpty
+                                  ? entry.titleBn
+                                  : entry.titleAr,
+                              style: TextStyle(
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2C3320),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 74.w),
+                      ],
                     ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              _BookmarkButton(
-                key: ValueKey('hadith-bookmark-$bookSlug-${entry.hadithNo}'),
-                bookSlug: bookSlug,
-                entry: entry,
-                appText: appText,
-              ),
-              SizedBox(width: 6.w),
-              Builder(
-                builder: (buttonContext) => _CopyButton(
-                  tooltip: appText.hadithCopy,
-                  onTap: () => _showActions(buttonContext),
-                ),
-              ),
-            ],
-          ),
-          SelectionArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (entry.arabicText.isNotEmpty) ...[
+                    SelectionArea(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (entry.arabicText.isNotEmpty) ...[
                   SizedBox(height: 14.h),
                   Text(
                     entry.arabicText,
@@ -931,33 +1021,62 @@ class _HadithCard extends StatelessWidget {
                     ),
                   ),
                 ],
-              ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          if (!isLast) ...[
-            SizedBox(height: 18.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.keyboard_double_arrow_left_rounded,
-                  size: 15.sp,
-                  color: const Color(0xFF9BA85B),
-                ),
-                SizedBox(width: 6.w),
-                Text(
-                  appText.hadithSwipeNext,
-                  style: TextStyle(
-                    fontSize: 10.5.sp,
-                    color: const Color(0xFF9BA85B),
-                    fontWeight: FontWeight.w600,
+            PositionedDirectional(
+              top: 8.h,
+              end: 12.w,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _BookmarkButton(
+                    key: ValueKey(
+                      'hadith-bookmark-${widget.bookSlug}-${entry.hadithNo}',
+                    ),
+                    bookSlug: widget.bookSlug,
+                    entry: entry,
+                    appText: appText,
                   ),
-                ),
-              ],
+                  SizedBox(width: 6.w),
+                  Builder(
+                    builder: (buttonContext) => _CopyButton(
+                      tooltip: appText.hadithCopy,
+                      onTap: () => _showActions(buttonContext),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
+        ),
+        if (!widget.isLast) ...[
+          SizedBox(height: 18.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.keyboard_double_arrow_left_rounded,
+                size: 15.sp,
+                color: const Color(0xFF9BA85B),
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                appText.hadithSwipeNext,
+                style: TextStyle(
+                  fontSize: 10.5.sp,
+                  color: const Color(0xFF9BA85B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }

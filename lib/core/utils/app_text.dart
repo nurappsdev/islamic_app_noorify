@@ -98,6 +98,13 @@ class AppText {
     required this.hadithCopy,
     required this.hadithCopied,
     required this.hadithShare,
+    required this.hadithCopyTranslation,
+    required this.hadithCopyArabic,
+    required this.hadithCopyFull,
+    required this.hadithShareScreenshot,
+    required this.hadithReport,
+    required this.hadithReportMessage,
+    required this.hadithShareFailed,
     required this.hadithBookmark,
     required this.hadithBookmarkAdded,
     required this.hadithBookmarkRemoved,
@@ -513,6 +520,13 @@ class AppText {
   final String hadithCopy;
   final String hadithCopied;
   final String hadithShare;
+  final String hadithCopyTranslation;
+  final String hadithCopyArabic;
+  final String hadithCopyFull;
+  final String hadithShareScreenshot;
+  final String hadithReport;
+  final String hadithReportMessage;
+  final String hadithShareFailed;
   final String hadithBookmark;
   final String hadithBookmarkAdded;
   final String hadithBookmarkRemoved;
@@ -1178,6 +1192,37 @@ class AppText {
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
       hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
+      hadithCopyTranslation: _read(
+        map,
+        'hadithCopyTranslation',
+        fallback?.hadithCopyTranslation ?? '',
+      ),
+      hadithCopyArabic: _read(
+        map,
+        'hadithCopyArabic',
+        fallback?.hadithCopyArabic ?? '',
+      ),
+      hadithCopyFull: _read(
+        map,
+        'hadithCopyFull',
+        fallback?.hadithCopyFull ?? '',
+      ),
+      hadithShareScreenshot: _read(
+        map,
+        'hadithShareScreenshot',
+        fallback?.hadithShareScreenshot ?? '',
+      ),
+      hadithReport: _read(map, 'hadithReport', fallback?.hadithReport ?? ''),
+      hadithReportMessage: _read(
+        map,
+        'hadithReportMessage',
+        fallback?.hadithReportMessage ?? '',
+      ),
+      hadithShareFailed: _read(
+        map,
+        'hadithShareFailed',
+        fallback?.hadithShareFailed ?? '',
+      ),
       hadithBookmark: _read(
         map,
         'hadithBookmark',
