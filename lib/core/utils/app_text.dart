@@ -214,6 +214,20 @@ class AppText {
     required this.notifications,
     required this.featureDua,
     required this.featureDijpr,
+    required this.zikrIntroTitle,
+    required this.zikrIntroSubtitle,
+    required this.zikrIntroStartButton,
+    required this.zikrTitle,
+    required this.zikrTotalZikr,
+    required this.zikrLastZikr,
+    required this.zikrMyCreatedZikr,
+    required this.zikrGetStart,
+    required this.zikrAllTitle,
+    required this.zikrCounterReset,
+    required this.zikrCreateTitle,
+    required this.zikrCreateNameHint,
+    required this.zikrCreateTargetHint,
+    required this.zikrCreateAdd,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -645,6 +659,20 @@ class AppText {
   final String notifications;
   final String featureDua;
   final String featureDijpr;
+  final String zikrIntroTitle;
+  final String zikrIntroSubtitle;
+  final String zikrIntroStartButton;
+  final String zikrTitle;
+  final String zikrTotalZikr;
+  final String zikrLastZikr;
+  final String zikrMyCreatedZikr;
+  final String zikrGetStart;
+  final String zikrAllTitle;
+  final String zikrCounterReset;
+  final String zikrCreateTitle;
+  final String zikrCreateNameHint;
+  final String zikrCreateTargetHint;
+  final String zikrCreateAdd;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -1582,6 +1610,52 @@ class AppText {
       notifications: _read(map, 'notifications', fallback?.notifications ?? ''),
       featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
       featureDijpr: _read(map, 'featureDijpr', fallback?.featureDijpr ?? ''),
+      zikrIntroTitle: _read(
+        map,
+        'zikrIntroTitle',
+        fallback?.zikrIntroTitle ?? '',
+      ),
+      zikrIntroSubtitle: _read(
+        map,
+        'zikrIntroSubtitle',
+        fallback?.zikrIntroSubtitle ?? '',
+      ),
+      zikrIntroStartButton: _read(
+        map,
+        'zikrIntroStartButton',
+        fallback?.zikrIntroStartButton ?? '',
+      ),
+      zikrTitle: _read(map, 'zikrTitle', fallback?.zikrTitle ?? ''),
+      zikrTotalZikr: _read(map, 'zikrTotalZikr', fallback?.zikrTotalZikr ?? ''),
+      zikrLastZikr: _read(map, 'zikrLastZikr', fallback?.zikrLastZikr ?? ''),
+      zikrMyCreatedZikr: _read(
+        map,
+        'zikrMyCreatedZikr',
+        fallback?.zikrMyCreatedZikr ?? '',
+      ),
+      zikrGetStart: _read(map, 'zikrGetStart', fallback?.zikrGetStart ?? ''),
+      zikrAllTitle: _read(map, 'zikrAllTitle', fallback?.zikrAllTitle ?? ''),
+      zikrCounterReset: _read(
+        map,
+        'zikrCounterReset',
+        fallback?.zikrCounterReset ?? '',
+      ),
+      zikrCreateTitle: _read(
+        map,
+        'zikrCreateTitle',
+        fallback?.zikrCreateTitle ?? '',
+      ),
+      zikrCreateNameHint: _read(
+        map,
+        'zikrCreateNameHint',
+        fallback?.zikrCreateNameHint ?? '',
+      ),
+      zikrCreateTargetHint: _read(
+        map,
+        'zikrCreateTargetHint',
+        fallback?.zikrCreateTargetHint ?? '',
+      ),
+      zikrCreateAdd: _read(map, 'zikrCreateAdd', fallback?.zikrCreateAdd ?? ''),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',

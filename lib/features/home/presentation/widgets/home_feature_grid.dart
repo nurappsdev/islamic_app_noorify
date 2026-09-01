@@ -29,6 +29,7 @@ class HomeFeatureGrid extends StatelessWidget {
       appText.featureDijpr,
       Icons.nightlight_round,
       const Color(0xFFFFD21E),
+      routeName: RouteNames.zikr,
     ),
     _HomeFeature(
       appText.featureAsmaUlHusna,
