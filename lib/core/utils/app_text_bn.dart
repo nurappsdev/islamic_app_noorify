@@ -353,6 +353,7 @@ const Map<String, String> appTextBn = <String, String>{
   'plannerPlanTwo': 'পরিকল্পনা ২',
   'createPlan': 'পরিকল্পনা তৈরি করুন',
   'myPlan': 'আমার পরিকল্পনা',
+  'searchPlan': 'পরিকল্পনা খুঁজুন',
   'completePlan': 'সম্পূর্ণ পরিকল্পনা',
   'noCompletedPlansMessage': 'আপনি এখনও কোনো\nপরিকল্পনা সম্পূর্ণ করতে পারেননি!',
   'noPlansYetMessage': 'আপনি এখনও কোনো\nপরিকল্পনা তৈরি করেননি!',

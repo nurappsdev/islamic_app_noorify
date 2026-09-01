@@ -256,6 +256,7 @@
   "plannerPlanTwo": "Plan 2",
   "createPlan": "Create Plan",
   "myPlan": "My Plan",
+  "searchPlan": "Search Plan",
   "completePlan": "Complete Plan",
   "noCompletedPlansMessage": "You cannot complete any\nplan yet !",
   "getStart": "Get Start",

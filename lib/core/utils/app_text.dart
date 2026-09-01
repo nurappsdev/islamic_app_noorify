@@ -323,6 +323,7 @@ class AppText {
     required this.plannerPlanTwo,
     required this.createPlan,
     required this.myPlan,
+    required this.searchPlan,
     required this.completePlan,
     required this.noCompletedPlansMessage,
     required this.noPlansYetMessage,
@@ -786,6 +787,7 @@ class AppText {
   final String plannerPlanTwo;
   final String createPlan;
   final String myPlan;
+  final String searchPlan;
   final String completePlan;
   final String noCompletedPlansMessage;
   final String noPlansYetMessage;
@@ -2019,6 +2021,7 @@ class AppText {
       ),
       createPlan: _read(map, 'createPlan', fallback?.createPlan ?? ''),
       myPlan: _read(map, 'myPlan', fallback?.myPlan ?? ''),
+      searchPlan: _read(map, 'searchPlan', fallback?.searchPlan ?? ''),
       completePlan: _read(map, 'completePlan', fallback?.completePlan ?? ''),
       noCompletedPlansMessage: _read(
         map,
