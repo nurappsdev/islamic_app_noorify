@@ -50,6 +50,7 @@ class RouteNames {
   static const tasbih = '/tasbih';
   static const zikr = '/zikr';
   static const zikrDashboard = '/zikr/dashboard';
+  static const zikrCreate = '/zikr/create';
   static const zikrCounter = '/zikr/counter';
   static const zikrAll = '/zikr/all';
   static const zakatCalculator = '/zakat-calculator';

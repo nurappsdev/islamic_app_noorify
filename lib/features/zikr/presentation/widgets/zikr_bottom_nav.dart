@@ -7,9 +7,11 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 /// Navigation bar dedicated to the Zikr flow.
 ///
-/// Index 0 = app Home, 1 = the Zikr dashboard, 2 = the "All Zikr" list.
+/// Index 0 = the Zikr dashboard (this flow's "Home", the same way the Hadith
+/// library is index 0 of [HadithBottomNav]); 1 = the "All Zikr" list. The
+/// trailing grid icon is decorative, matching the app's main [HomeBottomNav].
 class ZikrBottomNav extends StatelessWidget {
-  const ZikrBottomNav({super.key, this.selectedIndex = 1});
+  const ZikrBottomNav({super.key, this.selectedIndex = 0});
 
   final int selectedIndex;
 
@@ -36,33 +38,26 @@ class ZikrBottomNav extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _ZikrNavItem(
-              icon: Icons.home_rounded,
+              icon: Icons.home_outlined,
               label: appText.home,
               selected: selectedIndex == 0,
-              onPressed: () => Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false),
-            ),
-            _ZikrNavItem(
-              icon: Icons.fact_check_outlined,
-              label: appText.zikrTitle,
-              selected: selectedIndex == 1,
-              onPressed: selectedIndex == 1
+              onPressed: selectedIndex == 0
                   ? null
                   : () => Navigator.of(
                       context,
                     ).pushReplacementNamed(RouteNames.zikrDashboard),
             ),
             _ZikrNavItem(
-              icon: Icons.grid_view_rounded,
+              icon: Icons.fact_check_outlined,
               label: appText.zikrAllTitle,
-              selected: selectedIndex == 2,
-              onPressed: selectedIndex == 2
+              selected: selectedIndex == 1,
+              onPressed: selectedIndex == 1
                   ? null
                   : () => Navigator.of(
                       context,
                     ).pushReplacementNamed(RouteNames.zikrAll),
             ),
+            const _ZikrNavItem(icon: Icons.grid_view_rounded),
           ],
         ),
       ),

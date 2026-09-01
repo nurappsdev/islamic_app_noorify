@@ -74,7 +74,7 @@ class ZikrAllScreen extends StatelessWidget {
             top: false,
             child: Align(
               alignment: Alignment.bottomCenter,
-              child: ZikrBottomNav(selectedIndex: 2),
+              child: ZikrBottomNav(selectedIndex: 1),
             ),
           ),
         ],

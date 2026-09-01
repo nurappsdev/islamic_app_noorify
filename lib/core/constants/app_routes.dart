@@ -65,6 +65,7 @@ import '../../features/quran/data/services/quran_audio_downloader.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_counter_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
 import '../../features/zikr/presentation/zikr_route_args.dart';
@@ -270,6 +271,8 @@ class AppRoutes {
         return _page(const ZikrIntroScreen(), settings);
       case RouteNames.zikrDashboard:
         return _page(const ZikrDashboardScreen(), settings);
+      case RouteNames.zikrCreate:
+        return _page(const ZikrCreateScreen(), settings);
       case RouteNames.zikrAll:
         return _page(const ZikrAllScreen(), settings);
       case RouteNames.zikrCounter:
