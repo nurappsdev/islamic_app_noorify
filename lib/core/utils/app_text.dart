@@ -234,6 +234,10 @@ class AppText {
     required this.zikrReadingValueHint,
     required this.zikrCreate,
     required this.zikrCreated,
+    required this.zikrCustom,
+    required this.zikrCancel,
+    required this.zikrWriteZikrName,
+    required this.zikrWriteZikrNameHint,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -685,6 +689,10 @@ class AppText {
   final String zikrReadingValueHint;
   final String zikrCreate;
   final String zikrCreated;
+  final String zikrCustom;
+  final String zikrCancel;
+  final String zikrWriteZikrName;
+  final String zikrWriteZikrNameHint;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -1686,6 +1694,18 @@ class AppText {
       ),
       zikrCreate: _read(map, 'zikrCreate', fallback?.zikrCreate ?? ''),
       zikrCreated: _read(map, 'zikrCreated', fallback?.zikrCreated ?? ''),
+      zikrCustom: _read(map, 'zikrCustom', fallback?.zikrCustom ?? ''),
+      zikrCancel: _read(map, 'zikrCancel', fallback?.zikrCancel ?? ''),
+      zikrWriteZikrName: _read(
+        map,
+        'zikrWriteZikrName',
+        fallback?.zikrWriteZikrName ?? '',
+      ),
+      zikrWriteZikrNameHint: _read(
+        map,
+        'zikrWriteZikrNameHint',
+        fallback?.zikrWriteZikrNameHint ?? '',
+      ),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',
