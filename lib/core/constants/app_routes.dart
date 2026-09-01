@@ -63,6 +63,11 @@ import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../../features/quran/data/services/quran_audio_downloader.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_counter_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
+import '../../features/zikr/presentation/zikr_route_args.dart';
 import 'route_names.dart';
 
 class AppRoutes {
@@ -261,6 +266,17 @@ class AppRoutes {
           ),
           settings,
         );
+      case RouteNames.zikr:
+        return _page(const ZikrIntroScreen(), settings);
+      case RouteNames.zikrDashboard:
+        return _page(const ZikrDashboardScreen(), settings);
+      case RouteNames.zikrAll:
+        return _page(const ZikrAllScreen(), settings);
+      case RouteNames.zikrCounter:
+        final args =
+            settings.arguments as ZikrCounterArgs? ??
+            const ZikrCounterArgs(title: 'Zikr', arabic: '', target: 33);
+        return _page(ZikrCounterScreen(args: args), settings);
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
       case RouteNames.signIn:

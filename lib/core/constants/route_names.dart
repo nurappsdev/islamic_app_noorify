@@ -48,6 +48,10 @@ class RouteNames {
   static const hadithBookReader = '/hadith/book';
   static const dua = '/dua';
   static const tasbih = '/tasbih';
+  static const zikr = '/zikr';
+  static const zikrDashboard = '/zikr/dashboard';
+  static const zikrCounter = '/zikr/counter';
+  static const zikrAll = '/zikr/all';
   static const zakatCalculator = '/zakat-calculator';
   static const quran = '/quran';
   static const quranSurahs = '/quran/surahs';
