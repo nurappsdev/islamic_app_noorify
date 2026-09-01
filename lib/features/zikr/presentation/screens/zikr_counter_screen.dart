@@ -229,7 +229,7 @@ class _TapButtonState extends State<_TapButton> {
 
   @override
   Widget build(BuildContext context) {
-    final size = 232.r;
+    final size = 184.r;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: widget.onTap,
@@ -246,8 +246,8 @@ class _TapButtonState extends State<_TapButton> {
               scale: _down ? 0.94 : 1,
               duration: const Duration(milliseconds: 120),
               child: Container(
-                width: size * 0.66,
-                height: size * 0.66,
+                width: size * 0.82,
+                height: size * 0.82,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -297,7 +297,7 @@ class _DottedRingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    const maxDot = 6.0;
+    const maxDot = 6.2;
     final radius = size.width / 2 - maxDot - 1;
 
     final clamped = progress.clamp(0.0, 1.0);
@@ -313,10 +313,10 @@ class _DottedRingPainter extends CustomPainter {
         // 0 at the start of the arc, 1 at the leading (most recent) dot.
         final rel = filled <= 1 ? 1.0 : i / (filled - 1);
         color = Color.lerp(_fillStart, _fillEnd, rel)!;
-        dotRadius = 3.8 + 2.2 * rel;
+        dotRadius = 4.4 + 1.8 * rel;
       } else {
         color = _empty;
-        dotRadius = 3.8;
+        dotRadius = 4.4;
       }
       canvas.drawCircle(pos, dotRadius, Paint()..color = color);
     }
