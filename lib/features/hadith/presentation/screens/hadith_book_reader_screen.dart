@@ -1207,7 +1207,7 @@ class _CopyButton extends StatelessWidget {
             border: Border.all(color: const Color(0xFFDCE3C4)),
           ),
           child: Icon(
-            Icons.copy_rounded,
+            Icons.more_vert_rounded,
             size: 15.sp,
             color: const Color(0xFF4C5A34),
           ),
