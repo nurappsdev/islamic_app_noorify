@@ -102,6 +102,7 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithShareScreenshot': 'স্ক্রিনশট শেয়ার করুন',
   'hadithReport': 'রিপোর্ট করুন',
   'hadithShareFailed': 'স্ক্রিনশট তৈরি করা যায়নি',
+  'hadithReportFailed': 'এই ডিভাইসে কোনো ইমেইল অ্যাপ পাওয়া যায়নি',
   'hadithReportMessage':
       'নিচের হাদিসটি সম্পর্কে একটি সমস্যা জানাতে চাই। অনুগ্রহ করে সমস্যাটি লিখুন:\n\n',
   'hadithBookmark': 'বুকমার্ক',

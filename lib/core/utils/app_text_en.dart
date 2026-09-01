@@ -103,6 +103,7 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithShareScreenshot': 'Share as screenshot',
   'hadithReport': 'Report',
   'hadithShareFailed': 'Could not create the screenshot',
+  'hadithReportFailed': 'No email app found on this device',
   'hadithReportMessage':
       'I would like to report an issue with the hadith below. Please describe the problem:\n\n',
   'hadithBookmark': 'Bookmark',

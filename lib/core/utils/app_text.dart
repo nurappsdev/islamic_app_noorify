@@ -105,6 +105,7 @@ class AppText {
     required this.hadithReport,
     required this.hadithReportMessage,
     required this.hadithShareFailed,
+    required this.hadithReportFailed,
     required this.hadithBookmark,
     required this.hadithBookmarkAdded,
     required this.hadithBookmarkRemoved,
@@ -527,6 +528,7 @@ class AppText {
   final String hadithReport;
   final String hadithReportMessage;
   final String hadithShareFailed;
+  final String hadithReportFailed;
   final String hadithBookmark;
   final String hadithBookmarkAdded;
   final String hadithBookmarkRemoved;
@@ -1222,6 +1224,11 @@ class AppText {
         map,
         'hadithShareFailed',
         fallback?.hadithShareFailed ?? '',
+      ),
+      hadithReportFailed: _read(
+        map,
+        'hadithReportFailed',
+        fallback?.hadithReportFailed ?? '',
       ),
       hadithBookmark: _read(
         map,

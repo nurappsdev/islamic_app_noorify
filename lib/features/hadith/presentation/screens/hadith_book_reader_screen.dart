@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -717,6 +718,8 @@ class _HadithCard extends StatefulWidget {
 }
 
 class _HadithCardState extends State<_HadithCard> {
+  static const _reportEmail = 'report.tuhfatulmuslim@gmail.com';
+
   final GlobalKey _boundaryKey = GlobalKey();
 
   HadithEntry get entry => widget.entry;
@@ -815,16 +818,31 @@ class _HadithCardState extends State<_HadithCard> {
   }
 
   Future<void> _report() async {
-    final where = widget.bookName.isNotEmpty
-        ? '${widget.bookName} — ${appText.categoryHadith} ${entry.hadithNo}'
-        : '${appText.categoryHadith} ${entry.hadithNo}';
-    await SharePlus.instance.share(
-      ShareParams(
-        text: '${appText.hadithReportMessage}$where\n\n$_plainText',
-        subject: appText.hadithReport,
-        sharePositionOrigin: _originRect,
-      ),
+    final book = widget.bookName.isNotEmpty
+        ? widget.bookName
+        : widget.bookSlug;
+    final subject =
+        '${appText.hadithReport}: $book — '
+        '${appText.categoryHadith} ${entry.hadithNo}';
+    final body =
+        '${appText.hadithReportMessage}'
+        '${appText.hadithBookReference}: $book\n'
+        '${appText.categoryHadith}: ${entry.hadithNo}\n\n'
+        '$_plainText';
+    final uri = Uri.parse(
+      'mailto:$_reportEmail'
+      '?subject=${Uri.encodeComponent(subject)}'
+      '&body=${Uri.encodeComponent(body)}',
     );
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) _toast(appText.hadithReportFailed);
+    } catch (_) {
+      _toast(appText.hadithReportFailed);
+    }
   }
 
   /// Bottom sheet with the per-hadith copy / share / report actions.
