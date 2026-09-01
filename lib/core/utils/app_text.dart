@@ -228,6 +228,12 @@ class AppText {
     required this.zikrCreateNameHint,
     required this.zikrCreateTargetHint,
     required this.zikrCreateAdd,
+    required this.zikrNewTitle,
+    required this.zikrSelectZikr,
+    required this.zikrSetReadingValue,
+    required this.zikrReadingValueHint,
+    required this.zikrCreate,
+    required this.zikrCreated,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -673,6 +679,12 @@ class AppText {
   final String zikrCreateNameHint;
   final String zikrCreateTargetHint;
   final String zikrCreateAdd;
+  final String zikrNewTitle;
+  final String zikrSelectZikr;
+  final String zikrSetReadingValue;
+  final String zikrReadingValueHint;
+  final String zikrCreate;
+  final String zikrCreated;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -1656,6 +1668,24 @@ class AppText {
         fallback?.zikrCreateTargetHint ?? '',
       ),
       zikrCreateAdd: _read(map, 'zikrCreateAdd', fallback?.zikrCreateAdd ?? ''),
+      zikrNewTitle: _read(map, 'zikrNewTitle', fallback?.zikrNewTitle ?? ''),
+      zikrSelectZikr: _read(
+        map,
+        'zikrSelectZikr',
+        fallback?.zikrSelectZikr ?? '',
+      ),
+      zikrSetReadingValue: _read(
+        map,
+        'zikrSetReadingValue',
+        fallback?.zikrSetReadingValue ?? '',
+      ),
+      zikrReadingValueHint: _read(
+        map,
+        'zikrReadingValueHint',
+        fallback?.zikrReadingValueHint ?? '',
+      ),
+      zikrCreate: _read(map, 'zikrCreate', fallback?.zikrCreate ?? ''),
+      zikrCreated: _read(map, 'zikrCreated', fallback?.zikrCreated ?? ''),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',
