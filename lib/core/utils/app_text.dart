@@ -245,6 +245,9 @@ class AppText {
     required this.zikrPlanWriteHere,
     required this.zikrPlanComplete,
     required this.zikrPlanDays,
+    required this.zikrTodaysValueGraph,
+    required this.zikrMostDoing,
+    required this.zikrHistory,
     required this.zikrTapToCount,
     required this.zikrCompletingProgress,
     required this.zikrCompleted,
@@ -711,6 +714,9 @@ class AppText {
   final String zikrPlanWriteHere;
   final String zikrPlanComplete;
   final String zikrPlanDays;
+  final String zikrTodaysValueGraph;
+  final String zikrMostDoing;
+  final String zikrHistory;
   final String zikrTapToCount;
   final String zikrCompletingProgress;
   final String zikrCompleted;
@@ -1751,6 +1757,13 @@ class AppText {
         fallback?.zikrPlanComplete ?? '',
       ),
       zikrPlanDays: _read(map, 'zikrPlanDays', fallback?.zikrPlanDays ?? ''),
+      zikrTodaysValueGraph: _read(
+        map,
+        'zikrTodaysValueGraph',
+        fallback?.zikrTodaysValueGraph ?? '',
+      ),
+      zikrMostDoing: _read(map, 'zikrMostDoing', fallback?.zikrMostDoing ?? ''),
+      zikrHistory: _read(map, 'zikrHistory', fallback?.zikrHistory ?? ''),
       zikrTapToCount: _read(
         map,
         'zikrTapToCount',
