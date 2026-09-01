@@ -239,6 +239,12 @@ class AppText {
     required this.zikrWriteZikrName,
     required this.zikrWriteZikrNameHint,
     required this.zikrAddMore,
+    required this.zikrPlanCreateTitle,
+    required this.zikrPlanName,
+    required this.zikrPlanCompletionDays,
+    required this.zikrPlanWriteHere,
+    required this.zikrPlanComplete,
+    required this.zikrPlanDays,
     required this.zikrTapToCount,
     required this.zikrCompletingProgress,
     required this.zikrCompleted,
@@ -699,6 +705,12 @@ class AppText {
   final String zikrWriteZikrName;
   final String zikrWriteZikrNameHint;
   final String zikrAddMore;
+  final String zikrPlanCreateTitle;
+  final String zikrPlanName;
+  final String zikrPlanCompletionDays;
+  final String zikrPlanWriteHere;
+  final String zikrPlanComplete;
+  final String zikrPlanDays;
   final String zikrTapToCount;
   final String zikrCompletingProgress;
   final String zikrCompleted;
@@ -1717,6 +1729,28 @@ class AppText {
         fallback?.zikrWriteZikrNameHint ?? '',
       ),
       zikrAddMore: _read(map, 'zikrAddMore', fallback?.zikrAddMore ?? ''),
+      zikrPlanCreateTitle: _read(
+        map,
+        'zikrPlanCreateTitle',
+        fallback?.zikrPlanCreateTitle ?? '',
+      ),
+      zikrPlanName: _read(map, 'zikrPlanName', fallback?.zikrPlanName ?? ''),
+      zikrPlanCompletionDays: _read(
+        map,
+        'zikrPlanCompletionDays',
+        fallback?.zikrPlanCompletionDays ?? '',
+      ),
+      zikrPlanWriteHere: _read(
+        map,
+        'zikrPlanWriteHere',
+        fallback?.zikrPlanWriteHere ?? '',
+      ),
+      zikrPlanComplete: _read(
+        map,
+        'zikrPlanComplete',
+        fallback?.zikrPlanComplete ?? '',
+      ),
+      zikrPlanDays: _read(map, 'zikrPlanDays', fallback?.zikrPlanDays ?? ''),
       zikrTapToCount: _read(
         map,
         'zikrTapToCount',

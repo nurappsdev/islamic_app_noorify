@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 
 /// Zikr planner (design `devImg/img_20.png`), reached from index 1 ("Planner")
@@ -57,7 +58,9 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24.r),
-                          borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFDDE8C1),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24.r),
@@ -68,39 +71,52 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
                   ),
                 ],
                 Expanded(
-                  child: Center(
-                    child: Transform.translate(
-                      offset: Offset(0, -20.h),
-                      child: _EmptyPlans(message: appText.noPlansYetMessage),
-                    ),
-                  ),
+                  child: _tab == 2
+                      ? _CompletePlanList(
+                          plans: ZikrCatalog.mockCompletedPlans,
+                          statusLabel: appText.zikrPlanComplete,
+                          daysLabel: appText.zikrPlanDays.toLowerCase(),
+                        )
+                      : Center(
+                          child: Transform.translate(
+                            offset: Offset(0, -20.h),
+                            child: _EmptyPlans(
+                              message: appText.noPlansYetMessage,
+                            ),
+                          ),
+                        ),
                 ),
               ],
             ),
-            Positioned(
-              right: 24.w,
-              bottom: 78.h + bottomInset,
-              child: FilledButton.icon(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(RouteNames.zikrCreate),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF9AAA63),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24.r),
+            if (_tab != 2)
+              Positioned(
+                right: 24.w,
+                bottom: 78.h + bottomInset,
+                child: FilledButton.icon(
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.zikrPlanCreate),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF9AAA63),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 18.w,
+                      vertical: 12.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
                   ),
-                ),
-                icon: Icon(Icons.edit_outlined, size: 18.sp),
-                label: Text(
-                  appText.createPlan,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
+                  icon: Icon(Icons.edit_outlined, size: 18.sp),
+                  label: Text(
+                    appText.createPlan,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
             const SafeArea(
               top: false,
               child: Align(
@@ -111,6 +127,88 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CompletePlanList extends StatelessWidget {
+  const _CompletePlanList({
+    required this.plans,
+    required this.statusLabel,
+    required this.daysLabel,
+  });
+
+  final List<ZikrPlan> plans;
+  final String statusLabel;
+  final String daysLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 96.h),
+      itemCount: plans.length,
+      separatorBuilder: (_, _) => SizedBox(height: 12.h),
+      itemBuilder: (context, i) {
+        final plan = plans[i];
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFDDE8C1)),
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46.r,
+                height: 46.r,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC9DBA3),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(
+                  Icons.menu_book_rounded,
+                  size: 22.sp,
+                  color: const Color(0xFF6E8B3D),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plan.name,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF3D3170),
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      '${plan.totalValue} ( ${plan.days} $daysLabel )',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: const Color(0xFF9AA579),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                statusLabel,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFA1AD59),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -130,9 +228,7 @@ class _PlannerTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFDDE8C1)),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFDDE8C1))),
       ),
       child: Row(
         children: [
