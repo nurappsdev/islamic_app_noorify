@@ -22,8 +22,25 @@ class ZikrCreateScreen extends StatefulWidget {
 }
 
 class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
+  static const _customValue = '__custom__';
+  static const List<ZikrItem> _dropdownItems = [
+    ZikrCatalog.subhanAllah,
+    ZikrCatalog.alhamdulillah,
+    ZikrCatalog.allahuAkbar,
+  ];
+
+  final _fieldKey = GlobalKey();
   final _valueController = TextEditingController();
-  ZikrItem? _selected;
+
+  String? _zikrName;
+  String _zikrArabic = '';
+  late AppText _appText;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _appText = AppText.of(context);
+  }
 
   @override
   void dispose() {
@@ -33,94 +50,99 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   int get _readingValue {
     final parsed = int.tryParse(_valueController.text.trim());
-    if (parsed != null && parsed > 0) return parsed;
-    return _selected?.target ?? 33;
+    return (parsed != null && parsed > 0) ? parsed : 33;
   }
 
-  Future<void> _pickZikr() async {
-    final appText = AppText.of(context);
-    final picked = await showModalBottomSheet<ZikrItem>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(height: 10.h),
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCE3C4),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 6.h),
-            Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 4.h),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  appText.zikrSelectZikr,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final item in ZikrCatalog.all)
-                    ListTile(
-                      title: Text(
-                        item.transliteration,
-                        style: TextStyle(fontSize: 13.sp),
-                      ),
-                      subtitle: Text(
-                        item.arabic,
-                        textDirection: TextDirection.rtl,
-                        style: TextStyle(fontSize: 14.sp),
-                      ),
-                      trailing: Text(
-                        '${item.target}x',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF4C5A34),
-                        ),
-                      ),
-                      onTap: () => Navigator.pop(sheetContext, item),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8.h),
-          ],
-        ),
-      ),
+  Future<void> _openDropdown() async {
+    FocusScope.of(context).unfocus();
+    final fieldBox =
+        _fieldKey.currentContext!.findRenderObject() as RenderBox;
+    final overlayBox =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final topLeft = fieldBox.localToGlobal(Offset.zero, ancestor: overlayBox);
+    final bottomRight = fieldBox.localToGlobal(
+      fieldBox.size.bottomRight(Offset.zero),
+      ancestor: overlayBox,
+    );
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(topLeft, bottomRight),
+      Offset.zero & overlayBox.size,
     );
 
-    if (picked != null) {
-      setState(() {
-        _selected = picked;
-        if (_valueController.text.trim().isEmpty) {
-          _valueController.text = picked.target.toString();
-        }
-      });
+    final appText = _appText;
+    final result = await showMenu<String>(
+      context: context,
+      position: position,
+      color: Colors.white,
+      elevation: 4,
+      constraints: BoxConstraints(
+        minWidth: fieldBox.size.width,
+        maxWidth: fieldBox.size.width,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+      items: [
+        for (var i = 0; i < _dropdownItems.length; i++) ...[
+          if (i > 0) const PopupMenuDivider(height: 1),
+          PopupMenuItem<String>(
+            value: _dropdownItems[i].name,
+            child: Text(
+              _dropdownItems[i].name,
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+            ),
+          ),
+        ],
+        const PopupMenuDivider(height: 1),
+        PopupMenuItem<String>(
+          value: _customValue,
+          child: Text(
+            appText.zikrCustom,
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+          ),
+        ),
+      ],
+    );
+
+    if (result == null || !mounted) return;
+    if (result == _customValue) {
+      await _openCustomSheet();
+      return;
     }
+    final item = _dropdownItems.firstWhere((z) => z.name == result);
+    setState(() {
+      _zikrName = item.name;
+      _zikrArabic = item.arabic;
+      _valueController.text = item.target.toString();
+    });
+  }
+
+  Future<void> _openCustomSheet() async {
+    final created = await showModalBottomSheet<(String, String)>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFDCE8C4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26.r)),
+      ),
+      builder: (_) => _CustomZikrSheet(appText: _appText),
+    );
+
+    if (created == null || !mounted) return;
+    final name = created.$1.isEmpty ? _appText.zikrCustom : created.$1;
+    final value = int.tryParse(created.$2);
+    setState(() {
+      _zikrName = name;
+      _zikrArabic = '';
+      _valueController.text = (value != null && value > 0)
+          ? value.toString()
+          : '';
+    });
   }
 
   void _create() {
     HapticFeedback.selectionClick();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppText.of(context).zikrCreated),
+        content: Text(_appText.zikrCreated),
         duration: const Duration(milliseconds: 1200),
       ),
     );
@@ -128,12 +150,11 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
   }
 
   void _start() {
-    final item = _selected;
     Navigator.of(context).pushNamed(
       RouteNames.zikrCounter,
       arguments: ZikrCounterArgs(
-        title: item?.name ?? AppText.of(context).zikrTitle,
-        arabic: item?.arabic ?? '',
+        title: _zikrName ?? _appText.zikrTitle,
+        arabic: _zikrArabic,
         target: _readingValue,
       ),
     );
@@ -141,7 +162,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
+    final appText = _appText;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -155,9 +176,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                 _FieldLabel(appText.zikrSelectZikr),
                 SizedBox(height: 10.h),
                 _SelectField(
-                  text: _selected?.transliteration,
+                  key: _fieldKey,
+                  text: _zikrName,
                   hint: appText.zikrSelectZikr,
-                  onTap: _pickZikr,
+                  onTap: _openDropdown,
                 ),
                 SizedBox(height: 24.h),
                 _FieldLabel(appText.zikrSetReadingValue),
@@ -269,7 +291,12 @@ class _FieldLabel extends StatelessWidget {
 }
 
 class _SelectField extends StatelessWidget {
-  const _SelectField({required this.hint, required this.onTap, this.text});
+  const _SelectField({
+    super.key,
+    required this.hint,
+    required this.onTap,
+    this.text,
+  });
 
   final String hint;
   final String? text;
@@ -302,11 +329,199 @@ class _SelectField extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.chevron_right_rounded,
-              size: 20.sp,
+              Icons.keyboard_arrow_down_rounded,
+              size: 22.sp,
               color: const Color(0xFF9BA85B),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Body of the "Custom" bottom sheet (design `devImg/img_15.png`). Owns its own
+/// controllers so they are disposed only after the sheet has fully closed.
+class _CustomZikrSheet extends StatefulWidget {
+  const _CustomZikrSheet({required this.appText});
+
+  final AppText appText;
+
+  @override
+  State<_CustomZikrSheet> createState() => _CustomZikrSheetState();
+}
+
+class _CustomZikrSheetState extends State<_CustomZikrSheet> {
+  final _nameController = TextEditingController();
+  final _valueController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _valueController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = widget.appText;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        22.w,
+        18.h,
+        22.w,
+        18.h + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              appText.zikrCreateTitle,
+              style: TextStyle(
+                fontSize: 17.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF3C4A28),
+              ),
+            ),
+          ),
+          SizedBox(height: 18.h),
+          _SheetLabel(appText.zikrWriteZikrName),
+          SizedBox(height: 8.h),
+          _SheetField(
+            controller: _nameController,
+            hint: appText.zikrWriteZikrNameHint,
+            textCapitalization: TextCapitalization.words,
+          ),
+          SizedBox(height: 16.h),
+          _SheetLabel(appText.zikrSetReadingValue),
+          SizedBox(height: 8.h),
+          _SheetField(
+            controller: _valueController,
+            hint: appText.zikrReadingValueHint,
+            keyboardType: TextInputType.number,
+            digitsOnly: true,
+          ),
+          SizedBox(height: 22.h),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 50.h,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFC0392B),
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFFC0392B)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26.r),
+                      ),
+                    ),
+                    child: Text(
+                      appText.zikrCancel,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: SizedBox(
+                  height: 50.h,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context, (
+                      _nameController.text.trim(),
+                      _valueController.text.trim(),
+                    )),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColor.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26.r),
+                      ),
+                    ),
+                    child: Text(
+                      appText.zikrCreate,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+        ],
+      ),
+    );
+  }
+}
+
+class _SheetLabel extends StatelessWidget {
+  const _SheetLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF5E7038),
+      ),
+    );
+  }
+}
+
+class _SheetField extends StatelessWidget {
+  const _SheetField({
+    required this.controller,
+    required this.hint,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.digitsOnly = false,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final bool digitsOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      inputFormatters: digitsOnly
+          ? [FilteringTextInputFormatter.digitsOnly]
+          : null,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(
+          fontStyle: FontStyle.italic,
+          color: const Color(0xFF9AA579),
+        ),
+        filled: true,
+        fillColor: const Color(0xFFEAF1D9),
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(26.r),
+          borderSide: const BorderSide(color: Color(0xFFBFD09B)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(26.r),
+          borderSide: const BorderSide(color: AppColor.primary),
         ),
       ),
     );
