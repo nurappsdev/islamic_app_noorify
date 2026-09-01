@@ -10,10 +10,12 @@ import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradi
 import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
 
 /// "New Zikr" screen (design `devImg/img_13.png`), reached from the `+` button
-/// on [ZikrDashboardScreen].
+/// on [ZikrDashboardScreen] and from "Add More" on [ZikrSetScreen].
 ///
-/// UI only — "Create" just returns to the dashboard; "Lets Get Start" opens the
-/// counter with the chosen zikr and reading value.
+/// UI only. "Create" adds the chosen zikr to the set and moves to
+/// [ZikrSetScreen]; "Lets Get Start" opens the counter with the set (plus the
+/// current selection). Any zikr already in the set arrive as route arguments
+/// (`List<ZikrItem>`).
 class ZikrCreateScreen extends StatefulWidget {
   const ZikrCreateScreen({super.key});
 
@@ -34,12 +36,19 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   String? _zikrName;
   String _zikrArabic = '';
+  List<ZikrItem> _items = [];
+  bool _argsRead = false;
   late AppText _appText;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _appText = AppText.of(context);
+    if (!_argsRead) {
+      _argsRead = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is List<ZikrItem>) _items = List.of(args);
+    }
   }
 
   @override
@@ -51,6 +60,27 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
   int get _readingValue {
     final parsed = int.tryParse(_valueController.text.trim());
     return (parsed != null && parsed > 0) ? parsed : 33;
+  }
+
+  /// The zikr currently chosen in the form, or null if nothing is selected.
+  ZikrItem? get _currentItem {
+    final name = _zikrName;
+    if (name == null || name.isEmpty) return null;
+    return ZikrItem(
+      name: name,
+      arabic: _zikrArabic,
+      transliteration: name,
+      target: _readingValue,
+    );
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
   }
 
   Future<void> _openDropdown() async {
@@ -139,23 +169,30 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
   }
 
   void _create() {
+    final item = _currentItem;
+    if (item == null) {
+      _toast(_appText.zikrSelectZikr);
+      return;
+    }
     HapticFeedback.selectionClick();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_appText.zikrCreated),
-        duration: const Duration(milliseconds: 1200),
-      ),
+    Navigator.of(context).pushReplacementNamed(
+      RouteNames.zikrSet,
+      arguments: [..._items, item],
     );
-    Navigator.of(context).maybePop();
   }
 
   void _start() {
+    final item = _currentItem;
+    final sequence = [..._items, ?item];
+    if (sequence.isEmpty) {
+      _toast(_appText.zikrSelectZikr);
+      return;
+    }
     Navigator.of(context).pushNamed(
       RouteNames.zikrCounter,
       arguments: ZikrCounterArgs(
-        title: _zikrName ?? _appText.zikrTitle,
-        arabic: _zikrArabic,
-        target: _readingValue,
+        title: sequence.length == 1 ? sequence.first.name : _appText.zikrTitle,
+        items: sequence,
       ),
     );
   }

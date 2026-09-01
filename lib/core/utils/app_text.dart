@@ -238,6 +238,10 @@ class AppText {
     required this.zikrCancel,
     required this.zikrWriteZikrName,
     required this.zikrWriteZikrNameHint,
+    required this.zikrAddMore,
+    required this.zikrTapToCount,
+    required this.zikrCompletingProgress,
+    required this.zikrCompleted,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -693,6 +697,10 @@ class AppText {
   final String zikrCancel;
   final String zikrWriteZikrName;
   final String zikrWriteZikrNameHint;
+  final String zikrAddMore;
+  final String zikrTapToCount;
+  final String zikrCompletingProgress;
+  final String zikrCompleted;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -1705,6 +1713,22 @@ class AppText {
         map,
         'zikrWriteZikrNameHint',
         fallback?.zikrWriteZikrNameHint ?? '',
+      ),
+      zikrAddMore: _read(map, 'zikrAddMore', fallback?.zikrAddMore ?? ''),
+      zikrTapToCount: _read(
+        map,
+        'zikrTapToCount',
+        fallback?.zikrTapToCount ?? '',
+      ),
+      zikrCompletingProgress: _read(
+        map,
+        'zikrCompletingProgress',
+        fallback?.zikrCompletingProgress ?? '',
+      ),
+      zikrCompleted: _read(
+        map,
+        'zikrCompleted',
+        fallback?.zikrCompleted ?? '',
       ),
       featureAsmaUlHusna: _read(
         map,

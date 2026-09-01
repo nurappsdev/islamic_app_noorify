@@ -10,10 +10,18 @@ import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 /// "Total Zikr" count. [trailing] is placed below the count (the dashboard uses
 /// it for the "Last Zikr" and "Prayer Zikr" pills).
 class ZikrGradientHeader extends StatelessWidget {
-  const ZikrGradientHeader({super.key, required this.title, this.trailing});
+  const ZikrGradientHeader({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.total,
+  });
 
   final String title;
   final Widget? trailing;
+
+  /// The number shown under "Total Zikr". Defaults to the mock dashboard total.
+  final int? total;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +88,7 @@ class ZikrGradientHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                ZikrCatalog.formatIndian(ZikrCatalog.mockTotalCount),
+                ZikrCatalog.formatIndian(total ?? ZikrCatalog.mockTotalCount),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,
