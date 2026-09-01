@@ -183,8 +183,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
       return;
     }
     HapticFeedback.selectionClick();
-    _toast(_appText.zikrCreated);
-    Navigator.of(context).maybePop();
+    Navigator.of(context).pop(
+      ZikrPlan(name: _planName, days: _planDays, entries: List.of(_entries)),
+    );
   }
 
   @override
