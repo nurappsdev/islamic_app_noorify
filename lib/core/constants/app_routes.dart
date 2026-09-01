@@ -69,6 +69,7 @@ import '../../features/zikr/presentation/screens/zikr_counter_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_planner_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_set_screen.dart';
 import '../../features/zikr/presentation/zikr_route_args.dart';
 import 'route_names.dart';
@@ -283,6 +284,8 @@ class AppRoutes {
           ),
           settings,
         );
+      case RouteNames.zikrPlanner:
+        return _page(const ZikrPlannerScreen(), settings);
       case RouteNames.zikrAll:
         return _page(const ZikrAllScreen(), settings);
       case RouteNames.zikrCounter:

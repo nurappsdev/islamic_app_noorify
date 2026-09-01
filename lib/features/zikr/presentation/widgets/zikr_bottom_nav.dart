@@ -8,8 +8,8 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 /// Navigation bar dedicated to the Zikr flow.
 ///
 /// Index 0 = the Zikr dashboard (this flow's "Home", the same way the Hadith
-/// library is index 0 of [HadithBottomNav]); 1 = the "All Zikr" list. The
-/// trailing grid icon is decorative, matching the app's main [HomeBottomNav].
+/// library is index 0 of [HadithBottomNav]); 1 = the Zikr planner; 2 = the
+/// "All Zikr" list.
 class ZikrBottomNav extends StatelessWidget {
   const ZikrBottomNav({super.key, this.selectedIndex = 0});
 
@@ -49,15 +49,24 @@ class ZikrBottomNav extends StatelessWidget {
             ),
             _ZikrNavItem(
               icon: Icons.fact_check_outlined,
-              label: appText.zikrAllTitle,
+              label: appText.planner,
               selected: selectedIndex == 1,
               onPressed: selectedIndex == 1
                   ? null
                   : () => Navigator.of(
                       context,
+                    ).pushReplacementNamed(RouteNames.zikrPlanner),
+            ),
+            _ZikrNavItem(
+              icon: Icons.grid_view_rounded,
+              label: appText.zikrAllTitle,
+              selected: selectedIndex == 2,
+              onPressed: selectedIndex == 2
+                  ? null
+                  : () => Navigator.of(
+                      context,
                     ).pushReplacementNamed(RouteNames.zikrAll),
             ),
-            const _ZikrNavItem(icon: Icons.grid_view_rounded),
           ],
         ),
       ),
