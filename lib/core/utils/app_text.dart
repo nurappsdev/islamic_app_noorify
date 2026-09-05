@@ -251,6 +251,19 @@ class AppText {
     required this.zikrTapToCount,
     required this.zikrCompletingProgress,
     required this.zikrCompleted,
+    required this.duaIntroTitle,
+    required this.duaIntroSubtitle,
+    required this.duaIntroStartButton,
+    required this.duaFeaturedTitle,
+    required this.duaCategoryTitle,
+    required this.duaAllCategoryTitle,
+    required this.duaTotalCategoryLabel,
+    required this.duaSearchCategoryHint,
+    required this.duaTotalFeaturedLabel,
+    required this.duaExplore,
+    required this.duaTotalDuaLabel,
+    required this.duaAllDuaTitle,
+    required this.duaLastRead,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -720,6 +733,21 @@ class AppText {
   final String zikrTapToCount;
   final String zikrCompletingProgress;
   final String zikrCompleted;
+
+  // Dua feature
+  final String duaIntroTitle;
+  final String duaIntroSubtitle;
+  final String duaIntroStartButton;
+  final String duaFeaturedTitle;
+  final String duaCategoryTitle;
+  final String duaAllCategoryTitle;
+  final String duaTotalCategoryLabel;
+  final String duaSearchCategoryHint;
+  final String duaTotalFeaturedLabel;
+  final String duaExplore;
+  final String duaTotalDuaLabel;
+  final String duaAllDuaTitle;
+  final String duaLastRead;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -1216,11 +1244,7 @@ class AppText {
         'hadithLastRead',
         fallback?.hadithLastRead ?? '',
       ),
-      hadithLibrary: _read(
-        map,
-        'hadithLibrary',
-        fallback?.hadithLibrary ?? '',
-      ),
+      hadithLibrary: _read(map, 'hadithLibrary', fallback?.hadithLibrary ?? ''),
       hadithEbook: _read(map, 'hadithEbook', fallback?.hadithEbook ?? ''),
       hadithLibraryTitle: _read(
         map,
@@ -1348,10 +1372,26 @@ class AppText {
         fallback?.folderNameHint ?? '',
       ),
       hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
-      hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),
-      hadithRefTranslator: _read(map, 'hadithRefTranslator', fallback?.hadithRefTranslator ?? ''),
-      hadithRefEditors: _read(map, 'hadithRefEditors', fallback?.hadithRefEditors ?? ''),
-      hadithRefPublisher: _read(map, 'hadithRefPublisher', fallback?.hadithRefPublisher ?? ''),
+      hadithRefAuthor: _read(
+        map,
+        'hadithRefAuthor',
+        fallback?.hadithRefAuthor ?? '',
+      ),
+      hadithRefTranslator: _read(
+        map,
+        'hadithRefTranslator',
+        fallback?.hadithRefTranslator ?? '',
+      ),
+      hadithRefEditors: _read(
+        map,
+        'hadithRefEditors',
+        fallback?.hadithRefEditors ?? '',
+      ),
+      hadithRefPublisher: _read(
+        map,
+        'hadithRefPublisher',
+        fallback?.hadithRefPublisher ?? '',
+      ),
       hadithRefYear: _read(map, 'hadithRefYear', fallback?.hadithRefYear ?? ''),
       savedHadithTitle: _read(
         map,
@@ -1400,11 +1440,7 @@ class AppText {
         'noReadingHistory',
         fallback?.noReadingHistory ?? '',
       ),
-      hadithNoLabel: _read(
-        map,
-        'hadithNoLabel',
-        fallback?.hadithNoLabel ?? '',
-      ),
+      hadithNoLabel: _read(map, 'hadithNoLabel', fallback?.hadithNoLabel ?? ''),
       totalSavedLabel: _read(
         map,
         'totalSavedLabel',
@@ -1774,11 +1810,60 @@ class AppText {
         'zikrCompletingProgress',
         fallback?.zikrCompletingProgress ?? '',
       ),
-      zikrCompleted: _read(
+      zikrCompleted: _read(map, 'zikrCompleted', fallback?.zikrCompleted ?? ''),
+      duaIntroTitle: _read(map, 'duaIntroTitle', fallback?.duaIntroTitle ?? ''),
+      duaIntroSubtitle: _read(
         map,
-        'zikrCompleted',
-        fallback?.zikrCompleted ?? '',
+        'duaIntroSubtitle',
+        fallback?.duaIntroSubtitle ?? '',
       ),
+      duaIntroStartButton: _read(
+        map,
+        'duaIntroStartButton',
+        fallback?.duaIntroStartButton ?? '',
+      ),
+      duaFeaturedTitle: _read(
+        map,
+        'duaFeaturedTitle',
+        fallback?.duaFeaturedTitle ?? '',
+      ),
+      duaCategoryTitle: _read(
+        map,
+        'duaCategoryTitle',
+        fallback?.duaCategoryTitle ?? '',
+      ),
+      duaAllCategoryTitle: _read(
+        map,
+        'duaAllCategoryTitle',
+        fallback?.duaAllCategoryTitle ?? '',
+      ),
+      duaTotalCategoryLabel: _read(
+        map,
+        'duaTotalCategoryLabel',
+        fallback?.duaTotalCategoryLabel ?? '',
+      ),
+      duaSearchCategoryHint: _read(
+        map,
+        'duaSearchCategoryHint',
+        fallback?.duaSearchCategoryHint ?? '',
+      ),
+      duaTotalFeaturedLabel: _read(
+        map,
+        'duaTotalFeaturedLabel',
+        fallback?.duaTotalFeaturedLabel ?? '',
+      ),
+      duaExplore: _read(map, 'duaExplore', fallback?.duaExplore ?? ''),
+      duaTotalDuaLabel: _read(
+        map,
+        'duaTotalDuaLabel',
+        fallback?.duaTotalDuaLabel ?? '',
+      ),
+      duaAllDuaTitle: _read(
+        map,
+        'duaAllDuaTitle',
+        fallback?.duaAllDuaTitle ?? '',
+      ),
+      duaLastRead: _read(map, 'duaLastRead', fallback?.duaLastRead ?? ''),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',

@@ -47,6 +47,11 @@ class RouteNames {
   static const hadithReadingHistory = '/hadith/reading-history';
   static const hadithBookReader = '/hadith/book';
   static const dua = '/dua';
+  static const duaDashboard = '/dua/dashboard';
+  static const duaAllCategory = '/dua/category/all';
+  static const duaFeatured = '/dua/featured';
+  static const duaGroup = '/dua/group';
+  static const duaGroupAllDua = '/dua/group/all-dua';
   static const tasbih = '/tasbih';
   static const zikr = '/zikr';
   static const zikrDashboard = '/zikr/dashboard';

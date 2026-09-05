@@ -193,22 +193,23 @@ const Map<String, String> appTextBn = <String, String>{
   'authErrorEmailInUse': 'এই ইমেইলটি ইতিমধ্যে ব্যবহৃত হয়েছে। লগইন করুন।',
   'authErrorWeakPassword':
       'পাসওয়ার্ডটি খুবই দুর্বল। কমপক্ষে ৬টি অক্ষর ব্যবহার করুন।',
-  'authErrorOperationNotAllowed':
-      'এই সাইন-ইন পদ্ধতিটি ফায়ারবেসে সক্রিয় নেই।',
-  'authErrorRequiresRecentLogin':
-      'পাসওয়ার্ড পরিবর্তনের আগে আবার লগইন করুন।',
+  'authErrorOperationNotAllowed': 'এই সাইন-ইন পদ্ধতিটি ফায়ারবেসে সক্রিয় নেই।',
+  'authErrorRequiresRecentLogin': 'পাসওয়ার্ড পরিবর্তনের আগে আবার লগইন করুন।',
   'authErrorAccountExistsDifferentCredential':
       'ভিন্ন সাইন-ইন পদ্ধতিতে ইতিমধ্যে একটি অ্যাকাউন্ট আছে।',
   'authErrorCredentialAlreadyInUse':
       'এই গুগল অ্যাকাউন্টটি ইতিমধ্যে অন্য ব্যবহারকারীর সাথে যুক্ত।',
-  'authErrorTooManyRequests': 'অনেকবার চেষ্টা করা হয়েছে। পরে আবার চেষ্টা করুন।',
+  'authErrorTooManyRequests':
+      'অনেকবার চেষ্টা করা হয়েছে। পরে আবার চেষ্টা করুন।',
   'authErrorNetworkFailed':
       'নেটওয়ার্ক ত্রুটি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন।',
   'authErrorGeneric': 'প্রমাণীকরণ ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
-  'googleAuthErrorNotConfigured': 'গুগল সাইন-ইন এখনও সঠিকভাবে কনফিগার করা হয়নি।',
+  'googleAuthErrorNotConfigured':
+      'গুগল সাইন-ইন এখনও সঠিকভাবে কনফিগার করা হয়নি।',
   'googleAuthErrorUiUnavailable':
       'এই ডিভাইসে গুগল সাইন-ইন বর্তমানে ব্যবহারযোগ্য নয়।',
-  'googleAuthErrorInterrupted': 'গুগল সাইন-ইন বাধাগ্রস্ত হয়েছে। আবার চেষ্টা করুন।',
+  'googleAuthErrorInterrupted':
+      'গুগল সাইন-ইন বাধাগ্রস্ত হয়েছে। আবার চেষ্টা করুন।',
   'googleAuthErrorGeneric': 'গুগল সাইন-ইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
 
   // Dashboard feature
@@ -269,6 +270,19 @@ const Map<String, String> appTextBn = <String, String>{
   'zikrTapToCount': 'গণনা করতে ট্যাপ করুন',
   'zikrCompletingProgress': 'সম্পন্ন হচ্ছে',
   'zikrCompleted': 'সম্পন্ন',
+  'duaIntroTitle': 'দোয়া',
+  'duaIntroSubtitle': 'প্রতিদিনের দোয়ার মাধ্যমে আপনার ঈমান মজবুত করুন',
+  'duaIntroStartButton': 'শুরু করুন',
+  'duaFeaturedTitle': 'ফিচার্ড দোয়া',
+  'duaCategoryTitle': 'দোয়ার বিভাগ',
+  'duaAllCategoryTitle': 'সব বিভাগ',
+  'duaTotalCategoryLabel': 'মোট বিভাগ',
+  'duaSearchCategoryHint': 'বিভাগ খুঁজুন',
+  'duaTotalFeaturedLabel': 'মোট ফিচার্ড দোয়া',
+  'duaExplore': 'এক্সপ্লোর',
+  'duaTotalDuaLabel': 'মোট দোয়া',
+  'duaAllDuaTitle': 'সব দোয়া',
+  'duaLastRead': 'সর্বশেষ পঠিত',
   'zakatCalculator': 'যাকাত ক্যালকুলেটর',
   'ageCalculate': 'বয়স গণনা',
   'home': 'হোম',
