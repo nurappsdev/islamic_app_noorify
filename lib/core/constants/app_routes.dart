@@ -62,6 +62,13 @@ import '../../features/quran/presentation/bloc/surah_playback/surah_playback_blo
 import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../../features/quran/data/services/quran_audio_downloader.dart';
+import '../../features/dua/data/dua_catalog.dart';
+import '../../features/dua/presentation/screens/dua_all_category_screen.dart';
+import '../../features/dua/presentation/screens/dua_all_dua_screen.dart';
+import '../../features/dua/presentation/screens/dua_dashboard_screen.dart';
+import '../../features/dua/presentation/screens/dua_featured_screen.dart';
+import '../../features/dua/presentation/screens/dua_group_screen.dart';
+import '../../features/dua/presentation/screens/dua_intro_screen.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
 import '../../features/zikr/data/zikr_catalog.dart';
@@ -272,6 +279,22 @@ class AppRoutes {
           ),
           settings,
         );
+      case RouteNames.dua:
+        return _page(const DuaIntroScreen(), settings);
+      case RouteNames.duaDashboard:
+        return _page(const DuaDashboardScreen(), settings);
+      case RouteNames.duaAllCategory:
+        return _page(const DuaAllCategoryScreen(), settings);
+      case RouteNames.duaFeatured:
+        return _page(const DuaFeaturedScreen(), settings);
+      case RouteNames.duaGroup:
+        final featured =
+            settings.arguments as DuaFeatured? ?? DuaCatalog.featured.first;
+        return _page(DuaGroupScreen(featured: featured), settings);
+      case RouteNames.duaGroupAllDua:
+        final featured =
+            settings.arguments as DuaFeatured? ?? DuaCatalog.featured.first;
+        return _page(DuaAllDuaScreen(featured: featured), settings);
       case RouteNames.zikr:
         return _page(const ZikrIntroScreen(), settings);
       case RouteNames.zikrDashboard:
@@ -281,9 +304,7 @@ class AppRoutes {
       case RouteNames.zikrSet:
         final items = settings.arguments;
         return _page(
-          ZikrSetScreen(
-            items: items is List<ZikrItem> ? items : const [],
-          ),
+          ZikrSetScreen(items: items is List<ZikrItem> ? items : const []),
           settings,
         );
       case RouteNames.zikrPlanner:

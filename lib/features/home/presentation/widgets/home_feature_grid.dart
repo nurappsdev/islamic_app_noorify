@@ -24,6 +24,7 @@ class HomeFeatureGrid extends StatelessWidget {
       appText.featureDua,
       Icons.volunteer_activism,
       const Color(0xFFFF7D67),
+      routeName: RouteNames.dua,
     ),
     _HomeFeature(
       appText.featureDijpr,
