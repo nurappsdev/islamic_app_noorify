@@ -264,6 +264,15 @@ class AppText {
     required this.duaTotalDuaLabel,
     required this.duaAllDuaTitle,
     required this.duaLastRead,
+    required this.duaRecitePrefix,
+    required this.duaReciteSuffix,
+    required this.duaBookmarkAdded,
+    required this.duaSettingsTitle,
+    required this.showArabicLabel,
+    required this.showTranslationLabel,
+    required this.duaCreateFolderTitle,
+    required this.duaFolderNameFieldHint,
+    required this.duaCancel,
     required this.featureAsmaUlHusna,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
@@ -476,6 +485,7 @@ class AppText {
     required this.selectReciterTitle,
     required this.tafsirTitle,
     required this.repeatLabel,
+    required this.showTransliterationLabel,
   });
 
   final String noorify;
@@ -748,6 +758,15 @@ class AppText {
   final String duaTotalDuaLabel;
   final String duaAllDuaTitle;
   final String duaLastRead;
+  final String duaRecitePrefix;
+  final String duaReciteSuffix;
+  final String duaBookmarkAdded;
+  final String duaSettingsTitle;
+  final String showArabicLabel;
+  final String showTranslationLabel;
+  final String duaCreateFolderTitle;
+  final String duaFolderNameFieldHint;
+  final String duaCancel;
   final String featureAsmaUlHusna;
   final String featureQuizAndLearn;
   final String zakatCalculator;
@@ -974,6 +993,7 @@ class AppText {
   final String selectReciterTitle;
   final String tafsirTitle;
   final String repeatLabel;
+  final String showTransliterationLabel;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1864,6 +1884,47 @@ class AppText {
         fallback?.duaAllDuaTitle ?? '',
       ),
       duaLastRead: _read(map, 'duaLastRead', fallback?.duaLastRead ?? ''),
+      duaRecitePrefix: _read(
+        map,
+        'duaRecitePrefix',
+        fallback?.duaRecitePrefix ?? '',
+      ),
+      duaReciteSuffix: _read(
+        map,
+        'duaReciteSuffix',
+        fallback?.duaReciteSuffix ?? '',
+      ),
+      duaBookmarkAdded: _read(
+        map,
+        'duaBookmarkAdded',
+        fallback?.duaBookmarkAdded ?? '',
+      ),
+      duaSettingsTitle: _read(
+        map,
+        'duaSettingsTitle',
+        fallback?.duaSettingsTitle ?? '',
+      ),
+      showArabicLabel: _read(
+        map,
+        'showArabicLabel',
+        fallback?.showArabicLabel ?? '',
+      ),
+      showTranslationLabel: _read(
+        map,
+        'showTranslationLabel',
+        fallback?.showTranslationLabel ?? '',
+      ),
+      duaCreateFolderTitle: _read(
+        map,
+        'duaCreateFolderTitle',
+        fallback?.duaCreateFolderTitle ?? '',
+      ),
+      duaFolderNameFieldHint: _read(
+        map,
+        'duaFolderNameFieldHint',
+        fallback?.duaFolderNameFieldHint ?? '',
+      ),
+      duaCancel: _read(map, 'duaCancel', fallback?.duaCancel ?? ''),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',
@@ -2588,6 +2649,11 @@ class AppText {
       ),
       tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
       repeatLabel: _read(map, 'repeatLabel', fallback?.repeatLabel ?? ''),
+      showTransliterationLabel: _read(
+        map,
+        'showTransliterationLabel',
+        fallback?.showTransliterationLabel ?? '',
+      ),
     );
   }
 

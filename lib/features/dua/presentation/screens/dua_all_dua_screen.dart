@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
+import 'package:islami_app_noorify/features/dua/presentation/dua_route_args.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
 
@@ -17,7 +19,7 @@ class DuaAllDuaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final duaNames = DuaCatalog.groupDuaNames;
+    final duas = DuaCatalog.groupDuas;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,7 +31,7 @@ class DuaAllDuaScreen extends StatelessWidget {
             DuaPageHeader(title: appText.duaAllDuaTitle),
             SizedBox(height: 16.h),
             Text(
-              '${appText.duaTotalDuaLabel} ( ${duaNames.length} )',
+              '${appText.duaTotalDuaLabel} ( ${duas.length} )',
               style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
             ),
             SizedBox(height: 12.h),
@@ -58,9 +60,15 @@ class DuaAllDuaScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            for (var i = 0; i < duaNames.length; i++) ...[
-              DuaItemTile(name: duaNames[i]),
-              if (i != duaNames.length - 1) SizedBox(height: 10.h),
+            for (var i = 0; i < duas.length; i++) ...[
+              DuaItemTile(
+                name: duas[i].name,
+                onTap: () => Navigator.of(context).pushNamed(
+                  RouteNames.duaReader,
+                  arguments: DuaReaderArgs(featured: featured, detail: duas[i]),
+                ),
+              ),
+              if (i != duas.length - 1) SizedBox(height: 10.h),
             ],
           ],
         ),
