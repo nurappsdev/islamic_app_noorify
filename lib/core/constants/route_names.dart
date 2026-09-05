@@ -52,6 +52,7 @@ class RouteNames {
   static const duaFeatured = '/dua/featured';
   static const duaGroup = '/dua/group';
   static const duaGroupAllDua = '/dua/group/all-dua';
+  static const duaReader = '/dua/reader';
   static const tasbih = '/tasbih';
   static const zikr = '/zikr';
   static const zikrDashboard = '/zikr/dashboard';

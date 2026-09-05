@@ -5,9 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 /// Category, and Featured Dua screens (design `img_1.png` / `img_2.png` /
 /// `img_3.png`).
 class DuaPageHeader extends StatelessWidget {
-  const DuaPageHeader({super.key, required this.title});
+  const DuaPageHeader({super.key, required this.title, this.action});
 
   final String title;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +33,11 @@ class DuaPageHeader extends StatelessWidget {
             title,
             style: TextStyle(fontSize: 19.sp, fontWeight: FontWeight.w600),
           ),
+          if (action != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: action!,
+            ),
         ],
       ),
     );

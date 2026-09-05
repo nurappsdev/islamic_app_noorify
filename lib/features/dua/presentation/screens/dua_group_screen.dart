@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
+import 'package:islami_app_noorify/features/dua/presentation/dua_route_args.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_item_tile.dart';
 
@@ -23,7 +24,7 @@ class DuaGroupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final duaNames = DuaCatalog.groupDuaNames;
+    final duas = DuaCatalog.groupDuas;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -67,9 +68,18 @@ class DuaGroupScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Column(
                   children: [
-                    for (var i = 0; i < duaNames.length; i++) ...[
-                      DuaItemTile(name: duaNames[i]),
-                      if (i != duaNames.length - 1) SizedBox(height: 10.h),
+                    for (var i = 0; i < duas.length; i++) ...[
+                      DuaItemTile(
+                        name: duas[i].name,
+                        onTap: () => Navigator.of(context).pushNamed(
+                          RouteNames.duaReader,
+                          arguments: DuaReaderArgs(
+                            featured: featured,
+                            detail: duas[i],
+                          ),
+                        ),
+                      ),
+                      if (i != duas.length - 1) SizedBox(height: 10.h),
                     ],
                   ],
                 ),
@@ -134,7 +144,7 @@ class _GroupHeader extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      appText.duaFeaturedTitle,
+                      featured.groupLabel,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18.sp,
