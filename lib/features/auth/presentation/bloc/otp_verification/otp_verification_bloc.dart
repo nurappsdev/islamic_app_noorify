@@ -11,12 +11,8 @@ export 'otp_verification_state.dart';
 
 class OtpVerificationBloc
     extends Bloc<OtpVerificationEvent, OtpVerificationState> {
-  OtpVerificationBloc({
-    required VerifyEmailOtp verifyEmailOtp,
-    required ResendOtp resendOtp,
-  }) : _verifyEmailOtp = verifyEmailOtp,
-       _resendOtp = resendOtp,
-       super(const OtpVerificationState()) {
+  OtpVerificationBloc(this._verifyEmailOtp, this._resendOtp)
+    : super(const OtpVerificationState()) {
     on<OtpSubmitted>(_onSubmitted);
     on<OtpResendRequested>(_onResendRequested);
     on<OtpVerificationReset>(

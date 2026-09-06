@@ -60,8 +60,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   OtpVerificationBloc _createOtpBloc() {
     final repository = AccountRepositoryImpl(AuthRemoteDataSourceImpl());
     return OtpVerificationBloc(
-      verifyEmailOtp: VerifyEmailOtp(repository),
-      resendOtp: ResendOtp(repository),
+      VerifyEmailOtp(repository),
+      ResendOtp(repository),
     );
   }
 
