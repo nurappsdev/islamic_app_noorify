@@ -19,6 +19,7 @@ class EmailVerificationScreen extends StatefulWidget {
     super.key,
     this.initiallyShowOtp = false,
     this.email,
+    this.onRequestOtp,
     this.onOtpVerified,
   });
 
@@ -26,7 +27,15 @@ class EmailVerificationScreen extends StatefulWidget {
 
   /// E-mail the OTP was sent to. Required for the verify call in OTP mode.
   final String? email;
-  final VoidCallback? onOtpVerified;
+
+  /// Called by the "Send OTP" button (email step). Return `null` on success to
+  /// advance to the code step, or an error message to show. When omitted the
+  /// button just switches to the code step without a network call (sign-up).
+  final Future<String?> Function(String email)? onRequestOtp;
+
+  /// Called after the code is verified. Receives the `resetToken` when the
+  /// backend returns one (forgot-password flow); `null` otherwise (sign-up).
+  final void Function(String? resetToken)? onOtpVerified;
 
   @override
   State<EmailVerificationScreen> createState() =>
@@ -140,8 +149,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
     switch (state.status) {
       case OtpVerificationStatus.success:
-        widget.onOtpVerified?.call();
-        _otpBloc.add(const OtpVerificationReset());
+        // Consumer navigates away here; don't touch the (soon-disposed) bloc.
+        widget.onOtpVerified?.call(state.resetToken);
       case OtpVerificationStatus.failure:
         _showSnack(
           context,
@@ -220,10 +229,27 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 
-  void _showOtpInput() {
-    setState(() {
-      _isOtpMode = true;
-    });
+  bool _sendingOtp = false;
+
+  Future<void> _sendOtp() async {
+    final onRequestOtp = widget.onRequestOtp;
+    if (onRequestOtp == null) {
+      setState(() => _isOtpMode = true);
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    FocusScope.of(context).unfocus();
+    setState(() => _sendingOtp = true);
+    final error = await onRequestOtp(email);
+    if (!mounted) return;
+    setState(() => _sendingOtp = false);
+
+    if (error == null) {
+      setState(() => _isOtpMode = true);
+    } else if (error.isNotEmpty) {
+      _showSnack(context, error);
+    }
   }
 
   Widget _buildOtpFields() {
@@ -413,8 +439,16 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     return AuthButton(
                       label: _isOtpMode ? appText.verify : appText.sendOtp,
                       height: 50.h,
-                      isLoading: _isOtpMode && state.isLoading,
-                      onPressed: _isOtpMode ? _submitOtp : _showOtpInput,
+                      isLoading: _isOtpMode
+                          ? state.isLoading
+                          : _sendingOtp,
+                      onPressed: () {
+                        if (_isOtpMode) {
+                          _submitOtp();
+                        } else {
+                          _sendOtp();
+                        }
+                      },
                     );
                   },
                 ),

@@ -145,7 +145,7 @@ class _SignupViewState extends State<_SignupView> {
             builder: (_) => EmailVerificationScreen(
               initiallyShowOtp: true,
               email: state.user?.email,
-              onOtpVerified: () {
+              onOtpVerified: (_) {
                 Navigator.of(
                   context,
                 ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);

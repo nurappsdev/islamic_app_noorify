@@ -10,6 +10,7 @@ class OtpVerificationState {
     this.resendStatus = OtpResendStatus.idle,
     this.message,
     this.failure,
+    this.resetToken,
     this.resendMessage,
     this.resendFailure,
   });
@@ -19,6 +20,9 @@ class OtpVerificationState {
 
   /// Verify: server confirmation message on success.
   final String? message;
+
+  /// Verify: short-lived reset token (forgot-password flow only).
+  final String? resetToken;
 
   /// Verify: failure.
   final Failure? failure;
@@ -43,6 +47,7 @@ class OtpVerificationState {
     OtpResendStatus? resendStatus,
     String? message,
     Failure? failure,
+    String? resetToken,
     String? resendMessage,
     Failure? resendFailure,
   }) {
@@ -51,6 +56,7 @@ class OtpVerificationState {
       resendStatus: resendStatus ?? this.resendStatus,
       message: message ?? this.message,
       failure: failure ?? this.failure,
+      resetToken: resetToken ?? this.resetToken,
       resendMessage: resendMessage ?? this.resendMessage,
       resendFailure: resendFailure ?? this.resendFailure,
     );

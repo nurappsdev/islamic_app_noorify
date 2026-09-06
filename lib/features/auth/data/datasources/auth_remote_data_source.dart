@@ -4,22 +4,34 @@ import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/models/auth_user_model.dart';
+import 'package:islami_app_noorify/features/auth/data/models/forgot_password_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/login_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/login_response_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/register_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/resend_otp_request_model.dart';
+import 'package:islami_app_noorify/features/auth/data/models/reset_password_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/verify_otp_request_model.dart';
+import 'package:islami_app_noorify/features/auth/data/models/verify_otp_result_model.dart';
 
 /// Talks to the REST auth endpoints via Dio. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.
 abstract interface class AuthRemoteDataSource {
   Future<AuthUserModel> register(RegisterRequestModel body);
 
-  /// Verifies the e-mail OTP; returns the server confirmation message.
-  Future<String> verifyEmail(VerifyOtpRequestModel body);
+  /// Verifies the OTP; returns the confirmation message + optional reset token.
+  Future<VerifyOtpResultModel> verifyEmail(VerifyOtpRequestModel body);
 
   /// Requests a fresh OTP e-mail; returns the server confirmation message.
   Future<String> resendOtp(ResendOtpRequestModel body);
+
+  /// Forgot-password: e-mails a reset OTP; returns the confirmation message.
+  Future<String> forgotPassword(ForgotPasswordRequestModel body);
+
+  /// Sets a new password. [resetToken] goes in the `Authorization` header.
+  Future<String> resetPassword(
+    ResetPasswordRequestModel body, {
+    required String resetToken,
+  });
 
   /// Signs in; returns the auth token (+ user when the API includes it).
   Future<LoginResponseModel> login(LoginRequestModel body);
@@ -41,10 +53,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<String> verifyEmail(VerifyOtpRequestModel body) async {
+  Future<VerifyOtpResultModel> verifyEmail(VerifyOtpRequestModel body) async {
     final json =
         _envelope(await _send(ApiConstants.verifyEmailEndPoint, body.toJson()));
-    return json['message']?.toString() ?? 'Your email has been verified.';
+    return VerifyOtpResultModel.fromEnvelope(json);
   }
 
   @override
@@ -52,6 +64,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final json =
         _envelope(await _send(ApiConstants.resendOtpEndPoint, body.toJson()));
     return json['message']?.toString() ?? 'A new code has been sent to your email.';
+  }
+
+  @override
+  Future<String> forgotPassword(ForgotPasswordRequestModel body) async {
+    final json = _envelope(
+      await _send(ApiConstants.forgotPasswordPoint, body.toJson()),
+    );
+    return json['message']?.toString() ??
+        'We sent a reset code to your email.';
+  }
+
+  @override
+  Future<String> resetPassword(
+    ResetPasswordRequestModel body, {
+    required String resetToken,
+  }) async {
+    final json = _envelope(
+      await _send(
+        ApiConstants.resetPasswordEndPoint,
+        body.toJson(),
+        headers: {'Authorization': 'Bearer $resetToken'},
+      ),
+    );
+    return json['message']?.toString() ?? 'Your password has been updated.';
   }
 
   @override
@@ -72,10 +108,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   /// POSTs [data] to [path]. Throws [ServerException] for any non-success
   /// response (`success: false`, non-2xx status, auth/validation error body).
-  Future<Response<dynamic>> _send(String path, Map<String, dynamic> data) async {
+  Future<Response<dynamic>> _send(
+    String path,
+    Map<String, dynamic> data, {
+    Map<String, String>? headers,
+  }) async {
     final Response<dynamic> response;
     try {
-      response = await _dio.post<dynamic>(path, data: data);
+      response = await _dio.post<dynamic>(
+        path,
+        data: data,
+        options: headers == null ? null : Options(headers: headers),
+      );
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
