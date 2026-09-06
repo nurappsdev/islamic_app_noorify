@@ -2,33 +2,57 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 
 enum OtpVerificationStatus { initial, loading, success, failure }
 
+enum OtpResendStatus { idle, sending, sent, failure }
+
 class OtpVerificationState {
-  const OtpVerificationState._({
-    required this.status,
+  const OtpVerificationState({
+    this.status = OtpVerificationStatus.initial,
+    this.resendStatus = OtpResendStatus.idle,
     this.message,
     this.failure,
+    this.resendMessage,
+    this.resendFailure,
   });
 
-  const OtpVerificationState.initial()
-    : this._(status: OtpVerificationStatus.initial);
-
-  const OtpVerificationState.loading()
-    : this._(status: OtpVerificationStatus.loading);
-
-  const OtpVerificationState.success(String message)
-    : this._(status: OtpVerificationStatus.success, message: message);
-
-  const OtpVerificationState.failure(Failure failure)
-    : this._(status: OtpVerificationStatus.failure, failure: failure);
-
   final OtpVerificationStatus status;
+  final OtpResendStatus resendStatus;
 
-  /// Server confirmation message on success.
+  /// Verify: server confirmation message on success.
   final String? message;
+
+  /// Verify: failure.
   final Failure? failure;
 
-  bool get isLoading => status == OtpVerificationStatus.loading;
+  /// Resend: server confirmation message on success.
+  final String? resendMessage;
 
-  /// UI-safe error message, or `null` when there is no error.
+  /// Resend: failure.
+  final Failure? resendFailure;
+
+  bool get isLoading => status == OtpVerificationStatus.loading;
+  bool get isResending => resendStatus == OtpResendStatus.sending;
+
+  /// Verify error message, UI-safe.
   String? get errorMessage => failure?.message;
+
+  /// Resend error message, UI-safe.
+  String? get resendErrorMessage => resendFailure?.message;
+
+  OtpVerificationState copyWith({
+    OtpVerificationStatus? status,
+    OtpResendStatus? resendStatus,
+    String? message,
+    Failure? failure,
+    String? resendMessage,
+    Failure? resendFailure,
+  }) {
+    return OtpVerificationState(
+      status: status ?? this.status,
+      resendStatus: resendStatus ?? this.resendStatus,
+      message: message ?? this.message,
+      failure: failure ?? this.failure,
+      resendMessage: resendMessage ?? this.resendMessage,
+      resendFailure: resendFailure ?? this.resendFailure,
+    );
+  }
 }

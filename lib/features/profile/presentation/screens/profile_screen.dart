@@ -1,11 +1,17 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/logout/logout_bloc.dart';
+import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -479,36 +485,80 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52.h,
-      child: OutlinedButton(
-        onPressed: () {},
-        style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFFBEAEA),
-          foregroundColor: AppColor.forgotPassword,
-          side: const BorderSide(color: AppColor.forgotPassword),
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26.r),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+    return BlocProvider<LogoutBloc>(
+      create: (_) => LogoutBloc(
+        LogoutUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+      ),
+      child: const _LogoutButtonView(),
+    );
+  }
+}
+
+class _LogoutButtonView extends StatelessWidget {
+  const _LogoutButtonView();
+
+  void _onLogoutState(BuildContext context, LogoutState state) {
+    if (!state.isDone) return;
+    // Token was removed from Hive by the bloc; clear the rest of the session
+    // and send the user back to the sign-in screen.
+    skipAuthGateNotifier.value = false;
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      RouteNames.signIn,
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<LogoutBloc, LogoutState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onLogoutState,
+      builder: (context, state) {
+        return SizedBox(
+          height: 52.h,
+          child: OutlinedButton(
+            onPressed: state.inProgress
+                ? null
+                : () =>
+                      context.read<LogoutBloc>().add(const LogoutRequested()),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFFBEAEA),
+              foregroundColor: AppColor.forgotPassword,
+              side: const BorderSide(color: AppColor.forgotPassword),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26.r),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.logout_rounded, size: 18),
-                SizedBox(width: 8.w),
-                Text(
-                  AppText.of(context).logout,
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+                Row(
+                  children: [
+                    const Icon(Icons.logout_rounded, size: 18),
+                    SizedBox(width: 8.w),
+                    Text(
+                      AppText.of(context).logout,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
+                if (state.inProgress)
+                  SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  const Icon(Icons.chevron_right_rounded, size: 20),
               ],
             ),
-            const Icon(Icons.chevron_right_rounded, size: 20),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

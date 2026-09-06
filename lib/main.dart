@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
+import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/brand_colors.dart';
 import 'core/utils/app_text.dart';
@@ -17,6 +18,7 @@ final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await HiveService.init();
   await AppText.load();
   quranAudioHandler = await AudioService.init(
     builder: QuranAudioHandler.new,

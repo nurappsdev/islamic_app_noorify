@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart';
+import 'package:islami_app_noorify/features/auth/domain/entities/login_params.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/verify_otp_params.dart';
 
@@ -21,4 +22,23 @@ abstract interface class AccountRepository {
   /// Returns [Right] with the server confirmation message on success, or [Left]
   /// with a typed [Failure].
   Future<Either<Failure, String>> verifyEmailOtp(VerifyOtpParams params);
+
+  /// Requests a fresh verification OTP for [email].
+  ///
+  /// Returns [Right] with the server confirmation message, or [Left] with a
+  /// typed [Failure].
+  Future<Either<Failure, String>> resendOtp(String email);
+
+  /// Signs in with email + password. On success the auth token is persisted to
+  /// local storage (Hive) and the signed-in [AuthUser] is returned.
+  Future<Either<Failure, AuthUser>> login(LoginParams params);
+
+  /// Clears the persisted session (removes the token from Hive).
+  Future<void> logout();
+
+  /// The persisted auth token, or `null` when signed out.
+  String? get authToken;
+
+  /// `true` while a token is stored locally.
+  bool get isSignedIn;
 }

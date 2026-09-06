@@ -10,7 +10,14 @@ class OtpSubmitted extends OtpVerificationEvent {
   final String otp;
 }
 
-/// Resets the bloc back to its initial state (e.g. after showing an error).
+/// Fired when the user taps "Resend code".
+class OtpResendRequested extends OtpVerificationEvent {
+  const OtpResendRequested(this.email);
+
+  final String email;
+}
+
+/// Resets the verify part of the state (e.g. after showing an error).
 class OtpVerificationReset extends OtpVerificationEvent {
   const OtpVerificationReset();
 }

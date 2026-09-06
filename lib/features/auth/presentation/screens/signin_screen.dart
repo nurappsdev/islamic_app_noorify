@@ -7,6 +7,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/domain/usecases/login_user.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
@@ -16,8 +20,15 @@ class SignInScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SignInBloc>(
-      create: (_) => SignInBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SignInBloc>(create: (_) => SignInBloc()),
+        BlocProvider<LoginBloc>(
+          create: (_) => LoginBloc(
+            LoginUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+          ),
+        ),
+      ],
       child: const _SignInView(),
     );
   }
@@ -38,7 +49,8 @@ class _SignInViewState extends State<_SignInView> {
 
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
-  bool get _isLoading => _authState.isLoading;
+  bool get _isLoading =>
+      _authState.isLoading || context.watch<LoginBloc>().state.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
 
   @override
@@ -77,13 +89,38 @@ class _SignInViewState extends State<_SignInView> {
     );
   }
 
-  Future<void> _signIn() async {
-    skipAuthGateNotifier.value = true;
-    unawaited(saveAppPreferences());
-    if (!mounted) return;
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+  void _signIn() {
+    FocusScope.of(context).unfocus();
+    context.read<LoginBloc>().add(
+      LoginSubmitted(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
+  }
+
+  void _onLoginState(BuildContext context, LoginState state) {
+    switch (state.status) {
+      case LoginStatus.success:
+        // Token is already stored in Hive by the repository at this point.
+        skipAuthGateNotifier.value = true;
+        unawaited(saveAppPreferences());
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+      case LoginStatus.failure:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              state.errorMessage ?? 'Sign in failed. Please try again.',
+            ),
+          ),
+        );
+        context.read<LoginBloc>().add(const LoginReset());
+      case LoginStatus.initial:
+      case LoginStatus.loading:
+        break;
+    }
   }
 
   void _openEmailVerification() {
@@ -95,6 +132,14 @@ class _SignInViewState extends State<_SignInView> {
     final appText = AppText.of(context);
     context.watch<SignInBloc>();
 
+    return BlocListener<LoginBloc, LoginState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onLoginState,
+      child: _buildScaffold(appText),
+    );
+  }
+
+  Widget _buildScaffold(AppText appText) {
     return Scaffold(
       backgroundColor: AppColor.authBackground,
       body: SafeArea(
