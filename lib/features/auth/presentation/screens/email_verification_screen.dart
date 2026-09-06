@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,7 @@ import '../../../../core/utils/app_text.dart';
 import '../../../../core/utils/app_color.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/repositories/account_repository_impl.dart';
+import '../../domain/usecases/resend_otp.dart';
 import '../../domain/usecases/verify_email_otp.dart';
 import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
@@ -47,9 +50,20 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   late bool _isOtpMode = widget.initiallyShowOtp;
 
-  late final OtpVerificationBloc _otpBloc = OtpVerificationBloc(
-    VerifyEmailOtp(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
-  );
+  static const int _resendCooldownSeconds = 60;
+
+  late final OtpVerificationBloc _otpBloc = _createOtpBloc();
+
+  Timer? _resendTimer;
+  int _resendSecondsLeft = 0;
+
+  OtpVerificationBloc _createOtpBloc() {
+    final repository = AccountRepositoryImpl(AuthRemoteDataSourceImpl());
+    return OtpVerificationBloc(
+      verifyEmailOtp: VerifyEmailOtp(repository),
+      resendOtp: ResendOtp(repository),
+    );
+  }
 
   @override
   void initState() {
@@ -61,6 +75,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _otpBloc.close();
     _emailController.dispose();
     for (final controller in _otpControllers) {
@@ -81,18 +96,56 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 
+  void _resendOtp() {
+    if (_resendSecondsLeft > 0) return;
+    FocusScope.of(context).unfocus();
+    _otpBloc.add(OtpResendRequested(_emailController.text.trim()));
+  }
+
+  void _startResendCooldown() {
+    _resendTimer?.cancel();
+    setState(() => _resendSecondsLeft = _resendCooldownSeconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _resendSecondsLeft <= 0) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _resendSecondsLeft--);
+    });
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _onOtpState(BuildContext context, OtpVerificationState state) {
+    switch (state.resendStatus) {
+      case OtpResendStatus.sent:
+        _showSnack(
+          context,
+          state.resendMessage ?? 'A new code has been sent to your email.',
+        );
+        _startResendCooldown();
+      case OtpResendStatus.failure:
+        _showSnack(
+          context,
+          state.resendErrorMessage ?? 'Could not resend the code. Try again.',
+        );
+      case OtpResendStatus.idle:
+      case OtpResendStatus.sending:
+        break;
+    }
+
     switch (state.status) {
       case OtpVerificationStatus.success:
         widget.onOtpVerified?.call();
         _otpBloc.add(const OtpVerificationReset());
       case OtpVerificationStatus.failure:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              state.errorMessage ?? 'Verification failed. Please try again.',
-            ),
-          ),
+        _showSnack(
+          context,
+          state.errorMessage ?? 'Verification failed. Please try again.',
         );
         _otpBloc.add(const OtpVerificationReset());
       case OtpVerificationStatus.initial:
@@ -125,6 +178,45 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
+    );
+  }
+
+  Widget _buildResendControl() {
+    return BlocBuilder<OtpVerificationBloc, OtpVerificationState>(
+      buildWhen: (previous, current) =>
+          previous.resendStatus != current.resendStatus,
+      builder: (context, state) {
+        if (state.isResending) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 6.h),
+            child: SizedBox(
+              width: 16.w,
+              height: 16.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        final onCooldown = _resendSecondsLeft > 0;
+        return TextButton(
+          onPressed: onCooldown ? null : _resendOtp,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            minimumSize: Size(0, 32.h),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            foregroundColor: AppColor.primary,
+          ),
+          child: Text(
+            onCooldown
+                ? 'Resend code in ${_resendSecondsLeft}s'
+                : "Didn't get the code? Resend",
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: onCooldown ? AppColor.authLogo : AppColor.primary,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -206,7 +298,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     return BlocProvider<OtpVerificationBloc>.value(
       value: _otpBloc,
       child: BlocListener<OtpVerificationBloc, OtpVerificationState>(
-        listenWhen: (previous, current) => previous.status != current.status,
+        listenWhen: (previous, current) =>
+            previous.status != current.status ||
+            previous.resendStatus != current.resendStatus,
         listener: _onOtpState,
         child: _buildScaffold(appText),
       ),
@@ -294,16 +388,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 SizedBox(height: _isOtpMode ? 38.h : 32.h),
                 if (_isOtpMode) ...[
                   _buildOtpFields(),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 6.h),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Text(
-                      appText.resendIn,
-                      style: TextStyle(
-                        color: AppColor.authLogo,
-                        fontSize: 12.sp,
-                      ),
-                    ),
+                    child: _buildResendControl(),
                   ),
                 ] else
                   SizedBox(
