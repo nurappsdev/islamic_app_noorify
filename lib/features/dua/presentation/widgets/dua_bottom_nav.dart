@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 
 /// Navigation bar shown on the Dua dashboard (design `img_1.png`).
 ///
@@ -10,7 +11,9 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 /// design but don't have dedicated screens yet, so they're rendered
 /// non-interactive until a Saved Dua / quick-category screen exists.
 class DuaBottomNav extends StatelessWidget {
-  const DuaBottomNav({super.key});
+  const DuaBottomNav({super.key, this.selectedIndex = 0});
+
+  final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +40,16 @@ class DuaBottomNav extends StatelessWidget {
             _DuaNavItem(
               icon: Icons.home_outlined,
               label: appText.home,
-              selected: true,
+              selected: selectedIndex == 0,
+              onTap: () =>
+                  Navigator.of(context).pushNamed(RouteNames.duaDashboard),
             ),
-            const _DuaNavItem(icon: Icons.bookmark_border_rounded),
+            _DuaNavItem(
+              icon: Icons.bookmark_border_rounded,
+              label: 'Saved',
+              selected: selectedIndex == 1,
+              onTap: () => Navigator.of(context).pushNamed(RouteNames.duaSaved),
+            ),
             const _DuaNavItem(icon: Icons.fact_check_outlined),
           ],
         ),
@@ -49,40 +59,54 @@ class DuaBottomNav extends StatelessWidget {
 }
 
 class _DuaNavItem extends StatelessWidget {
-  const _DuaNavItem({required this.icon, this.label, this.selected = false});
+  const _DuaNavItem({
+    required this.icon,
+    this.label,
+    this.selected = false,
+    this.onTap,
+  });
 
   final IconData icon;
   final String? label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     if (!selected) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
-        child: Icon(icon, color: Colors.white, size: 18.sp),
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
+          child: Icon(icon, color: Colors.white, size: 18.sp),
+        ),
       );
     }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF738A69),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 16.sp),
-          SizedBox(width: 4.w),
-          Text(
-            label ?? '',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 9.sp,
-              fontWeight: FontWeight.w700,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: const Color(0xFF738A69),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 16.sp),
+            SizedBox(width: 4.w),
+            Text(
+              label ?? '',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

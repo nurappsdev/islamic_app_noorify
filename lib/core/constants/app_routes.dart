@@ -70,6 +70,7 @@ import '../../features/dua/presentation/screens/dua_featured_screen.dart';
 import '../../features/dua/presentation/screens/dua_group_screen.dart';
 import '../../features/dua/presentation/screens/dua_intro_screen.dart';
 import '../../features/dua/presentation/screens/dua_reader_screen.dart';
+import '../../features/dua/presentation/screens/dua_saved_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
@@ -301,6 +302,8 @@ class AppRoutes {
         final args =
             settings.arguments as DuaReaderArgs? ?? DuaReaderArgs.fallback;
         return _page(DuaReaderScreen(args: args), settings);
+      case RouteNames.duaSaved:
+        return _page(const DuaSavedScreen(), settings);
       case RouteNames.zikr:
         return _page(const ZikrIntroScreen(), settings);
       case RouteNames.zikrDashboard:
