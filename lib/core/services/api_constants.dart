@@ -6,7 +6,7 @@ class ApiConstants {
 // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
 
-  static const String socketBaseUrl = "https://api.drop-dr.com";
+  // static const String socketBaseUrl = "https://api.drop-dr.com";
 
 // static const String baseUrl = "https://health-mamun.sarv.live/api/v1";
 // static const String imageBaseUrl = "https://health-mamun.sarv.live/uploads/";
