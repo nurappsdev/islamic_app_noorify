@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:islami_app_noorify/features/auth/domain/usecases/reset_password.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  const ResetPasswordScreen({super.key, this.resetToken});
+
+  /// Short-lived token from OTP verification that authorises the reset.
+  final String? resetToken;
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -22,11 +31,58 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
+  late final ResetPasswordBloc _bloc = ResetPasswordBloc(
+    ResetPassword(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+  );
+
   @override
   void dispose() {
+    _bloc.close();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    _bloc.add(
+      ResetPasswordSubmitted(
+        resetToken: widget.resetToken ?? '',
+        password: _newPasswordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      ),
+    );
+  }
+
+  void _onState(BuildContext context, ResetPasswordState state) {
+    switch (state.status) {
+      case ResetPasswordStatus.success:
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(state.message ?? 'Your password has been updated.'),
+            ),
+          );
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          RouteNames.signIn,
+          (route) => false,
+        );
+      case ResetPasswordStatus.failure:
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                state.errorMessage ?? 'Could not reset password. Try again.',
+              ),
+            ),
+          );
+        _bloc.add(const ResetPasswordReset());
+      case ResetPasswordStatus.initial:
+      case ResetPasswordStatus.loading:
+        break;
+    }
   }
 
   InputDecoration _fieldDecoration({
@@ -96,6 +152,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
+    return BlocProvider<ResetPasswordBloc>.value(
+      value: _bloc,
+      child: BlocListener<ResetPasswordBloc, ResetPasswordState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: _onState,
+        child: _buildScaffold(appText),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(AppText appText) {
     return Scaffold(
       backgroundColor: AppColor.authBackground,
       body: SafeArea(
@@ -196,10 +263,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   },
                 ),
                 SizedBox(height: 78.h),
-                AuthButton(
-                  label: appText.confirm,
-                  height: 50.h,
-                  onPressed: () {},
+                BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                  builder: (context, state) {
+                    return AuthButton(
+                      label: appText.confirm,
+                      height: 50.h,
+                      isLoading: state.isLoading,
+                      onPressed: _submit,
+                    );
+                  },
                 ),
                 SizedBox(height: 120.h),
               ],

@@ -335,7 +335,7 @@ class AppRoutes {
       case RouteNames.signUp:
         return _page(const SignupScreen(), settings);
       case RouteNames.forgotPassword:
-        return _page(const ForgotPasswordScreen(), settings);
+        return _page(ForgotPasswordScreen(), settings);
       case RouteNames.emailVerification:
         return _page(const EmailVerificationScreen(), settings);
       case RouteNames.resetPassword:

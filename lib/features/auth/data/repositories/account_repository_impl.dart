@@ -4,13 +4,17 @@ import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/data/models/forgot_password_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/login_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/register_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/resend_otp_request_model.dart';
+import 'package:islami_app_noorify/features/auth/data/models/reset_password_request_model.dart';
 import 'package:islami_app_noorify/features/auth/data/models/verify_otp_request_model.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/login_params.dart';
+import 'package:islami_app_noorify/features/auth/domain/entities/otp_verification_result.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
+import 'package:islami_app_noorify/features/auth/domain/entities/reset_password_params.dart';
 import 'package:islami_app_noorify/features/auth/domain/entities/verify_otp_params.dart';
 import 'package:islami_app_noorify/features/auth/domain/repositories/account_repository.dart';
 
@@ -29,8 +33,10 @@ class AccountRepositoryImpl implements AccountRepository {
   }
 
   @override
-  Future<Either<Failure, String>> verifyEmailOtp(VerifyOtpParams params) {
-    return _guard(
+  Future<Either<Failure, OtpVerificationResult>> verifyEmailOtp(
+    VerifyOtpParams params,
+  ) {
+    return _guard<OtpVerificationResult>(
       () => _remote.verifyEmail(VerifyOtpRequestModel.fromParams(params)),
     );
   }
@@ -39,6 +45,23 @@ class AccountRepositoryImpl implements AccountRepository {
   Future<Either<Failure, String>> resendOtp(String email) {
     return _guard(
       () => _remote.resendOtp(ResendOtpRequestModel(email: email)),
+    );
+  }
+
+  @override
+  Future<Either<Failure, String>> forgotPassword(String email) {
+    return _guard(
+      () => _remote.forgotPassword(ForgotPasswordRequestModel(email: email)),
+    );
+  }
+
+  @override
+  Future<Either<Failure, String>> resetPassword(ResetPasswordParams params) {
+    return _guard(
+      () => _remote.resetPassword(
+        ResetPasswordRequestModel.fromParams(params),
+        resetToken: params.resetToken,
+      ),
     );
   }
 

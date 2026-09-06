@@ -40,10 +40,11 @@ class OtpVerificationBloc
           failure: failure,
         ),
       ),
-      (message) => emit(
+      (result) => emit(
         state.copyWith(
           status: OtpVerificationStatus.success,
-          message: message,
+          message: result.message,
+          resetToken: result.resetToken,
         ),
       ),
     );
