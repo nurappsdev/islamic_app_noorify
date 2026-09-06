@@ -24,10 +24,12 @@ class ApiConstants {
 //static const String mapAPIEndPoint = "AIzaSyA-Iri6x5mzNv45XO3a-Ew3z4nvF4CdYo0";
 
   static const String signUpEndPoint = "/auth/register";
+  static const String verifyEmailEndPoint = "/auth/verify-otp";
+  static const String resendOtpEndPoint = "/auth/resend-otp";
   static const String signInEndPoint = "/auth/login";
   static const String refreshTokenEndPoint = "/auth/refresh-token";
   static const String accountDelete = "/users/delete";
-  static const String verifyEmailEndPoint = "/auth/verify-email";
+
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";
   static const String forgotPasswordPoint = "/auth/forgot-password";

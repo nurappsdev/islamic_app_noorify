@@ -9,9 +9,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/services/auth_service.dart';
+import 'package:islami_app_noorify/features/auth/domain/usecases/register_account.dart';
 import 'package:islami_app_noorify/features/auth/domain/usecases/sign_up_usecase.dart';
+import 'package:islami_app_noorify/features/auth/presentation/bloc/register/register_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
@@ -26,8 +30,17 @@ class SignupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SignUpBloc>(
-      create: (_) => SignUpBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SignUpBloc>(create: (_) => SignUpBloc()),
+        BlocProvider<RegisterBloc>(
+          create: (_) => RegisterBloc(
+            RegisterAccount(
+              AccountRepositoryImpl(AuthRemoteDataSourceImpl()),
+            ),
+          ),
+        ),
+      ],
       child: _SignupView(googleSignUpRouteResolver: googleSignUpRouteResolver),
     );
   }
@@ -50,9 +63,12 @@ class _SignupViewState extends State<_SignupView> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  String? _selectedGender;
+
   SignUpBloc get _auth => context.read<SignUpBloc>();
   SignUpState get _authState => _auth.state;
-  bool get _isLoading => _authState.isLoading;
+  bool get _isLoading =>
+      _authState.isLoading || context.watch<RegisterBloc>().state.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
   bool get _obscureConfirm => _authState.obscureConfirm;
   bool get _termsAccepted => _authState.saveInfo;
@@ -96,19 +112,55 @@ class _SignupViewState extends State<_SignupView> {
     );
   }
 
-  Future<void> _createAccount() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => EmailVerificationScreen(
-          initiallyShowOtp: true,
-          onOtpVerified: () {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
-          },
-        ),
+  void _createAccount() {
+    FocusScope.of(context).unfocus();
+
+    if (!_termsAccepted) {
+      _showMessage('Please accept the Terms of Service to continue.');
+      return;
+    }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showMessage('Passwords do not match.');
+      return;
+    }
+
+    context.read<RegisterBloc>().add(
+      RegisterSubmitted(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: _phoneController.text.trim().isEmpty
+            ? null
+            : _phoneController.text.trim(),
+        gender: _selectedGender,
       ),
     );
+  }
+
+  void _onRegisterStateChanged(BuildContext context, RegisterState state) {
+    switch (state.status) {
+      case RegisterStatus.success:
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => EmailVerificationScreen(
+              initiallyShowOtp: true,
+              email: state.user?.email,
+              onOtpVerified: () {
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+              },
+            ),
+          ),
+        );
+        context.read<RegisterBloc>().add(const RegisterReset());
+      case RegisterStatus.failure:
+        _showMessage(state.errorMessage ?? 'Registration failed. Please try again.');
+        context.read<RegisterBloc>().add(const RegisterReset());
+      case RegisterStatus.initial:
+      case RegisterStatus.loading:
+        break;
+    }
   }
 
   Future<String> _defaultGoogleSignUpRouteResolver() async {
@@ -315,7 +367,10 @@ class _SignupViewState extends State<_SignupView> {
     final appText = AppText.of(context);
     context.watch<SignUpBloc>();
 
-    return Scaffold(
+    return BlocListener<RegisterBloc, RegisterState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onRegisterStateChanged,
+      child: Scaffold(
       backgroundColor: AppColor.authBackground,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -390,6 +445,7 @@ class _SignupViewState extends State<_SignupView> {
                 SizedBox(
                   height: 48.h,
                   child: DropdownButtonFormField<String>(
+                    initialValue: _selectedGender,
                     decoration: _fieldDecoration(
                       hint: appText.gender,
                       prefixIcon: Icons.male_outlined,
@@ -410,7 +466,8 @@ class _SignupViewState extends State<_SignupView> {
                         child: Text(appText.female),
                       ),
                     ],
-                    onChanged: (_) {},
+                    onChanged: (value) =>
+                        setState(() => _selectedGender = value),
                   ),
                 ),
                 SizedBox(height: 9.h),
@@ -487,6 +544,7 @@ class _SignupViewState extends State<_SignupView> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

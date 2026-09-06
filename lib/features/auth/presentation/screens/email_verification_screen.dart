@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/utils/app_text.dart';
 import '../../../../core/utils/app_color.dart';
+import '../../data/datasources/auth_remote_data_source.dart';
+import '../../data/repositories/account_repository_impl.dart';
+import '../../domain/usecases/verify_email_otp.dart';
+import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
     super.key,
     this.initiallyShowOtp = false,
+    this.email,
     this.onOtpVerified,
   });
 
   final bool initiallyShowOtp;
+
+  /// E-mail the OTP was sent to. Required for the verify call in OTP mode.
+  final String? email;
   final VoidCallback? onOtpVerified;
 
   @override
@@ -38,8 +47,21 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   late bool _isOtpMode = widget.initiallyShowOtp;
 
+  late final OtpVerificationBloc _otpBloc = OtpVerificationBloc(
+    VerifyEmailOtp(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      _emailController.text = widget.email!;
+    }
+  }
+
   @override
   void dispose() {
+    _otpBloc.close();
     _emailController.dispose();
     for (final controller in _otpControllers) {
       controller.dispose();
@@ -48,6 +70,35 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       focusNode.dispose();
     }
     super.dispose();
+  }
+
+  String get _enteredOtp => _otpControllers.map((c) => c.text).join();
+
+  void _submitOtp() {
+    FocusScope.of(context).unfocus();
+    _otpBloc.add(
+      OtpSubmitted(email: _emailController.text.trim(), otp: _enteredOtp),
+    );
+  }
+
+  void _onOtpState(BuildContext context, OtpVerificationState state) {
+    switch (state.status) {
+      case OtpVerificationStatus.success:
+        widget.onOtpVerified?.call();
+        _otpBloc.add(const OtpVerificationReset());
+      case OtpVerificationStatus.failure:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              state.errorMessage ?? 'Verification failed. Please try again.',
+            ),
+          ),
+        );
+        _otpBloc.add(const OtpVerificationReset());
+      case OtpVerificationStatus.initial:
+      case OtpVerificationStatus.loading:
+        break;
+    }
   }
 
   InputDecoration _fieldDecoration({
@@ -152,6 +203,17 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
+    return BlocProvider<OtpVerificationBloc>.value(
+      value: _otpBloc,
+      child: BlocListener<OtpVerificationBloc, OtpVerificationState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: _onOtpState,
+        child: _buildScaffold(appText),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(AppText appText) {
     return Scaffold(
       backgroundColor: AppColor.authBackground,
       body: SafeArea(
@@ -258,12 +320,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
                   ),
                 SizedBox(height: _isOtpMode ? 110.h : 94.h),
-                AuthButton(
-                  label: _isOtpMode ? appText.verify : appText.sendOtp,
-                  height: 50.h,
-                  onPressed: _isOtpMode
-                      ? widget.onOtpVerified ?? () {}
-                      : _showOtpInput,
+                BlocBuilder<OtpVerificationBloc, OtpVerificationState>(
+                  builder: (context, state) {
+                    return AuthButton(
+                      label: _isOtpMode ? appText.verify : appText.sendOtp,
+                      height: 50.h,
+                      isLoading: _isOtpMode && state.isLoading,
+                      onPressed: _isOtpMode ? _submitOtp : _showOtpInput,
+                    );
+                  },
                 ),
                 SizedBox(height: 120.h),
               ],
