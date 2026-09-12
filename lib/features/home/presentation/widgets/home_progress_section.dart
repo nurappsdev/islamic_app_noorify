@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
+import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+
+/// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
+/// already knows how to localize. `nafl_and_more` isn't here: it drives the
+/// full-width card below the grid instead of a grid tile.
+const _pillarTitleKeyByKey = {
+  'fardh_prayer': 'Fardh Prayer',
+  'sunnah_witr': 'Sunnah and Witr',
+  'quran': 'Quran',
+  'zikr': 'Zikr',
+  'hadith': 'Hadith',
+  'quiz': 'Quiz',
+};
+
+const _naflAndMorePillarKey = 'nafl_and_more';
 
 class HomeProgressSection extends StatelessWidget {
   const HomeProgressSection({super.key});
@@ -20,19 +37,39 @@ class HomeProgressSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final dashboardState = context.watch<HomeDashboardBloc>().state;
+    final pillars = dashboardState.hasData
+        ? dashboardState.dashboard!.pillarCards
+        : null;
+
+    final gridPillars = pillars
+        ?.where((p) => p.pillarKey != _naflAndMorePillarKey)
+        .toList();
+    PillarCard? naflPillar;
+    if (pillars != null) {
+      for (final p in pillars) {
+        if (p.pillarKey == _naflAndMorePillarKey) {
+          naflPillar = p;
+          break;
+        }
+      }
+    }
+
     return Column(
       children: [
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _items.length,
+          itemCount: gridPillars?.length ?? _items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisExtent: 90.h,
             crossAxisSpacing: 11.w,
             mainAxisSpacing: 8.h,
           ),
-          itemBuilder: (context, index) => _ProgressCard(item: _items[index]),
+          itemBuilder: (context, index) => gridPillars != null
+              ? _PillarProgressCard(pillar: gridPillars[index])
+              : _ProgressCard(item: _items[index]),
         ),
         SizedBox(height: 8.h),
         InkWell(
@@ -47,14 +84,57 @@ class HomeProgressSection extends StatelessWidget {
                   style: homeSerifStyle(fontSize: 12.sp),
                 ),
                 SizedBox(height: 6.h),
-                const _ProgressBar(value: .58),
+                _ProgressBar(
+                  value: naflPillar == null
+                      ? .58
+                      : (naflPillar.percentage / 100).clamp(0, 1).toDouble(),
+                ),
                 SizedBox(height: 7.h),
-                Text('0/3', style: homeSansStyle(fontSize: 12.sp)),
+                Text(
+                  naflPillar?.formattedSubtext ?? '0/3',
+                  style: homeSansStyle(fontSize: 12.sp),
+                ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PillarProgressCard extends StatelessWidget {
+  const _PillarProgressCard({required this.pillar});
+
+  final PillarCard pillar;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final titleKey = _pillarTitleKeyByKey[pillar.pillarKey] ?? pillar.title;
+    final progress = (pillar.percentage / 100).clamp(0, 1).toDouble();
+    return InkWell(
+      borderRadius: BorderRadius.circular(16.r),
+      onTap: () => _openAmolTracking(context, titleKey),
+      child: HomeCard(
+        padding: EdgeInsets.symmetric(vertical: 9.h),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                appText.categoryLabel(titleKey),
+                style: homeSerifStyle(fontSize: 12.sp),
+              ),
+            ),
+            SizedBox(height: 7.h),
+            _ProgressBar(value: progress),
+            SizedBox(height: 6.h),
+            Text(pillar.formattedSubtext, style: homeSansStyle(fontSize: 12.sp)),
+          ],
+        ),
+      ),
     );
   }
 }

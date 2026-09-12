@@ -75,6 +75,7 @@ const Map<String, String> appTextBn = <String, String>{
   'categorySunnahAndWitr': 'সুন্নত ও বিতর',
   'categoryQuran': 'কুরআন',
   'categoryNaflSalat': 'নফল সালাত',
+  'categoryZikr': 'যিকর',
   'categoryHadith': 'হাদিস',
   'hadithIntroTitle': 'হাদিস ও বই',
   'hadithIntroSubtitle':
