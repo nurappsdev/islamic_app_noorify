@@ -1,9 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
+
+/// English title -> the pillar key `GET /amol/tracker/daily` uses, so a
+/// caller (e.g. [HomeProgressSection]'s tiles) can still ask for a category
+/// to open expanded by its familiar display name.
+const _pillarKeyByTitle = {
+  'Fardh Prayer': 'fardh_prayer',
+  'Sunnah and Witr': 'sunnah_witr',
+  'Nafl Salat': 'nafl_salat',
+  'Quran': 'quran',
+  'Hadith': 'hadith',
+  'Quiz': 'quiz',
+  'Nafl & more': 'nafl_and_more',
+};
+
+/// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
+/// already knows how to localize.
+const _pillarTitleKeyByKey = {
+  'fardh_prayer': 'Fardh Prayer',
+  'sunnah_witr': 'Sunnah and Witr',
+  'nafl_salat': 'Nafl Salat',
+  'quran': 'Quran',
+  'hadith': 'Hadith',
+  'quiz': 'Quiz',
+  'nafl_and_more': 'Nafl & more',
+};
 
 class AmolTrackingScreen extends StatefulWidget {
   const AmolTrackingScreen({
@@ -26,375 +59,217 @@ class AmolTrackingScreen extends StatefulWidget {
 }
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
-  late String? _expandedCategory = widget.initialExpandedCategory;
+  late final DateTime _today = (widget.now ?? DateTime.now)();
+  late String? _expandedPillarKey =
+      _pillarKeyByTitle[widget.initialExpandedCategory] ??
+      widget.initialExpandedCategory;
+  late final AmolDailyBloc _bloc =
+      AmolDailyBloc(
+          GetAmolDaily(
+            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+          ),
+        )
+        ..add(LoadAmolDaily(_isoDate(_today)));
 
-  var _fardhItems = const [
-    _SalahItem(
-      name: 'Fajr',
-      icon: Icons.wb_twilight,
-      iconColor: Color(0xFFFFC83D),
-      points: 2,
-      status: _SalahStatus.completed,
-    ),
-    _SalahItem(
-      name: 'Duhr',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: 1,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Asr',
-      icon: Icons.sunny,
-      iconColor: Color(0xFFFFAA2C),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Magrib',
-      icon: Icons.wb_twilight_outlined,
-      iconColor: Color(0xFFFF8E4A),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Esa',
-      icon: Icons.nights_stay,
-      iconColor: Color(0xFFEACB2B),
-      points: 2,
-      status: _SalahStatus.locked,
-    ),
-  ];
+  static String _isoDate(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
 
-  var _sunnahItems = const [
-    _SalahItem(
-      name: 'Fajr Sunnah',
-      icon: Icons.wb_twilight,
-      iconColor: Color(0xFFFFC83D),
-      points: 1,
-      status: _SalahStatus.completed,
-    ),
-    _SalahItem(
-      name: 'Duhr Sunnah',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: 1,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Asr Sunnah',
-      icon: Icons.sunny,
-      iconColor: Color(0xFFFFAA2C),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Magrib Sunnah',
-      icon: Icons.wb_twilight_outlined,
-      iconColor: Color(0xFFFF8E4A),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Esa Sunnah',
-      icon: Icons.nights_stay,
-      iconColor: Color(0xFFEACB2B),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Witr',
-      icon: Icons.nightlight_round,
-      iconColor: Color(0xFFEACB2B),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-  ];
+  static String _formatPercentage(num percentage) {
+    final isWhole = percentage % 1 == 0;
+    return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
+  }
 
-  var _naflItems = const [
-    _SalahItem(
-      name: 'Tahajjud',
-      icon: Icons.nights_stay,
-      iconColor: Color(0xFF7FA8C9),
-      points: 1,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Ishraq',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: .5,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Chast',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: .5,
-      status: _SalahStatus.locked,
-    ),
-    _SalahItem(
-      name: 'Awabin',
-      icon: Icons.wb_sunny,
-      iconColor: Color(0xFFFFC83D),
-      points: .5,
-      status: _SalahStatus.locked,
-    ),
-  ];
-
-  var _naflMoreItems = const [
-    _SalahItem(
-      name: 'Sadaqah',
-      icon: Icons.volunteer_activism,
-      iconColor: Color(0xFFE8916B),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Karze Hasanah',
-      icon: Icons.handshake,
-      iconColor: Color(0xFF6FA8D8),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Nafl Fasting',
-      icon: Icons.self_improvement,
-      iconColor: Color(0xFFC9A227),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Physical Exercise',
-      icon: Icons.fitness_center,
-      iconColor: Color(0xFF4FB0C6),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Given Good Ad Vice',
-      icon: Icons.campaign,
-      iconColor: Color(0xFF4FB0C6),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-    _SalahItem(
-      name: 'Skill Development',
-      icon: Icons.emoji_objects,
-      iconColor: Color(0xFFFFC83D),
-      points: .5,
-      status: _SalahStatus.available,
-    ),
-  ];
-
-  static const _quranEntry = _InfoEntry(
-    icon: Icons.auto_awesome,
-    iconColor: Color(0xFFFF8A50),
-    name: 'Quran Tilawat',
-    points: 11,
-  );
-  static const _hadithEntry = _InfoEntry(
-    icon: Icons.auto_awesome,
-    iconColor: Color(0xFFFF8A50),
-    name: 'Hadith Reading',
-    points: 8,
-  );
-  static const _quizEntry = _InfoEntry(
-    icon: Icons.quiz,
-    iconColor: Color(0xFFFFC83D),
-    name: 'Giving Quiz',
-    points: 2.5,
-  );
-
-  void _toggleCategory(String title) {
+  void _toggleCategory(String pillarKey) {
     setState(() {
-      _expandedCategory = _expandedCategory == title ? null : title;
+      _expandedPillarKey = _expandedPillarKey == pillarKey ? null : pillarKey;
     });
   }
 
-  void _toggleFardhItem(int index) {
-    setState(() => _fardhItems = _toggledSalah(_fardhItems, index));
-  }
+  void _reload() => _bloc.add(LoadAmolDaily(_isoDate(_today)));
 
-  void _toggleSunnahItem(int index) {
-    setState(() => _sunnahItems = _toggledSalah(_sunnahItems, index));
-  }
-
-  void _toggleNaflItem(int index) {
-    setState(() => _naflItems = _toggledSalah(_naflItems, index));
-  }
-
-  void _toggleNaflMoreItem(int index) {
-    setState(() => _naflMoreItems = _toggledSalah(_naflMoreItems, index));
-  }
-
-  static List<_SalahItem> _toggledSalah(List<_SalahItem> items, int index) {
-    final item = items[index];
-    if (item.status == _SalahStatus.locked) return items;
-    return [
-      for (var i = 0; i < items.length; i++)
-        if (i == index)
-          item.copyWith(
-            status: item.status == _SalahStatus.completed
-                ? _SalahStatus.available
-                : _SalahStatus.completed,
-          )
-        else
-          items[i],
-    ];
+  @override
+  void dispose() {
+    _bloc.close();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final today = (widget.now ?? DateTime.now)();
     final appText = AppText.of(context);
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            AmolHeader(title: appText.amolTracking),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+    return BlocProvider.value(
+      value: _bloc,
+      child: BlocBuilder<AmolDailyBloc, AmolDailyState>(
+        builder: (context, state) {
+          final dashboard = state.dashboard;
+          final pointLabel = dashboard?.summary.pointsText ?? widget.pointLabel;
+          final progress = dashboard == null
+              ? widget.progress
+              : (dashboard.completionPercentage / 100).clamp(0, 1).toDouble();
+          final progressLabel = dashboard == null
+              ? widget.progressLabel
+              : _formatPercentage(dashboard.completionPercentage);
+
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: Column(
                 children: [
-                  AmolSummaryCard(
-                    pointLabel: widget.pointLabel,
-                    progressLabel: widget.progressLabel,
-                    progress: widget.progress,
-                  ),
-                  SizedBox(height: 18.h),
-                  Text(
-                    formatAmolDate(today, appText),
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                  AmolHeader(title: appText.amolTracking),
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+                      children: [
+                        AmolSummaryCard(
+                          pointLabel: pointLabel,
+                          progressLabel: progressLabel,
+                          progress: progress,
+                        ),
+                        SizedBox(height: 18.h),
+                        Text(
+                          formatAmolDate(_today, appText),
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        if (dashboard != null)
+                          for (final pillar in dashboard.pillars) ...[
+                            _PillarRow(
+                              pillar: pillar,
+                              expanded: _expandedPillarKey == pillar.pillarKey,
+                              onToggleExpanded: () =>
+                                  _toggleCategory(pillar.pillarKey),
+                            ),
+                            SizedBox(height: 12.h),
+                          ]
+                        else if (state.status == AmolDailyStatus.failure)
+                          _LoadFailedNotice(
+                            message: state.errorMessage,
+                            onRetry: _reload,
+                          )
+                        else
+                          const _PillarListShimmer(),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 12.h),
-                  _ExpandableAmolRow(
-                    title: appText.categoryFardhPrayer,
-                    items: _fardhItems,
-                    expanded: _expandedCategory == 'Fardh Prayer',
-                    onToggleExpanded: () => _toggleCategory('Fardh Prayer'),
-                    onToggleItem: _toggleFardhItem,
-                  ),
-                  SizedBox(height: 12.h),
-                  _ExpandableAmolRow(
-                    title: appText.categorySunnahAndWitr,
-                    items: _sunnahItems,
-                    expanded: _expandedCategory == 'Sunnah and Witr',
-                    onToggleExpanded: () => _toggleCategory('Sunnah and Witr'),
-                    onToggleItem: _toggleSunnahItem,
-                  ),
-                  SizedBox(height: 12.h),
-                  _ExpandableAmolRow(
-                    title: appText.categoryNaflSalat,
-                    items: _naflItems,
-                    expanded: _expandedCategory == 'Nafl Salat',
-                    onToggleExpanded: () => _toggleCategory('Nafl Salat'),
-                    onToggleItem: _toggleNaflItem,
-                  ),
-                  SizedBox(height: 12.h),
-                  _InfoExpandableRow(
-                    title: appText.categoryQuran,
-                    fraction: '0/11',
-                    entry: _quranEntry,
-                    expanded: _expandedCategory == 'Quran',
-                    onToggleExpanded: () => _toggleCategory('Quran'),
-                  ),
-                  SizedBox(height: 12.h),
-                  _InfoExpandableRow(
-                    title: appText.categoryHadith,
-                    fraction: '0/8',
-                    entry: _hadithEntry,
-                    expanded: _expandedCategory == 'Hadith',
-                    onToggleExpanded: () => _toggleCategory('Hadith'),
-                  ),
-                  SizedBox(height: 12.h),
-                  _InfoExpandableRow(
-                    title: appText.categoryQuiz,
-                    fraction: '0/2.5',
-                    entry: _quizEntry,
-                    expanded: _expandedCategory == 'Quiz',
-                    onToggleExpanded: () => _toggleCategory('Quiz'),
-                  ),
-                  SizedBox(height: 12.h),
-                  _GroupedExpandableRow(
-                    title: appText.categoryNaflAndMore,
-                    items: _naflMoreItems,
-                    expanded: _expandedCategory == 'Nafl & more',
-                    onToggleExpanded: () => _toggleCategory('Nafl & more'),
-                    onToggleItem: _toggleNaflMoreItem,
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(15.w, 0, 15.w, 12.h),
+                    child: const _DashboardButton(),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(15.w, 0, 15.w, 12.h),
-              child: _DashboardButton(),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
-String _localizedItemName(AppText appText, String key) {
-  switch (key) {
-    case 'Fajr':
+/// `itemKey` -> the localized display name the app already ships. Falls
+/// back to the server's own (English) [AmolItem.title] for anything new.
+String _localizedItemName(AppText appText, AmolItem item) {
+  switch (item.itemKey) {
+    case 'fajr':
       return appText.salahFajr;
-    case 'Duhr':
+    case 'dhuhr':
       return appText.salahDuhr;
-    case 'Asr':
+    case 'asr':
       return appText.salahAsr;
-    case 'Magrib':
+    case 'maghrib':
       return appText.salahMagrib;
-    case 'Esa':
+    case 'isha':
       return appText.salahEsa;
-    case 'Fajr Sunnah':
+    case 'fajr_sunnah':
       return appText.salahFajrSunnah;
-    case 'Duhr Sunnah':
+    case 'dhuhr_sunnah':
       return appText.salahDuhrSunnah;
-    case 'Asr Sunnah':
+    case 'asr_sunnah':
       return appText.salahAsrSunnah;
-    case 'Magrib Sunnah':
+    case 'maghrib_sunnah':
       return appText.salahMagribSunnah;
-    case 'Esa Sunnah':
+    case 'isha_sunnah':
       return appText.salahEsaSunnah;
-    case 'Witr':
+    case 'witr':
       return appText.salahWitr;
-    case 'Tahajjud':
+    case 'tahajjud':
       return appText.naflTahajjud;
-    case 'Ishraq':
+    case 'ishraq':
       return appText.naflIshraq;
-    case 'Chast':
+    case 'chasht':
       return appText.naflChast;
-    case 'Awabin':
+    case 'awabin':
       return appText.naflAwabin;
-    case 'Sadaqah':
-      return appText.moreSadaqah;
-    case 'Karze Hasanah':
-      return appText.moreKarzeHasanah;
-    case 'Nafl Fasting':
-      return appText.moreNaflFasting;
-    case 'Physical Exercise':
-      return appText.morePhysicalExercise;
-    case 'Given Good Ad Vice':
-      return appText.moreGivenGoodAdvice;
-    case 'Skill Development':
-      return appText.moreSkillDevelopment;
-    case 'Quran Tilawat':
+    case 'quran_tilawat':
       return appText.infoQuranTilawat;
-    case 'Hadith Reading':
+    case 'hadith_reading':
       return appText.infoHadithReading;
-    case 'Giving Quiz':
+    case 'daily_quiz':
       return appText.infoGivingQuiz;
+    case 'sadaqah':
+      return appText.moreSadaqah;
+    case 'roza_kaffarah':
+      return appText.moreRozaKaffarah;
+    case 'nafl_fasting':
+      return appText.moreNaflFasting;
+    case 'physical_exercise':
+      return appText.morePhysicalExercise;
+    case 'good_advice':
+      return appText.moreGivenGoodAdvice;
+    case 'skill_development':
+      return appText.moreSkillDevelopment;
     default:
-      return key;
+      return item.title;
   }
+}
+
+class _ItemIcon {
+  const _ItemIcon(this.icon, this.color);
+
+  final IconData icon;
+  final Color color;
+}
+
+const _fallbackItemIcon = _ItemIcon(Icons.check_circle_outline, amolOlive);
+
+/// `itemKey` -> the icon/color the app already uses for that action.
+const _itemIconByKey = {
+  'fajr': _ItemIcon(Icons.wb_twilight, Color(0xFFFFC83D)),
+  'dhuhr': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
+  'asr': _ItemIcon(Icons.sunny, Color(0xFFFFAA2C)),
+  'maghrib': _ItemIcon(Icons.wb_twilight_outlined, Color(0xFFFF8E4A)),
+  'isha': _ItemIcon(Icons.nights_stay, Color(0xFFEACB2B)),
+  'fajr_sunnah': _ItemIcon(Icons.wb_twilight, Color(0xFFFFC83D)),
+  'dhuhr_sunnah': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
+  'asr_sunnah': _ItemIcon(Icons.sunny, Color(0xFFFFAA2C)),
+  'maghrib_sunnah': _ItemIcon(Icons.wb_twilight_outlined, Color(0xFFFF8E4A)),
+  'isha_sunnah': _ItemIcon(Icons.nights_stay, Color(0xFFEACB2B)),
+  'witr': _ItemIcon(Icons.nightlight_round, Color(0xFFEACB2B)),
+  'tahajjud': _ItemIcon(Icons.nights_stay, Color(0xFF7FA8C9)),
+  'ishraq': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
+  'chasht': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
+  'awabin': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
+  'quran_tilawat': _ItemIcon(Icons.auto_awesome, Color(0xFFFF8A50)),
+  'hadith_reading': _ItemIcon(Icons.auto_awesome, Color(0xFFFF8A50)),
+  'daily_quiz': _ItemIcon(Icons.quiz, Color(0xFFFFC83D)),
+  'sadaqah': _ItemIcon(Icons.volunteer_activism, Color(0xFFE8916B)),
+  'roza_kaffarah': _ItemIcon(Icons.handshake, Color(0xFF6FA8D8)),
+  'nafl_fasting': _ItemIcon(Icons.self_improvement, Color(0xFFC9A227)),
+  'physical_exercise': _ItemIcon(Icons.fitness_center, Color(0xFF4FB0C6)),
+  'good_advice': _ItemIcon(Icons.campaign, Color(0xFF4FB0C6)),
+  'skill_development': _ItemIcon(Icons.emoji_objects, Color(0xFFFFC83D)),
+};
+
+String _formatPoints(num value) {
+  return value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
 }
 
 class _ProgressBar extends StatelessWidget {
@@ -421,32 +296,6 @@ class _ProgressBar extends StatelessWidget {
       ),
     );
   }
-}
-
-enum _SalahStatus { locked, available, completed }
-
-class _SalahItem {
-  const _SalahItem({
-    required this.name,
-    required this.icon,
-    required this.iconColor,
-    required this.points,
-    required this.status,
-  });
-
-  final String name;
-  final IconData icon;
-  final Color iconColor;
-  final num points;
-  final _SalahStatus status;
-
-  _SalahItem copyWith({_SalahStatus? status}) => _SalahItem(
-    name: name,
-    icon: icon,
-    iconColor: iconColor,
-    points: points,
-    status: status ?? this.status,
-  );
 }
 
 class _AccordionHeader extends StatelessWidget {
@@ -539,43 +388,33 @@ class _AccordionCard extends StatelessWidget {
   }
 }
 
-String _formatPoints(num value) {
-  return value == value.roundToDouble()
-      ? value.toInt().toString()
-      : value.toString();
-}
-
-class _ExpandableAmolRow extends StatelessWidget {
-  const _ExpandableAmolRow({
-    required this.title,
-    required this.items,
+/// One [AmolPillar] rendered as an accordion: header (title, progress,
+/// `formattedSubtext` fraction) plus its [AmolItem]s when expanded. Every
+/// pillar from the API — prayer, Quran, Hadith, Quiz, Nafl & more — uses
+/// this same layout.
+class _PillarRow extends StatelessWidget {
+  const _PillarRow({
+    required this.pillar,
     required this.expanded,
     required this.onToggleExpanded,
-    required this.onToggleItem,
   });
 
-  final String title;
-  final List<_SalahItem> items;
+  final AmolPillar pillar;
   final bool expanded;
   final VoidCallback onToggleExpanded;
-  final ValueChanged<int> onToggleItem;
 
   @override
   Widget build(BuildContext context) {
-    final num total = items.fold(0, (sum, item) => sum + item.points);
-    final num completed = items
-        .where((item) => item.status == _SalahStatus.completed)
-        .fold(0, (sum, item) => sum + item.points);
-    final progress = total == 0 ? 0.0 : completed / total;
+    final appText = AppText.of(context);
+    final titleKey = _pillarTitleKeyByKey[pillar.pillarKey] ?? pillar.title;
     return _AccordionCard(
       expanded: expanded,
       child: Column(
         children: [
           _AccordionHeader(
-            title: title,
-            progress: progress,
-            fractionLabel:
-                '${_formatPoints(completed)}/${_formatPoints(total)}',
+            title: appText.categoryLabel(titleKey),
+            progress: (pillar.percentage / 100).clamp(0.0, 1.0).toDouble(),
+            fractionLabel: pillar.formattedSubtext,
             expanded: expanded,
             onTap: onToggleExpanded,
           ),
@@ -584,9 +423,9 @@ class _ExpandableAmolRow extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
               child: Column(
                 children: [
-                  for (var i = 0; i < items.length; i++) ...[
+                  for (var i = 0; i < pillar.items.length; i++) ...[
                     if (i != 0) SizedBox(height: 6.h),
-                    _SalahRow(item: items[i], onTap: () => onToggleItem(i)),
+                    _AmolItemRow(item: pillar.items[i]),
                   ],
                 ],
               ),
@@ -597,278 +436,170 @@ class _ExpandableAmolRow extends StatelessWidget {
   }
 }
 
-class _InfoEntry {
-  const _InfoEntry({
-    required this.icon,
-    required this.iconColor,
-    required this.name,
-    required this.points,
-  });
+/// A single checklist item: icon, localized name, earned points and a
+/// read-only `isCompleted` indicator. There's no per-option write flow
+/// (in-jama'at / alone / kaja) here — this is a display of the server's
+/// current state for the day.
+class _AmolItemRow extends StatelessWidget {
+  const _AmolItemRow({required this.item});
 
-  final IconData icon;
-  final Color iconColor;
-  final String name;
-  final num points;
-}
-
-class _InfoExpandableRow extends StatelessWidget {
-  const _InfoExpandableRow({
-    required this.title,
-    required this.fraction,
-    required this.entry,
-    required this.expanded,
-    required this.onToggleExpanded,
-  });
-
-  final String title;
-  final String fraction;
-  final _InfoEntry entry;
-  final bool expanded;
-  final VoidCallback onToggleExpanded;
+  final AmolItem item;
 
   @override
   Widget build(BuildContext context) {
-    return _AccordionCard(
-      expanded: expanded,
-      child: Column(
+    final iconSpec = _itemIconByKey[item.itemKey] ?? _fallbackItemIcon;
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 6.h),
+      child: Row(
         children: [
-          _AccordionHeader(
-            title: title,
-            progress: 0,
-            fractionLabel: fraction,
-            expanded: expanded,
-            onTap: onToggleExpanded,
-          ),
-          if (expanded)
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-              child: _InfoEntryRow(entry: entry),
+          Container(
+            width: 30.r,
+            height: 30.r,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(9.r),
             ),
+            child: Icon(iconSpec.icon, color: iconSpec.color, size: 17.sp),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text(
+              _localizedItemName(AppText.of(context), item),
+              style: TextStyle(fontSize: 13.sp, color: Colors.black),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDDEBB5),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Text(
+              '+${_formatPoints(item.points)}',
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF5F6B45),
+              ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          _CompletionCircle(isCompleted: item.isCompleted),
         ],
       ),
     );
   }
 }
 
-class _InfoEntryRow extends StatelessWidget {
-  const _InfoEntryRow({required this.entry});
+class _CompletionCircle extends StatelessWidget {
+  const _CompletionCircle({required this.isCompleted});
 
-  final _InfoEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 30.r,
-          height: 30.r,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(9.r),
-          ),
-          child: Icon(entry.icon, color: entry.iconColor, size: 16.sp),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: Text(
-            _localizedItemName(AppText.of(context), entry.name),
-            style: TextStyle(fontSize: 13.sp, color: Colors.black),
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFFDDEBB5),
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Text(
-            '+${_formatPoints(entry.points)}',
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF5F6B45),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GroupedExpandableRow extends StatelessWidget {
-  const _GroupedExpandableRow({
-    required this.title,
-    required this.items,
-    required this.expanded,
-    required this.onToggleExpanded,
-    required this.onToggleItem,
-  });
-
-  final String title;
-  final List<_SalahItem> items;
-  final bool expanded;
-  final VoidCallback onToggleExpanded;
-  final ValueChanged<int> onToggleItem;
+  final bool isCompleted;
 
   @override
   Widget build(BuildContext context) {
-    final num total = items.fold(0, (sum, item) => sum + item.points);
-    final num completed = items
-        .where((item) => item.status == _SalahStatus.completed)
-        .fold(0, (sum, item) => sum + item.points);
-    final progress = total == 0 ? 0.0 : completed / total;
-    final mid = (items.length / 2).ceil();
-    final firstGroup = items.sublist(0, mid);
-    final secondGroup = items.sublist(mid);
-
-    Widget group(List<_SalahItem> groupItems, int offset) => Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+    if (isCompleted) {
+      return Container(
+        width: 26.r,
+        height: 26.r,
+        decoration: const BoxDecoration(
+          color: amolOlive,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.check, size: 15.sp, color: Colors.white),
+      );
+    }
+    return Container(
+      width: 26.r,
+      height: 26.r,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFDADDC6), width: 1.4),
       ),
-      child: Column(
-        children: [
-          for (var i = 0; i < groupItems.length; i++) ...[
-            if (i != 0) SizedBox(height: 6.h),
-            _SalahRow(
-              item: groupItems[i],
-              onTap: () => onToggleItem(offset + i),
-            ),
-          ],
-        ],
-      ),
+      child: Icon(Icons.check, size: 13.sp, color: const Color(0xFFB7BBA0)),
     );
+  }
+}
 
-    return _AccordionCard(
-      expanded: expanded,
+class _PillarListShimmer extends StatelessWidget {
+  const _PillarListShimmer();
+
+  // Matches the 7 pillars `GET /amol/tracker/daily` normally returns
+  // (Fardh Prayer, Sunnah and Witr, Nafl Salat, Quran, Hadith, Quiz,
+  // Nafl & more).
+  static const _itemCount = 7;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE3ECC5),
+      highlightColor: const Color(0xFFF6F9EC),
       child: Column(
         children: [
-          _AccordionHeader(
-            title: title,
-            progress: progress,
-            fractionLabel:
-                '${_formatPoints(completed)}/${_formatPoints(total)}',
-            expanded: expanded,
-            onTap: onToggleExpanded,
-          ),
-          if (expanded)
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+          for (var i = 0; i < _itemCount; i++) ...[
+            Container(
+              height: 62.h,
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  group(firstGroup, 0),
-                  SizedBox(height: 10.h),
-                  group(secondGroup, mid),
+                  Container(
+                    width: 110.w,
+                    height: 12.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Container(
+                    width: double.infinity,
+                    height: 7.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
                 ],
               ),
             ),
+            if (i != _itemCount - 1) SizedBox(height: 12.h),
+          ],
         ],
       ),
     );
   }
 }
 
-class _SalahRow extends StatelessWidget {
-  const _SalahRow({required this.item, required this.onTap});
+class _LoadFailedNotice extends StatelessWidget {
+  const _LoadFailedNotice({required this.message, required this.onRetry});
 
-  final _SalahItem item;
-  final VoidCallback onTap;
+  final String? message;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12.r),
-      onTap: item.status == _SalahStatus.locked ? null : onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 6.h),
-        child: Row(
-          children: [
-            Container(
-              width: 30.r,
-              height: 30.r,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(9.r),
-              ),
-              child: Icon(item.icon, color: item.iconColor, size: 17.sp),
-            ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: Text(
-                _localizedItemName(AppText.of(context), item.name),
-                style: TextStyle(fontSize: 13.sp, color: Colors.black),
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDEBB5),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                '+${_formatPoints(item.points)}',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5F6B45),
-                ),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            _ActionCircle(status: item.status),
-          ],
-        ),
+    final appText = AppText.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 32.h),
+      child: Column(
+        children: [
+          Text(
+            message ?? 'Something went wrong. Please try again.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13.sp, color: Colors.black54),
+          ),
+          SizedBox(height: 12.h),
+          OutlinedButton(onPressed: onRetry, child: Text(appText.tryAgain)),
+        ],
       ),
     );
-  }
-}
-
-class _ActionCircle extends StatelessWidget {
-  const _ActionCircle({required this.status});
-
-  final _SalahStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    switch (status) {
-      case _SalahStatus.completed:
-        return Container(
-          width: 26.r,
-          height: 26.r,
-          decoration: const BoxDecoration(
-            color: amolOlive,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.check, size: 15.sp, color: Colors.white),
-        );
-      case _SalahStatus.available:
-        return Container(
-          width: 26.r,
-          height: 26.r,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: amolOlive, width: 1.4),
-          ),
-          child: Icon(Icons.check, size: 13.sp, color: amolOlive),
-        );
-      case _SalahStatus.locked:
-        return Container(
-          width: 26.r,
-          height: 26.r,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFDADDC6), width: 1.2),
-          ),
-          child: Icon(
-            Icons.lock_outline,
-            size: 13.sp,
-            color: const Color(0xFFB7BBA0),
-          ),
-        );
-    }
   }
 }
 
@@ -911,6 +642,8 @@ class _DashedCardBorderPainter extends CustomPainter {
 }
 
 class _DashboardButton extends StatelessWidget {
+  const _DashboardButton();
+
   @override
   Widget build(BuildContext context) {
     return Material(

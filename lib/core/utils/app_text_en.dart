@@ -156,6 +156,7 @@ const Map<String, String> appTextEn = <String, String>{
   'naflAwabin': 'Awabin',
   'moreSadaqah': 'Sadaqah',
   'moreKarzeHasanah': 'Karze Hasanah',
+  'moreRozaKaffarah': 'Roza/Kaffarah',
   'moreNaflFasting': 'Nafl Fasting',
   'morePhysicalExercise': 'Physical Exercise',
   'moreGivenGoodAdvice': 'Given Good Ad Vice',
