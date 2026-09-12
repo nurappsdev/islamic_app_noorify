@@ -87,6 +87,8 @@ class _SignupViewState extends State<_SignupView> {
     required String hint,
     required IconData prefixIcon,
     Widget? suffixIcon,
+    EdgeInsetsGeometry? contentPadding,
+    bool isDense = false,
   }) {
     final radius = BorderRadius.circular(24.r);
     return InputDecoration(
@@ -94,9 +96,11 @@ class _SignupViewState extends State<_SignupView> {
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
       suffixIcon: suffixIcon,
+      isDense: isDense,
       filled: true,
       fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
+      contentPadding: contentPadding ??
+          EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.authFieldBorder),
@@ -201,6 +205,38 @@ class _SignupViewState extends State<_SignupView> {
         _auth.add(const SetLoading(false));
       }
     }
+  }
+
+  /// Gender selector styled to match [_authField] exactly: same 48.h pill,
+  /// icon on the left, value/hint on one line, chevron on the right.
+  Widget _genderField(AppText appText) {
+    return SizedBox(
+      height: 48.h,
+      child: DropdownButtonFormField<String>(
+        initialValue: _selectedGender,
+        isExpanded: true,
+        isDense: true,
+        borderRadius: BorderRadius.circular(16.r),
+        dropdownColor: Colors.white,
+        style: TextStyle(color: AppColor.authLogo, fontSize: 13.sp),
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AppColor.authIcon,
+          size: 20.sp,
+        ),
+        decoration: _fieldDecoration(
+          hint: appText.gender,
+          prefixIcon: Icons.wc_outlined,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        ),
+        items: [
+          DropdownMenuItem(value: 'male', child: Text(appText.male)),
+          DropdownMenuItem(value: 'female', child: Text(appText.female)),
+        ],
+        onChanged: (value) => setState(() => _selectedGender = value),
+      ),
+    );
   }
 
   Widget _authField({
@@ -442,34 +478,7 @@ class _SignupViewState extends State<_SignupView> {
                   textInputAction: TextInputAction.next,
                 ),
                 SizedBox(height: 9.h),
-                SizedBox(
-                  height: 48.h,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedGender,
-                    decoration: _fieldDecoration(
-                      hint: appText.gender,
-                      prefixIcon: Icons.male_outlined,
-                    ),
-                    icon: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppColor.authIcon,
-                      size: 20.sp,
-                    ),
-                    dropdownColor: Colors.white,
-                    items: [
-                      DropdownMenuItem(
-                        value: 'male',
-                        child: Text(appText.male),
-                      ),
-                      DropdownMenuItem(
-                        value: 'female',
-                        child: Text(appText.female),
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _selectedGender = value),
-                  ),
-                ),
+                _genderField(appText),
                 SizedBox(height: 9.h),
                 _authField(
                   controller: _passwordController,
