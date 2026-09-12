@@ -156,6 +156,7 @@ class AppText {
     required this.naflAwabin,
     required this.moreSadaqah,
     required this.moreKarzeHasanah,
+    required this.moreRozaKaffarah,
     required this.moreNaflFasting,
     required this.morePhysicalExercise,
     required this.moreGivenGoodAdvice,
@@ -645,6 +646,7 @@ class AppText {
   final String naflAwabin;
   final String moreSadaqah;
   final String moreKarzeHasanah;
+  final String moreRozaKaffarah;
   final String moreNaflFasting;
   final String morePhysicalExercise;
   final String moreGivenGoodAdvice;
@@ -1527,6 +1529,11 @@ class AppText {
         map,
         'moreKarzeHasanah',
         fallback?.moreKarzeHasanah ?? '',
+      ),
+      moreRozaKaffarah: _read(
+        map,
+        'moreRozaKaffarah',
+        fallback?.moreRozaKaffarah ?? '',
       ),
       moreNaflFasting: _read(
         map,

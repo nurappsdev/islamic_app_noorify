@@ -36,6 +36,7 @@ class ApiConstants {
   static const String accountDelete = "/users/delete";
   static const String getProfileEndPoint = "/user/me";
   static const String homeDashboardEndPoint = "/home/dashboard";
+  static const String amolTrackerDailyEndPoint = "/amol/tracker/daily";
 
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";
