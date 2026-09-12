@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 
 import '../../../core/constants/route_names.dart';
 import '../../auth/data/datasources/auth_local_data_source.dart';
 import '../../auth/data/services/auth_service.dart';
+import '../../profile/data/services/profile_service.dart';
 
 /// Resolves the route to land on once the splash/onboarding flow is done.
 ///
@@ -13,6 +16,10 @@ import '../../auth/data/services/auth_service.dart';
 Future<String> resolvePostSplashRoute() async {
   // Reopening the app with a saved access token -> straight to home.
   if (AuthLocalDataSourceImpl().hasToken) {
+    // Show the last cached name immediately, then refresh it from
+    // `GET /user/me` in the background.
+    ProfileService.instance.hydrateFromCache();
+    unawaited(ProfileService.instance.refresh());
     return RouteNames.home;
   }
 

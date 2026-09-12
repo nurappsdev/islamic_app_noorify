@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/auth/domain/usecases/login_user.dart
 import 'package:islami_app_noorify/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
+import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 class SignInScreen extends StatelessWidget {
@@ -105,6 +106,7 @@ class _SignInViewState extends State<_SignInView> {
         // Token is already stored in Hive by the repository at this point.
         skipAuthGateNotifier.value = true;
         unawaited(saveAppPreferences());
+        unawaited(ProfileService.instance.refresh());
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
