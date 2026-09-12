@@ -175,6 +175,9 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
   }
 
+  static const _slideDuration = Duration(seconds: 3);
+  static const _transitionDuration = Duration(milliseconds: 650);
+
   late final PageController _pageController;
   Timer? _autoSlideTimer;
   int _currentPage = 0;
@@ -183,14 +186,23 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   void initState() {
     super.initState();
     _pageController = PageController(viewportFraction: .98);
-    _autoSlideTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _scheduleAutoSlide();
+  }
+
+  /// Waits [_slideDuration] with the current slide fully at rest, then
+  /// glides to the next one and reschedules itself — so every slide gets
+  /// the same 3-second dwell time regardless of the transition length.
+  void _scheduleAutoSlide() {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer(_slideDuration, () async {
       if (!mounted || !_pageController.hasClients || _itemCount == 0) return;
       _currentPage = (_currentPage + 1) % _itemCount;
-      _pageController.animateToPage(
+      await _pageController.animateToPage(
         _currentPage,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeOutCubic,
+        duration: _transitionDuration,
+        curve: Curves.easeInOutCubic,
       );
+      _scheduleAutoSlide();
     });
   }
 
@@ -220,13 +232,36 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
           child: PageView.builder(
             controller: _pageController,
             itemCount: items.length,
-            onPageChanged: (index) => _currentPage = index,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: (index) {
+              _currentPage = index;
+              // A manual swipe shouldn't get cut short by an auto-advance
+              // landing right after it, so give this slide a fresh 3s dwell.
+              _scheduleAutoSlide();
+            },
             itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2.w),
-                child: _AmalSlide(
-                  item: items[index],
-                  isTodaysTrack: index == 0,
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  var page = _currentPage.toDouble();
+                  if (_pageController.hasClients &&
+                      _pageController.position.haveDimensions) {
+                    page = _pageController.page ?? page;
+                  }
+                  final delta = (page - index).abs().clamp(0.0, 1.0);
+                  final scale = 1 - (delta * 0.08);
+                  final opacity = 1 - (delta * 0.35);
+                  return Opacity(
+                    opacity: opacity,
+                    child: Transform.scale(scale: scale, child: child),
+                  );
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 2.w),
+                  child: _AmalSlide(
+                    item: items[index],
+                    isTodaysTrack: index == 0,
+                  ),
                 ),
               );
             },
