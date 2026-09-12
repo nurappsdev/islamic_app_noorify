@@ -441,6 +441,9 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'familyMemberNameSabit': 'Sabit',
   'familyMemberNameAli': 'Ali',
   'logout': 'Logout',
+  'logoutConfirmMessage': 'Are you sure you want to logout?',
+  'yes': 'Yes',
+  'no': 'No',
 
   // Settings feature
   'settingsTitle': 'Settings',

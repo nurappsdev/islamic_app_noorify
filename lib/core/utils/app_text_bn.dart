@@ -440,6 +440,9 @@ const Map<String, String> appTextBn = <String, String>{
   'familyMemberNameSabit': 'সাবিত',
   'familyMemberNameAli': 'আলী',
   'logout': 'লগআউট',
+  'logoutConfirmMessage': 'আপনি কি লগআউট করতে নিশ্চিত?',
+  'yes': 'হ্যাঁ',
+  'no': 'না',
 
   // Settings feature
   'settingsTitle': 'সেটিংস',
