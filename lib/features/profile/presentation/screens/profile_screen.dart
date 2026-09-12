@@ -92,9 +92,9 @@ class ProfileScreen extends StatelessWidget {
               child: const _AddFamilyMemberButton(),
             ),
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 8.h,
+              left: 16.w,
+              right: 16.w,
+              bottom: 12.h,
               child: const _LogoutButton(),
             ),
           ],
