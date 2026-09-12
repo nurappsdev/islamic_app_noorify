@@ -1,6 +1,6 @@
 class ApiConstants {
 // local
-  static const String baseUrl = "https://vondo7000.ilmifygroup.com/api/v1";
+  static const String baseUrl = "https://pagla7000.ilmifygroup.com/api/v1";
 
 //live
 // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
