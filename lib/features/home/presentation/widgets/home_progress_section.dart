@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/a
 import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
 
 /// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
 /// already knows how to localize. `nafl_and_more` isn't here: it drives the
@@ -38,6 +39,10 @@ class HomeProgressSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final dashboardState = context.watch<HomeDashboardBloc>().state;
+    if (dashboardState.isLoading) {
+      return HomeProgressSectionShimmer(gridItemCount: _items.length);
+    }
+
     final pillars = dashboardState.hasData
         ? dashboardState.dashboard!.pillarCards
         : null;

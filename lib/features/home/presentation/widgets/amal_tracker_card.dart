@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/a
 import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 class AmalTrackerCard extends StatefulWidget {
@@ -204,6 +205,8 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final dashboardState = context.watch<HomeDashboardBloc>().state;
+    if (dashboardState.isLoading) return const AmalTrackerCardShimmer();
+
     final items = dashboardState.hasData
         ? _apiItems(appText, dashboardState.dashboard!.topHighlightCards)
         : _items(appText);

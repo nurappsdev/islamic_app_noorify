@@ -14,6 +14,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_heade
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
+import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -29,8 +30,36 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _HomeScreenView extends StatelessWidget {
+class _HomeScreenView extends StatefulWidget {
   const _HomeScreenView();
+
+  @override
+  State<_HomeScreenView> createState() => _HomeScreenViewState();
+}
+
+class _HomeScreenViewState extends State<_HomeScreenView> {
+  // Bumped on every pull-to-refresh to remount the prayer-time cards below,
+  // which fetch their own data independently of HomeDashboardBloc.
+  int _refreshTick = 0;
+
+  Future<void> _onRefresh() async {
+    final dashboardBloc = context.read<HomeDashboardBloc>();
+    // Subscribe before dispatching so the loading -> done transition can't
+    // be missed.
+    final dashboardDone = dashboardBloc.stream.firstWhere(
+      (state) => state.status != HomeDashboardStatus.loading,
+    );
+    dashboardBloc.add(const LoadHomeDashboard());
+
+    try {
+      await Future.wait([dashboardDone, ProfileService.instance.refresh()]);
+    } catch (_) {
+      // A bloc/stream teardown mid-refresh (e.g. navigating away) shouldn't
+      // surface as an error from the pull-to-refresh gesture.
+    }
+    if (!mounted) return;
+    setState(() => _refreshTick++);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,22 +68,33 @@ class _HomeScreenView extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
-              child: Column(
-                children: [
-                  const HomeHeader(),
-                  SizedBox(height: 10.h),
-                  const AmalTrackerCard(),
-                  SizedBox(height: 16.h),
-                   const PrayerTimeCard(),
-                  SizedBox(height: 24.h),
-                  const ProhibitedPrayerTimesCard(),
-                  SizedBox(height: 14.h),
-                  const HomeProgressSection(),
-                  SizedBox(height: 10.h),
-                  const HomeFeatureGrid(),
-                ],
+            RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColor.primary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
+                child: Column(
+                  children: [
+                    const HomeHeader(),
+                    SizedBox(height: 10.h),
+                    const AmalTrackerCard(),
+                    SizedBox(height: 16.h),
+                    KeyedSubtree(
+                      key: ValueKey('prayer-time-card-$_refreshTick'),
+                      child: const PrayerTimeCard(),
+                    ),
+                    SizedBox(height: 24.h),
+                    KeyedSubtree(
+                      key: ValueKey('prohibited-prayer-times-$_refreshTick'),
+                      child: const ProhibitedPrayerTimesCard(),
+                    ),
+                    SizedBox(height: 14.h),
+                    const HomeProgressSection(),
+                    SizedBox(height: 10.h),
+                    const HomeFeatureGrid(),
+                  ],
+                ),
               ),
             ),
             const Align(
