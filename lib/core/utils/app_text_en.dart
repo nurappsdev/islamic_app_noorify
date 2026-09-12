@@ -9,6 +9,7 @@ const Map<String, String> appTextEn = <String, String>{
   'login': 'Login',
   'newToNoorify': 'New To Noorify?',
   'createAccount': 'Create Account',
+  'guestUser': 'Continue as Guest',
   'signUpSubtitle':
       'Begin your journey toward a more mindful Islamic lifestyle.',
   'enterYourName': 'Enter Your Name',

@@ -9,6 +9,7 @@ const Map<String, String> appTextBn = <String, String>{
   'login': 'লগইন',
   'newToNoorify': 'নূরিফাইতে নতুন?',
   'createAccount': 'অ্যাকাউন্ট তৈরি করুন',
+  'guestUser': 'অতিথি হিসেবে চালিয়ে যান',
   'signUpSubtitle': 'আরও মননশীল ইসলামিক জীবনযাত্রার পথচলা শুরু করুন।',
   'enterYourName': 'আপনার নাম দিন',
   'emailAddress': 'ইমেইল',

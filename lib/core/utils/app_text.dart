@@ -19,6 +19,7 @@ class AppText {
     required this.login,
     required this.newToNoorify,
     required this.createAccount,
+    required this.guestUser,
     required this.signUpSubtitle,
     required this.enterYourName,
     required this.emailAddress,
@@ -497,6 +498,7 @@ class AppText {
   final String login;
   final String newToNoorify;
   final String createAccount;
+  final String guestUser;
   final String signUpSubtitle;
   final String enterYourName;
   final String emailAddress;
@@ -1071,6 +1073,7 @@ class AppText {
       login: _read(map, 'login', fallback?.login ?? ''),
       newToNoorify: _read(map, 'newToNoorify', fallback?.newToNoorify ?? ''),
       createAccount: _read(map, 'createAccount', fallback?.createAccount ?? ''),
+      guestUser: _read(map, 'guestUser', fallback?.guestUser ?? ''),
       signUpSubtitle: _read(
         map,
         'signUpSubtitle',
