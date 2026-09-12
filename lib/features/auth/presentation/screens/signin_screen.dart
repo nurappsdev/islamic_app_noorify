@@ -127,6 +127,13 @@ class _SignInViewState extends State<_SignInView> {
     Navigator.of(context).pushNamed(RouteNames.forgotPassword);
   }
 
+  void _continueAsGuest() {
+    // No token is stored, so the user stays unauthenticated while browsing.
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -282,6 +289,22 @@ class _SignInViewState extends State<_SignInView> {
                         ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: 14.h),
+                  TextButton(
+                    onPressed: _isLoading ? null : _continueAsGuest,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColor.authLogo,
+                      minimumSize: Size(0, 34.h),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      appText.guestUser,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                   SizedBox(height: 72.h),
                 ],
