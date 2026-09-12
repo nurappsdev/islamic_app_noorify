@@ -438,6 +438,9 @@ class AppText {
     required this.familyMemberNameSabit,
     required this.familyMemberNameAli,
     required this.logout,
+    required this.logoutConfirmMessage,
+    required this.yes,
+    required this.no,
     required this.settingsTitle,
     required this.aboutUs,
     required this.ourProducts,
@@ -942,6 +945,9 @@ class AppText {
   final String familyMemberNameSabit;
   final String familyMemberNameAli;
   final String logout;
+  final String logoutConfirmMessage;
+  final String yes;
+  final String no;
 
   // Settings feature
   final String settingsTitle;
@@ -2528,6 +2534,13 @@ class AppText {
         fallback?.familyMemberNameAli ?? '',
       ),
       logout: _read(map, 'logout', fallback?.logout ?? ''),
+      logoutConfirmMessage: _read(
+        map,
+        'logoutConfirmMessage',
+        fallback?.logoutConfirmMessage ?? '',
+      ),
+      yes: _read(map, 'yes', fallback?.yes ?? ''),
+      no: _read(map, 'no', fallback?.no ?? ''),
       settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
       ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),

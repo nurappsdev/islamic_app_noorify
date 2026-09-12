@@ -516,19 +516,49 @@ class _LogoutButtonView extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmLogout(BuildContext context, AppText appText) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          appText.logout,
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+        ),
+        content: Text(appText.logoutConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.no),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColor.forgotPassword,
+            ),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<LogoutBloc>().add(const LogoutRequested());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LogoutBloc, LogoutState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: _onLogoutState,
       builder: (context, state) {
+        final appText = AppText.of(context);
         return SizedBox(
           height: 52.h,
           child: OutlinedButton(
             onPressed: state.inProgress
                 ? null
-                : () =>
-                      context.read<LogoutBloc>().add(const LogoutRequested()),
+                : () => _confirmLogout(context, appText),
             style: OutlinedButton.styleFrom(
               backgroundColor: const Color(0xFFFBEAEA),
               foregroundColor: AppColor.forgotPassword,
@@ -546,7 +576,7 @@ class _LogoutButtonView extends StatelessWidget {
                     const Icon(Icons.logout_rounded, size: 18),
                     SizedBox(width: 8.w),
                     Text(
-                      AppText.of(context).logout,
+                      appText.logout,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
