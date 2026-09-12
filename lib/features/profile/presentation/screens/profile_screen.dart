@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:islami_app_noorify/features/auth/data/repositories/account_repos
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/logout/logout_bloc.dart';
+import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -190,13 +192,18 @@ class _ProfileHeroCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          Text(
-            appText.competitorName,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 19.sp,
-              fontWeight: FontWeight.w600,
-            ),
+          ValueListenableBuilder<String?>(
+            valueListenable: profileNameNotifier,
+            builder: (context, name, _) {
+              return Text(
+                (name == null || name.isEmpty) ? appText.competitorName : name,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 19.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              );
+            },
           ),
           SizedBox(height: 4.h),
           Text(
@@ -502,6 +509,7 @@ class _LogoutButtonView extends StatelessWidget {
     // Token was removed from Hive by the bloc; clear the rest of the session
     // and send the user back to the sign-in screen.
     skipAuthGateNotifier.value = false;
+    unawaited(ProfileService.instance.clear());
     Navigator.of(context).pushNamedAndRemoveUntil(
       RouteNames.signIn,
       (route) => false,

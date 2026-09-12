@@ -34,6 +34,7 @@ class ApiConstants {
 
   static const String refreshTokenEndPoint = "/auth/refresh-token";
   static const String accountDelete = "/users/delete";
+  static const String getProfileEndPoint = "/user/me";
 
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";

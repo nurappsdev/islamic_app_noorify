@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -27,14 +28,21 @@ class HomeHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                appText.competitorName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: homeSansStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+              ValueListenableBuilder<String?>(
+                valueListenable: profileNameNotifier,
+                builder: (context, name, _) {
+                  return Text(
+                    (name == null || name.isEmpty)
+                        ? appText.competitorName
+                        : name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: homeSansStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                },
               ),
               SizedBox(height: 2.h),
               Text(
