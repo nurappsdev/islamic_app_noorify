@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
+import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
@@ -12,6 +17,20 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<HomeDashboardBloc>(
+      create: (_) => HomeDashboardBloc(
+        GetHomeDashboard(HomeRepositoryImpl(HomeRemoteDataSourceImpl())),
+      )..add(const LoadHomeDashboard()),
+      child: const _HomeScreenView(),
+    );
+  }
+}
+
+class _HomeScreenView extends StatelessWidget {
+  const _HomeScreenView();
 
   @override
   Widget build(BuildContext context) {

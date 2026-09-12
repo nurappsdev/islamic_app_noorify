@@ -79,6 +79,7 @@ class AppText {
     required this.categorySunnahAndWitr,
     required this.categoryQuran,
     required this.categoryNaflSalat,
+    required this.categoryZikr,
     required this.categoryHadith,
     required this.hadithIntroTitle,
     required this.hadithIntroSubtitle,
@@ -564,6 +565,7 @@ class AppText {
   final String categorySunnahAndWitr;
   final String categoryQuran;
   final String categoryNaflSalat;
+  final String categoryZikr;
   final String categoryHadith;
   final String hadithIntroTitle;
   final String hadithIntroSubtitle;
@@ -1007,6 +1009,8 @@ class AppText {
         return categoryQuran;
       case 'Nafl Salat':
         return categoryNaflSalat;
+      case 'Zikr':
+        return categoryZikr;
       case 'Hadith':
         return categoryHadith;
       case 'Quiz':
@@ -1237,6 +1241,7 @@ class AppText {
         'categoryNaflSalat',
         fallback?.categoryNaflSalat ?? '',
       ),
+      categoryZikr: _read(map, 'categoryZikr', fallback?.categoryZikr ?? ''),
       categoryHadith: _read(
         map,
         'categoryHadith',
