@@ -75,6 +75,8 @@ class AppText {
     required this.myNearestOrCompetitor,
     required this.competitorInitials,
     required this.viewInDashboard,
+    required this.amolPrayerTimeNotStarted,
+    required this.ok,
     required this.categoryFardhPrayer,
     required this.categorySunnahAndWitr,
     required this.categoryQuran,
@@ -565,6 +567,8 @@ class AppText {
   final String myNearestOrCompetitor;
   final String competitorInitials;
   final String viewInDashboard;
+  final String amolPrayerTimeNotStarted;
+  final String ok;
   final String categoryFardhPrayer;
   final String categorySunnahAndWitr;
   final String categoryQuran;
@@ -1228,6 +1232,12 @@ class AppText {
         'competitorInitials',
         fallback?.competitorInitials ?? '',
       ),
+      amolPrayerTimeNotStarted: _read(
+        map,
+        'amolPrayerTimeNotStarted',
+        fallback?.amolPrayerTimeNotStarted ?? '',
+      ),
+      ok: _read(map, 'ok', fallback?.ok ?? ''),
       viewInDashboard: _read(
         map,
         'viewInDashboard',
@@ -2706,6 +2716,14 @@ class AppText {
 
   static AppText of(BuildContext context) {
     final language = context.watch<LanguageBloc>().state.language;
+    return forLanguage(language);
+  }
+
+  /// Like [of], but does not subscribe to [LanguageBloc] changes. Use this
+  /// outside of `build` (e.g. in gesture callbacks) where listening would
+  /// throw a provider assertion.
+  static AppText readOf(BuildContext context) {
+    final language = context.read<LanguageBloc>().state.language;
     return forLanguage(language);
   }
 

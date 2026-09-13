@@ -9,3 +9,30 @@ class LoadAmolDaily extends AmolDailyEvent {
 
   final String date;
 }
+
+/// Marks one checklist item done (`POST /amol/tracker/log-item`). The
+/// screen only dispatches this after its own prayer-time gate passes.
+class LogAmolDailyItem extends AmolDailyEvent {
+  const LogAmolDailyItem({
+    required this.logDate,
+    required this.pillarKey,
+    required this.itemKey,
+  });
+
+  final String logDate;
+  final String pillarKey;
+  final String itemKey;
+}
+
+/// Un-checks one checklist item (`DELETE /amol/tracker/delete-item`).
+class UncheckAmolDailyItem extends AmolDailyEvent {
+  const UncheckAmolDailyItem({
+    required this.logDate,
+    required this.pillarKey,
+    required this.itemKey,
+  });
+
+  final String logDate;
+  final String pillarKey;
+  final String itemKey;
+}

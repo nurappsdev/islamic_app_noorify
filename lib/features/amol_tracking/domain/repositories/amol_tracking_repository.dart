@@ -9,4 +9,22 @@ abstract interface class AmolTrackingRepository {
   /// [Right] with the [AmolDailyDashboard], or [Left] with a typed
   /// [Failure].
   Future<Either<Failure, AmolDailyDashboard>> getDaily({required String date});
+
+  /// Marks one checklist item done via `POST /amol/tracker/log-item`.
+  /// Returns [Right] with the day's updated [AmolDailyDashboard], or [Left]
+  /// with a typed [Failure].
+  Future<Either<Failure, AmolDailyDashboard>> logItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  });
+
+  /// Un-checks one checklist item via `DELETE /amol/tracker/delete-item`.
+  /// Returns [Right] with the day's updated [AmolDailyDashboard], or [Left]
+  /// with a typed [Failure].
+  Future<Either<Failure, AmolDailyDashboard>> deleteItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,10 +10,20 @@ import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_
 import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
+import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
+import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+
+/// `pillarKey`s whose items may only be logged once their prayer window has
+/// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
+/// have no time gate.
+const _timeGatedPillarKeys = {'fardh_prayer', 'sunnah_witr', 'nafl_salat'};
 
 /// English title -> the pillar key `GET /amol/tracker/daily` uses, so a
 /// caller (e.g. [HomeProgressSection]'s tiles) can still ask for a category
@@ -68,8 +80,17 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
           GetAmolDaily(
             AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
           ),
+          LogAmolItem(
+            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+          ),
+          DeleteAmolItem(
+            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+          ),
         )
         ..add(LoadAmolDaily(_isoDate(_today)));
+
+  DailyPrayerTimes? _prayerTimes;
+  late final StreamSubscription<String> _logFailureSub;
 
   static String _isoDate(DateTime date) {
     final y = date.year.toString().padLeft(4, '0');
@@ -83,6 +104,125 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _logFailureSub = _bloc.logFailures.listen((message) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
+    unawaited(_loadPrayerTimes());
+  }
+
+  Future<void> _loadPrayerTimes() async {
+    try {
+      final service = await AladhanPrayerTimeService.create();
+      final cached = service.cachedPrayerTimes(_today);
+      if (mounted && cached != null) setState(() => _prayerTimes = cached);
+
+      final fresh = await service.loadPrayerTimes(_today);
+      if (mounted && fresh != null) setState(() => _prayerTimes = fresh);
+    } catch (_) {
+      // Times stay null; the gate below allows tracking when they're
+      // unavailable rather than blocking the user on our own load failure.
+    }
+  }
+
+  /// The earliest clock time [pillarKey]/[itemKey] may be logged at, or
+  /// `null` when that item isn't time-gated. Sunnah prayers share their
+  /// Fard's start; Witr and Tahajjud open at Isha; Ishraq/Chasht open at
+  /// sunrise; Awabin opens at Maghrib.
+  PrayerClockTime? _gateStart(
+    String pillarKey,
+    String itemKey,
+    DailyPrayerTimes times,
+  ) {
+    if (!_timeGatedPillarKeys.contains(pillarKey)) return null;
+    switch (itemKey) {
+      case 'fajr':
+      case 'fajr_sunnah':
+        return times.fajr;
+      case 'dhuhr':
+      case 'dhuhr_sunnah':
+        return times.dhuhr;
+      case 'asr':
+      case 'asr_sunnah':
+        return times.asr;
+      case 'maghrib':
+      case 'maghrib_sunnah':
+      case 'awabin':
+        return times.maghrib;
+      case 'isha':
+      case 'isha_sunnah':
+      case 'witr':
+      case 'tahajjud':
+        return times.isha;
+      case 'ishraq':
+      case 'chasht':
+        return times.sunrise;
+      default:
+        return null;
+    }
+  }
+
+  void _onItemTap(String pillarKey, AmolItem item) {
+    if (_bloc.state.loggingItemKey != null) return;
+
+    if (_bloc.state.isItemChecked(item.itemKey, item.isCompleted)) {
+      _bloc.add(
+        UncheckAmolDailyItem(
+          logDate: _isoDate(_today),
+          pillarKey: pillarKey,
+          itemKey: item.itemKey,
+        ),
+      );
+      return;
+    }
+
+    final times = _prayerTimes;
+    if (times != null) {
+      final gate = _gateStart(pillarKey, item.itemKey, times);
+      if (gate != null) {
+        final now = (widget.now ?? DateTime.now)();
+        final gateTime = DateTime(
+          _today.year,
+          _today.month,
+          _today.day,
+          gate.hour,
+          gate.minute,
+        );
+        if (now.isBefore(gateTime)) {
+          _showPrayerNotStartedAlert();
+          return;
+        }
+      }
+    }
+
+    _bloc.add(
+      LogAmolDailyItem(
+        logDate: _isoDate(_today),
+        pillarKey: pillarKey,
+        itemKey: item.itemKey,
+      ),
+    );
+  }
+
+  void _showPrayerNotStartedAlert() {
+    final appText = AppText.readOf(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        content: Text(appText.amolPrayerTimeNotStarted),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(appText.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _toggleCategory(String pillarKey) {
     setState(() {
       _expandedPillarKey = _expandedPillarKey == pillarKey ? null : pillarKey;
@@ -93,6 +233,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
 
   @override
   void dispose() {
+    _logFailureSub.cancel();
     _bloc.close();
     super.dispose();
   }
@@ -145,6 +286,10 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                               expanded: _expandedPillarKey == pillar.pillarKey,
                               onToggleExpanded: () =>
                                   _toggleCategory(pillar.pillarKey),
+                              loggingItemKey: state.loggingItemKey,
+                              completionOverrides: state.completionOverrides,
+                              onItemTap: (item) =>
+                                  _onItemTap(pillar.pillarKey, item),
                             ),
                             SizedBox(height: 12.h),
                           ]
@@ -397,11 +542,17 @@ class _PillarRow extends StatelessWidget {
     required this.pillar,
     required this.expanded,
     required this.onToggleExpanded,
+    required this.loggingItemKey,
+    required this.completionOverrides,
+    required this.onItemTap,
   });
 
   final AmolPillar pillar;
   final bool expanded;
   final VoidCallback onToggleExpanded;
+  final String? loggingItemKey;
+  final Map<String, bool> completionOverrides;
+  final ValueChanged<AmolItem> onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +576,13 @@ class _PillarRow extends StatelessWidget {
                 children: [
                   for (var i = 0; i < pillar.items.length; i++) ...[
                     if (i != 0) SizedBox(height: 6.h),
-                    _AmolItemRow(item: pillar.items[i]),
+                    _AmolItemRow(
+                      item: pillar.items[i],
+                      isLogging: loggingItemKey == pillar.items[i].itemKey,
+                      isChecked: completionOverrides[pillar.items[i].itemKey] ??
+                          pillar.items[i].isCompleted,
+                      onTap: () => onItemTap(pillar.items[i]),
+                    ),
                   ],
                 ],
               ),
@@ -437,67 +594,94 @@ class _PillarRow extends StatelessWidget {
 }
 
 /// A single checklist item: icon, localized name, earned points and a
-/// read-only `isCompleted` indicator. There's no per-option write flow
-/// (in-jama'at / alone / kaja) here — this is a display of the server's
-/// current state for the day.
+/// checkmark tied to [isChecked] (`isCompleted`, overridden by the bloc's
+/// `completionOverrides` once the user has locally checked/unchecked it this
+/// session, so a flaky `GET` can't silently flip it back). Tapping an
+/// unchecked item logs it via `POST /amol/tracker/log-item` (subject to the
+/// screen's prayer-time gate); tapping a checked item un-checks it via
+/// `DELETE /amol/tracker/delete-item`. There's no per-option flow
+/// (in-jama'at / alone / kaja) here.
 class _AmolItemRow extends StatelessWidget {
-  const _AmolItemRow({required this.item});
+  const _AmolItemRow({
+    required this.item,
+    required this.isLogging,
+    required this.isChecked,
+    required this.onTap,
+  });
 
   final AmolItem item;
+  final bool isLogging;
+  final bool isChecked;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final iconSpec = _itemIconByKey[item.itemKey] ?? _fallbackItemIcon;
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.h),
-      child: Row(
-        children: [
-          Container(
-            width: 30.r,
-            height: 30.r,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(9.r),
+    return InkWell(
+      borderRadius: BorderRadius.circular(12.r),
+      onTap: isLogging ? null : onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 6.h),
+        child: Row(
+          children: [
+            Container(
+              width: 30.r,
+              height: 30.r,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(9.r),
+              ),
+              child: Icon(iconSpec.icon, color: iconSpec.color, size: 17.sp),
             ),
-            child: Icon(iconSpec.icon, color: iconSpec.color, size: 17.sp),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              _localizedItemName(AppText.of(context), item),
-              style: TextStyle(fontSize: 13.sp, color: Colors.black),
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDEBB5),
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Text(
-              '+${_formatPoints(item.points)}',
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF5F6B45),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                _localizedItemName(AppText.of(context), item),
+                style: TextStyle(fontSize: 13.sp, color: Colors.black),
               ),
             ),
-          ),
-          SizedBox(width: 10.w),
-          _CompletionCircle(isCompleted: item.isCompleted),
-        ],
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDEBB5),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Text(
+                '+${_formatPoints(item.points)}',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF5F6B45),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            _CompletionCircle(isCompleted: isChecked, isLogging: isLogging),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _CompletionCircle extends StatelessWidget {
-  const _CompletionCircle({required this.isCompleted});
+  const _CompletionCircle({required this.isCompleted, this.isLogging = false});
 
   final bool isCompleted;
+  final bool isLogging;
 
   @override
   Widget build(BuildContext context) {
+    if (isLogging) {
+      return SizedBox(
+        width: 26.r,
+        height: 26.r,
+        child: const Padding(
+          padding: EdgeInsets.all(5),
+          child: CircularProgressIndicator(strokeWidth: 2, color: amolOlive),
+        ),
+      );
+    }
     if (isCompleted) {
       return Container(
         width: 26.r,

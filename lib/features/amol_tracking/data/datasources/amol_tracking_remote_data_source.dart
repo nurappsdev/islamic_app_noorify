@@ -6,11 +6,27 @@ import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_daily_dashboard_model.dart';
 
-/// Talks to `GET /amol/tracker/daily?date=YYYY-MM-DD`. Throws
-/// [ServerException] / [NetworkException] / [ParsingException]; never
-/// returns error states.
+/// Talks to the Amol Tracking REST endpoints. Throws [ServerException] /
+/// [NetworkException] / [ParsingException]; never returns error states.
 abstract interface class AmolTrackingRemoteDataSource {
+  /// `GET /amol/tracker/daily?date=YYYY-MM-DD`.
   Future<AmolDailyDashboardModel> getDaily({required String date});
+
+  /// `POST /amol/tracker/log-item`. Returns the day's updated dashboard
+  /// (same shape as [getDaily]) so the caller can refresh from one response.
+  Future<AmolDailyDashboardModel> logItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  });
+
+  /// `DELETE /amol/tracker/delete-item`. Un-checks a previously logged item;
+  /// returns the day's updated dashboard (same shape as [getDaily]).
+  Future<AmolDailyDashboardModel> deleteItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  });
 }
 
 class AmolTrackingRemoteDataSourceImpl implements AmolTrackingRemoteDataSource {
@@ -23,20 +39,64 @@ class AmolTrackingRemoteDataSourceImpl implements AmolTrackingRemoteDataSource {
 
   @override
   Future<AmolDailyDashboardModel> getDaily({required String date}) async {
-    final token = _local.getToken();
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
         ApiConstants.amolTrackerDailyEndPoint,
         queryParameters: {'date': date},
-        options: Options(
-          headers: token == null ? null : {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
+    return _parseDashboard(response);
+  }
 
+  @override
+  Future<AmolDailyDashboardModel> logItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  }) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        ApiConstants.amolTrackerLogItemEndPoint,
+        data: {'logDate': logDate, 'pillarKey': pillarKey, 'itemKey': itemKey},
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+    return _parseDashboard(response);
+  }
+
+  @override
+  Future<AmolDailyDashboardModel> deleteItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  }) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.delete<dynamic>(
+        ApiConstants.amolTrackerDeleteItemEndPoint,
+        data: {'logDate': logDate, 'pillarKey': pillarKey, 'itemKey': itemKey},
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+    return _parseDashboard(response);
+  }
+
+  Map<String, String>? _authHeaders() {
+    final token = _local.getToken();
+    return token == null ? null : {'Authorization': 'Bearer $token'};
+  }
+
+  /// Both endpoints return the same `{ ..., data: <dashboard> }` envelope.
+  AmolDailyDashboardModel _parseDashboard(Response<dynamic> response) {
     final body = response.data;
     final json = body is Map<String, dynamic> ? body : const <String, dynamic>{};
     final status = response.statusCode ?? 0;
@@ -50,7 +110,7 @@ class AmolTrackingRemoteDataSourceImpl implements AmolTrackingRemoteDataSource {
 
     final data = json['data'];
     if (data is! Map<String, dynamic>) {
-      throw ParsingException('Amol daily response is missing "data".');
+      throw ParsingException('Amol response is missing "data".');
     }
     return AmolDailyDashboardModel.fromJson(data);
   }
