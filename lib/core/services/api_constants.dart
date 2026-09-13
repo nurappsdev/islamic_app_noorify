@@ -1,6 +1,6 @@
 class ApiConstants {
 // local
-  static const String baseUrl = "https://pagla7000.ilmifygroup.com/api/v1";
+  static const String baseUrl = "https://vondo7000.ilmifygroup.com/api/v1";
 
 //live
 // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
@@ -37,6 +37,9 @@ class ApiConstants {
   static const String getProfileEndPoint = "/user/me";
   static const String homeDashboardEndPoint = "/home/dashboard";
   static const String amolTrackerDailyEndPoint = "/amol/tracker/daily";
+  static const String amolTrackerLogItemEndPoint = "/amol/tracker/log-item";
+  static const String amolTrackerDeleteItemEndPoint =
+      "/amol/tracker/delete-item";
 
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";

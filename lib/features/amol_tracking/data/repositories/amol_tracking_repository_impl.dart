@@ -14,9 +14,46 @@ class AmolTrackingRepositoryImpl implements AmolTrackingRepository {
   @override
   Future<Either<Failure, AmolDailyDashboard>> getDaily({
     required String date,
-  }) async {
+  }) {
+    return _guard(() => _remote.getDaily(date: date));
+  }
+
+  @override
+  Future<Either<Failure, AmolDailyDashboard>> logItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  }) {
+    return _guard(
+      () => _remote.logItem(
+        logDate: logDate,
+        pillarKey: pillarKey,
+        itemKey: itemKey,
+      ),
+    );
+  }
+
+  @override
+  Future<Either<Failure, AmolDailyDashboard>> deleteItem({
+    required String logDate,
+    required String pillarKey,
+    required String itemKey,
+  }) {
+    return _guard(
+      () => _remote.deleteItem(
+        logDate: logDate,
+        pillarKey: pillarKey,
+        itemKey: itemKey,
+      ),
+    );
+  }
+
+  /// Runs [action], mapping any data-layer exception to a typed [Failure].
+  Future<Either<Failure, AmolDailyDashboard>> _guard(
+    Future<AmolDailyDashboard> Function() action,
+  ) async {
     try {
-      return Right(await _remote.getDaily(date: date));
+      return Right(await action());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {
