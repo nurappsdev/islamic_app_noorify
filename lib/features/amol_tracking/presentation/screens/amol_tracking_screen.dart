@@ -647,7 +647,7 @@ class _AmolItemRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
-                '+${_formatPoints(item.points)}',
+                '+${_formatPoints(isChecked ? item.points : item.maxPoints)}',
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
