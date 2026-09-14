@@ -55,6 +55,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
             agreedToTerms: profile.agreedToTerms,
             totalPoints: profile.totalPoints,
             currentStreakDays: profile.currentStreakDays,
+            globalRankPosition: profile.globalRankPosition,
+            badges: profile.badges,
+            currentBadge: profile.currentBadge,
           );
     return _local.cacheProfile(model);
   }

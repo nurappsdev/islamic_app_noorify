@@ -13,12 +13,32 @@ import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_da
 import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/logout/logout_bloc.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
+import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
+import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  static const _progress = .67;
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  ProfileEntity? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _profile = ProfileService.instance.cachedProfile;
+    unawaited(_loadProfile());
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await ProfileService.instance.fetchProfile();
+    if (!mounted || profile == null) return;
+    setState(() => _profile = profile);
+  }
 
   static List<_FamilyMember> _members(AppText appText) => [
     _FamilyMember(
@@ -45,6 +65,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final members = _members(appText);
+    final profile = _profile;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -55,7 +76,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 _ProfileHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 14.h),
-                const _ProfileHeroCard(progress: _progress),
+                _ProfileHeroCard(profile: profile),
                 SizedBox(height: 24.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -158,13 +179,16 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _ProfileHeroCard extends StatelessWidget {
-  const _ProfileHeroCard({required this.progress});
+  const _ProfileHeroCard({required this.profile});
 
-  final double progress;
+  final ProfileEntity? profile;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final progress = (profile?.profileCompletionPercentage ?? 0) / 100;
+    final badges = profile?.badges ?? const <BadgeEntity>[];
+    final currentBadge = profile?.currentBadge;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18.w, 28.h, 18.w, 22.h),
@@ -213,20 +237,95 @@ class _ProfileHeroCard extends StatelessWidget {
               fontSize: 12.sp,
             ),
           ),
+          if (currentBadge != null) ...[
+            SizedBox(height: 18.h),
+            _CurrentBadge(badge: currentBadge),
+          ],
+          if (badges.isNotEmpty) ...[
+            SizedBox(height: 18.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (final badge in badges) _BadgeCircle(badge: badge),
+              ],
+            ),
+          ],
           SizedBox(height: 18.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (var index = 1; index <= 4; index++)
-                _BadgeCircle(label: '${appText.badgeLabel} $index'),
-              const _BadgeCircle(label: '+2'),
-            ],
+          _PositionPointsPill(
+            position: profile?.globalRankPosition ?? 0,
+            points: profile?.totalPoints ?? 0,
           ),
-          SizedBox(height: 18.h),
-          _PositionPointsPill(position: 24, points: 831),
         ],
       ),
     );
+  }
+}
+
+class _CurrentBadge extends StatelessWidget {
+  const _CurrentBadge({required this.badge});
+
+  final BadgeEntity badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _BadgeAvatar(iconUrl: badge.iconUrl, dimension: 56.r),
+        SizedBox(height: 6.h),
+        Text(
+          badge.name,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BadgeAvatar extends StatelessWidget {
+  const _BadgeAvatar({required this.iconUrl, required this.dimension});
+
+  final String? iconUrl;
+  final double dimension;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = iconUrl;
+    return Container(
+      width: dimension,
+      height: dimension,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Color(0xFFB9C36E),
+        shape: BoxShape.circle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: (url == null || url.isEmpty)
+          ? _BadgePlaceholderIcon(size: dimension * .5)
+          : Image.network(
+              url,
+              width: dimension,
+              height: dimension,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _BadgePlaceholderIcon(size: dimension * .5),
+            ),
+    );
+  }
+}
+
+class _BadgePlaceholderIcon extends StatelessWidget {
+  const _BadgePlaceholderIcon({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.emoji_events_rounded, size: size, color: Colors.white);
   }
 }
 
@@ -331,34 +430,13 @@ class _ProfileRingPainter extends CustomPainter {
 }
 
 class _BadgeCircle extends StatelessWidget {
-  const _BadgeCircle({required this.label});
+  const _BadgeCircle({required this.badge});
 
-  final String label;
+  final BadgeEntity badge;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 46.r,
-      height: 46.r,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Color(0xFFB9C36E),
-        shape: BoxShape.circle,
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(5.r),
-        child: FittedBox(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    );
+    return _BadgeAvatar(iconUrl: badge.iconUrl, dimension: 46.r);
   }
 }
 
