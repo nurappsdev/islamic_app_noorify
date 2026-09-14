@@ -12,8 +12,10 @@ import 'package:islami_app_noorify/features/auth/data/repositories/account_repos
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
 import 'package:islami_app_noorify/features/auth/presentation/bloc/logout/logout_bloc.dart';
+import 'package:islami_app_noorify/features/profile/data/services/family_service.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
+import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
@@ -27,12 +29,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   ProfileEntity? _profile;
+  List<FamilyMemberEntity> _familyMembers = const [];
 
   @override
   void initState() {
     super.initState();
     _profile = ProfileService.instance.cachedProfile;
     unawaited(_loadProfile());
+    unawaited(_loadFamilyMembers());
   }
 
   Future<void> _loadProfile() async {
@@ -41,31 +45,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _profile = profile);
   }
 
-  static List<_FamilyMember> _members(AppText appText) => [
-    _FamilyMember(
-      rank: 4,
-      name: appText.familyMemberNameAbdullah,
-      relation: appText.brother,
-      points: 831,
-    ),
-    _FamilyMember(
-      rank: 5,
-      name: appText.familyMemberNameSabit,
-      relation: appText.brother,
-      points: 812,
-    ),
-    _FamilyMember(
-      rank: 6,
-      name: appText.familyMemberNameAli,
-      relation: appText.brother,
-      points: 786,
-    ),
-  ];
+  Future<void> _loadFamilyMembers() async {
+    final members = await FamilyService.instance.fetchFamilyMembers();
+    if (!mounted) return;
+    setState(() => _familyMembers = members);
+  }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final members = _members(appText);
     final profile = _profile;
     return Scaffold(
       backgroundColor: Colors.white,
@@ -104,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 SizedBox(height: 14.h),
-                for (final member in members) ...[
+                for (final member in _familyMembers) ...[
                   _FamilyMemberCard(member: member),
                   SizedBox(height: 10.h),
                 ],
@@ -495,24 +483,10 @@ class _PositionPointsPill extends StatelessWidget {
   }
 }
 
-class _FamilyMember {
-  const _FamilyMember({
-    required this.rank,
-    required this.name,
-    required this.relation,
-    required this.points,
-  });
-
-  final int rank;
-  final String name;
-  final String relation;
-  final int points;
-}
-
 class _FamilyMemberCard extends StatelessWidget {
   const _FamilyMemberCard({required this.member});
 
-  final _FamilyMember member;
+  final FamilyMemberEntity member;
 
   @override
   Widget build(BuildContext context) {
@@ -526,22 +500,20 @@ class _FamilyMemberCard extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '#${member.rank}',
+            '#${member.globalRank}',
             style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7551)),
           ),
           SizedBox(width: 10.w),
-          CircleAvatar(
-            radius: 15.r,
-            backgroundColor: const Color(0xFFCFCFEA),
-            child: Text(
-              'Z',
-              style: TextStyle(color: const Color(0xFF5B5B8C), fontSize: 12.sp),
-            ),
+          _FamilyMemberAvatar(
+            avatarUrl: member.memberAvatarUrl,
+            name: member.memberName,
           ),
           SizedBox(width: 10.w),
           Expanded(
             child: Text(
-              '${member.name} ( ${member.relation} )',
+              member.memberName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13.sp),
             ),
           ),
@@ -552,10 +524,41 @@ class _FamilyMemberCard extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${member.points}',
+            '${member.memberTotalPoints}',
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FamilyMemberAvatar extends StatelessWidget {
+  const _FamilyMemberAvatar({required this.avatarUrl, required this.name});
+
+  final String? avatarUrl;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmedName = name.trim();
+    final placeholder = CircleAvatar(
+      radius: 15.r,
+      backgroundColor: const Color(0xFFCFCFEA),
+      child: Text(
+        trimmedName.isEmpty ? '?' : trimmedName[0].toUpperCase(),
+        style: TextStyle(color: const Color(0xFF5B5B8C), fontSize: 12.sp),
+      ),
+    );
+    final url = avatarUrl;
+    if (url == null || url.isEmpty) return placeholder;
+    return ClipOval(
+      child: Image.network(
+        url,
+        width: 30.r,
+        height: 30.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => placeholder,
       ),
     );
   }
