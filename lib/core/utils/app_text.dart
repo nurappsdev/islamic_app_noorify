@@ -435,6 +435,7 @@ class AppText {
     required this.editProfileChooseGallery,
     required this.editProfileCancel,
     required this.editProfileImagePickError,
+    required this.editProfilePhotoNotUploaded,
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
@@ -950,6 +951,7 @@ class AppText {
   final String editProfileChooseGallery;
   final String editProfileCancel;
   final String editProfileImagePickError;
+  final String editProfilePhotoNotUploaded;
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
@@ -2558,6 +2560,11 @@ class AppText {
         map,
         'editProfileImagePickError',
         fallback?.editProfileImagePickError ?? '',
+      ),
+      editProfilePhotoNotUploaded: _read(
+        map,
+        'editProfilePhotoNotUploaded',
+        fallback?.editProfilePhotoNotUploaded ?? '',
       ),
       percentCompleteSuffix: _read(
         map,

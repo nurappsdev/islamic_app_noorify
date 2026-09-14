@@ -332,6 +332,7 @@
   "editProfileChooseGallery": "Choose from Gallery",
   "editProfileCancel": "Cancel",
   "editProfileImagePickError": "Couldn't load the selected image. Please try again.",
+  "editProfilePhotoNotUploaded": "Profile saved. Photo upload is not available yet.",
   "percentCompleteSuffix": "complete",
   "mymensingh": "Mymensingh",
   "badgeLabel": "Badge",
