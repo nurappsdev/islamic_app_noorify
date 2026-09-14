@@ -108,41 +108,34 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   Future<void> _save() async {
     final appText = AppText.readOf(context);
-    final current = _profile;
-    if (current == null || !(_formKey.currentState?.validate() ?? false)) {
+    if (_profile == null || !(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     setState(() => _isSaving = true);
-    final updated = ProfileEntity(
-      id: current.id,
+    final phone = _phoneController.text.trim();
+    final result = await ProfileService.instance.updateProfile(
       name: _nameController.text.trim(),
-      email: current.email,
-      phone: _phoneController.text.trim().isEmpty
-          ? null
-          : _phoneController.text.trim(),
-      role: current.role,
-      authProvider: current.authProvider,
+      phone: phone.isEmpty ? null : phone,
       gender: _selectedGender,
-      preferredLanguage: current.preferredLanguage,
-      profileCompletionPercentage: current.profileCompletionPercentage,
-      isEmailVerified: current.isEmailVerified,
-      isPhoneVerified: current.isPhoneVerified,
-      agreedToTerms: current.agreedToTerms,
-      totalPoints: current.totalPoints,
-      currentStreakDays: current.currentStreakDays,
-      globalRankPosition: current.globalRankPosition,
-      badges: current.badges,
-      currentBadge: current.currentBadge,
-      avatarUrl: current.avatarUrl,
     );
-    await ProfileService.instance.updateLocal(updated);
     if (!mounted) return;
     setState(() => _isSaving = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(appText.saveAction)),
+
+    result.fold(
+      (failure) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
+      },
+      (updated) {
+        _applyProfile(updated);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(appText.saveAction)));
+        Navigator.of(context).maybePop();
+      },
     );
-    Navigator.of(context).maybePop();
   }
 
   InputDecoration _fieldDecoration({

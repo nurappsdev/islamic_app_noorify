@@ -35,6 +35,7 @@ class ApiConstants {
   static const String refreshTokenEndPoint = "/auth/refresh-token";
   static const String accountDelete = "/users/delete";
   static const String getProfileEndPoint = "/user/me";
+  static const String updateProfileEndPoint = "/user/me";
   static const String homeDashboardEndPoint = "/home/dashboard";
   static const String amolTrackerDailyEndPoint = "/amol/tracker/daily";
   static const String amolTrackerLogItemEndPoint = "/amol/tracker/log-item";

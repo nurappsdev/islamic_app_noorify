@@ -21,6 +21,9 @@ class ProfileEntity {
     this.badges = const [],
     this.currentBadge,
     this.avatarUrl,
+    this.dateOfBirth,
+    this.profession,
+    this.location,
   });
 
   final String id;
@@ -31,6 +34,9 @@ class ProfileEntity {
   final String? authProvider;
   final String? gender;
   final String? avatarUrl;
+  final String? dateOfBirth;
+  final String? profession;
+  final String? location;
   final String? preferredLanguage;
   final int profileCompletionPercentage;
   final bool isEmailVerified;
