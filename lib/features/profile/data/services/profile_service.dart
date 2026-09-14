@@ -22,48 +22,61 @@ class ProfileService {
   /// been fetched yet. Used to prefill the Edit Profile form instantly.
   ProfileEntity? get cachedProfile => _repository.cachedProfile;
 
-  /// Fetches the freshest profile from the API; falls back to the cache on
-  /// failure so the Edit Profile form still has something to prefill.
+  /// Fetches the freshest profile from the API, keeping
+  /// [profileNameNotifier] / [profilePhotoUrlNotifier] in sync; falls back
+  /// to the cache on failure so the caller still has something to show.
   Future<ProfileEntity?> fetchProfile() async {
     final result = await _getProfile();
-    return result.fold((_) => _repository.cachedProfile, (profile) => profile);
+    return result.fold((_) => _repository.cachedProfile, (profile) {
+      _syncNotifiers(profile);
+      return profile;
+    });
   }
 
   /// Persists an edit made on the Edit Profile screen to the local cache
   /// (there is no update-profile endpoint yet) and keeps
-  /// [profileNameNotifier] in sync.
+  /// [profileNameNotifier] / [profilePhotoUrlNotifier] in sync.
   Future<void> updateLocal(ProfileEntity profile) async {
     await _repository.cacheLocally(profile);
-    if (profile.name.isNotEmpty) {
-      profileNameNotifier.value = profile.name;
-    }
+    _syncNotifiers(profile);
   }
 
-  /// Pushes the last cached name (if any) into [profileNameNotifier] without
-  /// hitting the network. Call as early as possible (e.g. right after
-  /// splash resolves to the home route) so the UI never flashes a fallback.
+  /// Pushes the last cached profile (if any) into [profileNameNotifier] /
+  /// [profilePhotoUrlNotifier] without hitting the network. Call as early as
+  /// possible (e.g. right after splash resolves to the home route) so the UI
+  /// never flashes a fallback.
   void hydrateFromCache() {
-    final name = _repository.cachedProfile?.name;
-    if (name != null && name.isNotEmpty) {
-      profileNameNotifier.value = name;
-    }
+    final profile = _repository.cachedProfile;
+    if (profile == null) return;
+    _syncNotifiers(profile);
   }
 
   /// Fetches the fresh profile from the API, caches it in Hive, and updates
-  /// [profileNameNotifier]. Safe to call fire-and-forget; failures are
-  /// swallowed since the cached/fallback name is already on screen.
-  Future<void> refresh() async {
-    final result = await _getProfile();
-    result.fold((_) {}, (profile) {
-      if (profile.name.isNotEmpty) {
-        profileNameNotifier.value = profile.name;
-      }
-    });
+  /// [profileNameNotifier] / [profilePhotoUrlNotifier]. Safe to call
+  /// fire-and-forget; failures are swallowed since the cached/fallback
+  /// values are already on screen.
+  Future<void> refresh() => fetchProfile();
+
+  /// Mirrors [profile] into [profileNameNotifier] / [profilePhotoUrlNotifier].
+  /// The avatar is skipped when the user has a custom local photo set via
+  /// the Firebase auth path ([profilePhotoBase64Notifier]) — that one wins,
+  /// same as [AuthService].
+  void _syncNotifiers(ProfileEntity profile) {
+    if (profile.name.isNotEmpty) {
+      profileNameNotifier.value = profile.name;
+    }
+    final hasCustomLocalPhoto = (profilePhotoBase64Notifier.value ?? '')
+        .trim()
+        .isNotEmpty;
+    if (hasCustomLocalPhoto) return;
+    final url = (profile.avatarUrl ?? '').trim();
+    profilePhotoUrlNotifier.value = url.isEmpty ? null : url;
   }
 
-  /// Clears the cached profile and resets the notifier (used on logout).
+  /// Clears the cached profile and resets the notifiers (used on logout).
   Future<void> clear() async {
     await _repository.clearCache();
     profileNameNotifier.value = null;
+    profilePhotoUrlNotifier.value = null;
   }
 }

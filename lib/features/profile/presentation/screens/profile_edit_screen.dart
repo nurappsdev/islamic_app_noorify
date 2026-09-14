@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
+import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -133,6 +134,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       globalRankPosition: current.globalRankPosition,
       badges: current.badges,
       currentBadge: current.currentBadge,
+      avatarUrl: current.avatarUrl,
     );
     await ProfileService.instance.updateLocal(updated);
     if (!mounted) return;
@@ -409,28 +411,20 @@ class _ProfileAvatar extends StatelessWidget {
               shape: BoxShape.circle,
               color: Color(0xFFA7B462),
             ),
-            child: Container(
-              width: dimension - 12.r,
-              height: dimension - 12.r,
-              alignment: Alignment.center,
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              child: imageFile != null
-                  ? Image.file(
+            child: imageFile != null
+                ? ClipOval(
+                    child: Image.file(
                       imageFile!,
                       fit: BoxFit.cover,
                       width: dimension - 12.r,
                       height: dimension - 12.r,
-                    )
-                  : Icon(
-                      Icons.person_rounded,
-                      size: 46.sp,
-                      color: const Color(0xFFB7C17E),
                     ),
-            ),
+                  )
+                : ProfileAvatarCircle(
+                    dimension: dimension - 12.r,
+                    backgroundColor: Colors.white,
+                    placeholderIconColor: const Color(0xFFB7C17E),
+                  ),
           ),
           Positioned(
             right: 0,

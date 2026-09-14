@@ -16,6 +16,7 @@ import 'package:islami_app_noorify/features/profile/data/services/profile_servic
 import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -347,19 +348,10 @@ class _AvatarWithProgress extends StatelessWidget {
             size: Size(dimension, dimension),
             painter: _ProfileRingPainter(progress: progress),
           ),
-          Container(
-            width: 84.r,
-            height: 84.r,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              size: 46.sp,
-              color: const Color(0xFFB7C17E),
-            ),
+          ProfileAvatarCircle(
+            dimension: 84.r,
+            backgroundColor: Colors.white,
+            placeholderIconColor: const Color(0xFFB7C17E),
           ),
           Positioned(
             right: 0,

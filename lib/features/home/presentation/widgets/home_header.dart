@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -17,10 +18,10 @@ class HomeHeader extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
-          child: CircleAvatar(
-            radius: 19.r,
+          child: ProfileAvatarCircle(
+            dimension: 38.r,
             backgroundColor: const Color(0xFFE8EBC9),
-            backgroundImage: const AssetImage('assets/images/logo.png'),
+            placeholderIconColor: AppColor.primary,
           ),
         ),
         SizedBox(width: 7.w),

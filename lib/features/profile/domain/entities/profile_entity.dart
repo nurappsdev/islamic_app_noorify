@@ -20,6 +20,7 @@ class ProfileEntity {
     this.globalRankPosition = 0,
     this.badges = const [],
     this.currentBadge,
+    this.avatarUrl,
   });
 
   final String id;
@@ -29,6 +30,7 @@ class ProfileEntity {
   final String? role;
   final String? authProvider;
   final String? gender;
+  final String? avatarUrl;
   final String? preferredLanguage;
   final int profileCompletionPercentage;
   final bool isEmailVerified;

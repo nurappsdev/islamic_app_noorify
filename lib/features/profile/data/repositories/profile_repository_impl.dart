@@ -58,6 +58,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
             globalRankPosition: profile.globalRankPosition,
             badges: profile.badges,
             currentBadge: profile.currentBadge,
+            avatarUrl: profile.avatarUrl,
           );
     return _local.cacheProfile(model);
   }
