@@ -431,6 +431,10 @@ class AppText {
     required this.planner,
     required this.profileTitle,
     required this.editProfileTitle,
+    required this.editProfileSelectPhotoTitle,
+    required this.editProfileChooseGallery,
+    required this.editProfileCancel,
+    required this.editProfileImagePickError,
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
@@ -942,6 +946,10 @@ class AppText {
   // Profile feature
   final String profileTitle;
   final String editProfileTitle;
+  final String editProfileSelectPhotoTitle;
+  final String editProfileChooseGallery;
+  final String editProfileCancel;
+  final String editProfileImagePickError;
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
@@ -2530,6 +2538,26 @@ class AppText {
         map,
         'editProfileTitle',
         fallback?.editProfileTitle ?? '',
+      ),
+      editProfileSelectPhotoTitle: _read(
+        map,
+        'editProfileSelectPhotoTitle',
+        fallback?.editProfileSelectPhotoTitle ?? '',
+      ),
+      editProfileChooseGallery: _read(
+        map,
+        'editProfileChooseGallery',
+        fallback?.editProfileChooseGallery ?? '',
+      ),
+      editProfileCancel: _read(
+        map,
+        'editProfileCancel',
+        fallback?.editProfileCancel ?? '',
+      ),
+      editProfileImagePickError: _read(
+        map,
+        'editProfileImagePickError',
+        fallback?.editProfileImagePickError ?? '',
       ),
       percentCompleteSuffix: _read(
         map,

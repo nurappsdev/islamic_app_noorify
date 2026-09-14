@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -20,9 +22,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _imagePicker = ImagePicker();
 
   ProfileEntity? _profile;
   String? _selectedGender;
+  File? _selectedImage;
   bool _isSaving = false;
 
   @override
@@ -57,8 +61,52 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     super.dispose();
   }
 
+  Future<void> _openGalleryPicker() async {
+    final appText = AppText.readOf(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          appText.editProfileSelectPhotoTitle,
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.editProfileCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
+            child: Text(appText.editProfileChooseGallery),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await _pickImageFromGallery();
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final appText = AppText.readOf(context);
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null || !mounted) return;
+      setState(() => _selectedImage = File(picked.path));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(appText.editProfileImagePickError)),
+      );
+    }
+  }
+
   Future<void> _save() async {
-    final appText = AppText.of(context);
+    final appText = AppText.readOf(context);
     final current = _profile;
     if (current == null || !(_formKey.currentState?.validate() ?? false)) {
       return;
@@ -145,7 +193,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
                   children: [
-                    Center(child: _ProfileAvatar()),
+                    Center(
+                      child: _ProfileAvatar(
+                        imageFile: _selectedImage,
+                        onTapGallery: _openGalleryPicker,
+                      ),
+                    ),
                     SizedBox(height: 28.h),
                     Text(
                       appText.enterYourName,
@@ -330,34 +383,78 @@ class _EditProfileHeader extends StatelessWidget {
   }
 }
 
-/// Display-only circular avatar; there is no photo-upload endpoint yet.
+/// Circular avatar that previews [imageFile] when set, with a gallery-icon
+/// badge that lets the user pick a new photo from their device. There is no
+/// photo-upload endpoint yet, so the picked image is a local preview only.
 class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar();
+  const _ProfileAvatar({required this.imageFile, required this.onTapGallery});
+
+  final File? imageFile;
+  final VoidCallback onTapGallery;
 
   @override
   Widget build(BuildContext context) {
     final dimension = 96.r;
-    return Container(
-      width: dimension,
-      height: dimension,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: Color(0xFFA7B462),
-      ),
-      child: Container(
-        width: dimension - 12.r,
-        height: dimension - 12.r,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-        ),
-        child: Icon(
-          Icons.person_rounded,
-          size: 46.sp,
-          color: const Color(0xFFB7C17E),
-        ),
+    return SizedBox(
+      width: dimension + 8.r,
+      height: dimension + 8.r,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: dimension,
+            height: dimension,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFFA7B462),
+            ),
+            child: Container(
+              width: dimension - 12.r,
+              height: dimension - 12.r,
+              alignment: Alignment.center,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: imageFile != null
+                  ? Image.file(
+                      imageFile!,
+                      fit: BoxFit.cover,
+                      width: dimension - 12.r,
+                      height: dimension - 12.r,
+                    )
+                  : Icon(
+                      Icons.person_rounded,
+                      size: 46.sp,
+                      color: const Color(0xFFB7C17E),
+                    ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: onTapGallery,
+              child: Container(
+                width: 28.r,
+                height: 28.r,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColor.primary,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  size: 14.sp,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

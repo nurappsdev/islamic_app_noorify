@@ -433,6 +433,10 @@ const Map<String, String> appTextBn = <String, String>{
   // Profile feature
   'profileTitle': 'প্রোফাইল',
   'editProfileTitle': 'প্রোফাইল সম্পাদনা',
+  'editProfileSelectPhotoTitle': 'প্রোফাইল ছবি নির্বাচন করুন',
+  'editProfileChooseGallery': 'গ্যালারি থেকে বেছে নিন',
+  'editProfileCancel': 'বাতিল',
+  'editProfileImagePickError': 'নির্বাচিত ছবি লোড করা যায়নি। আবার চেষ্টা করুন।',
   'percentCompleteSuffix': 'সম্পন্ন',
   'mymensingh': 'ময়মনসিংহ',
   'badgeLabel': 'ব্যাজ',
