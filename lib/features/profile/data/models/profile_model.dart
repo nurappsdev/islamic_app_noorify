@@ -24,7 +24,10 @@ import 'package:islami_app_noorify/features/profile/domain/entities/profile_enti
 ///   "agreedToTerms": false,
 ///   "totalPoints": 0,
 ///   "currentStreakDays": 0,
-///   "avatarUrl": "https://res.cloudinary.com/demo/image/upload/avatar.jpg"
+///   "avatarUrl": "https://res.cloudinary.com/demo/image/upload/avatar.jpg",
+///   "dateOfBirth": "1998-05-15",
+///   "profession": "Software Engineer",
+///   "location": "Dhaka, Bangladesh"
 /// }
 /// ```
 class ProfileModel extends ProfileEntity {
@@ -47,6 +50,9 @@ class ProfileModel extends ProfileEntity {
     super.badges,
     super.currentBadge,
     super.avatarUrl,
+    super.dateOfBirth,
+    super.profession,
+    super.location,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -84,6 +90,9 @@ class ProfileModel extends ProfileEntity {
           ? BadgeModel.fromJson(Map<String, dynamic>.from(currentBadgeJson))
           : null,
       avatarUrl: json['avatarUrl']?.toString(),
+      dateOfBirth: json['dateOfBirth']?.toString(),
+      profession: json['profession']?.toString(),
+      location: json['location']?.toString(),
     );
   }
 
@@ -115,6 +124,9 @@ class ProfileModel extends ProfileEntity {
                   : _toBadgeModel(currentBadge!))
               .toJson(),
     'avatarUrl': avatarUrl,
+    'dateOfBirth': dateOfBirth,
+    'profession': profession,
+    'location': location,
   };
 
   static BadgeModel _toBadgeModel(BadgeEntity b) => BadgeModel(

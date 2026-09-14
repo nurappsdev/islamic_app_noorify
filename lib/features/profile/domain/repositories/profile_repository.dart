@@ -14,10 +14,19 @@ abstract interface class ProfileRepository {
   /// when nothing has been fetched yet.
   ProfileEntity? get cachedProfile;
 
-  /// Persists [profile] to the local cache only, without calling the API.
-  /// Used to keep edits made on the Edit Profile screen until a real
-  /// update-profile endpoint exists.
-  Future<void> cacheLocally(ProfileEntity profile);
+  /// PATCHes only the provided fields to `PATCH /user/me`, caches the
+  /// server's returned profile locally on success, and returns it. All
+  /// parameters are optional — omitted ones are left unchanged server-side.
+  Future<Either<Failure, ProfileEntity>> updateMe({
+    String? name,
+    String? phone,
+    String? gender,
+    String? dateOfBirth,
+    String? profession,
+    String? location,
+    String? preferredLanguage,
+    String? avatarUrl,
+  });
 
   /// Removes the cached profile (used on logout).
   Future<void> clearCache();

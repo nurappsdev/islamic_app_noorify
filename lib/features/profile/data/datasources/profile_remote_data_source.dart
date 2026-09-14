@@ -6,10 +6,22 @@ import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/models/profile_model.dart';
 
-/// Talks to `GET /user/me`. Throws [ServerException] / [NetworkException] /
-/// [ParsingException]; never returns error states.
+/// Talks to `GET`/`PATCH /user/me`. Throws [ServerException] /
+/// [NetworkException] / [ParsingException]; never returns error states.
 abstract interface class ProfileRemoteDataSource {
   Future<ProfileModel> getMe();
+
+  /// PATCHes only the non-null fields. All parameters are optional.
+  Future<ProfileModel> updateMe({
+    String? name,
+    String? phone,
+    String? gender,
+    String? dateOfBirth,
+    String? profession,
+    String? location,
+    String? preferredLanguage,
+    String? avatarUrl,
+  });
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -22,19 +34,61 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<ProfileModel> getMe() async {
-    final token = _local.getToken();
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
         ApiConstants.getProfileEndPoint,
-        options: Options(
-          headers: token == null ? null : {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
+    return _parseProfileResponse(response);
+  }
 
+  @override
+  Future<ProfileModel> updateMe({
+    String? name,
+    String? phone,
+    String? gender,
+    String? dateOfBirth,
+    String? profession,
+    String? location,
+    String? preferredLanguage,
+    String? avatarUrl,
+  }) async {
+    final body = <String, dynamic>{
+      'name': ?name,
+      'phone': ?phone,
+      'gender': ?gender,
+      'dateOfBirth': ?dateOfBirth,
+      'profession': ?profession,
+      'location': ?location,
+      'preferredLanguage': ?preferredLanguage,
+      'avatarUrl': ?avatarUrl,
+    };
+
+    final Response<dynamic> response;
+    try {
+      response = await _dio.patch<dynamic>(
+        ApiConstants.updateProfileEndPoint,
+        data: body,
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+    return _parseProfileResponse(response);
+  }
+
+  Map<String, String>? _authHeaders() {
+    final token = _local.getToken();
+    return token == null ? null : {'Authorization': 'Bearer $token'};
+  }
+
+  /// Unwraps `{ success, data: {...} }` into a [ProfileModel], throwing
+  /// [ServerException] / [ParsingException] on anything unexpected.
+  ProfileModel _parseProfileResponse(Response<dynamic> response) {
     final body = response.data;
     final json = body is Map<String, dynamic> ? body : const <String, dynamic>{};
     final status = response.statusCode ?? 0;

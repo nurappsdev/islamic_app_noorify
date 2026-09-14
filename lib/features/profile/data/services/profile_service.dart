@@ -1,8 +1,12 @@
+import 'package:dartz/dartz.dart';
+
+import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/features/profile/domain/repositories/profile_repository.dart';
 import 'package:islami_app_noorify/features/profile/domain/usecases/get_profile.dart';
+import 'package:islami_app_noorify/features/profile/domain/usecases/update_profile.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 /// Keeps [profileNameNotifier] in sync with the REST profile
@@ -17,6 +21,7 @@ class ProfileService {
     ProfileRemoteDataSourceImpl(),
   );
   late final GetProfile _getProfile = GetProfile(_repository);
+  late final UpdateProfile _updateProfile = UpdateProfile(_repository);
 
   /// The last cached profile (no network call), or `null` when nothing has
   /// been fetched yet. Used to prefill the Edit Profile form instantly.
@@ -33,12 +38,34 @@ class ProfileService {
     });
   }
 
-  /// Persists an edit made on the Edit Profile screen to the local cache
-  /// (there is no update-profile endpoint yet) and keeps
-  /// [profileNameNotifier] / [profilePhotoUrlNotifier] in sync.
-  Future<void> updateLocal(ProfileEntity profile) async {
-    await _repository.cacheLocally(profile);
-    _syncNotifiers(profile);
+  /// Sends the edited fields from the Edit Profile screen to
+  /// `PATCH /user/me`. All parameters are optional. On success, caches the
+  /// server's returned profile and keeps [profileNameNotifier] /
+  /// [profilePhotoUrlNotifier] in sync.
+  Future<Either<Failure, ProfileEntity>> updateProfile({
+    String? name,
+    String? phone,
+    String? gender,
+    String? dateOfBirth,
+    String? profession,
+    String? location,
+    String? preferredLanguage,
+    String? avatarUrl,
+  }) async {
+    final result = await _updateProfile(
+      UpdateProfileParams(
+        name: name,
+        phone: phone,
+        gender: gender,
+        dateOfBirth: dateOfBirth,
+        profession: profession,
+        location: location,
+        preferredLanguage: preferredLanguage,
+        avatarUrl: avatarUrl,
+      ),
+    );
+    result.fold((_) {}, _syncNotifiers);
+    return result;
   }
 
   /// Pushes the last cached profile (if any) into [profileNameNotifier] /

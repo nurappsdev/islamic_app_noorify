@@ -16,10 +16,46 @@ class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileLocalDataSource _local;
 
   @override
-  Future<Either<Failure, ProfileEntity>> getMe() async {
+  Future<Either<Failure, ProfileEntity>> getMe() {
+    return _callAndCache(_remote.getMe);
+  }
+
+  @override
+  ProfileEntity? get cachedProfile => _local.getProfile();
+
+  @override
+  Future<Either<Failure, ProfileEntity>> updateMe({
+    String? name,
+    String? phone,
+    String? gender,
+    String? dateOfBirth,
+    String? profession,
+    String? location,
+    String? preferredLanguage,
+    String? avatarUrl,
+  }) {
+    return _callAndCache(
+      () => _remote.updateMe(
+        name: name,
+        phone: phone,
+        gender: gender,
+        dateOfBirth: dateOfBirth,
+        profession: profession,
+        location: location,
+        preferredLanguage: preferredLanguage,
+        avatarUrl: avatarUrl,
+      ),
+    );
+  }
+
+  /// Runs [call], caches the returned profile to Hive on success (so it's
+  /// available offline / on next launch), and maps thrown data-layer
+  /// exceptions to typed [Failure]s.
+  Future<Either<Failure, ProfileEntity>> _callAndCache(
+    Future<ProfileModel> Function() call,
+  ) async {
     try {
-      final profile = await _remote.getMe();
-      // Cache to Hive so the name is available offline / on next launch.
+      final profile = await call();
       await _local.cacheProfile(profile);
       return Right(profile);
     } on ServerException catch (e) {
@@ -31,36 +67,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } catch (_) {
       return const Left(UnknownFailure());
     }
-  }
-
-  @override
-  ProfileEntity? get cachedProfile => _local.getProfile();
-
-  @override
-  Future<void> cacheLocally(ProfileEntity profile) {
-    final model = profile is ProfileModel
-        ? profile
-        : ProfileModel(
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            phone: profile.phone,
-            role: profile.role,
-            authProvider: profile.authProvider,
-            gender: profile.gender,
-            preferredLanguage: profile.preferredLanguage,
-            profileCompletionPercentage: profile.profileCompletionPercentage,
-            isEmailVerified: profile.isEmailVerified,
-            isPhoneVerified: profile.isPhoneVerified,
-            agreedToTerms: profile.agreedToTerms,
-            totalPoints: profile.totalPoints,
-            currentStreakDays: profile.currentStreakDays,
-            globalRankPosition: profile.globalRankPosition,
-            badges: profile.badges,
-            currentBadge: profile.currentBadge,
-            avatarUrl: profile.avatarUrl,
-          );
-    return _local.cacheProfile(model);
   }
 
   @override
