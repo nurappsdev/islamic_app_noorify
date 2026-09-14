@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -97,6 +98,16 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         imageQuality: 85,
       );
       if (picked == null || !mounted) return;
+
+      // Decode eagerly so an undecodable file (some devices/emulators throw
+      // `ImageDecoder ... 'unimplemented'` for certain formats) is caught
+      // here with a clear message, instead of failing silently inside the
+      // avatar's Image widget later.
+      final bytes = await picked.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      codec.dispose();
+      if (!mounted) return;
+
       setState(() => _selectedImage = File(picked.path));
     } catch (_) {
       if (!mounted) return;
@@ -130,9 +141,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       },
       (updated) {
         _applyProfile(updated);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(appText.saveAction)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _selectedImage != null
+                  ? appText.editProfilePhotoNotUploaded
+                  : appText.saveAction,
+            ),
+          ),
+        );
         Navigator.of(context).maybePop();
       },
     );
@@ -411,6 +428,11 @@ class _ProfileAvatar extends StatelessWidget {
                       fit: BoxFit.cover,
                       width: dimension - 12.r,
                       height: dimension - 12.r,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.person_rounded,
+                        size: 46.sp,
+                        color: const Color(0xFFB7C17E),
+                      ),
                     ),
                   )
                 : ProfileAvatarCircle(
