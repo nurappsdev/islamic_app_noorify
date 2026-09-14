@@ -1,0 +1,361 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
+import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
+
+class ProfileEditScreen extends StatefulWidget {
+  const ProfileEditScreen({super.key});
+
+  @override
+  State<ProfileEditScreen> createState() => _ProfileEditScreenState();
+}
+
+class _ProfileEditScreenState extends State<ProfileEditScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+
+  ProfileEntity? _profile;
+  String? _selectedGender;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyProfile(ProfileService.instance.cachedProfile);
+    unawaited(_loadProfile());
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await ProfileService.instance.fetchProfile();
+    if (!mounted) return;
+    _applyProfile(profile);
+  }
+
+  void _applyProfile(ProfileEntity? profile) {
+    if (profile == null) return;
+    setState(() {
+      _profile = profile;
+      _nameController.text = profile.name;
+      _emailController.text = profile.email;
+      _phoneController.text = profile.phone ?? '';
+      _selectedGender = profile.gender;
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final appText = AppText.of(context);
+    final current = _profile;
+    if (current == null || !(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    final updated = ProfileEntity(
+      id: current.id,
+      name: _nameController.text.trim(),
+      email: current.email,
+      phone: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      role: current.role,
+      authProvider: current.authProvider,
+      gender: _selectedGender,
+      preferredLanguage: current.preferredLanguage,
+      profileCompletionPercentage: current.profileCompletionPercentage,
+      isEmailVerified: current.isEmailVerified,
+      isPhoneVerified: current.isPhoneVerified,
+      agreedToTerms: current.agreedToTerms,
+      totalPoints: current.totalPoints,
+      currentStreakDays: current.currentStreakDays,
+    );
+    await ProfileService.instance.updateLocal(updated);
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(appText.saveAction)),
+    );
+    Navigator.of(context).maybePop();
+  }
+
+  InputDecoration _fieldDecoration({
+    required String hint,
+    required IconData prefixIcon,
+    bool enabled = true,
+  }) {
+    final radius = BorderRadius.circular(24.r);
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
+      prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
+      filled: true,
+      fillColor: enabled ? Colors.white : const Color(0xFFF3F5E4),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
+      border: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+      ),
+      disabledBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _EditProfileHeader(
+              title: appText.editProfileTitle,
+              onBack: () => Navigator.maybePop(context),
+            ),
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
+                  children: [
+                    Center(child: _ProfileAvatar()),
+                    SizedBox(height: 28.h),
+                    Text(
+                      appText.enterYourName,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.authLogo,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    TextFormField(
+                      controller: _nameController,
+                      textInputAction: TextInputAction.next,
+                      style: TextStyle(fontSize: 13.sp),
+                      decoration: _fieldDecoration(
+                        hint: appText.enterYourName,
+                        prefixIcon: Icons.person_outline,
+                      ),
+                      validator: (value) => (value == null || value.trim().isEmpty)
+                          ? appText.enterYourName
+                          : null,
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      appText.emailAddress,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.authLogo,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    TextFormField(
+                      controller: _emailController,
+                      enabled: false,
+                      style: TextStyle(fontSize: 13.sp, color: AppColor.authHint),
+                      decoration: _fieldDecoration(
+                        hint: appText.emailAddress,
+                        prefixIcon: Icons.email_outlined,
+                        enabled: false,
+                      ),
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      appText.gender,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.authLogo,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedGender,
+                      isExpanded: true,
+                      borderRadius: BorderRadius.circular(16.r),
+                      dropdownColor: Colors.white,
+                      style: TextStyle(color: AppColor.authLogo, fontSize: 13.sp),
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: AppColor.authIcon,
+                        size: 20.sp,
+                      ),
+                      decoration: _fieldDecoration(
+                        hint: appText.gender,
+                        prefixIcon: Icons.wc_outlined,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'male',
+                          child: Text(appText.male),
+                        ),
+                        DropdownMenuItem(
+                          value: 'female',
+                          child: Text(appText.female),
+                        ),
+                      ],
+                      onChanged: (value) =>
+                          setState(() => _selectedGender = value),
+                    ),
+                    SizedBox(height: 18.h),
+                    Text(
+                      appText.phoneNo,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.authLogo,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      style: TextStyle(fontSize: 13.sp),
+                      decoration: _fieldDecoration(
+                        hint: appText.phoneNo,
+                        prefixIcon: Icons.phone_outlined,
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
+                    SizedBox(
+                      height: 50.h,
+                      child: FilledButton(
+                        onPressed: (_profile == null || _isSaving) ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26.r),
+                          ),
+                        ),
+                        child: _isSaving
+                            ? SizedBox(
+                                width: 20.w,
+                                height: 20.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                appText.saveAction,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditProfileHeader extends StatelessWidget {
+  const _EditProfileHeader({required this.title, required this.onBack});
+
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: SizedBox(
+        height: 44.h,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                tooltip: appText.back,
+                onPressed: onBack,
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFDFDE68),
+                  foregroundColor: const Color(0xFF303629),
+                ),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+              ),
+            ),
+            Text(
+              title,
+              style: TextStyle(
+                color: AppColor.primary,
+                fontSize: 19.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Display-only circular avatar; there is no photo-upload endpoint yet.
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    final dimension = 96.r;
+    return Container(
+      width: dimension,
+      height: dimension,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: Color(0xFFA7B462),
+      ),
+      child: Container(
+        width: dimension - 12.r,
+        height: dimension - 12.r,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+        ),
+        child: Icon(
+          Icons.person_rounded,
+          size: 46.sp,
+          color: const Color(0xFFB7C17E),
+        ),
+      ),
+    );
+  }
+}

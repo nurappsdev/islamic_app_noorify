@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/profile/data/datasources/profile_local_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:islami_app_noorify/features/profile/data/models/profile_model.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/features/profile/domain/repositories/profile_repository.dart';
 
@@ -34,6 +35,29 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   ProfileEntity? get cachedProfile => _local.getProfile();
+
+  @override
+  Future<void> cacheLocally(ProfileEntity profile) {
+    final model = profile is ProfileModel
+        ? profile
+        : ProfileModel(
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            phone: profile.phone,
+            role: profile.role,
+            authProvider: profile.authProvider,
+            gender: profile.gender,
+            preferredLanguage: profile.preferredLanguage,
+            profileCompletionPercentage: profile.profileCompletionPercentage,
+            isEmailVerified: profile.isEmailVerified,
+            isPhoneVerified: profile.isPhoneVerified,
+            agreedToTerms: profile.agreedToTerms,
+            totalPoints: profile.totalPoints,
+            currentStreakDays: profile.currentStreakDays,
+          );
+    return _local.cacheProfile(model);
+  }
 
   @override
   Future<void> clearCache() => _local.clearProfile();
