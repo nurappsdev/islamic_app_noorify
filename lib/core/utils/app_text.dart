@@ -430,6 +430,7 @@ class AppText {
     required this.learn,
     required this.planner,
     required this.profileTitle,
+    required this.editProfileTitle,
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
@@ -940,6 +941,7 @@ class AppText {
 
   // Profile feature
   final String profileTitle;
+  final String editProfileTitle;
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
@@ -2524,6 +2526,11 @@ class AppText {
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),
       profileTitle: _read(map, 'profileTitle', fallback?.profileTitle ?? ''),
+      editProfileTitle: _read(
+        map,
+        'editProfileTitle',
+        fallback?.editProfileTitle ?? '',
+      ),
       percentCompleteSuffix: _read(
         map,
         'percentCompleteSuffix',

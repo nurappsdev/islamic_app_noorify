@@ -433,6 +433,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
 
   // Profile feature
   'profileTitle': 'Profile',
+  'editProfileTitle': 'Edit Profile',
   'percentCompleteSuffix': 'complete',
   'mymensingh': 'Mymensingh',
   'badgeLabel': 'Badge',

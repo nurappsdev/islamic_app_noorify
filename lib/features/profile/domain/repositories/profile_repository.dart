@@ -14,6 +14,11 @@ abstract interface class ProfileRepository {
   /// when nothing has been fetched yet.
   ProfileEntity? get cachedProfile;
 
+  /// Persists [profile] to the local cache only, without calling the API.
+  /// Used to keep edits made on the Edit Profile screen until a real
+  /// update-profile endpoint exists.
+  Future<void> cacheLocally(ProfileEntity profile);
+
   /// Removes the cached profile (used on logout).
   Future<void> clearCache();
 }

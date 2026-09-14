@@ -21,6 +21,7 @@ import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/app_language_screen.dart';
 import '../../features/profile/presentation/screens/family_members_screen.dart';
@@ -93,6 +94,8 @@ class AppRoutes {
         return _page(const HomeScreen(), settings);
       case RouteNames.profile:
         return _page(const ProfileScreen(), settings);
+      case RouteNames.editProfile:
+        return _page(const ProfileEditScreen(), settings);
       case RouteNames.settings:
         return _page(const SettingsScreen(), settings);
       case RouteNames.appLanguage:

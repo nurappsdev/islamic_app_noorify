@@ -262,6 +262,29 @@ class _AvatarWithProgress extends StatelessWidget {
               color: const Color(0xFFB7C17E),
             ),
           ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: () =>
+                  Navigator.of(context).pushNamed(RouteNames.editProfile),
+              child: Container(
+                width: 26.r,
+                height: 26.r,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColor.primary,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Icon(
+                  Icons.edit_rounded,
+                  size: 13.sp,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

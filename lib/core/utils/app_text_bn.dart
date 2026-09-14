@@ -432,6 +432,7 @@ const Map<String, String> appTextBn = <String, String>{
 
   // Profile feature
   'profileTitle': 'প্রোফাইল',
+  'editProfileTitle': 'প্রোফাইল সম্পাদনা',
   'percentCompleteSuffix': 'সম্পন্ন',
   'mymensingh': 'ময়মনসিংহ',
   'badgeLabel': 'ব্যাজ',
