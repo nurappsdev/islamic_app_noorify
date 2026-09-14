@@ -23,7 +23,8 @@ import 'package:islami_app_noorify/features/profile/domain/entities/profile_enti
 ///   "isPhoneVerified": false,
 ///   "agreedToTerms": false,
 ///   "totalPoints": 0,
-///   "currentStreakDays": 0
+///   "currentStreakDays": 0,
+///   "avatarUrl": "https://res.cloudinary.com/demo/image/upload/avatar.jpg"
 /// }
 /// ```
 class ProfileModel extends ProfileEntity {
@@ -45,6 +46,7 @@ class ProfileModel extends ProfileEntity {
     super.globalRankPosition,
     super.badges,
     super.currentBadge,
+    super.avatarUrl,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
@@ -81,6 +83,7 @@ class ProfileModel extends ProfileEntity {
       currentBadge: currentBadgeJson is Map
           ? BadgeModel.fromJson(Map<String, dynamic>.from(currentBadgeJson))
           : null,
+      avatarUrl: json['avatarUrl']?.toString(),
     );
   }
 
@@ -111,6 +114,7 @@ class ProfileModel extends ProfileEntity {
                   ? currentBadge as BadgeModel
                   : _toBadgeModel(currentBadge!))
               .toJson(),
+    'avatarUrl': avatarUrl,
   };
 
   static BadgeModel _toBadgeModel(BadgeEntity b) => BadgeModel(
