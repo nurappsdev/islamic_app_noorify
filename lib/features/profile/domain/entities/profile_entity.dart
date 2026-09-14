@@ -1,3 +1,5 @@
+import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
+
 /// The signed-in user's profile, as returned by `GET /user/me`.
 class ProfileEntity {
   const ProfileEntity({
@@ -15,6 +17,9 @@ class ProfileEntity {
     this.agreedToTerms = false,
     this.totalPoints = 0,
     this.currentStreakDays = 0,
+    this.globalRankPosition = 0,
+    this.badges = const [],
+    this.currentBadge,
   });
 
   final String id;
@@ -31,4 +36,7 @@ class ProfileEntity {
   final bool agreedToTerms;
   final int totalPoints;
   final int currentStreakDays;
+  final int globalRankPosition;
+  final List<BadgeEntity> badges;
+  final BadgeEntity? currentBadge;
 }

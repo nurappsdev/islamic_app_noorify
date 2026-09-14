@@ -82,6 +82,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       agreedToTerms: current.agreedToTerms,
       totalPoints: current.totalPoints,
       currentStreakDays: current.currentStreakDays,
+      globalRankPosition: current.globalRankPosition,
+      badges: current.badges,
+      currentBadge: current.currentBadge,
     );
     await ProfileService.instance.updateLocal(updated);
     if (!mounted) return;
