@@ -83,6 +83,7 @@ class _AmolDashboardView extends StatelessWidget {
   static const _fallbackMyPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
   static const _fallbackCompetitorValues = [6.0, 9.0, null, 8.0, null, 11.0, null];
   static const _fallbackPoints = 27;
+  static const _fallbackTotalPoints = 40;
   static const _fallbackCompetitorLabel = 'Ab';
 
   @override
@@ -116,6 +117,9 @@ class _AmolDashboardView extends StatelessWidget {
     final myPoints = graph == null
         ? _fallbackPoints
         : graph.myTotalPoints.round();
+    final totalPoints = graph == null
+        ? _fallbackTotalPoints
+        : graph.maxTotalPoints.round();
     final pointLabel = graph == null
         ? '${appText.point} : 30/40'
         : '${appText.point} : ${_formatPoints(graph.myTotalPoints)}/${_formatPoints(graph.maxTotalPoints)}';
@@ -203,7 +207,7 @@ class _AmolDashboardView extends StatelessWidget {
                     maxY: maxY,
                   ),
                   SizedBox(height: 18.h),
-                  _MyPointsBar(points: myPoints),
+                  _MyPointsBar(myPoints: myPoints, totalPoints: totalPoints),
                 ],
               ),
             ),
@@ -700,9 +704,10 @@ class _LineChartPainter extends CustomPainter {
 }
 
 class _MyPointsBar extends StatelessWidget {
-  const _MyPointsBar({required this.points});
+  const _MyPointsBar({required this.myPoints, required this.totalPoints});
 
-  final int points;
+  final int myPoints;
+  final int totalPoints;
 
   @override
   Widget build(BuildContext context) {
@@ -718,7 +723,7 @@ class _MyPointsBar extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                '${AppText.of(context).myPoints} : $points',
+                '${AppText.of(context).myPoints} : $myPoints',
                 style: TextStyle(fontSize: 13.sp, color: Colors.black),
               ),
             ),
@@ -736,7 +741,7 @@ class _MyPointsBar extends StatelessWidget {
               ),
               SizedBox(width: 5.w),
               Text(
-                '$points',
+                '$totalPoints',
                 style: TextStyle(fontSize: 12.sp, color: Colors.black87),
               ),
             ],
