@@ -37,10 +37,19 @@ const Map<String, String> appTextEn = <String, String>{
 
   // Shared
   'back': 'Back',
+  'comingSoon': 'Coming Soon',
 
   // Alarm feature
+  'alarm': 'Alarm',
   'setAlarm': 'Set Alarm',
   'setAllAlarm': 'Set All Alarm',
+  'allAlarm': 'All Alarm',
+  'prayersAlarm': 'Prayers Alarm',
+  'alarmWillRingIn': 'Alarm will be ring in',
+  'hrLabel': 'hr',
+  'noAlarmSet': 'No alarm set',
+  'alarmLabel': 'Label',
+  'alarmLabelHint': 'e.g. Wake up',
   'vibrateAndRing': 'Vibrate And Ring',
   'setRingtone': 'Set Ringtone',
   'vibrate': 'Vibrate',
@@ -437,8 +446,10 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'editProfileSelectPhotoTitle': 'Select Profile Photo',
   'editProfileChooseGallery': 'Choose from Gallery',
   'editProfileCancel': 'Cancel',
-  'editProfileImagePickError': "Couldn't load the selected image. Please try again.",
-  'editProfilePhotoNotUploaded': 'Profile saved. Photo upload is not available yet.',
+  'editProfileImagePickError':
+      "Couldn't load the selected image. Please try again.",
+  'editProfilePhotoNotUploaded':
+      'Profile saved. Photo upload is not available yet.',
   'percentCompleteSuffix': 'complete',
   'mymensingh': 'Mymensingh',
   'badgeLabel': 'Badge',

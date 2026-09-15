@@ -6,7 +6,7 @@ class AlarmState {
     this.minuteIndex = 0,
     this.periodIndex = 0,
     this.offsetIndex = 6,
-    this.vibrateAndRing = true,
+    this.vibrateAndRing = false,
     this.vibrate = false,
     this.ring = false,
   });

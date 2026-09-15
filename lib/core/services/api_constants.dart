@@ -1,27 +1,27 @@
 class ApiConstants {
-// local
+  // local
   static const String baseUrl = "https://vondo7000.ilmifygroup.com/api/v1";
 
-//live
-// static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
+  //live
+  // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
 
   // static const String socketBaseUrl = "https://api.drop-dr.com";
 
-// static const String baseUrl = "https://health-mamun.sarv.live/api/v1";
-// static const String imageBaseUrl = "https://health-mamun.sarv.live/uploads/";
-// static const String socketBaseUrl = "https://health-mamun.sarv.live";
+  // static const String baseUrl = "https://health-mamun.sarv.live/api/v1";
+  // static const String imageBaseUrl = "https://health-mamun.sarv.live/uploads/";
+  // static const String socketBaseUrl = "https://health-mamun.sarv.live";
 
   /// client key
   ///AIzaSyAxaYzHRBhydkW_TwUGHeRYSUV2iCc_uuk
   static const String mapAPIEndPoint =
       "AIzaSyAxaYzHRBhydkW_TwUGHeRYSUV2iCc_uuk";
 
-// from maqmun bro
-//static const String mapAPIEndPoint = "AIzaSyBTNR1NWw7LcTsEJTTogqVZ39tgY--eD5U";
+  // from maqmun bro
+  //static const String mapAPIEndPoint = "AIzaSyBTNR1NWw7LcTsEJTTogqVZ39tgY--eD5U";
 
   /// amader key
-//static const String mapAPIEndPoint = "AIzaSyA-Iri6x5mzNv45XO3a-Ew3z4nvF4CdYo0";
+  //static const String mapAPIEndPoint = "AIzaSyA-Iri6x5mzNv45XO3a-Ew3z4nvF4CdYo0";
 
   static const String signUpEndPoint = "/auth/register";
   static const String verifyEmailEndPoint = "/auth/verify-otp";
@@ -29,8 +29,6 @@ class ApiConstants {
   static const String signInEndPoint = "/auth/login";
   static const String forgotPasswordPoint = "/auth/forgot-password";
   static const String resetPasswordEndPoint = "/auth/reset-password";
-
-
 
   static const String refreshTokenEndPoint = "/auth/refresh-token";
   static const String accountDelete = "/users/delete";
@@ -44,9 +42,11 @@ class ApiConstants {
       "/amol/tracker/delete-item";
   static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
 
+  static const String alarmsCustomEndPoint = "/alarms/custom";
+  static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
+
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";
-
 
   static const String changePasswordEndPoint = "/auth/change-password";
   static const String deleteAccountEndPoint = "/auth/delete-account";
@@ -56,5 +56,4 @@ class ApiConstants {
 
   static String notificationReadEndPoint(String notificationId) =>
       "/notifications/$notificationId/read";
-
 }
