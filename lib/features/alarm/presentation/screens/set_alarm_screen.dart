@@ -100,25 +100,29 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
               title: appText.setAlarm,
               subtitle: widget.period?.displayName(appText),
             ),
-            SizedBox(height: 20.h),
-            _TimeWheel(
-              hourController: _hourController,
-              minuteController: _minuteController,
-              periodController: _periodController,
-              hourIndex: state.hourIndex,
-              minuteIndex: state.minuteIndex,
-              periodIndex: state.periodIndex,
-              onHourChanged: (index) => bloc.add(SelectHour(index)),
-              onMinuteChanged: (index) => bloc.add(SelectMinute(index)),
-              onPeriodChanged: (index) => bloc.add(SelectPeriod(index)),
-            ),
-            SizedBox(height: 26.h),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    SizedBox(height: 20.h),
+                    Center(
+                      child: _TimeWheel(
+                        hourController: _hourController,
+                        minuteController: _minuteController,
+                        periodController: _periodController,
+                        hourIndex: state.hourIndex,
+                        minuteIndex: state.minuteIndex,
+                        periodIndex: state.periodIndex,
+                        onHourChanged: (index) => bloc.add(SelectHour(index)),
+                        onMinuteChanged: (index) =>
+                            bloc.add(SelectMinute(index)),
+                        onPeriodChanged: (index) =>
+                            bloc.add(SelectPeriod(index)),
+                      ),
+                    ),
+                    SizedBox(height: 26.h),
                     if (widget.onSetAlarm != null) ...[
                       Text(appText.alarmLabel, style: alarmItalicStyle(14.sp)),
                       SizedBox(height: 10.h),
