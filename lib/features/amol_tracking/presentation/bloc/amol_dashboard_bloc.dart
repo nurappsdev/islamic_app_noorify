@@ -29,6 +29,14 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
 
   final GetAmolAnalyticsGraph _getGraph;
 
+  /// Guards against a slow, now-stale request (e.g. the "daily" fetch)
+  /// resolving *after* a newer one (e.g. "weekly", tapped right after) and
+  /// overwriting it — `on<Event>` runs same-type events concurrently by
+  /// default, so without this a fast tab switch could otherwise leave the
+  /// points/progress/chart showing a different period's data than the
+  /// selected tab.
+  int _requestId = 0;
+
   Future<void> _onSelectPeriod(
     SelectPeriod event,
     Emitter<AmolDashboardState> emit,
@@ -69,11 +77,16 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
   /// `date=2026-09-15&timeframe=daily`; shifting a week back on the weekly
   /// tab -> `date=2026-09-08&timeframe=weekly`.
   Future<void> _load(Emitter<AmolDashboardState> emit) async {
+    final requestId = ++_requestId;
     emit(state.copyWith(status: AmolDashboardStatus.loading));
     final result = await _getGraph(
       date: _isoDate(state.date),
       timeframe: _timeframeByPeriod[state.selectedPeriod],
     );
+    // A newer request already started (another tab/date/month tapped while
+    // this one was in flight) — drop this now-stale response instead of
+    // letting it clobber the newer state.
+    if (requestId != _requestId) return;
     result.fold(
       (failure) => emit(
         state.copyWith(status: AmolDashboardStatus.failure, failure: failure),
