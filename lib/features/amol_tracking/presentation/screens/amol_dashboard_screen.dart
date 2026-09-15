@@ -128,7 +128,7 @@ class _AmolDashboardView extends StatelessWidget {
         : (graph.completionPercentage / 100).clamp(0, 1).toDouble();
     final progressLabel = graph == null
         ? '86 %'
-        : '${_formatPoints(graph.completionPercentage)} %';
+        : '${graph.completionPercentage.round()} %';
     final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
     return Scaffold(
       backgroundColor: Colors.white,
