@@ -37,12 +37,17 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
   /// selected tab.
   int _requestId = 0;
 
+  /// Switching tabs always re-anchors on `today` (rather than keeping
+  /// whatever date the previous tab had navigated to), so tapping Weekly
+  /// fires `date=today&timeframe=weekly` (today back to the previous 7
+  /// days) and tapping Monthly fires `date=today&timeframe=monthly` (today
+  /// back to the previous month) immediately.
   Future<void> _onSelectPeriod(
     SelectPeriod event,
     Emitter<AmolDashboardState> emit,
   ) async {
     if (state.selectedPeriod == event.period) return;
-    emit(state.copyWith(selectedPeriod: event.period));
+    emit(state.copyWith(selectedPeriod: event.period, date: state.today));
     await _load(emit);
   }
 
