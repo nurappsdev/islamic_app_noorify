@@ -39,7 +39,14 @@ class ValidationFailure extends Failure {
   const ValidationFailure(super.message);
 }
 
+/// Reading from or writing to local (on-device) storage failed.
+class CacheFailure extends Failure {
+  const CacheFailure([super.message = 'Failed to read local storage.']);
+}
+
 /// Anything that does not fit the buckets above.
 class UnknownFailure extends Failure {
-  const UnknownFailure([super.message = 'Something went wrong. Please try again.']);
+  const UnknownFailure([
+    super.message = 'Something went wrong. Please try again.',
+  ]);
 }

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/alarm/presentation/screens/all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
@@ -58,14 +59,12 @@ class HomeHeader extends StatelessWidget {
         SizedBox.square(
           dimension: 32.r,
           child: IconButton(
-            tooltip: appText.timer,
-            onPressed: () {},
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              Icons.timer_outlined,
-              color: AppColor.primary,
-              size: 20.sp,
+            tooltip: appText.alarm,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
             ),
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
           ),
         ),
         Stack(

@@ -31,3 +31,13 @@ class ParsingException implements Exception {
   @override
   String toString() => 'ParsingException: $message';
 }
+
+/// Thrown when reading from or writing to local (on-device) storage fails.
+class CacheException implements Exception {
+  CacheException([this.message = 'Failed to read local storage.']);
+
+  final String message;
+
+  @override
+  String toString() => 'CacheException: $message';
+}

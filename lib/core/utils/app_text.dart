@@ -44,8 +44,17 @@ class AppText {
     required this.alreadyHaveAccount,
     required this.logIn,
     required this.back,
+    required this.comingSoon,
+    required this.alarm,
     required this.setAlarm,
     required this.setAllAlarm,
+    required this.allAlarm,
+    required this.prayersAlarm,
+    required this.alarmWillRingIn,
+    required this.hrLabel,
+    required this.noAlarmSet,
+    required this.alarmLabel,
+    required this.alarmLabelHint,
     required this.vibrateAndRing,
     required this.setRingtone,
     required this.vibrate,
@@ -538,10 +547,19 @@ class AppText {
 
   // Shared
   final String back;
+  final String comingSoon;
 
   // Alarm feature
+  final String alarm;
   final String setAlarm;
   final String setAllAlarm;
+  final String allAlarm;
+  final String prayersAlarm;
+  final String alarmWillRingIn;
+  final String hrLabel;
+  final String noAlarmSet;
+  final String alarmLabel;
+  final String alarmLabelHint;
   final String vibrateAndRing;
   final String setRingtone;
   final String vibrate;
@@ -1158,8 +1176,25 @@ class AppText {
       ),
       logIn: _read(map, 'logIn', fallback?.logIn ?? ''),
       back: _read(map, 'back', fallback?.back ?? ''),
+      comingSoon: _read(map, 'comingSoon', fallback?.comingSoon ?? ''),
+      alarm: _read(map, 'alarm', fallback?.alarm ?? ''),
       setAlarm: _read(map, 'setAlarm', fallback?.setAlarm ?? ''),
       setAllAlarm: _read(map, 'setAllAlarm', fallback?.setAllAlarm ?? ''),
+      allAlarm: _read(map, 'allAlarm', fallback?.allAlarm ?? ''),
+      prayersAlarm: _read(map, 'prayersAlarm', fallback?.prayersAlarm ?? ''),
+      alarmWillRingIn: _read(
+        map,
+        'alarmWillRingIn',
+        fallback?.alarmWillRingIn ?? '',
+      ),
+      hrLabel: _read(map, 'hrLabel', fallback?.hrLabel ?? ''),
+      noAlarmSet: _read(map, 'noAlarmSet', fallback?.noAlarmSet ?? ''),
+      alarmLabel: _read(map, 'alarmLabel', fallback?.alarmLabel ?? ''),
+      alarmLabelHint: _read(
+        map,
+        'alarmLabelHint',
+        fallback?.alarmLabelHint ?? '',
+      ),
       vibrateAndRing: _read(
         map,
         'vibrateAndRing',

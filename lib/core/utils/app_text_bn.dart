@@ -36,10 +36,19 @@ const Map<String, String> appTextBn = <String, String>{
 
   // Shared
   'back': 'পিছনে',
+  'comingSoon': 'শীঘ্রই আসছে',
 
   // Alarm feature
+  'alarm': 'অ্যালার্ম',
   'setAlarm': 'অ্যালার্ম সেট করুন',
   'setAllAlarm': 'সব অ্যালার্ম সেট করুন',
+  'allAlarm': 'সব অ্যালার্ম',
+  'prayersAlarm': 'নামাজের অ্যালার্ম',
+  'alarmWillRingIn': 'অ্যালার্ম বাজবে',
+  'hrLabel': 'ঘণ্টা',
+  'noAlarmSet': 'কোনো অ্যালার্ম সেট নেই',
+  'alarmLabel': 'লেবেল',
+  'alarmLabelHint': 'যেমন: ঘুম থেকে ওঠা',
   'vibrateAndRing': 'কম্পন ও রিং',
   'setRingtone': 'রিংটোন সেট করুন',
   'vibrate': 'কম্পন',
@@ -436,8 +445,10 @@ const Map<String, String> appTextBn = <String, String>{
   'editProfileSelectPhotoTitle': 'প্রোফাইল ছবি নির্বাচন করুন',
   'editProfileChooseGallery': 'গ্যালারি থেকে বেছে নিন',
   'editProfileCancel': 'বাতিল',
-  'editProfileImagePickError': 'নির্বাচিত ছবি লোড করা যায়নি। আবার চেষ্টা করুন।',
-  'editProfilePhotoNotUploaded': 'প্রোফাইল সংরক্ষিত হয়েছে। ছবি আপলোড এখনো চালু নেই।',
+  'editProfileImagePickError':
+      'নির্বাচিত ছবি লোড করা যায়নি। আবার চেষ্টা করুন।',
+  'editProfilePhotoNotUploaded':
+      'প্রোফাইল সংরক্ষিত হয়েছে। ছবি আপলোড এখনো চালু নেই।',
   'percentCompleteSuffix': 'সম্পন্ন',
   'mymensingh': 'ময়মনসিংহ',
   'badgeLabel': 'ব্যাজ',

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
+import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
+import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
 
 TextStyle alarmItalicStyle(double size, {Color color = Colors.black}) =>
     TextStyle(
@@ -92,29 +97,142 @@ class AlarmToggleRow extends StatelessWidget {
   }
 }
 
-class RingtoneSearchField extends StatelessWidget {
-  const RingtoneSearchField({super.key});
+/// A search box over the `GET /alarms/ringtones` catalog. Typing filters the
+/// list shown below the box; tapping an entry fills the field with its name
+/// and reports the pick via [onSelected].
+class RingtoneSearchField extends StatefulWidget {
+  const RingtoneSearchField({super.key, this.onSelected});
+
+  final ValueChanged<Ringtone>? onSelected;
+
+  @override
+  State<RingtoneSearchField> createState() => _RingtoneSearchFieldState();
+}
+
+class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  final _getRingtones = GetRingtones(
+    AlarmRepositoryImpl(
+      AlarmRemoteDataSourceImpl(),
+      AlarmLocalDataSourceImpl(),
+    ),
+  );
+  List<Ringtone> _ringtones = const [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() => setState(() {}));
+    _controller.addListener(() => setState(() {}));
+    _load();
+  }
+
+  Future<void> _load() async {
+    final result = await _getRingtones();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _ringtones = result.fold((_) => const [], (list) => list);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  List<Ringtone> get _filtered {
+    final query = _controller.text.trim().toLowerCase();
+    if (query.isEmpty) return _ringtones;
+    return _ringtones
+        .where((r) => r.name.toLowerCase().contains(query))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 44.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: const Color(0xFFDCE9B8)),
-      ),
-      child: Center(
-        child: TextField(
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            isDense: true,
-            hintText: AppText.of(context).searchHere,
-            hintStyle: alarmItalicStyle(13.sp, color: const Color(0xFF9AA687)),
+    final showList = _focusNode.hasFocus && (_loading || _filtered.isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 44.h,
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22.r),
+            border: Border.all(color: const Color(0xFFDCE9B8)),
           ),
-          style: alarmItalicStyle(13.sp),
+          child: Center(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                hintText: AppText.of(context).searchHere,
+                hintStyle: alarmItalicStyle(
+                  13.sp,
+                  color: const Color(0xFF9AA687),
+                ),
+              ),
+              style: alarmItalicStyle(13.sp),
+            ),
+          ),
         ),
-      ),
+        if (showList)
+          Container(
+            margin: EdgeInsets.only(top: 6.h),
+            constraints: BoxConstraints(maxHeight: 160.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: const Color(0xFFDCE9B8)),
+            ),
+            child: _loading
+                ? Padding(
+                    padding: EdgeInsets.all(14.r),
+                    child: Center(
+                      child: SizedBox(
+                        width: 16.r,
+                        height: 16.r,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    shrinkWrap: true,
+                    itemCount: _filtered.length,
+                    separatorBuilder: (_, _) =>
+                        Divider(height: 1, color: const Color(0xFFF0F2E6)),
+                    itemBuilder: (context, index) {
+                      final ringtone = _filtered[index];
+                      return ListTile(
+                        dense: true,
+                        title: Text(
+                          ringtone.name,
+                          style: alarmItalicStyle(13.sp),
+                        ),
+                        trailing: Text(
+                          ringtone.duration,
+                          style: alarmItalicStyle(
+                            11.sp,
+                            color: const Color(0xFF9AA687),
+                          ),
+                        ),
+                        onTap: () {
+                          _controller.text = ringtone.name;
+                          widget.onSelected?.call(ringtone);
+                          _focusNode.unfocus();
+                        },
+                      );
+                    },
+                  ),
+          ),
+      ],
     );
   }
 }
