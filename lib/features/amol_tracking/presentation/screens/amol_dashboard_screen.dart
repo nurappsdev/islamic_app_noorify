@@ -3,10 +3,45 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
+
+/// `pillarKey` order the chart's x-axis renders in — matches
+/// `GET /amol/tracker/daily`'s pillars and the `categories` list below.
+const _pillarOrder = [
+  'fardh_prayer',
+  'sunnah_witr',
+  'quran',
+  'nafl_salat',
+  'hadith',
+  'quiz',
+  'nafl_and_more',
+];
+
+String _formatPoints(num value) {
+  return value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
+}
+
+/// The competitor bubble is a small pill, so a full server-given name (e.g.
+/// "Khalid Saifullah") is shortened to initials (e.g. "KS") to fit it.
+String _initials(String name, {required String fallback}) {
+  final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+  final letters = words.map((w) => w[0].toUpperCase()).take(2).join();
+  return letters.isEmpty ? fallback : letters;
+}
+
+/// The current calendar month plus the 11 before it, newest first, for the
+/// monthly tab's month-picker dropdown.
+List<DateTime> _lastTwelveMonths(DateTime today) => [
+  for (var i = 0; i < 12; i++) DateTime(today.year, today.month - i),
+];
 
 extension on _AmolPeriod {
   String label(AppText appText) => switch (this) {
@@ -30,7 +65,12 @@ class AmolDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AmolDashboardBloc(now: now),
+      create: (_) => AmolDashboardBloc(
+        GetAmolAnalyticsGraph(
+          AmolAnalyticsRepositoryImpl(AmolAnalyticsRemoteDataSourceImpl()),
+        ),
+        now: now,
+      )..add(const LoadGraph()),
       child: const _AmolDashboardView(),
     );
   }
@@ -39,9 +79,11 @@ class AmolDashboardScreen extends StatelessWidget {
 class _AmolDashboardView extends StatelessWidget {
   const _AmolDashboardView();
 
-  static const _myPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
-  static const _competitorIndices = [0, 1, 3, 5];
-  static const _myPoints = 27;
+  // Shown before the first `GET /amol/analytics/graph` response lands.
+  static const _fallbackMyPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
+  static const _fallbackCompetitorValues = [6.0, 9.0, null, 8.0, null, 11.0, null];
+  static const _fallbackPoints = 27;
+  static const _fallbackCompetitorLabel = 'Ab';
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +100,32 @@ class _AmolDashboardView extends StatelessWidget {
       appText.categoryQuiz,
       appText.categoryNaflAndMore,
     ];
+    final graph = state.graph;
+    final values = graph == null
+        ? _fallbackMyPosition
+        : [for (final key in _pillarOrder) graph.valueFor(key).toDouble()];
+    final competitorValues = graph == null
+        ? _fallbackCompetitorValues
+        : [
+            for (final key in _pillarOrder)
+              graph.competitorValueFor(key)?.toDouble(),
+          ];
+    final competitorLabel = graph == null
+        ? _fallbackCompetitorLabel
+        : _initials(graph.competitorName, fallback: appText.competitorInitials);
+    final myPoints = graph == null
+        ? _fallbackPoints
+        : graph.myTotalPoints.round();
+    final pointLabel = graph == null
+        ? '${appText.point} : 30/40'
+        : '${appText.point} : ${_formatPoints(graph.myTotalPoints)}/${_formatPoints(graph.maxTotalPoints)}';
+    final progress = graph == null
+        ? .86
+        : (graph.completionPercentage / 100).clamp(0, 1).toDouble();
+    final progressLabel = graph == null
+        ? '86 %'
+        : '${_formatPoints(graph.completionPercentage)} %';
+    final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -74,9 +142,9 @@ class _AmolDashboardView extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   AmolSummaryCard(
-                    pointLabel: '${appText.point} : 30/40',
-                    progressLabel: '86 %',
-                    progress: .86,
+                    pointLabel: pointLabel,
+                    progressLabel: progressLabel,
+                    progress: progress,
                   ),
                   SizedBox(height: 14.h),
                   _DateNavigator(
@@ -85,6 +153,21 @@ class _AmolDashboardView extends StatelessWidget {
                     onPrevious: () => bloc.add(ShiftDate(period.step, -1)),
                     onNext: () => bloc.add(ShiftDate(period.step, 1)),
                   ),
+                  if (period == _AmolPeriod.monthly) ...[
+                    SizedBox(height: 10.h),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: _MonthDropdown(
+                        selectedMonth: DateTime(
+                          state.date.year,
+                          state.date.month,
+                        ),
+                        months: _lastTwelveMonths(state.today),
+                        appText: appText,
+                        onChanged: (month) => bloc.add(SelectMonth(month)),
+                      ),
+                    ),
+                  ],
                   SizedBox(height: 18.h),
                   RichText(
                     text: TextSpan(
@@ -114,13 +197,13 @@ class _AmolDashboardView extends StatelessWidget {
                   SizedBox(height: 10.h),
                   _AmolLineChart(
                     categories: categories,
-                    values: _myPosition,
-                    competitorIndices: _competitorIndices,
-                    competitorLabel: appText.competitorInitials,
-                    maxY: 12,
+                    values: values,
+                    competitorValues: competitorValues,
+                    competitorLabel: competitorLabel,
+                    maxY: maxY,
                   ),
                   SizedBox(height: 18.h),
-                  const _MyPointsBar(points: _myPoints),
+                  _MyPointsBar(points: myPoints),
                 ],
               ),
             ),
@@ -229,6 +312,65 @@ class _DateNavigator extends StatelessWidget {
   }
 }
 
+/// Lets the user jump the monthly tab straight to one of the last 12
+/// calendar months (e.g. "August 2026"), instead of stepping 30 days at a
+/// time via [_DateNavigator]'s arrows.
+class _MonthDropdown extends StatelessWidget {
+  const _MonthDropdown({
+    required this.selectedMonth,
+    required this.months,
+    required this.appText,
+    required this.onChanged,
+  });
+
+  final DateTime selectedMonth;
+  final List<DateTime> months;
+  final AppText appText;
+  final ValueChanged<DateTime> onChanged;
+
+  String _label(DateTime month) =>
+      '${appText.monthNames[month.month - 1]} ${month.year}';
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: const Color(0xFFDCE9B8)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<DateTime>(
+          // Falls back to a hint (rather than asserting) when the current
+          // selection isn't one of the last 12 months, e.g. after stepping
+          // further back with the date-navigator arrows.
+          value: months.contains(selectedMonth) ? selectedMonth : null,
+          hint: Text(
+            _label(selectedMonth),
+            style: TextStyle(fontSize: 13.sp, color: Colors.black),
+          ),
+          isDense: true,
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: const Color(0xFF7E8C61),
+            size: 18.sp,
+          ),
+          borderRadius: BorderRadius.circular(16.r),
+          dropdownColor: Colors.white,
+          style: TextStyle(fontSize: 13.sp, color: Colors.black),
+          items: [
+            for (final month in months)
+              DropdownMenuItem(value: month, child: Text(_label(month))),
+          ],
+          onChanged: (value) {
+            if (value != null) onChanged(value);
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _NavArrow extends StatelessWidget {
   const _NavArrow({required this.icon, required this.onTap});
 
@@ -304,14 +446,17 @@ class _AmolLineChart extends StatelessWidget {
   const _AmolLineChart({
     required this.categories,
     required this.values,
-    required this.competitorIndices,
+    required this.competitorValues,
     required this.competitorLabel,
     required this.maxY,
   });
 
   final List<String> categories;
   final List<double> values;
-  final List<int> competitorIndices;
+
+  /// The nearest competitor's score per category, `null` where the server
+  /// has none for that pillar (no bubble is drawn there).
+  final List<double?> competitorValues;
   final String competitorLabel;
   final double maxY;
 
@@ -332,7 +477,13 @@ class _AmolLineChart extends StatelessWidget {
           (width - plotLeft - plotRight).clamp(0.0, double.infinity),
           (height - plotTop - plotBottom).clamp(0.0, double.infinity),
         );
-        final points = _computePoints(plotRect, values, maxY);
+        final points = _computePoints(plotRect, values, maxY)
+            .cast<Offset>();
+        final competitorPoints = _computePoints(
+          plotRect,
+          competitorValues,
+          maxY,
+        );
         return SizedBox(
           height: height,
           width: width,
@@ -348,15 +499,16 @@ class _AmolLineChart extends StatelessWidget {
                   maxY: maxY,
                 ),
               ),
-              for (final index in competitorIndices)
-                Positioned(
-                  left: points[index].dx,
-                  top: (points[index].dy - 32.h).clamp(0.0, height),
-                  child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0),
-                    child: _CompetitorBubble(label: competitorLabel),
+              for (final point in competitorPoints)
+                if (point != null)
+                  Positioned(
+                    left: point.dx,
+                    top: (point.dy - 32.h).clamp(0.0, height),
+                    child: FractionalTranslation(
+                      translation: const Offset(-0.5, 0),
+                      child: _CompetitorBubble(label: competitorLabel),
+                    ),
                   ),
-                ),
             ],
           ),
         );
@@ -364,18 +516,24 @@ class _AmolLineChart extends StatelessWidget {
     );
   }
 
-  static List<Offset> _computePoints(
+  /// Maps [values] onto [rect] using [maxY] as the y-axis ceiling. A `null`
+  /// entry (only possible for competitor values) stays `null` in the
+  /// result, so its bubble is skipped.
+  static List<Offset?> _computePoints(
     Rect rect,
-    List<double> values,
+    List<double?> values,
     double maxY,
   ) {
     final stepX = values.length > 1 ? rect.width / (values.length - 1) : 0.0;
     return [
       for (var i = 0; i < values.length; i++)
-        Offset(
-          rect.left + stepX * i,
-          rect.bottom - (values[i] / maxY).clamp(0.0, 1.0) * rect.height,
-        ),
+        if (values[i] == null)
+          null
+        else
+          Offset(
+            rect.left + stepX * i,
+            rect.bottom - (values[i]! / maxY).clamp(0.0, 1.0) * rect.height,
+          ),
     ];
   }
 }
