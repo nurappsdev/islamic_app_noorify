@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/models/alarm_model.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
 import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
@@ -44,6 +45,21 @@ class AlarmRepositoryImpl implements AlarmRepository {
       return Right(await _local.addAlarm(AlarmModel.fromEntity(alarm)));
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, AlarmDashboard>> getAlarmDashboard() async {
+    try {
+      return Right(await _remote.getAlarmDashboard());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
     } catch (_) {
       return const Left(UnknownFailure());
     }

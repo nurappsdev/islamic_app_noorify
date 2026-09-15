@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
 
@@ -13,9 +14,11 @@ export 'alarm_list_state.dart';
 class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   AlarmListBloc({
     required GetAlarms getAlarms,
+    required GetAlarmDashboard getAlarmDashboard,
     required AddAlarm addAlarm,
     required SetAlarmEnabled setAlarmEnabled,
   }) : _getAlarms = getAlarms,
+       _getAlarmDashboard = getAlarmDashboard,
        _addAlarm = addAlarm,
        _setAlarmEnabled = setAlarmEnabled,
        super(const AlarmListState()) {
@@ -25,23 +28,44 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   }
 
   final GetAlarms _getAlarms;
+  final GetAlarmDashboard _getAlarmDashboard;
   final AddAlarm _addAlarm;
   final SetAlarmEnabled _setAlarmEnabled;
 
+  /// Loads the local "All Alarm" list and the `GET /alarms` dashboard (which
+  /// backs the header countdown and the "Prayers Alarm" tab) independently —
+  /// the dashboard is best-effort: a failure there doesn't fail the whole
+  /// screen, it just leaves prayerAlarms/serverCountdown at their last value.
   Future<void> _onLoadAlarms(
     LoadAlarms event,
     Emitter<AlarmListState> emit,
   ) async {
     emit(state.copyWith(status: AlarmListStatus.loading));
     final result = await _getAlarms();
+    final dashboardResult = await _getAlarmDashboard();
+    final prayerAlarms = dashboardResult.fold(
+      (_) => state.prayerAlarms,
+      (dashboard) => dashboard.prayerAlarms,
+    );
+    final serverCountdown = dashboardResult.fold(
+      (_) => state.serverCountdown,
+      (dashboard) => dashboard.nextAlarmCountdown,
+    );
     result.fold(
       (failure) => emit(
-        state.copyWith(status: AlarmListStatus.failure, failure: failure),
+        state.copyWith(
+          status: AlarmListStatus.failure,
+          failure: failure,
+          prayerAlarms: prayerAlarms,
+          serverCountdown: serverCountdown,
+        ),
       ),
       (alarms) => emit(
         state.copyWith(
           status: AlarmListStatus.success,
           alarms: alarms,
+          prayerAlarms: prayerAlarms,
+          serverCountdown: serverCountdown,
           clearFailure: true,
         ),
       ),
