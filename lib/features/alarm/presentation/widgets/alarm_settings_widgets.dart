@@ -165,7 +165,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
   }
 
   Future<void> _confirmDelete(BuildContext context, Ringtone ringtone) async {
-    final appText = AppText.of(context);
+    final appText = AppText.readOf(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
