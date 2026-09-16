@@ -77,6 +77,9 @@ class AppText {
     required this.alarmIsRinging,
     required this.stopAlarm,
     required this.snoozeAlarm,
+    required this.deleteAlarmTitle,
+    required this.deleteAlarmMessage,
+    required this.deleteAlarmConfirm,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -589,6 +592,9 @@ class AppText {
   final String alarmIsRinging;
   final String stopAlarm;
   final String snoozeAlarm;
+  final String deleteAlarmTitle;
+  final String deleteAlarmMessage;
+  final String deleteAlarmConfirm;
 
   // Amol tracking feature
   final String amolTracking;
@@ -1279,6 +1285,21 @@ class AppText {
       ),
       stopAlarm: _read(map, 'stopAlarm', fallback?.stopAlarm ?? ''),
       snoozeAlarm: _read(map, 'snoozeAlarm', fallback?.snoozeAlarm ?? ''),
+      deleteAlarmTitle: _read(
+        map,
+        'deleteAlarmTitle',
+        fallback?.deleteAlarmTitle ?? '',
+      ),
+      deleteAlarmMessage: _read(
+        map,
+        'deleteAlarmMessage',
+        fallback?.deleteAlarmMessage ?? '',
+      ),
+      deleteAlarmConfirm: _read(
+        map,
+        'deleteAlarmConfirm',
+        fallback?.deleteAlarmConfirm ?? '',
+      ),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),
       weekly: _read(map, 'weekly', fallback?.weekly ?? ''),

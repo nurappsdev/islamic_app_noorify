@@ -71,6 +71,9 @@ const Map<String, String> appTextBn = <String, String>{
   'alarmIsRinging': 'অ্যালার্ম',
   'stopAlarm': 'বন্ধ করুন',
   'snoozeAlarm': '৫ মিনিট পর',
+  'deleteAlarmTitle': 'অ্যালার্ম মুছুন',
+  'deleteAlarmMessage': 'আপনি কি নিশ্চিত এই অ্যালার্মটি মুছে ফেলতে চান?',
+  'deleteAlarmConfirm': 'মুছুন',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',

@@ -19,9 +19,14 @@ abstract interface class AlarmRepository {
   /// Persists [alarm] and returns it back once saved.
   Future<Either<Failure, AlarmEntry>> addAlarm(AlarmEntry alarm);
 
-  /// Flips the enabled state of the alarm identified by [id].
+  /// Flips the enabled state of the alarm identified by [id] via
+  /// `PATCH /alarms/custom/{id}`, then mirrors it in the local cache.
   Future<Either<Failure, void>> setAlarmEnabled({
     required String id,
     required bool enabled,
   });
+
+  /// Deletes the alarm identified by [id] via `DELETE /alarms/custom/{id}`,
+  /// then removes it from the local cache.
+  Future<Either<Failure, void>> deleteAlarm(String id);
 }

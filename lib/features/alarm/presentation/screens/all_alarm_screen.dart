@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:just_audio/just_audio.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
@@ -9,6 +10,7 @@ import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_reposi
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
@@ -43,6 +45,7 @@ class AllAlarmScreen extends StatelessWidget {
         getAlarmDashboard: GetAlarmDashboard(repository),
         addAlarm: AddAlarm(repository),
         setAlarmEnabled: SetAlarmEnabled(repository),
+        deleteAlarm: DeleteAlarm(repository),
       )..add(const LoadAlarms()),
       child: const _AllAlarmView(),
     );
@@ -219,13 +222,84 @@ class _AlarmTabLabel extends StatelessWidget {
   }
 }
 
-class _AllAlarmList extends StatelessWidget {
+class _AllAlarmList extends StatefulWidget {
   const _AllAlarmList({required this.state});
 
   final AlarmListState state;
 
   @override
+  State<_AllAlarmList> createState() => _AllAlarmListState();
+}
+
+class _AllAlarmListState extends State<_AllAlarmList> {
+  final _player = AudioPlayer();
+  String? _playingId;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.processingStateStream.listen((processingState) {
+      if (processingState == ProcessingState.completed && mounted) {
+        setState(() => _playingId = null);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  /// Previews [alarm]'s ringtone; tapping the same row again stops it.
+  Future<void> _togglePlay(AlarmEntry alarm) async {
+    if (_playingId == alarm.id) {
+      await _player.stop();
+      if (mounted) setState(() => _playingId = null);
+      return;
+    }
+    if (alarm.ringtoneUrl.isEmpty) return;
+    setState(() => _playingId = alarm.id);
+    try {
+      await _player.setUrl(alarm.ringtoneUrl);
+      await _player.play();
+    } catch (_) {
+      if (mounted) setState(() => _playingId = null);
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, AlarmEntry alarm) async {
+    final appText = AppText.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(appText.deleteAlarmTitle),
+        content: Text(appText.deleteAlarmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.alarmCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: Text(appText.deleteAlarmConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final bloc = context.read<AlarmListBloc>();
+    if (_playingId == alarm.id) {
+      await _player.stop();
+      if (mounted) setState(() => _playingId = null);
+    }
+    bloc.add(RemoveAlarm(alarm.id));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     if (state.isLoading && state.alarms.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -241,16 +315,31 @@ class _AllAlarmList extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 15.w),
       itemCount: state.alarms.length,
       separatorBuilder: (_, _) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) =>
-          _AlarmListItem(alarm: state.alarms[index]),
+      itemBuilder: (context, index) {
+        final alarm = state.alarms[index];
+        return _AlarmListItem(
+          alarm: alarm,
+          isPlaying: _playingId == alarm.id,
+          onPlayToggle: () => _togglePlay(alarm),
+          onDelete: () => _confirmDelete(context, alarm),
+        );
+      },
     );
   }
 }
 
 class _AlarmListItem extends StatelessWidget {
-  const _AlarmListItem({required this.alarm});
+  const _AlarmListItem({
+    required this.alarm,
+    required this.isPlaying,
+    required this.onPlayToggle,
+    required this.onDelete,
+  });
 
   final AlarmEntry alarm;
+  final bool isPlaying;
+  final VoidCallback onPlayToggle;
+  final VoidCallback onDelete;
 
   String _subtitle(AppText appText) {
     if (alarm.vibrateAndRing || (alarm.vibrate && alarm.ring)) {
@@ -266,7 +355,7 @@ class _AlarmListItem extends StatelessWidget {
     final appText = AppText.of(context);
     final color = alarm.enabled ? _olive : _mutedGrey;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         border: Border.all(color: _cardBorder),
         borderRadius: BorderRadius.circular(16.r),
@@ -297,6 +386,19 @@ class _AlarmListItem extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            onPressed: alarm.ringtoneUrl.isEmpty ? null : onPlayToggle,
+            icon: Icon(
+              isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
+              size: 22.sp,
+            ),
+            color: alarm.ringtoneUrl.isEmpty ? _mutedGrey : _olive,
+          ),
+          IconButton(
+            onPressed: onDelete,
+            icon: Icon(Icons.delete_outline_rounded, size: 21.sp),
+            color: Colors.redAccent,
           ),
           Switch(
             value: alarm.enabled,
