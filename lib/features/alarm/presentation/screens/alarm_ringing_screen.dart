@@ -7,13 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/splash/utils/post_splash_route.dart';
 
 const _olive = Color(0xFF8D9B70);
 
@@ -26,21 +26,12 @@ const _olive = Color(0xFF8D9B70);
 /// the audio and vibrates for as long as the alarm's toggles ask for, until
 /// the user stops or snoozes it — from this screen's own buttons, or from
 /// the notification's Stop/Snooze actions (relayed via [alarmNotificationEvents]).
+/// Either action always lands back on the home screen (img_25) — see
+/// [_leaveScreen].
 class AlarmRingingScreen extends StatefulWidget {
-  const AlarmRingingScreen({
-    super.key,
-    required this.payload,
-    this.isColdLaunch = false,
-  });
+  const AlarmRingingScreen({super.key, required this.payload});
 
   final AlarmRingPayload payload;
-
-  /// True when this screen was pushed straight after a cold app start (the
-  /// notification's full-screen intent launched the process), meaning it
-  /// sits on top of the splash screen with nothing real to pop back to. See
-  /// `_leaveScreen` — dismissing then resolves the normal post-splash
-  /// destination instead of popping.
-  final bool isColdLaunch;
 
   @override
   State<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
@@ -168,23 +159,19 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     _watchdogTimer?.cancel();
     _autoStopTimer?.cancel();
     await _player.stop();
-    await _leaveScreen();
+    _leaveScreen();
   }
 
-  /// A cold-launched alarm screen sits directly on top of the splash screen
-  /// (nothing real to pop back to — see `RamadanSplashScreen`'s `isCurrent`
-  /// guard, which defers its own navigation while this screen is showing),
-  /// so leaving it means resolving where splash would have sent the user and
-  /// replacing this route with that instead of popping.
-  Future<void> _leaveScreen() async {
+  /// Both Stop and Snooze always land on the home screen / main bottom nav
+  /// (img_25) — not just "back to wherever this was pushed from" — clearing
+  /// the whole stack under it (which, on a cold launch, is the splash
+  /// screen; see `RamadanSplashScreen`'s `isCurrent` guard for why that
+  /// doesn't race with this screen while it's still showing).
+  void _leaveScreen() {
     if (!mounted) return;
-    if (widget.isColdLaunch) {
-      final nextRoute = await resolvePostSplashRoute();
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(nextRoute);
-    } else {
-      Navigator.of(context).maybePop();
-    }
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
   }
 
   Future<void> _stop() async {

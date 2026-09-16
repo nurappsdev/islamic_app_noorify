@@ -73,8 +73,7 @@ Future<void> main() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       appNavigatorKey.currentState?.push(
         MaterialPageRoute<void>(
-          builder: (_) =>
-              AlarmRingingScreen(payload: launchPayload, isColdLaunch: true),
+          builder: (_) => AlarmRingingScreen(payload: launchPayload),
         ),
       );
     });
