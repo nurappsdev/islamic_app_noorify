@@ -65,6 +65,10 @@ const Map<String, String> appTextEn = <String, String>{
   'offsetBefore30Min': 'Before 30 Min',
   'offsetBefore40Min': 'Before 40 Min',
   'offsetBefore60Min': 'Before 60 Min',
+  'offsetCustom': 'Custom',
+  'offsetMinutesUnit': 'Minutes',
+  'alarmCancel': 'Cancel',
+  'alarmSet': 'Set',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',
