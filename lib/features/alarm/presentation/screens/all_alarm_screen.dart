@@ -269,7 +269,7 @@ class _AllAlarmListState extends State<_AllAlarmList> {
   }
 
   Future<void> _confirmDelete(BuildContext context, AlarmEntry alarm) async {
-    final appText = AppText.of(context);
+    final appText = AppText.readOf(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
