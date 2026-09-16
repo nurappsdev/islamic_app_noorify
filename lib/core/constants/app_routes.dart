@@ -63,6 +63,12 @@ import '../../features/quran/presentation/bloc/surah_playback/surah_playback_blo
 import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../../features/quran/data/services/quran_audio_downloader.dart';
+import '../../features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
+import '../../features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
+import '../../features/asma_husna/domain/usecases/get_asma_names.dart';
+import '../../features/asma_husna/presentation/bloc/asma_husna_bloc.dart';
+import '../../features/asma_husna/presentation/screens/asma_husna_intro_screen.dart';
+import '../../features/asma_husna/presentation/screens/asma_husna_list_screen.dart';
 import '../../features/dua/data/dua_catalog.dart';
 import '../../features/dua/presentation/screens/dua_all_category_screen.dart';
 import '../../features/dua/presentation/screens/dua_all_dua_screen.dart';
@@ -247,6 +253,30 @@ class AppRoutes {
         );
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
+      case RouteNames.asma:
+        return _page(
+          BlocProvider(
+            create: (_) => AsmaHusnaBloc(
+              GetAsmaNames(
+                AsmaHusnaRepositoryImpl(AsmaHusnaRemoteDataSourceImpl()),
+              ),
+            )..add(const LoadAsmaNames()),
+            child: const AsmaHusnaIntroScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.asmaAll:
+        return _page(
+          BlocProvider(
+            create: (_) => AsmaHusnaBloc(
+              GetAsmaNames(
+                AsmaHusnaRepositoryImpl(AsmaHusnaRemoteDataSourceImpl()),
+              ),
+            )..add(const LoadAsmaNames()),
+            child: const AsmaHusnaListScreen(),
+          ),
+          settings,
+        );
       case RouteNames.hadith:
         return _page(const HadithIntroScreen(), settings);
       case RouteNames.hadithLibrary:

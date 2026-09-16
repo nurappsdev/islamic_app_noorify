@@ -36,6 +36,7 @@ class HomeFeatureGrid extends StatelessWidget {
       appText.featureAsmaUlHusna,
       Icons.workspace_premium,
       const Color(0xFF37C915),
+      routeName: RouteNames.asma,
     ),
     _HomeFeature(
       appText.featureQuizAndLearn,
