@@ -5,7 +5,7 @@ class AlarmState {
     this.hourIndex = 9,
     this.minuteIndex = 0,
     this.periodIndex = 0,
-    this.offsetIndex = 6,
+    this.offsetMinutes = 40,
     this.vibrateAndRing = false,
     this.vibrate = false,
     this.ring = false,
@@ -14,7 +14,10 @@ class AlarmState {
   final int hourIndex;
   final int minuteIndex;
   final int periodIndex;
-  final int offsetIndex;
+
+  /// "Before prayer" offset in minutes — a preset (20/30/40) or any custom
+  /// value from 1-59.
+  final int offsetMinutes;
   final bool vibrateAndRing;
   final bool vibrate;
   final bool ring;
@@ -33,7 +36,7 @@ class AlarmState {
     int? hourIndex,
     int? minuteIndex,
     int? periodIndex,
-    int? offsetIndex,
+    int? offsetMinutes,
     bool? vibrateAndRing,
     bool? vibrate,
     bool? ring,
@@ -42,7 +45,7 @@ class AlarmState {
       hourIndex: hourIndex ?? this.hourIndex,
       minuteIndex: minuteIndex ?? this.minuteIndex,
       periodIndex: periodIndex ?? this.periodIndex,
-      offsetIndex: offsetIndex ?? this.offsetIndex,
+      offsetMinutes: offsetMinutes ?? this.offsetMinutes,
       vibrateAndRing: vibrateAndRing ?? this.vibrateAndRing,
       vibrate: vibrate ?? this.vibrate,
       ring: ring ?? this.ring,

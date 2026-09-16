@@ -24,7 +24,7 @@ class AlarmBloc extends Bloc<AlarmEvent, AlarmState> {
       (event, emit) => emit(state.copyWith(periodIndex: event.index)),
     );
     on<SelectOffset>(
-      (event, emit) => emit(state.copyWith(offsetIndex: event.index)),
+      (event, emit) => emit(state.copyWith(offsetMinutes: event.minutes)),
     );
     on<SetVibrateAndRing>(
       (event, emit) => emit(state.copyWith(vibrateAndRing: event.value)),

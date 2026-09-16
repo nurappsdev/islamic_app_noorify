@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:just_audio/just_audio.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
@@ -121,11 +122,19 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
   List<Ringtone> _ringtones = const [];
   bool _loading = true;
 
+  final _player = AudioPlayer();
+  String? _playingId;
+
   @override
   void initState() {
     super.initState();
     _focusNode.addListener(() => setState(() {}));
     _controller.addListener(() => setState(() {}));
+    _player.processingStateStream.listen((state) {
+      if (state == ProcessingState.completed && mounted) {
+        setState(() => _playingId = null);
+      }
+    });
     _load();
   }
 
@@ -138,10 +147,26 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
     });
   }
 
+  Future<void> _togglePlay(Ringtone ringtone) async {
+    if (_playingId == ringtone.id) {
+      await _player.stop();
+      if (mounted) setState(() => _playingId = null);
+      return;
+    }
+    setState(() => _playingId = ringtone.id);
+    try {
+      await _player.setUrl(ringtone.audioUrl);
+      await _player.play();
+    } catch (_) {
+      if (mounted) setState(() => _playingId = null);
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
+    _player.dispose();
     super.dispose();
   }
 
@@ -210,18 +235,38 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                         Divider(height: 1, color: const Color(0xFFF0F2E6)),
                     itemBuilder: (context, index) {
                       final ringtone = _filtered[index];
+                      final isPlaying = _playingId == ringtone.id;
                       return ListTile(
                         dense: true,
                         title: Text(
                           ringtone.name,
                           style: alarmItalicStyle(13.sp),
                         ),
-                        trailing: Text(
-                          ringtone.duration,
-                          style: alarmItalicStyle(
-                            11.sp,
-                            color: const Color(0xFF9AA687),
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              ringtone.duration,
+                              style: alarmItalicStyle(
+                                11.sp,
+                                color: const Color(0xFF9AA687),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            IconButton(
+                              iconSize: 20.sp,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
+                              color: const Color(0xFF7E8C61),
+                              icon: Icon(
+                                isPlaying
+                                    ? Icons.stop_circle_outlined
+                                    : Icons.play_circle_outline,
+                              ),
+                              onPressed: () => _togglePlay(ringtone),
+                            ),
+                          ],
                         ),
                         onTap: () {
                           _controller.text = ringtone.name;

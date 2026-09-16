@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -8,6 +9,20 @@ import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart'
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+
+/// The 3 fixed presets shown in the "Set Alarm Before Prayer" dropdown
+/// (a 4th, always-last "Custom" entry opens [_CustomOffsetDialog] instead).
+const _offsetPresets = [40, 30, 20];
+
+/// Sentinel returned by the dropdown when "Custom" is tapped.
+const _customOffsetSentinel = -1;
+
+String _offsetLabel(int minutes, AppText appText) => switch (minutes) {
+  40 => appText.offsetBefore40Min,
+  30 => appText.offsetBefore30Min,
+  20 => appText.offsetBefore20Min,
+  _ => '${appText.offsetCustom} ($minutes ${appText.offsetMinutesUnit})',
+};
 
 class SetAllAlarmScreen extends StatelessWidget {
   const SetAllAlarmScreen({super.key, this.times});
@@ -23,38 +38,72 @@ class SetAllAlarmScreen extends StatelessWidget {
   }
 }
 
-class _SetAllAlarmView extends StatelessWidget {
+class _SetAllAlarmView extends StatefulWidget {
   const _SetAllAlarmView({this.times});
 
   final DailyPrayerTimes? times;
 
+  @override
+  State<_SetAllAlarmView> createState() => _SetAllAlarmViewState();
+}
+
+class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
+  final _offsetFieldKey = GlobalKey();
+
+  /// Opens a compact dropdown anchored under the "Set Alarm Before Prayer"
+  /// field (img_23): the 3 presets plus "Custom", which instead opens
+  /// [_CustomOffsetDialog] for picking any 1-59 value.
   Future<void> _pickOffset(BuildContext context) async {
-    final appText = AppText.of(context);
-    final offsetOptions = appText.alarmOffsetOptions;
-    final selectedIndex = context.read<AlarmBloc>().state.offsetIndex;
-    final selected = await showModalBottomSheet<int>(
-      context: context,
-      backgroundColor: const Color(0xFFFCFDF8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < offsetOptions.length; i++)
-              ListTile(
-                title: Text(offsetOptions[i], style: alarmItalicStyle(14.sp)),
-                trailing: i == selectedIndex
-                    ? const Icon(Icons.check, color: Color(0xFF8D9B70))
-                    : null,
-                onTap: () => Navigator.of(context).pop(i),
-              ),
-          ],
-        ),
-      ),
+    final appText = AppText.readOf(context);
+    final renderBox =
+        _offsetFieldKey.currentContext!.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final topLeft = renderBox.localToGlobal(
+      Offset(0, renderBox.size.height + 6.h),
+      ancestor: overlay,
     );
-    if (selected != null && context.mounted) {
+    final position = RelativeRect.fromRect(
+      topLeft & Size(renderBox.size.width, 0),
+      Offset.zero & overlay.size,
+    );
+
+    final selected = await showMenu<int>(
+      context: context,
+      position: position,
+      color: const Color(0xFFFCFDF8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14.r),
+        side: const BorderSide(color: Color(0xFFDCE9B8)),
+      ),
+      constraints: BoxConstraints(minWidth: renderBox.size.width),
+      items: [
+        for (final minutes in _offsetPresets) ...[
+          PopupMenuItem<int>(
+            value: minutes,
+            child: Text(
+              _offsetLabel(minutes, appText),
+              style: alarmItalicStyle(14.sp),
+            ),
+          ),
+          const PopupMenuDivider(height: 1),
+        ],
+        PopupMenuItem<int>(
+          value: _customOffsetSentinel,
+          child: Text(appText.offsetCustom, style: alarmItalicStyle(14.sp)),
+        ),
+      ],
+    );
+    if (selected == null || !context.mounted) return;
+    if (selected == _customOffsetSentinel) {
+      final currentMinutes = context.read<AlarmBloc>().state.offsetMinutes;
+      final custom = await showDialog<int>(
+        context: context,
+        builder: (_) => _CustomOffsetDialog(initialMinutes: currentMinutes),
+      );
+      if (custom != null && context.mounted) {
+        context.read<AlarmBloc>().add(SelectOffset(custom));
+      }
+    } else {
       context.read<AlarmBloc>().add(SelectOffset(selected));
     }
   }
@@ -83,6 +132,7 @@ class _SetAllAlarmView extends StatelessWidget {
                     onTap: () => _pickOffset(context),
                     borderRadius: BorderRadius.circular(22.r),
                     child: Container(
+                      key: _offsetFieldKey,
                       height: 46.h,
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       decoration: BoxDecoration(
@@ -93,7 +143,7 @@ class _SetAllAlarmView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            appText.alarmOffsetOptions[state.offsetIndex],
+                            _offsetLabel(state.offsetMinutes, appText),
                             style: alarmItalicStyle(14.sp),
                           ),
                           const Icon(
@@ -128,7 +178,7 @@ class _SetAllAlarmView extends StatelessWidget {
                   ),
                   SizedBox(height: 26.h),
                   for (final period in PrayerPeriod.values) ...[
-                    _AllAlarmRow(period: period, times: times),
+                    _AllAlarmRow(period: period, times: widget.times),
                     SizedBox(height: 14.h),
                   ],
                 ],
@@ -255,4 +305,143 @@ class _AllAlarmRow extends StatelessWidget {
     PrayerPeriod.maghrib => const Color(0xFFFF8E4A),
     PrayerPeriod.isha => const Color(0xFFEACB2B),
   };
+}
+
+/// The "Custom" minutes picker (img_24) — free-form 1-59 entry, opened when
+/// "Custom" is picked from the offset dropdown.
+class _CustomOffsetDialog extends StatefulWidget {
+  const _CustomOffsetDialog({required this.initialMinutes});
+
+  final int initialMinutes;
+
+  @override
+  State<_CustomOffsetDialog> createState() => _CustomOffsetDialogState();
+}
+
+class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
+  late final _controller = TextEditingController(
+    text: widget.initialMinutes.toString(),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final parsed = int.tryParse(_controller.text) ?? widget.initialMinutes;
+    Navigator.of(context).pop(parsed.clamp(1, 59));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 24.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              appText.setAlarmBeforePrayer,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: const Color(0xFFF15A24),
+                fontSize: 19.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 22.h),
+            Container(
+              height: 50.h,
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25.r),
+                border: Border.all(color: const Color(0xFFDCE9B8)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(2),
+                      ],
+                      onSubmitted: (_) => _submit(),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                      style: TextStyle(fontSize: 15.sp, color: Colors.black87),
+                    ),
+                  ),
+                  Text(
+                    appText.offsetMinutesUnit,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: const Color(0xFF7E8C61),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 22.h),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 46.h,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFBDCDC),
+                        foregroundColor: const Color(0xFFD84A4A),
+                        elevation: 0,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text(
+                        appText.alarmCancel,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: SizedBox(
+                    height: 46.h,
+                    child: ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8D9B70),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text(
+                        appText.alarmSet,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

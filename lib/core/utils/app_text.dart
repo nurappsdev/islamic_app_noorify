@@ -70,6 +70,10 @@ class AppText {
     required this.offsetBefore30Min,
     required this.offsetBefore40Min,
     required this.offsetBefore60Min,
+    required this.offsetCustom,
+    required this.offsetMinutesUnit,
+    required this.alarmCancel,
+    required this.alarmSet,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -575,6 +579,10 @@ class AppText {
   final String offsetBefore30Min;
   final String offsetBefore40Min;
   final String offsetBefore60Min;
+  final String offsetCustom;
+  final String offsetMinutesUnit;
+  final String alarmCancel;
+  final String alarmSet;
 
   // Amol tracking feature
   final String amolTracking;
@@ -1250,6 +1258,14 @@ class AppText {
         'offsetBefore60Min',
         fallback?.offsetBefore60Min ?? '',
       ),
+      offsetCustom: _read(map, 'offsetCustom', fallback?.offsetCustom ?? ''),
+      offsetMinutesUnit: _read(
+        map,
+        'offsetMinutesUnit',
+        fallback?.offsetMinutesUnit ?? '',
+      ),
+      alarmCancel: _read(map, 'alarmCancel', fallback?.alarmCancel ?? ''),
+      alarmSet: _read(map, 'alarmSet', fallback?.alarmSet ?? ''),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),
       weekly: _read(map, 'weekly', fallback?.weekly ?? ''),
