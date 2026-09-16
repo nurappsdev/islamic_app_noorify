@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_d
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_ringtone.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
 
 TextStyle alarmItalicStyle(double size, {Color color = Colors.black}) =>
@@ -113,14 +114,15 @@ class RingtoneSearchField extends StatefulWidget {
 class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
-  final _getRingtones = GetRingtones(
-    AlarmRepositoryImpl(
-      AlarmRemoteDataSourceImpl(),
-      AlarmLocalDataSourceImpl(),
-    ),
+  final _repository = AlarmRepositoryImpl(
+    AlarmRemoteDataSourceImpl(),
+    AlarmLocalDataSourceImpl(),
   );
+  late final _getRingtones = GetRingtones(_repository);
+  late final _deleteRingtone = DeleteRingtone(_repository);
   List<Ringtone> _ringtones = const [];
   bool _loading = true;
+  String? _deletingId;
 
   final _player = AudioPlayer();
   String? _playingId;
@@ -160,6 +162,48 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
     } catch (_) {
       if (mounted) setState(() => _playingId = null);
     }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Ringtone ringtone) async {
+    final appText = AppText.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(appText.deleteRingtoneTitle),
+        content: Text(appText.deleteRingtoneMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.alarmCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: Text(appText.deleteRingtoneConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    if (_playingId == ringtone.id) {
+      await _player.stop();
+      if (mounted) setState(() => _playingId = null);
+    }
+    setState(() => _deletingId = ringtone.id);
+    final result = await _deleteRingtone(ringtone.id);
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        setState(() => _deletingId = null);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
+      },
+      (_) => setState(() {
+        _deletingId = null;
+        _ringtones = _ringtones.where((r) => r.id != ringtone.id).toList();
+      }),
+    );
   }
 
   @override
@@ -236,6 +280,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                     itemBuilder: (context, index) {
                       final ringtone = _filtered[index];
                       final isPlaying = _playingId == ringtone.id;
+                      final isDeleting = _deletingId == ringtone.id;
                       return ListTile(
                         dense: true,
                         title: Text(
@@ -264,8 +309,32 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                                     ? Icons.stop_circle_outlined
                                     : Icons.play_circle_outline,
                               ),
-                              onPressed: () => _togglePlay(ringtone),
+                              onPressed: isDeleting
+                                  ? null
+                                  : () => _togglePlay(ringtone),
                             ),
+                            SizedBox(width: 4.w),
+                            isDeleting
+                                ? SizedBox(
+                                    width: 20.sp,
+                                    height: 20.sp,
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  )
+                                : IconButton(
+                                    iconSize: 20.sp,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    visualDensity: VisualDensity.compact,
+                                    color: Colors.redAccent,
+                                    icon: const Icon(Icons.delete_outline),
+                                    onPressed: () =>
+                                        _confirmDelete(context, ringtone),
+                                  ),
                           ],
                         ),
                         onTap: () {

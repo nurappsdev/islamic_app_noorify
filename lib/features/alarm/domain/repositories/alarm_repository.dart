@@ -29,4 +29,8 @@ abstract interface class AlarmRepository {
   /// Deletes the alarm identified by [id] via `DELETE /alarms/custom/{id}`,
   /// then removes it from the local cache.
   Future<Either<Failure, void>> deleteAlarm(String id);
+
+  /// Deletes the ringtone catalog entry identified by [id] via
+  /// `DELETE /alarms/ringtones/{id}`.
+  Future<Either<Failure, void>> deleteRingtone(String id);
 }

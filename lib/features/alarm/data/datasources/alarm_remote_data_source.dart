@@ -27,6 +27,9 @@ abstract interface class AlarmRemoteDataSource {
 
   /// `DELETE /alarms/custom/{id}`.
   Future<void> deleteAlarm(String id);
+
+  /// `DELETE /alarms/ringtones/{id}`.
+  Future<void> deleteRingtone(String id);
 }
 
 class AlarmRemoteDataSourceImpl implements AlarmRemoteDataSource {
@@ -167,6 +170,32 @@ class AlarmRemoteDataSourceImpl implements AlarmRemoteDataSource {
     try {
       response = await _dio.delete<dynamic>(
         ApiConstants.alarmCustomItemEndPoint(id),
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteRingtone(String id) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.delete<dynamic>(
+        ApiConstants.alarmRingtoneItemEndPoint(id),
         options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {

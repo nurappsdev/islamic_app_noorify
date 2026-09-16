@@ -75,6 +75,9 @@ const Map<String, String> appTextEn = <String, String>{
   'deleteAlarmTitle': 'Delete Alarm',
   'deleteAlarmMessage': 'Are you sure you want to delete this alarm?',
   'deleteAlarmConfirm': 'Delete',
+  'deleteRingtoneTitle': 'Delete Ringtone',
+  'deleteRingtoneMessage': 'Are you sure you want to delete this ringtone?',
+  'deleteRingtoneConfirm': 'Delete',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',

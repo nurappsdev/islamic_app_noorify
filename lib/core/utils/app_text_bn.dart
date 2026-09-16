@@ -74,6 +74,9 @@ const Map<String, String> appTextBn = <String, String>{
   'deleteAlarmTitle': 'অ্যালার্ম মুছুন',
   'deleteAlarmMessage': 'আপনি কি নিশ্চিত এই অ্যালার্মটি মুছে ফেলতে চান?',
   'deleteAlarmConfirm': 'মুছুন',
+  'deleteRingtoneTitle': 'রিংটোন মুছুন',
+  'deleteRingtoneMessage': 'আপনি কি নিশ্চিত এই রিংটোনটি মুছে ফেলতে চান?',
+  'deleteRingtoneConfirm': 'মুছুন',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',
