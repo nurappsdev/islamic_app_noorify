@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
@@ -7,6 +9,7 @@ import 'package:islami_app_noorify/features/profile/domain/entities/profile_enti
 import 'package:islami_app_noorify/features/profile/domain/repositories/profile_repository.dart';
 import 'package:islami_app_noorify/features/profile/domain/usecases/get_profile.dart';
 import 'package:islami_app_noorify/features/profile/domain/usecases/update_profile.dart';
+import 'package:islami_app_noorify/features/profile/domain/usecases/upload_avatar.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 /// Keeps [profileNameNotifier] in sync with the REST profile
@@ -22,6 +25,7 @@ class ProfileService {
   );
   late final GetProfile _getProfile = GetProfile(_repository);
   late final UpdateProfile _updateProfile = UpdateProfile(_repository);
+  late final UploadAvatar _uploadAvatar = UploadAvatar(_repository);
 
   /// The last cached profile (no network call), or `null` when nothing has
   /// been fetched yet. Used to prefill the Edit Profile form instantly.
@@ -67,6 +71,12 @@ class ProfileService {
     result.fold((_) {}, _syncNotifiers);
     return result;
   }
+
+  /// Uploads [file] to `POST /s3/upload` and returns its public URL. Does
+  /// not touch the cached profile or notifiers — call [updateProfile] with
+  /// the returned URL as `avatarUrl` to persist it.
+  Future<Either<Failure, String>> uploadAvatar(File file) =>
+      _uploadAvatar(file);
 
   /// Pushes the last cached profile (if any) into [profileNameNotifier] /
   /// [profilePhotoUrlNotifier] without hitting the network. Call as early as

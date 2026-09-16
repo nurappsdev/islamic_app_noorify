@@ -1,5 +1,11 @@
-import 'package:bloc/bloc.dart';
+import 'dart:async';
 
+import 'package:bloc/bloc.dart';
+import 'package:dartz/dartz.dart';
+
+import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
@@ -32,16 +38,18 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   final AddAlarm _addAlarm;
   final SetAlarmEnabled _setAlarmEnabled;
 
-  /// Loads the local "All Alarm" list and the `GET /alarms` dashboard (which
-  /// backs the header countdown and the "Prayers Alarm" tab) independently —
-  /// the dashboard is best-effort: a failure there doesn't fail the whole
-  /// screen, it just leaves prayerAlarms/serverCountdown at their last value.
+  /// Loads the `GET /alarms` dashboard, which backs the header countdown,
+  /// the "Prayers Alarm" tab, and — via its `customAlarms` — the "All Alarm"
+  /// tab too: the server is the source of truth there, since every save
+  /// already goes through `POST /alarms/custom` first (see [_onSaveAlarm]).
+  /// The local Hive cache is only consulted as a fallback when the
+  /// dashboard call itself fails (e.g. offline), so the screen still shows
+  /// whatever was last saved on this device.
   Future<void> _onLoadAlarms(
     LoadAlarms event,
     Emitter<AlarmListState> emit,
   ) async {
     emit(state.copyWith(status: AlarmListStatus.loading));
-    final result = await _getAlarms();
     final dashboardResult = await _getAlarmDashboard();
     final prayerAlarms = dashboardResult.fold(
       (_) => state.prayerAlarms,
@@ -51,6 +59,13 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
       (_) => state.serverCountdown,
       (dashboard) => dashboard.nextAlarmCountdown,
     );
+    final serverAlarms = dashboardResult.fold(
+      (_) => null,
+      (dashboard) => dashboard.customAlarms,
+    );
+    final result = serverAlarms != null
+        ? Right<Failure, List<AlarmEntry>>(serverAlarms)
+        : await _getAlarms();
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -60,15 +75,21 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
           serverCountdown: serverCountdown,
         ),
       ),
-      (alarms) => emit(
-        state.copyWith(
-          status: AlarmListStatus.success,
-          alarms: alarms,
-          prayerAlarms: prayerAlarms,
-          serverCountdown: serverCountdown,
-          clearFailure: true,
-        ),
-      ),
+      (alarms) {
+        // Keeps this device's OS-level schedule in sync with whatever the
+        // server says is saved — including alarms created elsewhere (another
+        // device, a direct API call) that this device has never scheduled.
+        unawaited(AlarmScheduler.rescheduleAll(alarms));
+        emit(
+          state.copyWith(
+            status: AlarmListStatus.success,
+            alarms: alarms,
+            prayerAlarms: prayerAlarms,
+            serverCountdown: serverCountdown,
+            clearFailure: true,
+          ),
+        );
+      },
     );
   }
 
@@ -79,9 +100,12 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     final result = await _addAlarm(event.alarm);
     result.fold(
       (failure) => emit(state.copyWith(failure: failure)),
-      (saved) => emit(
-        state.copyWith(alarms: [...state.alarms, saved], clearFailure: true),
-      ),
+      (saved) {
+        if (saved.enabled) unawaited(AlarmScheduler.scheduleAlarm(saved));
+        emit(
+          state.copyWith(alarms: [...state.alarms, saved], clearFailure: true),
+        );
+      },
     );
   }
 
@@ -92,21 +116,25 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     Emitter<AlarmListState> emit,
   ) async {
     final previous = state.alarms;
-    emit(
-      state.copyWith(
-        alarms: [
-          for (final alarm in previous)
-            if (alarm.id == event.id)
-              alarm.copyWith(enabled: event.enabled)
-            else
-              alarm,
-        ],
-      ),
-    );
+    final updated = [
+      for (final alarm in previous)
+        if (alarm.id == event.id)
+          alarm.copyWith(enabled: event.enabled)
+        else
+          alarm,
+    ];
+    emit(state.copyWith(alarms: updated));
     final result = await _setAlarmEnabled(id: event.id, enabled: event.enabled);
     result.fold(
       (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
-      (_) {},
+      (_) {
+        final alarm = updated.firstWhere((a) => a.id == event.id);
+        unawaited(
+          event.enabled
+              ? AlarmScheduler.scheduleAlarm(alarm)
+              : AlarmScheduler.cancelAlarm(event.id),
+        );
+      },
     );
   }
 }

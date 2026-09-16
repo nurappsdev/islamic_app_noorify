@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
@@ -30,4 +32,7 @@ abstract interface class ProfileRepository {
 
   /// Removes the cached profile (used on logout).
   Future<void> clearCache();
+
+  /// Uploads [file] to S3 (`POST /s3/upload`) and returns its public URL.
+  Future<Either<Failure, String>> uploadAvatar(File file);
 }

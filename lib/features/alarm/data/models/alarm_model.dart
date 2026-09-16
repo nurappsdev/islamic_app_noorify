@@ -12,6 +12,7 @@ class AlarmModel extends AlarmEntry {
     super.label,
     super.ringtoneId,
     super.ringtoneName,
+    super.ringtoneUrl,
   });
 
   factory AlarmModel.fromEntity(AlarmEntry entry) => AlarmModel(
@@ -25,6 +26,7 @@ class AlarmModel extends AlarmEntry {
     label: entry.label,
     ringtoneId: entry.ringtoneId,
     ringtoneName: entry.ringtoneName,
+    ringtoneUrl: entry.ringtoneUrl,
   );
 
   factory AlarmModel.fromJson(Map<String, dynamic> json) => AlarmModel(
@@ -39,6 +41,7 @@ class AlarmModel extends AlarmEntry {
     ringtoneId: json['ringtoneId'] as String? ?? AlarmEntry.defaultRingtoneId,
     ringtoneName:
         json['ringtoneName'] as String? ?? AlarmEntry.defaultRingtoneName,
+    ringtoneUrl: json['ringtoneUrl'] as String? ?? '',
   );
 
   Map<String, dynamic> toJson() => {
@@ -52,5 +55,6 @@ class AlarmModel extends AlarmEntry {
     'label': label,
     'ringtoneId': ringtoneId,
     'ringtoneName': ringtoneName,
+    'ringtoneUrl': ringtoneUrl,
   };
 }

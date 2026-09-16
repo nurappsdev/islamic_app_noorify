@@ -74,6 +74,9 @@ class AppText {
     required this.offsetMinutesUnit,
     required this.alarmCancel,
     required this.alarmSet,
+    required this.alarmIsRinging,
+    required this.stopAlarm,
+    required this.snoozeAlarm,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -448,7 +451,7 @@ class AppText {
     required this.editProfileChooseGallery,
     required this.editProfileCancel,
     required this.editProfileImagePickError,
-    required this.editProfilePhotoNotUploaded,
+    required this.editProfilePhotoUploadError,
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
@@ -583,6 +586,9 @@ class AppText {
   final String offsetMinutesUnit;
   final String alarmCancel;
   final String alarmSet;
+  final String alarmIsRinging;
+  final String stopAlarm;
+  final String snoozeAlarm;
 
   // Amol tracking feature
   final String amolTracking;
@@ -977,7 +983,7 @@ class AppText {
   final String editProfileChooseGallery;
   final String editProfileCancel;
   final String editProfileImagePickError;
-  final String editProfilePhotoNotUploaded;
+  final String editProfilePhotoUploadError;
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
@@ -1266,6 +1272,13 @@ class AppText {
       ),
       alarmCancel: _read(map, 'alarmCancel', fallback?.alarmCancel ?? ''),
       alarmSet: _read(map, 'alarmSet', fallback?.alarmSet ?? ''),
+      alarmIsRinging: _read(
+        map,
+        'alarmIsRinging',
+        fallback?.alarmIsRinging ?? '',
+      ),
+      stopAlarm: _read(map, 'stopAlarm', fallback?.stopAlarm ?? ''),
+      snoozeAlarm: _read(map, 'snoozeAlarm', fallback?.snoozeAlarm ?? ''),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),
       weekly: _read(map, 'weekly', fallback?.weekly ?? ''),
@@ -2612,10 +2625,10 @@ class AppText {
         'editProfileImagePickError',
         fallback?.editProfileImagePickError ?? '',
       ),
-      editProfilePhotoNotUploaded: _read(
+      editProfilePhotoUploadError: _read(
         map,
-        'editProfilePhotoNotUploaded',
-        fallback?.editProfilePhotoNotUploaded ?? '',
+        'editProfilePhotoUploadError',
+        fallback?.editProfilePhotoUploadError ?? '',
       ),
       percentCompleteSuffix: _read(
         map,

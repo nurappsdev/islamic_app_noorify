@@ -124,11 +124,30 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
 
     setState(() => _isSaving = true);
+
+    String? avatarUrl;
+    if (_selectedImage != null) {
+      final uploadResult = await ProfileService.instance.uploadAvatar(
+        _selectedImage!,
+      );
+      final uploadFailure = uploadResult.fold((failure) => failure, (_) => null);
+      if (uploadFailure != null) {
+        if (!mounted) return;
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(appText.editProfilePhotoUploadError)),
+        );
+        return;
+      }
+      avatarUrl = uploadResult.fold((_) => null, (url) => url);
+    }
+
     final phone = _phoneController.text.trim();
     final result = await ProfileService.instance.updateProfile(
       name: _nameController.text.trim(),
       phone: phone.isEmpty ? null : phone,
       gender: _selectedGender,
+      avatarUrl: avatarUrl,
     );
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -140,15 +159,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         ).showSnackBar(SnackBar(content: Text(failure.message)));
       },
       (updated) {
+        setState(() => _selectedImage = null);
         _applyProfile(updated);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _selectedImage != null
-                  ? appText.editProfilePhotoNotUploaded
-                  : appText.saveAction,
-            ),
-          ),
+          SnackBar(content: Text(appText.saveAction)),
         );
         Navigator.of(context).maybePop();
       },
@@ -396,8 +410,8 @@ class _EditProfileHeader extends StatelessWidget {
 }
 
 /// Circular avatar that previews [imageFile] when set, with a gallery-icon
-/// badge that lets the user pick a new photo from their device. There is no
-/// photo-upload endpoint yet, so the picked image is a local preview only.
+/// badge that lets the user pick a new photo from their device. The picked
+/// image is a local preview until [_ProfileEditScreenState._save] uploads it.
 class _ProfileAvatar extends StatelessWidget {
   const _ProfileAvatar({required this.imageFile, required this.onTapGallery});
 

@@ -75,6 +75,24 @@ String formatPrayerTime(PrayerClockTime time) {
   return '$hour:$minute $period';
 }
 
+final _clockTimeRegExp = RegExp(
+  r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+  caseSensitive: false,
+);
+
+/// The inverse of [formatPrayerTime] — parses a 12-hour clock string like
+/// `"10:00 AM"` (as returned by `GET /alarms`'s `time`/`alarmTime` fields)
+/// into a [PrayerClockTime], or `null` if it doesn't match that shape.
+PrayerClockTime? parseClockTime12h(String time) {
+  final match = _clockTimeRegExp.firstMatch(time.trim());
+  if (match == null) return null;
+  final hour12 = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  final isPm = match.group(3)!.toUpperCase() == 'PM';
+  final hour24 = hour12 % 12 + (isPm ? 12 : 0);
+  return PrayerClockTime(hour: hour24, minute: minute);
+}
+
 /// Fraction (0..1) of daylight elapsed between [DailyPrayerTimes.sunrise] and
 /// [DailyPrayerTimes.sunset] at [now] — 0 at/before sunrise, 1 at/after
 /// sunset.

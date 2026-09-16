@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,10 @@ import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/brand_colors.dart';
 import 'core/utils/app_text.dart';
+import 'features/alarm/data/datasources/alarm_local_data_source.dart';
+import 'features/alarm/data/services/alarm_scheduler.dart';
+import 'features/alarm/domain/entities/alarm_ring_payload.dart';
+import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
 
@@ -29,6 +35,30 @@ Future<void> main() async {
       androidStopForegroundOnPause: true,
     ),
   );
+
+  await AlarmScheduler.init();
+  // Re-arm every saved alarm against the OS scheduler on every cold start —
+  // cheap, idempotent, and it repairs anything the OS silently dropped
+  // (e.g. a reinstall) without needing its own reboot-recovery path.
+  unawaited(
+    AlarmLocalDataSourceImpl()
+        .getAlarms()
+        .then(AlarmScheduler.rescheduleAll)
+        .catchError((_) {}),
+  );
+  alarmNotificationEvents.stream.listen((event) {
+    if (event.action != 'open') return;
+    appNavigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        builder: (_) => AlarmRingingScreen(payload: event.payload),
+      ),
+    );
+  });
+  final launchDetails = await AlarmScheduler.launchDetails();
+  final launchPayload = launchDetails?.didNotificationLaunchApp == true
+      ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)
+      : null;
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -38,6 +68,17 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
+
+  if (launchPayload != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appNavigatorKey.currentState?.push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              AlarmRingingScreen(payload: launchPayload, isColdLaunch: true),
+        ),
+      );
+    });
+  }
 }
 
 class MyApp extends StatelessWidget {

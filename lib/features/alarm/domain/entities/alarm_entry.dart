@@ -11,6 +11,7 @@ class AlarmEntry {
     this.label = '',
     this.ringtoneId = defaultRingtoneId,
     this.ringtoneName = defaultRingtoneName,
+    this.ringtoneUrl = '',
   });
 
   /// Used until the user picks one from the `GET /alarms/ringtones` catalog.
@@ -33,6 +34,12 @@ class AlarmEntry {
   final String ringtoneId;
   final String ringtoneName;
 
+  /// The ringtone's playable audio URL (from the `GET /alarms/ringtones`
+  /// catalog) — kept only on-device (never sent to the server) so the alarm
+  /// can actually play the chosen sound when it fires. Empty when the user
+  /// never picked a ringtone.
+  final String ringtoneUrl;
+
   AlarmEntry copyWith({bool? enabled}) {
     return AlarmEntry(
       id: id,
@@ -45,6 +52,7 @@ class AlarmEntry {
       label: label,
       ringtoneId: ringtoneId,
       ringtoneName: ringtoneName,
+      ringtoneUrl: ringtoneUrl,
     );
   }
 }
