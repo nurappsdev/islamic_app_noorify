@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
@@ -6,8 +8,9 @@ import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/models/profile_model.dart';
 
-/// Talks to `GET`/`PATCH /user/me`. Throws [ServerException] /
-/// [NetworkException] / [ParsingException]; never returns error states.
+/// Talks to `GET`/`PATCH /user/me` and `POST /s3/upload`. Throws
+/// [ServerException] / [NetworkException] / [ParsingException]; never
+/// returns error states.
 abstract interface class ProfileRemoteDataSource {
   Future<ProfileModel> getMe();
 
@@ -22,6 +25,10 @@ abstract interface class ProfileRemoteDataSource {
     String? preferredLanguage,
     String? avatarUrl,
   });
+
+  /// Uploads [file] to `POST /s3/upload?primaryPath=$primaryPath` and
+  /// returns the S3 `publicUrl` from the response.
+  Future<String> uploadImage({required File file, required String primaryPath});
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -79,6 +86,51 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw _mapDioException(e);
     }
     return _parseProfileResponse(response);
+  }
+
+  @override
+  Future<String> uploadImage({
+    required File file,
+    required String primaryPath,
+  }) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        file.path,
+        filename: file.uri.pathSegments.last,
+      ),
+    });
+
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        ApiConstants.s3UploadEndPoint,
+        data: formData,
+        queryParameters: {'primaryPath': primaryPath},
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic> ? body : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Upload failed ($status).',
+        statusCode: status,
+      );
+    }
+
+    final data = json['data'];
+    final publicUrl = data is Map<String, dynamic>
+        ? (data['publicUrl'] ?? data['url'])?.toString()
+        : null;
+    if (publicUrl == null || publicUrl.isEmpty) {
+      throw ParsingException('Upload response is missing "publicUrl".');
+    }
+    return publicUrl;
   }
 
   Map<String, String>? _authHeaders() {

@@ -69,6 +69,9 @@ const Map<String, String> appTextEn = <String, String>{
   'offsetMinutesUnit': 'Minutes',
   'alarmCancel': 'Cancel',
   'alarmSet': 'Set',
+  'alarmIsRinging': 'Alarm',
+  'stopAlarm': 'Stop',
+  'snoozeAlarm': 'Snooze 5 min',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',
@@ -452,8 +455,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'editProfileCancel': 'Cancel',
   'editProfileImagePickError':
       "Couldn't load the selected image. Please try again.",
-  'editProfilePhotoNotUploaded':
-      'Profile saved. Photo upload is not available yet.',
+  'editProfilePhotoUploadError':
+      "Couldn't upload the photo. Please try again.",
   'percentCompleteSuffix': 'complete',
   'mymensingh': 'Mymensingh',
   'badgeLabel': 'Badge',

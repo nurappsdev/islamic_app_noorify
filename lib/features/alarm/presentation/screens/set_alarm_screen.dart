@@ -229,6 +229,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
       label: _labelController.text.trim(),
       ringtoneId: _selectedRingtone?.id ?? AlarmEntry.defaultRingtoneId,
       ringtoneName: _selectedRingtone?.name ?? AlarmEntry.defaultRingtoneName,
+      ringtoneUrl: _selectedRingtone?.audioUrl ?? '',
     );
   }
 }

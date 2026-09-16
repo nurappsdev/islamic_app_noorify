@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/profile/data/datasources/profile_local_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/models/profile_model.dart';
@@ -71,4 +74,23 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<void> clearCache() => _local.clearProfile();
+
+  @override
+  Future<Either<Failure, String>> uploadAvatar(File file) async {
+    try {
+      final publicUrl = await _remote.uploadImage(
+        file: file,
+        primaryPath: ApiConstants.profileImagesPrimaryPath,
+      );
+      return Right(publicUrl);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
 }

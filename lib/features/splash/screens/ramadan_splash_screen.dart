@@ -27,8 +27,15 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
   Future<void> _openNextAfterDelay() async {
     await Future<void>.delayed(_splashDuration);
     if (!mounted) return;
+    // Something (namely a cold-launched `AlarmRingingScreen` — see
+    // `main.dart`) was pushed on top of this screen: `pushReplacement`
+    // always replaces the navigator's current top route, not necessarily
+    // the route that requested it, so without this guard our own delayed
+    // redirect would silently swap out whatever got stacked above us.
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
     final nextRoute = await resolvePostSplashRoute();
     if (!mounted) return;
+    if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
     Navigator.of(context).pushReplacementNamed(nextRoute);
   }
 

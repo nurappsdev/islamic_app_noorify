@@ -68,6 +68,9 @@ const Map<String, String> appTextBn = <String, String>{
   'offsetMinutesUnit': 'মিনিট',
   'alarmCancel': 'বাতিল',
   'alarmSet': 'সেট করুন',
+  'alarmIsRinging': 'অ্যালার্ম',
+  'stopAlarm': 'বন্ধ করুন',
+  'snoozeAlarm': '৫ মিনিট পর',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',
@@ -451,8 +454,8 @@ const Map<String, String> appTextBn = <String, String>{
   'editProfileCancel': 'বাতিল',
   'editProfileImagePickError':
       'নির্বাচিত ছবি লোড করা যায়নি। আবার চেষ্টা করুন।',
-  'editProfilePhotoNotUploaded':
-      'প্রোফাইল সংরক্ষিত হয়েছে। ছবি আপলোড এখনো চালু নেই।',
+  'editProfilePhotoUploadError':
+      'ছবি আপলোড করা যায়নি। আবার চেষ্টা করুন।',
   'percentCompleteSuffix': 'সম্পন্ন',
   'mymensingh': 'ময়মনসিংহ',
   'badgeLabel': 'ব্যাজ',
