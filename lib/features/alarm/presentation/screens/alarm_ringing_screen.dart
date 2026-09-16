@@ -56,6 +56,21 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   // idle, i.e. "triggering" with no audible sound.
   final _player = AudioPlayer(androidApplyAudioAttributes: false);
   Timer? _vibrateTimer;
+
+  /// Polls [AudioPlayer.playing] and restarts playback (from the guaranteed
+  /// -good bundled asset) whenever it's found stopped — a network drop
+  /// mid-stream, a remote source erroring out asynchronously after it looked
+  /// like it loaded fine, or any other way [LoopMode.one] might not carry
+  /// playback forward. This is what actually guarantees "keeps ringing
+  /// until Stop/Snooze" rather than trusting a single playback session to
+  /// never hiccup for minutes on end.
+  Timer? _watchdogTimer;
+
+  /// Safety cap so an unanswered alarm doesn't ring forever in the
+  /// background — matches stock alarm-clock behaviour.
+  static const _maxRingDuration = Duration(minutes: 3);
+  Timer? _autoStopTimer;
+
   StreamSubscription<AlarmNotificationEvent>? _eventSub;
   bool _dismissed = false;
 
@@ -63,6 +78,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   void initState() {
     super.initState();
     _startRinging();
+    _autoStopTimer = Timer(_maxRingDuration, () {
+      if (!_dismissed) _stop();
+    });
     _eventSub = alarmNotificationEvents.stream.listen((event) {
       if (event.payload.alarmId != widget.payload.alarmId) return;
       if (event.action == 'stop' || event.action == 'snooze') {
@@ -83,6 +101,12 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
 
   Future<void> _startRinging() async {
     final payload = widget.payload;
+    // This screen now owns ringing (sound + vibration) itself, using the
+    // user's actual chosen ringtone — stop the notification's own
+    // fallback-beep repeat (see `AlarmScheduler.muteInsistentNotification`)
+    // so the two don't sound at once. The notification stays up and
+    // cancellable either way.
+    unawaited(AlarmScheduler.muteInsistentNotification(payload));
     if (payload.shouldVibrate) {
       _vibrateTimer = Timer.periodic(
         const Duration(milliseconds: 900),
@@ -108,6 +132,10 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     if (!playedChosen) {
       await _tryLoad(() => _player.setAsset(_fallbackRingtoneAsset));
     }
+    _watchdogTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _ensureStillPlaying(),
+    );
   }
 
   Future<bool> _tryLoad(Future<Duration?> Function() load) async {
@@ -121,10 +149,24 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     }
   }
 
+  /// Called every 2s while the alarm is ringing. `LoopMode.one` should keep
+  /// audio going indefinitely on its own, but if playback has stopped for
+  /// any reason — a dropped connection, a source that errored out after
+  /// already starting, anything — this restarts it from the bundled asset,
+  /// which has no external dependency and can't 404 or time out.
+  Future<void> _ensureStillPlaying() async {
+    if (_dismissed || !widget.payload.shouldPlaySound || _player.playing) {
+      return;
+    }
+    await _tryLoad(() => _player.setAsset(_fallbackRingtoneAsset));
+  }
+
   Future<void> _dismiss() async {
     if (_dismissed) return;
     _dismissed = true;
     _vibrateTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _autoStopTimer?.cancel();
     await _player.stop();
     await _leaveScreen();
   }
@@ -159,6 +201,8 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   @override
   void dispose() {
     _vibrateTimer?.cancel();
+    _watchdogTimer?.cancel();
+    _autoStopTimer?.cancel();
     _eventSub?.cancel();
     _player.dispose();
     super.dispose();

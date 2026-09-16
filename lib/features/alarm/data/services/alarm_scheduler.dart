@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
@@ -14,12 +15,39 @@ import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_pay
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 
-const _channelId = 'islami_app_noorify_alarms';
+// Bumped to `_v2`: on Android 8+, a channel's sound/importance are locked in
+// at first creation and can't be changed by the app afterwards — only by
+// deleting and recreating the channel under a new id, which is what this is.
+const _channelId = 'islami_app_noorify_alarms_v2';
 const _channelName = 'Alarms';
 const _channelDescription = 'Prayer and custom alarm ringtones.';
 const _stopActionId = 'stop';
 const _snoozeActionId = 'snooze';
 const _snoozeDuration = Duration(minutes: 5);
+
+/// Android's `Notification.FLAG_INSISTENT` — repeats the notification's
+/// sound/vibration continuously until it's cancelled (our Stop/Snooze
+/// actions both do) or its window is opened. This is what actually makes
+/// the alarm ring continuously: it's driven entirely by the OS's own
+/// NotificationManager, so — unlike a custom audio player — it doesn't
+/// depend on `AlarmRingingScreen` ever being shown (which Android only
+/// auto-launches over a *locked* screen; on an unlocked device a fired
+/// alarm is otherwise just an ordinary heads-up notification that plays
+/// its sound once, like the "1 second, like a notification" symptom this
+/// fixes) or on any background isolate/process staying alive for minutes.
+const _insistentFlag = 4;
+final _insistentFlags = Int32List.fromList(<int>[_insistentFlag]);
+
+/// Bundled at `android/app/src/main/res/raw/alarm_fallback.wav` (a native
+/// Android raw resource, separate from — but generated from the same
+/// source as — `assets/audio/alarm_fallback.wav`) since a notification
+/// channel's sound must be a local raw resource or content URI, never a
+/// remote URL. It's what loops for [_insistentFlags]; the user's actually
+/// selected ringtone still plays from `AlarmRingingScreen` whenever that
+/// does get shown.
+const _alarmChannelSound = RawResourceAndroidNotificationSound(
+  'alarm_fallback',
+);
 
 /// What to do with an [AlarmRingPayload] once a notification response comes
 /// back — `open` means "bring the ringing screen to the foreground",
@@ -101,6 +129,8 @@ class AlarmScheduler {
         description: _channelDescription,
         importance: Importance.max,
         enableVibration: true,
+        playSound: true,
+        sound: _alarmChannelSound,
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
@@ -148,6 +178,21 @@ class AlarmScheduler {
     await _notifications.cancel(id: alarmManagerIdFor(alarmId));
     await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
   }
+
+  /// Stops the notification's own [_insistentFlags] repeat once
+  /// [AlarmRingingScreen] is up and playing the user's actual chosen
+  /// ringtone itself, so the fallback beep and the real ringtone don't
+  /// overlap. The notification stays visible/cancellable either way.
+  static Future<void> muteInsistentNotification(AlarmRingPayload payload) =>
+      _notifications.show(
+        id: alarmManagerIdFor(payload.alarmId),
+        title: payload.label.isEmpty ? 'Alarm' : payload.label,
+        body: _timeLabel(payload.hour, payload.minute),
+        notificationDetails: NotificationDetails(
+          android: _androidDetails(payload, insistent: false),
+        ),
+        payload: payload.encode(),
+      );
 
   static Future<void> snooze(
     AlarmRingPayload payload, [
@@ -289,24 +334,41 @@ Future<void> _showAlarmNotification(
   );
 }
 
-AndroidNotificationDetails _androidDetails(AlarmRingPayload payload) =>
-    AndroidNotificationDetails(
+/// [insistent] is false for the update [AlarmScheduler.muteInsistentNotification]
+/// sends once `AlarmRingingScreen` takes over with the user's actual chosen
+/// ringtone — the notification itself stays put (still cancellable from the
+/// shade via Stop/Snooze) but stops repeating its own fallback sound, so the
+/// two don't play over each other. [onlyAlertOnce] on that update also
+/// prevents the re-`show()` call from re-triggering an alert on its own.
+AndroidNotificationDetails _androidDetails(
+  AlarmRingPayload payload, {
+  bool insistent = true,
+}) => AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
+      fullScreenIntent: insistent,
       ongoing: true,
       autoCancel: false,
+      onlyAlertOnce: !insistent,
       visibility: NotificationVisibility.public,
-      playSound: payload.shouldPlaySound,
-      enableVibration: payload.shouldVibrate,
+      playSound: insistent && payload.shouldPlaySound,
+      sound: _alarmChannelSound,
+      enableVibration: insistent && payload.shouldVibrate,
       audioAttributesUsage: AudioAttributesUsage.alarm,
-      // Auto-clears after 10 minutes so a missed/unanswered alarm doesn't
-      // linger in the shade forever.
-      timeoutAfter: 10 * 60 * 1000,
+      // Repeats the sound/vibration above until Stop/Snooze cancels the
+      // notification — see [_insistentFlags].
+      additionalFlags:
+          insistent && (payload.shouldPlaySound || payload.shouldVibrate)
+          ? _insistentFlags
+          : null,
+      // Safety cap so an unanswered alarm doesn't ring forever: auto-clears
+      // after 5 minutes, comfortably past the couple of minutes it should
+      // take someone to respond.
+      timeoutAfter: 5 * 60 * 1000,
       actions: const [
         AndroidNotificationAction(
           _stopActionId,
