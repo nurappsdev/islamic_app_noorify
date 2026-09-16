@@ -23,3 +23,10 @@ class ToggleAlarmEnabled extends AlarmListEvent {
   final String id;
   final bool enabled;
 }
+
+/// Deletes the alarm identified by [id].
+class RemoveAlarm extends AlarmListEvent {
+  const RemoveAlarm(this.id);
+
+  final String id;
+}

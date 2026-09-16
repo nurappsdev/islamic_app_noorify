@@ -80,13 +80,46 @@ class AlarmRepositoryImpl implements AlarmRepository {
     }
   }
 
+  /// Persists the toggle via `PATCH /alarms/custom/{id}` first, then mirrors
+  /// it in the local cache only once the server call succeeds — matching
+  /// [addAlarm]'s remote-then-cache ordering.
   @override
   Future<Either<Failure, void>> setAlarmEnabled({
     required String id,
     required bool enabled,
   }) async {
     try {
+      await _remote.updateAlarmEnabled(id: id, enabled: enabled);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+    try {
       await _local.setAlarmEnabled(id: id, enabled: enabled);
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteAlarm(String id) async {
+    try {
+      await _remote.deleteAlarm(id);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+    try {
+      await _local.deleteAlarm(id);
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));

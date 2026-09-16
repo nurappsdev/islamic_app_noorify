@@ -12,6 +12,8 @@ abstract interface class AlarmLocalDataSource {
   Future<AlarmModel> addAlarm(AlarmModel alarm);
 
   Future<void> setAlarmEnabled({required String id, required bool enabled});
+
+  Future<void> deleteAlarm(String id);
 }
 
 class AlarmLocalDataSourceImpl implements AlarmLocalDataSource {
@@ -58,6 +60,15 @@ class AlarmLocalDataSourceImpl implements AlarmLocalDataSource {
         Map<String, dynamic>.from(raw),
       ).copyWith(enabled: enabled);
       await _box.put(id, AlarmModel.fromEntity(updated).toJson());
+    } catch (_) {
+      throw CacheException();
+    }
+  }
+
+  @override
+  Future<void> deleteAlarm(String id) async {
+    try {
+      await _box.delete(id);
     } catch (_) {
       throw CacheException();
     }

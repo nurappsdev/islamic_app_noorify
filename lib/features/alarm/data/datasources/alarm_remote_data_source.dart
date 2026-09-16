@@ -21,6 +21,12 @@ abstract interface class AlarmRemoteDataSource {
 
   /// `GET /alarms/ringtones`.
   Future<List<RingtoneModel>> getRingtones();
+
+  /// `PATCH /alarms/custom/{id}` with `{ "isEnabled": enabled }`.
+  Future<void> updateAlarmEnabled({required String id, required bool enabled});
+
+  /// `DELETE /alarms/custom/{id}`.
+  Future<void> deleteAlarm(String id);
 }
 
 class AlarmRemoteDataSourceImpl implements AlarmRemoteDataSource {
@@ -123,6 +129,62 @@ class AlarmRemoteDataSourceImpl implements AlarmRemoteDataSource {
         .whereType<Map<String, dynamic>>()
         .map(RingtoneModel.fromJson)
         .toList();
+  }
+
+  @override
+  Future<void> updateAlarmEnabled({
+    required String id,
+    required bool enabled,
+  }) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.patch<dynamic>(
+        ApiConstants.alarmCustomItemEndPoint(id),
+        data: {'isEnabled': enabled},
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteAlarm(String id) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.delete<dynamic>(
+        ApiConstants.alarmCustomItemEndPoint(id),
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
   }
 
   Map<String, dynamic> _toRequestJson(AlarmEntry alarm) => {

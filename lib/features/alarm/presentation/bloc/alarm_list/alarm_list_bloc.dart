@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
@@ -23,20 +24,24 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     required GetAlarmDashboard getAlarmDashboard,
     required AddAlarm addAlarm,
     required SetAlarmEnabled setAlarmEnabled,
+    required DeleteAlarm deleteAlarm,
   }) : _getAlarms = getAlarms,
        _getAlarmDashboard = getAlarmDashboard,
        _addAlarm = addAlarm,
        _setAlarmEnabled = setAlarmEnabled,
+       _deleteAlarm = deleteAlarm,
        super(const AlarmListState()) {
     on<LoadAlarms>(_onLoadAlarms);
     on<SaveAlarm>(_onSaveAlarm);
     on<ToggleAlarmEnabled>(_onToggleAlarmEnabled);
+    on<RemoveAlarm>(_onRemoveAlarm);
   }
 
   final GetAlarms _getAlarms;
   final GetAlarmDashboard _getAlarmDashboard;
   final AddAlarm _addAlarm;
   final SetAlarmEnabled _setAlarmEnabled;
+  final DeleteAlarm _deleteAlarm;
 
   /// Loads the `GET /alarms` dashboard, which backs the header countdown,
   /// the "Prayers Alarm" tab, and — via its `customAlarms` — the "All Alarm"
@@ -135,6 +140,28 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
               : AlarmScheduler.cancelAlarm(event.id),
         );
       },
+    );
+  }
+
+  /// Removes the alarm immediately (optimistic), then persists the delete —
+  /// restoring it if the write fails so the list never drops an alarm that
+  /// wasn't actually deleted server-side.
+  Future<void> _onRemoveAlarm(
+    RemoveAlarm event,
+    Emitter<AlarmListState> emit,
+  ) async {
+    final previous = state.alarms;
+    final index = previous.indexWhere((a) => a.id == event.id);
+    if (index == -1) return;
+    emit(
+      state.copyWith(
+        alarms: [...previous]..removeAt(index),
+      ),
+    );
+    final result = await _deleteAlarm(event.id);
+    result.fold(
+      (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
+      (_) => unawaited(AlarmScheduler.cancelAlarm(event.id)),
     );
   }
 }
