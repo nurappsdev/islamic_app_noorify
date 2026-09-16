@@ -36,6 +36,7 @@ class RouteNames {
   static const notifications = '/notifications';
   static const elmNoor = '/elm-noor';
   static const asma = '/asma';
+  static const asmaAll = '/asma/all';
   static const hadith = '/hadith';
   static const hadithLibrary = '/hadith/library';
   static const hadithLibraryList = '/hadith/library/all';

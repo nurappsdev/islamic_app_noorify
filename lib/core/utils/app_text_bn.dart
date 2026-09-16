@@ -258,6 +258,20 @@ const Map<String, String> appTextBn = <String, String>{
   'featureDua': 'দোয়া',
   'featureDijpr': 'যিকর',
   'featureAsmaUlHusna': 'আসমাউল হুসনা',
+  'asmaHusnaTitle': 'আসমাউল-হুসনা',
+  'asmaHusnaHadithNarrator':
+      'আবু হুরাইরা (রাদ্বিয়াল্লাহু আনহু) থেকে বর্ণিত, রাসূলুল্লাহ ﷺ বলেছেন:',
+  'asmaHusnaHadithArabic':
+      'إِنَّ لِلَّهِ تِسْعَةً وَتِسْعِينَ اسْمًا مِائَةً إِلَّا وَاحِدَةً مَنْ أَحْصَاهَا دَخَلَ الْجَنَّةَ',
+  'asmaHusnaHadithTranslation':
+      '"নিশ্চয়ই আল্লাহর নিরানব্বইটি নাম আছে, একশত থেকে একটি কম। যে ব্যক্তি এগুলো মুখস্থ করবে (বা গণনা/সংরক্ষণ করবে) সে জান্নাতে প্রবেশ করবে।"',
+  'asmaHusnaSourcesLabel': 'সূত্র:',
+  'asmaHusnaSourceBukhari': 'সহীহ আল-বুখারী (হাদীস ২৭৩৬ / ৭৩৯২)',
+  'asmaHusnaSourceMuslim': 'সহীহ মুসলিম (হাদীস ২৬৭৭)',
+  'asmaHusnaAgreedNote':
+      'এটি একটি মুত্তাফাকুন আলাইহি হাদীস (বুখারী ও মুসলিম উভয়ে সম্মত)।',
+  'asmaHusnaNamesCount': '৯৯টি নাম',
+  'asmaHusnaClickDetails': 'বিস্তারিত দেখতে ক্লিক করুন',
   'featureQuizAndLearn': 'কুইজ ও শিখুন',
   'zikrIntroTitle': 'যিকর',
   'zikrIntroSubtitle':

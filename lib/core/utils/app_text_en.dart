@@ -259,6 +259,20 @@ const Map<String, String> appTextEn = <String, String>{
   'featureDua': 'Dua',
   'featureDijpr': 'Zikr',
   'featureAsmaUlHusna': 'Asma-ul Husna',
+  'asmaHusnaTitle': 'Asmaul-Husna',
+  'asmaHusnaHadithNarrator':
+      'Abu Huraira (May Allah Be Pleased With Him) Reported That The Messenger Of Allah ﷺ Said:',
+  'asmaHusnaHadithArabic':
+      'إِنَّ لِلَّهِ تِسْعَةً وَتِسْعِينَ اسْمًا مِائَةً إِلَّا وَاحِدَةً مَنْ أَحْصَاهَا دَخَلَ الْجَنَّةَ',
+  'asmaHusnaHadithTranslation':
+      '"Indeed, Allah has ninety-nine names, one hundred minus one. Whoever memorizes them (or enumerates/preserves them) will enter Paradise."',
+  'asmaHusnaSourcesLabel': 'Sources:',
+  'asmaHusnaSourceBukhari': 'Sahih Al-Bukhari (Hadith 2736 / 7392)',
+  'asmaHusnaSourceMuslim': 'Sahih Muslim (Hadith 2677)',
+  'asmaHusnaAgreedNote':
+      'This Is A Muttafaqun Alayhi Hadith (Agreed Upon By Both Bukhari And Muslim).',
+  'asmaHusnaNamesCount': '99 Name',
+  'asmaHusnaClickDetails': 'Click to see details',
   'featureQuizAndLearn': 'Quiz & Learn',
   'zikrIntroTitle': 'Zikr',
   'zikrIntroSubtitle':

@@ -44,6 +44,8 @@ class ApiConstants {
       "/amol/tracker/delete-item";
   static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
 
+  static const String asmaUlHusnaEndPoint = "/asma-ul-husna";
+
   static const String alarmsDashboardEndPoint = "/alarms";
   static const String alarmsCustomEndPoint = "/alarms/custom";
   static const String alarmsRingtonesEndPoint = "/alarms/ringtones";

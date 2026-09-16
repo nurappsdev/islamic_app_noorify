@@ -301,6 +301,16 @@ class AppText {
     required this.duaFolderNameFieldHint,
     required this.duaCancel,
     required this.featureAsmaUlHusna,
+    required this.asmaHusnaTitle,
+    required this.asmaHusnaHadithNarrator,
+    required this.asmaHusnaHadithArabic,
+    required this.asmaHusnaHadithTranslation,
+    required this.asmaHusnaSourcesLabel,
+    required this.asmaHusnaSourceBukhari,
+    required this.asmaHusnaSourceMuslim,
+    required this.asmaHusnaAgreedNote,
+    required this.asmaHusnaNamesCount,
+    required this.asmaHusnaClickDetails,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
     required this.ageCalculate,
@@ -831,6 +841,16 @@ class AppText {
   final String duaFolderNameFieldHint;
   final String duaCancel;
   final String featureAsmaUlHusna;
+  final String asmaHusnaTitle;
+  final String asmaHusnaHadithNarrator;
+  final String asmaHusnaHadithArabic;
+  final String asmaHusnaHadithTranslation;
+  final String asmaHusnaSourcesLabel;
+  final String asmaHusnaSourceBukhari;
+  final String asmaHusnaSourceMuslim;
+  final String asmaHusnaAgreedNote;
+  final String asmaHusnaNamesCount;
+  final String asmaHusnaClickDetails;
   final String featureQuizAndLearn;
   final String zakatCalculator;
   final String ageCalculate;
@@ -2078,6 +2098,56 @@ class AppText {
         map,
         'featureAsmaUlHusna',
         fallback?.featureAsmaUlHusna ?? '',
+      ),
+      asmaHusnaTitle: _read(
+        map,
+        'asmaHusnaTitle',
+        fallback?.asmaHusnaTitle ?? '',
+      ),
+      asmaHusnaHadithNarrator: _read(
+        map,
+        'asmaHusnaHadithNarrator',
+        fallback?.asmaHusnaHadithNarrator ?? '',
+      ),
+      asmaHusnaHadithArabic: _read(
+        map,
+        'asmaHusnaHadithArabic',
+        fallback?.asmaHusnaHadithArabic ?? '',
+      ),
+      asmaHusnaHadithTranslation: _read(
+        map,
+        'asmaHusnaHadithTranslation',
+        fallback?.asmaHusnaHadithTranslation ?? '',
+      ),
+      asmaHusnaSourcesLabel: _read(
+        map,
+        'asmaHusnaSourcesLabel',
+        fallback?.asmaHusnaSourcesLabel ?? '',
+      ),
+      asmaHusnaSourceBukhari: _read(
+        map,
+        'asmaHusnaSourceBukhari',
+        fallback?.asmaHusnaSourceBukhari ?? '',
+      ),
+      asmaHusnaSourceMuslim: _read(
+        map,
+        'asmaHusnaSourceMuslim',
+        fallback?.asmaHusnaSourceMuslim ?? '',
+      ),
+      asmaHusnaAgreedNote: _read(
+        map,
+        'asmaHusnaAgreedNote',
+        fallback?.asmaHusnaAgreedNote ?? '',
+      ),
+      asmaHusnaNamesCount: _read(
+        map,
+        'asmaHusnaNamesCount',
+        fallback?.asmaHusnaNamesCount ?? '',
+      ),
+      asmaHusnaClickDetails: _read(
+        map,
+        'asmaHusnaClickDetails',
+        fallback?.asmaHusnaClickDetails ?? '',
       ),
       featureQuizAndLearn: _read(
         map,
