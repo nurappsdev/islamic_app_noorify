@@ -80,6 +80,9 @@ class AppText {
     required this.deleteAlarmTitle,
     required this.deleteAlarmMessage,
     required this.deleteAlarmConfirm,
+    required this.deleteRingtoneTitle,
+    required this.deleteRingtoneMessage,
+    required this.deleteRingtoneConfirm,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -595,6 +598,9 @@ class AppText {
   final String deleteAlarmTitle;
   final String deleteAlarmMessage;
   final String deleteAlarmConfirm;
+  final String deleteRingtoneTitle;
+  final String deleteRingtoneMessage;
+  final String deleteRingtoneConfirm;
 
   // Amol tracking feature
   final String amolTracking;
@@ -1299,6 +1305,21 @@ class AppText {
         map,
         'deleteAlarmConfirm',
         fallback?.deleteAlarmConfirm ?? '',
+      ),
+      deleteRingtoneTitle: _read(
+        map,
+        'deleteRingtoneTitle',
+        fallback?.deleteRingtoneTitle ?? '',
+      ),
+      deleteRingtoneMessage: _read(
+        map,
+        'deleteRingtoneMessage',
+        fallback?.deleteRingtoneMessage ?? '',
+      ),
+      deleteRingtoneConfirm: _read(
+        map,
+        'deleteRingtoneConfirm',
+        fallback?.deleteRingtoneConfirm ?? '',
       ),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),

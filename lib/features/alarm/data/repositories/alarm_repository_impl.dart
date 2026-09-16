@@ -127,4 +127,18 @@ class AlarmRepositoryImpl implements AlarmRepository {
       return const Left(UnknownFailure());
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteRingtone(String id) async {
+    try {
+      await _remote.deleteRingtone(id);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
 }
