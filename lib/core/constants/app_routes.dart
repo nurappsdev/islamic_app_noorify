@@ -63,6 +63,7 @@ import '../../features/quran/presentation/bloc/surah_playback/surah_playback_blo
 import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../../features/quran/data/services/quran_audio_downloader.dart';
+import '../../features/asma_husna/data/datasources/asma_husna_local_data_source.dart';
 import '../../features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
 import '../../features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
 import '../../features/asma_husna/domain/usecases/get_asma_names.dart';
@@ -258,7 +259,10 @@ class AppRoutes {
           BlocProvider(
             create: (_) => AsmaHusnaBloc(
               GetAsmaNames(
-                AsmaHusnaRepositoryImpl(AsmaHusnaRemoteDataSourceImpl()),
+                AsmaHusnaRepositoryImpl(
+                  AsmaHusnaRemoteDataSourceImpl(),
+                  AsmaHusnaLocalDataSourceImpl(),
+                ),
               ),
             )..add(const LoadAsmaNames()),
             child: const AsmaHusnaIntroScreen(),
@@ -270,7 +274,10 @@ class AppRoutes {
           BlocProvider(
             create: (_) => AsmaHusnaBloc(
               GetAsmaNames(
-                AsmaHusnaRepositoryImpl(AsmaHusnaRemoteDataSourceImpl()),
+                AsmaHusnaRepositoryImpl(
+                  AsmaHusnaRemoteDataSourceImpl(),
+                  AsmaHusnaLocalDataSourceImpl(),
+                ),
               ),
             )..add(const LoadAsmaNames()),
             child: const AsmaHusnaListScreen(),

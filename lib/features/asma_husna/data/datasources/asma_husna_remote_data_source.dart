@@ -11,7 +11,11 @@ import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_mod
 abstract interface class AsmaHusnaRemoteDataSource {
   /// `GET /asma-ul-husna?page=1&limit=99&sort=displayOrder _id&fields=...`
   /// — `limit` covers all 99 names in one request since the list is fixed
-  /// size.
+  /// size, and `fields` now also pulls each name's full explanation
+  /// (`meaningEnglish`/`explanationParagraphs`) so this single call is
+  /// enough to populate the local cache for both the list and detail
+  /// screens (see `AsmaHusnaLocalDataSource`) — no separate per-id
+  /// `getNameDetail` round trip needed once it's synced.
   Future<List<AsmaNameModel>> getNames();
 
   /// `GET /asma-ul-husna/{id}` — the full explanation for one name.
@@ -35,7 +39,8 @@ class AsmaHusnaRemoteDataSourceImpl implements AsmaHusnaRemoteDataSource {
           'sort': 'displayOrder _id',
           'fields':
               'meaningBangla,serialNumberBangla,nameArabic,nameBangla,'
-              'displayOrder,audioUrl,nameTransliteration',
+              'displayOrder,audioUrl,nameTransliteration,meaningEnglish,'
+              'explanationParagraphs',
         },
       );
     } on DioException catch (e) {

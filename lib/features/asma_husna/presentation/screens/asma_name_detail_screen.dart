@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
 import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
+import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
 
 /// Full-screen explanation for one name (design `img_29.png`), opened from
 /// its card's "Click to see details" button. Fetches
@@ -97,9 +98,7 @@ class _AsmaNameDetailScreenState extends State<AsmaNameDetailScreen> {
                         builder: (context, state) {
                           switch (state.status) {
                             case AsmaNameDetailStatus.loading:
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
+                              return const AsmaNameDetailShimmer();
                             case AsmaNameDetailStatus.failure:
                               return _ErrorView(
                                 message: state.failure?.message ?? '',
