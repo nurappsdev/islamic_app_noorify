@@ -284,15 +284,38 @@ Future<void> _fire(
   DartPluginRegistrant.ensureInitialized();
 
   final payload = AlarmRingPayload.fromJson(params);
+
+  // Validate against the saved alarm list *before* making any sound —
+  // `AndroidAlarmManager.cancel` can lose the race against an alarm that's
+  // already been dispatched to the OS right at its trigger time, and a
+  // snooze has no cancellation path of its own, so this fire may be for an
+  // alarm that's since been deleted, disabled, or (defensively) rescheduled
+  // to a different time. If storage can't even be read, fail closed rather
+  // than ring for an alarm we can't verify.
+  List<AlarmEntry> alarms;
+  try {
+    alarms = await AlarmLocalDataSourceImpl().getAlarms();
+  } catch (_) {
+    return;
+  }
+  AlarmEntry? current;
+  for (final a in alarms) {
+    if (a.id == payload.alarmId) {
+      current = a;
+      break;
+    }
+  }
+  if (current == null ||
+      !current.enabled ||
+      current.hour != payload.hour ||
+      current.minute != payload.minute) {
+    return;
+  }
+
   await _showAlarmNotification(payload, notificationId: id);
 
   if (!chain) return;
   try {
-    final alarms = await AlarmLocalDataSourceImpl().getAlarms();
-    final stillEnabled = alarms.any(
-      (a) => a.id == payload.alarmId && a.enabled,
-    );
-    if (!stillEnabled) return;
     final next = _nextOccurrence(
       payload.hour,
       payload.minute,
