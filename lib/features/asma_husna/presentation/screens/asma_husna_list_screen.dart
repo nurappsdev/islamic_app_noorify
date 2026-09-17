@@ -26,6 +26,11 @@ class AsmaHusnaListScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [Color(0xFFFCFDF7), Color(0xFFEFF2DA)],
           ),
+          image: DecorationImage(
+            image: AssetImage('assets/asmaulHusna.png'),
+            repeat: ImageRepeat.repeat, // Fixed: BoxFit doesn't have 'repeat'
+            opacity: 0.15,
+          ),
         ),
         child: SafeArea(
           child: Column(
