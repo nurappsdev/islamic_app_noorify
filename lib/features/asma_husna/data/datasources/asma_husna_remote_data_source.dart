@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
+import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_detail_model.dart';
 import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_model.dart';
 
 /// Talks to the Asma-ul-Husna REST endpoint. Throws [ServerException] /
@@ -12,6 +13,9 @@ abstract interface class AsmaHusnaRemoteDataSource {
   /// — `limit` covers all 99 names in one request since the list is fixed
   /// size.
   Future<List<AsmaNameModel>> getNames();
+
+  /// `GET /asma-ul-husna/{id}` — the full explanation for one name.
+  Future<AsmaNameDetailModel> getNameDetail(String id);
 }
 
 class AsmaHusnaRemoteDataSourceImpl implements AsmaHusnaRemoteDataSource {
@@ -59,6 +63,39 @@ class AsmaHusnaRemoteDataSourceImpl implements AsmaHusnaRemoteDataSource {
         .whereType<Map>()
         .map((e) => AsmaNameModel.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+  }
+
+  @override
+  Future<AsmaNameDetailModel> getNameDetail(String id) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.get<dynamic>(
+        ApiConstants.asmaUlHusnaDetailEndPoint(id),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+
+    final data = json['data'];
+    if (data is! Map) {
+      throw ParsingException(
+        'Asma-ul-Husna detail response is missing "data".',
+      );
+    }
+    return AsmaNameDetailModel.fromJson(Map<String, dynamic>.from(data));
   }
 
   /// Turns a low-level [DioException] into one of our data-layer exceptions.
