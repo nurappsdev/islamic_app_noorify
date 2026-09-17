@@ -87,6 +87,16 @@ class AsmaNameCard extends StatelessWidget {
                                 color: _oliveGreen,
                               ),
                             ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              name.nameBangla,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: _oliveGreen,
+                              ),
+                            ),
                             SizedBox(height: 4.h),
                             Text(
                               name.meaningBangla,

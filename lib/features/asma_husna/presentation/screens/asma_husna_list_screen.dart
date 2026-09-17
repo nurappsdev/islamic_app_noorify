@@ -27,7 +27,7 @@ class AsmaHusnaListScreen extends StatelessWidget {
             colors: [Color(0xFFFCFDF7), Color(0xFFEFF2DA)],
           ),
           image: DecorationImage(
-            image: AssetImage('assets/asmaulHusna.png'),
+            image: AssetImage('assets/asmaulHusnas.png'),
             repeat: ImageRepeat.repeat, // Fixed: BoxFit doesn't have 'repeat'
             opacity: 0.15,
           ),
