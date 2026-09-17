@@ -5,9 +5,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
+import 'package:islami_app_noorify/features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
+import 'package:islami_app_noorify/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_husna_bloc.dart';
+import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
+import 'package:islami_app_noorify/features/asma_husna/presentation/screens/asma_name_detail_screen.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_name_card.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_name_detail_sheet.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
 
 /// Asmaul-Husna landing screen (design `img_26.png`): the "99 names" hadith,
@@ -195,11 +199,19 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                                     audioUrl: audioUrl,
                                   ),
                                 ),
-                          onShowDetails: () => showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => AsmaNameDetailSheet(name: first),
+                          onShowDetails: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => BlocProvider(
+                                create: (_) => AsmaNameDetailBloc(
+                                  GetAsmaNameDetail(
+                                    AsmaHusnaRepositoryImpl(
+                                      AsmaHusnaRemoteDataSourceImpl(),
+                                    ),
+                                  ),
+                                )..add(LoadAsmaNameDetail(first.id)),
+                                child: AsmaNameDetailScreen(name: first),
+                              ),
+                            ),
                           ),
                         );
                       },

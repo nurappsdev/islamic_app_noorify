@@ -46,6 +46,9 @@ class ApiConstants {
 
   static const String asmaUlHusnaEndPoint = "/asma-ul-husna";
 
+  static String asmaUlHusnaDetailEndPoint(String id) =>
+      "$asmaUlHusnaEndPoint/$id";
+
   static const String alarmsDashboardEndPoint = "/alarms";
   static const String alarmsCustomEndPoint = "/alarms/custom";
   static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
