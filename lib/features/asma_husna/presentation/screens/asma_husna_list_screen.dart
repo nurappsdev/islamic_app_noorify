@@ -4,12 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_local_data_source.dart';
 import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
 import 'package:islami_app_noorify/features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
 import 'package:islami_app_noorify/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_husna_bloc.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/screens/asma_name_detail_screen.dart';
+import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_name_card.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
 
@@ -67,7 +69,7 @@ class AsmaHusnaListScreen extends StatelessWidget {
                   builder: (context, state) {
                     if (state.status == AsmaHusnaStatus.loading ||
                         state.status == AsmaHusnaStatus.initial) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const AsmaHusnaListShimmer();
                     }
                     if (state.status == AsmaHusnaStatus.failure) {
                       return _ErrorView(
@@ -118,6 +120,7 @@ class AsmaHusnaListScreen extends StatelessWidget {
                                   GetAsmaNameDetail(
                                     AsmaHusnaRepositoryImpl(
                                       AsmaHusnaRemoteDataSourceImpl(),
+                                      AsmaHusnaLocalDataSourceImpl(),
                                     ),
                                   ),
                                 )..add(LoadAsmaNameDetail(name.id)),
