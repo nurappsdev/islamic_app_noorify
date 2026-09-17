@@ -195,14 +195,8 @@ class _DetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(28.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-      ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
