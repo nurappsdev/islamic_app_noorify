@@ -1,6 +1,6 @@
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 
-/// One page of `GET /hadiths?subCategoryId=...` plus its pagination `meta`.
+/// One page of `GET /hadiths?subCategoryId=...` / `?bookId=...` plus its pagination `meta`.
 class HadithDetailPage {
   const HadithDetailPage({
     required this.hadiths,

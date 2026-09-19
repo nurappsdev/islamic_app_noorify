@@ -31,9 +31,11 @@ abstract interface class HadithLibraryRemoteDataSource {
     String? searchTerm,
   });
 
-  /// `GET /hadiths?subCategoryId=...&page=...&limit=...`.
-  Future<HadithDetailPageModel> getHadiths(
-    String subCategoryId, {
+  /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId` or
+  /// `bookId`.
+  Future<HadithDetailPageModel> getHadiths({
+    String? subCategoryId,
+    String? bookId,
     required int page,
     required int limit,
   });
@@ -91,13 +93,15 @@ class HadithLibraryRemoteDataSourceImpl
   }
 
   @override
-  Future<HadithDetailPageModel> getHadiths(
-    String subCategoryId, {
+  Future<HadithDetailPageModel> getHadiths({
+    String? subCategoryId,
+    String? bookId,
     required int page,
     required int limit,
   }) async {
     final envelope = await _getList(ApiConstants.hadithsEndPoint, {
-      'subCategoryId': subCategoryId,
+      'subCategoryId': ?subCategoryId,
+      'bookId': ?bookId,
       'page': page,
       'limit': limit,
     }, 'Hadiths');

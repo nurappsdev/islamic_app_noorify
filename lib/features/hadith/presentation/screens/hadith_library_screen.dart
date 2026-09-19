@@ -421,9 +421,28 @@ class _CollectionCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6.h),
-          Text(
-            '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
-            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF5D6B44)),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => openAllHadithsOfBook(context, book),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF5F7A43),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                minimumSize: Size(0, 34.h),
+                textStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9.r),
+                ),
+              ),
+              child: Text(
+                '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+              ),
+            ),
           ),
         ],
       ),
