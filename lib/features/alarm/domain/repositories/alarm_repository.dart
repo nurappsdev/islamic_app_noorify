@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
 
 abstract interface class AlarmRepository {
@@ -29,6 +30,10 @@ abstract interface class AlarmRepository {
   /// Deletes the alarm identified by [id] via `DELETE /alarms/custom/{id}`,
   /// then removes it from the local cache.
   Future<Either<Failure, void>> deleteAlarm(String id);
+
+  /// Applies the same offset / sound mode / ringtone to every prayer in
+  /// [batch] via `POST /alarms/prayers/batch`.
+  Future<Either<Failure, void>> setAllPrayerAlarms(PrayerAlarmBatch batch);
 
   /// Deletes the ringtone catalog entry identified by [id] via
   /// `DELETE /alarms/ringtones/{id}`.

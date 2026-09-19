@@ -8,6 +8,5 @@ class DeleteAlarm {
 
   final AlarmRepository _repository;
 
-  Future<Either<Failure, void>> call(String id) =>
-      _repository.deleteAlarm(id);
+  Future<Either<Failure, void>> call(String id) => _repository.deleteAlarm(id);
 }

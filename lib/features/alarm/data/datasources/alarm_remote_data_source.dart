@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/alarm/data/models/alarm_dashboard_model.dart';
 import 'package:islami_app_noorify/features/alarm/data/models/ringtone_model.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
@@ -27,6 +28,9 @@ abstract interface class AlarmRemoteDataSource {
 
   /// `DELETE /alarms/custom/{id}`.
   Future<void> deleteAlarm(String id);
+
+  /// `POST /alarms/prayers/batch`.
+  Future<void> setAllPrayerAlarms(PrayerAlarmBatch batch);
 
   /// `DELETE /alarms/ringtones/{id}`.
   Future<void> deleteRingtone(String id);
@@ -170,6 +174,38 @@ class AlarmRemoteDataSourceImpl implements AlarmRemoteDataSource {
     try {
       response = await _dio.delete<dynamic>(
         ApiConstants.alarmCustomItemEndPoint(id),
+        options: Options(headers: _authHeaders()),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+  }
+
+  @override
+  Future<void> setAllPrayerAlarms(PrayerAlarmBatch batch) async {
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        ApiConstants.alarmsPrayersBatchEndPoint,
+        data: {
+          'offsetMinutesBefore': batch.offsetMinutesBefore,
+          'soundMode': batch.soundMode,
+          'ringtoneId': batch.ringtoneId,
+          'selectedPrayers': batch.selectedPrayers,
+        },
         options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {

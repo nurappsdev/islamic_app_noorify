@@ -1,6 +1,6 @@
 class ApiConstants {
   // local
-  static const String baseUrl = "https://vondo7000.ilmifygroup.com/api/v1";
+  static const String baseUrl = "https://tuhfatulmuslim2.ilmifygroup.com/api/v1";
 
   //live
   // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
@@ -52,6 +52,7 @@ class ApiConstants {
   static const String alarmsDashboardEndPoint = "/alarms";
   static const String alarmsCustomEndPoint = "/alarms/custom";
   static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
+  static const String alarmsPrayersBatchEndPoint = "/alarms/prayers/batch";
 
   static String alarmCustomItemEndPoint(String id) =>
       "$alarmsCustomEndPoint/$id";

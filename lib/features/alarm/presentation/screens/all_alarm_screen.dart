@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart
 import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
@@ -46,6 +47,7 @@ class AllAlarmScreen extends StatelessWidget {
         addAlarm: AddAlarm(repository),
         setAlarmEnabled: SetAlarmEnabled(repository),
         deleteAlarm: DeleteAlarm(repository),
+        getRingtones: GetRingtones(repository),
       )..add(const LoadAlarms()),
       child: const _AllAlarmView(),
     );
@@ -454,11 +456,16 @@ class _PrayerAlarmTab extends StatelessWidget {
             width: double.infinity,
             height: 46.h,
             child: OutlinedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SetAllAlarmScreen(),
-                ),
-              ),
+              onPressed: () async {
+                final bloc = context.read<AlarmListBloc>();
+                final saved = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute<bool>(
+                    builder: (_) => const SetAllAlarmScreen(),
+                  ),
+                );
+                // Pull the freshly saved prayer alarms into this list.
+                if (saved == true) bloc.add(const LoadAlarms());
+              },
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: _cardBorder),
                 shape: const StadiumBorder(),

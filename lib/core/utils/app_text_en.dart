@@ -69,6 +69,7 @@ const Map<String, String> appTextEn = <String, String>{
   'offsetMinutesUnit': 'Minutes',
   'alarmCancel': 'Cancel',
   'alarmSet': 'Set',
+  'allAlarmsSaved': 'Prayer alarms saved',
   'alarmIsRinging': 'Alarm',
   'stopAlarm': 'Stop',
   'snoozeAlarm': 'Snooze 5 min',
