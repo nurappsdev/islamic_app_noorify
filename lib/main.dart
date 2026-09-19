@@ -19,11 +19,15 @@ import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
-
+import 'package:flutter/services.dart';
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
   await HiveService.init();
   await AppText.load();
   quranAudioHandler = await AudioService.init(
