@@ -34,7 +34,8 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
   void initState() {
     super.initState();
     _searchController.addListener(
-      () => setState(() => _query = _searchController.text.trim().toLowerCase()),
+      () =>
+          setState(() => _query = _searchController.text.trim().toLowerCase()),
     );
     _load();
   }

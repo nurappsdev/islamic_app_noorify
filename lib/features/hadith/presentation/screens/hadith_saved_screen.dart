@@ -37,7 +37,8 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(
-      () => setState(() => _query = _searchController.text.trim().toLowerCase()),
+      () =>
+          setState(() => _query = _searchController.text.trim().toLowerCase()),
     );
     _load();
   }
@@ -95,10 +96,9 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
   }
 
   Future<void> _open(HadithBookmark bookmark) async {
-    await Navigator.of(context).pushNamed(
-      RouteNames.hadithBookReader,
-      arguments: bookmark.bookSlug,
-    );
+    await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.hadithBookReader, arguments: bookmark.bookSlug);
     _load();
   }
 
@@ -312,12 +312,7 @@ class _SavedTabs extends StatelessWidget {
           color: const Color(0xFFF0F3E4),
           borderRadius: BorderRadius.circular(14.r),
         ),
-        child: Row(
-          children: [
-            _tab(hadithLabel, 0),
-            _tab(folderLabel, 1),
-          ],
-        ),
+        child: Row(children: [_tab(hadithLabel, 0), _tab(folderLabel, 1)]),
       ),
     );
   }
@@ -339,9 +334,7 @@ class _SavedTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: active
-                  ? const Color(0xFF3E4A2A)
-                  : const Color(0xFF8A9568),
+              color: active ? const Color(0xFF3E4A2A) : const Color(0xFF8A9568),
             ),
           ),
         ),

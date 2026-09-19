@@ -80,7 +80,9 @@ class HadithBookBloc extends Bloc<HadithBookEvent, HadithBookState> {
       emit(
         HadithBookState(
           status: HadithBookStatus.failed,
-          errorMessage: error is HadithSetupException ? error.message : '$error',
+          errorMessage: error is HadithSetupException
+              ? error.message
+              : '$error',
         ),
       );
     }
