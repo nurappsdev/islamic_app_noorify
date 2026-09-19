@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_libr
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -73,6 +74,7 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
   static const _loadMoreThreshold = 400.0;
 
   final _scrollController = ScrollController();
+  String _query = '';
 
   @override
   void initState() {
@@ -112,6 +114,20 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
       });
     }
 
+    // Search matches the chapter and the section name. It only sees loaded
+    // pages, so the auto-load above keeps pulling pages while few match.
+    final query = _query.trim().toLowerCase();
+    final hadiths = query.isEmpty
+        ? state.hadiths
+        : state.hadiths
+              .where(
+                (h) =>
+                    h.chapter.toLowerCase().contains(query) ||
+                    h.sectionNameBangla.toLowerCase().contains(query),
+              )
+              .toList();
+    final searching = query.isNotEmpty;
+
     final title = (widget.title ?? '').isNotEmpty
         ? widget.title!
         : appText.categoryHadith;
@@ -124,6 +140,14 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
             SizedBox(height: 6.h),
             _Header(title: title),
             SizedBox(height: 12.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: HadithSearchField(
+                hint: appText.searchHere,
+                onChanged: (value) => setState(() => _query = value),
+              ),
+            ),
+            SizedBox(height: 14.h),
             Expanded(
               child: ListView(
                 controller: _scrollController,
@@ -142,14 +166,15 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
                       ),
                       child: Text(appText.tryAgain),
                     ),
-                  ] else if (state.hadiths.isEmpty)
+                  ] else if (hadiths.isEmpty && !(searching && state.hasMore))
                     _Message(appText.noResultsFound)
                   else ...[
-                    for (final hadith in state.hadiths) ...[
+                    for (final hadith in hadiths) ...[
                       _HadithCard(hadith: hadith),
                       SizedBox(height: 14.h),
                     ],
-                    if (state.isLoadingMore) const _HadithSkeletons(count: 1),
+                    if (state.isLoadingMore || (searching && state.hasMore))
+                      const _HadithSkeletons(count: 1),
                     if (state.loadMoreFailure != null) ...[
                       _Message(state.loadMoreFailure!.message),
                       TextButton(
@@ -261,14 +286,25 @@ class _HadithSkeletons extends StatelessWidget {
   }
 }
 
-class _HadithCard extends StatelessWidget {
+class _HadithCard extends StatefulWidget {
   const _HadithCard({required this.hadith});
 
   final HadithDetail hadith;
 
+  @override
+  State<_HadithCard> createState() => _HadithCardState();
+}
+
+class _HadithCardState extends State<_HadithCard> {
   static const _ink = Color(0xFF283016);
   static const _muted = Color(0xFF5D6B44);
   static const _tint = Color(0xFFE6EFE3);
+  static const _green = Color(0xFF008000);
+
+  /// Whether the English translation is expanded under the Bangla text.
+  bool _showEnglish = false;
+
+  HadithDetail get hadith => widget.hadith;
 
   @override
   Widget build(BuildContext context) {
@@ -297,23 +333,55 @@ class _HadithCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF008000),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  '${hadith.hadithNumber}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _green,
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    '${hadith.hadithNumber}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
+                if (hadith.textEnglish.isNotEmpty)
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        setState(() => _showEnglish = !_showEnglish),
+                    icon: Icon(
+                      _showEnglish
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.translate_rounded,
+                      size: 16.sp,
+                    ),
+                    label: const Text('English'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _showEnglish ? Colors.white : _green,
+                      backgroundColor: _showEnglish ? _green : Colors.white,
+                      side: const BorderSide(color: _green),
+                      padding: EdgeInsets.symmetric(horizontal: 12.w),
+                      minimumSize: Size(0, 30.h),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             if (hadith.titleBangla.isNotEmpty) ...[
               SizedBox(height: 12.h),
@@ -353,6 +421,22 @@ class _HadithCard extends StatelessWidget {
               Text(
                 hadith.textBangla,
                 style: TextStyle(fontSize: 14.sp, height: 1.7, color: _ink),
+              ),
+            ],
+            if (_showEnglish && hadith.textEnglish.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F9EC),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: const Color(0xFFDDE8AE)),
+                ),
+                child: Text(
+                  hadith.textEnglish,
+                  style: TextStyle(fontSize: 13.5.sp, height: 1.6, color: _ink),
+                ),
               ),
             ],
             if (hadith.takhrij.isNotEmpty) ...[

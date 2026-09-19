@@ -96,7 +96,7 @@ class HadithListScaffold extends StatelessWidget {
             SizedBox(height: 18.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _HadithSearchField(
+              child: HadithSearchField(
                 hint: appText.searchHere,
                 onChanged: onSearchChanged,
               ),
@@ -157,8 +157,8 @@ class _HadithListHeader extends StatelessWidget {
   }
 }
 
-class _HadithSearchField extends StatelessWidget {
-  const _HadithSearchField({required this.hint, this.onChanged});
+class HadithSearchField extends StatelessWidget {
+  const HadithSearchField({super.key, required this.hint, this.onChanged});
 
   final String hint;
   final ValueChanged<String>? onChanged;

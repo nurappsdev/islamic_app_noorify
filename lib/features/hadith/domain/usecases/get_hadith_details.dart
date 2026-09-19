@@ -7,8 +7,9 @@ import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_li
 class GetHadithDetails {
   const GetHadithDetails(this._repository);
 
-  /// Matches the API's default page size.
-  static const pageSize = 10;
+  /// The search field filters loaded hadiths, so pages are large to reach
+  /// matches quickly (the API allows up to 100).
+  static const pageSize = 50;
 
   final HadithLibraryRepository _repository;
 
