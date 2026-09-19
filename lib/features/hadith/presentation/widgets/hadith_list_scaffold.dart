@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
@@ -7,6 +8,8 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_category_screen.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Opens the reader for a Hadith library collection. Books without bundled
 /// content ([HadithBook.isAvailable] is false) show a "coming soon" notice
@@ -29,6 +32,20 @@ void openHadithLibraryBook(BuildContext context, HadithLibraryBook book) {
   Navigator.of(context).pushNamed(
     RouteNames.hadithCategory,
     arguments: HadithCategoryArgs(bookId: book.id, title: book.titleEn),
+  );
+}
+
+/// Opens every hadith of an API-backed collection, one card after another
+/// (`GET /hadiths?bookId=...`).
+void openAllHadithsOfBook(BuildContext context, HadithLibraryBook book) {
+  final isBangla =
+      context.read<LanguageBloc>().state.language == AppLanguage.bangla;
+  final name = isBangla && book.titleBn.isNotEmpty
+      ? book.titleBn
+      : book.titleEn;
+  Navigator.of(context).pushNamed(
+    RouteNames.hadithDetail,
+    arguments: HadithDetailArgs(bookId: book.id, title: name),
   );
 }
 

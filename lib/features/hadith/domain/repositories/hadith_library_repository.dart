@@ -34,9 +34,12 @@ abstract interface class HadithLibraryRepository {
   });
 
   /// One page of the hadiths of a sub-category
-  /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`), in display order.
-  Future<Either<Failure, HadithDetailPage>> getHadiths(
-    String subCategoryId, {
+  /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book
+  /// (`...&bookId=...`), in display order. Pass one of [subCategoryId] /
+  /// [bookId].
+  Future<Either<Failure, HadithDetailPage>> getHadiths({
+    String? subCategoryId,
+    String? bookId,
     required int page,
     required int limit,
   });

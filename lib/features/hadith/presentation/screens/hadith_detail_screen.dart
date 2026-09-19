@@ -12,26 +12,32 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_deta
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
-  const HadithDetailArgs({required this.subCategoryId, this.title});
+  const HadithDetailArgs({this.subCategoryId, this.bookId, this.title})
+    : assert(subCategoryId != null || bookId != null);
 
-  final String subCategoryId;
+  final String? subCategoryId;
+  final String? bookId;
   final String? title;
 }
 
-/// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`).
+/// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`) or of a
+/// whole book (`GET /hadiths?bookId=...`).
 ///
-/// Reached by tapping a row on [HadithSubCategoryScreen]. Each hadith is a
+/// Reached by tapping a row on [HadithSubCategoryScreen], or the "Total
+/// Hadith" button on a collection card of the library screen. Each hadith is a
 /// card with its Arabic text, Bangla translation, reference (takhrij), grade
 /// and source, paginated with shimmer placeholders.
 class HadithDetailScreen extends StatelessWidget {
   const HadithDetailScreen({
     super.key,
-    required this.subCategoryId,
-    this.subCategoryName,
+    this.subCategoryId,
+    this.bookId,
+    this.title,
   });
 
-  final String subCategoryId;
-  final String? subCategoryName;
+  final String? subCategoryId;
+  final String? bookId;
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
@@ -40,19 +46,21 @@ class HadithDetailScreen extends StatelessWidget {
         GetHadithDetails(
           HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
         ),
-      )..add(LoadHadithDetails(subCategoryId)),
+      )..add(LoadHadithDetails(subCategoryId: subCategoryId, bookId: bookId)),
       child: _HadithDetailView(
         subCategoryId: subCategoryId,
-        title: subCategoryName,
+        bookId: bookId,
+        title: title,
       ),
     );
   }
 }
 
 class _HadithDetailView extends StatefulWidget {
-  const _HadithDetailView({required this.subCategoryId, this.title});
+  const _HadithDetailView({this.subCategoryId, this.bookId, this.title});
 
-  final String subCategoryId;
+  final String? subCategoryId;
+  final String? bookId;
   final String? title;
 
   @override
@@ -127,7 +135,10 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
                     _Message(state.failure?.message ?? ''),
                     TextButton(
                       onPressed: () => context.read<HadithDetailBloc>().add(
-                        LoadHadithDetails(widget.subCategoryId),
+                        LoadHadithDetails(
+                          subCategoryId: widget.subCategoryId,
+                          bookId: widget.bookId,
+                        ),
                       ),
                       child: Text(appText.tryAgain),
                     ),

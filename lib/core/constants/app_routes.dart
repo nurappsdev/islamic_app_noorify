@@ -333,7 +333,8 @@ class AppRoutes {
           detailArgs is HadithDetailArgs
               ? HadithDetailScreen(
                   subCategoryId: detailArgs.subCategoryId,
-                  subCategoryName: detailArgs.title,
+                  bookId: detailArgs.bookId,
+                  title: detailArgs.title,
                 )
               : const HadithLibraryListScreen(),
           settings,

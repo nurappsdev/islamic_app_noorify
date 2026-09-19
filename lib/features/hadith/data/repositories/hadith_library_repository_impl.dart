@@ -87,14 +87,20 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
-  Future<Either<Failure, HadithDetailPage>> getHadiths(
-    String subCategoryId, {
+  Future<Either<Failure, HadithDetailPage>> getHadiths({
+    String? subCategoryId,
+    String? bookId,
     required int page,
     required int limit,
   }) async {
     try {
       return Right(
-        await _remote.getHadiths(subCategoryId, page: page, limit: limit),
+        await _remote.getHadiths(
+          subCategoryId: subCategoryId,
+          bookId: bookId,
+          page: page,
+          limit: limit,
+        ),
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));

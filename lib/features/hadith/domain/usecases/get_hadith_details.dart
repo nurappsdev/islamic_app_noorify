@@ -12,8 +12,14 @@ class GetHadithDetails {
 
   final HadithLibraryRepository _repository;
 
-  Future<Either<Failure, HadithDetailPage>> call(
-    String subCategoryId, {
+  Future<Either<Failure, HadithDetailPage>> call({
+    String? subCategoryId,
+    String? bookId,
     int page = 1,
-  }) => _repository.getHadiths(subCategoryId, page: page, limit: pageSize);
+  }) => _repository.getHadiths(
+    subCategoryId: subCategoryId,
+    bookId: bookId,
+    page: page,
+    limit: pageSize,
+  );
 }
