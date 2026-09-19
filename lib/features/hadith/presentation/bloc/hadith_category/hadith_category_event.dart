@@ -14,3 +14,11 @@ class LoadHadithCategories extends HadithCategoryEvent {
 class LoadMoreHadithCategories extends HadithCategoryEvent {
   const LoadMoreHadithCategories();
 }
+
+/// Re-runs the list from page 1 filtered by [term] (Bangla, Arabic or English
+/// category name); an empty term clears the filter.
+class SearchHadithCategories extends HadithCategoryEvent {
+  const SearchHadithCategories(this.term);
+
+  final String term;
+}

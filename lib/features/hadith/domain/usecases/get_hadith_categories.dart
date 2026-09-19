@@ -15,5 +15,11 @@ class GetHadithCategories {
   Future<Either<Failure, HadithCategoryPage>> call(
     String bookId, {
     int page = 1,
-  }) => _repository.getCategories(bookId, page: page, limit: pageSize);
+    String? searchTerm,
+  }) => _repository.getCategories(
+    bookId,
+    page: page,
+    limit: pageSize,
+    searchTerm: searchTerm,
+  );
 }

@@ -35,10 +35,16 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     String bookId, {
     required int page,
     required int limit,
+    String? searchTerm,
   }) async {
     try {
       return Right(
-        await _remote.getCategories(bookId, page: page, limit: limit),
+        await _remote.getCategories(
+          bookId,
+          page: page,
+          limit: limit,
+          searchTerm: searchTerm,
+        ),
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));

@@ -12,9 +12,12 @@ abstract interface class HadithLibraryRepository {
   /// One page of the categories (chapters) of a collection
   /// (`GET /hadiths/categories?bookId=...&page=...&limit=...`), in display
   /// order.
+  ///
+  /// [searchTerm] filters by the category's Bangla, Arabic or English name.
   Future<Either<Failure, HadithCategoryPage>> getCategories(
     String bookId, {
     required int page,
     required int limit,
+    String? searchTerm,
   });
 }
