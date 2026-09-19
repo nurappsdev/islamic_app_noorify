@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
 
@@ -30,5 +31,13 @@ abstract interface class HadithLibraryRepository {
     required int page,
     required int limit,
     String? searchTerm,
+  });
+
+  /// One page of the hadiths of a sub-category
+  /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`), in display order.
+  Future<Either<Failure, HadithDetailPage>> getHadiths(
+    String subCategoryId, {
+    required int page,
+    required int limit,
   });
 }
