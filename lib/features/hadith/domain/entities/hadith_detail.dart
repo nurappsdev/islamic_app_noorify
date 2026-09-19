@@ -9,6 +9,7 @@ class HadithDetail {
     required this.textEnglish,
     required this.titleBangla,
     required this.titleEnglish,
+    required this.chapter,
     required this.narrator,
     required this.grade,
     required this.gradeBangla,
@@ -29,6 +30,9 @@ class HadithDetail {
   final String textEnglish;
   final String titleBangla;
   final String titleEnglish;
+
+  /// Bangla chapter name (searched by the hadith list's search field).
+  final String chapter;
 
   /// Bangla narrator name.
   final String narrator;
