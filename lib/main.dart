@@ -42,11 +42,18 @@ Future<void> main() async {
   // Alarms are re-armed from the server's list whenever the alarm screen
   // loads (see `AlarmListBloc`), not from the local cache here: the cache
   // holds client-made ids, so re-arming it too made every alarm ring twice.
+  // Tapping the alarm notification — or its Stop/Snooze buttons — opens the
+  // ringing screen, which is where stopping/snoozing reliably silences the
+  // alarm. A Stop/Snooze press carries its action so the screen applies it
+  // straight away. If that screen is already up it handles the event itself.
   alarmNotificationEvents.stream.listen((event) {
-    if (event.action != 'open') return;
+    if (AlarmRingingScreen.isShowing(event.payload.alarmId)) return;
     appNavigatorKey.currentState?.push(
       MaterialPageRoute<void>(
-        builder: (_) => AlarmRingingScreen(payload: event.payload),
+        builder: (_) => AlarmRingingScreen(
+          payload: event.payload,
+          autoAction: event.action == 'open' ? null : event.action,
+        ),
       ),
     );
   });
@@ -54,6 +61,9 @@ Future<void> main() async {
   final launchPayload = launchDetails?.didNotificationLaunchApp == true
       ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)
       : null;
+  final launchAction = AlarmScheduler.actionFor(
+    launchDetails?.notificationResponse?.actionId,
+  );
 
   runApp(
     MultiBlocProvider(
@@ -69,7 +79,10 @@ Future<void> main() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       appNavigatorKey.currentState?.push(
         MaterialPageRoute<void>(
-          builder: (_) => AlarmRingingScreen(payload: launchPayload),
+          builder: (_) => AlarmRingingScreen(
+            payload: launchPayload,
+            autoAction: launchAction,
+          ),
         ),
       );
     });

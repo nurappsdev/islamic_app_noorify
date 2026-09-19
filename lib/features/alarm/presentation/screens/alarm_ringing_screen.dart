@@ -29,9 +29,19 @@ const _olive = Color(0xFF8D9B70);
 /// Either action always lands back on the home screen (img_25) — see
 /// [_leaveScreen].
 class AlarmRingingScreen extends StatefulWidget {
-  const AlarmRingingScreen({super.key, required this.payload});
+  const AlarmRingingScreen({super.key, required this.payload, this.autoAction});
 
   final AlarmRingPayload payload;
+
+  /// `'stop'` or `'snooze'` when opened by pressing that button on the alarm
+  /// notification: the screen applies it as soon as it's up instead of
+  /// ringing and waiting for a second tap.
+  final String? autoAction;
+
+  static final _showing = <String>{};
+
+  /// Whether a ringing screen for [alarmId] is currently on screen.
+  static bool isShowing(String alarmId) => _showing.contains(alarmId);
 
   @override
   State<AlarmRingingScreen> createState() => _AlarmRingingScreenState();
@@ -68,14 +78,29 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   @override
   void initState() {
     super.initState();
-    _startRinging();
+    AlarmRingingScreen._showing.add(widget.payload.alarmId);
+    final autoAction = widget.autoAction;
+    if (autoAction == null) {
+      _startRinging();
+    } else {
+      // Opened by a notification Stop/Snooze press: no ringing, just apply it.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (autoAction == 'snooze') {
+          _snooze();
+        } else {
+          _stop();
+        }
+      });
+    }
     _autoStopTimer = Timer(_maxRingDuration, () {
       if (!_dismissed) _stop();
     });
     _eventSub = alarmNotificationEvents.stream.listen((event) {
       if (event.payload.alarmId != widget.payload.alarmId) return;
-      if (event.action == 'stop' || event.action == 'snooze') {
-        _dismiss();
+      if (event.action == 'stop') {
+        _stop();
+      } else if (event.action == 'snooze') {
+        _snooze();
       }
     });
   }
@@ -186,7 +211,12 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
   }
 
+  bool _handled = false;
+
   Future<void> _stop() async {
+    if (_handled) return;
+    _handled = true;
+    await AlarmScheduler.markDismissed(widget.payload);
     try {
       await AlarmScheduler.dismissNotification(widget.payload.alarmId);
     } catch (_) {
@@ -197,8 +227,11 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   }
 
   Future<void> _snooze() async {
+    if (_handled) return;
+    _handled = true;
     // Schedule the re-ring first, and guard each step so a failure in one
     // can't stop the alarm from being silenced.
+    await AlarmScheduler.markDismissed(widget.payload);
     try {
       await AlarmScheduler.snooze(widget.payload);
     } catch (_) {}
@@ -210,6 +243,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
 
   @override
   void dispose() {
+    AlarmRingingScreen._showing.remove(widget.payload.alarmId);
     _vibrateTimer?.cancel();
     _watchdogTimer?.cancel();
     _autoStopTimer?.cancel();

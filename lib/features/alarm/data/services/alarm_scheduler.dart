@@ -259,6 +259,20 @@ class AlarmScheduler {
   /// daily recurrence is already re-armed for tomorrow by the time this is
   /// called (see [_fire]), so this is safe to call from the "Stop"/"Snooze"
   /// buttons on [AlarmRingingScreen] alone.
+  /// `'stop'` / `'snooze'` for a notification action id, `null` for a plain
+  /// tap on the notification body.
+  static String? actionFor(String? actionId) => switch (actionId) {
+    _stopActionId => 'stop',
+    _snoozeActionId => 'snooze',
+    _ => null,
+  };
+
+  /// Records that [payload]'s alarm was stopped/snoozed so a background
+  /// ringer in another isolate stops at its next check. Call before
+  /// [dismissNotification].
+  static Future<void> markDismissed(AlarmRingPayload payload) =>
+      _markDismissed(payload);
+
   static Future<void> dismissNotification(String alarmId) async {
     await _notifications.cancel(id: alarmManagerIdFor(alarmId));
     await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
@@ -331,27 +345,22 @@ class AlarmScheduler {
   }
 }
 
-// Async (and awaits everything) so the short-lived isolate the OS spins up
-// for a notification action isn't torn down before the snooze is actually
-// scheduled or the notification actually cancelled.
+/// Fallback for a Stop/Snooze press that reaches the background isolate
+/// instead of the UI (the notification actions normally open the app — see
+/// [_notificationActions]). Async and fully awaited so the short-lived
+/// isolate isn't torn down before the work is done.
 @pragma('vm:entry-point')
 Future<void> _onBackgroundResponse(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
-  await _handleResponse(response);
-}
-
-Future<void> _handleResponse(NotificationResponse response) async {
   final payload = AlarmRingPayload.tryDecode(response.payload);
   if (payload == null) return;
   final notifId = response.id ?? alarmManagerIdFor(payload.alarmId);
   switch (response.actionId) {
     case _stopActionId:
-      alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'stop'));
       await _cancelRinging(payload, notifId);
       break;
     case _snoozeActionId:
-      alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'snooze'));
       // Schedule the re-ring first: it's what matters most if anything
       // below fails.
       try {
@@ -359,14 +368,27 @@ Future<void> _handleResponse(NotificationResponse response) async {
       } catch (_) {}
       await _cancelRinging(payload, notifId);
       break;
-    default:
-      alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'open'));
   }
+}
+
+/// Main-isolate handler for a notification tap or action press. It only
+/// relays the request: `main.dart` opens `AlarmRingingScreen` (the screen
+/// whose Stop/Snooze are known to silence the alarm) and it does the work.
+void _handleResponse(NotificationResponse response) {
+  final payload = AlarmRingPayload.tryDecode(response.payload);
+  if (payload == null) return;
+  alarmNotificationEvents.add(
+    AlarmNotificationEvent(
+      payload,
+      AlarmScheduler.actionFor(response.actionId) ?? 'open',
+    ),
+  );
 }
 
 /// Removes the ringing notification (which is what the background ringer
 /// watches for to stop its music) and cuts the vibration.
 Future<void> _cancelRinging(AlarmRingPayload payload, int notifId) async {
+  await _markDismissed(payload);
   try {
     await _notifications.cancel(id: notifId);
     await AlarmScheduler.dismissNotification(payload.alarmId);
@@ -401,13 +423,61 @@ Future<void> _fire(
   // "fail closed" check silently swallowed every alarm (no sound). Deleting
   // or disabling an alarm cancels its OS schedule (see `cancelAlarm`), which
   // is what stops it from firing.
-  final plugin = await _showAlarmNotification(payload, notificationId: id);
+  final firedAt = DateTime.now().millisecondsSinceEpoch;
 
+  // Re-arm before anything else: it must happen even when this fire is
+  // skipped below or the ringing runs for minutes.
   if (chain) await _rearmDaily(id, payload);
+
+  // Alarm callbacks are queued and run one after another, so a duplicate
+  // (same time, different id) waits behind the first and would start ringing
+  // the moment the user stops that one — Stop appearing to do nothing. If
+  // this time was just stopped/snoozed, this is that echo: skip it.
+  if (await _dismissedSince(payload, firedAt - _dismissEchoWindow)) return;
+
+  final plugin = await _showAlarmNotification(payload, notificationId: id);
 
   // Last on purpose: this keeps the callback (and so the alarm service)
   // alive while the chosen ringtone loops.
-  await _playChosenRingtone(plugin, payload, notificationId: id);
+  await _playChosenRingtone(
+    plugin,
+    payload,
+    notificationId: id,
+    firedAt: firedAt,
+  );
+}
+
+/// How long after a Stop/Snooze another fire of the same clock time is
+/// treated as a duplicate echo rather than a real alarm.
+const _dismissEchoWindow = 2 * 60 * 1000;
+
+// Stop/Snooze can be pressed in any of three isolates (main UI, the
+// notification-action isolate, the alarm isolate that's ringing), so the
+// signal that stops the ringer goes through SharedPreferences — shared
+// natively across them — instead of relying on notification state alone.
+String _dismissKey(AlarmRingPayload payload) =>
+    'alarm_dismissed_${payload.hour}_${payload.minute}';
+
+Future<void> _markDismissed(AlarmRingPayload payload) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      _dismissKey(payload),
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  } catch (_) {}
+}
+
+/// Whether [payload]'s time was stopped/snoozed at or after [sinceMs].
+Future<bool> _dismissedSince(AlarmRingPayload payload, int sinceMs) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final at = prefs.getInt(_dismissKey(payload));
+    return at != null && at >= sinceMs;
+  } catch (_) {
+    return false;
+  }
 }
 
 Future<void> _rearmDaily(int id, AlarmRingPayload payload) async {
@@ -454,6 +524,7 @@ Future<void> _playChosenRingtone(
   FlutterLocalNotificationsPlugin plugin,
   AlarmRingPayload payload, {
   required int notificationId,
+  required int firedAt,
 }) async {
   if (!_playsChosenRingtone(payload)) return;
 
@@ -468,6 +539,11 @@ Future<void> _playChosenRingtone(
     await player.setUrl(payload.ringtoneUrl);
     await player.setLoopMode(LoopMode.one);
     await player.setVolume(1);
+    // Stop/Snooze may have landed while the ringtone was still loading.
+    if (await _dismissedSince(payload, firedAt)) {
+      await player.dispose();
+      return;
+    }
     unawaited(player.play());
   } catch (_) {
     await player.dispose();
@@ -494,6 +570,7 @@ Future<void> _playChosenRingtone(
     final deadline = DateTime.now().add(_maxBackgroundRing);
     while (DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (await _dismissedSince(payload, firedAt)) break;
       final active = await plugin.getActiveNotifications();
       final mine = active.where((n) => n.id == notificationId).firstOrNull;
       if (mine == null || mine.groupKey == _ringingScreenGroup) break;
@@ -594,13 +671,13 @@ const _notificationActions = [
     _stopActionId,
     'Stop',
     cancelNotification: true,
-    showsUserInterface: false,
+    showsUserInterface: true,
   ),
   AndroidNotificationAction(
     _snoozeActionId,
     'Snooze',
     cancelNotification: true,
-    showsUserInterface: false,
+    showsUserInterface: true,
   ),
 ];
 
