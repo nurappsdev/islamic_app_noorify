@@ -304,10 +304,13 @@ class AppRoutes {
       case RouteNames.hadithReadingHistory:
         return _page(const HadithReadingHistoryScreen(), settings);
       case RouteNames.hadithCategory:
-        final title = settings.arguments is String
-            ? settings.arguments as String
-            : null;
-        return _page(HadithCategoryScreen(collectionName: title), settings);
+        final args = settings.arguments;
+        return _page(
+          args is HadithCategoryArgs
+              ? HadithCategoryScreen(bookId: args.bookId, collectionName: args.title)
+              : const HadithLibraryListScreen(),
+          settings,
+        );
       case RouteNames.hadithBookReader:
         final slug = settings.arguments is String
             ? settings.arguments as String

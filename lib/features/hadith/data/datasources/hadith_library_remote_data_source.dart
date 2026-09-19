@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
 
 /// Talks to `GET /hadiths/books/lists` (public — no token needed). Throws
@@ -10,6 +11,9 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_bo
 /// error states.
 abstract interface class HadithLibraryRemoteDataSource {
   Future<List<HadithLibraryBookModel>> getBooks();
+
+  /// `GET /hadiths/categories?bookId=...`.
+  Future<List<HadithCategoryModel>> getCategories(String bookId);
 }
 
 class HadithLibraryRemoteDataSourceImpl
@@ -20,13 +24,34 @@ class HadithLibraryRemoteDataSourceImpl
 
   @override
   Future<List<HadithLibraryBookModel>> getBooks() async {
+    final data = await _getList(
+      ApiConstants.hadithBooksListEndPoint,
+      // The API paginates at 10 by default; 100 is its maximum.
+      {'limit': 100},
+      'Hadith books',
+    );
+    return data.map(HadithLibraryBookModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<HadithCategoryModel>> getCategories(String bookId) async {
+    final data = await _getList(ApiConstants.hadithCategoriesEndPoint, {
+      'bookId': bookId,
+      'limit': 100,
+    }, 'Hadith categories');
+    return data.map(HadithCategoryModel.fromJson).toList();
+  }
+
+  /// GETs [path] and returns the envelope's `data` array as maps, throwing
+  /// the data-layer exceptions on any failure.
+  Future<List<Map<String, dynamic>>> _getList(
+    String path,
+    Map<String, dynamic> query,
+    String what,
+  ) async {
     final Response<dynamic> response;
     try {
-      response = await _dio.get<dynamic>(
-        ApiConstants.hadithBooksListEndPoint,
-        // The API paginates at 10 by default; 100 is its maximum.
-        queryParameters: {'limit': 100},
-      );
+      response = await _dio.get<dynamic>(path, queryParameters: query);
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
@@ -46,12 +71,9 @@ class HadithLibraryRemoteDataSourceImpl
 
     final data = json['data'];
     if (data is! List) {
-      throw ParsingException('Hadith books response is missing "data".');
+      throw ParsingException('$what response is missing "data".');
     }
-    return data
-        .whereType<Map<String, dynamic>>()
-        .map(HadithLibraryBookModel.fromJson)
-        .toList();
+    return data.whereType<Map<String, dynamic>>().toList();
   }
 
   Exception _mapDioException(DioException e) {

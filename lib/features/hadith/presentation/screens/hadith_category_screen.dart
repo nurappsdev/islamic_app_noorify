@@ -1,58 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_categories.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_category/hadith_category_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
-/// Per-collection Hadith category list.
+/// Route arguments for [HadithCategoryScreen].
+class HadithCategoryArgs {
+  const HadithCategoryArgs({required this.bookId, this.title});
+
+  final String bookId;
+  final String? title;
+}
+
+/// Per-collection Hadith category list (`GET /hadiths/categories`).
 ///
-/// Reached from a collection card's "Explore" action on
-/// [HadithLibraryListScreen]. Shows the ordered chapters/categories with a
-/// read-progress ring.
+/// Reached from a collection card's "Explore" action on the Hadith library
+/// screens. Shows the collection's ordered categories, each with its name (in
+/// Bangla and/or the API's `name`) and hadith count.
 class HadithCategoryScreen extends StatelessWidget {
-  const HadithCategoryScreen({super.key, this.collectionName});
+  const HadithCategoryScreen({
+    super.key,
+    required this.bookId,
+    this.collectionName,
+  });
 
+  final String bookId;
   final String? collectionName;
-
-  static const _categories = <_HadithCategory>[
-    _HadithCategory(title: 'Ohir Sucona', count: 7, progress: 0.6),
-    _HadithCategory(title: 'Prayer', count: 20, progress: 0.35),
-    _HadithCategory(title: 'Iman', count: 17, progress: 0.8),
-    _HadithCategory(title: 'Society', count: 11, progress: 0.5),
-    _HadithCategory(title: 'Knowledge', count: 14, progress: 0.15),
-    _HadithCategory(title: 'Purification', count: 9, progress: 1.0),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return HadithListScaffold(
-      title: appText.hadithCategory,
-      children: [
-        for (var i = 0; i < _categories.length; i++) ...[
-          _CategoryCard(
-            index: i + 1,
-            category: _categories[i],
-            hadithWord: appText.categoryHadith,
-          ),
-          SizedBox(height: 10.h),
-        ],
-      ],
+    return BlocProvider(
+      create: (_) => HadithCategoryBloc(
+        GetHadithCategories(
+          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+        ),
+      )..add(LoadHadithCategories(bookId)),
+      child: _HadithCategoryView(bookId: bookId),
     );
   }
 }
 
-class _HadithCategory {
-  const _HadithCategory({
-    required this.title,
-    required this.count,
-    required this.progress,
-  });
+class _HadithCategoryView extends StatelessWidget {
+  const _HadithCategoryView({required this.bookId});
 
-  final String title;
-  final int count;
-  final double progress;
+  final String bookId;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final state = context.watch<HadithCategoryBloc>().state;
+    return HadithListScaffold(
+      title: appText.hadithCategory,
+      children: [
+        if (state.isLoading)
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: const Center(child: CircularProgressIndicator()),
+          )
+        else if (state.status == HadithCategoryStatus.failure) ...[
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: Text(
+              state.failure?.message ?? '',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.read<HadithCategoryBloc>().add(
+              LoadHadithCategories(bookId),
+            ),
+            child: Text(appText.tryAgain),
+          ),
+        ] else
+          for (var i = 0; i < state.categories.length; i++) ...[
+            _CategoryCard(
+              index: i + 1,
+              category: state.categories[i],
+              hadithWord: appText.categoryHadith,
+            ),
+            SizedBox(height: 10.h),
+          ],
+      ],
+    );
+  }
 }
 
 class _CategoryCard extends StatelessWidget {
@@ -63,11 +101,21 @@ class _CategoryCard extends StatelessWidget {
   });
 
   final int index;
-  final _HadithCategory category;
+  final HadithCategory category;
   final String hadithWord;
 
   @override
   Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    // The language's own name first, falling back to the other when empty;
+    // the other one is shown underneath when it actually differs.
+    final primary = isBangla
+        ? (category.nameBangla.isEmpty ? category.name : category.nameBangla)
+        : (category.name.isEmpty ? category.nameBangla : category.name);
+    final secondary = isBangla ? category.name : category.nameBangla;
+    final showSecondary = secondary.isNotEmpty && secondary != primary;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
@@ -100,62 +148,32 @@ class _CategoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  category.title,
+                  primary,
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF2C3320),
                   ),
                 ),
+                if (showSecondary) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    secondary,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF5D6B44),
+                    ),
+                  ),
+                ],
                 SizedBox(height: 4.h),
                 Text(
-                  '${category.count} $hadithWord',
+                  '${formatHadithCount(category.totalHadiths)} $hadithWord',
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: const Color(0xFF9BA85B),
                   ),
                 ),
               ],
-            ),
-          ),
-          SizedBox(width: 12.w),
-          _ProgressRing(value: category.progress),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressRing extends StatelessWidget {
-  const _ProgressRing({required this.value});
-
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 46.r,
-      height: 46.r,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 46.r,
-            height: 46.r,
-            child: CircularProgressIndicator(
-              value: value.clamp(0.0, 1.0),
-              strokeWidth: 4.r,
-              backgroundColor: const Color(0xFFEDEFE0),
-              valueColor: const AlwaysStoppedAnimation(AppColor.primary),
-              strokeCap: StrokeCap.round,
-            ),
-          ),
-          Text(
-            '${(value * 100).round()}%',
-            style: TextStyle(
-              fontSize: 9.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF7D8765),
             ),
           ),
         ],
