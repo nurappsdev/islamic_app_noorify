@@ -17,6 +17,7 @@ import '../../features/hadith/presentation/screens/hadith_dashboard_screen.dart'
 import '../../features/hadith/presentation/screens/hadith_planner_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_reading_history_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_saved_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_sub_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
@@ -308,6 +309,17 @@ class AppRoutes {
         return _page(
           args is HadithCategoryArgs
               ? HadithCategoryScreen(bookId: args.bookId, collectionName: args.title)
+              : const HadithLibraryListScreen(),
+          settings,
+        );
+      case RouteNames.hadithSubCategory:
+        final subArgs = settings.arguments;
+        return _page(
+          subArgs is HadithSubCategoryArgs
+              ? HadithSubCategoryScreen(
+                  categoryId: subArgs.categoryId,
+                  categoryName: subArgs.title,
+                )
               : const HadithLibraryListScreen(),
           settings,
         );

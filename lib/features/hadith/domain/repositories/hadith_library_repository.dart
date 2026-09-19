@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
 
 abstract interface class HadithLibraryRepository {
   /// The hadith collections of the library (`GET /hadiths/books/lists`),
@@ -16,6 +17,16 @@ abstract interface class HadithLibraryRepository {
   /// [searchTerm] filters by the category's Bangla, Arabic or English name.
   Future<Either<Failure, HadithCategoryPage>> getCategories(
     String bookId, {
+    required int page,
+    required int limit,
+    String? searchTerm,
+  });
+
+  /// One page of a category's sub-categories
+  /// (`GET /hadiths/categories/{categoryId}/subcategories`), in display
+  /// order. [searchTerm] filters by name.
+  Future<Either<Failure, HadithSubCategoryPage>> getSubCategories(
+    String categoryId, {
     required int page,
     required int limit,
     String? searchTerm,

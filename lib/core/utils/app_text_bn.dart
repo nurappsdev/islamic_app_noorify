@@ -112,6 +112,7 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithEbook': 'ই-বুক',
   'hadithLibraryTitle': 'হাদিস লাইব্রেরি',
   'hadithCategory': 'হাদিস ক্যাটাগরি',
+  'hadithSubCategory': 'হাদিস উপ-ক্যাটাগরি',
   'hadithBookDownloadTitle': 'অফলাইনে পড়তে ডাউনলোড করুন',
   'hadithBookDownloadBody':
       'বইটি একবার আপনার ডিভাইসে সংরক্ষণ হবে, এরপর ইন্টারনেট ছাড়াই সঙ্গে সঙ্গে খুলবে।',
