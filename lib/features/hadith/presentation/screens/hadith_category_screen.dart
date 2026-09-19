@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
@@ -47,23 +48,67 @@ class HadithCategoryScreen extends StatelessWidget {
   }
 }
 
-class _HadithCategoryView extends StatelessWidget {
+class _HadithCategoryView extends StatefulWidget {
   const _HadithCategoryView({required this.bookId});
 
   final String bookId;
 
   @override
+  State<_HadithCategoryView> createState() => _HadithCategoryViewState();
+}
+
+class _HadithCategoryViewState extends State<_HadithCategoryView> {
+  /// How close to the end of the list (in logical pixels) the next page
+  /// starts loading.
+  static const _loadMoreThreshold = 240.0;
+
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      // The bloc ignores this while a page is loading or after the last one.
+      context.read<HadithCategoryBloc>().add(const LoadMoreHadithCategories());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final state = context.watch<HadithCategoryBloc>().state;
+    // A first page too short to scroll would never fire the scroll listener,
+    // so keep pulling pages until the list overflows (or runs out).
+    if (state.status == HadithCategoryStatus.success &&
+        state.hasMore &&
+        !state.isLoadingMore &&
+        state.loadMoreFailure == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        if (_scrollController.position.maxScrollExtent <= 0) {
+          context.read<HadithCategoryBloc>().add(
+            const LoadMoreHadithCategories(),
+          );
+        }
+      });
+    }
     return HadithListScaffold(
       title: appText.hadithCategory,
+      controller: _scrollController,
       children: [
         if (state.isLoading)
-          Padding(
-            padding: EdgeInsets.only(top: 40.h),
-            child: const Center(child: CircularProgressIndicator()),
-          )
+          const _CategorySkeletons(count: 6)
         else if (state.status == HadithCategoryStatus.failure) ...[
           Padding(
             padding: EdgeInsets.only(top: 40.h),
@@ -75,11 +120,11 @@ class _HadithCategoryView extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => context.read<HadithCategoryBloc>().add(
-              LoadHadithCategories(bookId),
+              LoadHadithCategories(widget.bookId),
             ),
             child: Text(appText.tryAgain),
           ),
-        ] else
+        ] else ...[
           for (var i = 0; i < state.categories.length; i++) ...[
             _CategoryCard(
               index: i + 1,
@@ -88,7 +133,58 @@ class _HadithCategoryView extends StatelessWidget {
             ),
             SizedBox(height: 10.h),
           ],
+          if (state.isLoadingMore) const _CategorySkeletons(count: 2),
+          if (state.loadMoreFailure != null)
+            Column(
+              children: [
+                Text(
+                  state.loadMoreFailure!.message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: const Color(0xFF5D6B44),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => context.read<HadithCategoryBloc>().add(
+                    const LoadMoreHadithCategories(),
+                  ),
+                  child: Text(appText.tryAgain),
+                ),
+              ],
+            ),
+        ],
       ],
+    );
+  }
+}
+
+/// Shimmer placeholders shaped like [_CategoryCard], shown while the first
+/// page or the next page is loading.
+class _CategorySkeletons extends StatelessWidget {
+  const _CategorySkeletons({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE3ECC5),
+      highlightColor: const Color(0xFFF6F9EC),
+      child: Column(
+        children: [
+          for (var i = 0; i < count; i++) ...[
+            Container(
+              height: 68.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            SizedBox(height: 10.h),
+          ],
+        ],
+      ),
     );
   }
 }
