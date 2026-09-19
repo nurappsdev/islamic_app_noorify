@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_category_screen.dart';
 
 /// Opens the reader for a Hadith library collection. Books without bundled
 /// content ([HadithBook.isAvailable] is false) show a "coming soon" notice
@@ -22,12 +23,12 @@ void openHadithCollection(BuildContext context, HadithBook book) {
   ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
 }
 
-/// Opens a collection from the API-backed library. The API only describes the
-/// collection (title, author, counts); its hadith text isn't served yet, so
-/// for now this shows the same "coming soon" notice as an unbundled book.
+/// Opens an API-backed collection: its category list
+/// (`GET /hadiths/categories?bookId=...`).
 void openHadithLibraryBook(BuildContext context, HadithLibraryBook book) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(AppText.of(context).hadithBookComingSoon)),
+  Navigator.of(context).pushNamed(
+    RouteNames.hadithCategory,
+    arguments: HadithCategoryArgs(bookId: book.id, title: book.titleEn),
   );
 }
 

@@ -46,6 +46,7 @@ class ApiConstants {
   static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
 
   static const String hadithBooksListEndPoint = "/hadiths/books/lists";
+  static const String hadithCategoriesEndPoint = "/hadiths/categories";
 
   static const String asmaUlHusnaEndPoint = "/asma-ul-husna";
 
