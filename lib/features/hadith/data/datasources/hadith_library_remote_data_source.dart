@@ -12,11 +12,12 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_bo
 abstract interface class HadithLibraryRemoteDataSource {
   Future<List<HadithLibraryBookModel>> getBooks();
 
-  /// `GET /hadiths/categories?bookId=...&page=...&limit=...`.
+  /// `GET /hadiths/categories?bookId=...&page=...&limit=...&searchTerm=...`.
   Future<HadithCategoryPageModel> getCategories(
     String bookId, {
     required int page,
     required int limit,
+    String? searchTerm,
   });
 }
 
@@ -42,11 +43,14 @@ class HadithLibraryRemoteDataSourceImpl
     String bookId, {
     required int page,
     required int limit,
+    String? searchTerm,
   }) async {
     final envelope = await _getList(ApiConstants.hadithCategoriesEndPoint, {
       'bookId': bookId,
       'page': page,
       'limit': limit,
+      // Matches the category's Bangla, Arabic or English name.
+      if (searchTerm != null && searchTerm.isNotEmpty) 'searchTerm': searchTerm,
     }, 'Hadith categories');
     return HadithCategoryPageModel.fromJson(envelope.items, envelope.meta);
   }

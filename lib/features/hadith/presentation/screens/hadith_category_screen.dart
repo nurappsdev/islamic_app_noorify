@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -62,7 +64,10 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
   /// starts loading.
   static const _loadMoreThreshold = 240.0;
 
+  static const _searchDebounce = Duration(milliseconds: 400);
+
   final _scrollController = ScrollController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -72,8 +77,18 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Waits for a pause in typing before hitting the API.
+  void _onSearchChanged(String term) {
+    _debounce?.cancel();
+    _debounce = Timer(_searchDebounce, () {
+      if (!mounted) return;
+      context.read<HadithCategoryBloc>().add(SearchHadithCategories(term));
+    });
   }
 
   void _onScroll() {
@@ -106,6 +121,7 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
     return HadithListScaffold(
       title: appText.hadithCategory,
       controller: _scrollController,
+      onSearchChanged: _onSearchChanged,
       children: [
         if (state.isLoading)
           const _CategorySkeletons(count: 6)
@@ -124,7 +140,16 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
             ),
             child: Text(appText.tryAgain),
           ),
-        ] else ...[
+        ] else if (state.categories.isEmpty)
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: Text(
+              appText.noResultsFound,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+            ),
+          )
+        else ...[
           for (var i = 0; i < state.categories.length; i++) ...[
             _CategoryCard(
               index: i + 1,

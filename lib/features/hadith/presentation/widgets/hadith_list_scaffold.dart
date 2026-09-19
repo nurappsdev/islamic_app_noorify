@@ -54,6 +54,7 @@ class HadithListScaffold extends StatelessWidget {
     required this.title,
     required this.children,
     this.controller,
+    this.onSearchChanged,
   });
 
   final String title;
@@ -61,6 +62,9 @@ class HadithListScaffold extends StatelessWidget {
 
   /// Lets a screen listen to scrolling (e.g. for pagination).
   final ScrollController? controller;
+
+  /// Called as the search text changes; when null the field does nothing.
+  final ValueChanged<String>? onSearchChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +79,10 @@ class HadithListScaffold extends StatelessWidget {
             SizedBox(height: 18.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _HadithSearchField(hint: appText.searchHere),
+              child: _HadithSearchField(
+                hint: appText.searchHere,
+                onChanged: onSearchChanged,
+              ),
             ),
             SizedBox(height: 16.h),
             Expanded(
@@ -134,13 +141,16 @@ class _HadithListHeader extends StatelessWidget {
 }
 
 class _HadithSearchField extends StatelessWidget {
-  const _HadithSearchField({required this.hint});
+  const _HadithSearchField({required this.hint, this.onChanged});
 
   final String hint;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
       style: TextStyle(fontSize: 13.sp),
       decoration: InputDecoration(
         hintText: hint,
