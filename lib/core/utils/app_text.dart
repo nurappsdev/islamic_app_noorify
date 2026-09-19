@@ -115,6 +115,7 @@ class AppText {
     required this.hadithEbook,
     required this.hadithLibraryTitle,
     required this.hadithCategory,
+    required this.hadithSubCategory,
     required this.hadithBookDownloadTitle,
     required this.hadithBookDownloadBody,
     required this.hadithBookDownloadAction,
@@ -646,6 +647,7 @@ class AppText {
   final String hadithEbook;
   final String hadithLibraryTitle;
   final String hadithCategory;
+  final String hadithSubCategory;
   final String hadithBookDownloadTitle;
   final String hadithBookDownloadBody;
   final String hadithBookDownloadAction;
@@ -1446,6 +1448,11 @@ class AppText {
         map,
         'hadithCategory',
         fallback?.hadithCategory ?? '',
+      ),
+      hadithSubCategory: _read(
+        map,
+        'hadithSubCategory',
+        fallback?.hadithSubCategory ?? '',
       ),
       hadithBookDownloadTitle: _read(
         map,

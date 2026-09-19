@@ -113,6 +113,7 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithEbook': 'E-book',
   'hadithLibraryTitle': 'Hadith Library',
   'hadithCategory': 'Hadith Category',
+  'hadithSubCategory': 'Hadith Sub Category',
   'hadithBookDownloadTitle': 'Download to read offline',
   'hadithBookDownloadBody':
       'This book is saved to your device once, then opens instantly and works without internet.',

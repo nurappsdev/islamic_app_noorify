@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
 
 /// Talks to `GET /hadiths/books/lists` (public — no token needed). Throws
 /// [ServerException] / [NetworkException] / [ParsingException]; never returns
@@ -15,6 +16,15 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// `GET /hadiths/categories?bookId=...&page=...&limit=...&searchTerm=...`.
   Future<HadithCategoryPageModel> getCategories(
     String bookId, {
+    required int page,
+    required int limit,
+    String? searchTerm,
+  });
+
+  /// `GET /hadiths/categories/{categoryId}/subcategories?page=...&limit=...`
+  /// (optionally `&searchTerm=...`).
+  Future<HadithSubCategoryPageModel> getSubCategories(
+    String categoryId, {
     required int page,
     required int limit,
     String? searchTerm,
@@ -53,6 +63,23 @@ class HadithLibraryRemoteDataSourceImpl
       if (searchTerm != null && searchTerm.isNotEmpty) 'searchTerm': searchTerm,
     }, 'Hadith categories');
     return HadithCategoryPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<HadithSubCategoryPageModel> getSubCategories(
+    String categoryId, {
+    required int page,
+    required int limit,
+    String? searchTerm,
+  }) async {
+    final envelope =
+        await _getList(ApiConstants.hadithSubCategoriesEndPoint(categoryId), {
+          'page': page,
+          'limit': limit,
+          if (searchTerm != null && searchTerm.isNotEmpty)
+            'searchTerm': searchTerm,
+        }, 'Hadith sub-categories');
+    return HadithSubCategoryPageModel.fromJson(envelope.items, envelope.meta);
   }
 
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,
