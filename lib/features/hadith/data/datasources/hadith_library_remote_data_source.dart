@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
 
@@ -28,6 +29,13 @@ abstract interface class HadithLibraryRemoteDataSource {
     required int page,
     required int limit,
     String? searchTerm,
+  });
+
+  /// `GET /hadiths?subCategoryId=...&page=...&limit=...`.
+  Future<HadithDetailPageModel> getHadiths(
+    String subCategoryId, {
+    required int page,
+    required int limit,
   });
 }
 
@@ -80,6 +88,20 @@ class HadithLibraryRemoteDataSourceImpl
             'searchTerm': searchTerm,
         }, 'Hadith sub-categories');
     return HadithSubCategoryPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<HadithDetailPageModel> getHadiths(
+    String subCategoryId, {
+    required int page,
+    required int limit,
+  }) async {
+    final envelope = await _getList(ApiConstants.hadithsEndPoint, {
+      'subCategoryId': subCategoryId,
+      'page': page,
+      'limit': limit,
+    }, 'Hadiths');
+    return HadithDetailPageModel.fromJson(envelope.items, envelope.meta);
   }
 
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,

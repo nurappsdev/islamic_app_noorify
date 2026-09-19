@@ -14,6 +14,7 @@ import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_create_plan_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_dashboard_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_detail_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_planner_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_reading_history_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_saved_screen.dart';
@@ -308,7 +309,10 @@ class AppRoutes {
         final args = settings.arguments;
         return _page(
           args is HadithCategoryArgs
-              ? HadithCategoryScreen(bookId: args.bookId, collectionName: args.title)
+              ? HadithCategoryScreen(
+                  bookId: args.bookId,
+                  collectionName: args.title,
+                )
               : const HadithLibraryListScreen(),
           settings,
         );
@@ -319,6 +323,17 @@ class AppRoutes {
               ? HadithSubCategoryScreen(
                   categoryId: subArgs.categoryId,
                   categoryName: subArgs.title,
+                )
+              : const HadithLibraryListScreen(),
+          settings,
+        );
+      case RouteNames.hadithDetail:
+        final detailArgs = settings.arguments;
+        return _page(
+          detailArgs is HadithDetailArgs
+              ? HadithDetailScreen(
+                  subCategoryId: detailArgs.subCategoryId,
+                  subCategoryName: detailArgs.title,
                 )
               : const HadithLibraryListScreen(),
           settings,

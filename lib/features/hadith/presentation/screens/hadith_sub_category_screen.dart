@@ -5,12 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_sub_categories.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_sub_category/hadith_sub_category_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 
 /// Route arguments for [HadithSubCategoryScreen].
@@ -232,64 +234,74 @@ class _SubCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: const Color(0xFFE3E7D3)),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).pushNamed(
+        RouteNames.hadithDetail,
+        arguments: HadithDetailArgs(
+          subCategoryId: subCategory.id,
+          title: _title,
+        ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40.r,
-            height: 40.r,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFF8B9A4B),
-              shape: BoxShape.circle,
-            ),
-            child: FittedBox(
-              child: Padding(
-                padding: EdgeInsets.all(6.r),
-                child: Text(
-                  '${subCategory.chapterNumber}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: const Color(0xFFE3E7D3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40.r,
+              height: 40.r,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Color(0xFF8B9A4B),
+                shape: BoxShape.circle,
+              ),
+              child: FittedBox(
+                child: Padding(
+                  padding: EdgeInsets.all(6.r),
+                  child: Text(
+                    '${subCategory.chapterNumber}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _title,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2C3320),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2C3320),
+                    ),
                   ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${formatHadithCount(subCategory.totalHadiths)} $hadithWord',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF9BA85B),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '${formatHadithCount(subCategory.totalHadiths)} $hadithWord',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF9BA85B),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
