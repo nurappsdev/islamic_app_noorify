@@ -53,10 +53,14 @@ class HadithListScaffold extends StatelessWidget {
     super.key,
     required this.title,
     required this.children,
+    this.controller,
   });
 
   final String title;
   final List<Widget> children;
+
+  /// Lets a screen listen to scrolling (e.g. for pagination).
+  final ScrollController? controller;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +80,7 @@ class HadithListScaffold extends StatelessWidget {
             SizedBox(height: 16.h),
             Expanded(
               child: ListView(
+                controller: controller,
                 padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
                 children: children,
               ),

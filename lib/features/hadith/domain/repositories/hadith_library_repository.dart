@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 
 abstract interface class HadithLibraryRepository {
@@ -9,7 +9,12 @@ abstract interface class HadithLibraryRepository {
   /// in the server's display order.
   Future<Either<Failure, List<HadithLibraryBook>>> getBooks();
 
-  /// The categories (chapters) of one collection
-  /// (`GET /hadiths/categories?bookId=...`), in display order.
-  Future<Either<Failure, List<HadithCategory>>> getCategories(String bookId);
+  /// One page of the categories (chapters) of a collection
+  /// (`GET /hadiths/categories?bookId=...&page=...&limit=...`), in display
+  /// order.
+  Future<Either<Failure, HadithCategoryPage>> getCategories(
+    String bookId, {
+    required int page,
+    required int limit,
+  });
 }

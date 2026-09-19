@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
 
@@ -31,14 +31,14 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
-  Future<Either<Failure, List<HadithCategory>>> getCategories(
-    String bookId,
-  ) async {
+  Future<Either<Failure, HadithCategoryPage>> getCategories(
+    String bookId, {
+    required int page,
+    required int limit,
+  }) async {
     try {
-      final categories = await _remote.getCategories(bookId);
       return Right(
-        [...categories]
-          ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)),
+        await _remote.getCategories(bookId, page: page, limit: limit),
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
