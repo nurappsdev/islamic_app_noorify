@@ -68,6 +68,7 @@ const Map<String, String> appTextBn = <String, String>{
   'offsetMinutesUnit': 'মিনিট',
   'alarmCancel': 'বাতিল',
   'alarmSet': 'সেট করুন',
+  'allAlarmsSaved': 'নামাজের অ্যালার্ম সেট হয়েছে',
   'alarmIsRinging': 'অ্যালার্ম',
   'stopAlarm': 'বন্ধ করুন',
   'snoozeAlarm': '৫ মিনিট পর',

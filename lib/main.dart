@@ -13,21 +13,19 @@ import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/brand_colors.dart';
 import 'core/utils/app_text.dart';
-import 'features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
+
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await HiveService.init();
   await AppText.load();
   quranAudioHandler = await AudioService.init(
@@ -41,15 +39,9 @@ Future<void> main() async {
   );
 
   await AlarmScheduler.init();
-  // Re-arm every saved alarm against the OS scheduler on every cold start —
-  // cheap, idempotent, and it repairs anything the OS silently dropped
-  // (e.g. a reinstall) without needing its own reboot-recovery path.
-  unawaited(
-    AlarmLocalDataSourceImpl()
-        .getAlarms()
-        .then(AlarmScheduler.rescheduleAll)
-        .catchError((_) {}),
-  );
+  // Alarms are re-armed from the server's list whenever the alarm screen
+  // loads (see `AlarmListBloc`), not from the local cache here: the cache
+  // holds client-made ids, so re-arming it too made every alarm ring twice.
   alarmNotificationEvents.stream.listen((event) {
     if (event.action != 'open') return;
     appNavigatorKey.currentState?.push(

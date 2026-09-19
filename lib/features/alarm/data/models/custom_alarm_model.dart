@@ -33,8 +33,7 @@ class CustomAlarmModel extends AlarmEntry {
       ring: soundMode == 'ring',
       enabled: json['isEnabled'] as bool? ?? true,
       label: json['label'] as String? ?? '',
-      ringtoneId:
-          json['ringtoneId'] as String? ?? AlarmEntry.defaultRingtoneId,
+      ringtoneId: json['ringtoneId'] as String? ?? AlarmEntry.defaultRingtoneId,
       ringtoneName:
           json['ringtoneName'] as String? ?? AlarmEntry.defaultRingtoneName,
       ringtoneUrl: json['audioUrl'] as String? ?? '',

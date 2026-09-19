@@ -4,14 +4,18 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:vibration/vibration.dart';
 
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 
@@ -19,11 +23,25 @@ import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.da
 // at first creation and can't be changed by the app afterwards — only by
 // deleting and recreating the channel under a new id, which is what this is.
 const _channelId = 'islami_app_noorify_alarms_v2';
+
+/// Same importance as [_channelId] but with no sound and no vibration of its
+/// own: used whenever the app plays the chosen ringtone (and vibrates) itself,
+/// so the channel's built-in fallback beep never sounds on top of it.
+const _silentChannelId = 'islami_app_noorify_alarms_silent_v1';
 const _channelName = 'Alarms';
 const _channelDescription = 'Prayer and custom alarm ringtones.';
 const _stopActionId = 'stop';
 const _snoozeActionId = 'snooze';
 const _snoozeDuration = Duration(minutes: 5);
+
+/// How long the background isolate keeps the chosen ringtone looping if
+/// nobody answers — the same cap the notification itself uses.
+const _maxBackgroundRing = Duration(minutes: 5);
+
+/// Set (via `groupKey`) on the notification once `AlarmRingingScreen` is up
+/// and playing the ringtone itself, so the background player knows to stop
+/// instead of playing over it.
+const _ringingScreenGroup = 'ringing_screen';
 
 /// Android's `Notification.FLAG_INSISTENT` — repeats the notification's
 /// sound/vibration continuously until it's cancelled (our Stop/Snooze
@@ -66,7 +84,8 @@ class AlarmNotificationEvent {
 /// notification shade instead of its own buttons); `main.dart` listens for
 /// `open` to push the ringing screen for an alarm that fired while some
 /// other screen was on top.
-final alarmNotificationEvents = StreamController<AlarmNotificationEvent>.broadcast();
+final alarmNotificationEvents =
+    StreamController<AlarmNotificationEvent>.broadcast();
 
 final FlutterLocalNotificationsPlugin _notifications =
     FlutterLocalNotificationsPlugin();
@@ -104,7 +123,9 @@ class AlarmScheduler {
     }
     tz_data.initializeTimeZones();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings();
     await _notifications.initialize(
       settings: const InitializationSettings(
@@ -112,7 +133,7 @@ class AlarmScheduler {
         iOS: darwinSettings,
         macOS: darwinSettings,
       ),
-      onDidReceiveNotificationResponse: (response) => _handleResponse(response),
+      onDidReceiveNotificationResponse: _handleResponse,
       onDidReceiveBackgroundNotificationResponse: _onBackgroundResponse,
     );
 
@@ -134,6 +155,16 @@ class AlarmScheduler {
         audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
+    await android?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _silentChannelId,
+        _channelName,
+        description: _channelDescription,
+        importance: Importance.max,
+        enableVibration: false,
+        playSound: false,
+      ),
+    );
   }
 
   static Future<NotificationAppLaunchDetails?> launchDetails() =>
@@ -150,6 +181,60 @@ class AlarmScheduler {
         await cancelAlarm(alarm.id);
       }
     }
+  }
+
+  /// Prayer alarms (the "Prayers Alarm" tab / Set All Alarm) live only on the
+  /// server, so they're armed straight from `GET /alarms` under a stable
+  /// `prayer_<type>` id — re-arming the same id replaces the previous one.
+  /// [ringtoneUrls] maps ringtone id -> audio URL so the ringing screen can
+  /// play the chosen adhan; without one it falls back to the bundled beep.
+  static Future<void> reschedulePrayerAlarms(
+    List<PrayerAlarm> prayers, {
+    Map<String, String> ringtoneUrls = const {},
+  }) async {
+    final userSet = await userPrayerAlarmTypes();
+    for (final prayer in prayers) {
+      final id = 'prayer_${prayer.prayerType}';
+      final time = parseClockTime12h(prayer.alarmTime);
+      // The server lists every prayer (often pre-enabled by default); only
+      // the ones the user picked in "Set All Alarm" may ring on this device.
+      if (!userSet.contains(prayer.prayerType) ||
+          !prayer.isEnabled ||
+          time == null) {
+        await cancelAlarm(id);
+        continue;
+      }
+      await scheduleAlarm(
+        AlarmEntry(
+          id: id,
+          hour: time.hour,
+          minute: time.minute,
+          vibrateAndRing: prayer.soundMode == 'vibrate_and_ring',
+          vibrate: prayer.soundMode == 'vibrate',
+          ring: prayer.soundMode == 'ring',
+          enabled: true,
+          label: prayer.title,
+          ringtoneId: prayer.ringtoneId,
+          ringtoneName: prayer.ringtoneName,
+          ringtoneUrl: ringtoneUrls[prayer.ringtoneId] ?? '',
+        ),
+      );
+    }
+  }
+
+  static const _userPrayerTypesKey = 'user_prayer_alarm_types';
+
+  /// Prayer types (`fajr`, ...) the user explicitly set via "Set All Alarm".
+  static Future<Set<String>> userPrayerAlarmTypes() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_userPrayerTypesKey) ?? const []).toSet();
+  }
+
+  /// Replaces the user's chosen prayer set; anything no longer in it is
+  /// disarmed on the next [reschedulePrayerAlarms].
+  static Future<void> saveUserPrayerAlarmTypes(List<String> types) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_userPrayerTypesKey, types);
   }
 
   static Future<void> scheduleAlarm(AlarmEntry alarm) => _schedule(
@@ -177,6 +262,16 @@ class AlarmScheduler {
   static Future<void> dismissNotification(String alarmId) async {
     await _notifications.cancel(id: alarmManagerIdFor(alarmId));
     await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
+    await _silenceVibration();
+  }
+
+  /// Vibration is a process-wide native service, so this also cuts off the
+  /// repeating pattern the background ringer started in its own isolate —
+  /// instantly, rather than at its next once-a-second check.
+  static Future<void> _silenceVibration() async {
+    try {
+      await Vibration.cancel();
+    } catch (_) {}
   }
 
   /// Stops the notification's own [_insistentFlags] repeat once
@@ -189,7 +284,7 @@ class AlarmScheduler {
         title: payload.label.isEmpty ? 'Alarm' : payload.label,
         body: _timeLabel(payload.hour, payload.minute),
         notificationDetails: NotificationDetails(
-          android: _androidDetails(payload, insistent: false),
+          android: _silentDetails(payload, groupKey: _ringingScreenGroup),
         ),
         payload: payload.encode(),
       );
@@ -236,30 +331,46 @@ class AlarmScheduler {
   }
 }
 
+// Async (and awaits everything) so the short-lived isolate the OS spins up
+// for a notification action isn't torn down before the snooze is actually
+// scheduled or the notification actually cancelled.
 @pragma('vm:entry-point')
-void _onBackgroundResponse(NotificationResponse response) {
+Future<void> _onBackgroundResponse(NotificationResponse response) async {
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
-  _handleResponse(response);
+  await _handleResponse(response);
 }
 
-void _handleResponse(NotificationResponse response) {
+Future<void> _handleResponse(NotificationResponse response) async {
   final payload = AlarmRingPayload.tryDecode(response.payload);
   if (payload == null) return;
   final notifId = response.id ?? alarmManagerIdFor(payload.alarmId);
   switch (response.actionId) {
     case _stopActionId:
-      unawaited(_notifications.cancel(id: notifId));
       alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'stop'));
+      await _cancelRinging(payload, notifId);
       break;
     case _snoozeActionId:
-      unawaited(_notifications.cancel(id: notifId));
-      unawaited(AlarmScheduler.snooze(payload));
       alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'snooze'));
+      // Schedule the re-ring first: it's what matters most if anything
+      // below fails.
+      try {
+        await AlarmScheduler.snooze(payload);
+      } catch (_) {}
+      await _cancelRinging(payload, notifId);
       break;
     default:
       alarmNotificationEvents.add(AlarmNotificationEvent(payload, 'open'));
   }
+}
+
+/// Removes the ringing notification (which is what the background ringer
+/// watches for to stop its music) and cuts the vibration.
+Future<void> _cancelRinging(AlarmRingPayload payload, int notifId) async {
+  try {
+    await _notifications.cancel(id: notifId);
+    await AlarmScheduler.dismissNotification(payload.alarmId);
+  } catch (_) {}
 }
 
 /// [AndroidAlarmManager] background-isolate entrypoint for a regular alarm.
@@ -285,36 +396,21 @@ Future<void> _fire(
 
   final payload = AlarmRingPayload.fromJson(params);
 
-  // Validate against the saved alarm list *before* making any sound —
-  // `AndroidAlarmManager.cancel` can lose the race against an alarm that's
-  // already been dispatched to the OS right at its trigger time, and a
-  // snooze has no cancellation path of its own, so this fire may be for an
-  // alarm that's since been deleted, disabled, or (defensively) rescheduled
-  // to a different time. If storage can't even be read, fail closed rather
-  // than ring for an alarm we can't verify.
-  List<AlarmEntry> alarms;
-  try {
-    alarms = await AlarmLocalDataSourceImpl().getAlarms();
-  } catch (_) {
-    return;
-  }
-  AlarmEntry? current;
-  for (final a in alarms) {
-    if (a.id == payload.alarmId) {
-      current = a;
-      break;
-    }
-  }
-  if (current == null ||
-      !current.enabled ||
-      current.hour != payload.hour ||
-      current.minute != payload.minute) {
-    return;
-  }
+  // No Hive lookup here: this runs in a background isolate where Hive was
+  // never opened, so reading the saved list always failed and the old
+  // "fail closed" check silently swallowed every alarm (no sound). Deleting
+  // or disabling an alarm cancels its OS schedule (see `cancelAlarm`), which
+  // is what stops it from firing.
+  final plugin = await _showAlarmNotification(payload, notificationId: id);
 
-  await _showAlarmNotification(payload, notificationId: id);
+  if (chain) await _rearmDaily(id, payload);
 
-  if (!chain) return;
+  // Last on purpose: this keeps the callback (and so the alarm service)
+  // alive while the chosen ringtone loops.
+  await _playChosenRingtone(plugin, payload, notificationId: id);
+}
+
+Future<void> _rearmDaily(int id, AlarmRingPayload payload) async {
   try {
     final next = _nextOccurrence(
       payload.hour,
@@ -338,7 +434,80 @@ Future<void> _fire(
   }
 }
 
-Future<void> _showAlarmNotification(
+/// Whether the app itself plays this alarm's chosen ringtone (rather than
+/// the notification channel's built-in fallback beep).
+bool _playsChosenRingtone(AlarmRingPayload payload) =>
+    payload.shouldPlaySound && payload.ringtoneUrl.isNotEmpty;
+
+/// Plays the alarm's chosen ringtone (`ringtoneUrl`, resolved from its
+/// `ringtoneId`) on a loop straight from the background isolate, so the
+/// selected music sounds even when `AlarmRingingScreen` never opens (an
+/// unlocked phone only gets a heads-up notification). Vibrates alongside it
+/// when the alarm asks for vibration. Stops once the notification is
+/// dismissed (Stop/Snooze), once the ringing screen takes over, or after
+/// [_maxBackgroundRing].
+///
+/// The notification is posted on the silent channel for these alarms, so if
+/// the ringtone can't load (404, offline) it is re-posted on the beep
+/// channel — the alarm never goes silent, and never plays both at once.
+Future<void> _playChosenRingtone(
+  FlutterLocalNotificationsPlugin plugin,
+  AlarmRingPayload payload, {
+  required int notificationId,
+}) async {
+  if (!_playsChosenRingtone(payload)) return;
+
+  final player = AudioPlayer();
+  try {
+    await player.setAndroidAudioAttributes(
+      const AndroidAudioAttributes(
+        usage: AndroidAudioUsage.alarm,
+        contentType: AndroidAudioContentType.music,
+      ),
+    );
+    await player.setUrl(payload.ringtoneUrl);
+    await player.setLoopMode(LoopMode.one);
+    await player.setVolume(1);
+    unawaited(player.play());
+  } catch (_) {
+    await player.dispose();
+    await plugin.show(
+      id: notificationId,
+      title: payload.label.isEmpty ? 'Alarm' : payload.label,
+      body: _timeLabel(payload.hour, payload.minute),
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(payload),
+      ),
+      payload: payload.encode(),
+    );
+    return;
+  }
+
+  var vibrating = false;
+  try {
+    if (payload.shouldVibrate && await Vibration.hasVibrator()) {
+      // repeat: 0 loops the pattern until cancelled.
+      await Vibration.vibrate(pattern: [0, 800, 600], repeat: 0);
+      vibrating = true;
+    }
+
+    final deadline = DateTime.now().add(_maxBackgroundRing);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      final active = await plugin.getActiveNotifications();
+      final mine = active.where((n) => n.id == notificationId).firstOrNull;
+      if (mine == null || mine.groupKey == _ringingScreenGroup) break;
+    }
+  } catch (_) {
+    // Fall through to cleanup.
+  } finally {
+    if (vibrating) await Vibration.cancel();
+    await player.stop();
+    await player.dispose();
+  }
+}
+
+Future<FlutterLocalNotificationsPlugin> _showAlarmNotification(
   AlarmRingPayload payload, {
   required int notificationId,
 }) async {
@@ -352,61 +521,88 @@ Future<void> _showAlarmNotification(
     id: notificationId,
     title: payload.label.isEmpty ? 'Alarm' : payload.label,
     body: _timeLabel(payload.hour, payload.minute),
-    notificationDetails: NotificationDetails(android: _androidDetails(payload)),
+    notificationDetails: NotificationDetails(
+      android: _playsChosenRingtone(payload)
+          ? _silentDetails(payload, fullScreenIntent: true)
+          : _androidDetails(payload),
+    ),
     payload: payload.encode(),
   );
+  return plugin;
 }
 
-/// [insistent] is false for the update [AlarmScheduler.muteInsistentNotification]
-/// sends once `AlarmRingingScreen` takes over with the user's actual chosen
-/// ringtone — the notification itself stays put (still cancellable from the
-/// shade via Stop/Snooze) but stops repeating its own fallback sound, so the
-/// two don't play over each other. [onlyAlertOnce] on that update also
-/// prevents the re-`show()` call from re-triggering an alert on its own.
-AndroidNotificationDetails _androidDetails(
-  AlarmRingPayload payload, {
-  bool insistent = true,
-}) => AndroidNotificationDetails(
+/// The default alarm notification: the channel's looping fallback beep (and
+/// vibration) repeats via [_insistentFlags] until Stop/Snooze cancels it.
+AndroidNotificationDetails _androidDetails(AlarmRingPayload payload) =>
+    AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: insistent,
+      fullScreenIntent: true,
       ongoing: true,
       autoCancel: false,
-      onlyAlertOnce: !insistent,
       visibility: NotificationVisibility.public,
-      playSound: insistent && payload.shouldPlaySound,
+      playSound: payload.shouldPlaySound,
       sound: _alarmChannelSound,
-      enableVibration: insistent && payload.shouldVibrate,
+      enableVibration: payload.shouldVibrate,
       audioAttributesUsage: AudioAttributesUsage.alarm,
       // Repeats the sound/vibration above until Stop/Snooze cancels the
       // notification — see [_insistentFlags].
-      additionalFlags:
-          insistent && (payload.shouldPlaySound || payload.shouldVibrate)
+      additionalFlags: payload.shouldPlaySound || payload.shouldVibrate
           ? _insistentFlags
           : null,
       // Safety cap so an unanswered alarm doesn't ring forever: auto-clears
       // after 5 minutes, comfortably past the couple of minutes it should
       // take someone to respond.
       timeoutAfter: 5 * 60 * 1000,
-      actions: const [
-        AndroidNotificationAction(
-          _stopActionId,
-          'Stop',
-          cancelNotification: true,
-          showsUserInterface: false,
-        ),
-        AndroidNotificationAction(
-          _snoozeActionId,
-          'Snooze',
-          cancelNotification: true,
-          showsUserInterface: false,
-        ),
-      ],
+      actions: _notificationActions,
     );
+
+/// Same notification on the silent channel: no beep, no vibration of its
+/// own. Used when the app plays the chosen ringtone itself (initially, with
+/// [fullScreenIntent] so a locked phone still opens `AlarmRingingScreen`) and
+/// for the update `AlarmRingingScreen` posts once it takes over ([groupKey]
+/// tells the background player to stop). Still cancellable via Stop/Snooze.
+AndroidNotificationDetails _silentDetails(
+  AlarmRingPayload payload, {
+  bool fullScreenIntent = false,
+  String? groupKey,
+}) => AndroidNotificationDetails(
+  _silentChannelId,
+  _channelName,
+  channelDescription: _channelDescription,
+  importance: Importance.max,
+  priority: Priority.max,
+  category: AndroidNotificationCategory.alarm,
+  fullScreenIntent: fullScreenIntent,
+  ongoing: true,
+  autoCancel: false,
+  onlyAlertOnce: true,
+  visibility: NotificationVisibility.public,
+  playSound: false,
+  enableVibration: false,
+  groupKey: groupKey,
+  timeoutAfter: 5 * 60 * 1000,
+  actions: _notificationActions,
+);
+
+const _notificationActions = [
+  AndroidNotificationAction(
+    _stopActionId,
+    'Stop',
+    cancelNotification: true,
+    showsUserInterface: false,
+  ),
+  AndroidNotificationAction(
+    _snoozeActionId,
+    'Snooze',
+    cancelNotification: true,
+    showsUserInterface: false,
+  ),
+];
 
 DarwinNotificationDetails _darwinDetails(AlarmRingPayload payload) =>
     DarwinNotificationDetails(

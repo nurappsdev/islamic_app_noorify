@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_
 import 'package:islami_app_noorify/features/alarm/data/models/alarm_model.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
 import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
 
@@ -123,6 +124,22 @@ class AlarmRepositoryImpl implements AlarmRepository {
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setAllPrayerAlarms(
+    PrayerAlarmBatch batch,
+  ) async {
+    try {
+      await _remote.setAllPrayerAlarms(batch);
+      return const Right(null);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
     } catch (_) {
       return const Left(UnknownFailure());
     }

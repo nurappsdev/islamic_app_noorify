@@ -132,6 +132,9 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   Future<bool> _tryLoad(Future<Duration?> Function() load) async {
     try {
       await load();
+      // Stop/Snooze may have been pressed while the source was still
+      // loading — don't start playing after the fact.
+      if (_dismissed) return true;
       await _player.setLoopMode(LoopMode.one);
       await _player.play();
       return true;
@@ -158,7 +161,16 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     _vibrateTimer?.cancel();
     _watchdogTimer?.cancel();
     _autoStopTimer?.cancel();
-    await _player.stop();
+    // Never let the audio player hold the buttons hostage: `stop()` can wait
+    // on a still-loading network source, which used to leave this screen
+    // stuck with Stop/Snooze apparently doing nothing. Leave straight away;
+    // `dispose()` releases the player either way.
+    unawaited(
+      _player
+          .stop()
+          .timeout(const Duration(seconds: 1))
+          .catchError((Object _) {}),
+    );
     _leaveScreen();
   }
 
@@ -175,13 +187,24 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   }
 
   Future<void> _stop() async {
-    await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+    try {
+      await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+    } catch (_) {
+      // Still leave and stop the sound even if the notification can't be
+      // cleared.
+    }
     await _dismiss();
   }
 
   Future<void> _snooze() async {
-    await AlarmScheduler.snooze(widget.payload);
-    await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+    // Schedule the re-ring first, and guard each step so a failure in one
+    // can't stop the alarm from being silenced.
+    try {
+      await AlarmScheduler.snooze(widget.payload);
+    } catch (_) {}
+    try {
+      await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+    } catch (_) {}
     await _dismiss();
   }
 

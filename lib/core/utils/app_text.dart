@@ -74,6 +74,7 @@ class AppText {
     required this.offsetMinutesUnit,
     required this.alarmCancel,
     required this.alarmSet,
+    required this.allAlarmsSaved,
     required this.alarmIsRinging,
     required this.stopAlarm,
     required this.snoozeAlarm,
@@ -602,6 +603,7 @@ class AppText {
   final String offsetMinutesUnit;
   final String alarmCancel;
   final String alarmSet;
+  final String allAlarmsSaved;
   final String alarmIsRinging;
   final String stopAlarm;
   final String snoozeAlarm;
@@ -1304,6 +1306,11 @@ class AppText {
       ),
       alarmCancel: _read(map, 'alarmCancel', fallback?.alarmCancel ?? ''),
       alarmSet: _read(map, 'alarmSet', fallback?.alarmSet ?? ''),
+      allAlarmsSaved: _read(
+        map,
+        'allAlarmsSaved',
+        fallback?.allAlarmsSaved ?? '',
+      ),
       alarmIsRinging: _read(
         map,
         'alarmIsRinging',
