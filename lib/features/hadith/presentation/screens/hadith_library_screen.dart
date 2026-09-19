@@ -184,6 +184,10 @@ String _headerTotal(BuildContext context) {
 
 /// Horizontal shelf of the API-backed hadith collections, with loading,
 /// error (retry) and empty states.
+/// Height of the collection shelf: just tall enough for a card with a
+/// two-line title, so cards have no dead space at the bottom.
+double get _collectionShelfHeight => 150.h;
+
 class _CollectionShelf extends StatelessWidget {
   const _CollectionShelf({required this.appText});
 
@@ -205,7 +209,7 @@ class _CollectionShelf extends StatelessWidget {
       return _ShelfMessage(message: appText.hadithBookComingSoon);
     }
     return SizedBox(
-      height: 170.h,
+      height: _collectionShelfHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
@@ -225,7 +229,7 @@ class _CollectionShelfSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 170.h,
+      height: _collectionShelfHeight,
       child: Shimmer.fromColors(
         baseColor: const Color(0xFFE3ECC5),
         highlightColor: const Color(0xFFF6F9EC),
@@ -362,65 +366,77 @@ class _CollectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isBangla =
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    final localized = isBangla ? book.titleBn : book.titleEn;
+    final title = localized.isEmpty ? book.titleEn : localized;
+
     return Container(
       width: 218.w,
-      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE8AE),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFE9F1C4), Color(0xFFD3E2A0)],
+        ),
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFC4D68A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(7.r),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF9BAE6C)),
-                  borderRadius: BorderRadius.circular(9.r),
+                width: 32.r,
+                height: 32.r,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.menu_book_outlined,
-                  size: 18.sp,
-                  color: const Color(0xFF5F6E3E),
+                  Icons.menu_book_rounded,
+                  size: 17.sp,
+                  color: const Color(0xFF5F7A43),
                 ),
               ),
               const Spacer(),
               OutlinedButton.icon(
                 onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
-                icon: Icon(Icons.north_east_rounded, size: 14.sp),
+                icon: Icon(Icons.north_east_rounded, size: 13.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF4C5A34),
                   side: const BorderSide(color: Color(0xFF9BAE6C)),
                   padding: EdgeInsets.symmetric(horizontal: 10.w),
-                  minimumSize: Size(0, 32.h),
+                  minimumSize: Size(0, 30.h),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: TextStyle(fontSize: 12.sp),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9.r),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
-          Text(
-            (isBangla ? book.titleBn : book.titleEn).isEmpty
-                ? book.titleEn
-                : (isBangla ? book.titleBn : book.titleEn),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-              color: const Color(0xFF2C3320),
+          // The title takes whatever height is left, so the button below is
+          // always pinned to the bottom edge instead of leaving a gap.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: const Color(0xFF2C3320),
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 6.h),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -429,18 +445,23 @@ class _CollectionCard extends StatelessWidget {
                 backgroundColor: const Color(0xFF5F7A43),
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: EdgeInsets.symmetric(vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
                 minimumSize: Size(0, 34.h),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 textStyle: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9.r),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
               ),
-              child: Text(
-                '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+                  maxLines: 1,
+                ),
               ),
             ),
           ),
