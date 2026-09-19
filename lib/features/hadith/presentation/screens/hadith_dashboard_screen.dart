@@ -197,10 +197,7 @@ class _LegendDot extends StatelessWidget {
         Flexible(
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 12.5.sp,
-              color: const Color(0xFF6A7350),
-            ),
+            style: TextStyle(fontSize: 12.5.sp, color: const Color(0xFF6A7350)),
           ),
         ),
       ],
@@ -278,10 +275,7 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: const Color(0xFF3B4430),
-              ),
+              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF3B4430)),
             ),
             SizedBox(height: 16.h),
             Text(
@@ -316,10 +310,7 @@ class _DashedBorderPainter extends CustomPainter {
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;
       while (distance < metric.length) {
-        canvas.drawPath(
-          metric.extractPath(distance, distance + dash),
-          paint,
-        );
+        canvas.drawPath(metric.extractPath(distance, distance + dash), paint);
         distance += dash + gap;
       }
     }
@@ -356,10 +347,7 @@ class _HistoryRow extends StatelessWidget {
         SizedBox(width: 12.w),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: const Color(0xFF2C3320),
-          ),
+          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF2C3320)),
         ),
         const Spacer(),
         Text(
@@ -423,8 +411,7 @@ class _ReadingChartPainter extends CustomPainter {
     final chartWidth = chartRight - chartLeft;
     final chartHeight = chartBottom - chartTop;
 
-    double xAt(int i) =>
-        chartLeft + chartWidth * (i / (values.length - 1));
+    double xAt(int i) => chartLeft + chartWidth * (i / (values.length - 1));
     double yAt(double v) => chartBottom - chartHeight * (v / _maxY);
 
     // Grid lines + Y labels.
@@ -473,11 +460,14 @@ class _ReadingChartPainter extends CustomPainter {
     canvas.drawPath(
       areaPath,
       Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0x559BA7D8), Color(0x0F9BA7D8)],
-        ).createShader(Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom)),
+        ..shader =
+            const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0x559BA7D8), Color(0x0F9BA7D8)],
+            ).createShader(
+              Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom),
+            ),
     );
 
     // Line.

@@ -21,11 +21,7 @@ class HadithIntroScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFDFEFB),
-              Color(0xFFF1F5E4),
-              Color(0xFFD8E5BC),
-            ],
+            colors: [Color(0xFFFDFEFB), Color(0xFFF1F5E4), Color(0xFFD8E5BC)],
             stops: [0.0, 0.55, 1.0],
           ),
         ),

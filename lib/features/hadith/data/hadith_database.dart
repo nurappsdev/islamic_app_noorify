@@ -362,7 +362,8 @@ class HadithDatabase {
           ? bookmark.titleBn
           : (prev?['title_bn'] as String?) ?? '';
       final savedAt =
-          (prev?['saved_at'] as int?) ?? bookmark.savedAt.millisecondsSinceEpoch;
+          (prev?['saved_at'] as int?) ??
+          bookmark.savedAt.millisecondsSinceEpoch;
       await txn.insert(_bookmarksTable, {
         'book_slug': bookmark.bookSlug,
         'hadith_no': bookmark.hadithNo,

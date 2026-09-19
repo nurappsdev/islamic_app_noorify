@@ -5,12 +5,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
+import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_library_books.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:shimmer/shimmer.dart';
 
 /// Hadith library landing screen.
 ///
@@ -18,6 +24,22 @@ import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 /// summary header, the collection library and a shelf of e-books.
 class HadithLibraryScreen extends StatelessWidget {
   const HadithLibraryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => HadithLibraryBloc(
+        GetHadithLibraryBooks(
+          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+        ),
+      )..add(const LoadHadithLibrary()),
+      child: const _HadithLibraryView(),
+    );
+  }
+}
+
+class _HadithLibraryView extends StatelessWidget {
+  const _HadithLibraryView();
 
   @override
   Widget build(BuildContext context) {
@@ -42,20 +64,7 @@ class HadithLibraryScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 14.h),
-              SizedBox(
-                height: 170.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: HadithBookCatalog.libraryCollections.length,
-                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
-                  itemBuilder: (context, index) => _CollectionCard(
-                    book: HadithBookCatalog.libraryCollections[index],
-                    appText: appText,
-                  ),
-                ),
-              ),
+              _CollectionShelf(appText: appText),
               SizedBox(height: 26.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -148,7 +157,7 @@ class _HadithHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                '1,76,337',
+                _headerTotal(context),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,
@@ -160,6 +169,108 @@ class _HadithHeader extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The header's total across every collection the API returned; a dash while
+/// loading or if the request failed.
+String _headerTotal(BuildContext context) {
+  final state = context.watch<HadithLibraryBloc>().state;
+  if (state.status != HadithLibraryStatus.success) return '—';
+  return formatHadithCount(state.totalHadiths);
+}
+
+/// Horizontal shelf of the API-backed hadith collections, with loading,
+/// error (retry) and empty states.
+class _CollectionShelf extends StatelessWidget {
+  const _CollectionShelf({required this.appText});
+
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HadithLibraryBloc>().state;
+    if (state.isLoading) return const _CollectionShelfSkeleton();
+    if (state.status == HadithLibraryStatus.failure) {
+      return _ShelfMessage(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () =>
+            context.read<HadithLibraryBloc>().add(const LoadHadithLibrary()),
+      );
+    }
+    if (state.books.isEmpty) {
+      return _ShelfMessage(message: appText.hadithBookComingSoon);
+    }
+    return SizedBox(
+      height: 170.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        itemCount: state.books.length,
+        separatorBuilder: (_, _) => SizedBox(width: 12.w),
+        itemBuilder: (context, index) =>
+            _CollectionCard(book: state.books[index], appText: appText),
+      ),
+    );
+  }
+}
+
+class _CollectionShelfSkeleton extends StatelessWidget {
+  const _CollectionShelfSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 170.h,
+      child: Shimmer.fromColors(
+        baseColor: const Color(0xFFE3ECC5),
+        highlightColor: const Color(0xFFF6F9EC),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          itemCount: 2,
+          separatorBuilder: (_, _) => SizedBox(width: 12.w),
+          itemBuilder: (_, _) => Container(
+            width: 218.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShelfMessage extends StatelessWidget {
+  const _ShelfMessage({required this.message, this.actionLabel, this.onAction});
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+          ),
+          if (onAction != null) ...[
+            SizedBox(height: 8.h),
+            TextButton(onPressed: onAction, child: Text(actionLabel ?? '')),
+          ],
+        ],
       ),
     );
   }
@@ -244,7 +355,7 @@ class _SectionTitle extends StatelessWidget {
 class _CollectionCard extends StatelessWidget {
   const _CollectionCard({required this.book, required this.appText});
 
-  final HadithBook book;
+  final HadithLibraryBook book;
   final AppText appText;
 
   @override
@@ -278,7 +389,7 @@ class _CollectionCard extends StatelessWidget {
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => openHadithCollection(context, book),
+                onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 14.sp),
                 label: Text(appText.explore),
@@ -297,7 +408,9 @@ class _CollectionCard extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           Text(
-            isBangla ? book.titleBn : book.titleEn,
+            (isBangla ? book.titleBn : book.titleEn).isEmpty
+                ? book.titleEn
+                : (isBangla ? book.titleBn : book.titleEn),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
@@ -309,11 +422,8 @@ class _CollectionCard extends StatelessWidget {
           ),
           SizedBox(height: 6.h),
           Text(
-            '${appText.hadithTotalHadith} : ${book.hadithCount}',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: const Color(0xFF5D6B44),
-            ),
+            '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF5D6B44)),
           ),
         ],
       ),
@@ -350,9 +460,9 @@ class _EbookShelfState extends State<_EbookShelf> {
       final appText = AppText.forLanguage(
         context.read<LanguageBloc>().state.language,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appText.hadithBookComingSoon)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(appText.hadithBookComingSoon)));
       return;
     }
     await Navigator.of(
@@ -427,10 +537,7 @@ class _EbookCard extends StatelessWidget {
                   Positioned(
                     top: 6.h,
                     right: 6.w,
-                    child: _StatusBadge(
-                      book: book,
-                      downloaded: downloaded,
-                    ),
+                    child: _StatusBadge(book: book, downloaded: downloaded),
                   ),
                 ],
               ),
@@ -454,10 +561,7 @@ class _EbookCard extends StatelessWidget {
                   : appText.hadithBookComingSoon,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: const Color(0xFF9BA85B),
-              ),
+              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9BA85B)),
             ),
           ],
         ),

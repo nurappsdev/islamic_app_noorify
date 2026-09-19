@@ -99,10 +99,7 @@ class _PlanForm extends StatelessWidget {
       children: [
         Padding(
           padding: EdgeInsets.only(left: 4.w),
-          child: Text(
-            appText.planNameLabel,
-            style: TextStyle(fontSize: 14.sp),
-          ),
+          child: Text(appText.planNameLabel, style: TextStyle(fontSize: 14.sp)),
         ),
         SizedBox(height: 9.h),
         TextField(

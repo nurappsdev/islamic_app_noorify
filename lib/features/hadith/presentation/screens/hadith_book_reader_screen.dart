@@ -160,8 +160,7 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
                       appText: appText,
                       bookSlug: widget.book.slug,
                       bookName: title,
-                      onPageChanged: (i) =>
-                          setState(() => _currentPage = i),
+                      onPageChanged: (i) => setState(() => _currentPage = i),
                     ),
                   },
                 ),
@@ -580,8 +579,9 @@ class _DownloadPrompt extends StatelessWidget {
             width: double.infinity,
             height: 50.h,
             child: FilledButton.icon(
-              onPressed: () =>
-                  context.read<HadithBookBloc>().add(const DownloadHadithBook()),
+              onPressed: () => context.read<HadithBookBloc>().add(
+                const DownloadHadithBook(),
+              ),
               icon: const Icon(Icons.download_rounded, size: 18),
               label: Text(appText.hadithBookDownloadAction),
               style: FilledButton.styleFrom(
@@ -643,10 +643,7 @@ class _DownloadingView extends StatelessWidget {
             SizedBox(height: 10.h),
             Text(
               '${state.done} / ${state.total}',
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: const Color(0xFF7A8368),
-              ),
+              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF7A8368)),
             ),
           ],
         ],
@@ -818,9 +815,7 @@ class _HadithCardState extends State<_HadithCard> {
   }
 
   Future<void> _report() async {
-    final book = widget.bookName.isNotEmpty
-        ? widget.bookName
-        : widget.bookSlug;
+    final book = widget.bookName.isNotEmpty ? widget.bookName : widget.bookSlug;
     final subject =
         '${appText.hadithReport}: $book — '
         '${appText.categoryHadith} ${entry.hadithNo}';
@@ -884,7 +879,8 @@ class _HadithCardState extends State<_HadithCard> {
                 ),
               ),
               SizedBox(height: 6.h),
-              if (entry.banglaText.isNotEmpty || entry.banglaNarrator.isNotEmpty)
+              if (entry.banglaText.isNotEmpty ||
+                  entry.banglaNarrator.isNotEmpty)
                 tile(
                   icon: Icons.translate_rounded,
                   label: appText.hadithCopyTranslation,
@@ -983,62 +979,62 @@ class _HadithCardState extends State<_HadithCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (entry.arabicText.isNotEmpty) ...[
-                  SizedBox(height: 14.h),
-                  Text(
-                    entry.arabicText,
-                    textAlign: TextAlign.right,
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(
-                      fontSize: 17.sp,
-                      height: 1.9,
-                      color: const Color(0xFF283016),
-                    ),
-                  ),
-                ],
-                if (entry.banglaNarrator.isNotEmpty) ...[
-                  SizedBox(height: 14.h),
-                  Text(
-                    entry.banglaNarrator,
-                    style: TextStyle(
-                      fontSize: 12.5.sp,
-                      height: 1.6,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF4C5A34),
-                    ),
-                  ),
-                ],
-                if (entry.banglaText.isNotEmpty) ...[
-                  SizedBox(height: 8.h),
-                  Text(
-                    entry.banglaText,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      height: 1.75,
-                      color: const Color(0xFF3B4430),
-                    ),
-                  ),
-                ],
-                if (entry.referencesText.isNotEmpty) ...[
-                  SizedBox(height: 12.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 8.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECF0DC),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Text(
-                      '${appText.hadithBookReference}: ${entry.referencesText}',
-                      style: TextStyle(
-                        fontSize: 11.5.sp,
-                        height: 1.5,
-                        color: const Color(0xFF5D6B44),
-                      ),
-                    ),
-                  ),
-                ],
+                            SizedBox(height: 14.h),
+                            Text(
+                              entry.arabicText,
+                              textAlign: TextAlign.right,
+                              textDirection: TextDirection.rtl,
+                              style: TextStyle(
+                                fontSize: 17.sp,
+                                height: 1.9,
+                                color: const Color(0xFF283016),
+                              ),
+                            ),
+                          ],
+                          if (entry.banglaNarrator.isNotEmpty) ...[
+                            SizedBox(height: 14.h),
+                            Text(
+                              entry.banglaNarrator,
+                              style: TextStyle(
+                                fontSize: 12.5.sp,
+                                height: 1.6,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF4C5A34),
+                              ),
+                            ),
+                          ],
+                          if (entry.banglaText.isNotEmpty) ...[
+                            SizedBox(height: 8.h),
+                            Text(
+                              entry.banglaText,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                height: 1.75,
+                                color: const Color(0xFF3B4430),
+                              ),
+                            ),
+                          ],
+                          if (entry.referencesText.isNotEmpty) ...[
+                            SizedBox(height: 12.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 8.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECF0DC),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Text(
+                                '${appText.hadithBookReference}: ${entry.referencesText}',
+                                style: TextStyle(
+                                  fontSize: 11.5.sp,
+                                  height: 1.5,
+                                  color: const Color(0xFF5D6B44),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

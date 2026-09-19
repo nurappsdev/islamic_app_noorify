@@ -122,12 +122,7 @@ class _HistoryTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(
-        children: [
-          _tab(hadithLabel, 0),
-          _tab(ebookLabel, 1),
-        ],
-      ),
+      child: Row(children: [_tab(hadithLabel, 0), _tab(ebookLabel, 1)]),
     );
   }
 
@@ -154,9 +149,7 @@ class _HistoryTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
-              color: active
-                  ? const Color(0xFF3E4A2A)
-                  : const Color(0xFF2C3320),
+              color: active ? const Color(0xFF3E4A2A) : const Color(0xFF2C3320),
             ),
           ),
         ),
@@ -201,10 +194,7 @@ class _HistoryRow extends StatelessWidget {
         const Spacer(),
         Text(
           timestamp,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: const Color(0xFFA1AD59),
-          ),
+          style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
         ),
       ],
     );

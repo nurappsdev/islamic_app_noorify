@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 
 /// Opens the reader for a Hadith library collection. Books without bundled
 /// content ([HadithBook.isAvailable] is false) show a "coming soon" notice
@@ -19,6 +20,28 @@ void openHadithCollection(BuildContext context, HadithBook book) {
   Navigator.of(
     context,
   ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
+}
+
+/// Opens a collection from the API-backed library. The API only describes the
+/// collection (title, author, counts); its hadith text isn't served yet, so
+/// for now this shows the same "coming soon" notice as an unbundled book.
+void openHadithLibraryBook(BuildContext context, HadithLibraryBook book) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(AppText.of(context).hadithBookComingSoon)),
+  );
+}
+
+/// `176337` -> `1,76,337` (lakh grouping, as the design shows it).
+String formatHadithCount(int value) {
+  final digits = value.toString();
+  if (digits.length <= 3) return digits;
+  final head = digits.substring(0, digits.length - 3);
+  final tail = digits.substring(digits.length - 3);
+  final grouped = head.replaceAllMapped(
+    RegExp(r'(\d)(?=(\d{2})+$)'),
+    (m) => '${m[1]},',
+  );
+  return '$grouped,$tail';
 }
 
 /// Shared shell for the Hadith list screens (library "See All" and the

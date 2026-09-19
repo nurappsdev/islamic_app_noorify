@@ -1,6 +1,7 @@
 class ApiConstants {
   // local
-  static const String baseUrl = "https://tuhfatulmuslim2.ilmifygroup.com/api/v1";
+  static const String baseUrl =
+      "https://tuhfatulmuslim2.ilmifygroup.com/api/v1";
 
   //live
   // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
@@ -43,6 +44,8 @@ class ApiConstants {
   static const String amolTrackerDeleteItemEndPoint =
       "/amol/tracker/delete-item";
   static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
+
+  static const String hadithBooksListEndPoint = "/hadiths/books/lists";
 
   static const String asmaUlHusnaEndPoint = "/asma-ul-husna";
 
