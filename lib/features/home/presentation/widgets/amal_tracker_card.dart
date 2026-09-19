@@ -20,10 +20,6 @@ class AmalTrackerCard extends StatefulWidget {
 }
 
 class _AmalTrackerCardState extends State<AmalTrackerCard> {
-  // Updated on every build to match whichever item list (API or static
-  // fallback) is on screen, so the auto-slide timer wraps correctly.
-  int _itemCount = 8;
-
   static List<_AmalTrackerItem> _items(AppText appText) => [
     _AmalTrackerItem(
       title: appText.todaysAmolTrack,
@@ -131,8 +127,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       case 'monthly_second':
         return _AmalTrackerItem(
           title: card.userName ?? appText.khalidSaifullah,
-          subtitle:
-              '${appText.secondInTheMonth}\n${appText.point} : $fraction',
+          subtitle: '${appText.secondInTheMonth}\n${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
         );
@@ -178,32 +173,85 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   static const _slideDuration = Duration(seconds: 3);
   static const _transitionDuration = Duration(milliseconds: 650);
 
+  // The PageView is endless (item = page % length) so the last card glides
+  // forward into the first one instead of rewinding through every card. It
+  // starts far from 0 so the user can also swipe backwards from the first
+  // card. 5040 (= 7!) divides evenly by every plausible card count, so the
+  // first page always shows card 0 whether the API or fallback list is used.
+  static const _initialPage = 5040 * 100;
+
   late final PageController _pageController;
   Timer? _autoSlideTimer;
-  int _currentPage = 0;
+  int _currentPage = _initialPage;
+  bool _isHolding = false;
+  bool _isAutoSliding = false;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: .98);
+    _pageController = PageController(
+      viewportFraction: .98,
+      initialPage: _initialPage,
+    );
     _scheduleAutoSlide();
+  }
+
+  /// True while the slider is actually in front of the user: not scrolled
+  /// out of the viewport and not hidden behind another route.
+  bool get _isOnScreen {
+    if (!TickerMode.valuesOf(context).enabled) return false;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return false;
+    final top = box.localToGlobal(Offset.zero).dy;
+    final bottom = top + box.size.height;
+    return bottom > 0 && top < MediaQuery.sizeOf(context).height;
   }
 
   /// Waits [_slideDuration] with the current slide fully at rest, then
   /// glides to the next one and reschedules itself — so every slide gets
   /// the same 3-second dwell time regardless of the transition length.
+  /// The advance is skipped (and retried a dwell later) while the user is
+  /// holding the slider or has scrolled it out of view, so it stays on the
+  /// same card until they come back.
   void _scheduleAutoSlide() {
     _autoSlideTimer?.cancel();
     _autoSlideTimer = Timer(_slideDuration, () async {
-      if (!mounted || !_pageController.hasClients || _itemCount == 0) return;
-      _currentPage = (_currentPage + 1) % _itemCount;
-      await _pageController.animateToPage(
-        _currentPage,
+      if (!mounted) return;
+      if (_isHolding || !_isOnScreen || !_pageController.hasClients) {
+        _scheduleAutoSlide();
+        return;
+      }
+      _isAutoSliding = true;
+      await _pageController.nextPage(
         duration: _transitionDuration,
         curve: Curves.easeInOutCubic,
       );
+      _isAutoSliding = false;
+      if (!mounted) return;
       _scheduleAutoSlide();
     });
+  }
+
+  void _onPointerDown(PointerDownEvent _) {
+    _isHolding = true;
+    // Pressing during a glide settles on the nearest card instead of letting
+    // the slide carry on under the finger.
+    if (_isAutoSliding && _pageController.hasClients) {
+      final page = _pageController.page;
+      if (page != null) {
+        _pageController.animateToPage(
+          page.round(),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+        );
+      }
+    }
+  }
+
+  void _onPointerEnd(PointerEvent _) {
+    _isHolding = false;
+    // Fresh dwell for whichever card the user let go on.
+    _scheduleAutoSlide();
   }
 
   @override
@@ -222,49 +270,57 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     final items = dashboardState.hasData
         ? _apiItems(appText, dashboardState.dashboard!.topHighlightCards)
         : _items(appText);
-    _itemCount = items.length;
+    if (items.isEmpty) return const SizedBox.shrink();
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
       children: [
         SizedBox(
           height: 108.h,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: items.length,
-            physics: const BouncingScrollPhysics(),
-            onPageChanged: (index) {
-              _currentPage = index;
-              // A manual swipe shouldn't get cut short by an auto-advance
-              // landing right after it, so give this slide a fresh 3s dwell.
-              _scheduleAutoSlide();
-            },
-            itemBuilder: (context, index) {
-              return AnimatedBuilder(
-                animation: _pageController,
-                builder: (context, child) {
-                  var page = _currentPage.toDouble();
-                  if (_pageController.hasClients &&
-                      _pageController.position.haveDimensions) {
-                    page = _pageController.page ?? page;
-                  }
-                  final delta = (page - index).abs().clamp(0.0, 1.0);
-                  final scale = 1 - (delta * 0.08);
-                  final opacity = 1 - (delta * 0.35);
-                  return Opacity(
-                    opacity: opacity,
-                    child: Transform.scale(scale: scale, child: child),
-                  );
-                },
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 2.w),
-                  child: _AmalSlide(
-                    item: items[index],
-                    isTodaysTrack: index == 0,
+          child: Listener(
+            onPointerDown: _onPointerDown,
+            onPointerUp: _onPointerEnd,
+            onPointerCancel: _onPointerEnd,
+            child: PageView.builder(
+              // Lets the controller restore the page if the slider is rebuilt
+              // from scratch (e.g. the shimmer shows during a refresh).
+              key: const PageStorageKey<String>('amal-tracker-slider'),
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                _currentPage = index;
+                // A manual swipe shouldn't get cut short by an auto-advance
+                // landing right after it, so give this slide a fresh 3s dwell.
+                _scheduleAutoSlide();
+              },
+              itemBuilder: (context, pageIndex) {
+                final index = pageIndex % items.length;
+                return AnimatedBuilder(
+                  animation: _pageController,
+                  builder: (context, child) {
+                    var page = _currentPage.toDouble();
+                    if (_pageController.hasClients &&
+                        _pageController.position.haveDimensions) {
+                      page = _pageController.page ?? page;
+                    }
+                    final delta = (page - pageIndex).abs().clamp(0.0, 1.0);
+                    final scale = 1 - (delta * 0.08);
+                    final opacity = 1 - (delta * 0.35);
+                    return Opacity(
+                      opacity: opacity,
+                      child: Transform.scale(scale: scale, child: child),
+                    );
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2.w),
+                    child: _AmalSlide(
+                      item: items[index],
+                      isTodaysTrack: index == 0,
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
