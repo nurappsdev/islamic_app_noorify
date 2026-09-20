@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
@@ -57,13 +58,13 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
         : ProhibitedPrayerWindows.fromDailyTimes(times);
     return HomeCard(
       padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 10.h),
-      backgroundColor: const Color(0xFFFFF4F4),
+      backgroundColor: context.appPalette.dangerSurface,
       borderColor: const Color(0xFFFF4B4B),
       child: Column(
         children: [
           Text(
             appText.prohibitedPrayerTimes,
-            style: homeSansStyle(fontSize: 14.sp),
+            style: homeSansStyle(context: context, fontSize: 14.sp),
           ),
           SizedBox(height: 10.h),
           Row(
@@ -101,17 +102,21 @@ class _ForbiddenTime extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 3.w),
         padding: EdgeInsets.symmetric(vertical: 9.h, horizontal: 4.w),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFD8D8),
+          color: context.appPalette.dangerTint,
           borderRadius: BorderRadius.circular(7.r),
         ),
         child: Column(
           children: [
-            Text(title, style: homeSansStyle(fontSize: 10.sp)),
+            Text(
+              title,
+              style: homeSansStyle(context: context, fontSize: 10.sp),
+            ),
             SizedBox(height: 7.h),
             FittedBox(
               child: Text(
                 value,
                 style: homeSansStyle(
+                  context: context,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w700,
                 ),

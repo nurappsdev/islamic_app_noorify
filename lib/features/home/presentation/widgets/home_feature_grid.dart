@@ -112,7 +112,10 @@ class _FeatureTile extends StatelessWidget {
           children: [
             Icon(feature.icon, color: feature.color, size: 28.sp),
             SizedBox(height: 9.h),
-            Text(feature.title, style: homeSerifStyle(fontSize: 12.sp)),
+            Text(
+              feature.title,
+              style: homeSerifStyle(context: context, fontSize: 12.sp),
+            ),
             SizedBox(height: 10.h),
             HomeCircleButton(icon: Icons.chevron_right, onPressed: navigate),
           ],
@@ -142,7 +145,10 @@ class _LinkTile extends StatelessWidget {
           Icon(icon, color: iconColor, size: 24.sp),
           SizedBox(width: 10.w),
           Expanded(
-            child: Text(title, style: homeSansStyle(fontSize: 12.sp)),
+            child: Text(
+              title,
+              style: homeSansStyle(context: context, fontSize: 12.sp),
+            ),
           ),
           const HomeCircleButton(icon: Icons.chevron_right),
         ],

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
+
 /// Wraps [child] with the app-wide shimmer sweep used for loading skeletons
 /// (same colors as [QuranShimmer], kept local to this feature).
 class HomeShimmer extends StatelessWidget {
@@ -12,8 +14,8 @@ class HomeShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.appPalette.shimmerBase,
+      highlightColor: context.appPalette.shimmerHighlight,
       child: child,
     );
   }

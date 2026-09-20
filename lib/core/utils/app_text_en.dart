@@ -477,8 +477,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'editProfileCancel': 'Cancel',
   'editProfileImagePickError':
       "Couldn't load the selected image. Please try again.",
-  'editProfilePhotoUploadError':
-      "Couldn't upload the photo. Please try again.",
+  'editProfilePhotoUploadError': "Couldn't upload the photo. Please try again.",
   'percentCompleteSuffix': 'complete',
   'mymensingh': 'Mymensingh',
   'badgeLabel': 'Badge',
@@ -496,6 +495,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
 
   // Settings feature
   'settingsTitle': 'Settings',
+  'themeSwitchToDark': 'Switch to dark mode',
+  'themeSwitchToLight': 'Switch to light mode',
   'aboutUs': 'About Us',
   'ourProducts': 'Our Products',
   'adminSupport': 'Admin Support',

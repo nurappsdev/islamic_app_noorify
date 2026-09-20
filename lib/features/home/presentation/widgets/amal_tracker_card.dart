@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
@@ -338,8 +339,8 @@ class _AmalSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = HomeCard(
       padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
-      backgroundColor: const Color(0xFFDDE8AE),
-      borderColor: const Color(0xFFDDE8AE),
+      backgroundColor: context.appPalette.tint,
+      borderColor: context.appPalette.tint,
       child: Row(
         children: [
           _LeadingIcon(item: item),
@@ -353,14 +354,17 @@ class _AmalSlide extends StatelessWidget {
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: homeSansStyle(fontSize: 13.sp),
+                  style: homeSansStyle(context: context, fontSize: 13.sp),
                 ),
                 SizedBox(height: 5.h),
                 Text(
                   item.subtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: homeSansStyle(fontSize: 9.sp).copyWith(height: 1.3),
+                  style: homeSansStyle(
+                    context: context,
+                    fontSize: 9.sp,
+                  ).copyWith(height: 1.3),
                 ),
               ],
             ),
@@ -371,7 +375,9 @@ class _AmalSlide extends StatelessWidget {
             progress: item.progress,
             dimension: 84.r,
             holeDimension: 57.r,
+            holeColor: context.appPalette.tint,
             labelStyle: homeSansStyle(
+              context: context,
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -411,7 +417,7 @@ class _LeadingIcon extends StatelessWidget {
       padding: EdgeInsets.all(item.leadingText == null ? 12.r : 0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8E8),
+        color: context.appPalette.tintSoft,
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: item.leadingText == null
@@ -423,6 +429,7 @@ class _LeadingIcon extends StatelessWidget {
           : Text(
               item.leadingText!,
               style: homeSansStyle(
+                context: context,
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w700,
               ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
@@ -63,45 +65,50 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            RefreshIndicator(
-              onRefresh: _onRefresh,
-              color: AppColor.primary,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
-                child: Column(
-                  children: [
-                    const HomeHeader(),
-                    SizedBox(height: 10.h),
-                    const AmalTrackerCard(),
-                    SizedBox(height: 16.h),
-                    KeyedSubtree(
-                      key: ValueKey('prayer-time-card-$_refreshTick'),
-                      child: const PrayerTimeCard(),
-                    ),
-                    SizedBox(height: 24.h),
-                    KeyedSubtree(
-                      key: ValueKey('prohibited-prayer-times-$_refreshTick'),
-                      child: const ProhibitedPrayerTimesCard(),
-                    ),
-                    SizedBox(height: 14.h),
-                    const HomeProgressSection(),
-                    SizedBox(height: 10.h),
-                    const HomeFeatureGrid(),
-                  ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Light status-bar icons on the dark background.
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: context.appPalette.background,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              RefreshIndicator(
+                onRefresh: _onRefresh,
+                color: AppColor.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
+                  child: Column(
+                    children: [
+                      const HomeHeader(),
+                      SizedBox(height: 10.h),
+                      const AmalTrackerCard(),
+                      SizedBox(height: 16.h),
+                      KeyedSubtree(
+                        key: ValueKey('prayer-time-card-$_refreshTick'),
+                        child: const PrayerTimeCard(),
+                      ),
+                      SizedBox(height: 24.h),
+                      KeyedSubtree(
+                        key: ValueKey('prohibited-prayer-times-$_refreshTick'),
+                        child: const ProhibitedPrayerTimesCard(),
+                      ),
+                      SizedBox(height: 14.h),
+                      const HomeProgressSection(),
+                      SizedBox(height: 10.h),
+                      const HomeFeatureGrid(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: HomeBottomNav(),
-            ),
-          ],
+              const Align(
+                alignment: Alignment.bottomCenter,
+                child: HomeBottomNav(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -114,36 +121,40 @@ class HomeCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.borderColor,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? borderColor;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
     return Container(
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: backgroundColor ?? palette.surface,
         borderRadius: BorderRadius.circular(11.r),
-        border: Border.all(color: borderColor ?? const Color(0xFFE4E8C8)),
+        border: Border.all(color: borderColor ?? palette.border),
       ),
       child: child,
     );
   }
 }
 
+/// Pass [context] to follow the active theme; without it (and without
+/// [color]) the light-mode color is used.
 TextStyle homeSerifStyle({
   double? fontSize,
   FontWeight? fontWeight,
-  Color color = const Color(0xFF1F2B1C),
+  Color? color,
+  BuildContext? context,
 }) {
   return TextStyle(
-    color: color,
+    color: color ?? (context?.appPalette ?? AppPalette.light).textStrong,
     fontSize: fontSize,
     fontFamily: 'Times New Roman',
     fontStyle: FontStyle.italic,
@@ -154,9 +165,14 @@ TextStyle homeSerifStyle({
 TextStyle homeSansStyle({
   double? fontSize,
   FontWeight? fontWeight,
-  Color color = const Color(0xFF233021),
+  Color? color,
+  BuildContext? context,
 }) {
-  return TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight);
+  return TextStyle(
+    color: color ?? (context?.appPalette ?? AppPalette.light).textPrimary,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+  );
 }
 
 class HomeCircleButton extends StatelessWidget {
@@ -179,7 +195,7 @@ class HomeCircleButton extends StatelessWidget {
         onPressed: onPressed ?? () {},
         style: IconButton.styleFrom(
           padding: EdgeInsets.zero,
-          backgroundColor: const Color(0xFFDDE8AE),
+          backgroundColor: context.appPalette.tint,
           foregroundColor: AppColor.primary,
         ),
         icon: Icon(icon, size: 15.sp),
