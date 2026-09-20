@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
@@ -18,6 +21,9 @@ class _FakeRepository implements HadithLibraryRepository {
   final calls = <_Call>[];
   bool fail = false;
 
+  /// When set, the next report waits for it (an in-flight request).
+  Completer<void>? gate;
+
   @override
   Future<Either<Failure, Unit>> trackReading({
     required String hadithId,
@@ -26,6 +32,7 @@ class _FakeRepository implements HadithLibraryRepository {
     required String date,
   }) async {
     calls.add(_Call(hadithId, seconds, completed, date));
+    await gate?.future;
     return fail ? const Left(NetworkFailure('offline')) : const Right(unit);
   }
 
@@ -153,5 +160,85 @@ void main() {
     expect(next.isCompleted('a'), isTrue);
     expect(await next.complete('a'), HadithCompletion.alreadyCompleted);
     expect(repo.calls, hasLength(1));
+  });
+
+  group('timer cleanup', () {
+    test('counts each second and never runs two timers', () {
+      fakeAsync((async) {
+        tracker
+          ..start(() => 'a')
+          ..start(() => 'a'); // restarting replaces the timer
+        async.elapse(const Duration(seconds: 3));
+        expect(tracker.elapsedSeconds, 3);
+        expect(async.pendingTimers, hasLength(1));
+        tracker.dispose();
+      });
+    });
+
+    test('pause cancels the timer; resume starts one again', () {
+      fakeAsync((async) {
+        tracker.start(() => 'a');
+        async.elapse(const Duration(seconds: 2));
+
+        tracker.pause();
+        expect(tracker.isRunning, isFalse);
+        expect(async.pendingTimers, isEmpty);
+        async.elapse(const Duration(seconds: 60));
+        expect(tracker.elapsedSeconds, 2);
+
+        tracker.resume();
+        expect(tracker.isRunning, isTrue);
+        async.elapse(const Duration(seconds: 3));
+        expect(tracker.elapsedSeconds, 5);
+        tracker.dispose();
+      });
+    });
+
+    test('stop cancels the timer for good, even after resume', () {
+      fakeAsync((async) {
+        tracker.start(() => 'a');
+        async.elapse(const Duration(seconds: 2));
+        tracker.stop();
+        expect(tracker.isRunning, isFalse);
+        expect(async.pendingTimers, isEmpty);
+
+        tracker.resume(); // must not bring the timer back
+        async.elapse(const Duration(seconds: 30));
+        expect(tracker.isRunning, isFalse);
+        expect(tracker.elapsedSeconds, 2);
+        tracker.dispose();
+      });
+    });
+
+    test('dispose cancels the timer and clears the visit state', () {
+      fakeAsync((async) {
+        tracker.start(() => 'a');
+        async.elapse(const Duration(seconds: 40));
+        expect(tracker.reportCandidate, 'a');
+
+        tracker.dispose();
+        expect(async.pendingTimers, isEmpty);
+        expect(tracker.reportCandidate, isNull); // dwell cleared
+        async.elapse(const Duration(seconds: 60));
+        expect(tracker.elapsedSeconds, 40); // nothing kept counting
+
+        tracker.dispose(); // twice is harmless
+      });
+    });
+
+    test(
+      'a report finishing after dispose is safe and still remembered',
+      () async {
+        spend(40, on: 'a');
+        repo.gate = Completer<void>();
+        final pending = tracker.complete('a'); // in flight
+        tracker.dispose();
+        repo.gate!.complete();
+
+        expect(await pending, HadithCompletion.done); // no exception
+        expect(repo.calls, hasLength(1));
+        expect(tracker.isCompleted('a'), isTrue);
+      },
+    );
   });
 }

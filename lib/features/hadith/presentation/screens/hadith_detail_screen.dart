@@ -150,13 +150,16 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   void didPushNext() => _tracker.pause();
 
   @override
-  void didPopNext() => _tracker.resume();
+  void didPopNext() {
+    if (!_leaving) _tracker.resume();
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch (state) {
       case AppLifecycleState.resumed:
-        _tracker.resume();
+        // Not while the leave dialog is up: that time isn't reading.
+        if (!_leaving) _tracker.resume();
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
@@ -191,6 +194,23 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     return best;
   }
 
+  bool _trackingTornDown = false;
+
+  /// Releases everything the tracking holds: the timer, the route and app
+  /// lifecycle subscriptions, and the scroll and tracker listeners. Called
+  /// as soon as the user leaves (after the report, if any) and again from
+  /// [dispose]; safe to run twice.
+  void _teardownTracking() {
+    if (_trackingTornDown) return;
+    _trackingTornDown = true;
+    appRouteObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
+    _scrollController.removeListener(_onScroll);
+    _tracker
+      ..removeListener(_onTrackerChanged)
+      ..stop();
+  }
+
   /// Back button / gesture. After more than 30 seconds on the screen, asks
   /// whether the hadith read most was completed and reports the time (Yes:
   /// completed, No: not completed); otherwise leaves straight away.
@@ -204,6 +224,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
           .where((h) => h.id == candidate)
           .map((h) => h.hadithNumber)
           .firstOrNull;
+      // Time spent deciding is not reading time.
+      _tracker.pause();
       final completed = await _askCompleted(number);
       if (!mounted) return;
       // One report, then leave; give it a moment to land first.
@@ -214,6 +236,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
             onTimeout: () => HadithCompletion.failed,
           );
     }
+    // Reported (or nothing to report): nothing may keep running from here on.
+    _teardownTracking();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -275,11 +299,10 @@ class _HadithDetailViewState extends State<_HadithDetailView>
 
   @override
   void dispose() {
-    appRouteObserver.unsubscribe(this);
-    WidgetsBinding.instance.removeObserver(this);
-    _tracker
-      ..removeListener(_onTrackerChanged)
-      ..stop();
+    _teardownTracking();
+    _tracker.dispose();
+    _cardKeys.clear();
+    _displayedIds = const [];
     _scrollController.dispose();
     super.dispose();
   }
