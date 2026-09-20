@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 
@@ -52,7 +53,7 @@ class QuranZoomControl extends StatelessWidget {
           '${(value * 100).toInt()}%',
           style: TextStyle(
             fontSize: 11.sp,
-            color: const Color(0xFF6B7458),
+            color: context.inkColor(Color(0xFF6B7458)),
             fontWeight: FontWeight.w600,
           ),
         ),

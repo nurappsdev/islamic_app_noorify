@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -35,9 +36,7 @@ class SignupScreen extends StatelessWidget {
         BlocProvider<SignUpBloc>(create: (_) => SignUpBloc()),
         BlocProvider<RegisterBloc>(
           create: (_) => RegisterBloc(
-            RegisterAccount(
-              AccountRepositoryImpl(AuthRemoteDataSourceImpl()),
-            ),
+            RegisterAccount(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
           ),
         ),
       ],
@@ -98,16 +97,21 @@ class _SignupViewState extends State<_SignupView> {
       suffixIcon: suffixIcon,
       isDense: isDense,
       filled: true,
-      fillColor: Colors.white,
-      contentPadding: contentPadding ??
+      fillColor: context.surfaceColor(Colors.white),
+      contentPadding:
+          contentPadding ??
           EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -159,7 +163,9 @@ class _SignupViewState extends State<_SignupView> {
         );
         context.read<RegisterBloc>().add(const RegisterReset());
       case RegisterStatus.failure:
-        _showMessage(state.errorMessage ?? 'Registration failed. Please try again.');
+        _showMessage(
+          state.errorMessage ?? 'Registration failed. Please try again.',
+        );
         context.read<RegisterBloc>().add(const RegisterReset());
       case RegisterStatus.initial:
       case RegisterStatus.loading:
@@ -217,8 +223,11 @@ class _SignupViewState extends State<_SignupView> {
         isExpanded: true,
         isDense: true,
         borderRadius: BorderRadius.circular(16.r),
-        dropdownColor: Colors.white,
-        style: TextStyle(color: AppColor.authLogo, fontSize: 13.sp),
+        dropdownColor: context.surfaceColor(Colors.white),
+        style: TextStyle(
+          color: context.inkColor(AppColor.authLogo),
+          fontSize: 13.sp,
+        ),
         icon: Icon(
           Icons.keyboard_arrow_down_rounded,
           color: AppColor.authIcon,
@@ -228,7 +237,10 @@ class _SignupViewState extends State<_SignupView> {
           hint: appText.gender,
           prefixIcon: Icons.wc_outlined,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 10.h,
+          ),
         ),
         items: [
           DropdownMenuItem(value: 'male', child: Text(appText.male)),
@@ -290,7 +302,9 @@ class _SignupViewState extends State<_SignupView> {
           child: Checkbox(
             value: _termsAccepted,
             activeColor: AppColor.primary,
-            side: const BorderSide(color: AppColor.authFieldBorder),
+            side: BorderSide(
+              color: context.lineColor(AppColor.authFieldBorder),
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4.r),
             ),
@@ -302,7 +316,7 @@ class _SignupViewState extends State<_SignupView> {
           child: RichText(
             text: TextSpan(
               style: TextStyle(
-                color: AppColor.authLogo,
+                color: context.inkColor(AppColor.authLogo),
                 fontSize: 12.sp,
                 height: 1.35,
               ),
@@ -330,7 +344,11 @@ class _SignupViewState extends State<_SignupView> {
       children: [
         Row(
           children: [
-            const Expanded(child: Divider(color: AppColor.authFieldBorder)),
+            Expanded(
+              child: Divider(
+                color: context.lineColor(AppColor.authFieldBorder),
+              ),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 14.w),
               child: Text(
@@ -338,7 +356,11 @@ class _SignupViewState extends State<_SignupView> {
                 style: TextStyle(color: AppColor.primary, fontSize: 13.sp),
               ),
             ),
-            const Expanded(child: Divider(color: AppColor.authFieldBorder)),
+            Expanded(
+              child: Divider(
+                color: context.lineColor(AppColor.authFieldBorder),
+              ),
+            ),
           ],
         ),
         SizedBox(height: 16.h),
@@ -389,9 +411,9 @@ class _SignupViewState extends State<_SignupView> {
         style: OutlinedButton.styleFrom(
           shape: const CircleBorder(),
           padding: EdgeInsets.zero,
-          side: const BorderSide(color: AppColor.authFieldBorder),
+          side: BorderSide(color: context.lineColor(AppColor.authFieldBorder)),
           foregroundColor: AppColor.primary,
-          backgroundColor: Colors.white,
+          backgroundColor: context.surfaceColor(Colors.white),
         ),
         child: Tooltip(message: tooltip, child: child),
       ),
@@ -407,153 +429,157 @@ class _SignupViewState extends State<_SignupView> {
       listenWhen: (previous, current) => previous.status != current.status,
       listener: _onRegisterStateChanged,
       child: Scaffold(
-      backgroundColor: AppColor.authBackground,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 22.h),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight:
-                  MediaQuery.sizeOf(context).height -
-                  MediaQuery.paddingOf(context).vertical -
-                  40.h,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFFAD7),
-                      foregroundColor: Colors.black,
-                      fixedSize: Size(36.r, 36.r),
-                    ),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: Icon(Icons.arrow_back_ios_new, size: 15.sp),
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Text(
-                  appText.createAccount,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColor.authLogo,
-                    fontSize: 21.sp,
-                    fontWeight: FontWeight.w600,
-                    height: 1.15,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                Text(
-                  appText.signUpSubtitle,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColor.authLogo,
-                    fontSize: 15.sp,
-                    height: 1.35,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                _authField(
-                  controller: _nameController,
-                  hint: appText.enterYourName,
-                  icon: Icons.person_outline,
-                  textInputAction: TextInputAction.next,
-                ),
-                SizedBox(height: 9.h),
-                _authField(
-                  controller: _emailController,
-                  hint: appText.emailAddress,
-                  icon: Icons.mail_outline,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                ),
-                SizedBox(height: 9.h),
-                _authField(
-                  controller: _phoneController,
-                  hint: appText.phoneNo,
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                ),
-                SizedBox(height: 9.h),
-                _genderField(appText),
-                SizedBox(height: 9.h),
-                _authField(
-                  controller: _passwordController,
-                  hint: appText.passwordHint,
-                  icon: Icons.key_outlined,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
-                  suffixIcon: _passwordVisibilityButton(
-                    appText: appText,
-                    obscure: _obscurePassword,
-                    onPressed: () => _auth.add(const ToggleObscurePassword()),
-                  ),
-                ),
-                SizedBox(height: 9.h),
-                _authField(
-                  controller: _confirmPasswordController,
-                  hint: appText.confirmPassword,
-                  icon: Icons.key_outlined,
-                  obscureText: _obscureConfirm,
-                  textInputAction: TextInputAction.done,
-                  suffixIcon: _passwordVisibilityButton(
-                    appText: appText,
-                    obscure: _obscureConfirm,
-                    onPressed: () => _auth.add(const ToggleObscureConfirm()),
-                  ),
-                ),
-                SizedBox(height: 28.h),
-                _socialSignupSection(appText),
-                SizedBox(height: 28.h),
-                _termsRow(appText),
-                SizedBox(height: 12.h),
-                AuthButton(
-                  label: appText.createAccount,
-                  isLoading: _isLoading,
-                  height: 60.h,
-                  onPressed: _createAccount,
-                ),
-                SizedBox(height: 10.h),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4.w,
-                  children: [
-                    Text(
-                      appText.alreadyHaveAccount,
-                      style: TextStyle(
-                        color: AppColor.authLogo,
-                        fontSize: 12.sp,
+        backgroundColor: context.pageColor(AppColor.authBackground),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 22.h),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight:
+                    MediaQuery.sizeOf(context).height -
+                    MediaQuery.paddingOf(context).vertical -
+                    40.h,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.surfaceColor(
+                          Color(0xFFFFFAD7),
+                        ),
+                        foregroundColor: context.inkColor(Colors.black),
+                        fixedSize: Size(36.r, 36.r),
                       ),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: Icon(Icons.arrow_back_ios_new, size: 15.sp),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.of(
-                        context,
-                      ).pushReplacementNamed(RouteNames.signIn),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(horizontal: 2.w),
-                        minimumSize: Size(0, 30.h),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        foregroundColor: AppColor.createAccount,
-                      ),
-                      child: Text(
-                        appText.logIn,
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    appText.createAccount,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.inkColor(AppColor.authLogo),
+                      fontSize: 21.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    appText.signUpSubtitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.inkColor(AppColor.authLogo),
+                      fontSize: 15.sp,
+                      height: 1.35,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  _authField(
+                    controller: _nameController,
+                    hint: appText.enterYourName,
+                    icon: Icons.person_outline,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  SizedBox(height: 9.h),
+                  _authField(
+                    controller: _emailController,
+                    hint: appText.emailAddress,
+                    icon: Icons.mail_outline,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  SizedBox(height: 9.h),
+                  _authField(
+                    controller: _phoneController,
+                    hint: appText.phoneNo,
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  SizedBox(height: 9.h),
+                  _genderField(appText),
+                  SizedBox(height: 9.h),
+                  _authField(
+                    controller: _passwordController,
+                    hint: appText.passwordHint,
+                    icon: Icons.key_outlined,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
+                    suffixIcon: _passwordVisibilityButton(
+                      appText: appText,
+                      obscure: _obscurePassword,
+                      onPressed: () => _auth.add(const ToggleObscurePassword()),
+                    ),
+                  ),
+                  SizedBox(height: 9.h),
+                  _authField(
+                    controller: _confirmPasswordController,
+                    hint: appText.confirmPassword,
+                    icon: Icons.key_outlined,
+                    obscureText: _obscureConfirm,
+                    textInputAction: TextInputAction.done,
+                    suffixIcon: _passwordVisibilityButton(
+                      appText: appText,
+                      obscure: _obscureConfirm,
+                      onPressed: () => _auth.add(const ToggleObscureConfirm()),
+                    ),
+                  ),
+                  SizedBox(height: 28.h),
+                  _socialSignupSection(appText),
+                  SizedBox(height: 28.h),
+                  _termsRow(appText),
+                  SizedBox(height: 12.h),
+                  AuthButton(
+                    label: appText.createAccount,
+                    isLoading: _isLoading,
+                    height: 60.h,
+                    onPressed: _createAccount,
+                  ),
+                  SizedBox(height: 10.h),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4.w,
+                    children: [
+                      Text(
+                        appText.alreadyHaveAccount,
                         style: TextStyle(
+                          color: context.inkColor(AppColor.authLogo),
                           fontSize: 12.sp,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      TextButton(
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushReplacementNamed(RouteNames.signIn),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          minimumSize: Size(0, 30.h),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          foregroundColor: context.inkColor(
+                            AppColor.createAccount,
+                          ),
+                        ),
+                        child: Text(
+                          appText.logIn,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

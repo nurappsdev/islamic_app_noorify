@@ -14,6 +14,8 @@ import '../../domain/usecases/verify_email_otp.dart';
 import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
     super.key,
@@ -173,15 +175,19 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 11.sp),
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 16.sp),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -221,7 +227,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 : "Didn't get the code? Resend",
             style: TextStyle(
               fontSize: 12.sp,
-              color: onCooldown ? AppColor.authLogo : AppColor.primary,
+              color: context.inkColor(
+                onCooldown ? AppColor.authLogo : AppColor.primary,
+              ),
             ),
           ),
         );
@@ -274,25 +282,29 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
               LengthLimitingTextInputFormatter(1),
             ],
             style: TextStyle(
-              color: AppColor.otpDigit,
+              color: context.inkColor(AppColor.otpDigit),
               fontSize: 15.sp,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: hasDigit ? AppColor.otpFieldFill : Colors.white,
+              fillColor: context.surfaceColor(
+                hasDigit ? AppColor.otpFieldFill : Colors.white,
+              ),
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5.r),
-                borderSide: const BorderSide(color: AppColor.authFieldBorder),
+                borderSide: BorderSide(
+                  color: context.lineColor(AppColor.authFieldBorder),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5.r),
                 borderSide: BorderSide(
-                  color: hasDigit
-                      ? AppColor.otpFieldFill
-                      : AppColor.authFieldBorder,
+                  color: context.lineColor(
+                    hasDigit ? AppColor.otpFieldFill : AppColor.authFieldBorder,
+                  ),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -335,7 +347,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   Widget _buildScaffold(AppText appText) {
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
@@ -356,8 +368,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFFAD7),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFFFFAD7),
+                          ),
+                          foregroundColor: context.inkColor(Colors.black),
                           fixedSize: Size(30.r, 30.r),
                         ),
                         onPressed: () => Navigator.of(context).maybePop(),
@@ -369,7 +383,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           ? appText.otpVerification
                           : appText.emailVerification,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w400,
                       ),
@@ -391,7 +405,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                         return Text(
                           'Noorify',
                           style: TextStyle(
-                            color: AppColor.authLogo,
+                            color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -405,7 +419,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   appText.noorify,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.black,
+                    color: context.inkColor(Colors.black),
                     fontSize: 14.sp,
                     height: 1.2,
                     fontFamily: 'Times New Roman',
@@ -439,9 +453,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     return AuthButton(
                       label: _isOtpMode ? appText.verify : appText.sendOtp,
                       height: 50.h,
-                      isLoading: _isOtpMode
-                          ? state.isLoading
-                          : _sendingOtp,
+                      isLoading: _isOtpMode ? state.isLoading : _sendingOtp,
                       onPressed: () {
                         if (_isOtpMode) {
                           _submitOtp();

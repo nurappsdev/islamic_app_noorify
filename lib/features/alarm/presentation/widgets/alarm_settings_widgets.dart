@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
@@ -10,13 +11,16 @@ import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart'
 import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_ringtone.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
 
-TextStyle alarmItalicStyle(double size, {Color color = Colors.black}) =>
-    TextStyle(
-      color: color,
-      fontSize: size,
-      fontFamily: 'Times New Roman',
-      fontStyle: FontStyle.italic,
-    );
+TextStyle alarmItalicStyle(
+  double size, {
+  Color color = Colors.black,
+  BuildContext? context,
+}) => TextStyle(
+  color: context?.inkColor(color) ?? color,
+  fontSize: size,
+  fontFamily: 'Times New Roman',
+  fontStyle: FontStyle.italic,
+);
 
 class AlarmBackHeader extends StatelessWidget {
   const AlarmBackHeader({super.key, required this.title, this.subtitle});
@@ -37,8 +41,8 @@ class AlarmBackHeader extends StatelessWidget {
               tooltip: AppText.of(context).back,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F5CE),
-                foregroundColor: const Color(0xFF526044),
+                backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+                foregroundColor: context.inkColor(Color(0xFF526044)),
               ),
               icon: const Icon(Icons.chevron_left),
             ),
@@ -92,7 +96,7 @@ class AlarmToggleRow extends StatelessWidget {
           activeThumbColor: const Color(0xFF8D9B70),
           activeTrackColor: const Color(0xFFDCE9B8),
           inactiveThumbColor: const Color(0xFFBDBDBD),
-          inactiveTrackColor: const Color(0xFFE0E0E0),
+          inactiveTrackColor: context.surfaceColor(Color(0xFFE0E0E0)),
         ),
       ],
     );
@@ -178,7 +182,9 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.surfaceColor(Colors.redAccent),
+            ),
             child: Text(appText.deleteRingtoneConfirm),
           ),
         ],
@@ -233,7 +239,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22.r),
-            border: Border.all(color: const Color(0xFFDCE9B8)),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
           ),
           child: Center(
             child: TextField(
@@ -258,7 +264,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
             constraints: BoxConstraints(maxHeight: 160.h),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: const Color(0xFFDCE9B8)),
+              border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
             ),
             child: _loading
                 ? Padding(
@@ -275,8 +281,10 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                     padding: EdgeInsets.symmetric(vertical: 4.h),
                     shrinkWrap: true,
                     itemCount: _filtered.length,
-                    separatorBuilder: (_, _) =>
-                        Divider(height: 1, color: const Color(0xFFF0F2E6)),
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: context.lineColor(Color(0xFFF0F2E6)),
+                    ),
                     itemBuilder: (context, index) {
                       final ringtone = _filtered[index];
                       final isPlaying = _playingId == ringtone.id;
@@ -303,7 +311,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               visualDensity: VisualDensity.compact,
-                              color: const Color(0xFF7E8C61),
+                              color: context.inkColor(Color(0xFF7E8C61)),
                               icon: Icon(
                                 isPlaying
                                     ? Icons.stop_circle_outlined
@@ -330,7 +338,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     visualDensity: VisualDensity.compact,
-                                    color: Colors.redAccent,
+                                    color: context.inkColor(Colors.redAccent),
                                     icon: const Icon(Icons.delete_outline),
                                     onPressed: () =>
                                         _confirmDelete(context, ringtone),

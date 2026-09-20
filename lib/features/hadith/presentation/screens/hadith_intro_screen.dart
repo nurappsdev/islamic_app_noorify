@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -37,7 +38,7 @@ class HadithIntroScreen extends StatelessWidget {
                     onPressed: () => Navigator.maybePop(context),
                     style: IconButton.styleFrom(
                       backgroundColor: const Color(0xFFDFDE68),
-                      foregroundColor: const Color(0xFF303629),
+                      foregroundColor: Color(0xFF303629),
                     ),
                     icon: const Icon(
                       Icons.arrow_back_ios_new_rounded,
@@ -56,7 +57,7 @@ class HadithIntroScreen extends StatelessWidget {
                         appText.hadithIntroTitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: const Color(0xFF7D8765),
+                          color: context.inkColor(Color(0xFF7D8765)),
                           fontSize: 26.sp,
                           fontWeight: FontWeight.w700,
                         ),
@@ -66,7 +67,7 @@ class HadithIntroScreen extends StatelessWidget {
                         appText.hadithIntroSubtitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: const Color(0xFF4C5346),
+                          color: context.inkColor(Color(0xFF4C5346)),
                           fontSize: 13.sp,
                           height: 1.5,
                         ),
@@ -75,7 +76,9 @@ class HadithIntroScreen extends StatelessWidget {
                       Icon(
                         Icons.menu_book_rounded,
                         size: 190.sp,
-                        color: Colors.white.withValues(alpha: .55),
+                        color: context.inkColor(
+                          Colors.white.withValues(alpha: .55),
+                        ),
                       ),
                     ],
                   ),

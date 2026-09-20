@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
@@ -45,7 +46,7 @@ class _PrayerTimesView extends StatelessWidget {
         ? null
         : currentPrayerPeriod(state.now, state.times!);
     return Scaffold(
-      backgroundColor: _olive,
+      backgroundColor: context.pageColor(_olive),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -64,7 +65,7 @@ class _PrayerTimesView extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(15.w, 20.h, 15.w, 18.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFCFDF8),
+                  color: context.surfaceColor(Color(0xFFFCFDF8)),
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(27.r),
                   ),
@@ -105,7 +106,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColoredBox(color: olive),
+        ColoredBox(color: context.surfaceColor(olive)),
         Positioned(
           top: 110.h,
           left: 70.w,
@@ -120,8 +121,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
             tooltip: appText.back,
             onPressed: () => Navigator.of(context).pop(),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F5CE),
-              foregroundColor: const Color(0xFF526044),
+              backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+              foregroundColor: context.inkColor(Color(0xFF526044)),
             ),
             icon: const Icon(Icons.chevron_left),
           ),
@@ -137,8 +138,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
               ),
             ),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F5CE),
-              foregroundColor: const Color(0xFF526044),
+              backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+              foregroundColor: context.inkColor(Color(0xFF526044)),
             ),
             icon: const Icon(Icons.alarm_add_outlined),
           ),
@@ -230,7 +231,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EFB8),
+                color: context.surfaceColor(Color(0xFFE8EFB8)),
                 borderRadius: BorderRadius.circular(17.r),
                 border: Border.all(color: const Color(0xFFA7B55E)),
               ),
@@ -371,15 +372,17 @@ class _PrayerRow extends StatelessWidget {
           width: 20.r,
           height: 20.r,
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF829061) : const Color(0xFFDDEBB5),
+            color: context.surfaceColor(
+              active ? const Color(0xFF829061) : const Color(0xFFDDEBB5),
+            ),
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Container(
               width: 10.r,
               height: 10.r,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
                 shape: BoxShape.circle,
               ),
             ),
@@ -391,12 +394,12 @@ class _PrayerRow extends StatelessWidget {
             key: active ? const ValueKey('active-prayer-row') : null,
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: active
-                    ? const Color(0xFF7F8E60)
-                    : const Color(0xFFDCE9B8),
+                color: context.lineColor(
+                  active ? const Color(0xFF7F8E60) : const Color(0xFFDCE9B8),
+                ),
                 width: active ? 2 : 1,
               ),
               boxShadow: const [
@@ -413,10 +416,14 @@ class _PrayerRow extends StatelessWidget {
                   width: 38.r,
                   height: 38.r,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8D7),
+                    color: context.surfaceColor(Color(0xFFFFF8D7)),
                     borderRadius: BorderRadius.circular(9.r),
                   ),
-                  child: Icon(_icon, color: _iconColor, size: 23.sp),
+                  child: Icon(
+                    _icon,
+                    color: context.inkColor(_iconColor),
+                    size: 23.sp,
+                  ),
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
@@ -456,7 +463,7 @@ class _PrayerRow extends StatelessWidget {
                       ),
                     ),
                     icon: Icon(Icons.alarm, size: 19.sp),
-                    color: const Color(0xFF7E8C61),
+                    color: context.inkColor(Color(0xFF7E8C61)),
                   ),
                 ),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -21,11 +22,7 @@ class ZikrIntroScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFDFEFB),
-              Color(0xFFF3F6E8),
-              Color(0xFFDCE6C4),
-            ],
+            colors: [Color(0xFFFDFEFB), Color(0xFFF3F6E8), Color(0xFFDCE6C4)],
             stops: [0.0, 0.55, 1.0],
           ),
         ),
@@ -43,8 +40,10 @@ class ZikrIntroScreen extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFDFDE68),
-                          foregroundColor: const Color(0xFF303629),
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFDFDE68),
+                          ),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -63,7 +62,7 @@ class ZikrIntroScreen extends StatelessWidget {
                             appText.zikrIntroTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: const Color(0xFF7D8765),
+                              color: context.inkColor(Color(0xFF7D8765)),
                               fontSize: 26.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -73,7 +72,7 @@ class ZikrIntroScreen extends StatelessWidget {
                             appText.zikrIntroSubtitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: const Color(0xFF4C5346),
+                              color: context.inkColor(Color(0xFF4C5346)),
                               fontSize: 13.sp,
                               height: 1.6,
                             ),
@@ -138,7 +137,9 @@ class _Decor extends StatelessWidget {
                   child: Icon(
                     Icons.nightlight_round,
                     size: 68.sp,
-                    color: const Color(0xFFC9B26B).withValues(alpha: .35),
+                    color: context.inkColor(
+                      Color(0xFFC9B26B).withValues(alpha: .35),
+                    ),
                   ),
                 ),
                 SizedBox(width: 4.w),
@@ -147,7 +148,9 @@ class _Decor extends StatelessWidget {
                   child: Icon(
                     Icons.star_rounded,
                     size: 26.sp,
-                    color: const Color(0xFFC9B26B).withValues(alpha: .35),
+                    color: context.inkColor(
+                      Color(0xFFC9B26B).withValues(alpha: .35),
+                    ),
                   ),
                 ),
               ],
@@ -158,7 +161,7 @@ class _Decor extends StatelessWidget {
             child: Icon(
               Icons.mosque_rounded,
               size: 300.sp,
-              color: Colors.white.withValues(alpha: .45),
+              color: context.inkColor(Colors.white.withValues(alpha: .45)),
             ),
           ),
         ],

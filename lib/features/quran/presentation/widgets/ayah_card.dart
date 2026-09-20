@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 
@@ -34,9 +35,9 @@ class AyahCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .85),
+          color: context.surfaceColor(Colors.white.withValues(alpha: .85)),
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFDDE8C1)),
+          border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +47,7 @@ class AyahCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 13.r,
-                  backgroundColor: const Color(0xFFDFE9B9),
+                  backgroundColor: context.surfaceColor(Color(0xFFDFE9B9)),
                   child: Text(
                     '$ayahNo',
                     style: TextStyle(color: AppColor.primary, fontSize: 11.sp),
@@ -90,7 +91,7 @@ class AyahCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.sp,
                   height: 1.4,
-                  color: const Color(0xFF444444),
+                  color: context.inkColor(Color(0xFF444444)),
                 ),
               ),
             ],

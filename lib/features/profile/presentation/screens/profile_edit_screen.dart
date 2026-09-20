@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
@@ -130,7 +131,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       final uploadResult = await ProfileService.instance.uploadAvatar(
         _selectedImage!,
       );
-      final uploadFailure = uploadResult.fold((failure) => failure, (_) => null);
+      final uploadFailure = uploadResult.fold(
+        (failure) => failure,
+        (_) => null,
+      );
       if (uploadFailure != null) {
         if (!mounted) return;
         setState(() => _isSaving = false);
@@ -161,9 +165,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       (updated) {
         setState(() => _selectedImage = null);
         _applyProfile(updated);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appText.saveAction)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(appText.saveAction)));
         Navigator.of(context).maybePop();
       },
     );
@@ -180,19 +184,27 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
       filled: true,
-      fillColor: enabled ? Colors.white : const Color(0xFFF3F5E4),
+      fillColor: context.surfaceColor(
+        enabled ? Colors.white : const Color(0xFFF3F5E4),
+      ),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -205,7 +217,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -231,7 +243,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -243,7 +255,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         hint: appText.enterYourName,
                         prefixIcon: Icons.person_outline,
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
                           ? appText.enterYourName
                           : null,
                     ),
@@ -253,14 +266,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                       ),
                     ),
                     SizedBox(height: 8.h),
                     TextFormField(
                       controller: _emailController,
                       enabled: false,
-                      style: TextStyle(fontSize: 13.sp, color: AppColor.authHint),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColor.authHint,
+                      ),
                       decoration: _fieldDecoration(
                         hint: appText.emailAddress,
                         prefixIcon: Icons.email_outlined,
@@ -273,7 +289,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -281,8 +297,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       initialValue: _selectedGender,
                       isExpanded: true,
                       borderRadius: BorderRadius.circular(16.r),
-                      dropdownColor: Colors.white,
-                      style: TextStyle(color: AppColor.authLogo, fontSize: 13.sp),
+                      dropdownColor: context.surfaceColor(Colors.white),
+                      style: TextStyle(
+                        color: context.inkColor(AppColor.authLogo),
+                        fontSize: 13.sp,
+                      ),
                       icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: AppColor.authIcon,
@@ -311,7 +330,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -329,7 +348,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     SizedBox(
                       height: 50.h,
                       child: FilledButton(
-                        onPressed: (_profile == null || _isSaving) ? null : _save,
+                        onPressed: (_profile == null || _isSaving)
+                            ? null
+                            : _save,
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColor.primary,
                           shape: RoundedRectangleBorder(
@@ -389,7 +410,7 @@ class _EditProfileHeader extends StatelessWidget {
                 onPressed: onBack,
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFDFDE68),
-                  foregroundColor: const Color(0xFF303629),
+                  foregroundColor: Color(0xFF303629),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
               ),
@@ -451,7 +472,7 @@ class _ProfileAvatar extends StatelessWidget {
                   )
                 : ProfileAvatarCircle(
                     dimension: dimension - 12.r,
-                    backgroundColor: Colors.white,
+                    backgroundColor: context.surfaceColor(Colors.white),
                     placeholderIconColor: const Color(0xFFB7C17E),
                   ),
           ),
@@ -467,7 +488,10 @@ class _ProfileAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColor.primary,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: context.lineColor(Colors.white),
+                    width: 2,
+                  ),
                 ),
                 child: Icon(
                   Icons.photo_library_rounded,

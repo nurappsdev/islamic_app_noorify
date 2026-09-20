@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
@@ -73,7 +74,7 @@ class _AsmaNameDetailScreenState extends State<AsmaNameDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9EC),
+      backgroundColor: context.pageColor(Color(0xFFF7F9EC)),
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -94,25 +95,27 @@ class _AsmaNameDetailScreenState extends State<AsmaNameDetailScreen> {
                     ),
                     SizedBox(height: 14.h),
                     Expanded(
-                      child: BlocBuilder<AsmaNameDetailBloc, AsmaNameDetailState>(
-                        builder: (context, state) {
-                          switch (state.status) {
-                            case AsmaNameDetailStatus.loading:
-                              return const AsmaNameDetailShimmer();
-                            case AsmaNameDetailStatus.failure:
-                              return _ErrorView(
-                                message: state.failure?.message ?? '',
-                                retryLabel: AppText.of(context).tryAgain,
-                                onRetry: () => context
-                                    .read<AsmaNameDetailBloc>()
-                                    .add(LoadAsmaNameDetail(widget.name.id)),
-                              );
-                            case AsmaNameDetailStatus.success:
-                              final detail = state.detail!;
-                              return _DetailCard(detail: detail);
-                          }
-                        },
-                      ),
+                      child:
+                          BlocBuilder<AsmaNameDetailBloc, AsmaNameDetailState>(
+                            builder: (context, state) {
+                              switch (state.status) {
+                                case AsmaNameDetailStatus.loading:
+                                  return const AsmaNameDetailShimmer();
+                                case AsmaNameDetailStatus.failure:
+                                  return _ErrorView(
+                                    message: state.failure?.message ?? '',
+                                    retryLabel: AppText.of(context).tryAgain,
+                                    onRetry: () =>
+                                        context.read<AsmaNameDetailBloc>().add(
+                                          LoadAsmaNameDetail(widget.name.id),
+                                        ),
+                                  );
+                                case AsmaNameDetailStatus.success:
+                                  final detail = state.detail!;
+                                  return _DetailCard(detail: detail);
+                              }
+                            },
+                          ),
                     ),
                     SizedBox(height: 64.h),
                   ],
@@ -125,7 +128,7 @@ class _AsmaNameDetailScreenState extends State<AsmaNameDetailScreen> {
                     child: _CircleIconButton(
                       icon: Icons.close,
                       background: Colors.white,
-                      iconColor: const Color(0xFFD1212C),
+                      iconColor: context.inkColor(Color(0xFFD1212C)),
                       onTap: () => Navigator.of(context).pop(),
                     ),
                   ),
@@ -171,16 +174,16 @@ class _OrderBadge extends StatelessWidget {
       height: 42.r,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFE1E5C4)),
+        border: Border.all(color: context.lineColor(Color(0xFFE1E5C4))),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 13.sp,
           fontWeight: FontWeight.w700,
-          color: AppColor.authLogo,
+          color: context.inkColor(AppColor.authLogo),
         ),
       ),
     );
@@ -206,7 +209,7 @@ class _DetailCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 30.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF3F6B2C),
+                color: context.inkColor(Color(0xFF3F6B2C)),
                 height: 1.5,
               ),
             ),
@@ -217,7 +220,7 @@ class _DetailCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w700,
-                color: AppColor.authLogo,
+                color: context.inkColor(AppColor.authLogo),
               ),
             ),
             SizedBox(height: 2.h),
@@ -234,7 +237,7 @@ class _DetailCard extends StatelessWidget {
                 fontSize: 15.sp,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF93A23A),
+                color: context.inkColor(Color(0xFF93A23A)),
               ),
             ),
             SizedBox(height: 4.h),
@@ -264,12 +267,12 @@ class _DetailCard extends StatelessWidget {
                           fontSize: 17.sp,
                           fontWeight: FontWeight.w600,
                           height: 1.8,
-                          color: const Color(0xFF3F6B2C),
+                          color: context.inkColor(Color(0xFF3F6B2C)),
                         )
                       : TextStyle(
                           fontSize: 13.sp,
                           height: 1.6,
-                          color: const Color(0xFF4B5540),
+                          color: context.inkColor(Color(0xFF4B5540)),
                         ),
                 ),
               ),
@@ -305,7 +308,7 @@ class _CircleIconButton extends StatelessWidget {
         height: 50.r,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: background,
+          color: context.surfaceColor(background),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
@@ -321,10 +324,10 @@ class _CircleIconButton extends StatelessWidget {
                 height: 18.r,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: iconColor,
+                  color: context.inkColor(iconColor),
                 ),
               )
-            : Icon(icon, color: iconColor, size: 22.sp),
+            : Icon(icon, color: context.inkColor(iconColor), size: 22.sp),
       ),
     );
   }

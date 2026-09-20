@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -19,7 +20,7 @@ class ZikrAllScreen extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           ListView(
@@ -37,7 +38,7 @@ class ZikrAllScreen extends StatelessWidget {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: const Color(0xFF303629),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -49,7 +50,7 @@ class ZikrAllScreen extends StatelessWidget {
                     Text(
                       appText.zikrAllTitle,
                       style: TextStyle(
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                         fontSize: 19.sp,
                         fontWeight: FontWeight.w600,
                       ),
@@ -97,9 +98,9 @@ class _ZikrTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 12.w, 12.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9EF),
+          color: context.surfaceColor(Color(0xFFF7F9EF)),
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFE3E7D3)),
+          border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         child: Row(
           children: [
@@ -112,7 +113,7 @@ class _ZikrTile extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     style: TextStyle(
                       fontSize: 18.sp,
-                      color: const Color(0xFF283016),
+                      color: context.inkColor(Color(0xFF283016)),
                     ),
                   ),
                   SizedBox(height: 6.h),
@@ -120,7 +121,7 @@ class _ZikrTile extends StatelessWidget {
                     item.transliteration,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFF5D6B44),
+                      color: context.inkColor(Color(0xFF5D6B44)),
                     ),
                   ),
                 ],
@@ -130,7 +131,7 @@ class _ZikrTile extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFECF0DC),
+                color: context.surfaceColor(Color(0xFFECF0DC)),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Text(
@@ -138,7 +139,7 @@ class _ZikrTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF4C5A34),
+                  color: context.inkColor(Color(0xFF4C5A34)),
                 ),
               ),
             ),

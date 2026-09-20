@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.dart';
@@ -25,7 +26,7 @@ class HadithContentSettingsDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       child: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 24.h),
@@ -40,7 +41,7 @@ class HadithContentSettingsDrawer extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF2C3320),
+                        color: context.inkColor(Color(0xFF2C3320)),
                       ),
                     ),
                   ),
@@ -48,8 +49,8 @@ class HadithContentSettingsDrawer extends StatelessWidget {
                     onPressed: onOpenProfileSettings,
                     tooltip: appText.settingsTitle,
                     style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFEDF1DE),
-                      foregroundColor: const Color(0xFF4C5A34),
+                      backgroundColor: context.surfaceColor(Color(0xFFEDF1DE)),
+                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                       minimumSize: Size(38.r, 38.r),
                     ),
                     icon: const Icon(Icons.settings_outlined, size: 18),
@@ -72,7 +73,7 @@ class HadithContentSettingsDrawer extends StatelessWidget {
                     ? null
                     : (v) => onChanged(settings.copyWith(showTranslation: v)),
               ),
-              const Divider(height: 28, color: Color(0xFFE3E7D3)),
+              Divider(height: 28, color: context.lineColor(Color(0xFFE3E7D3))),
               _SizeSlider(
                 label: appText.quranArabicSizeLabel,
                 value: settings.arabicScale,
@@ -145,7 +146,7 @@ class _SizeSlider extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5A6350),
+                  color: context.inkColor(Color(0xFF5A6350)),
                 ),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -27,7 +28,7 @@ class QuizCompletionScreen extends StatelessWidget {
     final appText = AppText.of(context);
     final categories = _categories(appText);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -54,7 +55,7 @@ class QuizCompletionScreen extends StatelessWidget {
                         child: Text(
                           appText.seeAll,
                           style: TextStyle(
-                            color: Colors.black,
+                            color: context.inkColor(Colors.black),
                             fontSize: 12.sp,
                           ),
                         ),
@@ -97,7 +98,7 @@ class _CompletionHero extends StatelessWidget {
       height: 246.h,
       padding: EdgeInsets.fromLTRB(19.w, 16.h, 24.w, 28.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFE4ECC5),
+        color: context.surfaceColor(Color(0xFFE4ECC5)),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(37.r),
           bottomRight: Radius.circular(37.r),
@@ -111,7 +112,7 @@ class _CompletionHero extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -134,9 +135,9 @@ class _CompletionHero extends StatelessWidget {
                 SizedBox(height: 28.h),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.workspace_premium_rounded,
-                      color: Color(0xFF31555D),
+                      color: context.inkColor(Color(0xFF31555D)),
                       size: 31,
                     ),
                     SizedBox(width: 10.w),
@@ -175,7 +176,7 @@ class _SuccessMark extends StatelessWidget {
             width: 106.w,
             height: 106.w,
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F4),
+              color: context.surfaceColor(Color(0xFFF5F5F4)),
               borderRadius: BorderRadius.circular(35.r),
               boxShadow: [
                 BoxShadow(
@@ -189,7 +190,7 @@ class _SuccessMark extends StatelessWidget {
         ),
         Icon(
           Icons.check_rounded,
-          color: const Color(0xFF82D020),
+          color: context.inkColor(Color(0xFF82D020)),
           size: 87.sp,
           shadows: [
             Shadow(
@@ -213,7 +214,7 @@ class _CompletedCategoryCard extends StatelessWidget {
     width: double.infinity,
     padding: EdgeInsets.all(19.w),
     decoration: BoxDecoration(
-      color: const Color(0xFFDFE9B9),
+      color: context.surfaceColor(Color(0xFFDFE9B9)),
       borderRadius: BorderRadius.circular(18.r),
     ),
     child: Column(
@@ -241,7 +242,7 @@ class _CompletedCategoryCard extends StatelessWidget {
               icon: Icon(Icons.north_east_rounded, size: 17.sp),
               label: Text(AppText.of(context).explore),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF4D5542),
+                foregroundColor: context.inkColor(Color(0xFF4D5542)),
                 side: const BorderSide(color: AppColor.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(11.r),
@@ -258,14 +259,20 @@ class _CompletedCategoryCard extends StatelessWidget {
         SizedBox(height: 14.h),
         Text(
           category.quizzes,
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFF56614F)),
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: context.inkColor(Color(0xFF56614F)),
+          ),
         ),
         SizedBox(height: 14.h),
         Row(
           children: [
             Text(
               AppText.of(context).highScore,
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF697269)),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: context.inkColor(Color(0xFF697269)),
+              ),
             ),
             SizedBox(width: 10.w),
             Text(

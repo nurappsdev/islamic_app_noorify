@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
@@ -41,7 +42,7 @@ class FullSurahScreen extends StatelessWidget {
 
   Widget _buildScaffold(BuildContext context, AppText appText) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7EA),
+      backgroundColor: context.pageColor(Color(0xFFF4F7EA)),
       body: SafeArea(
         child: Column(
           children: [
@@ -58,8 +59,10 @@ class FullSurahScreen extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -71,7 +74,7 @@ class FullSurahScreen extends StatelessWidget {
                   Text(
                     appText.categoryQuran,
                     style: TextStyle(
-                      color: const Color(0xFF6B7458),
+                      color: context.inkColor(Color(0xFF6B7458)),
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w500,
                     ),
@@ -86,8 +89,10 @@ class FullSurahScreen extends StatelessWidget {
                           bloc: context.read<QuranTranslationBloc>(),
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(Icons.tune_rounded, size: 18),
                       ),
@@ -108,7 +113,7 @@ class FullSurahScreen extends StatelessWidget {
                         appText.quranLoadError,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.grey.shade700,
+                          color: context.inkColor(Colors.grey.shade700),
                           fontSize: 13.sp,
                         ),
                       ),
@@ -158,7 +163,9 @@ class FullSurahScreen extends StatelessWidget {
                                     appText.quranTranslationLabel,
                                     style: TextStyle(
                                       fontSize: 12.sp,
-                                      color: const Color(0xFF6B7458),
+                                      color: context.inkColor(
+                                        Color(0xFF6B7458),
+                                      ),
                                     ),
                                   ),
                                   const Spacer(),
@@ -359,7 +366,7 @@ class _ContinuousAyahTextState extends State<_ContinuousAyahText> {
           textAlign: TextAlign.right,
           text: TextSpan(
             style: TextStyle(
-              color: Colors.black87,
+              color: context.inkColor(Colors.black87),
               fontSize: 19.sp * multiplier,
               height: 2.0,
             ),
@@ -371,19 +378,21 @@ class _ContinuousAyahTextState extends State<_ContinuousAyahText> {
                       text: '${widget.arabicAyahs[i]} ',
                       style: i + 1 == currentAyahNo
                           ? TextStyle(
-                              backgroundColor: _highlightColor,
+                              backgroundColor: context.surfaceColor(
+                                _highlightColor,
+                              ),
                               fontWeight: FontWeight.w600,
                             )
                           : i + 1 < currentAyahNo
-                          ? const TextStyle(color: _readColor)
+                          ? TextStyle(color: context.inkColor(_readColor))
                           : null,
                     ),
                     TextSpan(
                       text: '﴿${i + 1}﴾  ',
                       style: TextStyle(
-                        color: i + 1 < currentAyahNo
-                            ? _readColor
-                            : AppColor.primary,
+                        color: context.inkColor(
+                          i + 1 < currentAyahNo ? _readColor : AppColor.primary,
+                        ),
                         fontSize: 14.sp * multiplier,
                         backgroundColor: i + 1 == currentAyahNo
                             ? _highlightColor
@@ -438,7 +447,7 @@ class _CurrentAyahDetails extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.sp * multiplier,
                   height: 1.4,
-                  color: const Color(0xFF444444),
+                  color: context.inkColor(Color(0xFF444444)),
                 ),
               ),
             SizedBox(height: 6.h),
@@ -471,8 +480,10 @@ class _NowPlayingBar extends StatelessWidget {
     final appText = AppText.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2DD),
-        border: const Border(top: BorderSide(color: Color(0xFFD8E2B0))),
+        color: context.surfaceColor(Color(0xFFEEF2DD)),
+        border: Border(
+          top: BorderSide(color: context.lineColor(Color(0xFFD8E2B0))),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -528,7 +539,7 @@ class _NowPlayingBar extends StatelessWidget {
                                 vertical: 7.h,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: context.surfaceColor(Colors.white),
                                 borderRadius: BorderRadius.circular(18.r),
                               ),
                               child: Row(
@@ -542,7 +553,9 @@ class _NowPlayingBar extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         fontSize: 11.sp,
-                                        color: const Color(0xFF6B6B6B),
+                                        color: context.inkColor(
+                                          Color(0xFF6B6B6B),
+                                        ),
                                       ),
                                     ),
                                   ),

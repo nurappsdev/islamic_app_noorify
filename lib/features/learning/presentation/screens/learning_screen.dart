@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -13,7 +14,7 @@ class LearningScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -83,7 +84,7 @@ class _LearningHeader extends StatelessWidget {
             onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
@@ -114,7 +115,10 @@ class _SectionTitle extends StatelessWidget {
         onPressed: onSeeAll ?? () {},
         child: Text(
           AppText.of(context).seeAll,
-          style: TextStyle(color: Colors.black, fontSize: 12.sp),
+          style: TextStyle(
+            color: context.inkColor(Colors.black),
+            fontSize: 12.sp,
+          ),
         ),
       ),
     ],
@@ -132,7 +136,7 @@ class _ExploreCard extends StatelessWidget {
     margin: EdgeInsets.only(right: 8.w),
     padding: EdgeInsets.fromLTRB(16.w, 20.h, 10.w, 14.h),
     decoration: BoxDecoration(
-      color: const Color(0xFFDFE9B9),
+      color: context.surfaceColor(Color(0xFFDFE9B9)),
       borderRadius: BorderRadius.circular(18.r),
     ),
     child: Column(
@@ -142,7 +146,10 @@ class _ExploreCard extends StatelessWidget {
         SizedBox(height: 15.h),
         Text(
           articleCount,
-          style: TextStyle(color: const Color(0xFF718060), fontSize: 12.sp),
+          style: TextStyle(
+            color: context.inkColor(Color(0xFF718060)),
+            fontSize: 12.sp,
+          ),
         ),
         const Spacer(),
         OutlinedButton.icon(
@@ -151,7 +158,7 @@ class _ExploreCard extends StatelessWidget {
           icon: Icon(Icons.north_east_rounded, size: 16.sp),
           label: Text(AppText.of(context).explore),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF637354),
+            foregroundColor: context.inkColor(Color(0xFF637354)),
             side: const BorderSide(color: AppColor.primary),
             padding: EdgeInsets.symmetric(horizontal: 10.w),
             minimumSize: Size(0, 34.h),
@@ -174,8 +181,8 @@ class _ArticleCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 9.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F6E7),
-        border: Border.all(color: const Color(0xFFDDE8B5)),
+        color: context.surfaceColor(Color(0xFFF2F6E7)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -192,8 +199,8 @@ class _ArticleCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFDDE8B5)),
+              color: context.surfaceColor(Colors.white),
+              border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
               borderRadius: BorderRadius.circular(14.r),
             ),
             child: Text(

@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
@@ -108,7 +109,7 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
         final isReady = state.status == HadithBookStatus.ready;
         return Scaffold(
           key: _scaffoldKey,
-          backgroundColor: Colors.white,
+          backgroundColor: context.pageColor(Colors.white),
           endDrawerEnableOpenDragGesture: isReady,
           endDrawer: isReady && state.entries.isNotEmpty
               ? _HadithIndexDrawer(
@@ -197,7 +198,7 @@ class _ReaderHeader extends StatelessWidget {
             onPressed: () => Navigator.maybePop(context),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFCBD16B),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: context.inkColor(Color(0xFF303629)),
               minimumSize: Size(38.r, 38.r),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -213,7 +214,7 @@ class _ReaderHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColor.authLogo,
+                    color: context.inkColor(AppColor.authLogo),
                     fontSize: 17.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -236,8 +237,8 @@ class _ReaderHeader extends StatelessWidget {
               onPressed: onBookmark,
               tooltip: AppText.of(context).hadithBookmark,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFEDF1DE),
-                foregroundColor: const Color(0xFF4C5A34),
+                backgroundColor: context.surfaceColor(Color(0xFFEDF1DE)),
+                foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.bookmark_border_rounded, size: 18),
@@ -248,8 +249,8 @@ class _ReaderHeader extends StatelessWidget {
             IconButton(
               onPressed: onOpenIndex,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFEDF1DE),
-                foregroundColor: const Color(0xFF4C5A34),
+                backgroundColor: context.surfaceColor(Color(0xFFEDF1DE)),
+                foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.menu_book_rounded, size: 17),
@@ -322,7 +323,7 @@ class _HadithIndexDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +338,7 @@ class _HadithIndexDrawer extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3320),
+                      color: context.inkColor(Color(0xFF2C3320)),
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -352,7 +353,7 @@ class _HadithIndexDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, color: Color(0xFFE3E7D3)),
+            Divider(height: 1, color: context.lineColor(Color(0xFFE3E7D3))),
             if (reference != null)
               _BookReferenceTile(
                 reference: reference!,
@@ -372,9 +373,9 @@ class _HadithIndexDrawer extends StatelessWidget {
                   return InkWell(
                     onTap: () => onSelect(index),
                     child: Container(
-                      color: selected
-                          ? const Color(0xFFEDF1DE)
-                          : Colors.transparent,
+                      color: context.surfaceColor(
+                        selected ? const Color(0xFFEDF1DE) : Colors.transparent,
+                      ),
                       padding: EdgeInsets.symmetric(
                         horizontal: 16.w,
                         vertical: 11.h,
@@ -413,7 +414,7 @@ class _HadithIndexDrawer extends StatelessWidget {
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                color: const Color(0xFF2C3320),
+                                color: context.inkColor(Color(0xFF2C3320)),
                               ),
                             ),
                           ),
@@ -484,7 +485,7 @@ class _BookReferenceTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF2C3320),
+            color: context.inkColor(Color(0xFF2C3320)),
           ),
         ),
         children: [
@@ -508,7 +509,7 @@ class _BookReferenceTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.sp,
                       height: 1.45,
-                      color: const Color(0xFF3B4430),
+                      color: context.inkColor(Color(0xFF3B4430)),
                     ),
                   ),
                 ],
@@ -535,8 +536,8 @@ class _DownloadPrompt extends StatelessWidget {
         children: [
           Container(
             padding: EdgeInsets.all(22.r),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEDF1DE),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(Color(0xFFEDF1DE)),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -552,7 +553,7 @@ class _DownloadPrompt extends StatelessWidget {
             style: TextStyle(
               fontSize: 17.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF2C3320),
+              color: context.inkColor(Color(0xFF2C3320)),
             ),
           ),
           SizedBox(height: 10.h),
@@ -562,7 +563,7 @@ class _DownloadPrompt extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5.sp,
               height: 1.5,
-              color: const Color(0xFF5D6B44),
+              color: context.inkColor(Color(0xFF5D6B44)),
             ),
           ),
           SizedBox(height: 8.h),
@@ -626,7 +627,7 @@ class _DownloadingView extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF2C3320),
+              color: context.inkColor(Color(0xFF2C3320)),
             ),
           ),
           SizedBox(height: 14.h),
@@ -635,7 +636,7 @@ class _DownloadingView extends StatelessWidget {
             child: LinearProgressIndicator(
               value: state.progress,
               minHeight: 8.h,
-              backgroundColor: const Color(0xFFEDEFE0),
+              backgroundColor: context.surfaceColor(Color(0xFFEDEFE0)),
               valueColor: const AlwaysStoppedAnimation(AppColor.primary),
             ),
           ),
@@ -643,7 +644,10 @@ class _DownloadingView extends StatelessWidget {
             SizedBox(height: 10.h),
             Text(
               '${state.done} / ${state.total}',
-              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF7A8368)),
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: context.inkColor(Color(0xFF7A8368)),
+              ),
             ),
           ],
         ],
@@ -674,15 +678,18 @@ class _FailedView extends StatelessWidget {
           Text(
             message ?? 'Download failed.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF5D6B44)),
+            ),
           ),
           SizedBox(height: 20.h),
           OutlinedButton(
             onPressed: () =>
                 context.read<HadithBookBloc>().add(const DownloadHadithBook()),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF4C5A34),
-              side: const BorderSide(color: Color(0xFF9BAE6C)),
+              foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+              side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24.r),
               ),
@@ -856,8 +863,11 @@ class _HadithCardState extends State<_HadithCard> {
           Color color = const Color(0xFF4C5A34),
         }) {
           return ListTile(
-            leading: Icon(icon, color: color),
-            title: Text(label, style: TextStyle(color: color)),
+            leading: Icon(icon, color: context.inkColor(color)),
+            title: Text(
+              label,
+              style: TextStyle(color: context.inkColor(color)),
+            ),
             onTap: () {
               Navigator.pop(sheetContext);
               onTap();
@@ -874,7 +884,7 @@ class _HadithCardState extends State<_HadithCard> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE3C4),
+                  color: context.surfaceColor(Color(0xFFDCE3C4)),
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -928,9 +938,11 @@ class _HadithCardState extends State<_HadithCard> {
               child: Container(
                 padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 16.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF7F9EF),
+                  color: context.surfaceColor(Color(0xFFF7F9EF)),
                   borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(color: const Color(0xFFE3E7D3)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFE3E7D3)),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -966,7 +978,7 @@ class _HadithCardState extends State<_HadithCard> {
                               style: TextStyle(
                                 fontSize: 13.5.sp,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF2C3320),
+                                color: context.inkColor(Color(0xFF2C3320)),
                               ),
                             ),
                           ),
@@ -987,7 +999,7 @@ class _HadithCardState extends State<_HadithCard> {
                               style: TextStyle(
                                 fontSize: 17.sp,
                                 height: 1.9,
-                                color: const Color(0xFF283016),
+                                color: context.inkColor(Color(0xFF283016)),
                               ),
                             ),
                           ],
@@ -999,7 +1011,7 @@ class _HadithCardState extends State<_HadithCard> {
                                 fontSize: 12.5.sp,
                                 height: 1.6,
                                 fontWeight: FontWeight.w600,
-                                color: const Color(0xFF4C5A34),
+                                color: context.inkColor(Color(0xFF4C5A34)),
                               ),
                             ),
                           ],
@@ -1010,7 +1022,7 @@ class _HadithCardState extends State<_HadithCard> {
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 height: 1.75,
-                                color: const Color(0xFF3B4430),
+                                color: context.inkColor(Color(0xFF3B4430)),
                               ),
                             ),
                           ],
@@ -1022,7 +1034,7 @@ class _HadithCardState extends State<_HadithCard> {
                                 vertical: 8.h,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFECF0DC),
+                                color: context.surfaceColor(Color(0xFFECF0DC)),
                                 borderRadius: BorderRadius.circular(10.r),
                               ),
                               child: Text(
@@ -1030,7 +1042,7 @@ class _HadithCardState extends State<_HadithCard> {
                                 style: TextStyle(
                                   fontSize: 11.5.sp,
                                   height: 1.5,
-                                  color: const Color(0xFF5D6B44),
+                                  color: context.inkColor(Color(0xFF5D6B44)),
                                 ),
                               ),
                             ),
@@ -1163,18 +1175,20 @@ class _BookmarkButtonState extends State<_BookmarkButton> {
         child: Container(
           padding: EdgeInsets.all(6.r),
           decoration: BoxDecoration(
-            color: _bookmarked
-                ? const Color(0xFF8B9A4B)
-                : const Color(0xFFECF0DC),
+            color: context.surfaceColor(
+              _bookmarked ? const Color(0xFF8B9A4B) : const Color(0xFFECF0DC),
+            ),
             borderRadius: BorderRadius.circular(9.r),
-            border: Border.all(color: const Color(0xFFDCE3C4)),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE3C4))),
           ),
           child: Icon(
             _bookmarked
                 ? Icons.bookmark_rounded
                 : Icons.bookmark_border_rounded,
             size: 15.sp,
-            color: _bookmarked ? Colors.white : const Color(0xFF4C5A34),
+            color: context.inkColor(
+              _bookmarked ? Colors.white : const Color(0xFF4C5A34),
+            ),
           ),
         ),
       ),
@@ -1198,14 +1212,14 @@ class _CopyButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(6.r),
           decoration: BoxDecoration(
-            color: const Color(0xFFECF0DC),
+            color: context.surfaceColor(Color(0xFFECF0DC)),
             borderRadius: BorderRadius.circular(9.r),
-            border: Border.all(color: const Color(0xFFDCE3C4)),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE3C4))),
           ),
           child: Icon(
             Icons.more_vert_rounded,
             size: 15.sp,
-            color: const Color(0xFF4C5A34),
+            color: context.inkColor(Color(0xFF4C5A34)),
           ),
         ),
       ),

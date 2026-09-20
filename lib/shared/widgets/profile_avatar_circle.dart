@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 /// Circular avatar that reflects the signed-in user's photo everywhere it's
@@ -33,7 +34,7 @@ class ProfileAvatarCircle extends StatelessWidget {
         final placeholder = Icon(
           Icons.person_rounded,
           size: dimension * .5,
-          color: placeholderIconColor,
+          color: context.inkColor(placeholderIconColor),
         );
 
         ImageProvider? provider;
@@ -55,7 +56,7 @@ class ProfileAvatarCircle extends StatelessWidget {
           height: dimension,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: context.surfaceColor(backgroundColor),
             shape: BoxShape.circle,
           ),
           clipBehavior: Clip.antiAlias,

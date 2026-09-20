@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -22,7 +23,7 @@ class DuaAllDuaScreen extends StatelessWidget {
     final duas = DuaCatalog.groupDuas;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
@@ -32,7 +33,10 @@ class DuaAllDuaScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             Text(
               '${appText.duaTotalDuaLabel} ( ${duas.length} )',
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
             ),
             SizedBox(height: 12.h),
             TextField(
@@ -40,18 +44,22 @@ class DuaAllDuaScreen extends StatelessWidget {
                 hintText: appText.searchHere,
                 hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: context.surfaceColor(Colors.white),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16.w,
                   vertical: 14.h,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: AppColor.authFieldBorder),
+                  borderSide: BorderSide(
+                    color: context.lineColor(AppColor.authFieldBorder),
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: AppColor.authFieldBorder),
+                  borderSide: BorderSide(
+                    color: context.lineColor(AppColor.authFieldBorder),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),

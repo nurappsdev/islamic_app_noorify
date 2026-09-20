@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -27,7 +28,7 @@ class DuaGroupScreen extends StatelessWidget {
     final duas = DuaCatalog.groupDuas;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           ListView(
@@ -56,7 +57,7 @@ class DuaGroupScreen extends StatelessWidget {
                         appText.seeAll,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: const Color(0xFF6B7A4A),
+                          color: context.inkColor(Color(0xFF6B7A4A)),
                         ),
                       ),
                     ),
@@ -134,8 +135,10 @@ class _GroupHeader extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -202,7 +205,9 @@ class _LastReadPill extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: .55)),
+        border: Border.all(
+          color: context.lineColor(Colors.white.withValues(alpha: .55)),
+        ),
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
@@ -226,7 +231,9 @@ class _LastReadPill extends StatelessWidget {
             height: 26.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: .7)),
+              border: Border.all(
+                color: context.lineColor(Colors.white.withValues(alpha: .7)),
+              ),
             ),
             child: Icon(
               Icons.chevron_right_rounded,

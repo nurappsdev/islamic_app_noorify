@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -87,7 +88,7 @@ class HadithListScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -136,7 +137,7 @@ class _HadithListHeader extends StatelessWidget {
                 onPressed: () => Navigator.maybePop(context),
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: const Color(0xFF303629),
+                  foregroundColor: context.inkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -146,7 +147,7 @@ class _HadithListHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: AppColor.authLogo,
+              color: context.inkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -175,10 +176,10 @@ class HadithSearchField extends StatelessWidget {
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.surfaceColor(Colors.white),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),
-          borderSide: const BorderSide(color: Color(0xFFE3E7D3)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),

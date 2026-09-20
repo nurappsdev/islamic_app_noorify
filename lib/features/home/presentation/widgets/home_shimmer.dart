@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 
 /// Wraps [child] with the app-wide shimmer sweep used for loading skeletons
@@ -34,7 +35,7 @@ class _ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
@@ -53,7 +54,7 @@ class AmalTrackerCardShimmer extends StatelessWidget {
         height: 108.h,
         padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor(Colors.white),
           borderRadius: BorderRadius.circular(18.r),
         ),
         child: Row(
@@ -105,7 +106,7 @@ class HomeProgressSectionShimmer extends StatelessWidget {
             itemBuilder: (context, index) => Container(
               padding: EdgeInsets.symmetric(vertical: 9.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(11.r),
               ),
               child: Column(
@@ -125,7 +126,7 @@ class HomeProgressSectionShimmer extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 13.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(11.r),
             ),
             child: Column(

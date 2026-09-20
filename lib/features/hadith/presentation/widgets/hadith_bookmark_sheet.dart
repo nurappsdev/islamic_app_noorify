@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
@@ -105,7 +106,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
       padding: EdgeInsets.only(bottom: viewInsets),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE6BE),
+          color: context.surfaceColor(Color(0xFFDCE6BE)),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
         padding: EdgeInsets.fromLTRB(
@@ -121,7 +122,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               width: 42.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: const Color(0xFFB6C489),
+                color: context.surfaceColor(Color(0xFFB6C489)),
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -131,7 +132,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF3E4A2A),
+                color: context.inkColor(Color(0xFF3E4A2A)),
               ),
             ),
             SizedBox(height: 16.h),
@@ -141,21 +142,23 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               decoration: InputDecoration(
                 hintText: appText.searchFolderHint,
                 hintStyle: TextStyle(
-                  color: const Color(0xFF8A9568),
+                  color: context.inkColor(Color(0xFF8A9568)),
                   fontSize: 13.sp,
                 ),
                 isDense: true,
                 prefixIcon: Icon(
                   Icons.search_rounded,
                   size: 18.sp,
-                  color: const Color(0xFF8A9568),
+                  color: context.inkColor(Color(0xFF8A9568)),
                 ),
                 contentPadding: EdgeInsets.symmetric(vertical: 14.h),
                 filled: true,
-                fillColor: const Color(0xFFEFF3E1),
+                fillColor: context.surfaceColor(Color(0xFFEFF3E1)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: Color(0xFFC7D2A0)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(Color(0xFFC7D2A0)),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
@@ -196,15 +199,17 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                                       ? Icons.check_circle_rounded
                                       : Icons.circle_outlined,
                                   size: 20.sp,
-                                  color: selected
-                                      ? const Color(0xFF7C8A48)
-                                      : const Color(0xFF9AA77A),
+                                  color: context.inkColor(
+                                    selected
+                                        ? const Color(0xFF7C8A48)
+                                        : const Color(0xFF9AA77A),
+                                  ),
                                 ),
                                 SizedBox(width: 14.w),
                                 Icon(
                                   Icons.folder_rounded,
                                   size: 22.sp,
-                                  color: const Color(0xFF8B9A4B),
+                                  color: context.inkColor(Color(0xFF8B9A4B)),
                                 ),
                                 SizedBox(width: 12.w),
                                 Expanded(
@@ -212,7 +217,9 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                                     folder,
                                     style: TextStyle(
                                       fontSize: 14.sp,
-                                      color: const Color(0xFF3E4A2A),
+                                      color: context.inkColor(
+                                        Color(0xFF3E4A2A),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -230,9 +237,11 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                   child: OutlinedButton(
                     onPressed: _createFolder,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF4C5A34),
+                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                       minimumSize: Size(0, 52.h),
-                      side: const BorderSide(color: Color(0xFF9BAE6C)),
+                      side: BorderSide(
+                        color: context.lineColor(Color(0xFF9BAE6C)),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26.r),
                       ),
@@ -297,7 +306,7 @@ class _CreateFolderDialogState extends State<_CreateFolderDialog> {
   Widget build(BuildContext context) {
     final appText = widget.appText;
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       title: Text(
         appText.createFolderAction,
         style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
@@ -310,7 +319,7 @@ class _CreateFolderDialogState extends State<_CreateFolderDialog> {
           hintText: appText.folderNameHint,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+            borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),

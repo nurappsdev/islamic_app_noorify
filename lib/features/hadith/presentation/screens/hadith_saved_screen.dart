@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -123,7 +124,7 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -276,7 +277,7 @@ class _Header extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: AppColor.authLogo,
+                color: context.inkColor(AppColor.authLogo),
                 fontSize: 19.sp,
                 fontWeight: FontWeight.w600,
               ),
@@ -309,15 +310,20 @@ class _SavedTabs extends StatelessWidget {
         height: 42.h,
         padding: EdgeInsets.all(4.r),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F3E4),
+          color: context.surfaceColor(Color(0xFFF0F3E4)),
           borderRadius: BorderRadius.circular(14.r),
         ),
-        child: Row(children: [_tab(hadithLabel, 0), _tab(folderLabel, 1)]),
+        child: Row(
+          children: [
+            _tab(context, hadithLabel, 0),
+            _tab(context, folderLabel, 1),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _tab(String label, int index) {
+  Widget _tab(BuildContext context, String label, int index) {
     final active = selected == index;
     return Expanded(
       child: GestureDetector(
@@ -326,7 +332,9 @@ class _SavedTabs extends StatelessWidget {
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? const Color(0xFFDDE8BA) : Colors.transparent,
+            color: context.surfaceColor(
+              active ? const Color(0xFFDDE8BA) : Colors.transparent,
+            ),
             borderRadius: BorderRadius.circular(11.r),
           ),
           child: Text(
@@ -334,7 +342,9 @@ class _SavedTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: active ? const Color(0xFF3E4A2A) : const Color(0xFF8A9568),
+              color: context.inkColor(
+                active ? const Color(0xFF3E4A2A) : const Color(0xFF8A9568),
+              ),
             ),
           ),
         ),
@@ -365,10 +375,10 @@ class _SearchField extends StatelessWidget {
         ),
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.surfaceColor(Colors.white),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),
-          borderSide: const BorderSide(color: Color(0xFFE3E7D3)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),
@@ -424,7 +434,7 @@ class _FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(18.r),
       child: InkWell(
         onTap: onTap,
@@ -433,7 +443,7 @@ class _FolderCard extends StatelessWidget {
           height: 74.h,
           padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 0),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE3E7D3)),
+            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
             borderRadius: BorderRadius.circular(18.r),
             boxShadow: [
               BoxShadow(
@@ -450,13 +460,13 @@ class _FolderCard extends StatelessWidget {
                 height: 44.w,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF1DE),
+                  color: context.surfaceColor(Color(0xFFEDF1DE)),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   Icons.folder_rounded,
                   size: 22.sp,
-                  color: const Color(0xFF8B9A4B),
+                  color: context.inkColor(Color(0xFF8B9A4B)),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -470,7 +480,7 @@ class _FolderCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF2C3320),
+                        color: context.inkColor(Color(0xFF2C3320)),
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -522,7 +532,7 @@ class _SavedHadithCard extends StatelessWidget {
     ].join('  ·  ');
 
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(18.r),
       child: InkWell(
         onTap: onTap,
@@ -531,7 +541,7 @@ class _SavedHadithCard extends StatelessWidget {
           height: 76.h,
           padding: EdgeInsets.fromLTRB(12.w, 0, 6.w, 0),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE3E7D3)),
+            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
             borderRadius: BorderRadius.circular(18.r),
             boxShadow: [
               BoxShadow(
@@ -571,7 +581,7 @@ class _SavedHadithCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF2C3320),
+                        color: context.inkColor(Color(0xFF2C3320)),
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -594,7 +604,7 @@ class _SavedHadithCard extends StatelessWidget {
                 icon: Icon(
                   Icons.bookmark_rounded,
                   size: 20.sp,
-                  color: const Color(0xFF8B9A4B),
+                  color: context.inkColor(Color(0xFF8B9A4B)),
                 ),
               ),
             ],

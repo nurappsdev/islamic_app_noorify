@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -56,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final appText = AppText.of(context);
     final profile = _profile;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -136,7 +137,7 @@ class _ProfileHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -156,7 +157,7 @@ class _ProfileHeader extends StatelessWidget {
                   Navigator.of(context).pushNamed(RouteNames.settings),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.settings_outlined, size: 18),
             ),
@@ -192,14 +193,14 @@ class _ProfileHeroCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCE7AC),
+              color: context.surfaceColor(Color(0xFFDCE7AC)),
               borderRadius: BorderRadius.circular(14.r),
             ),
             child: Text(
               '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
               style: TextStyle(
                 fontSize: 11.sp,
-                color: const Color(0xFF3F4A2C),
+                color: context.inkColor(Color(0xFF3F4A2C)),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -222,7 +223,7 @@ class _ProfileHeroCard extends StatelessWidget {
           Text(
             '${appText.trishal}, ${appText.mymensingh}',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: .85),
+              color: context.inkColor(Colors.white.withValues(alpha: .85)),
               fontSize: 12.sp,
             ),
           ),
@@ -338,7 +339,7 @@ class _AvatarWithProgress extends StatelessWidget {
           ),
           ProfileAvatarCircle(
             dimension: 84.r,
-            backgroundColor: Colors.white,
+            backgroundColor: context.surfaceColor(Colors.white),
             placeholderIconColor: const Color(0xFFB7C17E),
           ),
           Positioned(
@@ -354,7 +355,10 @@ class _AvatarWithProgress extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColor.primary,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: context.lineColor(Colors.white),
+                    width: 2,
+                  ),
                 ),
                 child: Icon(
                   Icons.edit_rounded,
@@ -448,7 +452,7 @@ class _PositionPointsPill extends StatelessWidget {
           Container(
             width: 1,
             height: 20.h,
-            color: Colors.white.withValues(alpha: .4),
+            color: context.surfaceColor(Colors.white.withValues(alpha: .4)),
           ),
           Expanded(
             child: Center(
@@ -494,14 +498,17 @@ class _FamilyMemberCard extends StatelessWidget {
       height: 60.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5E4),
+        color: context.surfaceColor(Color(0xFFF3F5E4)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: [
           Text(
             '#${member.globalRank}',
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7551)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF6B7551)),
+            ),
           ),
           SizedBox(width: 10.w),
           _FamilyMemberAvatar(
@@ -544,10 +551,13 @@ class _FamilyMemberAvatar extends StatelessWidget {
     final trimmedName = name.trim();
     final placeholder = CircleAvatar(
       radius: 15.r,
-      backgroundColor: const Color(0xFFCFCFEA),
+      backgroundColor: context.surfaceColor(Color(0xFFCFCFEA)),
       child: Text(
         trimmedName.isEmpty ? '?' : trimmedName[0].toUpperCase(),
-        style: TextStyle(color: const Color(0xFF5B5B8C), fontSize: 12.sp),
+        style: TextStyle(
+          color: context.inkColor(Color(0xFF5B5B8C)),
+          fontSize: 12.sp,
+        ),
       ),
     );
     final url = avatarUrl;
@@ -606,10 +616,9 @@ class _LogoutButtonView extends StatelessWidget {
     // and send the user back to the sign-in screen.
     skipAuthGateNotifier.value = false;
     unawaited(ProfileService.instance.clear());
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      RouteNames.signIn,
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
   }
 
   Future<void> _confirmLogout(BuildContext context, AppText appText) async {
@@ -656,8 +665,8 @@ class _LogoutButtonView extends StatelessWidget {
                 ? null
                 : () => _confirmLogout(context, appText),
             style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFFBEAEA),
-              foregroundColor: AppColor.forgotPassword,
+              backgroundColor: context.surfaceColor(Color(0xFFFBEAEA)),
+              foregroundColor: context.inkColor(AppColor.forgotPassword),
               side: const BorderSide(color: AppColor.forgotPassword),
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               shape: RoundedRectangleBorder(

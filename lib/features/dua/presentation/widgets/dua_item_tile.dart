@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+
 /// The "Dua - N" row tile shown in a Dua group's "All dua" list (design
 /// `img_4.png` / `img_5.png`).
 class DuaItemTile extends StatelessWidget {
@@ -17,9 +19,9 @@ class DuaItemTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor(Colors.white),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: const Color(0xFFE3E7D3)),
+          border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         child: Row(
           children: [
@@ -37,7 +39,7 @@ class DuaItemTile extends StatelessWidget {
                 name,
                 style: TextStyle(
                   fontSize: 13.sp,
-                  color: const Color(0xFF2C3320),
+                  color: context.inkColor(Color(0xFF2C3320)),
                 ),
               ),
             ),

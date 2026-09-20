@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
@@ -11,11 +12,7 @@ class FamilyMembersScreen extends StatelessWidget {
     _FamilyMember(rank: 4, name: appText.familyMemberNameAbdullah, points: 831),
     _FamilyMember(rank: 5, name: appText.familyMemberNameSabit, points: 812),
     _FamilyMember(rank: 6, name: appText.familyMemberNameAli, points: 786),
-    _FamilyMember(
-      rank: 7,
-      name: appText.familyMemberNameZulfikur,
-      points: 769,
-    ),
+    _FamilyMember(rank: 7, name: appText.familyMemberNameZulfikur, points: 769),
     _FamilyMember(rank: 8, name: appText.familyMemberNameAsif, points: 720),
   ];
 
@@ -24,7 +21,7 @@ class FamilyMembersScreen extends StatelessWidget {
     final appText = AppText.of(context);
     final members = _members(appText);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -73,7 +70,7 @@ class _FamilyMembersHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -112,7 +109,9 @@ class _SearchField extends StatelessWidget {
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 18.w),
                 enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(Color(0xFFDDE8C1)),
+                  ),
                   borderRadius: BorderRadius.circular(22.r),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -120,7 +119,9 @@ class _SearchField extends StatelessWidget {
                   borderRadius: BorderRadius.circular(22.r),
                 ),
                 border: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(Color(0xFFDDE8C1)),
+                  ),
                   borderRadius: BorderRadius.circular(22.r),
                 ),
               ),
@@ -133,7 +134,7 @@ class _SearchField extends StatelessWidget {
           child: IconButton(
             onPressed: () {},
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFDDE8AE),
+              backgroundColor: context.surfaceColor(Color(0xFFDDE8AE)),
               foregroundColor: AppColor.primary,
             ),
             icon: Icon(Icons.search_rounded, size: 20.sp),
@@ -167,30 +168,33 @@ class _FamilyMemberCard extends StatelessWidget {
       height: 60.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5E4),
+        color: context.surfaceColor(Color(0xFFF3F5E4)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: [
           Text(
             '#${member.rank}',
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7551)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF6B7551)),
+            ),
           ),
           SizedBox(width: 10.w),
           CircleAvatar(
             radius: 15.r,
-            backgroundColor: const Color(0xFFCFCFEA),
+            backgroundColor: context.surfaceColor(Color(0xFFCFCFEA)),
             child: Text(
               'Z',
-              style: TextStyle(color: const Color(0xFF5B5B8C), fontSize: 12.sp),
+              style: TextStyle(
+                color: context.inkColor(Color(0xFF5B5B8C)),
+                fontSize: 12.sp,
+              ),
             ),
           ),
           SizedBox(width: 10.w),
           Expanded(
-            child: Text(
-              member.name,
-              style: TextStyle(fontSize: 13.sp),
-            ),
+            child: Text(member.name, style: TextStyle(fontSize: 13.sp)),
           ),
           Icon(
             Icons.monetization_on,

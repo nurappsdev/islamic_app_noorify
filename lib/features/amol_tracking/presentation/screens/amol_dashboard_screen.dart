@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
@@ -81,7 +82,15 @@ class _AmolDashboardView extends StatelessWidget {
 
   // Shown before the first `GET /amol/analytics/graph` response lands.
   static const _fallbackMyPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
-  static const _fallbackCompetitorValues = [6.0, 9.0, null, 8.0, null, 11.0, null];
+  static const _fallbackCompetitorValues = [
+    6.0,
+    9.0,
+    null,
+    8.0,
+    null,
+    11.0,
+    null,
+  ];
   static const _fallbackPoints = 27;
   static const _fallbackTotalPoints = 40;
   static const _fallbackCompetitorLabel = 'Ab';
@@ -131,7 +140,7 @@ class _AmolDashboardView extends StatelessWidget {
         : '${graph.completionPercentage.round()} %';
     final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -179,7 +188,7 @@ class _AmolDashboardView extends StatelessWidget {
                         TextSpan(
                           text: appText.todays,
                           style: TextStyle(
-                            color: Colors.black,
+                            color: context.inkColor(Colors.black),
                             fontSize: 15.sp,
                             fontStyle: FontStyle.italic,
                             fontFamily: 'Times New Roman',
@@ -189,7 +198,7 @@ class _AmolDashboardView extends StatelessWidget {
                         TextSpan(
                           text: ' ${appText.averageTodaysDays}',
                           style: TextStyle(
-                            color: Colors.black87,
+                            color: context.inkColor(Colors.black87),
                             fontSize: 13.sp,
                           ),
                         ),
@@ -230,7 +239,7 @@ class _PeriodTabs extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4EA),
+        color: context.surfaceColor(Color(0xFFF3F4EA)),
         borderRadius: BorderRadius.circular(24.r),
       ),
       child: Row(
@@ -244,9 +253,11 @@ class _PeriodTabs extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 9.h),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: value == period
-                        ? const Color(0xFFCBD79A)
-                        : Colors.transparent,
+                    color: context.surfaceColor(
+                      value == period
+                          ? const Color(0xFFCBD79A)
+                          : Colors.transparent,
+                    ),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
@@ -256,9 +267,11 @@ class _PeriodTabs extends StatelessWidget {
                       fontWeight: value == period
                           ? FontWeight.w700
                           : FontWeight.w400,
-                      color: value == period
-                          ? const Color(0xFF3F4A32)
-                          : const Color(0xFF9AA48A),
+                      color: context.inkColor(
+                        value == period
+                            ? const Color(0xFF3F4A32)
+                            : const Color(0xFF9AA48A),
+                      ),
                     ),
                   ),
                 ),
@@ -289,7 +302,7 @@ class _DateNavigator extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFDCE9B8)),
+        border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
       ),
       child: Row(
         children: [
@@ -299,12 +312,18 @@ class _DateNavigator extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 13.sp, color: Colors.black),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: context.inkColor(Colors.black),
+                  ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 10.sp, color: Colors.black54),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: context.inkColor(Colors.black54),
+                  ),
                 ),
               ],
             ),
@@ -341,7 +360,7 @@ class _MonthDropdown extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFDCE9B8)),
+        border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<DateTime>(
@@ -351,17 +370,23 @@ class _MonthDropdown extends StatelessWidget {
           value: months.contains(selectedMonth) ? selectedMonth : null,
           hint: Text(
             _label(selectedMonth),
-            style: TextStyle(fontSize: 13.sp, color: Colors.black),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Colors.black),
+            ),
           ),
           isDense: true,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: const Color(0xFF7E8C61),
+            color: context.inkColor(Color(0xFF7E8C61)),
             size: 18.sp,
           ),
           borderRadius: BorderRadius.circular(16.r),
-          dropdownColor: Colors.white,
-          style: TextStyle(fontSize: 13.sp, color: Colors.black),
+          dropdownColor: context.surfaceColor(Colors.white),
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: context.inkColor(Colors.black),
+          ),
           items: [
             for (final month in months)
               DropdownMenuItem(value: month, child: Text(_label(month))),
@@ -389,10 +414,14 @@ class _NavArrow extends StatelessWidget {
         onPressed: onTap,
         padding: EdgeInsets.zero,
         style: IconButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Color(0xFFDCE9B8)),
+          backgroundColor: context.surfaceColor(Colors.white),
+          side: BorderSide(color: context.lineColor(Color(0xFFDCE9B8))),
         ),
-        icon: Icon(icon, size: 16.sp, color: const Color(0xFF7E8C61)),
+        icon: Icon(
+          icon,
+          size: 16.sp,
+          color: context.inkColor(Color(0xFF7E8C61)),
+        ),
       ),
     );
   }
@@ -434,12 +463,18 @@ class _LegendDot extends StatelessWidget {
         Container(
           width: 9.r,
           height: 9.r,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(color),
+            shape: BoxShape.circle,
+          ),
         ),
         SizedBox(width: 6.w),
         Text(
           label,
-          style: TextStyle(fontSize: 11.sp, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: context.inkColor(Colors.black87),
+          ),
         ),
       ],
     );
@@ -481,8 +516,7 @@ class _AmolLineChart extends StatelessWidget {
           (width - plotLeft - plotRight).clamp(0.0, double.infinity),
           (height - plotTop - plotBottom).clamp(0.0, double.infinity),
         );
-        final points = _computePoints(plotRect, values, maxY)
-            .cast<Offset>();
+        final points = _computePoints(plotRect, values, maxY).cast<Offset>();
         final competitorPoints = _computePoints(
           plotRect,
           competitorValues,
@@ -555,7 +589,7 @@ class _CompetitorBubble extends StatelessWidget {
       height: 22.r,
       padding: EdgeInsets.symmetric(horizontal: 7.w),
       decoration: BoxDecoration(
-        color: dotColor.withValues(alpha: .55),
+        color: context.surfaceColor(dotColor.withValues(alpha: .55)),
         borderRadius: BorderRadius.circular(11.r),
       ),
       child: Row(
@@ -575,7 +609,7 @@ class _CompetitorBubble extends StatelessWidget {
             style: TextStyle(
               fontSize: 9.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF3F4A32),
+              color: context.inkColor(Color(0xFF3F4A32)),
             ),
           ),
         ],
@@ -714,8 +748,8 @@ class _MyPointsBar extends StatelessWidget {
     return Container(
       height: 50.h,
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      decoration: const ShapeDecoration(
-        color: Color(0xFFDCE7AC),
+      decoration: ShapeDecoration(
+        color: context.surfaceColor(Color(0xFFDCE7AC)),
         shape: StadiumBorder(),
       ),
       child: Row(
@@ -724,7 +758,10 @@ class _MyPointsBar extends StatelessWidget {
             child: Center(
               child: Text(
                 '${AppText.of(context).myPoints} : $myPoints',
-                style: TextStyle(fontSize: 13.sp, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: context.inkColor(Colors.black),
+                ),
               ),
             ),
           ),
@@ -742,7 +779,10 @@ class _MyPointsBar extends StatelessWidget {
               SizedBox(width: 5.w),
               Text(
                 '$totalPoints',
-                style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: context.inkColor(Colors.black87),
+                ),
               ),
             ],
           ),

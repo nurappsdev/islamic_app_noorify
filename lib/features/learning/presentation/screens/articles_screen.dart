@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -11,7 +12,7 @@ class ArticlesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -78,7 +79,7 @@ class _ArticleHeader extends StatelessWidget {
             onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
@@ -100,7 +101,7 @@ class _ArticlePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(11.r),
       child: InkWell(
         onTap: onTap,
@@ -108,7 +109,7 @@ class _ArticlePreview extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 10.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8B5)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
             borderRadius: BorderRadius.circular(11.r),
           ),
           child: Column(
@@ -120,12 +121,11 @@ class _ArticlePreview extends StatelessWidget {
               ),
               SizedBox(height: 7.h),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.w,
-                  vertical: 4.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFDDE8B5)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFDDE8B5)),
+                  ),
                   borderRadius: BorderRadius.circular(15.r),
                 ),
                 child: Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -12,7 +13,7 @@ class ArticleDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -34,7 +35,9 @@ class ArticleDetailsScreen extends StatelessWidget {
                       vertical: 5.h,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFDDE8B5)),
+                      border: Border.all(
+                        color: context.lineColor(Color(0xFFDDE8B5)),
+                      ),
                       borderRadius: BorderRadius.circular(15.r),
                     ),
                     child: Text(
@@ -106,7 +109,7 @@ class _DetailsHeader extends StatelessWidget {
             onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),

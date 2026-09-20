@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
@@ -31,7 +32,7 @@ class _QuizDashboardView extends StatelessWidget {
     final bloc = context.read<QuizDashboardBloc>();
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -107,7 +108,7 @@ class _QuizDashboardView extends StatelessWidget {
                         context,
                       ).pushNamed(RouteNames.completedHistory),
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
+                        foregroundColor: context.inkColor(Colors.black),
                         minimumSize: Size.zero,
                         padding: EdgeInsets.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -166,7 +167,7 @@ class _DashboardHeader extends StatelessWidget {
           Text(
             AppText.of(context).dashboard,
             style: TextStyle(
-              color: const Color(0xFF84945F),
+              color: context.inkColor(Color(0xFF84945F)),
               fontSize: 20.sp,
               fontWeight: FontWeight.w400,
             ),
@@ -199,14 +200,18 @@ class _PeriodTabs extends StatelessWidget {
                 child: Container(
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: selectedPeriod == index
-                        ? const Color(0xFFDDE8BA)
-                        : Colors.transparent,
+                    color: context.surfaceColor(
+                      selectedPeriod == index
+                          ? const Color(0xFFDDE8BA)
+                          : Colors.transparent,
+                    ),
                     border: Border(
                       bottom: BorderSide(
-                        color: selectedPeriod == index
-                            ? Colors.transparent
-                            : const Color(0xFFDDE8C1),
+                        color: context.lineColor(
+                          selectedPeriod == index
+                              ? Colors.transparent
+                              : const Color(0xFFDDE8C1),
+                        ),
                       ),
                     ),
                     borderRadius: BorderRadius.circular(13.r),
@@ -281,7 +286,7 @@ class _DateSelector extends StatelessWidget {
       height: 84.h,
       padding: EdgeInsets.symmetric(horizontal: 11.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(26.r),
       ),
       child: Row(
@@ -362,12 +367,15 @@ class _LegendItem extends StatelessWidget {
         Container(
           width: 19.w,
           height: 19.w,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(color),
+            shape: BoxShape.circle,
+          ),
         ),
         SizedBox(width: 10.w),
         Text(
           label,
-          style: TextStyle(color: color, fontSize: 14.sp),
+          style: TextStyle(color: context.inkColor(color), fontSize: 14.sp),
         ),
       ],
     );
@@ -420,9 +428,9 @@ class _CompetitorCard extends StatelessWidget {
       height: 105.h,
       padding: EdgeInsets.fromLTRB(20.w, 27.h, 15.w, 12.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE8BA),
+        color: context.surfaceColor(Color(0xFFDDE8BA)),
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFF5F5F5)),
+        border: Border.all(color: context.lineColor(Color(0xFFF5F5F5))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .13),
@@ -476,7 +484,7 @@ class _PointsSummary extends StatelessWidget {
       height: 51.h,
       margin: EdgeInsets.symmetric(horizontal: 20.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5E4),
+        color: context.surfaceColor(Color(0xFFF3F5E4)),
         borderRadius: BorderRadius.circular(26.r),
       ),
       child: Row(
@@ -485,7 +493,7 @@ class _PointsSummary extends StatelessWidget {
             child: Container(
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFDDE8BA),
+                color: context.surfaceColor(Color(0xFFDDE8BA)),
                 borderRadius: BorderRadius.circular(26.r),
               ),
               child: Text(
@@ -529,7 +537,7 @@ class _HistoryCard extends StatelessWidget {
       height: 84.h,
       padding: EdgeInsets.symmetric(horizontal: 11.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(25.r),
       ),
       child: Row(
@@ -539,11 +547,11 @@ class _HistoryCard extends StatelessWidget {
             height: 51.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFDDE8C1)),
+              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             ),
             child: Icon(
               Icons.image_outlined,
-              color: const Color(0xFF8B9865),
+              color: context.inkColor(Color(0xFF8B9865)),
               size: 25.sp,
             ),
           ),
@@ -593,7 +601,7 @@ class _ScoreProgress extends StatelessWidget {
             strokeWidth: 5.w,
             strokeCap: StrokeCap.round,
             color: const Color(0xFFA1AD59),
-            backgroundColor: const Color(0xFFF0F0F6),
+            backgroundColor: context.surfaceColor(Color(0xFFF0F0F6)),
           ),
           Text(
             '${(value * 100).round()}%',

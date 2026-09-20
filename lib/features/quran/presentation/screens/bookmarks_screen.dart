@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -40,8 +41,12 @@ class BookmarksScreen extends StatelessWidget {
                           child: IconButton(
                             onPressed: () => Navigator.maybePop(context),
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFEDE7A6),
-                              foregroundColor: AppColor.authLogo,
+                              backgroundColor: context.surfaceColor(
+                                Color(0xFFEDE7A6),
+                              ),
+                              foregroundColor: context.inkColor(
+                                AppColor.authLogo,
+                              ),
                             ),
                             icon: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -73,7 +78,7 @@ class BookmarksScreen extends StatelessWidget {
                             child: Text(
                               appText.noBookmarksYet,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: context.inkColor(Colors.grey.shade700),
                                 fontSize: 13.sp,
                               ),
                             ),
@@ -86,7 +91,9 @@ class BookmarksScreen extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final bookmark = bookmarks[index];
                             return Material(
-                              color: Colors.white.withValues(alpha: .85),
+                              color: context.surfaceColor(
+                                Colors.white.withValues(alpha: .85),
+                              ),
                               borderRadius: BorderRadius.circular(16.r),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16.r),
@@ -105,7 +112,9 @@ class BookmarksScreen extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.r),
                                     border: Border.all(
-                                      color: const Color(0xFFDDE8C1),
+                                      color: context.lineColor(
+                                        Color(0xFFDDE8C1),
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -132,7 +141,9 @@ class BookmarksScreen extends StatelessWidget {
                                                 maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  color: Colors.grey,
+                                                  color: context.inkColor(
+                                                    Colors.grey,
+                                                  ),
                                                   fontSize: 12.sp,
                                                 ),
                                               ),

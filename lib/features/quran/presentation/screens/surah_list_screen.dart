@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -73,7 +74,7 @@ class _SurahListScreenState extends State<SurahListScreen>
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           SafeArea(
@@ -96,7 +97,7 @@ class _SurahListScreenState extends State<SurahListScreen>
                       TabBar(
                         controller: _tabController,
                         labelColor: AppColor.primary,
-                        unselectedLabelColor: Colors.grey,
+                        unselectedLabelColor: context.inkColor(Colors.grey),
                         indicatorColor: AppColor.primary,
                         indicatorSize: TabBarIndicatorSize.label,
                         labelStyle: TextStyle(
@@ -169,7 +170,10 @@ class _OfflineBuildStrip extends StatelessWidget {
                   : '${appText.offlineQuranPreparing}  $percent%',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF7A8368)),
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: context.inkColor(Color(0xFF7A8368)),
+              ),
             ),
           ),
         ],
@@ -199,13 +203,13 @@ class _TopBar extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: context.inkColor(Colors.black87),
                 ),
               ),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 size: 18.sp,
-                color: Colors.black54,
+                color: context.inkColor(Colors.black54),
               ),
             ],
           ),
@@ -417,7 +421,10 @@ class _ListRow extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFC9D89A), width: 1.4),
+                border: Border.all(
+                  color: context.lineColor(Color(0xFFC9D89A)),
+                  width: 1.4,
+                ),
               ),
               child: Text(
                 '$number',
@@ -451,7 +458,7 @@ class _ListRow extends StatelessWidget {
                             subtitleLeft!,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: context.inkColor(Colors.grey),
                               fontSize: 12.sp,
                             ),
                           ),
@@ -462,8 +469,8 @@ class _ListRow extends StatelessWidget {
                             child: Container(
                               width: 3,
                               height: 3,
-                              decoration: const BoxDecoration(
-                                color: Colors.grey,
+                              decoration: BoxDecoration(
+                                color: context.surfaceColor(Colors.grey),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -471,7 +478,7 @@ class _ListRow extends StatelessWidget {
                           Text(
                             subtitleRight!,
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: context.inkColor(Colors.grey),
                               fontSize: 12.sp,
                             ),
                           ),
@@ -519,7 +526,10 @@ class _LoadingOrError extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 13.sp),
+            style: TextStyle(
+              color: context.inkColor(Colors.grey.shade700),
+              fontSize: 13.sp,
+            ),
           ),
           SizedBox(height: 12.h),
           TextButton(onPressed: onRetry, child: Text(actionLabel)),
@@ -691,7 +701,7 @@ class _PaginatedListState<T> extends State<_PaginatedList<T>> {
       padding: EdgeInsets.fromLTRB(0, 4.h, 0, 100.h),
       itemCount: visibleItems.length + (_isLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: Color(0xFFE3ECC5)),
+          Divider(height: 1, color: context.lineColor(Color(0xFFE3ECC5))),
       itemBuilder: (context, index) {
         if (index >= visibleItems.length) {
           return const SurahListRowShimmer();

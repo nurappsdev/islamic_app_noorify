@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -25,7 +26,7 @@ class SurahTranslationSwitch extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7EECB),
+        color: context.surfaceColor(Color(0xFFE7EECB)),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
@@ -50,9 +51,9 @@ class SurahTranslationSwitch extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
-                    color: lang == selected
-                        ? Colors.white
-                        : const Color(0xFF6B7458),
+                    color: context.inkColor(
+                      lang == selected ? Colors.white : const Color(0xFF6B7458),
+                    ),
                   ),
                 ),
               ),
@@ -84,7 +85,7 @@ class AyahTranslationToggle extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: const Color(0xFFC9D89A)),
+          border: Border.all(color: context.lineColor(Color(0xFFC9D89A))),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -46,7 +47,7 @@ class _HadithLibraryView extends StatelessWidget {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           ListView(
@@ -119,8 +120,10 @@ class _HadithHeader extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -150,7 +153,7 @@ class _HadithHeader extends StatelessWidget {
               Text(
                 appText.hadithTotalHadith,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: .9),
+                  color: context.inkColor(Colors.white.withValues(alpha: .9)),
                   fontSize: 14.sp,
                   fontStyle: FontStyle.italic,
                 ),
@@ -231,8 +234,8 @@ class _CollectionShelfSkeleton extends StatelessWidget {
     return SizedBox(
       height: _collectionShelfHeight,
       child: Shimmer.fromColors(
-        baseColor: const Color(0xFFE3ECC5),
-        highlightColor: const Color(0xFFF6F9EC),
+        baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+        highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const NeverScrollableScrollPhysics(),
@@ -242,7 +245,7 @@ class _CollectionShelfSkeleton extends StatelessWidget {
           itemBuilder: (_, _) => Container(
             width: 218.w,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(16.r),
             ),
           ),
@@ -268,7 +271,10 @@ class _ShelfMessage extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF5D6B44)),
+            ),
           ),
           if (onAction != null) ...[
             SizedBox(height: 8.h),
@@ -290,7 +296,9 @@ class _LastReadPill extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: .55)),
+        border: Border.all(
+          color: context.lineColor(Colors.white.withValues(alpha: .55)),
+        ),
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
@@ -314,7 +322,9 @@ class _LastReadPill extends StatelessWidget {
             height: 30.r,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: .7)),
+              border: Border.all(
+                color: context.lineColor(Colors.white.withValues(alpha: .7)),
+              ),
             ),
             child: Icon(
               Icons.chevron_right_rounded,
@@ -348,7 +358,10 @@ class _SectionTitle extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Text(
             AppText.of(context).seeAll,
-            style: TextStyle(color: Colors.black, fontSize: 12.sp),
+            style: TextStyle(
+              color: context.inkColor(Colors.black),
+              fontSize: 12.sp,
+            ),
           ),
         ),
       ],
@@ -379,7 +392,7 @@ class _CollectionCard extends StatelessWidget {
           colors: [Color(0xFFE9F1C4), Color(0xFFD3E2A0)],
         ),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFC4D68A)),
+        border: Border.all(color: context.lineColor(Color(0xFFC4D68A))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,14 +402,14 @@ class _CollectionCard extends StatelessWidget {
               Container(
                 width: 32.r,
                 height: 32.r,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(Colors.white),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.menu_book_rounded,
                   size: 17.sp,
-                  color: const Color(0xFF5F7A43),
+                  color: context.inkColor(Color(0xFF5F7A43)),
                 ),
               ),
               const Spacer(),
@@ -406,8 +419,8 @@ class _CollectionCard extends StatelessWidget {
                 icon: Icon(Icons.north_east_rounded, size: 13.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4C5A34),
-                  side: const BorderSide(color: Color(0xFF9BAE6C)),
+                  foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                  side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
                   padding: EdgeInsets.symmetric(horizontal: 10.w),
                   minimumSize: Size(0, 30.h),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -432,7 +445,7 @@ class _CollectionCard extends StatelessWidget {
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
-                  color: const Color(0xFF2C3320),
+                  color: context.inkColor(Color(0xFF2C3320)),
                 ),
               ),
             ),
@@ -565,7 +578,7 @@ class _EbookCard extends StatelessWidget {
                   Container(
                     width: 128.w,
                     height: 140.h,
-                    color: const Color(0xFFF0F3E4),
+                    color: context.surfaceColor(Color(0xFFF0F3E4)),
                     child: Opacity(
                       opacity: book.isAvailable ? 1 : .45,
                       child: Image.asset(
@@ -590,7 +603,7 @@ class _EbookCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF2C3320),
+                color: context.inkColor(Color(0xFF2C3320)),
                 height: 1.3,
               ),
             ),
@@ -626,7 +639,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
-        color: bg,
+        color: context.surfaceColor(bg),
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Icon(icon, size: 13.sp, color: Colors.white),

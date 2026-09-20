@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -36,7 +37,7 @@ class _QuizQuestionView extends StatelessWidget {
     final answers = _answers(appText);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 10.h),
@@ -77,13 +78,13 @@ class _QuizQuestionView extends StatelessWidget {
                     vertical: 15.h,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDDE8B5),
+                    color: context.surfaceColor(Color(0xFFDDE8B5)),
                     borderRadius: BorderRadius.circular(28.r),
                   ),
                   child: Text(
                     appText.fiftyFiftyChance,
                     style: TextStyle(
-                      color: const Color(0xFF5F8671),
+                      color: context.inkColor(Color(0xFF5F8671)),
                       fontSize: 18.sp,
                     ),
                   ),
@@ -94,7 +95,7 @@ class _QuizQuestionView extends StatelessWidget {
                 child: Text(
                   appText.quizTimingProgress,
                   style: TextStyle(
-                    color: const Color(0xFF5D876A),
+                    color: context.inkColor(Color(0xFF5D876A)),
                     fontSize: 13.sp,
                   ),
                 ),
@@ -110,7 +111,9 @@ class _QuizQuestionView extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         minimumSize: Size.fromHeight(45.h),
                         shape: StadiumBorder(),
-                        side: BorderSide(color: const Color(0xFFE0E0E0)),
+                        side: BorderSide(
+                          color: context.lineColor(Color(0xFFE0E0E0)),
+                        ),
                       ),
                       child: Text(
                         appText.previous,
@@ -128,7 +131,9 @@ class _QuizQuestionView extends StatelessWidget {
                           : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF879765),
-                        disabledBackgroundColor: const Color(0xFFE2E2E2),
+                        disabledBackgroundColor: context.surfaceColor(
+                          Color(0xFFE2E2E2),
+                        ),
                         minimumSize: Size.fromHeight(45.h),
                       ),
                       child: Text(
@@ -163,7 +168,7 @@ class _QuizAppBar extends StatelessWidget {
             onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
@@ -211,7 +216,7 @@ class _QuestionProgress extends StatelessWidget {
       Container(
         height: 8.h,
         decoration: BoxDecoration(
-          color: const Color(0xFFE9E9E9),
+          color: context.surfaceColor(Color(0xFFE9E9E9)),
           borderRadius: BorderRadius.circular(20.r),
         ),
       ),
@@ -254,7 +259,7 @@ class _AnswerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: const Color(0xFFF2F6E7),
+    color: context.surfaceColor(Color(0xFFF2F6E7)),
     borderRadius: BorderRadius.circular(15.r),
     child: InkWell(
       onTap: onTap,
@@ -269,14 +274,14 @@ class _AnswerTile extends StatelessWidget {
               width: 29.r,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFDDE8B5)),
+                border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
                 shape: BoxShape.circle,
               ),
               child: Text(
                 label,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: const Color(0xFF596254),
+                  color: context.inkColor(Color(0xFF596254)),
                 ),
               ),
             ),
@@ -297,7 +302,10 @@ class _AnswerTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColor.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(
+                    color: context.lineColor(Colors.white),
+                    width: 2,
+                  ),
                 ),
                 child: const SizedBox(),
               ),
@@ -315,7 +323,7 @@ class _TimingProgress extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 55.h,
     decoration: BoxDecoration(
-      color: const Color(0xFFDDE8B5),
+      color: context.surfaceColor(Color(0xFFDDE8B5)),
       borderRadius: BorderRadius.circular(30.r),
     ),
     child: Align(
@@ -325,13 +333,18 @@ class _TimingProgress extends StatelessWidget {
         height: 58.r,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFDDE8B5),
+          color: context.surfaceColor(Color(0xFFDDE8B5)),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: .7)),
+          border: Border.all(
+            color: context.lineColor(Colors.white.withValues(alpha: .7)),
+          ),
         ),
         child: Text(
           '23 %',
-          style: TextStyle(color: const Color(0xFF5D876A), fontSize: 13.sp),
+          style: TextStyle(
+            color: context.inkColor(Color(0xFF5D876A)),
+            fontSize: 13.sp,
+          ),
         ),
       ),
     ),

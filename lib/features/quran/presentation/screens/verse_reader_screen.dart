@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
@@ -42,8 +43,12 @@ class VerseReaderScreen extends StatelessWidget {
                           child: IconButton(
                             onPressed: () => Navigator.maybePop(context),
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFEDE7A6),
-                              foregroundColor: AppColor.authLogo,
+                              backgroundColor: context.surfaceColor(
+                                Color(0xFFEDE7A6),
+                              ),
+                              foregroundColor: context.inkColor(
+                                AppColor.authLogo,
+                              ),
                             ),
                             icon: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -74,7 +79,7 @@ class VerseReaderScreen extends StatelessWidget {
                               appText.quranLoadError,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: context.inkColor(Colors.grey.shade700),
                                 fontSize: 13.sp,
                               ),
                             ),

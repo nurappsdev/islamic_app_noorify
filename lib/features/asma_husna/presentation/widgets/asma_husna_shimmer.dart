@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+
 /// Wraps [child] with the app-wide shimmer sweep used for loading skeletons
 /// (same colors as [QuranShimmer]/[HomeShimmer], kept local to this feature).
 class AsmaHusnaShimmer extends StatelessWidget {
@@ -12,8 +14,8 @@ class AsmaHusnaShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
       child: child,
     );
   }
@@ -32,7 +34,7 @@ class _ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
@@ -53,7 +55,7 @@ class AsmaNameCardShimmer extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 18.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor(Colors.white),
           borderRadius: BorderRadius.circular(28.r),
         ),
         child: Column(

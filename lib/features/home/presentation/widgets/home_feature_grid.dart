@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
@@ -69,7 +70,7 @@ class HomeFeatureGrid extends StatelessWidget {
         _LinkTile(
           title: appText.zakatCalculator,
           icon: Icons.price_check,
-          iconColor: const Color(0xFF0DA334),
+          iconColor: context.inkColor(Color(0xFF0DA334)),
         ),
         SizedBox(height: 6.h),
         _LinkTile(
@@ -110,7 +111,11 @@ class _FeatureTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(feature.icon, color: feature.color, size: 28.sp),
+            Icon(
+              feature.icon,
+              color: context.inkColor(feature.color),
+              size: 28.sp,
+            ),
             SizedBox(height: 9.h),
             Text(
               feature.title,
@@ -142,7 +147,7 @@ class _LinkTile extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 9.h),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 24.sp),
+          Icon(icon, color: context.inkColor(iconColor), size: 24.sp),
           SizedBox(width: 10.w),
           Expanded(
             child: Text(

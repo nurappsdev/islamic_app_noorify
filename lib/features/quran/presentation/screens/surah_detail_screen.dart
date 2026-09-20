@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -65,7 +66,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   Widget _buildScaffold(BuildContext context, AppText appText) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F7EA),
+      backgroundColor: context.pageColor(Color(0xFFF4F7EA)),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 18.w),
@@ -82,8 +83,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -98,7 +101,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF6B7458),
+                        color: context.inkColor(Color(0xFF6B7458)),
                         fontSize: 17.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -111,8 +114,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           bloc: context.read<QuranTranslationBloc>(),
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(Icons.tune_rounded, size: 18),
                       ),
@@ -135,7 +140,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                               appText.quranLoadError,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: context.inkColor(Colors.grey.shade700),
                                 fontSize: 13.sp,
                               ),
                             ),
@@ -257,7 +262,7 @@ class _SurahBodyState extends State<_SurahBody> {
                 appText.quranTranslationLabel,
                 style: TextStyle(
                   fontSize: 12.sp,
-                  color: const Color(0xFF6B7458),
+                  color: context.inkColor(Color(0xFF6B7458)),
                 ),
               ),
               const Spacer(),

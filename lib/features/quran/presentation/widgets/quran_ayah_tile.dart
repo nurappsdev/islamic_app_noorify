@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
@@ -54,7 +55,7 @@ class QuranAyahTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 21.sp,
                 height: 1.9,
-                color: Colors.black87,
+                color: context.inkColor(Colors.black87),
               ),
             ),
           ),
@@ -151,15 +152,28 @@ class _AyahDivider extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(
+              color: context.lineColor(Colors.grey.shade300),
+              height: 1,
+            ),
+          ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Text(
               '•••',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 12.sp),
+              style: TextStyle(
+                color: context.inkColor(Colors.grey.shade400),
+                fontSize: 12.sp,
+              ),
             ),
           ),
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(
+              color: context.lineColor(Colors.grey.shade300),
+              height: 1,
+            ),
+          ),
         ],
       ),
     );

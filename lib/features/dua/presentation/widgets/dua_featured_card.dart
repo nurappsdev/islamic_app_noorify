@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
 
@@ -23,9 +24,9 @@ class DuaFeaturedCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE8C4),
+        color: context.surfaceColor(Color(0xFFDCE8C4)),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: const Color(0xFFC7D6A6)),
+        border: Border.all(color: context.lineColor(Color(0xFFC7D6A6))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,13 +40,15 @@ class DuaFeaturedCard extends StatelessWidget {
                 height: 34.r,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.surfaceColor(Colors.white),
                   borderRadius: BorderRadius.circular(9.r),
-                  border: Border.all(color: const Color(0xFFC7D6A6)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFC7D6A6)),
+                  ),
                 ),
                 child: Icon(
                   Icons.badge_outlined,
-                  color: const Color(0xFF6B7A4A),
+                  color: context.inkColor(Color(0xFF6B7A4A)),
                   size: 18.sp,
                 ),
               ),
@@ -58,7 +61,7 @@ class DuaFeaturedCard extends StatelessWidget {
                     vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.surfaceColor(Colors.white),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: const Color(0xFF3C4A28)),
                   ),
@@ -88,7 +91,7 @@ class DuaFeaturedCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF3C4A28),
+                  color: context.inkColor(Color(0xFF3C4A28)),
                 ),
               ),
               SizedBox(height: 6.h),
@@ -96,7 +99,7 @@ class DuaFeaturedCard extends StatelessWidget {
                 '${appText.duaTotalDuaLabel} : ${featured.totalDua}',
                 style: TextStyle(
                   fontSize: 11.sp,
-                  color: const Color(0xFF5D6B44),
+                  color: context.inkColor(Color(0xFF5D6B44)),
                 ),
               ),
             ],

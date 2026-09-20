@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_local_data_source.dart';
@@ -24,7 +25,7 @@ class AsmaHusnaListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9EC),
+      backgroundColor: context.pageColor(Color(0xFFF7F9EC)),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -49,9 +50,11 @@ class AsmaHusnaListScreen extends StatelessWidget {
                   action: IconButton(
                     onPressed: () {},
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColor.authLogo,
-                      side: const BorderSide(color: Color(0xFFDCE3BE)),
+                      backgroundColor: context.surfaceColor(Colors.white),
+                      foregroundColor: context.inkColor(AppColor.authLogo),
+                      side: BorderSide(
+                        color: context.lineColor(Color(0xFFDCE3BE)),
+                      ),
                       minimumSize: Size(38.r, 38.r),
                     ),
                     icon: const Icon(Icons.access_time, size: 18),
@@ -160,10 +163,10 @@ class _SearchField extends StatelessWidget {
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 14.h),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: context.surfaceColor(Colors.white),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),
-          borderSide: const BorderSide(color: Color(0xFFE3E7D3)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(28.r),
