@@ -8,13 +8,16 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_book_reader_screen.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_saved_reader_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// "Saved Hadith", reached from index 2 ("Saved") of the Hadith navigation bar.
 ///
-/// Two tabs: a flat list of every bookmarked hadith, and a folder-wise view
-/// that drills into the hadith saved under each folder.
+/// Opens on the list of bookmark folders; tapping a folder lists the hadith
+/// saved in it, and tapping a hadith reads it. Hadith saved with the reader's
+/// quick bookmark icon are kept in the default (Favorite) folder.
 class HadithSavedScreen extends StatefulWidget {
   const HadithSavedScreen({super.key});
 
@@ -28,10 +31,8 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
 
   List<HadithBookmark> _bookmarks = const [];
   List<String> _folders = const [];
-  Map<String, int> _counts = const {};
   bool _loading = true;
   String _query = '';
-  int _tab = 0; // 0 = single hadith, 1 = folders
   String? _openFolder;
 
   @override
@@ -53,24 +54,22 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
   Future<void> _load() async {
     final items = await _store.all();
     final folders = await _store.folders();
-    final counts = await _store.folderCounts();
     if (!mounted) return;
     setState(() {
       _bookmarks = items;
       _folders = folders;
-      _counts = counts;
       _loading = false;
     });
   }
 
-  void _switchTab(int tab) {
-    if (tab == _tab) return;
-    _searchController.clear();
-    setState(() {
-      _tab = tab;
-      _openFolder = null;
-    });
-  }
+  /// Whether [bookmark] is listed under [folder]. Quick-bookmarked hadith
+  /// belong to the default folder.
+  bool _inFolder(HadithBookmark bookmark, String folder) =>
+      bookmark.userFolders.contains(folder) ||
+      (folder == HadithBookmark.defaultFolder && bookmark.isSingleBookmarked);
+
+  int _countIn(String folder) =>
+      _bookmarks.where((b) => _inFolder(b, folder)).length;
 
   void _openFolderView(String folder) {
     _searchController.clear();
@@ -84,24 +83,32 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
 
   Future<void> _removeHadith(HadithBookmark bookmark) async {
     final folder = _openFolder;
-    if (folder == null) {
+    if (folder == null) return;
+    await _store.removeFromFolder(bookmark.bookSlug, bookmark.hadithNo, folder);
+    if (folder == HadithBookmark.defaultFolder && bookmark.isSingleBookmarked) {
       await _store.removeSingle(bookmark.bookSlug, bookmark.hadithNo);
-    } else {
-      await _store.removeFromFolder(
-        bookmark.bookSlug,
-        bookmark.hadithNo,
-        folder,
-      );
     }
     await _load();
   }
 
   Future<void> _open(HadithBookmark bookmark) async {
-    // Hadiths saved from the online library have no page in the local reader.
-    if (HadithBookCatalog.bySlug(bookmark.bookSlug) == null) return;
-    await Navigator.of(
-      context,
-    ).pushNamed(RouteNames.hadithBookReader, arguments: bookmark.bookSlug);
+    if (HadithBookCatalog.bySlug(bookmark.bookSlug) != null) {
+      // A hadith of a local book: open the book at that hadith.
+      await Navigator.of(context).pushNamed(
+        RouteNames.hadithBookReader,
+        arguments: HadithReaderArgs(
+          slug: bookmark.bookSlug,
+          hadithNo: bookmark.hadithNo,
+        ),
+      );
+    } else if (bookmark.payload != null) {
+      // A hadith of the online library: read the copy kept with the bookmark.
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => HadithSavedReaderScreen(bookmark: bookmark),
+        ),
+      );
+    }
     _load();
   }
 
@@ -125,61 +132,58 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
     final isBangla =
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                SizedBox(height: 6.h),
-                _Header(
-                  title: _openFolder ?? appText.savedHadithTitle,
-                  onBack: _openFolder != null
-                      ? _closeFolderView
-                      : () => Navigator.maybePop(context),
-                ),
-                SizedBox(height: 14.h),
-                if (_openFolder == null)
-                  _SavedTabs(
-                    selected: _tab,
-                    hadithLabel: appText.savedTabHadith,
-                    folderLabel: appText.savedTabFolder,
-                    onChanged: _switchTab,
+    return PopScope(
+      // Back from a folder returns to the folder list first.
+      canPop: _openFolder == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _closeFolderView();
+      },
+      child: Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  SizedBox(height: 6.h),
+                  _Header(
+                    title: _openFolder ?? appText.savedHadithTitle,
+                    onBack: _openFolder != null ? _closeFolderView : null,
                   ),
-                SizedBox(height: 12.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: _SearchField(
-                    controller: _searchController,
-                    hint: appText.searchHere,
+                  SizedBox(height: 14.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: _SearchField(
+                      controller: _searchController,
+                      hint: appText.searchHere,
+                    ),
                   ),
-                ),
-                SizedBox(height: 14.h),
-                Expanded(
-                  child: _loading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColor.primary,
-                          ),
-                        )
-                      : _buildContent(appText, isBangla),
-                ),
-              ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: HadithBottomNav(selectedIndex: 2),
-            ),
-          ],
+                  SizedBox(height: 14.h),
+                  Expanded(
+                    child: _loading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColor.primary,
+                            ),
+                          )
+                        : _buildContent(appText, isBangla),
+                  ),
+                ],
+              ),
+              const Align(
+                alignment: Alignment.bottomCenter,
+                child: HadithBottomNav(selectedIndex: 2),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildContent(AppText appText, bool isBangla) {
-    // Folder-wise tab, folder list.
-    if (_tab == 1 && _openFolder == null) {
+    // The folder list.
+    if (_openFolder == null) {
       final folders = _query.isEmpty
           ? _folders
           : _folders.where((f) => f.toLowerCase().contains(_query)).toList();
@@ -199,7 +203,7 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
           final folder = folders[index];
           return _FolderCard(
             name: folder,
-            count: _counts[folder] ?? 0,
+            count: _countIn(folder),
             hadithWord: appText.categoryHadith,
             onTap: () => _openFolderView(folder),
           );
@@ -207,10 +211,8 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
       );
     }
 
-    // Hadith list — either the per-hadith bookmarks or one folder's hadith.
-    final source = _openFolder == null
-        ? _bookmarks.where((b) => b.isSingleBookmarked).toList()
-        : _bookmarks.where((b) => b.folders.contains(_openFolder)).toList();
+    // One folder's hadith.
+    final source = _bookmarks.where((b) => _inFolder(b, _openFolder!)).toList();
     final visible = source.where(_matchesHadith).toList();
 
     if (visible.isEmpty) {
@@ -245,10 +247,12 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, required this.onBack});
+  const _Header({required this.title, this.onBack});
 
   final String title;
-  final VoidCallback onBack;
+
+  /// Shown as a back button while a folder is open; null on the folder list.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -257,21 +261,22 @@ class _Header extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Align(
-          //   alignment: Alignment.centerLeft,
-          //   child: Padding(
-          //     padding: EdgeInsets.only(left: 14.w),
-          //     child: IconButton(
-          //       onPressed: onBack,
-          //       style: IconButton.styleFrom(
-          //         backgroundColor: const Color(0xFFCBD16B),
-          //         foregroundColor: const Color(0xFF303629),
-          //         minimumSize: Size(38.r, 38.r),
-          //       ),
-          //       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
-          //     ),
-          //   ),
-          // ),
+          if (onBack != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(left: 14.w),
+                child: IconButton(
+                  onPressed: onBack,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFCBD16B),
+                    foregroundColor: const Color(0xFF303629),
+                    minimumSize: Size(38.r, 38.r),
+                  ),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
+                ),
+              ),
+            ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 64.w),
             child: Text(
@@ -286,70 +291,6 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SavedTabs extends StatelessWidget {
-  const _SavedTabs({
-    required this.selected,
-    required this.hadithLabel,
-    required this.folderLabel,
-    required this.onChanged,
-  });
-
-  final int selected;
-  final String hadithLabel;
-  final String folderLabel;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Container(
-        height: 42.h,
-        padding: EdgeInsets.all(4.r),
-        decoration: BoxDecoration(
-          color: context.surfaceColor(Color(0xFFF0F3E4)),
-          borderRadius: BorderRadius.circular(14.r),
-        ),
-        child: Row(
-          children: [
-            _tab(context, hadithLabel, 0),
-            _tab(context, folderLabel, 1),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tab(BuildContext context, String label, int index) {
-    final active = selected == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onChanged(index),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(
-              active ? const Color(0xFFDDE8BA) : Colors.transparent,
-            ),
-            borderRadius: BorderRadius.circular(11.r),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: context.inkColor(
-                active ? const Color(0xFF3E4A2A) : const Color(0xFF8A9568),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
