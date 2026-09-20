@@ -53,7 +53,11 @@ class HadithReadingTracker extends ChangeNotifier {
 
   bool _paused = false;
   bool _reported = false;
+  bool _disposed = false;
   Timer? _timer;
+
+  /// Says which hadith is in focus; set by [start], cleared by [stop].
+  String? Function()? _focus;
 
   /// Loads the hadiths already completed on this device.
   Future<void> load() async {
@@ -69,29 +73,60 @@ class HadithReadingTracker extends ChangeNotifier {
   /// Starts the clock. [focusedHadithId] says which hadith is in view right
   /// now (null while none is).
   void start(String? Function() focusedHadithId) {
-    _timer?.cancel();
-    _timer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => tick(focusedHadithId()),
-    );
+    _focus = focusedHadithId;
+    _schedule();
   }
 
+  /// (Re)creates the one-second timer, or leaves none running if the tracker
+  /// is paused, stopped or disposed. There is never more than one timer.
+  void _schedule() {
+    _timer?.cancel();
+    _timer = null;
+    final focus = _focus;
+    if (focus == null || _paused || _disposed) return;
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => tick(focus()));
+  }
+
+  /// Cancels the timer for good and drops the focus callback (which holds on
+  /// to the screen's state). Safe to call more than once.
   void stop() {
+    _focus = null;
     _timer?.cancel();
     _timer = null;
   }
 
+  /// Whether the one-second timer is running.
+  bool get isRunning => _timer != null;
+
+  @override
+  void notifyListeners() {
+    // A report can finish after the screen (and this tracker) is gone.
+    if (!_disposed) super.notifyListeners();
+  }
+
+  /// Cancels the timer and clears the temporary state of this screen visit.
+  /// A report already on its way still finishes (and is remembered), quietly.
   @override
   void dispose() {
+    if (_disposed) return;
     stop();
+    _dwell.clear();
+    _disposed = true;
     super.dispose();
   }
 
-  /// Stops counting (another screen is on top, or the app is in the
-  /// background).
-  void pause() => _paused = true;
+  /// Stops counting *and* cancels the timer, so nothing ticks while another
+  /// screen is on top or the app is in the background. [resume] restarts it.
+  void pause() {
+    _paused = true;
+    _timer?.cancel();
+    _timer = null;
+  }
 
-  void resume() => _paused = false;
+  void resume() {
+    _paused = false;
+    _schedule();
+  }
 
   /// One second on the screen, spent on [hadithId] if one is in focus.
   @visibleForTesting
