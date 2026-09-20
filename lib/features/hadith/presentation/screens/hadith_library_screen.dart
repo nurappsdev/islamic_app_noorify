@@ -14,11 +14,12 @@ import 'package:islami_app_noorify/features/hadith/domain/usecases/get_ebooks.da
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_library_books.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebooks/ebooks_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_detail_screen.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Hadith library landing screen.
 ///
@@ -495,7 +496,7 @@ class _CollectionCard extends StatelessWidget {
 }
 
 /// Horizontal shelf of the API-backed e-books (`GET /ebooks`), with loading,
-/// error (retry) and empty states. Tapping a book opens its PDF.
+/// error (retry) and empty states. Tapping a book opens its detail screen.
 class _EbookShelf extends StatelessWidget {
   const _EbookShelf();
 
@@ -533,20 +534,11 @@ class _EbookShelf extends StatelessWidget {
   }
 }
 
-/// Opens the e-book's PDF in the device's PDF viewer / browser.
-Future<void> _openEbook(BuildContext context, Ebook ebook) async {
-  final failed = AppText.readOf(context).ebookOpenFailed;
-  final messenger = ScaffoldMessenger.of(context);
-  final uri = Uri.tryParse(ebook.pdfFileUrl);
-  var opened = false;
-  if (uri != null && uri.hasScheme) {
-    try {
-      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      opened = false;
-    }
-  }
-  if (!opened) messenger.showSnackBar(SnackBar(content: Text(failed)));
+/// Opens the e-book's detail screen (where the PDF can be downloaded).
+void _openEbook(BuildContext context, Ebook ebook) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => EbookDetailScreen(ebook: ebook)),
+  );
 }
 
 class _EbookShelfSkeleton extends StatelessWidget {
@@ -618,7 +610,7 @@ class _EbookCard extends StatelessWidget {
                 width: 128.w,
                 height: 140.h,
                 color: context.surfaceColor(const Color(0xFFF0F3E4)),
-                child: _EbookCover(url: ebook.coverImageUrl),
+                child: EbookCover(url: ebook.coverImageUrl),
               ),
             ),
             SizedBox(height: 8.h),
@@ -648,32 +640,6 @@ class _EbookCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// The cover picture; the bundled book image stands in while it loads, when
-/// the book has no cover, or if the download fails.
-class _EbookCover extends StatelessWidget {
-  const _EbookCover({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    final placeholder = Image.asset(
-      'assets/images/book.png',
-      fit: BoxFit.cover,
-    );
-    if (url.isEmpty) return placeholder;
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      height: double.infinity,
-      loadingBuilder: (context, child, progress) =>
-          progress == null ? child : placeholder,
-      errorBuilder: (_, _, _) => placeholder,
     );
   }
 }

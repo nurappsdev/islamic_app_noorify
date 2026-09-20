@@ -10,6 +10,8 @@ class Ebook {
     required this.totalPages,
     required this.description,
     required this.language,
+    required this.publisher,
+    required this.reference,
     required this.displayOrder,
     required this.isActive,
   });
@@ -23,6 +25,8 @@ class Ebook {
   final int totalPages;
   final String description;
   final String language;
+  final String publisher;
+  final String reference;
   final int displayOrder;
   final bool isActive;
 }

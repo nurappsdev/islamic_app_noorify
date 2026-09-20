@@ -11,6 +11,8 @@ class EbookModel extends Ebook {
     required super.totalPages,
     required super.description,
     required super.language,
+    required super.publisher,
+    required super.reference,
     required super.displayOrder,
     required super.isActive,
   });
@@ -25,6 +27,8 @@ class EbookModel extends Ebook {
     totalPages: (json['totalPages'] as num?)?.toInt() ?? 0,
     description: json['description'] as String? ?? '',
     language: json['language'] as String? ?? '',
+    publisher: json['publisher'] as String? ?? '',
+    reference: json['reference'] as String? ?? '',
     displayOrder: (json['displayOrder'] as num?)?.toInt() ?? 0,
     isActive: json['isActive'] as bool? ?? true,
   );
