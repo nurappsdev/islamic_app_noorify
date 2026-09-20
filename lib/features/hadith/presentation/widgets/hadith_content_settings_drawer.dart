@@ -12,10 +12,14 @@ class HadithContentSettingsDrawer extends StatelessWidget {
     super.key,
     required this.settings,
     required this.onChanged,
+    required this.onOpenProfileSettings,
   });
 
   final HadithContentSettings settings;
   final ValueChanged<HadithContentSettings> onChanged;
+
+  /// Tapped from the gear in the drawer's top-right corner.
+  final VoidCallback onOpenProfileSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +32,29 @@ class HadithContentSettingsDrawer extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                appText.quranReaderSettingsTitle,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF2C3320),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      appText.quranReaderSettingsTitle,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2C3320),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onOpenProfileSettings,
+                    tooltip: appText.settingsTitle,
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFEDF1DE),
+                      foregroundColor: const Color(0xFF4C5A34),
+                      minimumSize: Size(38.r, 38.r),
+                    ),
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                  ),
+                ],
               ),
               SizedBox(height: 10.h),
               // At least one text stays on, so a card is never empty.
