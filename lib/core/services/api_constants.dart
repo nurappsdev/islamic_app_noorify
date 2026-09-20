@@ -49,6 +49,8 @@ class ApiConstants {
   static const String hadithCategoriesEndPoint = "/hadiths/categories";
   static const String hadithsEndPoint = "/hadiths";
 
+  static const String ebooksEndPoint = "/ebooks";
+
   static String hadithSubCategoriesEndPoint(String categoryId) =>
       "$hadithCategoriesEndPoint/$categoryId/subcategories";
 

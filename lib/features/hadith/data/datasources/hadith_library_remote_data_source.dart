@@ -3,16 +3,21 @@ import 'package:dio/dio.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
 
-/// Talks to `GET /hadiths/books/lists` (public — no token needed). Throws
+/// Talks to `GET /hadiths/books/lists` and `GET /ebooks` (public — no token
+/// needed). Throws
 /// [ServerException] / [NetworkException] / [ParsingException]; never returns
 /// error states.
 abstract interface class HadithLibraryRemoteDataSource {
   Future<List<HadithLibraryBookModel>> getBooks();
+
+  /// `GET /ebooks` — the e-book shelf.
+  Future<List<EbookModel>> getEbooks();
 
   /// `GET /hadiths/categories?bookId=...&page=...&limit=...&searchTerm=...`.
   Future<HadithCategoryPageModel> getCategories(
@@ -56,6 +61,14 @@ class HadithLibraryRemoteDataSourceImpl
       'Hadith books',
     );
     return envelope.items.map(HadithLibraryBookModel.fromJson).toList();
+  }
+
+  @override
+  Future<List<EbookModel>> getEbooks() async {
+    final envelope = await _getList(ApiConstants.ebooksEndPoint, {
+      'limit': 50,
+    }, 'E-books');
+    return envelope.items.map(EbookModel.fromJson).toList();
   }
 
   @override

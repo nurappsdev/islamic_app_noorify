@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
@@ -20,6 +21,25 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
       final books = await _remote.getBooks();
       return Right(
         [...books]..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)),
+      );
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Ebook>>> getEbooks() async {
+    try {
+      final ebooks = await _remote.getEbooks();
+      return Right(
+        ebooks.where((e) => e.isActive).toList()
+          ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)),
       );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));

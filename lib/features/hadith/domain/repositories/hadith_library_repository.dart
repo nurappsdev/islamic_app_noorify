@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
@@ -10,6 +11,10 @@ abstract interface class HadithLibraryRepository {
   /// The hadith collections of the library (`GET /hadiths/books/lists`),
   /// in the server's display order.
   Future<Either<Failure, List<HadithLibraryBook>>> getBooks();
+
+  /// The active e-books of the library (`GET /ebooks`), in the server's
+  /// display order.
+  Future<Either<Failure, List<Ebook>>> getEbooks();
 
   /// One page of the categories (chapters) of a collection
   /// (`GET /hadiths/categories?bookId=...&page=...&limit=...`), in display
