@@ -19,7 +19,7 @@ class HadithDatabase {
   static final HadithDatabase _instance = HadithDatabase._();
 
   static const _fileName = 'hadith_books.db';
-  static const _version = 2;
+  static const _version = 3;
   static const _booksTable = 'hadith_books';
   static const _entriesTable = 'hadith_entries';
   static const _bookmarksTable = 'hadith_bookmarks';
@@ -45,7 +45,13 @@ class HadithDatabase {
         await _createBookmarkSchema(db);
       },
       onUpgrade: (db, oldVersion, _) async {
-        if (oldVersion < 2) await _createBookmarkSchema(db);
+        if (oldVersion < 2) {
+          await _createBookmarkSchema(db);
+        } else if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE $_bookmarksTable ADD COLUMN payload TEXT',
+          );
+        }
       },
     );
   }
@@ -58,6 +64,7 @@ class HadithDatabase {
         title_ar TEXT,
         title_bn TEXT,
         saved_at INTEGER NOT NULL,
+        payload TEXT,
         PRIMARY KEY (book_slug, hadith_no)
       )
     ''');
@@ -240,6 +247,7 @@ class HadithDatabase {
           titleAr: (r['title_ar'] as String?) ?? '',
           titleBn: (r['title_bn'] as String?) ?? '',
           savedAt: DateTime.fromMillisecondsSinceEpoch(r['saved_at'] as int),
+          payload: r['payload'] as String?,
           folders:
               foldersByKey['${r['book_slug']}#${r['hadith_no']}'] ?? const [],
         ),
@@ -349,7 +357,7 @@ class HadithDatabase {
       }
       final existing = await txn.query(
         _bookmarksTable,
-        columns: ['title_ar', 'title_bn', 'saved_at'],
+        columns: ['title_ar', 'title_bn', 'saved_at', 'payload'],
         where: 'book_slug = ? AND hadith_no = ?',
         whereArgs: [bookmark.bookSlug, bookmark.hadithNo],
         limit: 1,
@@ -361,6 +369,7 @@ class HadithDatabase {
       final titleBn = bookmark.titleBn.isNotEmpty
           ? bookmark.titleBn
           : (prev?['title_bn'] as String?) ?? '';
+      final payload = bookmark.payload ?? prev?['payload'] as String?;
       final savedAt =
           (prev?['saved_at'] as int?) ??
           bookmark.savedAt.millisecondsSinceEpoch;
@@ -370,6 +379,7 @@ class HadithDatabase {
         'title_ar': titleAr,
         'title_bn': titleBn,
         'saved_at': savedAt,
+        'payload': payload,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       for (final folder in folders) {
         await txn.insert(_bookmarkFolderMapTable, {

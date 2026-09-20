@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -17,6 +18,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
@@ -209,7 +211,7 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
                     _Message(appText.noResultsFound)
                   else ...[
                     for (final hadith in hadiths) ...[
-                      _HadithCard(
+                      HadithDetailCard(
                         hadith: hadith,
                         bookName: title,
                         settings: _settings,
@@ -319,7 +321,7 @@ class _Message extends StatelessWidget {
   }
 }
 
-/// Shimmer placeholders shaped like [_HadithCard].
+/// Shimmer placeholders shaped like [HadithDetailCard].
 class _HadithSkeletons extends StatelessWidget {
   const _HadithSkeletons({required this.count});
 
@@ -348,8 +350,11 @@ class _HadithSkeletons extends StatelessWidget {
   }
 }
 
-class _HadithCard extends StatefulWidget {
-  const _HadithCard({
+/// One hadith as a card: Arabic text, translation, reference, grade and
+/// source, with the bookmark and copy / share / report buttons.
+class HadithDetailCard extends StatefulWidget {
+  const HadithDetailCard({
+    super.key,
     required this.hadith,
     required this.bookName,
     required this.settings,
@@ -362,10 +367,10 @@ class _HadithCard extends StatefulWidget {
   final String bookName;
 
   @override
-  State<_HadithCard> createState() => _HadithCardState();
+  State<HadithDetailCard> createState() => _HadithDetailCardState();
 }
 
-class _HadithCardState extends State<_HadithCard> {
+class _HadithDetailCardState extends State<HadithDetailCard> {
   static const _ink = Color(0xFF283016);
   static const _muted = Color(0xFF5D6B44);
   static const _tint = Color(0xFFE6EFE3);
@@ -436,6 +441,7 @@ class _HadithCardState extends State<_HadithCard> {
           titleAr: '',
           titleBn: _bookmarkTitle,
           savedAt: DateTime.now(),
+          payload: jsonEncode(hadith.toJson()),
         ),
       ),
     );

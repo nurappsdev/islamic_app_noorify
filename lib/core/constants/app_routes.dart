@@ -340,8 +340,11 @@ class AppRoutes {
           settings,
         );
       case RouteNames.hadithBookReader:
-        final slug = settings.arguments is String
-            ? settings.arguments as String
+        final readerArgs = settings.arguments;
+        final slug = readerArgs is HadithReaderArgs
+            ? readerArgs.slug
+            : readerArgs is String
+            ? readerArgs
             : HadithBookCatalog.nawawi40.slug;
         final book =
             HadithBookCatalog.bySlug(slug) ?? HadithBookCatalog.nawawi40;
@@ -349,7 +352,12 @@ class AppRoutes {
           BlocProvider(
             create: (_) =>
                 HadithBookBloc(book: book)..add(const CheckHadithBook()),
-            child: HadithBookReaderScreen(book: book),
+            child: HadithBookReaderScreen(
+              book: book,
+              initialHadithNo: readerArgs is HadithReaderArgs
+                  ? readerArgs.hadithNo
+                  : null,
+            ),
           ),
           settings,
         );

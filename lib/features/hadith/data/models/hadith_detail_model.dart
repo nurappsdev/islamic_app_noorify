@@ -57,6 +57,32 @@ class HadithDetailModel extends HadithDetail {
   }
 }
 
+/// Serialises a hadith so a copy can be kept with a bookmark; the keys are the
+/// ones [HadithDetailModel.fromJson] reads back.
+extension HadithDetailJson on HadithDetail {
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'hadithNumber': hadithNumber,
+    'hadithNumberInChapter': hadithNumberInChapter,
+    'textArabic': textArabic,
+    'textBangla': textBangla,
+    'textEnglish': textEnglish,
+    'titleBangla': titleBangla,
+    'titleEnglish': titleEnglish,
+    'chapter': chapter,
+    'narrator': narrator,
+    'grade': grade,
+    'gradeBangla': gradeBangla,
+    'takhrij': takhrij,
+    'authorBangla': authorBangla,
+    'authorEnglish': authorEnglish,
+    'sourceBangla': sourceBangla,
+    'sourceEnglish': sourceEnglish,
+    'sectionNameBangla': sectionNameBangla,
+    'explanationEnglish': explanationEnglish,
+  };
+}
+
 class HadithDetailPageModel extends HadithDetailPage {
   const HadithDetailPageModel({
     required super.hadiths,

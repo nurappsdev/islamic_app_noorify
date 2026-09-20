@@ -21,6 +21,15 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
+/// Route arguments for [HadithBookReaderScreen]: the book, and optionally the
+/// hadith to open at.
+class HadithReaderArgs {
+  const HadithReaderArgs({required this.slug, this.hadithNo});
+
+  final String slug;
+  final int? hadithNo;
+}
+
 /// Reads a single hadith e-book.
 ///
 /// On first open the book is parsed from its bundled source file into the local
@@ -31,9 +40,16 @@ import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 /// the next hadith, left-to-right for the previous one. A right-side drawer
 /// lists every hadith and jumps straight to the tapped one.
 class HadithBookReaderScreen extends StatefulWidget {
-  const HadithBookReaderScreen({super.key, required this.book});
+  const HadithBookReaderScreen({
+    super.key,
+    required this.book,
+    this.initialHadithNo,
+  });
 
   final HadithBook book;
+
+  /// Hadith to open at (e.g. from the Saved screen); the first one if null.
+  final int? initialHadithNo;
 
   @override
   State<HadithBookReaderScreen> createState() => _HadithBookReaderScreenState();
@@ -43,6 +59,9 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _pageController = PageController();
   int _currentPage = 0;
+
+  /// Consumed once the book is ready and the page has been jumped to.
+  late int? _pendingHadithNo = widget.initialHadithNo;
 
   @override
   void dispose() {
@@ -103,6 +122,17 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
       listener: (context, state) {
         if (state.status != HadithBookStatus.ready && _currentPage != 0) {
           setState(() => _currentPage = 0);
+        }
+        final pending = _pendingHadithNo;
+        if (state.status == HadithBookStatus.ready && pending != null) {
+          _pendingHadithNo = null;
+          final index = state.entries.indexWhere((e) => e.hadithNo == pending);
+          if (index >= 0) {
+            // The pager is built by this same state change; jump after it.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _goToHadith(index);
+            });
+          }
         }
       },
       builder: (context, state) {
