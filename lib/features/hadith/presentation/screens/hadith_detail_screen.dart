@@ -301,19 +301,25 @@ class _HadithCardState extends State<_HadithCard> {
   static const _tint = Color(0xFFE6EFE3);
   static const _green = Color(0xFF008000);
 
-  /// Whether the English translation is expanded under the Bangla text.
+  /// Which language the card shows; the button next to the number flips it.
   bool _showEnglish = false;
 
   HadithDetail get hadith => widget.hadith;
 
+  /// [english] when English is on and available, otherwise [bangla] (and the
+  /// other way round when one of them is empty).
+  String _pick(String bangla, String english) {
+    final preferred = _showEnglish ? english : bangla;
+    return preferred.isNotEmpty ? preferred : (_showEnglish ? bangla : english);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final grade = hadith.gradeBangla.isNotEmpty
-        ? hadith.gradeBangla
-        : hadith.grade;
-    final source = hadith.sourceBangla.isNotEmpty
-        ? hadith.sourceBangla
-        : hadith.sourceEnglish;
+    final grade = _pick(hadith.gradeBangla, hadith.grade);
+    final source = _pick(hadith.sourceBangla, hadith.sourceEnglish);
+    final author = _pick(hadith.authorBangla, hadith.authorEnglish);
+    final title = _pick(hadith.titleBangla, hadith.titleEnglish);
+    final text = _pick(hadith.textBangla, hadith.textEnglish);
 
     return Container(
       padding: EdgeInsets.all(14.r),
@@ -358,16 +364,12 @@ class _HadithCardState extends State<_HadithCard> {
                   OutlinedButton.icon(
                     onPressed: () =>
                         setState(() => _showEnglish = !_showEnglish),
-                    icon: Icon(
-                      _showEnglish
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.translate_rounded,
-                      size: 16.sp,
-                    ),
-                    label: const Text('English'),
+                    icon: Icon(Icons.translate_rounded, size: 16.sp),
+                    // Names the language a tap switches to.
+                    label: Text(_showEnglish ? 'বাংলা' : 'English'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _showEnglish ? Colors.white : _green,
-                      backgroundColor: _showEnglish ? _green : Colors.white,
+                      foregroundColor: _green,
+                      backgroundColor: Colors.white,
                       side: const BorderSide(color: _green),
                       padding: EdgeInsets.symmetric(horizontal: 12.w),
                       minimumSize: Size(0, 30.h),
@@ -383,10 +385,10 @@ class _HadithCardState extends State<_HadithCard> {
                   ),
               ],
             ),
-            if (hadith.titleBangla.isNotEmpty) ...[
+            if (title.isNotEmpty) ...[
               SizedBox(height: 12.h),
               Text(
-                hadith.titleBangla,
+                title,
                 style: TextStyle(
                   fontSize: 13.sp,
                   height: 1.5,
@@ -404,7 +406,8 @@ class _HadithCardState extends State<_HadithCard> {
                 style: TextStyle(fontSize: 20.sp, height: 2.0, color: _ink),
               ),
             ],
-            if (hadith.narrator.isNotEmpty) ...[
+            // The English text already opens with its narrator.
+            if (!_showEnglish && hadith.narrator.isNotEmpty) ...[
               SizedBox(height: 14.h),
               Text(
                 hadith.narrator,
@@ -416,27 +419,11 @@ class _HadithCardState extends State<_HadithCard> {
                 ),
               ),
             ],
-            if (hadith.textBangla.isNotEmpty) ...[
+            if (text.isNotEmpty) ...[
               SizedBox(height: 8.h),
               Text(
-                hadith.textBangla,
+                text,
                 style: TextStyle(fontSize: 14.sp, height: 1.7, color: _ink),
-              ),
-            ],
-            if (_showEnglish && hadith.textEnglish.isNotEmpty) ...[
-              SizedBox(height: 12.h),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(12.r),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6F9EC),
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: const Color(0xFFDDE8AE)),
-                ),
-                child: Text(
-                  hadith.textEnglish,
-                  style: TextStyle(fontSize: 13.5.sp, height: 1.6, color: _ink),
-                ),
               ),
             ],
             if (hadith.takhrij.isNotEmpty) ...[
@@ -488,8 +475,7 @@ class _HadithCardState extends State<_HadithCard> {
                       ),
                     ),
                   if (source.isNotEmpty) _FooterText(source),
-                  if (hadith.authorBangla.isNotEmpty)
-                    _FooterText(hadith.authorBangla),
+                  if (author.isNotEmpty) _FooterText(author),
                   if (hadith.sectionNameBangla.isNotEmpty)
                     _FooterText(hadith.sectionNameBangla),
                 ],

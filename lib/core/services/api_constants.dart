@@ -1,7 +1,7 @@
 class ApiConstants {
   // local
   static const String baseUrl =
-      "https://tuhfatulmuslim2.ilmifygroup.com/api/v1";
+      "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
   //live
   // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
