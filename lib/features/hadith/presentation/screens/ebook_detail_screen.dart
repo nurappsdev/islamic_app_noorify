@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:open_filex/open_filex.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -9,10 +8,11 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/ebook_downloader.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebook_download/ebook_download_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_reader_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
 
 /// One e-book: cover, title, author, language, publisher and reference, with a
-/// button that downloads the PDF onto the device (and opens it afterwards).
+/// button that downloads the PDF onto the device, then reads it in the app.
 ///
 /// Reached by tapping a book on the e-book shelf of [HadithLibraryScreen].
 class EbookDetailScreen extends StatelessWidget {
@@ -102,7 +102,7 @@ class _EbookDetailView extends StatelessWidget {
                       _DetailsCard(rows: details),
                     ],
                     SizedBox(height: 26.h),
-                    const _DownloadButton(),
+                    _DownloadButton(ebook: ebook),
                   ],
                 ),
               ),
@@ -205,20 +205,19 @@ class _DetailsCard extends StatelessWidget {
   }
 }
 
-/// Download → progress → "Open book", driven by [EbookDownloadBloc].
+/// Download → progress → "Open book" (reads the PDF in [EbookReaderScreen]),
+/// driven by [EbookDownloadBloc].
 class _DownloadButton extends StatelessWidget {
-  const _DownloadButton();
+  const _DownloadButton({required this.ebook});
 
-  Future<void> _open(BuildContext context, String path) async {
-    final failed = AppText.readOf(context).ebookOpenFailed;
-    final messenger = ScaffoldMessenger.of(context);
-    var opened = false;
-    try {
-      opened = (await OpenFilex.open(path)).type == ResultType.done;
-    } catch (_) {
-      opened = false;
-    }
-    if (!opened) messenger.showSnackBar(SnackBar(content: Text(failed)));
+  final Ebook ebook;
+
+  void _open(BuildContext context, String path) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EbookReaderScreen(ebook: ebook, filePath: path),
+      ),
+    );
   }
 
   @override
