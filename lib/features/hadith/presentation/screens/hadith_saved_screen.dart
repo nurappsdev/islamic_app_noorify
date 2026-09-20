@@ -97,6 +97,8 @@ class _HadithSavedScreenState extends State<HadithSavedScreen> {
   }
 
   Future<void> _open(HadithBookmark bookmark) async {
+    // Hadiths saved from the online library have no page in the local reader.
+    if (HadithBookCatalog.bySlug(bookmark.bookSlug) == null) return;
     await Navigator.of(
       context,
     ).pushNamed(RouteNames.hadithBookReader, arguments: bookmark.bookSlug);
