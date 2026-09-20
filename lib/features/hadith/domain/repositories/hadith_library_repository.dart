@@ -38,6 +38,15 @@ abstract interface class HadithLibraryRepository {
     String? searchTerm,
   });
 
+  /// Reports the active reading time of a hadith (`POST
+  /// /hadiths/reading/track`). [date] is `YYYY-MM-DD`.
+  Future<Either<Failure, Unit>> trackReading({
+    required String hadithId,
+    required int seconds,
+    required bool completed,
+    required String date,
+  });
+
   /// One page of the hadiths of a sub-category
   /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book
   /// (`...&bookId=...`), in display order. Pass one of [subCategoryId] /

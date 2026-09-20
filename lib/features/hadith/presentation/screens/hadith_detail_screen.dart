@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -12,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -22,7 +24,9 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_mod
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/track_hadith_reading.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/controllers/hadith_reading_tracker.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
@@ -85,16 +89,34 @@ class _HadithDetailView extends StatefulWidget {
   State<_HadithDetailView> createState() => _HadithDetailViewState();
 }
 
-class _HadithDetailViewState extends State<_HadithDetailView> {
+class _HadithDetailViewState extends State<_HadithDetailView>
+    with WidgetsBindingObserver, RouteAware {
   /// How close to the end of the list (in logical pixels) the next page
   /// starts loading.
   static const _loadMoreThreshold = 400.0;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _listKey = GlobalKey();
   final _scrollController = ScrollController();
   final _settingsStore = HadithContentSettingsStore();
   String _query = '';
   HadithContentSettings _settings = const HadithContentSettings();
+
+  /// Measures the user's active reading time and reports it (see
+  /// [HadithReadingTracker]).
+  late final HadithReadingTracker _tracker = HadithReadingTracker(
+    TrackHadithReading(
+      HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+    ),
+  );
+
+  /// One key per card, to find which hadith is on screen.
+  final _cardKeys = <String, GlobalKey>{};
+
+  /// Ids of the cards currently listed, top to bottom.
+  List<String> _displayedIds = const [];
+
+  bool _leaving = false;
 
   @override
   void initState() {
@@ -103,6 +125,147 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
     _settingsStore.load().then((value) {
       if (mounted) setState(() => _settings = value);
     });
+    WidgetsBinding.instance.addObserver(this);
+    _tracker
+      ..addListener(_onTrackerChanged)
+      ..load()
+      ..start(_focusedHadithId);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
+  }
+
+  void _onTrackerChanged() {
+    if (mounted) setState(() {});
+  }
+
+  // --- Tracking: leaving the screen / the app ---------------------------------
+
+  /// Another screen opened on top of this one: stop counting.
+  @override
+  void didPushNext() => _tracker.pause();
+
+  @override
+  void didPopNext() => _tracker.resume();
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _tracker.resume();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _tracker.pause();
+    }
+  }
+
+  /// The hadith in the middle of the list, i.e. the one being read.
+  String? _focusedHadithId() {
+    final list = _listKey.currentContext?.findRenderObject();
+    if (list is! RenderBox || !list.attached || !list.hasSize) return null;
+    final center = list.localToGlobal(Offset.zero).dy + list.size.height / 2;
+    String? best;
+    var bestDistance = list.size.height / 2;
+    for (final id in _displayedIds) {
+      final box = _cardKeys[id]?.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.attached || !box.hasSize) continue;
+      final top = box.localToGlobal(Offset.zero).dy;
+      final bottom = top + box.size.height;
+      final distance = center < top
+          ? top - center
+          : center > bottom
+          ? center - bottom
+          : 0.0;
+      if (distance <= bestDistance) {
+        best = id;
+        bestDistance = distance;
+        if (distance == 0) break;
+      }
+    }
+    return best;
+  }
+
+  /// Back button / gesture. After more than 30 seconds on the screen, asks
+  /// whether the hadith read most was completed and reports the time (Yes:
+  /// completed, No: not completed); otherwise leaves straight away.
+  Future<void> _handleExit() async {
+    if (_leaving) return;
+    _leaving = true;
+    final candidate = _tracker.reportCandidate;
+    if (_tracker.shouldAskOnLeave && candidate != null) {
+      final hadiths = context.read<HadithDetailBloc>().state.hadiths;
+      final number = hadiths
+          .where((h) => h.id == candidate)
+          .map((h) => h.hadithNumber)
+          .firstOrNull;
+      final completed = await _askCompleted(number);
+      if (!mounted) return;
+      // One report, then leave; give it a moment to land first.
+      await _tracker
+          .submit(candidate, completed: completed == true)
+          .timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => HadithCompletion.failed,
+          );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<bool?> _askCompleted(int? hadithNumber) {
+    final appText = AppText.readOf(context);
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: dialogContext.surfaceColor(Colors.white),
+        title: Text(
+          appText.hadithCompletedQuestion,
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+        ),
+        content: hadithNumber == null || hadithNumber == 0
+            ? null
+            : Text(
+                '${appText.categoryHadith} $hadithNumber',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: dialogContext.inkColor(const Color(0xFF5D6B44)),
+                ),
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.no),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF008000),
+            ),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The Complete button of a card.
+  Future<void> _complete(String hadithId) async {
+    final failed = AppText.readOf(context).hadithTrackFailed;
+    final result = await _tracker.complete(hadithId);
+    if (result == HadithCompletion.failed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(failed),
+          duration: const Duration(milliseconds: 2000),
+        ),
+      );
+    }
   }
 
   void _updateSettings(HadithContentSettings value) {
@@ -112,6 +275,11 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
 
   @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
+    _tracker
+      ..removeListener(_onTrackerChanged)
+      ..stop();
     _scrollController.dispose();
     super.dispose();
   }
@@ -155,85 +323,105 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
               )
               .toList();
     final searching = query.isNotEmpty;
+    _displayedIds = [
+      for (final h in hadiths)
+        if (h.id.isNotEmpty) h.id,
+    ];
 
     final title = (widget.title ?? '').isNotEmpty
         ? widget.title!
         : appText.categoryHadith;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: context.pageColor(Colors.white),
-      endDrawer: HadithContentSettingsDrawer(
-        settings: _settings,
-        onChanged: _updateSettings,
-        onOpenProfileSettings: () {
-          Navigator.of(context).pop(); // close the drawer
-          Navigator.of(context).pushNamed(RouteNames.settings);
-        },
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: 6.h),
-            _Header(
-              title: title,
-              onContentSettings: () =>
-                  _scaffoldKey.currentState?.openEndDrawer(),
-            ),
-            SizedBox(height: 12.h),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: HadithSearchField(
-                hint: appText.searchHere,
-                onChanged: (value) => setState(() => _query = value),
+    return PopScope(
+      // Back is handled by _handleExit (completion question + report).
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleExit();
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: context.pageColor(Colors.white),
+        endDrawer: HadithContentSettingsDrawer(
+          settings: _settings,
+          onChanged: _updateSettings,
+          onOpenProfileSettings: () {
+            Navigator.of(context).pop(); // close the drawer
+            Navigator.of(context).pushNamed(RouteNames.settings);
+          },
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              SizedBox(height: 6.h),
+              _Header(
+                title: title,
+                onContentSettings: () =>
+                    _scaffoldKey.currentState?.openEndDrawer(),
               ),
-            ),
-            SizedBox(height: 14.h),
-            Expanded(
-              child: ListView(
-                controller: _scrollController,
-                padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
-                children: [
-                  if (state.isLoading)
-                    const _HadithSkeletons(count: 2)
-                  else if (state.status == HadithDetailStatus.failure) ...[
-                    _Message(state.failure?.message ?? ''),
-                    TextButton(
-                      onPressed: () => context.read<HadithDetailBloc>().add(
-                        LoadHadithDetails(
-                          subCategoryId: widget.subCategoryId,
-                          bookId: widget.bookId,
-                        ),
-                      ),
-                      child: Text(appText.tryAgain),
-                    ),
-                  ] else if (hadiths.isEmpty && !(searching && state.hasMore))
-                    _Message(appText.noResultsFound)
-                  else ...[
-                    for (final hadith in hadiths) ...[
-                      HadithDetailCard(
-                        hadith: hadith,
-                        bookName: title,
-                        settings: _settings,
-                      ),
-                      SizedBox(height: 14.h),
-                    ],
-                    if (state.isLoadingMore || (searching && state.hasMore))
-                      const _HadithSkeletons(count: 1),
-                    if (state.loadMoreFailure != null) ...[
-                      _Message(state.loadMoreFailure!.message),
+              SizedBox(height: 12.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: HadithSearchField(
+                  hint: appText.searchHere,
+                  onChanged: (value) => setState(() => _query = value),
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Expanded(
+                child: ListView(
+                  key: _listKey,
+                  controller: _scrollController,
+                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
+                  children: [
+                    if (state.isLoading)
+                      const _HadithSkeletons(count: 2)
+                    else if (state.status == HadithDetailStatus.failure) ...[
+                      _Message(state.failure?.message ?? ''),
                       TextButton(
                         onPressed: () => context.read<HadithDetailBloc>().add(
-                          const LoadMoreHadithDetails(),
+                          LoadHadithDetails(
+                            subCategoryId: widget.subCategoryId,
+                            bookId: widget.bookId,
+                          ),
                         ),
                         child: Text(appText.tryAgain),
                       ),
+                    ] else if (hadiths.isEmpty && !(searching && state.hasMore))
+                      _Message(appText.noResultsFound)
+                    else ...[
+                      for (final hadith in hadiths) ...[
+                        HadithDetailCard(
+                          key: hadith.id.isEmpty
+                              ? null
+                              : _cardKeys.putIfAbsent(hadith.id, GlobalKey.new),
+                          hadith: hadith,
+                          bookName: title,
+                          settings: _settings,
+                          onComplete: hadith.id.isEmpty
+                              ? null
+                              : () => _complete(hadith.id),
+                          completed: _tracker.isCompleted(hadith.id),
+                          completing: _tracker.isCompleting(hadith.id),
+                        ),
+                        SizedBox(height: 14.h),
+                      ],
+                      if (state.isLoadingMore || (searching && state.hasMore))
+                        const _HadithSkeletons(count: 1),
+                      if (state.loadMoreFailure != null) ...[
+                        _Message(state.loadMoreFailure!.message),
+                        TextButton(
+                          onPressed: () => context.read<HadithDetailBloc>().add(
+                            const LoadMoreHadithDetails(),
+                          ),
+                          child: Text(appText.tryAgain),
+                        ),
+                      ],
                     ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -358,10 +546,22 @@ class HadithDetailCard extends StatefulWidget {
     required this.hadith,
     required this.bookName,
     required this.settings,
+    this.onComplete,
+    this.completed = false,
+    this.completing = false,
   });
 
   final HadithDetail hadith;
   final HadithContentSettings settings;
+
+  /// Called by the Complete button under the card; no button when null.
+  final VoidCallback? onComplete;
+
+  /// Whether the hadith is already marked completed (the button says so).
+  final bool completed;
+
+  /// Whether a completion is being sent right now.
+  final bool completing;
 
   /// Name of the book / sub-category on screen, used in the report mail.
   final String bookName;
@@ -846,7 +1046,7 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
       ),
     );
 
-    return Stack(
+    final stack = Stack(
       children: [
         RepaintBoundary(key: _boundaryKey, child: card),
         // Outside the boundary so the menu button is not in the screenshot.
@@ -872,6 +1072,71 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
           ),
         ),
       ],
+    );
+
+    final onComplete = widget.onComplete;
+    if (onComplete == null) return stack;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        stack,
+        SizedBox(height: 10.h),
+        _CompleteButton(
+          completed: widget.completed,
+          completing: widget.completing,
+          onPressed: onComplete,
+        ),
+      ],
+    );
+  }
+}
+
+/// "Complete" under a hadith; turns into a "Completed" tick once done.
+class _CompleteButton extends StatelessWidget {
+  const _CompleteButton({
+    required this.completed,
+    required this.completing,
+    required this.onPressed,
+  });
+
+  final bool completed;
+  final bool completing;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return FilledButton.icon(
+      // Disabled while sending and once completed, so it can't fire twice.
+      onPressed: completed || completing ? null : onPressed,
+      icon: completing
+          ? SizedBox.square(
+              dimension: 16.r,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : Icon(
+              completed
+                  ? Icons.check_circle_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 18.sp,
+            ),
+      label: Text(completed ? appText.hadithCompleted : appText.hadithComplete),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF008000),
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: completed
+            ? const Color(0xFF008000).withValues(alpha: .55)
+            : const Color(0xFF008000),
+        disabledForegroundColor: Colors.white,
+        minimumSize: Size(double.infinity, 46.h),
+        textStyle: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w600),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+      ),
     );
   }
 }
