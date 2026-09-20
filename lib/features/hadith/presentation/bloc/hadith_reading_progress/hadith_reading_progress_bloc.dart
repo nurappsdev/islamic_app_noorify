@@ -1,0 +1,63 @@
+import 'package:bloc/bloc.dart';
+
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_progress.dart';
+
+import 'hadith_reading_progress_event.dart';
+import 'hadith_reading_progress_state.dart';
+
+export 'hadith_reading_progress_event.dart';
+export 'hadith_reading_progress_state.dart';
+
+class HadithReadingProgressBloc
+    extends Bloc<HadithReadingProgressEvent, HadithReadingProgressState> {
+  HadithReadingProgressBloc(this._getProgress)
+    : super(const HadithReadingProgressState()) {
+    on<LoadHadithReadingProgress>(_onLoad);
+    on<RefreshHadithReadingProgress>(_onRefresh);
+  }
+
+  final GetHadithReadingProgress _getProgress;
+
+  /// Bumped per request so a slow, superseded response can't overwrite a
+  /// newer one.
+  int _generation = 0;
+
+  Future<void> _onLoad(
+    LoadHadithReadingProgress event,
+    Emitter<HadithReadingProgressState> emit,
+  ) async {
+    emit(
+      HadithReadingProgressState(
+        status: HadithReadingProgressStatus.loading,
+        progress: state.progress,
+      ),
+    );
+    await _fetch(emit);
+  }
+
+  Future<void> _onRefresh(
+    RefreshHadithReadingProgress event,
+    Emitter<HadithReadingProgressState> emit,
+  ) => _fetch(emit);
+
+  Future<void> _fetch(Emitter<HadithReadingProgressState> emit) async {
+    final generation = ++_generation;
+    final result = await _getProgress();
+    if (generation != _generation || emit.isDone) return;
+    result.fold(
+      (failure) => emit(
+        HadithReadingProgressState(
+          status: HadithReadingProgressStatus.failure,
+          progress: state.progress,
+          failure: failure,
+        ),
+      ),
+      (progress) => emit(
+        HadithReadingProgressState(
+          status: HadithReadingProgressStatus.success,
+          progress: progress,
+        ),
+      ),
+    );
+  }
+}
