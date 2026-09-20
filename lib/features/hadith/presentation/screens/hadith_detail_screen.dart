@@ -1,8 +1,17 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
@@ -10,6 +19,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -138,7 +148,11 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
         child: Column(
           children: [
             SizedBox(height: 6.h),
-            _Header(title: title),
+            _Header(
+              title: title,
+              onSettings: () =>
+                  Navigator.of(context).pushNamed(RouteNames.settings),
+            ),
             SizedBox(height: 12.h),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -170,7 +184,7 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
                     _Message(appText.noResultsFound)
                   else ...[
                     for (final hadith in hadiths) ...[
-                      _HadithCard(hadith: hadith),
+                      _HadithCard(hadith: hadith, bookName: title),
                       SizedBox(height: 14.h),
                     ],
                     if (state.isLoadingMore || (searching && state.hasMore))
@@ -196,9 +210,10 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title});
+  const _Header({required this.title, required this.onSettings});
 
   final String title;
+  final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -220,7 +235,7 @@ class _Header extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: 16.w),
+              padding: EdgeInsets.only(right: 8.w),
               child: Text(
                 title,
                 maxLines: 2,
@@ -231,6 +246,19 @@ class _Header extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(right: 14.w),
+            child: IconButton(
+              onPressed: onSettings,
+              tooltip: AppText.of(context).settingsTitle,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFEDF1DE),
+                foregroundColor: const Color(0xFF4C5A34),
+                minimumSize: Size(38.r, 38.r),
+              ),
+              icon: const Icon(Icons.settings_outlined, size: 18),
             ),
           ),
         ],
@@ -287,9 +315,12 @@ class _HadithSkeletons extends StatelessWidget {
 }
 
 class _HadithCard extends StatefulWidget {
-  const _HadithCard({required this.hadith});
+  const _HadithCard({required this.hadith, required this.bookName});
 
   final HadithDetail hadith;
+
+  /// Name of the book / sub-category on screen, used in the report mail.
+  final String bookName;
 
   @override
   State<_HadithCard> createState() => _HadithCardState();
@@ -300,6 +331,9 @@ class _HadithCardState extends State<_HadithCard> {
   static const _muted = Color(0xFF5D6B44);
   static const _tint = Color(0xFFE6EFE3);
   static const _green = Color(0xFF008000);
+  static const _reportEmail = 'report.tuhfatulmuslim@gmail.com';
+
+  final GlobalKey _boundaryKey = GlobalKey();
 
   /// Which language the card shows; the button next to the number flips it.
   bool _showEnglish = false;
@@ -313,6 +347,201 @@ class _HadithCardState extends State<_HadithCard> {
     return preferred.isNotEmpty ? preferred : (_showEnglish ? bangla : english);
   }
 
+  /// For tap handlers, where [AppText.of] (which listens) is not allowed.
+  AppText get _appText =>
+      AppText.forLanguage(context.read<LanguageBloc>().state.language);
+
+  /// Narrator and translation in the language the card currently shows.
+  String get _translationText {
+    final buffer = StringBuffer();
+    if (!_showEnglish && hadith.narrator.isNotEmpty) {
+      buffer.writeln(hadith.narrator);
+    }
+    final text = _pick(hadith.textBangla, hadith.textEnglish);
+    if (text.isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.writeln();
+      buffer.writeln(text);
+    }
+    return buffer.toString().trim();
+  }
+
+  /// Title, Arabic, narrator, translation and reference as plain text.
+  String get _plainText {
+    final buffer = StringBuffer();
+    final title = _pick(hadith.titleBangla, hadith.titleEnglish);
+    if (title.isNotEmpty) buffer.writeln('${hadith.hadithNumber}. $title');
+    if (hadith.textArabic.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(hadith.textArabic);
+    }
+    final translation = _translationText;
+    if (translation.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(translation);
+    }
+    if (hadith.takhrij.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(hadith.takhrij);
+    }
+    return buffer.toString().trim();
+  }
+
+  String get _shareSubject => _pick(hadith.titleBangla, hadith.titleEnglish);
+
+  Rect? get _originRect {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
+  Future<void> _copyValue(String text) async {
+    if (text.isEmpty) return;
+    final copied = _appText.hadithCopied;
+    await Clipboard.setData(ClipboardData(text: text));
+    _toast(copied);
+  }
+
+  Future<void> _shareScreenshot() async {
+    final failed = _appText.hadithShareFailed;
+    try {
+      final boundary =
+          _boundaryKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      if (data == null) return;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/hadith_${hadith.id}.png');
+      await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: _shareSubject,
+          sharePositionOrigin: _originRect,
+        ),
+      );
+    } catch (_) {
+      _toast(failed);
+    }
+  }
+
+  Future<void> _report() async {
+    final appText = _appText;
+    final subject =
+        '${appText.hadithReport}: ${widget.bookName} — '
+        '${appText.categoryHadith} ${hadith.hadithNumber}';
+    final body =
+        '${appText.hadithReportMessage}'
+        '${appText.hadithBookReference}: ${widget.bookName}\n'
+        '${appText.categoryHadith}: ${hadith.hadithNumber}\n\n'
+        '$_plainText';
+    final uri = Uri.parse(
+      'mailto:$_reportEmail'
+      '?subject=${Uri.encodeComponent(subject)}'
+      '&body=${Uri.encodeComponent(body)}',
+    );
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) _toast(appText.hadithReportFailed);
+    } catch (_) {
+      _toast(appText.hadithReportFailed);
+    }
+  }
+
+  /// Bottom sheet with the per-hadith copy / share / report actions.
+  void _showActions(BuildContext buttonContext) {
+    final appText = _appText;
+    showModalBottomSheet<void>(
+      context: buttonContext,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (sheetContext) {
+        Widget tile({
+          required IconData icon,
+          required String label,
+          required VoidCallback onTap,
+          Color color = const Color(0xFF4C5A34),
+        }) {
+          return ListTile(
+            leading: Icon(icon, color: color),
+            title: Text(label, style: TextStyle(color: color)),
+            onTap: () {
+              Navigator.pop(sheetContext);
+              onTap();
+            },
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10.h),
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCE3C4),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+              SizedBox(height: 6.h),
+              if (_translationText.isNotEmpty)
+                tile(
+                  icon: Icons.translate_rounded,
+                  label: appText.hadithCopyTranslation,
+                  onTap: () => _copyValue(_translationText),
+                ),
+              if (hadith.textArabic.isNotEmpty)
+                tile(
+                  icon: Icons.menu_book_rounded,
+                  label: appText.hadithCopyArabic,
+                  onTap: () => _copyValue(hadith.textArabic),
+                ),
+              tile(
+                icon: Icons.copy_rounded,
+                label: appText.hadithCopyFull,
+                onTap: () => _copyValue(_plainText),
+              ),
+              tile(
+                icon: Icons.ios_share_rounded,
+                label: appText.hadithShareScreenshot,
+                onTap: _shareScreenshot,
+              ),
+              tile(
+                icon: Icons.flag_outlined,
+                label: appText.hadithReport,
+                color: const Color(0xFFC15B4B),
+                onTap: _report,
+              ),
+              SizedBox(height: 8.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final grade = _pick(hadith.gradeBangla, hadith.grade);
@@ -321,7 +550,7 @@ class _HadithCardState extends State<_HadithCard> {
     final title = _pick(hadith.titleBangla, hadith.titleEnglish);
     final text = _pick(hadith.textBangla, hadith.textEnglish);
 
-    return Container(
+    final card = Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -340,7 +569,6 @@ class _HadithCardState extends State<_HadithCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -360,6 +588,7 @@ class _HadithCardState extends State<_HadithCard> {
                     ),
                   ),
                 ),
+                const Spacer(),
                 if (hadith.textEnglish.isNotEmpty)
                   OutlinedButton.icon(
                     onPressed: () =>
@@ -383,6 +612,8 @@ class _HadithCardState extends State<_HadithCard> {
                       ),
                     ),
                   ),
+                // Room for the overlaid menu button.
+                SizedBox(width: 40.w),
               ],
             ),
             if (title.isNotEmpty) ...[
@@ -482,6 +713,54 @@ class _HadithCardState extends State<_HadithCard> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+
+    return Stack(
+      children: [
+        RepaintBoundary(key: _boundaryKey, child: card),
+        // Outside the boundary so the menu button is not in the screenshot.
+        PositionedDirectional(
+          top: 14.r,
+          end: 14.r,
+          child: Builder(
+            builder: (buttonContext) => _MoreButton(
+              tooltip: AppText.of(context).hadithCopy,
+              onTap: () => _showActions(buttonContext),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MoreButton extends StatelessWidget {
+  const _MoreButton({required this.tooltip, required this.onTap});
+
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9.r),
+        child: Container(
+          padding: EdgeInsets.all(6.r),
+          decoration: BoxDecoration(
+            color: const Color(0xFFECF0DC),
+            borderRadius: BorderRadius.circular(9.r),
+            border: Border.all(color: const Color(0xFFDCE3C4)),
+          ),
+          child: Icon(
+            Icons.more_vert_rounded,
+            size: 16.sp,
+            color: const Color(0xFF4C5A34),
+          ),
         ),
       ),
     );
