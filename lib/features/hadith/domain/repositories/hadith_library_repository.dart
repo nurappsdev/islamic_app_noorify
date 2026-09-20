@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
 
 abstract interface class HadithLibraryRepository {
@@ -46,6 +47,10 @@ abstract interface class HadithLibraryRepository {
     required bool completed,
     required String date,
   });
+
+  /// The reading progress overall and per category
+  /// (`GET /hadiths/reading/progress/categories`, needs the login token).
+  Future<Either<Failure, HadithReadingProgress>> getReadingProgress();
 
   /// One page of the hadiths of a sub-category
   /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book

@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart'
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_progress_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
 
 /// Talks to `GET /hadiths/books/lists` and `GET /ebooks` (public — no token
@@ -46,6 +47,10 @@ abstract interface class HadithLibraryRemoteDataSource {
     required bool completed,
     required String date,
   });
+
+  /// `GET /hadiths/reading/progress/categories` (needs the login token): the
+  /// overall summary and the progress of every category.
+  Future<HadithReadingProgressModel> getReadingProgress();
 
   /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId` or
   /// `bookId`.
@@ -173,6 +178,41 @@ class HadithLibraryRemoteDataSourceImpl
         statusCode: status,
       );
     }
+  }
+
+  @override
+  Future<HadithReadingProgressModel> getReadingProgress() async {
+    final token = _local.getToken();
+    final Response<dynamic> response;
+    try {
+      response = await _dio.get<dynamic>(
+        ApiConstants.hadithReadingProgressCategoriesEndPoint,
+        options: Options(
+          headers: token == null ? null : {'Authorization': 'Bearer $token'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ParsingException('Reading progress response is missing "data".');
+    }
+    return HadithReadingProgressModel.fromJson(data);
   }
 
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,

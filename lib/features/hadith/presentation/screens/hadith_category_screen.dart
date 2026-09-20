@@ -12,7 +12,9 @@ import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_libra
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_categories.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_progress.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_category/hadith_category_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_sub_category_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -29,7 +31,8 @@ class HadithCategoryArgs {
 ///
 /// Reached from a collection card's "Explore" action on the Hadith library
 /// screens. Shows the collection's ordered categories, each with its name (in
-/// Bangla and/or the API's `name`) and hadith count.
+/// Bangla and/or the API's `name`), hadith count and reading progress
+/// (`GET /hadiths/reading/progress/categories`, matched by category id).
 class HadithCategoryScreen extends StatelessWidget {
   const HadithCategoryScreen({
     super.key,
@@ -42,12 +45,22 @@ class HadithCategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HadithCategoryBloc(
-        GetHadithCategories(
-          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+    final repository = HadithLibraryRepositoryImpl(
+      HadithLibraryRemoteDataSourceImpl(),
+    );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              HadithCategoryBloc(GetHadithCategories(repository))
+                ..add(LoadHadithCategories(bookId)),
         ),
-      )..add(LoadHadithCategories(bookId)),
+        BlocProvider(
+          create: (_) =>
+              HadithReadingProgressBloc(GetHadithReadingProgress(repository))
+                ..add(const LoadHadithReadingProgress()),
+        ),
+      ],
       child: _HadithCategoryView(bookId: bookId),
     );
   }
@@ -92,6 +105,15 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
       if (!mounted) return;
       context.read<HadithCategoryBloc>().add(SearchHadithCategories(term));
     });
+  }
+
+  /// Called when the user comes back from a category's screens (where they
+  /// may have read hadiths), so the new percentages show straight away.
+  void _refreshProgress() {
+    if (!mounted) return;
+    context.read<HadithReadingProgressBloc>().add(
+      const RefreshHadithReadingProgress(),
+    );
   }
 
   void _onScroll() {
@@ -164,6 +186,7 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
               index: i + 1,
               category: state.categories[i],
               hadithWord: appText.categoryHadith,
+              onReturn: _refreshProgress,
             ),
             SizedBox(height: 10.h),
           ],
@@ -228,11 +251,15 @@ class _CategoryCard extends StatelessWidget {
     required this.index,
     required this.category,
     required this.hadithWord,
+    required this.onReturn,
   });
 
   final int index;
   final HadithCategory category;
   final String hadithWord;
+
+  /// Called once the pushed sub-category route has been popped.
+  final VoidCallback onReturn;
 
   @override
   Widget build(BuildContext context) {
@@ -248,13 +275,16 @@ class _CategoryCard extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context).pushNamed(
-        RouteNames.hadithSubCategory,
-        arguments: HadithSubCategoryArgs(
-          categoryId: category.id,
-          title: primary,
-        ),
-      ),
+      onTap: () async {
+        await Navigator.of(context).pushNamed(
+          RouteNames.hadithSubCategory,
+          arguments: HadithSubCategoryArgs(
+            categoryId: category.id,
+            title: primary,
+          ),
+        );
+        onReturn();
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
@@ -315,8 +345,65 @@ class _CategoryCard extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(width: 10.w),
+            _CategoryProgressRing(categoryId: category.id),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The reading progress of one category: a ring filled to the backend's
+/// `percentage`, with the number inside. Shows 0% when the backend has no
+/// progress for the category (or the request failed), and an empty ring
+/// while the first load is running.
+class _CategoryProgressRing extends StatelessWidget {
+  const _CategoryProgressRing({required this.categoryId});
+
+  final String categoryId;
+
+  @override
+  Widget build(BuildContext context) {
+    // Rebuild only when this category's own value changes.
+    final (isLoading, percentage) = context
+        .select<HadithReadingProgressBloc, (bool, double?)>(
+          (bloc) => (
+            bloc.state.isLoading && bloc.state.progress == null,
+            bloc.state.forCategory(categoryId)?.percentage,
+          ),
+        );
+    final clamped = (percentage ?? 0).clamp(0, 100).toDouble();
+    final size = 40.r;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        fit: StackFit.expand,
+        children: [
+          CircularProgressIndicator(
+            // Full ring = the remaining portion; the arc drawn over it is the
+            // read portion.
+            value: isLoading ? 0 : clamped / 100,
+            strokeWidth: 3.5.r,
+            strokeCap: clamped > 0 ? StrokeCap.round : null,
+            backgroundColor: context.lineColor(const Color(0xFFE3E7D3)),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFF8B9A4B)),
+          ),
+          if (!isLoading)
+            Center(
+              child: Text(
+                '${clamped.round()}%',
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: context.inkColor(const Color(0xFF2C3320)),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
