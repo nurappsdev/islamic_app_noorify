@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColor {
+
+  static const Color whiteColor = Color(0xffFFFFFF);
   static const primary = Color(0xFFA1AD59);
   static const authBackground = Colors.white;
   static const authFieldBorder = Color(0xFFDDE8C1);

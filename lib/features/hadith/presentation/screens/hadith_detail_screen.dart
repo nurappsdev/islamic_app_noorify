@@ -161,6 +161,10 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
       endDrawer: HadithContentSettingsDrawer(
         settings: _settings,
         onChanged: _updateSettings,
+        onOpenProfileSettings: () {
+          Navigator.of(context).pop(); // close the drawer
+          Navigator.of(context).pushNamed(RouteNames.settings);
+        },
       ),
       body: SafeArea(
         child: Column(
@@ -170,8 +174,6 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
               title: title,
               onContentSettings: () =>
                   _scaffoldKey.currentState?.openEndDrawer(),
-              onProfileSettings: () =>
-                  Navigator.of(context).pushNamed(RouteNames.settings),
             ),
             SizedBox(height: 12.h),
             Padding(
@@ -234,19 +236,12 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({
-    required this.title,
-    required this.onContentSettings,
-    required this.onProfileSettings,
-  });
+  const _Header({required this.title, required this.onContentSettings});
 
   final String title;
 
   /// Opens the content-settings drawer (Arabic / translation, font sizes).
   final VoidCallback onContentSettings;
-
-  /// Opens the app-wide profile settings screen.
-  final VoidCallback onProfileSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -281,28 +276,17 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          IconButton(
-            onPressed: onContentSettings,
-            tooltip: AppText.of(context).quranReaderSettingsTitle,
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFEDF1DE),
-              foregroundColor: const Color(0xFF4C5A34),
-              minimumSize: Size(38.r, 38.r),
-            ),
-            icon: const Icon(Icons.text_fields_rounded, size: 18),
-          ),
-          SizedBox(width: 6.w),
           Padding(
             padding: EdgeInsets.only(right: 14.w),
             child: IconButton(
-              onPressed: onProfileSettings,
-              tooltip: AppText.of(context).settingsTitle,
+              onPressed: onContentSettings,
+              tooltip: AppText.of(context).quranReaderSettingsTitle,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFEDF1DE),
                 foregroundColor: const Color(0xFF4C5A34),
                 minimumSize: Size(38.r, 38.r),
               ),
-              icon: const Icon(Icons.settings_outlined, size: 18),
+              icon: const Icon(Icons.text_fields_rounded, size: 18),
             ),
           ),
         ],
