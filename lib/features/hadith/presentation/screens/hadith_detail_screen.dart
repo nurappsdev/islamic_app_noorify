@@ -14,10 +14,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -83,13 +85,24 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
   /// starts loading.
   static const _loadMoreThreshold = 400.0;
 
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _scrollController = ScrollController();
+  final _settingsStore = HadithContentSettingsStore();
   String _query = '';
+  HadithContentSettings _settings = const HadithContentSettings();
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _settingsStore.load().then((value) {
+      if (mounted) setState(() => _settings = value);
+    });
+  }
+
+  void _updateSettings(HadithContentSettings value) {
+    setState(() => _settings = value);
+    _settingsStore.save(value);
   }
 
   @override
@@ -143,14 +156,21 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
         : appText.categoryHadith;
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Colors.white,
+      endDrawer: HadithContentSettingsDrawer(
+        settings: _settings,
+        onChanged: _updateSettings,
+      ),
       body: SafeArea(
         child: Column(
           children: [
             SizedBox(height: 6.h),
             _Header(
               title: title,
-              onSettings: () =>
+              onContentSettings: () =>
+                  _scaffoldKey.currentState?.openEndDrawer(),
+              onProfileSettings: () =>
                   Navigator.of(context).pushNamed(RouteNames.settings),
             ),
             SizedBox(height: 12.h),
@@ -184,7 +204,11 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
                     _Message(appText.noResultsFound)
                   else ...[
                     for (final hadith in hadiths) ...[
-                      _HadithCard(hadith: hadith, bookName: title),
+                      _HadithCard(
+                        hadith: hadith,
+                        bookName: title,
+                        settings: _settings,
+                      ),
                       SizedBox(height: 14.h),
                     ],
                     if (state.isLoadingMore || (searching && state.hasMore))
@@ -210,10 +234,19 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title, required this.onSettings});
+  const _Header({
+    required this.title,
+    required this.onContentSettings,
+    required this.onProfileSettings,
+  });
 
   final String title;
-  final VoidCallback onSettings;
+
+  /// Opens the content-settings drawer (Arabic / translation, font sizes).
+  final VoidCallback onContentSettings;
+
+  /// Opens the app-wide profile settings screen.
+  final VoidCallback onProfileSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -248,10 +281,21 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
+          IconButton(
+            onPressed: onContentSettings,
+            tooltip: AppText.of(context).quranReaderSettingsTitle,
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFEDF1DE),
+              foregroundColor: const Color(0xFF4C5A34),
+              minimumSize: Size(38.r, 38.r),
+            ),
+            icon: const Icon(Icons.text_fields_rounded, size: 18),
+          ),
+          SizedBox(width: 6.w),
           Padding(
             padding: EdgeInsets.only(right: 14.w),
             child: IconButton(
-              onPressed: onSettings,
+              onPressed: onProfileSettings,
               tooltip: AppText.of(context).settingsTitle,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFEDF1DE),
@@ -315,9 +359,14 @@ class _HadithSkeletons extends StatelessWidget {
 }
 
 class _HadithCard extends StatefulWidget {
-  const _HadithCard({required this.hadith, required this.bookName});
+  const _HadithCard({
+    required this.hadith,
+    required this.bookName,
+    required this.settings,
+  });
 
   final HadithDetail hadith;
+  final HadithContentSettings settings;
 
   /// Name of the book / sub-category on screen, used in the report mail.
   final String bookName;
@@ -339,6 +388,7 @@ class _HadithCardState extends State<_HadithCard> {
   bool _showEnglish = false;
 
   HadithDetail get hadith => widget.hadith;
+  HadithContentSettings get settings => widget.settings;
 
   /// [english] when English is on and available, otherwise [bangla] (and the
   /// other way round when one of them is empty).
@@ -616,45 +666,55 @@ class _HadithCardState extends State<_HadithCard> {
                 SizedBox(width: 40.w),
               ],
             ),
-            if (title.isNotEmpty) ...[
+            if (title.isNotEmpty && settings.showTranslation) ...[
               SizedBox(height: 12.h),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 13.sp,
+                  fontSize: 13.sp * settings.translationScale,
                   height: 1.5,
                   fontWeight: FontWeight.w600,
                   color: _muted,
                 ),
               ),
             ],
-            if (hadith.textArabic.isNotEmpty) ...[
+            if (hadith.textArabic.isNotEmpty && settings.showArabic) ...[
               SizedBox(height: 14.h),
               Text(
                 hadith.textArabic,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: TextStyle(fontSize: 20.sp, height: 2.0, color: _ink),
+                style: TextStyle(
+                  fontSize: 20.sp * settings.arabicScale,
+                  height: 2.0,
+                  color: _ink,
+                ),
               ),
             ],
             // The English text already opens with its narrator.
-            if (!_showEnglish && hadith.narrator.isNotEmpty) ...[
+            if (settings.showTranslation &&
+                !_showEnglish &&
+                hadith.narrator.isNotEmpty) ...[
               SizedBox(height: 14.h),
               Text(
                 hadith.narrator,
                 style: TextStyle(
-                  fontSize: 12.5.sp,
+                  fontSize: 12.5.sp * settings.translationScale,
                   height: 1.6,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF8B9A4B),
                 ),
               ),
             ],
-            if (text.isNotEmpty) ...[
+            if (text.isNotEmpty && settings.showTranslation) ...[
               SizedBox(height: 8.h),
               Text(
                 text,
-                style: TextStyle(fontSize: 14.sp, height: 1.7, color: _ink),
+                style: TextStyle(
+                  fontSize: 14.sp * settings.translationScale,
+                  height: 1.7,
+                  color: _ink,
+                ),
               ),
             ],
             if (hadith.takhrij.isNotEmpty) ...[
