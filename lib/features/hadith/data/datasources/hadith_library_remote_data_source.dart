@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
@@ -36,6 +37,16 @@ abstract interface class HadithLibraryRemoteDataSource {
     String? searchTerm,
   });
 
+  /// `POST /hadiths/reading/track` (needs the login token): reports the
+  /// [seconds] spent reading one hadith on [date] (`YYYY-MM-DD`), and whether
+  /// it was [completed]. Body: `{hadithId, seconds, completed, date}`.
+  Future<void> trackReading({
+    required String hadithId,
+    required int seconds,
+    required bool completed,
+    required String date,
+  });
+
   /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId` or
   /// `bookId`.
   Future<HadithDetailPageModel> getHadiths({
@@ -48,9 +59,12 @@ abstract interface class HadithLibraryRemoteDataSource {
 
 class HadithLibraryRemoteDataSourceImpl
     implements HadithLibraryRemoteDataSource {
-  HadithLibraryRemoteDataSourceImpl({Dio? dio}) : _dio = dio ?? DioClient().dio;
+  HadithLibraryRemoteDataSourceImpl({Dio? dio, AuthLocalDataSource? local})
+    : _dio = dio ?? DioClient().dio,
+      _local = local ?? AuthLocalDataSourceImpl();
 
   final Dio _dio;
+  final AuthLocalDataSource _local;
 
   @override
   Future<List<HadithLibraryBookModel>> getBooks() async {
@@ -119,6 +133,46 @@ class HadithLibraryRemoteDataSourceImpl
       'limit': limit,
     }, 'Hadiths');
     return HadithDetailPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<void> trackReading({
+    required String hadithId,
+    required int seconds,
+    required bool completed,
+    required String date,
+  }) async {
+    final token = _local.getToken();
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        ApiConstants.hadithReadingTrackEndPoint,
+        data: {
+          'hadithId': hadithId,
+          'seconds': seconds,
+          'completed': completed,
+          'date': date,
+        },
+        options: Options(
+          headers: token == null ? null : {'Authorization': 'Bearer $token'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
   }
 
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,

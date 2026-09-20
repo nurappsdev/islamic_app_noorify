@@ -135,6 +135,10 @@ class AppText {
     required this.hadithShareFailed,
     required this.hadithReportFailed,
     required this.ebookOpenFailed,
+    required this.hadithComplete,
+    required this.hadithCompleted,
+    required this.hadithCompletedQuestion,
+    required this.hadithTrackFailed,
     required this.folderNameInputHint,
     required this.cancelAction,
     required this.ebookOpen,
@@ -675,6 +679,10 @@ class AppText {
   final String hadithShareFailed;
   final String hadithReportFailed;
   final String ebookOpenFailed;
+  final String hadithComplete;
+  final String hadithCompleted;
+  final String hadithCompletedQuestion;
+  final String hadithTrackFailed;
   final String folderNameInputHint;
   final String cancelAction;
   final String ebookOpen;
@@ -1548,6 +1556,26 @@ class AppText {
         map,
         'ebookOpenFailed',
         fallback?.ebookOpenFailed ?? '',
+      ),
+      hadithComplete: _read(
+        map,
+        'hadithComplete',
+        fallback?.hadithComplete ?? '',
+      ),
+      hadithCompleted: _read(
+        map,
+        'hadithCompleted',
+        fallback?.hadithCompleted ?? '',
+      ),
+      hadithCompletedQuestion: _read(
+        map,
+        'hadithCompletedQuestion',
+        fallback?.hadithCompletedQuestion ?? '',
+      ),
+      hadithTrackFailed: _read(
+        map,
+        'hadithTrackFailed',
+        fallback?.hadithTrackFailed ?? '',
       ),
       folderNameInputHint: _read(
         map,

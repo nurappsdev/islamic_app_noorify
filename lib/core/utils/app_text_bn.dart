@@ -495,6 +495,12 @@ const Map<String, String> appTextBn = <String, String>{
   // Settings feature
   'settingsTitle': 'সেটিংস',
   'ebookOpenFailed': "ই-বুকটি খোলা যায়নি",
+  'hadithComplete': "সম্পন্ন করুন",
+  'hadithCompleted': "সম্পন্ন হয়েছে",
+  'hadithCompletedQuestion':
+      "আপনি কি এই হাদিসটি পড়া সম্পন্ন করেছেন? সম্পন্ন করে থাকলে আপনার অ্যাকাউন্টে পয়েন্ট যোগ করা হবে।",
+  'hadithTrackFailed':
+      "আপনার পড়ার অগ্রগতি সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
   'folderNameInputHint': "ফোল্ডারের নাম এখানে লিখুন।",
   'cancelAction': "বাতিল",
   'ebookOpen': "বই খুলুন",

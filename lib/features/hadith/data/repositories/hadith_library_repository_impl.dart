@@ -107,6 +107,32 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> trackReading({
+    required String hadithId,
+    required int seconds,
+    required bool completed,
+    required String date,
+  }) async {
+    try {
+      await _remote.trackReading(
+        hadithId: hadithId,
+        seconds: seconds,
+        completed: completed,
+        date: date,
+      );
+      return const Right(unit);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
