@@ -476,8 +476,7 @@ const Map<String, String> appTextBn = <String, String>{
   'editProfileCancel': 'বাতিল',
   'editProfileImagePickError':
       'নির্বাচিত ছবি লোড করা যায়নি। আবার চেষ্টা করুন।',
-  'editProfilePhotoUploadError':
-      'ছবি আপলোড করা যায়নি। আবার চেষ্টা করুন।',
+  'editProfilePhotoUploadError': 'ছবি আপলোড করা যায়নি। আবার চেষ্টা করুন।',
   'percentCompleteSuffix': 'সম্পন্ন',
   'mymensingh': 'ময়মনসিংহ',
   'badgeLabel': 'ব্যাজ',
@@ -495,6 +494,8 @@ const Map<String, String> appTextBn = <String, String>{
 
   // Settings feature
   'settingsTitle': 'সেটিংস',
+  'themeSwitchToDark': 'ডার্ক মোডে যান',
+  'themeSwitchToLight': 'লাইট মোডে যান',
   'aboutUs': 'আমাদের সম্পর্কে',
   'ourProducts': 'আমাদের পণ্য',
   'adminSupport': 'অ্যাডমিন সাপোর্ট',

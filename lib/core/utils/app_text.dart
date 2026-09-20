@@ -134,6 +134,8 @@ class AppText {
     required this.hadithReportMessage,
     required this.hadithShareFailed,
     required this.hadithReportFailed,
+    required this.themeSwitchToDark,
+    required this.themeSwitchToLight,
     required this.hadithBookmark,
     required this.hadithBookmarkAdded,
     required this.hadithBookmarkRemoved,
@@ -666,6 +668,8 @@ class AppText {
   final String hadithReportMessage;
   final String hadithShareFailed;
   final String hadithReportFailed;
+  final String themeSwitchToDark;
+  final String themeSwitchToLight;
   final String hadithBookmark;
   final String hadithBookmarkAdded;
   final String hadithBookmarkRemoved;
@@ -1527,6 +1531,16 @@ class AppText {
         map,
         'hadithReportFailed',
         fallback?.hadithReportFailed ?? '',
+      ),
+      themeSwitchToDark: _read(
+        map,
+        'themeSwitchToDark',
+        fallback?.themeSwitchToDark ?? '',
+      ),
+      themeSwitchToLight: _read(
+        map,
+        'themeSwitchToLight',
+        fallback?.themeSwitchToLight ?? '',
       ),
       hadithBookmark: _read(
         map,

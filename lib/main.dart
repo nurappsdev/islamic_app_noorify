@@ -4,14 +4,15 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
 import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
-import 'core/theme/brand_colors.dart';
+import 'core/theme/dark_theme.dart';
+import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
@@ -37,6 +38,12 @@ Future<void> main() async {
       androidStopForegroundOnPause: true,
     ),
   );
+
+  final savedDarkTheme =
+      (await SharedPreferences.getInstance()).getBool(
+        AppPreferencesBloc.darkThemeKey,
+      ) ??
+      false;
 
   await AlarmScheduler.init();
   // Alarms are re-armed from the server's list whenever the alarm screen
@@ -69,7 +76,9 @@ Future<void> main() async {
     MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => LanguageBloc()),
-        BlocProvider(create: (_) => AppPreferencesBloc()),
+        BlocProvider(
+          create: (_) => AppPreferencesBloc(darkThemeEnabled: savedDarkTheme),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -108,20 +117,9 @@ class MyApp extends StatelessWidget {
           navigatorKey: appNavigatorKey,
           navigatorObservers: [appRouteObserver],
           title: 'Noorify',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: const Color.fromRGBO(30, 168, 184, 1),
-            scaffoldBackgroundColor: BrandColors.screenBackground,
-            textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorSchemeSeed: BrandColors.primary,
-            textTheme: GoogleFonts.plusJakartaSansTextTheme(
-              ThemeData(brightness: Brightness.dark).textTheme,
-            ),
-          ),
+          theme: lightTheme(),
+          darkTheme: darkTheme(),
+          themeAnimationDuration: const Duration(milliseconds: 300),
           themeMode: appPreferences.darkThemeEnabled
               ? ThemeMode.dark
               : ThemeMode.light,

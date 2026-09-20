@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/all_alarm_screen.dart';
@@ -15,13 +18,15 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final palette = context.appPalette;
+    final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
     return Row(
       children: [
         GestureDetector(
           onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
           child: ProfileAvatarCircle(
             dimension: 38.r,
-            backgroundColor: const Color(0xFFE8EBC9),
+            backgroundColor: palette.avatar,
             placeholderIconColor: AppColor.primary,
           ),
         ),
@@ -40,6 +45,7 @@ class HomeHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: homeSansStyle(
+                      context: context,
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -51,9 +57,25 @@ class HomeHeader extends StatelessWidget {
                 appText.greeting,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: homeSansStyle(fontSize: 8.sp),
+                style: homeSansStyle(context: context, fontSize: 8.sp),
               ),
             ],
+          ),
+        ),
+        SizedBox.square(
+          dimension: 32.r,
+          child: IconButton(
+            tooltip: isDark
+                ? appText.themeSwitchToLight
+                : appText.themeSwitchToDark,
+            onPressed: () =>
+                context.read<AppPreferencesBloc>().add(const ToggleDarkTheme()),
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              color: AppColor.primary,
+              size: 20.sp,
+            ),
           ),
         ),
         SizedBox.square(
@@ -77,7 +99,7 @@ class HomeHeader extends StatelessWidget {
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFDDE8AE),
+                  backgroundColor: palette.tint,
                   foregroundColor: AppColor.primary,
                 ),
                 icon: Icon(Icons.notifications_none, size: 20.sp),
@@ -92,7 +114,7 @@ class HomeHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6969),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.2),
+                  border: Border.all(color: palette.background, width: 1.2),
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
@@ -86,7 +87,7 @@ class HomeProgressSection extends StatelessWidget {
               children: [
                 Text(
                   appText.categoryNaflAndMore,
-                  style: homeSerifStyle(fontSize: 12.sp),
+                  style: homeSerifStyle(context: context, fontSize: 12.sp),
                 ),
                 SizedBox(height: 6.h),
                 _ProgressBar(
@@ -97,7 +98,7 @@ class HomeProgressSection extends StatelessWidget {
                 SizedBox(height: 7.h),
                 Text(
                   naflPillar?.formattedSubtext ?? '0/3',
-                  style: homeSansStyle(fontSize: 12.sp),
+                  style: homeSansStyle(context: context, fontSize: 12.sp),
                 ),
               ],
             ),
@@ -130,13 +131,16 @@ class _PillarProgressCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 appText.categoryLabel(titleKey),
-                style: homeSerifStyle(fontSize: 12.sp),
+                style: homeSerifStyle(context: context, fontSize: 12.sp),
               ),
             ),
             SizedBox(height: 7.h),
             _ProgressBar(value: progress),
             SizedBox(height: 6.h),
-            Text(pillar.formattedSubtext, style: homeSansStyle(fontSize: 12.sp)),
+            Text(
+              pillar.formattedSubtext,
+              style: homeSansStyle(context: context, fontSize: 12.sp),
+            ),
           ],
         ),
       ),
@@ -180,13 +184,16 @@ class _ProgressCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 appText.categoryLabel(item.title),
-                style: homeSerifStyle(fontSize: 12.sp),
+                style: homeSerifStyle(context: context, fontSize: 12.sp),
               ),
             ),
             SizedBox(height: 7.h),
             _ProgressBar(value: item.progress),
             SizedBox(height: 6.h),
-            Text(item.count, style: homeSansStyle(fontSize: 12.sp)),
+            Text(
+              item.count,
+              style: homeSansStyle(context: context, fontSize: 12.sp),
+            ),
           ],
         ),
       ),
@@ -208,7 +215,7 @@ class _ProgressBar extends StatelessWidget {
         child: LinearProgressIndicator(
           minHeight: 4.h,
           value: value,
-          backgroundColor: const Color(0xFFE0E0E0),
+          backgroundColor: context.appPalette.progressTrack,
           valueColor: const AlwaysStoppedAnimation(Color(0xFF88936B)),
         ),
       ),
