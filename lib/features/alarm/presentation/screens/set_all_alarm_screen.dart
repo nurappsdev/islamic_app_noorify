@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
@@ -170,7 +171,7 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
       color: const Color(0xFFFCFDF8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14.r),
-        side: const BorderSide(color: Color(0xFFDCE9B8)),
+        side: BorderSide(color: context.lineColor(Color(0xFFDCE9B8))),
       ),
       constraints: BoxConstraints(minWidth: renderBox.size.width),
       items: [
@@ -179,14 +180,17 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
             value: minutes,
             child: Text(
               _offsetLabel(minutes, appText),
-              style: alarmItalicStyle(14.sp),
+              style: alarmItalicStyle(14.sp, context: context),
             ),
           ),
           const PopupMenuDivider(height: 1),
         ],
         PopupMenuItem<int>(
           value: _customOffsetSentinel,
-          child: Text(appText.offsetCustom, style: alarmItalicStyle(14.sp)),
+          child: Text(
+            appText.offsetCustom,
+            style: alarmItalicStyle(14.sp, context: context),
+          ),
         ),
       ],
     );
@@ -211,7 +215,7 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
     final bloc = context.read<AlarmBloc>();
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFDF8),
+      backgroundColor: context.pageColor(Color(0xFFFCFDF8)),
       body: SafeArea(
         child: Column(
           children: [
@@ -242,7 +246,7 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
                   SizedBox(height: 12.h),
                   Text(
                     appText.setAlarmBeforePrayer,
-                    style: alarmItalicStyle(14.sp),
+                    style: alarmItalicStyle(14.sp, context: context),
                   ),
                   SizedBox(height: 10.h),
                   InkWell(
@@ -254,14 +258,16 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22.r),
-                        border: Border.all(color: const Color(0xFFDCE9B8)),
+                        border: Border.all(
+                          color: context.lineColor(Color(0xFFDCE9B8)),
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             _offsetLabel(state.offsetMinutes, appText),
-                            style: alarmItalicStyle(14.sp),
+                            style: alarmItalicStyle(14.sp, context: context),
                           ),
                           const Icon(
                             Icons.chevron_right,
@@ -284,7 +290,10 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
                     onChanged: (value) => bloc.add(SetRing(value)),
                   ),
                   SizedBox(height: 22.h),
-                  Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
+                  Text(
+                    appText.setRingtone,
+                    style: alarmItalicStyle(14.sp, context: context),
+                  ),
                   SizedBox(height: 10.h),
                   RingtoneSearchField(
                     onSelected: (ringtone) =>
@@ -395,7 +404,7 @@ class _AllAlarmRow extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(30.r),
               border: Border.all(color: const Color(0xFF7F8E60), width: 1.4),
             ),
@@ -405,12 +414,12 @@ class _AllAlarmRow extends StatelessWidget {
                   width: 38.r,
                   height: 38.r,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8D7),
+                    color: context.surfaceColor(Color(0xFFFFF8D7)),
                     borderRadius: BorderRadius.circular(9.r),
                   ),
                   child: Icon(
                     _icon(period),
-                    color: _iconColor(period),
+                    color: context.inkColor(_iconColor(period)),
                     size: 23.sp,
                   ),
                 ),
@@ -436,7 +445,7 @@ class _AllAlarmRow extends StatelessWidget {
                             range,
                             style: TextStyle(
                               fontSize: 9.sp,
-                              color: Colors.black54,
+                              color: context.inkColor(Colors.black54),
                             ),
                           ),
                         ),
@@ -459,7 +468,7 @@ class _AllAlarmRow extends StatelessWidget {
                         ),
                       ),
                       icon: Icon(Icons.access_alarm, size: 20.sp),
-                      color: const Color(0xFF7E8C61),
+                      color: context.inkColor(Color(0xFF7E8C61)),
                     ),
                   ),
               ],
@@ -520,7 +529,7 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
       child: Padding(
         padding: EdgeInsets.fromLTRB(24.w, 28.h, 24.w, 24.h),
@@ -542,7 +551,7 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
               padding: EdgeInsets.symmetric(horizontal: 18.w),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(25.r),
-                border: Border.all(color: const Color(0xFFDCE9B8)),
+                border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
               ),
               child: Row(
                 children: [
@@ -560,14 +569,17 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
                         border: InputBorder.none,
                         isDense: true,
                       ),
-                      style: TextStyle(fontSize: 15.sp, color: Colors.black87),
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        color: context.inkColor(Colors.black87),
+                      ),
                     ),
                   ),
                   Text(
                     appText.offsetMinutesUnit,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: const Color(0xFF7E8C61),
+                      color: context.inkColor(Color(0xFF7E8C61)),
                     ),
                   ),
                 ],
@@ -582,7 +594,9 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFBDCDC),
+                        backgroundColor: context.surfaceColor(
+                          Color(0xFFFBDCDC),
+                        ),
                         foregroundColor: const Color(0xFFD84A4A),
                         elevation: 0,
                         shape: const StadiumBorder(),

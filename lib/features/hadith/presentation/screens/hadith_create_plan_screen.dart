@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 /// Create-plan form for the Hadith planner.
@@ -35,7 +36,7 @@ class _HadithCreatePlanScreenState extends State<HadithCreatePlanScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -105,13 +106,13 @@ class _PlanForm extends StatelessWidget {
         TextField(
           controller: controller,
           style: TextStyle(fontSize: 13.sp),
-          decoration: _fieldDecoration(appText.writeHereHint),
+          decoration: _fieldDecoration(context, appText.writeHereHint),
         ),
         SizedBox(height: 14.h),
         Container(
           padding: EdgeInsets.fromLTRB(23.w, 28.h, 23.w, 28.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCBD16B)),
+            border: Border.all(color: context.lineColor(Color(0xFFCBD16B))),
             borderRadius: BorderRadius.circular(27.r),
           ),
           child: Column(
@@ -175,7 +176,7 @@ class _AddedView extends StatelessWidget {
           height: 76.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8C1)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             borderRadius: BorderRadius.circular(21.r),
           ),
           child: Row(
@@ -185,11 +186,13 @@ class _AddedView extends StatelessWidget {
                 height: 47.w,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFDDE8C1)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFDDE8C1)),
+                  ),
                 ),
                 child: Icon(
                   Icons.menu_book_outlined,
-                  color: const Color(0xFF8B9865),
+                  color: context.inkColor(Color(0xFF8B9865)),
                   size: 22.sp,
                 ),
               ),
@@ -201,7 +204,7 @@ class _AddedView extends StatelessWidget {
                   Text(
                     appText.hadithCategorySample,
                     style: TextStyle(
-                      color: const Color(0xFF332B57),
+                      color: context.inkColor(Color(0xFF332B57)),
                       fontSize: 14.sp,
                     ),
                   ),
@@ -263,7 +266,7 @@ class _CreatePlanHeader extends StatelessWidget {
                 onPressed: onBack,
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: const Color(0xFF303629),
+                  foregroundColor: context.inkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                   padding: EdgeInsets.zero,
                 ),
@@ -274,7 +277,7 @@ class _CreatePlanHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: const Color(0xFF84945F),
+              color: context.inkColor(Color(0xFF84945F)),
               fontSize: 18.sp,
               fontWeight: FontWeight.w400,
             ),
@@ -285,13 +288,13 @@ class _CreatePlanHeader extends StatelessWidget {
   }
 }
 
-InputDecoration _fieldDecoration(String hint) {
+InputDecoration _fieldDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
     hintStyle: const TextStyle(color: Color(0xFFB8B8B8)),
     contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
     enabledBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+      borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
       borderRadius: BorderRadius.circular(25.r),
     ),
     focusedBorder: OutlineInputBorder(
@@ -312,7 +315,7 @@ class _SelectionField extends StatelessWidget {
       height: 48.h,
       padding: EdgeInsets.symmetric(horizontal: 15.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(25.r),
       ),
       child: Row(

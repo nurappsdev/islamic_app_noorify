@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
@@ -26,7 +27,7 @@ class ZikrDashboardScreen extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           ListView(
@@ -131,7 +132,9 @@ class _LastZikrPill extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white.withValues(alpha: .55)),
+          border: Border.all(
+            color: context.lineColor(Colors.white.withValues(alpha: .55)),
+          ),
           borderRadius: BorderRadius.circular(30.r),
         ),
         child: Row(
@@ -155,7 +158,7 @@ class _LastZikrPill extends StatelessWidget {
               '${ZikrCatalog.mockLastZikrDone}/'
               '${ZikrCatalog.mockLastZikr.target}',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: .9),
+                color: context.inkColor(Colors.white.withValues(alpha: .9)),
                 fontSize: 12.sp,
               ),
             ),
@@ -165,7 +168,9 @@ class _LastZikrPill extends StatelessWidget {
               height: 30.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: .7)),
+                border: Border.all(
+                  color: context.lineColor(Colors.white.withValues(alpha: .7)),
+                ),
               ),
               child: Icon(
                 Icons.chevron_right_rounded,
@@ -197,9 +202,11 @@ class _PresetPill extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 11.h, horizontal: 10.w),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .18),
+              color: context.surfaceColor(Colors.white.withValues(alpha: .18)),
               borderRadius: BorderRadius.circular(22.r),
-              border: Border.all(color: Colors.white.withValues(alpha: .35)),
+              border: Border.all(
+                color: context.lineColor(Colors.white.withValues(alpha: .35)),
+              ),
             ),
             child: Text(
               preset.name,
@@ -216,7 +223,7 @@ class _PresetPill extends StatelessWidget {
         Text(
           preset.formula,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: .85),
+            color: context.inkColor(Colors.white.withValues(alpha: .85)),
             fontSize: 11.sp,
           ),
         ),
@@ -243,9 +250,9 @@ class _CreatedZikrCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE8C4),
+        color: context.surfaceColor(Color(0xFFDCE8C4)),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: const Color(0xFFC7D6A6)),
+        border: Border.all(color: context.lineColor(Color(0xFFC7D6A6))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +262,7 @@ class _CreatedZikrCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF3C4A28),
+              color: context.inkColor(Color(0xFF3C4A28)),
             ),
           ),
           SizedBox(height: 12.h),
@@ -273,15 +280,17 @@ class _CreatedZikrCard extends StatelessWidget {
                       vertical: 9.h,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.surfaceColor(Colors.white),
                       borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: const Color(0xFFCBD9AF)),
+                      border: Border.all(
+                        color: context.lineColor(Color(0xFFCBD9AF)),
+                      ),
                     ),
                     child: Text(
                       item.labelWithTarget,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: const Color(0xFF3C4A28),
+                        color: context.inkColor(Color(0xFF3C4A28)),
                       ),
                     ),
                   ),

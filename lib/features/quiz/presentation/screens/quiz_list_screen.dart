@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -11,7 +12,7 @@ class QuizListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(14.w, 16.h, 14.w, 0),
@@ -55,7 +56,7 @@ class _QuizListHeader extends StatelessWidget {
             onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
@@ -78,7 +79,7 @@ class _QuizListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(22.r),
       child: InkWell(
         onTap: onTap,
@@ -87,7 +88,7 @@ class _QuizListTile extends StatelessWidget {
           height: 75.h,
           padding: EdgeInsets.symmetric(horizontal: 12.w),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8B5)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
             borderRadius: BorderRadius.circular(22.r),
           ),
           child: Row(
@@ -97,7 +98,9 @@ class _QuizListTile extends StatelessWidget {
                 height: 48.r,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFDDE8B5)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFDDE8B5)),
+                  ),
                 ),
                 child: Icon(
                   Icons.image_outlined,
@@ -117,10 +120,7 @@ class _QuizListTile extends StatelessWidget {
                   SizedBox(height: 7.h),
                   Text(
                     appText.questionsCountLabel,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColor.primary,
-                    ),
+                    style: TextStyle(fontSize: 13.sp, color: AppColor.primary),
                   ),
                 ],
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
@@ -31,8 +32,8 @@ class AmolHeader extends StatelessWidget {
               tooltip: AppText.of(context).back,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F5CE),
-                foregroundColor: const Color(0xFF526044),
+                backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+                foregroundColor: context.inkColor(Color(0xFF526044)),
               ),
               icon: const Icon(Icons.chevron_left),
             ),
@@ -42,7 +43,7 @@ class AmolHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 17.sp,
               fontWeight: FontWeight.w600,
-              color: amolOlive,
+              color: context.inkColor(amolOlive),
             ),
           ),
         ],
@@ -68,7 +69,7 @@ class AmolSummaryCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
       decoration: BoxDecoration(
-        color: amolCardGreen,
+        color: context.surfaceColor(amolCardGreen),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
@@ -78,13 +79,13 @@ class AmolSummaryCard extends StatelessWidget {
             height: 52.r,
             padding: EdgeInsets.all(12.r),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F8E8),
+              color: context.surfaceColor(Color(0xFFF7F8E8)),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Image.asset(
               'assets/noorifyLogo.png',
               fit: BoxFit.contain,
-              color: const Color(0xFF879461),
+              color: context.inkColor(Color(0xFF879461)),
             ),
           ),
           SizedBox(width: 12.w),
@@ -94,12 +95,18 @@ class AmolSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   AppText.of(context).todaysAmolTrack,
-                  style: TextStyle(fontSize: 14.sp, color: Colors.black),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: context.inkColor(Colors.black),
+                  ),
                 ),
                 SizedBox(height: 5.h),
                 Text(
                   pointLabel,
-                  style: TextStyle(fontSize: 11.sp, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: context.inkColor(Colors.black87),
+                  ),
                 ),
               ],
             ),

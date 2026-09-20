@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -64,10 +65,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               content: Text(state.message ?? 'Your password has been updated.'),
             ),
           );
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          RouteNames.signIn,
-          (route) => false,
-        );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
       case ResetPasswordStatus.failure:
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -108,15 +108,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -164,7 +168,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   Widget _buildScaffold(AppText appText) {
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
@@ -185,8 +189,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFFAD7),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFFFFAD7),
+                          ),
+                          foregroundColor: context.inkColor(Colors.black),
                           fixedSize: Size(30.r, 30.r),
                         ),
                         onPressed: () => Navigator.of(context).maybePop(),
@@ -196,7 +202,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text(
                       appText.resetPassword,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w400,
                       ),
@@ -218,7 +224,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         return Text(
                           'Noorify',
                           style: TextStyle(
-                            color: AppColor.authLogo,
+                            color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -232,7 +238,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   appText.noorify,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.black,
+                    color: context.inkColor(Colors.black),
                     fontSize: 14.sp,
                     height: 1.2,
                     fontFamily: 'Times New Roman',

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
@@ -424,7 +425,7 @@ class _LeadingIcon extends StatelessWidget {
           ? Image.asset(
               'assets/noorifyLogo.png',
               fit: BoxFit.contain,
-              color: const Color(0xFF879461),
+              color: context.inkColor(Color(0xFF879461)),
             )
           : Text(
               item.leadingText!,

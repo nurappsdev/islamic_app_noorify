@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
@@ -33,7 +34,7 @@ class _HadithReadingHistoryScreenState
     final label = _tab == 0 ? appText.categoryHadith : appText.ebookLabel;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -51,8 +52,10 @@ class _HadithReadingHistoryScreenState
               child: ListView.separated(
                 padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
                 itemCount: _entries.length,
-                separatorBuilder: (_, _) =>
-                    Divider(height: 22.h, color: const Color(0xFFEDEFE0)),
+                separatorBuilder: (_, _) => Divider(
+                  height: 22.h,
+                  color: context.lineColor(Color(0xFFEDEFE0)),
+                ),
                 itemBuilder: (context, index) =>
                     _HistoryRow(label: label, timestamp: _entries[index]),
               ),
@@ -84,7 +87,7 @@ class _Header extends StatelessWidget {
                 onPressed: () => Navigator.maybePop(context),
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: const Color(0xFF303629),
+                  foregroundColor: context.inkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -94,7 +97,7 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: AppColor.authLogo,
+              color: context.inkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -122,11 +125,13 @@ class _HistoryTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(children: [_tab(hadithLabel, 0), _tab(ebookLabel, 1)]),
+      child: Row(
+        children: [_tab(context, hadithLabel, 0), _tab(context, ebookLabel, 1)],
+      ),
     );
   }
 
-  Widget _tab(String label, int index) {
+  Widget _tab(BuildContext context, String label, int index) {
     final active = selected == index;
     return Expanded(
       child: GestureDetector(
@@ -136,11 +141,15 @@ class _HistoryTabs extends StatelessWidget {
           height: 40.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: active ? const Color(0xFFDDE8BA) : Colors.transparent,
+            color: context.surfaceColor(
+              active ? const Color(0xFFDDE8BA) : Colors.transparent,
+            ),
             borderRadius: BorderRadius.circular(12.r),
             border: Border(
               bottom: BorderSide(
-                color: active ? Colors.transparent : const Color(0xFFC7D2A0),
+                color: context.lineColor(
+                  active ? Colors.transparent : const Color(0xFFC7D2A0),
+                ),
               ),
             ),
           ),
@@ -149,7 +158,9 @@ class _HistoryTabs extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
-              color: active ? const Color(0xFF3E4A2A) : const Color(0xFF2C3320),
+              color: context.inkColor(
+                active ? const Color(0xFF3E4A2A) : const Color(0xFF2C3320),
+              ),
             ),
           ),
         ),
@@ -174,12 +185,12 @@ class _HistoryRow extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE3E7D3)),
+            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
           ),
           child: Icon(
             Icons.menu_book_outlined,
             size: 16.sp,
-            color: const Color(0xFF8B9865),
+            color: context.inkColor(Color(0xFF8B9865)),
           ),
         ),
         SizedBox(width: 12.w),
@@ -188,7 +199,7 @@ class _HistoryRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF2C3320),
+            color: context.inkColor(Color(0xFF2C3320)),
           ),
         ),
         const Spacer(),

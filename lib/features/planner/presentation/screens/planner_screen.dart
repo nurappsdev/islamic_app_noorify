@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
@@ -44,7 +45,7 @@ class _PlannerView extends StatelessWidget {
     final appText = AppText.of(context);
     final plans = _plans(appText);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -149,7 +150,7 @@ class _PlanTabs extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       height: 1.h,
-                      color: const Color(0xFFDDE8C1),
+                      color: context.surfaceColor(Color(0xFFDDE8C1)),
                     ),
                   ),
                   Align(
@@ -193,7 +194,9 @@ class _PlanTab extends StatelessWidget {
           height: 36.h,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFDDE8BA) : Colors.transparent,
+            color: context.surfaceColor(
+              selected ? const Color(0xFFDDE8BA) : Colors.transparent,
+            ),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Text(
@@ -231,7 +234,7 @@ class _EmptyCompletedPlans extends StatelessWidget {
                   child: Text(
                     '?',
                     style: TextStyle(
-                      color: const Color(0xFF84945F),
+                      color: context.inkColor(Color(0xFF84945F)),
                       fontSize: 31.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -242,7 +245,7 @@ class _EmptyCompletedPlans extends StatelessWidget {
                   left: 6.w,
                   child: Icon(
                     Icons.wb_sunny_outlined,
-                    color: const Color(0xFF84945F),
+                    color: context.inkColor(Color(0xFF84945F)),
                     size: 25.sp,
                   ),
                 ),
@@ -278,7 +281,7 @@ class _PlanCard extends StatelessWidget {
       height: 76.h,
       padding: EdgeInsets.symmetric(horizontal: 4.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(21.r),
       ),
       child: Row(
@@ -293,7 +296,7 @@ class _PlanCard extends StatelessWidget {
                 Text(
                   plan.title,
                   style: TextStyle(
-                    color: const Color(0xFF332B57),
+                    color: context.inkColor(Color(0xFF332B57)),
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
                   ),
@@ -312,8 +315,8 @@ class _PlanCard extends StatelessWidget {
           FilledButton(
             onPressed: onGetStarted,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDDE8BA),
-              foregroundColor: const Color(0xFF303629),
+              backgroundColor: context.surfaceColor(Color(0xFFDDE8BA)),
+              foregroundColor: context.inkColor(Color(0xFF303629)),
               minimumSize: Size(89.w, 36.h),
               padding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
@@ -323,7 +326,11 @@ class _PlanCard extends StatelessWidget {
             child: Text(appText.getStart, style: TextStyle(fontSize: 12.sp)),
           ),
           SizedBox(width: 8.w),
-          Icon(Icons.more_vert_rounded, color: Colors.black, size: 20.sp),
+          Icon(
+            Icons.more_vert_rounded,
+            color: context.inkColor(Colors.black),
+            size: 20.sp,
+          ),
         ],
       ),
     );
@@ -340,11 +347,11 @@ class _PlanArtwork extends StatelessWidget {
       height: 47.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
       ),
       child: Icon(
         Icons.image_outlined,
-        color: const Color(0xFF8B9865),
+        color: context.inkColor(Color(0xFF8B9865)),
         size: 23.sp,
       ),
     );

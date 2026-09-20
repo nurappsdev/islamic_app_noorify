@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -73,15 +74,19 @@ class _SignInViewState extends State<_SignInView> {
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -150,7 +155,7 @@ class _SignInViewState extends State<_SignInView> {
 
   Widget _buildScaffold(AppText appText) {
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -175,7 +180,7 @@ class _SignInViewState extends State<_SignInView> {
                           return Text(
                             'Noorify',
                             style: TextStyle(
-                              color: AppColor.authLogo,
+                              color: context.inkColor(AppColor.authLogo),
                               fontSize: 28.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -189,7 +194,7 @@ class _SignInViewState extends State<_SignInView> {
                     appText.noorify,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.black,
+                      color: context.inkColor(Colors.black),
                       fontSize: 14.sp,
                       height: 1.2,
                       fontFamily: 'Times New Roman',
@@ -248,7 +253,9 @@ class _SignInViewState extends State<_SignInView> {
                     child: TextButton(
                       onPressed: _isLoading ? null : _openEmailVerification,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColor.forgotPassword,
+                        foregroundColor: context.inkColor(
+                          AppColor.forgotPassword,
+                        ),
                         padding: EdgeInsets.symmetric(horizontal: 4.w),
                         minimumSize: Size(0, 34.h),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -275,7 +282,7 @@ class _SignInViewState extends State<_SignInView> {
                         appText.newToNoorify,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColor.authLogo,
+                          color: context.inkColor(AppColor.authLogo),
                           fontSize: 11.sp,
                         ),
                       ),
@@ -285,7 +292,7 @@ class _SignInViewState extends State<_SignInView> {
                         child: Text(
                           appText.createAccount,
                           style: TextStyle(
-                            color: AppColor.createAccount,
+                            color: context.inkColor(AppColor.createAccount),
                             fontSize: 11.sp,
                           ),
                         ),
@@ -296,7 +303,7 @@ class _SignInViewState extends State<_SignInView> {
                   TextButton(
                     onPressed: _isLoading ? null : _continueAsGuest,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColor.authLogo,
+                      foregroundColor: context.inkColor(AppColor.authLogo),
                       minimumSize: Size(0, 34.h),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),

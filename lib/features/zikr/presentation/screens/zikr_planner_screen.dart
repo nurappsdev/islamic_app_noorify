@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -40,7 +41,7 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -71,8 +72,8 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24.r),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFDDE8C1),
+                          borderSide: BorderSide(
+                            color: context.lineColor(Color(0xFFDDE8C1)),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -169,7 +170,7 @@ class _PlanList extends StatelessWidget {
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8C1)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             borderRadius: BorderRadius.circular(18.r),
           ),
           child: Row(
@@ -179,13 +180,13 @@ class _PlanList extends StatelessWidget {
                 height: 46.r,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC9DBA3),
+                  color: context.surfaceColor(Color(0xFFC9DBA3)),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   Icons.menu_book_rounded,
                   size: 22.sp,
-                  color: const Color(0xFF6E8B3D),
+                  color: context.inkColor(Color(0xFF6E8B3D)),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -198,7 +199,7 @@ class _PlanList extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF3D3170),
+                        color: context.inkColor(Color(0xFF3D3170)),
                       ),
                     ),
                     SizedBox(height: 3.h),
@@ -245,8 +246,10 @@ class _PlannerTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFDDE8C1))),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
+        ),
       ),
       child: Row(
         children: [
@@ -293,7 +296,9 @@ class _PlannerTab extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFDDE8BA) : Colors.transparent,
+            color: context.surfaceColor(
+              selected ? const Color(0xFFDDE8BA) : Colors.transparent,
+            ),
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Text(
@@ -301,7 +306,7 @@ class _PlannerTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF303629),
+              color: context.inkColor(Color(0xFF303629)),
             ),
           ),
         ),
@@ -336,7 +341,7 @@ class _EmptyPlans extends StatelessWidget {
                 child: Text(
                   '?',
                   style: TextStyle(
-                    color: const Color(0xFF84945F),
+                    color: context.inkColor(Color(0xFF84945F)),
                     fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                   ),
@@ -347,7 +352,7 @@ class _EmptyPlans extends StatelessWidget {
                 left: 4.w,
                 child: Icon(
                   Icons.wb_sunny_outlined,
-                  color: const Color(0xFF84945F),
+                  color: context.inkColor(Color(0xFF84945F)),
                   size: 24.sp,
                 ),
               ),

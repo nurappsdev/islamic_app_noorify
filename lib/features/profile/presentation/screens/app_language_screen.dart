@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -15,7 +16,7 @@ class AppLanguageScreen extends StatelessWidget {
     final selected = context.watch<LanguageBloc>().state.language;
     final bloc = context.read<LanguageBloc>();
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -68,7 +69,7 @@ class _LanguageHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -103,7 +104,9 @@ class _LanguageOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFFF3F5E4) : Colors.white,
+      color: context.surfaceColor(
+        selected ? const Color(0xFFF3F5E4) : Colors.white,
+      ),
       borderRadius: BorderRadius.circular(18.r),
       child: InkWell(
         onTap: onTap,
@@ -111,7 +114,7 @@ class _LanguageOption extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8C1)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             borderRadius: BorderRadius.circular(18.r),
           ),
           child: Row(
@@ -146,13 +149,13 @@ class _LanguageOption extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: selected
-                      ? const Color(0xFFEDEFD8)
-                      : Colors.transparent,
+                  color: context.surfaceColor(
+                    selected ? const Color(0xFFEDEFD8) : Colors.transparent,
+                  ),
                   border: Border.all(
-                    color: selected
-                        ? AppColor.primary
-                        : const Color(0xFFDDE8C1),
+                    color: context.lineColor(
+                      selected ? AppColor.primary : const Color(0xFFDDE8C1),
+                    ),
                   ),
                 ),
                 child: selected

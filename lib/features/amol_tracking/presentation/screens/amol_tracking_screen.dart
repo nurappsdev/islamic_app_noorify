@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
@@ -75,19 +76,15 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   late String? _expandedPillarKey =
       _pillarKeyByTitle[widget.initialExpandedCategory] ??
       widget.initialExpandedCategory;
-  late final AmolDailyBloc _bloc =
-      AmolDailyBloc(
-          GetAmolDaily(
-            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-          ),
-          LogAmolItem(
-            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-          ),
-          DeleteAmolItem(
-            AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-          ),
-        )
-        ..add(LoadAmolDaily(_isoDate(_today)));
+  late final AmolDailyBloc _bloc = AmolDailyBloc(
+    GetAmolDaily(
+      AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+    ),
+    LogAmolItem(AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl())),
+    DeleteAmolItem(
+      AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+    ),
+  )..add(LoadAmolDaily(_isoDate(_today)));
 
   DailyPrayerTimes? _prayerTimes;
   late final StreamSubscription<String> _logFailureSub;
@@ -109,7 +106,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     super.initState();
     _logFailureSub = _bloc.logFailures.listen((message) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     });
     unawaited(_loadPrayerTimes());
   }
@@ -255,7 +254,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
               : _formatPercentage(dashboard.completionPercentage);
 
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: context.pageColor(Colors.white),
             body: SafeArea(
               child: Column(
                 children: [
@@ -275,7 +274,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                            color: context.inkColor(Colors.black),
                           ),
                         ),
                         SizedBox(height: 12.h),
@@ -430,11 +429,11 @@ class _ProgressBar extends StatelessWidget {
         height: 7.h,
         child: Stack(
           children: [
-            const ColoredBox(color: Color(0xFFDDE0D0)),
+            ColoredBox(color: context.surfaceColor(Color(0xFFDDE0D0))),
             FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: progress.clamp(0.0, 1.0),
-              child: const ColoredBox(color: amolOlive),
+              child: ColoredBox(color: context.surfaceColor(amolOlive)),
             ),
           ],
         ),
@@ -487,7 +486,7 @@ class _AccordionHeader extends StatelessWidget {
                         fractionLabel,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Colors.black54,
+                          color: context.inkColor(Colors.black54),
                         ),
                       ),
                     ],
@@ -499,7 +498,7 @@ class _AccordionHeader extends StatelessWidget {
             Icon(
               expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
               size: 20.sp,
-              color: const Color(0xFF7E8C61),
+              color: context.inkColor(Color(0xFF7E8C61)),
             ),
           ],
         ),
@@ -519,7 +518,9 @@ class _AccordionCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: expanded ? const Color(0xFFF7F7E7) : Colors.white,
+        color: context.surfaceColor(
+          expanded ? const Color(0xFFF7F7E7) : Colors.white,
+        ),
         borderRadius: BorderRadius.circular(16.r),
       ),
       clipBehavior: Clip.antiAlias,
@@ -579,7 +580,8 @@ class _PillarRow extends StatelessWidget {
                     _AmolItemRow(
                       item: pillar.items[i],
                       isLogging: loggingItemKey == pillar.items[i].itemKey,
-                      isChecked: completionOverrides[pillar.items[i].itemKey] ??
+                      isChecked:
+                          completionOverrides[pillar.items[i].itemKey] ??
                           pillar.items[i].isCompleted,
                       onTap: () => onItemTap(pillar.items[i]),
                     ),
@@ -628,22 +630,29 @@ class _AmolItemRow extends StatelessWidget {
               width: 30.r,
               height: 30.r,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(9.r),
               ),
-              child: Icon(iconSpec.icon, color: iconSpec.color, size: 17.sp),
+              child: Icon(
+                iconSpec.icon,
+                color: context.inkColor(iconSpec.color),
+                size: 17.sp,
+              ),
             ),
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
                 _localizedItemName(AppText.of(context), item),
-                style: TextStyle(fontSize: 13.sp, color: Colors.black),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  color: context.inkColor(Colors.black),
+                ),
               ),
             ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFDDEBB5),
+                color: context.surfaceColor(Color(0xFFDDEBB5)),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
@@ -651,7 +660,7 @@ class _AmolItemRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5F6B45),
+                  color: context.inkColor(Color(0xFF5F6B45)),
                 ),
               ),
             ),
@@ -676,9 +685,12 @@ class _CompletionCircle extends StatelessWidget {
       return SizedBox(
         width: 26.r,
         height: 26.r,
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.all(5),
-          child: CircularProgressIndicator(strokeWidth: 2, color: amolOlive),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: context.inkColor(amolOlive),
+          ),
         ),
       );
     }
@@ -686,8 +698,8 @@ class _CompletionCircle extends StatelessWidget {
       return Container(
         width: 26.r,
         height: 26.r,
-        decoration: const BoxDecoration(
-          color: amolOlive,
+        decoration: BoxDecoration(
+          color: context.surfaceColor(amolOlive),
           shape: BoxShape.circle,
         ),
         child: Icon(Icons.check, size: 15.sp, color: Colors.white),
@@ -697,9 +709,12 @@ class _CompletionCircle extends StatelessWidget {
       width: 26.r,
       height: 26.r,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFDADDC6), width: 1.4),
+        border: Border.all(
+          color: context.lineColor(Color(0xFFDADDC6)),
+          width: 1.4,
+        ),
       ),
       child: Icon(Icons.check, size: 13.sp, color: const Color(0xFFB7BBA0)),
     );
@@ -717,8 +732,8 @@ class _PillarListShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
       child: Column(
         children: [
           for (var i = 0; i < _itemCount; i++) ...[
@@ -726,7 +741,7 @@ class _PillarListShimmer extends StatelessWidget {
               height: 62.h,
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: Column(
@@ -737,7 +752,7 @@ class _PillarListShimmer extends StatelessWidget {
                     width: 110.w,
                     height: 12.h,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.surfaceColor(Colors.white),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
@@ -746,7 +761,7 @@ class _PillarListShimmer extends StatelessWidget {
                     width: double.infinity,
                     height: 7.h,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: context.surfaceColor(Colors.white),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
@@ -777,7 +792,10 @@ class _LoadFailedNotice extends StatelessWidget {
           Text(
             message ?? 'Something went wrong. Please try again.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.sp, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Colors.black54),
+            ),
           ),
           SizedBox(height: 12.h),
           OutlinedButton(onPressed: onRetry, child: Text(appText.tryAgain)),
@@ -860,7 +878,9 @@ class _DashboardButton extends StatelessWidget {
                 width: 26.r,
                 height: 26.r,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .18),
+                  color: context.surfaceColor(
+                    Colors.white.withValues(alpha: .18),
+                  ),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(

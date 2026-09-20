@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
@@ -92,7 +93,10 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
             value: ZikrCatalog.dropdownItems[i].name,
             child: Text(
               ZikrCatalog.dropdownItems[i].name,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF2C3320)),
+              ),
             ),
           ),
         ],
@@ -101,7 +105,10 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           value: _customValue,
           child: Text(
             _appText.zikrCustom,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF2C3320)),
+            ),
           ),
         ),
       ],
@@ -193,7 +200,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     final appText = _appText;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -211,7 +218,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: const Color(0xFF303629),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -224,7 +231,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   Text(
                     appText.zikrPlanCreateTitle,
                     style: TextStyle(
-                      color: AppColor.authLogo,
+                      color: context.inkColor(AppColor.authLogo),
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -292,7 +299,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
         Container(
           padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 18.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCBB94F)),
+            border: Border.all(color: context.lineColor(Color(0xFFCBB94F))),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Column(
@@ -311,7 +318,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(26.r),
-                    border: Border.all(color: const Color(0xFFDDE3C6)),
+                    border: Border.all(
+                      color: context.lineColor(Color(0xFFDDE3C6)),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -356,8 +365,8 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _add,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8C7A1F),
-              side: const BorderSide(color: Color(0xFFCBB94F)),
+              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22.r),
@@ -382,7 +391,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF2C3320),
+            color: context.inkColor(Color(0xFF2C3320)),
           ),
         ),
         SizedBox(height: 14.h),
@@ -396,8 +405,8 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _addMore,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8C7A1F),
-              side: const BorderSide(color: Color(0xFFCBB94F)),
+              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22.r),
@@ -427,7 +436,7 @@ class _Label extends StatelessWidget {
       style: TextStyle(
         fontSize: big ? 15.sp : 13.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF2C3320),
+        color: context.inkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -468,7 +477,7 @@ class _RoundedField extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
-          borderSide: const BorderSide(color: Color(0xFFDDE3C6)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE3C6))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
@@ -489,7 +498,7 @@ class _PlanEntryRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE3C6)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE3C6))),
         borderRadius: BorderRadius.circular(18.r),
       ),
       child: Row(
@@ -500,12 +509,12 @@ class _PlanEntryRow extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFCBD9AF)),
+              border: Border.all(color: context.lineColor(Color(0xFFCBD9AF))),
             ),
             child: Icon(
               Icons.self_improvement_rounded,
               size: 18.sp,
-              color: const Color(0xFF6E8B3D),
+              color: context.inkColor(Color(0xFF6E8B3D)),
             ),
           ),
           SizedBox(width: 12.w),
@@ -518,7 +527,7 @@ class _PlanEntryRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF3D3170),
+                    color: context.inkColor(Color(0xFF3D3170)),
                   ),
                 ),
                 SizedBox(height: 2.h),

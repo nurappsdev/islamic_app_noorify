@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
@@ -26,7 +27,7 @@ class HomeHeader extends StatelessWidget {
           onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
           child: ProfileAvatarCircle(
             dimension: 38.r,
-            backgroundColor: palette.avatar,
+            backgroundColor: context.surfaceColor(palette.avatar),
             placeholderIconColor: AppColor.primary,
           ),
         ),
@@ -99,7 +100,7 @@ class HomeHeader extends StatelessWidget {
                 onPressed: () {},
                 padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(
-                  backgroundColor: palette.tint,
+                  backgroundColor: context.surfaceColor(palette.tint),
                   foregroundColor: AppColor.primary,
                 ),
                 icon: Icon(Icons.notifications_none, size: 20.sp),
@@ -114,7 +115,10 @@ class HomeHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6969),
                   shape: BoxShape.circle,
-                  border: Border.all(color: palette.background, width: 1.2),
+                  border: Border.all(
+                    color: context.lineColor(palette.background),
+                    width: 1.2,
+                  ),
                 ),
               ),
             ),

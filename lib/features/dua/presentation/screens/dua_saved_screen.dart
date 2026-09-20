@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bottom_nav.dart';
 
 class DuaSavedScreen extends StatefulWidget {
@@ -25,11 +26,14 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
     final action = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(190.w, 120.h + index * 78.h, 12.w, 0),
-      items: const [
+      items: [
         PopupMenuItem(value: 'edit', child: Text('Edit')),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete', style: TextStyle(color: Colors.red)),
+          child: Text(
+            'Delete',
+            style: TextStyle(color: context.inkColor(Colors.red)),
+          ),
         ),
       ],
     );
@@ -71,7 +75,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       (i) => i,
     ).where((i) => _folders[i].toLowerCase().contains(query)).toList();
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -93,11 +97,15 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25.r),
-                        borderSide: const BorderSide(color: Color(0xFFB7C86A)),
+                        borderSide: BorderSide(
+                          color: context.lineColor(Color(0xFFB7C86A)),
+                        ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(25.r),
-                        borderSide: const BorderSide(color: Color(0xFFB7C86A)),
+                        borderSide: BorderSide(
+                          color: context.lineColor(Color(0xFFB7C86A)),
+                        ),
                       ),
                     ),
                   ),
@@ -151,7 +159,10 @@ class _Header extends StatelessWidget {
         ),
         Text(
           'Saved Hadith',
-          style: TextStyle(fontSize: 17.sp, color: const Color(0xFF7D8E54)),
+          style: TextStyle(
+            fontSize: 17.sp,
+            color: context.inkColor(Color(0xFF7D8E54)),
+          ),
         ),
       ],
     ),
@@ -172,7 +183,7 @@ class _FolderCard extends StatelessWidget {
     height: 72.h,
     padding: EdgeInsets.symmetric(horizontal: 10.w),
     decoration: BoxDecoration(
-      border: Border.all(color: const Color(0xFFD5E59B)),
+      border: Border.all(color: context.lineColor(Color(0xFFD5E59B))),
       borderRadius: BorderRadius.circular(20.r),
     ),
     child: Row(
@@ -227,7 +238,10 @@ class _EditSheetState extends State<_EditSheet> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Folder name', style: TextStyle(color: Color(0xFF879260))),
+        Text(
+          'Folder name',
+          style: TextStyle(color: context.inkColor(Color(0xFF879260))),
+        ),
         SizedBox(height: 8.h),
         TextField(
           controller: _controller,
@@ -253,7 +267,11 @@ class _DeleteSheet extends StatelessWidget {
     title: 'Delete Book Mark',
     child: Column(
       children: [
-        Icon(Icons.delete_outline, color: Colors.red, size: 45.sp),
+        Icon(
+          Icons.delete_outline,
+          color: context.inkColor(Colors.red),
+          size: 45.sp,
+        ),
         SizedBox(height: 20.h),
         const Text(
           'Are you sure want to delete this\nbookmark right now?',
@@ -278,8 +296,8 @@ class _SheetShell extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Container(
-    decoration: const BoxDecoration(
-      color: Color(0xFFDCE6BE),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(Color(0xFFDCE6BE)),
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 24.h),
@@ -288,7 +306,10 @@ class _SheetShell extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 17.sp, color: const Color(0xFF879260)),
+          style: TextStyle(
+            fontSize: 17.sp,
+            color: context.inkColor(Color(0xFF879260)),
+          ),
         ),
         SizedBox(height: 20.h),
         child,
@@ -318,9 +339,9 @@ class _Buttons extends StatelessWidget {
         child: FilledButton(
           onPressed: confirm,
           style: FilledButton.styleFrom(
-            backgroundColor: danger
-                ? Colors.red.shade700
-                : const Color(0xFFA5B657),
+            backgroundColor: context.surfaceColor(
+              danger ? Colors.red.shade700 : const Color(0xFFA5B657),
+            ),
           ),
           child: Text(confirmText),
         ),

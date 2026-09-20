@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -29,7 +30,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9EC),
+      backgroundColor: context.pageColor(Color(0xFFF7F9EC)),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -49,9 +50,11 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                   action: IconButton(
                     onPressed: () {},
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColor.authLogo,
-                      side: const BorderSide(color: Color(0xFFDCE3BE)),
+                      backgroundColor: context.surfaceColor(Colors.white),
+                      foregroundColor: context.inkColor(AppColor.authLogo),
+                      side: BorderSide(
+                        color: context.lineColor(Color(0xFFDCE3BE)),
+                      ),
                       minimumSize: Size(38.r, 38.r),
                     ),
                     icon: const Icon(Icons.access_time, size: 18),
@@ -67,7 +70,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontStyle: FontStyle.italic,
-                        color: const Color(0xFF4B5540),
+                        color: context.inkColor(Color(0xFF4B5540)),
                         height: 1.5,
                       ),
                     ),
@@ -78,7 +81,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 19.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF3E6B2E),
+                        color: context.inkColor(Color(0xFF3E6B2E)),
                         height: 1.9,
                       ),
                     ),
@@ -88,7 +91,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontStyle: FontStyle.italic,
-                        color: const Color(0xFF4B5540),
+                        color: context.inkColor(Color(0xFF4B5540)),
                         height: 1.5,
                       ),
                     ),
@@ -98,7 +101,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w700,
-                        color: AppColor.authLogo,
+                        color: context.inkColor(AppColor.authLogo),
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -109,7 +112,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       appText.asmaHusnaAgreedNote,
                       style: TextStyle(
                         fontSize: 12.5.sp,
-                        color: const Color(0xFF6B7659),
+                        color: context.inkColor(Color(0xFF6B7659)),
                         height: 1.5,
                       ),
                     ),
@@ -131,7 +134,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
-                              color: AppColor.authLogo,
+                              color: context.inkColor(AppColor.authLogo),
                             ),
                           ),
                         ),
@@ -160,11 +163,11 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                               vertical: 14.h,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: context.surfaceColor(Colors.white),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(28.r),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE3E7D3),
+                              borderSide: BorderSide(
+                                color: context.lineColor(Color(0xFFE3E7D3)),
                               ),
                             ),
                           ),
@@ -241,14 +244,17 @@ class _BulletLine extends StatelessWidget {
         children: [
           Text(
             '• ',
-            style: TextStyle(fontSize: 12.5.sp, color: const Color(0xFF6B7659)),
+            style: TextStyle(
+              fontSize: 12.5.sp,
+              color: context.inkColor(Color(0xFF6B7659)),
+            ),
           ),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
                 fontSize: 12.5.sp,
-                color: const Color(0xFF6B7659),
+                color: context.inkColor(Color(0xFF6B7659)),
               ),
             ),
           ),

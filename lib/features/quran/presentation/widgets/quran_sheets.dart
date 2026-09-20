@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
@@ -61,8 +62,10 @@ class ReciterPickerSheet extends StatelessWidget {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: state.reciters.length,
-                      separatorBuilder: (_, _) =>
-                          Divider(height: 1, color: const Color(0xFFE3ECC5)),
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        color: context.lineColor(Color(0xFFE3ECC5)),
+                      ),
                       itemBuilder: (context, index) {
                         final reciter = state.reciters[index];
                         final selected = reciter.id == state.selectedId;
@@ -153,7 +156,7 @@ class TafsirSheet extends StatelessWidget {
                         child: Text(
                           appText.quranLoadError,
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: context.inkColor(Colors.grey.shade700),
                             fontSize: 13.sp,
                           ),
                         ),
@@ -270,7 +273,7 @@ class _SurahAudioSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     height: 1.5,
-                    color: const Color(0xFF5A6350),
+                    color: context.inkColor(Color(0xFF5A6350)),
                   ),
                 ),
                 SizedBox(height: 18.h),
@@ -280,7 +283,7 @@ class _SurahAudioSheet extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: state.progress,
                       minHeight: 8.h,
-                      backgroundColor: const Color(0xFFE0E6CC),
+                      backgroundColor: context.surfaceColor(Color(0xFFE0E6CC)),
                       color: AppColor.primary,
                     ),
                   ),
@@ -295,7 +298,7 @@ class _SurahAudioSheet extends StatelessWidget {
                       appText.quranAudioDownloadFailed,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Colors.red.shade400,
+                        color: context.inkColor(Colors.red.shade400),
                       ),
                     ),
                     SizedBox(height: 12.h),
@@ -330,7 +333,7 @@ class _SurahAudioSheet extends StatelessWidget {
                       appText.offlineQuranNotNow,
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: const Color(0xFF7A8368),
+                        color: context.inkColor(Color(0xFF7A8368)),
                       ),
                     ),
                   ),
@@ -438,7 +441,7 @@ class _SettingLabel extends StatelessWidget {
         style: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF5A6350),
+          color: context.inkColor(Color(0xFF5A6350)),
         ),
       ),
     );
@@ -520,9 +523,9 @@ class _EditionRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                      color: selected
-                          ? AppColor.primary
-                          : const Color(0xFF3A4032),
+                      color: context.inkColor(
+                        selected ? AppColor.primary : const Color(0xFF3A4032),
+                      ),
                     ),
                   ),
                   Text(
@@ -539,7 +542,9 @@ class _EditionRow extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: dl.fraction,
                         minHeight: 4.h,
-                        backgroundColor: const Color(0xFFE0E6CC),
+                        backgroundColor: context.surfaceColor(
+                          Color(0xFFE0E6CC),
+                        ),
                         color: AppColor.primary,
                       ),
                     ),
@@ -613,7 +618,7 @@ class _AyahRepeatSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     height: 1.4,
-                    color: const Color(0xFF5A6350),
+                    color: context.inkColor(Color(0xFF5A6350)),
                   ),
                 ),
                 SizedBox(height: 18.h),
@@ -631,7 +636,7 @@ class _AyahRepeatSheet extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF3A4032),
+                        color: context.inkColor(Color(0xFF3A4032)),
                       ),
                     ),
                     SizedBox(width: 24.w),
@@ -672,7 +677,9 @@ class _StepButton extends StatelessWidget {
         height: 40.w,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? const Color(0xFFE7EECB) : const Color(0xFFEDEEE6),
+          color: context.surfaceColor(
+            enabled ? const Color(0xFFE7EECB) : const Color(0xFFEDEEE6),
+          ),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Icon(

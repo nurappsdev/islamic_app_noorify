@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
 
@@ -31,9 +32,7 @@ class DuaZoomControl extends StatelessWidget {
               min: 0.8,
               max: 2.5,
               onChanged: (val) {
-                context.read<DuaSettingsBloc>().add(
-                  SetDuaFontSize(val),
-                );
+                context.read<DuaSettingsBloc>().add(SetDuaFontSize(val));
               },
             ),
           ),
@@ -42,7 +41,7 @@ class DuaZoomControl extends StatelessWidget {
           '${(multiplier * 100).toInt()}%',
           style: TextStyle(
             fontSize: 11.sp,
-            color: const Color(0xFF6B7458),
+            color: context.inkColor(Color(0xFF6B7458)),
             fontWeight: FontWeight.w600,
           ),
         ),

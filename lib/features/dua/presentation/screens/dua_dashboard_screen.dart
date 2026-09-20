@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
@@ -25,7 +26,7 @@ class DuaDashboardScreen extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           ListView(
@@ -113,7 +114,10 @@ class _SectionHeader extends StatelessWidget {
           onTap: onSeeAll,
           child: Text(
             AppText.of(context).seeAll,
-            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF6B7A4A)),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: context.inkColor(Color(0xFF6B7A4A)),
+            ),
           ),
         ),
       ],

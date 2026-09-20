@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_history_item.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
@@ -13,9 +14,9 @@ class CompletedHistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.surfaceColor(Colors.white),
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -27,7 +28,7 @@ class CompletedHistoryScreen extends StatelessWidget {
             onPressed: () => Navigator.maybePop(context),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: const Color(0xFF303629),
+              foregroundColor: Color(0xFF303629),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
           ),
@@ -36,7 +37,7 @@ class CompletedHistoryScreen extends StatelessWidget {
         title: Text(
           appText.completedHistory,
           style: TextStyle(
-            color: const Color(0xFF84945F),
+            color: context.inkColor(Color(0xFF84945F)),
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
           ),
@@ -78,7 +79,7 @@ class _CompletedQuizCard extends StatelessWidget {
       height: 80.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(25.r),
       ),
       child: Row(
@@ -88,11 +89,11 @@ class _CompletedQuizCard extends StatelessWidget {
             height: 48.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFDDE8C1)),
+              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             ),
             child: Icon(
               Icons.image_outlined,
-              color: const Color(0xFF8B9865),
+              color: context.inkColor(Color(0xFF8B9865)),
               size: 24.sp,
             ),
           ),
@@ -139,7 +140,7 @@ class _HistoryScoreProgress extends StatelessWidget {
             strokeWidth: 5.w,
             strokeCap: StrokeCap.round,
             color: const Color(0xFFA1AD59),
-            backgroundColor: const Color(0xFFF0F0F6),
+            backgroundColor: context.surfaceColor(Color(0xFFF0F0F6)),
           ),
           Text(
             '${(value * 100).round()}%',

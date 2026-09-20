@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -39,8 +40,10 @@ class DuaIntroScreen extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFDFDE68),
-                          foregroundColor: const Color(0xFF303629),
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFDFDE68),
+                          ),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -59,7 +62,7 @@ class DuaIntroScreen extends StatelessWidget {
                             appText.duaIntroTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: const Color(0xFF7D8765),
+                              color: context.inkColor(Color(0xFF7D8765)),
                               fontSize: 26.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -69,7 +72,7 @@ class DuaIntroScreen extends StatelessWidget {
                             appText.duaIntroSubtitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: const Color(0xFF4C5346),
+                              color: context.inkColor(Color(0xFF4C5346)),
                               fontSize: 13.sp,
                               height: 1.6,
                             ),
@@ -126,7 +129,7 @@ class _Decor extends StatelessWidget {
         child: Icon(
           Icons.auto_stories_rounded,
           size: 260.sp,
-          color: Colors.white.withValues(alpha: .55),
+          color: context.inkColor(Colors.white.withValues(alpha: .55)),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
@@ -62,9 +63,9 @@ class SurahAyahCard extends StatelessWidget {
         width: double.infinity,
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
-          color: const Color(0xFFEEF2DD),
+          color: context.surfaceColor(Color(0xFFEEF2DD)),
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFD8E2B0)),
+          border: Border.all(color: context.lineColor(Color(0xFFD8E2B0))),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,7 +106,7 @@ class SurahAyahCard extends StatelessWidget {
                             vertical: 7.h,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: context.surfaceColor(Colors.white),
                             borderRadius: BorderRadius.circular(18.r),
                           ),
                           child: Row(
@@ -119,7 +120,7 @@ class SurahAyahCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11.sp,
-                                    color: const Color(0xFF6B6B6B),
+                                    color: context.inkColor(Color(0xFF6B6B6B)),
                                   ),
                                 ),
                               ),
@@ -266,10 +267,7 @@ class SurahAyahCard extends StatelessWidget {
                 arabic,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  fontSize: 19.sp * arabicScale,
-                  height: 1.8,
-                ),
+                style: TextStyle(fontSize: 19.sp * arabicScale, height: 1.8),
               ),
             ),
             if (showTranslation && translation.isNotEmpty) ...[
@@ -281,7 +279,7 @@ class SurahAyahCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.sp * translationScale,
                   height: 1.4,
-                  color: const Color(0xFF444444),
+                  color: context.inkColor(Color(0xFF444444)),
                 ),
               ),
             ],

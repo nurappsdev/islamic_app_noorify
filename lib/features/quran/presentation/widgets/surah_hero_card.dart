@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
@@ -51,7 +52,7 @@ class SurahHeroCard extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontSize: 13.sp),
           ),
           SizedBox(height: 10.h),
-          Container(height: 1, color: Colors.white24),
+          Container(height: 1, color: context.surfaceColor(Colors.white24)),
           SizedBox(height: 10.h),
           Text(
             '${revelationPlaceLabel(appText, detail.revelationPlace).toUpperCase()} • '
@@ -79,7 +80,9 @@ class SurahHeroCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onAction,
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: .12),
+                      backgroundColor: context.surfaceColor(
+                        Colors.white.withValues(alpha: .12),
+                      ),
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20.r),
@@ -98,13 +101,19 @@ class SurahHeroCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .12),
+                  color: context.surfaceColor(
+                    Colors.white.withValues(alpha: .12),
+                  ),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.amber, size: 14.sp),
+                    Icon(
+                      Icons.auto_awesome,
+                      color: context.inkColor(Colors.amber),
+                      size: 14.sp,
+                    ),
                     SizedBox(width: 6.w),
                     Text(
                       '${appText.pointsLabel} : '

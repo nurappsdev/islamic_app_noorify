@@ -126,10 +126,18 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             final media = MediaQuery.of(context);
             final textScale = appFontScale(appPreferences.fontSize);
-            return MediaQuery(
+            final content = MediaQuery(
               data: media.copyWith(textScaler: TextScaler.linear(textScale)),
               child: child ?? const SizedBox.shrink(),
             );
+            // Light status-bar icons over the dark background. Light mode
+            // keeps the platform default.
+            return appPreferences.darkThemeEnabled
+                ? AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle.light,
+                    child: content,
+                  )
+                : content;
           },
           initialRoute: initialRoute ?? RouteNames.splash,
           onGenerateRoute: AppRoutes.onGenerateRoute,

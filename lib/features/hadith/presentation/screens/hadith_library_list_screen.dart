@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
@@ -53,7 +54,10 @@ class _HadithLibraryListView extends StatelessWidget {
             child: Text(
               state.failure?.message ?? '',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
             ),
           ),
           TextButton(
@@ -85,7 +89,7 @@ class _LibraryCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE8AE),
+        color: context.surfaceColor(Color(0xFFDDE8AE)),
         borderRadius: BorderRadius.circular(18.r),
       ),
       child: Column(
@@ -96,13 +100,15 @@ class _LibraryCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.r),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF9BAE6C)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFF9BAE6C)),
+                  ),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Icon(
                   Icons.menu_book_outlined,
                   size: 20.sp,
-                  color: const Color(0xFF5F6E3E),
+                  color: context.inkColor(Color(0xFF5F6E3E)),
                 ),
               ),
               const Spacer(),
@@ -112,8 +118,8 @@ class _LibraryCard extends StatelessWidget {
                 icon: Icon(Icons.north_east_rounded, size: 15.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4C5A34),
-                  side: const BorderSide(color: Color(0xFF9BAE6C)),
+                  foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                  side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   minimumSize: Size(0, 36.h),
                   textStyle: TextStyle(
@@ -135,13 +141,16 @@ class _LibraryCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF2C3320),
+              color: context.inkColor(Color(0xFF2C3320)),
             ),
           ),
           SizedBox(height: 8.h),
           Text(
             '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
-            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF5D6B44)),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: context.inkColor(Color(0xFF5D6B44)),
+            ),
           ),
         ],
       ),

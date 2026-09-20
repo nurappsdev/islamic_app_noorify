@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
@@ -259,18 +260,26 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFCFDF8),
+        backgroundColor: context.pageColor(Color(0xFFFCFDF8)),
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.access_alarm, size: 64.sp, color: _olive),
+                Icon(
+                  Icons.access_alarm,
+                  size: 64.sp,
+                  color: context.inkColor(_olive),
+                ),
                 SizedBox(height: 18.h),
                 Text(
                   appText.alarmIsRinging,
-                  style: alarmItalicStyle(16.sp, color: _olive),
+                  style: alarmItalicStyle(
+                    16.sp,
+                    color: context.inkColor(_olive),
+                    context: context,
+                  ),
                 ),
                 SizedBox(height: 10.h),
                 Text(
@@ -280,12 +289,15 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                   style: TextStyle(
                     fontSize: 48.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: context.inkColor(Colors.black87),
                   ),
                 ),
                 if (payload.label.isNotEmpty) ...[
                   SizedBox(height: 8.h),
-                  Text(payload.label, style: alarmItalicStyle(14.sp)),
+                  Text(
+                    payload.label,
+                    style: alarmItalicStyle(14.sp, context: context),
+                  ),
                 ],
                 SizedBox(height: 48.h),
                 SizedBox(
@@ -294,7 +306,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                   child: ElevatedButton(
                     onPressed: _stop,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _olive,
+                      backgroundColor: context.surfaceColor(_olive),
                       foregroundColor: Colors.white,
                       shape: const StadiumBorder(),
                     ),
@@ -314,7 +326,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                   child: OutlinedButton(
                     onPressed: _snooze,
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: _olive),
+                      side: BorderSide(color: context.lineColor(_olive)),
                       shape: const StadiumBorder(),
                     ),
                     child: Text(
@@ -322,7 +334,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: _olive,
+                        color: context.inkColor(_olive),
                       ),
                     ),
                   ),

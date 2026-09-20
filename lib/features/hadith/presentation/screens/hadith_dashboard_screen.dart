@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -30,7 +31,7 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
     final labels = _period == 0 ? _weekDays : _monthWeeks;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -112,7 +113,10 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
                       behavior: HitTestBehavior.opaque,
                       child: Text(
                         appText.seeAll,
-                        style: TextStyle(fontSize: 12.sp, color: Colors.black),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: context.inkColor(Colors.black),
+                        ),
                       ),
                     ),
                   ],
@@ -124,7 +128,10 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
                   ('Hadith', '17 Aug  At 5 : 35 PM'),
                 ]) ...[
                   _HistoryRow(label: entry.$1, timestamp: entry.$2),
-                  Divider(height: 22.h, color: const Color(0xFFEDEFE0)),
+                  Divider(
+                    height: 22.h,
+                    color: context.lineColor(Color(0xFFEDEFE0)),
+                  ),
                 ],
               ],
             ),
@@ -157,7 +164,7 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFCBD16B),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: context.inkColor(Color(0xFF303629)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -166,7 +173,7 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: AppColor.authLogo,
+              color: context.inkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -191,13 +198,19 @@ class _LegendDot extends StatelessWidget {
         Container(
           width: 12.r,
           height: 12.r,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(color),
+            shape: BoxShape.circle,
+          ),
         ),
         SizedBox(width: 8.w),
         Flexible(
           child: Text(
             label,
-            style: TextStyle(fontSize: 12.5.sp, color: const Color(0xFF6A7350)),
+            style: TextStyle(
+              fontSize: 12.5.sp,
+              color: context.inkColor(Color(0xFF6A7350)),
+            ),
           ),
         ),
       ],
@@ -231,7 +244,7 @@ class _PeriodDropdown extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFDDE8BA),
+          color: context.surfaceColor(Color(0xFFDDE8BA)),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
@@ -242,14 +255,14 @@ class _PeriodDropdown extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF3E4A2A),
+                color: context.inkColor(Color(0xFF3E4A2A)),
               ),
             ),
             SizedBox(width: 6.w),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 18.sp,
-              color: const Color(0xFF3E4A2A),
+              color: context.inkColor(Color(0xFF3E4A2A)),
             ),
           ],
         ),
@@ -275,7 +288,10 @@ class _StatCard extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF3B4430)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF3B4430)),
+              ),
             ),
             SizedBox(height: 16.h),
             Text(
@@ -283,7 +299,7 @@ class _StatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF2C3320),
+                color: context.inkColor(Color(0xFF2C3320)),
               ),
             ),
           ],
@@ -336,18 +352,21 @@ class _HistoryRow extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE3E7D3)),
+            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
           ),
           child: Icon(
             Icons.menu_book_outlined,
             size: 15.sp,
-            color: const Color(0xFF8B9865),
+            color: context.inkColor(Color(0xFF8B9865)),
           ),
         ),
         SizedBox(width: 12.w),
         Text(
           label,
-          style: TextStyle(fontSize: 14.sp, color: const Color(0xFF2C3320)),
+          style: TextStyle(
+            fontSize: 14.sp,
+            color: context.inkColor(Color(0xFF2C3320)),
+          ),
         ),
         const Spacer(),
         Text(

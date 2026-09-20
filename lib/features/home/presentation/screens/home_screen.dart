@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
@@ -136,9 +137,11 @@ class HomeCard extends StatelessWidget {
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: backgroundColor ?? palette.surface,
+        color: context.surfaceColor(backgroundColor ?? palette.surface),
         borderRadius: BorderRadius.circular(11.r),
-        border: Border.all(color: borderColor ?? palette.border),
+        border: Border.all(
+          color: context.lineColor(borderColor ?? palette.border),
+        ),
       ),
       child: child,
     );

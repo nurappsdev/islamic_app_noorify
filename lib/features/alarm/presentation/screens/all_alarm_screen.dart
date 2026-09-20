@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
@@ -85,12 +86,12 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
     AlarmListState state,
   ) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: _tab != _AlarmTab.all
           ? null
           : FloatingActionButton(
-              backgroundColor: _fabGreen,
+              backgroundColor: context.surfaceColor(_fabGreen),
               elevation: 0,
               onPressed: () {
                 final bloc = context.read<AlarmListBloc>();
@@ -102,7 +103,7 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
                   ),
                 );
               },
-              child: const Icon(Icons.add, color: Colors.black87),
+              child: Icon(Icons.add, color: context.inkColor(Colors.black87)),
             ),
       body: SafeArea(
         child: Column(
@@ -210,12 +211,16 @@ class _AlarmTabLabel extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-              color: selected ? _olive : _mutedGreen,
+              color: context.inkColor(selected ? _olive : _mutedGreen),
             ),
           ),
           SizedBox(height: 4.h),
           if (selected)
-            Container(width: 20.w, height: 2.h, color: _olive)
+            Container(
+              width: 20.w,
+              height: 2.h,
+              color: context.surfaceColor(_olive),
+            )
           else
             SizedBox(height: 2.h),
         ],
@@ -284,7 +289,9 @@ class _AllAlarmListState extends State<_AllAlarmList> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.surfaceColor(Colors.redAccent),
+            ),
             child: Text(appText.deleteAlarmConfirm),
           ),
         ],
@@ -309,7 +316,11 @@ class _AllAlarmListState extends State<_AllAlarmList> {
       return Center(
         child: Text(
           AppText.of(context).noAlarmSet,
-          style: alarmItalicStyle(13.sp, color: _mutedGreen),
+          style: alarmItalicStyle(
+            13.sp,
+            color: context.inkColor(_mutedGreen),
+            context: context,
+          ),
         ),
       );
     }
@@ -359,7 +370,7 @@ class _AlarmListItem extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        border: Border.all(color: _cardBorder),
+        border: Border.all(color: context.lineColor(_cardBorder)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
@@ -375,7 +386,7 @@ class _AlarmListItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
-                    color: color,
+                    color: context.inkColor(color),
                   ),
                 ),
                 SizedBox(height: 3.h),
@@ -383,7 +394,10 @@ class _AlarmListItem extends StatelessWidget {
                   _subtitle(appText),
                   style: alarmItalicStyle(
                     12.sp,
-                    color: alarm.enabled ? _mutedGreen : _mutedGrey,
+                    color: context.inkColor(
+                      alarm.enabled ? _mutedGreen : _mutedGrey,
+                    ),
+                    context: context,
                   ),
                 ),
               ],
@@ -395,12 +409,14 @@ class _AlarmListItem extends StatelessWidget {
               isPlaying ? Icons.stop_rounded : Icons.play_arrow_rounded,
               size: 22.sp,
             ),
-            color: alarm.ringtoneUrl.isEmpty ? _mutedGrey : _olive,
+            color: context.inkColor(
+              alarm.ringtoneUrl.isEmpty ? _mutedGrey : _olive,
+            ),
           ),
           IconButton(
             onPressed: onDelete,
             icon: Icon(Icons.delete_outline_rounded, size: 21.sp),
-            color: Colors.redAccent,
+            color: context.inkColor(Colors.redAccent),
           ),
           Switch(
             value: alarm.enabled,
@@ -410,7 +426,7 @@ class _AlarmListItem extends StatelessWidget {
             activeThumbColor: _olive,
             activeTrackColor: _cardBorder,
             inactiveThumbColor: _mutedGrey,
-            inactiveTrackColor: const Color(0xFFE0E0E0),
+            inactiveTrackColor: context.surfaceColor(Color(0xFFE0E0E0)),
           ),
         ],
       ),
@@ -437,7 +453,11 @@ class _PrayerAlarmTab extends StatelessWidget {
               ? Center(
                   child: Text(
                     appText.noAlarmSet,
-                    style: alarmItalicStyle(13.sp, color: _mutedGreen),
+                    style: alarmItalicStyle(
+                      13.sp,
+                      color: context.inkColor(_mutedGreen),
+                      context: context,
+                    ),
                   ),
                 )
               : ListView.separated(
@@ -467,12 +487,16 @@ class _PrayerAlarmTab extends StatelessWidget {
                 if (saved == true) bloc.add(const LoadAlarms());
               },
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: _cardBorder),
+                side: BorderSide(color: context.lineColor(_cardBorder)),
                 shape: const StadiumBorder(),
               ),
               child: Text(
                 appText.setAllAlarm,
-                style: alarmItalicStyle(14.sp, color: _olive),
+                style: alarmItalicStyle(
+                  14.sp,
+                  color: context.inkColor(_olive),
+                  context: context,
+                ),
               ),
             ),
           ),
@@ -562,9 +586,9 @@ class _PrayerAlarmRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: _cardBorder),
+        border: Border.all(color: context.lineColor(_cardBorder)),
       ),
       child: Row(
         children: [
@@ -572,10 +596,14 @@ class _PrayerAlarmRow extends StatelessWidget {
             width: 38.r,
             height: 38.r,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF8D7),
+              color: context.surfaceColor(Color(0xFFFFF8D7)),
               borderRadius: BorderRadius.circular(9.r),
             ),
-            child: Icon(_icon, color: _iconColor, size: 23.sp),
+            child: Icon(
+              _icon,
+              color: context.inkColor(_iconColor),
+              size: 23.sp,
+            ),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -596,7 +624,10 @@ class _PrayerAlarmRow extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     prayerAlarm.timeWindow,
-                    style: TextStyle(fontSize: 9.sp, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      color: context.inkColor(Colors.black54),
+                    ),
                   ),
                 ),
               ],
@@ -607,16 +638,23 @@ class _PrayerAlarmRow extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: _olive),
+                border: Border.all(color: context.lineColor(_olive)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.access_time, size: 15.sp, color: _olive),
+                  Icon(
+                    Icons.access_time,
+                    size: 15.sp,
+                    color: context.inkColor(_olive),
+                  ),
                   SizedBox(width: 5.w),
                   Text(
                     prayerAlarm.alarmTime,
-                    style: TextStyle(fontSize: 11.sp, color: _olive),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: context.inkColor(_olive),
+                    ),
                   ),
                 ],
               ),
@@ -635,7 +673,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                 ),
               ),
               icon: Icon(Icons.access_alarm, size: 20.sp),
-              color: const Color(0xFF7E8C61),
+              color: context.inkColor(Color(0xFF7E8C61)),
             ),
         ],
       ),

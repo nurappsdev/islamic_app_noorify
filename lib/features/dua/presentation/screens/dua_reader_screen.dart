@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
@@ -130,7 +131,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
@@ -148,7 +149,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                     width: 40.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: context.surfaceColor(Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(2.r),
                     ),
                   ),
@@ -216,7 +217,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
           BlocBuilder<DuaSettingsBloc, DuaSettingsState>(
@@ -236,8 +237,10 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                     action: IconButton(
                       onPressed: _showSettingsModal,
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFDFDE68),
-                        foregroundColor: const Color(0xFF303629),
+                        backgroundColor: context.surfaceColor(
+                          Color(0xFFDFDE68),
+                        ),
+                        foregroundColor: context.inkColor(Color(0xFF303629)),
                         minimumSize: Size(38.r, 38.r),
                       ),
                       icon: const Icon(Icons.settings_rounded, size: 18),
@@ -258,7 +261,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                       '${appText.duaReciteSuffix}',
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: const Color(0xFF3B4430),
+                        color: context.inkColor(Color(0xFF3B4430)),
                       ),
                     ),
                   ],
@@ -272,7 +275,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                         style: TextStyle(
                           fontSize: 20.sp * multiplier,
                           height: 1.9,
-                          color: const Color(0xFF283016),
+                          color: context.inkColor(Color(0xFF283016)),
                         ),
                       ),
                     if (settings.showArabic && settings.showTranslation)
@@ -283,7 +286,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12.sp * multiplier,
-                          color: const Color(0xFF5D6B44),
+                          color: context.inkColor(Color(0xFF5D6B44)),
                         ),
                       ),
                     SizedBox(height: 14.h),
@@ -297,7 +300,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                         fontSize: 12.5.sp * multiplier,
                         height: 1.6,
                         fontStyle: FontStyle.italic,
-                        color: const Color(0xFF3B4430),
+                        color: context.inkColor(Color(0xFF3B4430)),
                       ),
                     ),
                   ],
@@ -344,7 +347,7 @@ class _VisibilityToggle extends StatelessWidget {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF6B7458),
+            color: context.inkColor(Color(0xFF6B7458)),
           ),
         ),
         Switch(
@@ -399,7 +402,7 @@ class _ReaderControlBar extends StatelessWidget {
                 height: 40.r,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.surfaceColor(Colors.white),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
@@ -407,7 +410,7 @@ class _ReaderControlBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF3C4A28),
+                    color: context.inkColor(Color(0xFF3C4A28)),
                   ),
                 ),
               ),
@@ -434,8 +437,8 @@ class _ReaderControlBar extends StatelessWidget {
               width: 40.r,
               height: 40.r,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
                 shape: BoxShape.circle,
               ),
               child: Icon(

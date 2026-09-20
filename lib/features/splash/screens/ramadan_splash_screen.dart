@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/utils/app_text.dart';
 import '../utils/post_splash_route.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+
 class RamadanSplashScreen extends StatefulWidget {
   const RamadanSplashScreen({super.key});
 
@@ -53,7 +55,9 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
               key: const Key('opening_splash_image'),
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return const ColoredBox(color: Color(0xFFF8F8F4));
+                return ColoredBox(
+                  color: context.surfaceColor(Color(0xFFF8F8F4)),
+                );
               },
             ),
             SafeArea(
@@ -70,7 +74,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                         return Text(
                           'Noorify',
                           style: TextStyle(
-                            color: const Color(0xFF7D8765),
+                            color: context.inkColor(Color(0xFF7D8765)),
                             fontSize: 30.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -82,7 +86,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       appText.noorify,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 15.sp,
                         height: 1.2,
                         fontFamily: 'Times New Roman',
@@ -93,7 +97,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       appText.splashTitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w400,
                         height: 1.2,
@@ -105,7 +109,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       '"${appText.splashQuote}"',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 16.sp,
                         fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,

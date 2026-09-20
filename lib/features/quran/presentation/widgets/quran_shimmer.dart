@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+
 /// Wraps [child] with the app-wide shimmer sweep used for loading skeletons.
 class QuranShimmer extends StatelessWidget {
   const QuranShimmer({super.key, required this.child});
@@ -11,8 +13,8 @@ class QuranShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
       child: child,
     );
   }
@@ -31,7 +33,7 @@ class _ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
@@ -83,7 +85,7 @@ class SurahListShimmer extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: itemCount,
         separatorBuilder: (_, _) =>
-            const Divider(height: 1, color: Colors.white),
+            Divider(height: 1, color: context.lineColor(Colors.white)),
         itemBuilder: (_, _) => Padding(
           padding: EdgeInsets.symmetric(vertical: 12.h),
           child: Row(
@@ -125,7 +127,7 @@ class QuranCardListShimmer extends StatelessWidget {
         itemBuilder: (_, _) => Container(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.surfaceColor(Colors.white),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Row(
@@ -166,7 +168,7 @@ class SurahDetailShimmer extends StatelessWidget {
             width: double.infinity,
             height: 210.h,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(22.r),
             ),
           ),
@@ -180,7 +182,7 @@ class SurahDetailShimmer extends StatelessWidget {
               width: double.infinity,
               height: 130.h,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(16.r),
               ),
             ),
@@ -209,7 +211,7 @@ class FullSurahShimmer extends StatelessWidget {
             width: double.infinity,
             height: 210.h,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(22.r),
             ),
           ),
@@ -222,7 +224,7 @@ class FullSurahShimmer extends StatelessWidget {
             width: double.infinity,
             height: 220.h,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.surfaceColor(Colors.white),
               borderRadius: BorderRadius.circular(12.r),
             ),
           ),
@@ -257,7 +259,7 @@ class VerseReaderShimmer extends StatelessWidget {
           width: double.infinity,
           height: 120.h,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.surfaceColor(Colors.white),
             borderRadius: BorderRadius.circular(16.r),
           ),
         ),

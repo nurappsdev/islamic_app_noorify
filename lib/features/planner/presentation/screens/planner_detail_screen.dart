@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
 
@@ -13,7 +14,7 @@ class PlannerDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -48,8 +49,10 @@ class _PlannerHeader extends StatelessWidget {
     return Container(
       height: 54.h,
       margin: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFDDE8C1))),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
+        ),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -60,7 +63,7 @@ class _PlannerHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
                 minimumSize: Size(33.w, 33.w),
                 padding: EdgeInsets.zero,
               ),
@@ -70,7 +73,7 @@ class _PlannerHeader extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: const Color(0xFF84945F),
+              color: context.inkColor(Color(0xFF84945F)),
               fontSize: 18.sp,
               fontWeight: FontWeight.w400,
             ),
@@ -92,7 +95,7 @@ class _PlanQuizCard extends StatelessWidget {
       height: 76.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(21.r),
       ),
       child: Row(
@@ -134,11 +137,11 @@ class _QuizArtwork extends StatelessWidget {
       height: 47.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
       ),
       child: Icon(
         Icons.image_outlined,
-        color: const Color(0xFF8B9865),
+        color: context.inkColor(Color(0xFF8B9865)),
         size: 23.sp,
       ),
     );

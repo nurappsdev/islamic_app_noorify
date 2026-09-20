@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
 
@@ -38,7 +39,7 @@ class _CreatePlanViewState extends State<_CreatePlanView> {
     final state = context.watch<PlannerBloc>().state;
     final bloc = context.read<PlannerBloc>();
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -104,7 +105,7 @@ class _CreatePlanHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
                 minimumSize: Size(33.w, 33.w),
                 padding: EdgeInsets.zero,
               ),
@@ -114,7 +115,7 @@ class _CreatePlanHeader extends StatelessWidget {
           Text(
             AppText.of(context).createPlanHeader,
             style: TextStyle(
-              color: const Color(0xFF84945F),
+              color: context.inkColor(Color(0xFF84945F)),
               fontSize: 18.sp,
               fontWeight: FontWeight.w400,
             ),
@@ -145,7 +146,7 @@ class _PlanForm extends StatelessWidget {
         TextField(
           controller: controller,
           style: TextStyle(fontSize: 13.sp),
-          decoration: _fieldDecoration(appText.writeHereHint),
+          decoration: _fieldDecoration(context, appText.writeHereHint),
         ),
         SizedBox(height: 14.h),
         Container(
@@ -195,13 +196,13 @@ class _PlanForm extends StatelessWidget {
   }
 }
 
-InputDecoration _fieldDecoration(String hint) {
+InputDecoration _fieldDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
     hintStyle: const TextStyle(color: Color(0xFFB8B8B8)),
     contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
     enabledBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
+      borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
       borderRadius: BorderRadius.circular(25.r),
     ),
     focusedBorder: OutlineInputBorder(
@@ -222,7 +223,7 @@ class _SelectionField extends StatelessWidget {
       height: 48.h,
       padding: EdgeInsets.symmetric(horizontal: 15.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(25.r),
       ),
       child: Row(
@@ -298,7 +299,7 @@ class _AddedQuizCard extends StatelessWidget {
       height: 76.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
         borderRadius: BorderRadius.circular(21.r),
       ),
       child: Row(
@@ -308,11 +309,11 @@ class _AddedQuizCard extends StatelessWidget {
             height: 47.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFDDE8C1)),
+              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             ),
             child: Icon(
               Icons.image_outlined,
-              color: const Color(0xFF8B9865),
+              color: context.inkColor(Color(0xFF8B9865)),
               size: 23.sp,
             ),
           ),

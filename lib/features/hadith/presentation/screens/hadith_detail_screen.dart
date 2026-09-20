@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
@@ -157,7 +158,7 @@ class _HadithDetailViewState extends State<_HadithDetailView> {
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       endDrawer: HadithContentSettingsDrawer(
         settings: _settings,
         onChanged: _updateSettings,
@@ -255,7 +256,7 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFCBD16B),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: context.inkColor(Color(0xFF303629)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -269,7 +270,7 @@ class _Header extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: const Color(0xFF2C3320),
+                  color: context.inkColor(Color(0xFF2C3320)),
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -282,8 +283,8 @@ class _Header extends StatelessWidget {
               onPressed: onContentSettings,
               tooltip: AppText.of(context).quranReaderSettingsTitle,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFEDF1DE),
-                foregroundColor: const Color(0xFF4C5A34),
+                backgroundColor: context.surfaceColor(Color(0xFFEDF1DE)),
+                foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.text_fields_rounded, size: 18),
@@ -307,7 +308,10 @@ class _Message extends StatelessWidget {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+        style: TextStyle(
+          fontSize: 13.sp,
+          color: context.inkColor(Color(0xFF5D6B44)),
+        ),
       ),
     );
   }
@@ -322,15 +326,15 @@ class _HadithSkeletons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
       child: Column(
         children: [
           for (var i = 0; i < count; i++) ...[
             Container(
               height: 340.h,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(16.r),
               ),
             ),
@@ -517,8 +521,11 @@ class _HadithCardState extends State<_HadithCard> {
           Color color = const Color(0xFF4C5A34),
         }) {
           return ListTile(
-            leading: Icon(icon, color: color),
-            title: Text(label, style: TextStyle(color: color)),
+            leading: Icon(icon, color: context.inkColor(color)),
+            title: Text(
+              label,
+              style: TextStyle(color: context.inkColor(color)),
+            ),
             onTap: () {
               Navigator.pop(sheetContext);
               onTap();
@@ -535,7 +542,7 @@ class _HadithCardState extends State<_HadithCard> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE3C4),
+                  color: context.surfaceColor(Color(0xFFDCE3C4)),
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -587,9 +594,9 @@ class _HadithCardState extends State<_HadithCard> {
     final card = Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFE3E7D3)),
+        border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
         boxShadow: const [
           BoxShadow(
             color: Color(0x14000000),
@@ -610,7 +617,7 @@ class _HadithCardState extends State<_HadithCard> {
                     vertical: 5.h,
                   ),
                   decoration: BoxDecoration(
-                    color: _green,
+                    color: context.surfaceColor(_green),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
@@ -631,9 +638,9 @@ class _HadithCardState extends State<_HadithCard> {
                     // Names the language a tap switches to.
                     label: Text(_showEnglish ? 'বাংলা' : 'English'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _green,
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: _green),
+                      foregroundColor: context.inkColor(_green),
+                      backgroundColor: context.surfaceColor(Colors.white),
+                      side: BorderSide(color: context.lineColor(_green)),
                       padding: EdgeInsets.symmetric(horizontal: 12.w),
                       minimumSize: Size(0, 30.h),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -658,7 +665,7 @@ class _HadithCardState extends State<_HadithCard> {
                   fontSize: 13.sp * settings.translationScale,
                   height: 1.5,
                   fontWeight: FontWeight.w600,
-                  color: _muted,
+                  color: context.inkColor(_muted),
                 ),
               ),
             ],
@@ -671,7 +678,7 @@ class _HadithCardState extends State<_HadithCard> {
                 style: TextStyle(
                   fontSize: 20.sp * settings.arabicScale,
                   height: 2.0,
-                  color: _ink,
+                  color: context.inkColor(_ink),
                 ),
               ),
             ],
@@ -686,7 +693,7 @@ class _HadithCardState extends State<_HadithCard> {
                   fontSize: 12.5.sp * settings.translationScale,
                   height: 1.6,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF8B9A4B),
+                  color: context.inkColor(Color(0xFF8B9A4B)),
                 ),
               ),
             ],
@@ -697,7 +704,7 @@ class _HadithCardState extends State<_HadithCard> {
                 style: TextStyle(
                   fontSize: 14.sp * settings.translationScale,
                   height: 1.7,
-                  color: _ink,
+                  color: context.inkColor(_ink),
                 ),
               ),
             ],
@@ -707,13 +714,19 @@ class _HadithCardState extends State<_HadithCard> {
                 width: double.infinity,
                 padding: EdgeInsets.all(12.r),
                 decoration: BoxDecoration(
-                  color: _tint,
+                  color: context.surfaceColor(_tint),
                   borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: const Color(0xFFD5E2D0)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFD5E2D0)),
+                  ),
                 ),
                 child: Text(
                   hadith.takhrij,
-                  style: TextStyle(fontSize: 12.5.sp, height: 1.6, color: _ink),
+                  style: TextStyle(
+                    fontSize: 12.5.sp,
+                    height: 1.6,
+                    color: context.inkColor(_ink),
+                  ),
                 ),
               ),
             ],
@@ -722,7 +735,7 @@ class _HadithCardState extends State<_HadithCard> {
               width: double.infinity,
               padding: EdgeInsets.all(12.r),
               decoration: BoxDecoration(
-                color: _tint,
+                color: context.surfaceColor(_tint),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Wrap(
@@ -796,14 +809,14 @@ class _MoreButton extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(6.r),
           decoration: BoxDecoration(
-            color: const Color(0xFFECF0DC),
+            color: context.surfaceColor(Color(0xFFECF0DC)),
             borderRadius: BorderRadius.circular(9.r),
-            border: Border.all(color: const Color(0xFFDCE3C4)),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE3C4))),
           ),
           child: Icon(
             Icons.more_vert_rounded,
             size: 16.sp,
-            color: const Color(0xFF4C5A34),
+            color: context.inkColor(Color(0xFF4C5A34)),
           ),
         ),
       ),
@@ -823,7 +836,7 @@ class _FooterText extends StatelessWidget {
       style: TextStyle(
         fontSize: 12.sp,
         height: 1.4,
-        color: const Color(0xFF5D6B44),
+        color: context.inkColor(Color(0xFF5D6B44)),
       ),
     );
   }

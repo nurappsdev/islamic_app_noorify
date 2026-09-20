@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 class AmolProgressRing extends StatelessWidget {
@@ -33,7 +34,10 @@ class AmolProgressRing extends StatelessWidget {
             width: holeDimension,
             height: holeDimension,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: holeColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(holeColor),
+              shape: BoxShape.circle,
+            ),
             child: Text(
               label,
               style:

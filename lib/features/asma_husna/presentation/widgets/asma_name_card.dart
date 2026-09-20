@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
 import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_scallop_badge.dart';
@@ -19,7 +20,6 @@ class AsmaNameCard extends StatelessWidget {
   static const _oliveGreen = Color(0xFF93A23A);
   static const _sageText = Color(0xFF8B9678);
 
-
   static const _outerCardFill = Color(0xFFF6F8EC);
   static const _circleFillLight = Color(0xFFF2F4E1);
   static const _circleFillDark = Color(0xFFE1E5C4);
@@ -37,10 +37,10 @@ class AsmaNameCard extends StatelessWidget {
     final appText = AppText.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: _outerCardFill,
+        color: context.surfaceColor(_outerCardFill),
         borderRadius: BorderRadius.circular(28.r),
         border: Border.all(
-          color: const Color(0xFFD8E2B0).withValues(alpha: 0.4),
+          color: context.lineColor(Color(0xFFD8E2B0).withValues(alpha: 0.4)),
         ),
         image: const DecorationImage(
           image: AssetImage('assets/asmaulHusnas.png'),
@@ -60,7 +60,6 @@ class AsmaNameCard extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 30.w),
                         child: Column(
@@ -73,7 +72,7 @@ class AsmaNameCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 26.sp,
                                 fontWeight: FontWeight.w700,
-                                color: _arabicGreen,
+                                color: context.inkColor(_arabicGreen),
                                 height: 1.5,
                               ),
                             ),
@@ -84,7 +83,7 @@ class AsmaNameCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 19.sp,
                                 fontWeight: FontWeight.w700,
-                                color: _oliveGreen,
+                                color: context.inkColor(_oliveGreen),
                               ),
                             ),
                             SizedBox(height: 2.h),
@@ -94,7 +93,7 @@ class AsmaNameCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
-                                color: _oliveGreen,
+                                color: context.inkColor(_oliveGreen),
                               ),
                             ),
                             SizedBox(height: 4.h),
@@ -106,7 +105,7 @@ class AsmaNameCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11.5.sp,
                                 fontStyle: FontStyle.italic,
-                                color: _sageText,
+                                color: context.inkColor(_sageText),
                               ),
                             ),
                             SizedBox(height: 12.h),
@@ -133,7 +132,7 @@ class AsmaNameCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
-                          color: _oliveGreen,
+                          color: context.inkColor(_oliveGreen),
                         ),
                       ),
                     ),
@@ -180,7 +179,7 @@ class _DetailsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(30.r),
       child: InkWell(
         onTap: onTap,
@@ -189,14 +188,14 @@ class _DetailsPill extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30.r),
-            border: Border.all(color: const Color(0xFFD7DEB2)),
+            border: Border.all(color: context.lineColor(Color(0xFFD7DEB2))),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 11.5.sp,
               fontStyle: FontStyle.italic,
-              color: const Color(0xFF7C8863),
+              color: context.inkColor(Color(0xFF7C8863)),
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
@@ -92,7 +93,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
         widget.onSetAlarm != null &&
         (state.vibrateAndRing || state.vibrate || state.ring);
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFDF8),
+      backgroundColor: context.pageColor(Color(0xFFFCFDF8)),
       body: SafeArea(
         child: Column(
           children: [
@@ -124,14 +125,19 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                     ),
                     SizedBox(height: 26.h),
                     if (widget.onSetAlarm != null) ...[
-                      Text(appText.alarmLabel, style: alarmItalicStyle(14.sp)),
+                      Text(
+                        appText.alarmLabel,
+                        style: alarmItalicStyle(14.sp, context: context),
+                      ),
                       SizedBox(height: 10.h),
                       Container(
                         height: 44.h,
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(22.r),
-                          border: Border.all(color: const Color(0xFFDCE9B8)),
+                          border: Border.all(
+                            color: context.lineColor(Color(0xFFDCE9B8)),
+                          ),
                         ),
                         child: Center(
                           child: TextField(
@@ -143,9 +149,10 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                               hintStyle: alarmItalicStyle(
                                 13.sp,
                                 color: const Color(0xFF9AA687),
+                                context: context,
                               ),
                             ),
-                            style: alarmItalicStyle(13.sp),
+                            style: alarmItalicStyle(13.sp, context: context),
                           ),
                         ),
                       ),
@@ -157,7 +164,10 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                       onChanged: (value) => bloc.add(SetVibrateAndRing(value)),
                     ),
                     SizedBox(height: 22.h),
-                    Text(appText.setRingtone, style: alarmItalicStyle(14.sp)),
+                    Text(
+                      appText.setRingtone,
+                      style: alarmItalicStyle(14.sp, context: context),
+                    ),
                     SizedBox(height: 10.h),
                     RingtoneSearchField(
                       onSelected: (ringtone) =>
@@ -192,7 +202,7 @@ class _SetAlarmViewState extends State<_SetAlarmView> {
                       Navigator.of(context).pop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _olive,
+                      backgroundColor: context.surfaceColor(_olive),
                       foregroundColor: Colors.white,
                       shape: const StadiumBorder(),
                     ),
@@ -284,7 +294,9 @@ class _TimeWheel extends StatelessWidget {
                 height: itemExtent,
                 margin: EdgeInsets.symmetric(horizontal: 46.w),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFD8C879)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFFD8C879)),
+                  ),
                   borderRadius: BorderRadius.circular(30.r),
                 ),
               ),
@@ -311,7 +323,7 @@ class _TimeWheel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black87,
+                    color: context.inkColor(Colors.black87),
                   ),
                 ),
               ),
@@ -382,11 +394,13 @@ class _Wheel extends StatelessWidget {
               style: TextStyle(
                 fontSize: isSelected ? 26.sp : (distance == 1 ? 18.sp : 14.sp),
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: isSelected
-                    ? _olive
-                    : distance == 1
-                    ? _fadedNear
-                    : _fadedFar,
+                color: context.inkColor(
+                  isSelected
+                      ? _olive
+                      : distance == 1
+                      ? _fadedNear
+                      : _fadedFar,
+                ),
               ),
             ),
           );

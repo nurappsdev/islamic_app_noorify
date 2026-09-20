@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
@@ -59,7 +60,7 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
     return HomeCard(
       padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 10.h),
       backgroundColor: context.appPalette.dangerSurface,
-      borderColor: const Color(0xFFFF4B4B),
+      borderColor: context.lineColor(Color(0xFFFF4B4B)),
       child: Column(
         children: [
           Text(

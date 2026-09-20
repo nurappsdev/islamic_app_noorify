@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
@@ -133,7 +134,10 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
             child: Text(
               state.failure?.message ?? '',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
             ),
           ),
           TextButton(
@@ -148,7 +152,10 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
             child: Text(
               appText.noResultsFound,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF5D6B44)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
             ),
           )
         else ...[
@@ -169,7 +176,7 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13.sp,
-                    color: const Color(0xFF5D6B44),
+                    color: context.inkColor(Color(0xFF5D6B44)),
                   ),
                 ),
                 TextButton(
@@ -196,15 +203,15 @@ class _CategorySkeletons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE3ECC5),
-      highlightColor: const Color(0xFFF6F9EC),
+      baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
       child: Column(
         children: [
           for (var i = 0; i < count; i++) ...[
             Container(
               height: 68.h,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.surfaceColor(Colors.white),
                 borderRadius: BorderRadius.circular(14.r),
               ),
             ),
@@ -251,9 +258,9 @@ class _CategoryCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: context.surfaceColor(Colors.white),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: const Color(0xFFE3E7D3)),
+          border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
         ),
         child: Row(
           children: [
@@ -284,7 +291,7 @@ class _CategoryCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF2C3320),
+                      color: context.inkColor(Color(0xFF2C3320)),
                     ),
                   ),
                   if (showSecondary) ...[
@@ -293,7 +300,7 @@ class _CategoryCard extends StatelessWidget {
                       secondary,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: const Color(0xFF5D6B44),
+                        color: context.inkColor(Color(0xFF5D6B44)),
                       ),
                     ),
                   ],

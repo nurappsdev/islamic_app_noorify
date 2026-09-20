@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -85,8 +86,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   Future<void> _openDropdown() async {
     FocusScope.of(context).unfocus();
-    final fieldBox =
-        _fieldKey.currentContext!.findRenderObject() as RenderBox;
+    final fieldBox = _fieldKey.currentContext!.findRenderObject() as RenderBox;
     final overlayBox =
         Overlay.of(context).context.findRenderObject() as RenderBox;
     final topLeft = fieldBox.localToGlobal(Offset.zero, ancestor: overlayBox);
@@ -117,7 +117,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
             value: _dropdownItems[i].name,
             child: Text(
               _dropdownItems[i].name,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF2C3320)),
+              ),
             ),
           ),
         ],
@@ -126,7 +129,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
           value: _customValue,
           child: Text(
             appText.zikrCustom,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF2C3320)),
+            ),
           ),
         ),
       ],
@@ -175,10 +181,9 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       return;
     }
     HapticFeedback.selectionClick();
-    Navigator.of(context).pushReplacementNamed(
-      RouteNames.zikrSet,
-      arguments: [..._items, item],
-    );
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(RouteNames.zikrSet, arguments: [..._items, item]);
   }
 
   void _start() {
@@ -202,7 +207,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     final appText = _appText;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Column(
         children: [
           ZikrGradientHeader(title: appText.zikrNewTitle),
@@ -237,7 +242,9 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28.r),
-                      borderSide: const BorderSide(color: Color(0xFFCBD9AF)),
+                      borderSide: BorderSide(
+                        color: context.lineColor(Color(0xFFCBD9AF)),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28.r),
@@ -260,8 +267,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                       child: OutlinedButton(
                         onPressed: _create,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColor.authLogo,
-                          side: const BorderSide(color: Color(0xFFC7D6A6)),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
+                          side: BorderSide(
+                            color: context.lineColor(Color(0xFFC7D6A6)),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.r),
                           ),
@@ -321,7 +330,7 @@ class _FieldLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 15.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF2C3320),
+        color: context.inkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -349,7 +358,7 @@ class _SelectField extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28.r),
-          border: Border.all(color: const Color(0xFFCBD9AF)),
+          border: Border.all(color: context.lineColor(Color(0xFFCBD9AF))),
         ),
         child: Row(
           children: [
@@ -359,9 +368,11 @@ class _SelectField extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
-                  color: hasValue
-                      ? const Color(0xFF2C3320)
-                      : const Color(0xFFA9B08D),
+                  color: context.inkColor(
+                    hasValue
+                        ? const Color(0xFF2C3320)
+                        : const Color(0xFFA9B08D),
+                  ),
                 ),
               ),
             ),
@@ -419,7 +430,7 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
               style: TextStyle(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF3C4A28),
+                color: context.inkColor(Color(0xFF3C4A28)),
               ),
             ),
           ),
@@ -449,8 +460,8 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC0392B),
-                      backgroundColor: Colors.white,
+                      foregroundColor: context.inkColor(Color(0xFFC0392B)),
+                      backgroundColor: context.surfaceColor(Colors.white),
                       side: const BorderSide(color: Color(0xFFC0392B)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26.r),
@@ -513,7 +524,7 @@ class _SheetLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF5E7038),
+        color: context.inkColor(Color(0xFF5E7038)),
       ),
     );
   }
@@ -550,11 +561,11 @@ class _SheetField extends StatelessWidget {
           color: const Color(0xFF9AA579),
         ),
         filled: true,
-        fillColor: const Color(0xFFEAF1D9),
+        fillColor: context.surfaceColor(Color(0xFFEAF1D9)),
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
-          borderSide: const BorderSide(color: Color(0xFFBFD09B)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFBFD09B))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
