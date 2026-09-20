@@ -15,11 +15,13 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
@@ -378,6 +380,70 @@ class _HadithCardState extends State<_HadithCard> {
   HadithDetail get hadith => widget.hadith;
   HadithContentSettings get settings => widget.settings;
 
+  final _bookmarkStore = HadithBookmarkStore();
+
+  /// Whether the hadith is filed under at least one bookmark folder.
+  bool _bookmarked = false;
+
+  /// Identity of this hadith in the local bookmark tables. Online hadiths have
+  /// no book slug, so the API id (unique across every book) stands in.
+  String get _bookmarkSlug =>
+      'api:${hadith.id.isNotEmpty ? hadith.id : hadith.hadithNumber}';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarked();
+  }
+
+  Future<void> _loadBookmarked() async {
+    final folders = await _bookmarkStore.foldersFor(
+      _bookmarkSlug,
+      hadith.hadithNumber,
+    );
+    if (mounted) setState(() => _bookmarked = folders.isNotEmpty);
+  }
+
+  /// Label under which the hadith shows in the Saved screen.
+  String get _bookmarkTitle {
+    for (final candidate in [
+      hadith.titleBangla,
+      hadith.titleEnglish,
+      hadith.chapter,
+      hadith.textBangla,
+      hadith.textEnglish,
+    ]) {
+      if (candidate.trim().isNotEmpty) {
+        final text = candidate.trim();
+        return text.length > 90 ? '${text.substring(0, 90)}…' : text;
+      }
+    }
+    return '';
+  }
+
+  /// "Book Mark" bottom sheet: file the hadith under one or more folders.
+  Future<void> _showBookmarkSheet() async {
+    final appText = _appText;
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => HadithBookmarkSheet(
+        appText: appText,
+        bookmark: HadithBookmark(
+          bookSlug: _bookmarkSlug,
+          hadithNo: hadith.hadithNumber,
+          titleAr: '',
+          titleBn: _bookmarkTitle,
+          savedAt: DateTime.now(),
+        ),
+      ),
+    );
+    if (saved != true || !mounted) return;
+    await _loadBookmarked();
+    _toast(appText.hadithBookmarkAdded);
+  }
+
   /// [english] when English is on and available, otherwise [bangla] (and the
   /// other way round when one of them is empty).
   String _pick(String bangla, String english) {
@@ -653,8 +719,8 @@ class _HadithCardState extends State<_HadithCard> {
                       ),
                     ),
                   ),
-                // Room for the overlaid menu button.
-                SizedBox(width: 40.w),
+                // Room for the overlaid bookmark and menu buttons.
+                SizedBox(width: 76.w),
               ],
             ),
             if (title.isNotEmpty && settings.showTranslation) ...[
@@ -781,14 +847,65 @@ class _HadithCardState extends State<_HadithCard> {
         PositionedDirectional(
           top: 14.r,
           end: 14.r,
-          child: Builder(
-            builder: (buttonContext) => _MoreButton(
-              tooltip: AppText.of(context).hadithCopy,
-              onTap: () => _showActions(buttonContext),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _BookmarkButton(
+                tooltip: AppText.of(context).hadithBookmark,
+                bookmarked: _bookmarked,
+                onTap: _showBookmarkSheet,
+              ),
+              SizedBox(width: 6.w),
+              Builder(
+                builder: (buttonContext) => _MoreButton(
+                  tooltip: AppText.of(context).hadithCopy,
+                  onTap: () => _showActions(buttonContext),
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BookmarkButton extends StatelessWidget {
+  const _BookmarkButton({
+    required this.tooltip,
+    required this.bookmarked,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final bool bookmarked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9.r),
+        child: Container(
+          padding: EdgeInsets.all(6.r),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(
+              bookmarked ? const Color(0xFF8B9A4B) : const Color(0xFFECF0DC),
+            ),
+            borderRadius: BorderRadius.circular(9.r),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE3C4))),
+          ),
+          child: Icon(
+            bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+            size: 16.sp,
+            color: bookmarked
+                ? Colors.white
+                : context.inkColor(const Color(0xFF4C5A34)),
+          ),
+        ),
+      ),
     );
   }
 }

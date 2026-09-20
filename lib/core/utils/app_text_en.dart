@@ -496,6 +496,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   // Settings feature
   'settingsTitle': 'Settings',
   'ebookOpenFailed': "Couldn't open this e-book",
+  'folderNameInputHint': "Write folder name here.",
+  'cancelAction': "Cancel",
   'ebookOpen': "Open book",
   'ebookDownloaded': "Saved on this device",
   'ebookDownloadFailed': "Download failed. Please try again.",

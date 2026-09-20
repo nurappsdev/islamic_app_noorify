@@ -346,6 +346,8 @@
   "logout": "Logout",
   "settingsTitle": "Settings",
   "ebookOpenFailed": "Couldn't open this e-book",
+  "folderNameInputHint": "Write folder name here.",
+  "cancelAction": "Cancel",
   "ebookOpen": "Open book",
   "ebookDownloaded": "Saved on this device",
   "ebookDownloadFailed": "Download failed. Please try again.",

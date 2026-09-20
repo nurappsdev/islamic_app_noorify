@@ -495,6 +495,8 @@ const Map<String, String> appTextBn = <String, String>{
   // Settings feature
   'settingsTitle': 'সেটিংস',
   'ebookOpenFailed': "ই-বুকটি খোলা যায়নি",
+  'folderNameInputHint': "ফোল্ডারের নাম এখানে লিখুন।",
+  'cancelAction': "বাতিল",
   'ebookOpen': "বই খুলুন",
   'ebookDownloaded': "এই ডিভাইসে সংরক্ষিত",
   'ebookDownloadFailed': "ডাউনলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",

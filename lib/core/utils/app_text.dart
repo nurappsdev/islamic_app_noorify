@@ -135,6 +135,8 @@ class AppText {
     required this.hadithShareFailed,
     required this.hadithReportFailed,
     required this.ebookOpenFailed,
+    required this.folderNameInputHint,
+    required this.cancelAction,
     required this.ebookOpen,
     required this.ebookDownloaded,
     required this.ebookDownloadFailed,
@@ -673,6 +675,8 @@ class AppText {
   final String hadithShareFailed;
   final String hadithReportFailed;
   final String ebookOpenFailed;
+  final String folderNameInputHint;
+  final String cancelAction;
   final String ebookOpen;
   final String ebookDownloaded;
   final String ebookDownloadFailed;
@@ -1545,11 +1549,13 @@ class AppText {
         'ebookOpenFailed',
         fallback?.ebookOpenFailed ?? '',
       ),
-      ebookOpen: _read(
+      folderNameInputHint: _read(
         map,
-        'ebookOpen',
-        fallback?.ebookOpen ?? '',
+        'folderNameInputHint',
+        fallback?.folderNameInputHint ?? '',
       ),
+      cancelAction: _read(map, 'cancelAction', fallback?.cancelAction ?? ''),
+      ebookOpen: _read(map, 'ebookOpen', fallback?.ebookOpen ?? ''),
       ebookDownloaded: _read(
         map,
         'ebookDownloaded',
