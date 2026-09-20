@@ -6,18 +6,19 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
 import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_ebooks.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_library_books.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebooks/ebooks_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Hadith library landing screen.
 ///
@@ -28,12 +29,21 @@ class HadithLibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HadithLibraryBloc(
-        GetHadithLibraryBooks(
-          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+    final repository = HadithLibraryRepositoryImpl(
+      HadithLibraryRemoteDataSourceImpl(),
+    );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              HadithLibraryBloc(GetHadithLibraryBooks(repository))
+                ..add(const LoadHadithLibrary()),
         ),
-      )..add(const LoadHadithLibrary()),
+        BlocProvider(
+          create: (_) =>
+              EbooksBloc(GetEbooks(repository))..add(const LoadEbooks()),
+        ),
+      ],
       child: const _HadithLibraryView(),
     );
   }
@@ -484,61 +494,102 @@ class _CollectionCard extends StatelessWidget {
   }
 }
 
-/// Horizontal shelf of hadith e-books. Tracks which books are already saved on
-/// the device so a downloaded book shows an "offline" badge and opens straight
-/// into the reader.
-class _EbookShelf extends StatefulWidget {
+/// Horizontal shelf of the API-backed e-books (`GET /ebooks`), with loading,
+/// error (retry) and empty states. Tapping a book opens its PDF.
+class _EbookShelf extends StatelessWidget {
   const _EbookShelf();
 
-  @override
-  State<_EbookShelf> createState() => _EbookShelfState();
-}
-
-class _EbookShelfState extends State<_EbookShelf> {
-  Set<String> _downloaded = const {};
-
-  @override
-  void initState() {
-    super.initState();
-    _refresh();
-  }
-
-  Future<void> _refresh() async {
-    final slugs = await HadithDatabase().downloadedSlugs();
-    if (mounted) setState(() => _downloaded = slugs);
-  }
-
-  Future<void> _open(HadithBook book) async {
-    if (!book.isAvailable) {
-      final appText = AppText.forLanguage(
-        context.read<LanguageBloc>().state.language,
-      );
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(appText.hadithBookComingSoon)));
-      return;
-    }
-    await Navigator.of(
-      context,
-    ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
-    _refresh();
-  }
+  static double get _height => 208.h;
 
   @override
   Widget build(BuildContext context) {
-    final books = HadithBookCatalog.all;
+    final appText = AppText.of(context);
+    final state = context.watch<EbooksBloc>().state;
+    if (state.isLoading) return const _EbookShelfSkeleton();
+    if (state.status == EbooksStatus.failure) {
+      return _ShelfMessage(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () => context.read<EbooksBloc>().add(const LoadEbooks()),
+      );
+    }
+    if (state.ebooks.isEmpty) {
+      return _ShelfMessage(message: appText.hadithBookComingSoon);
+    }
     return SizedBox(
-      height: 208.h,
+      height: _height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        itemCount: books.length,
+        itemCount: state.ebooks.length,
         separatorBuilder: (_, _) => SizedBox(width: 12.w),
         itemBuilder: (context, index) => _EbookCard(
-          book: books[index],
-          downloaded: _downloaded.contains(books[index].slug),
-          onTap: () => _open(books[index]),
+          ebook: state.ebooks[index],
+          onTap: () => _openEbook(context, state.ebooks[index]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the e-book's PDF in the device's PDF viewer / browser.
+Future<void> _openEbook(BuildContext context, Ebook ebook) async {
+  final failed = AppText.readOf(context).ebookOpenFailed;
+  final messenger = ScaffoldMessenger.of(context);
+  final uri = Uri.tryParse(ebook.pdfFileUrl);
+  var opened = false;
+  if (uri != null && uri.hasScheme) {
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      opened = false;
+    }
+  }
+  if (!opened) messenger.showSnackBar(SnackBar(content: Text(failed)));
+}
+
+class _EbookShelfSkeleton extends StatelessWidget {
+  const _EbookShelfSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _EbookShelf._height,
+      child: Shimmer.fromColors(
+        baseColor: context.surfaceColor(const Color(0xFFE3ECC5)),
+        highlightColor: context.surfaceColor(const Color(0xFFF6F9EC)),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          itemCount: 3,
+          separatorBuilder: (_, _) => SizedBox(width: 12.w),
+          itemBuilder: (_, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 128.w,
+                height: 140.h,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(Colors.white),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                width: 100.w,
+                height: 12.h,
+                color: context.surfaceColor(Colors.white),
+              ),
+              SizedBox(height: 6.h),
+              Container(
+                width: 70.w,
+                height: 10.h,
+                color: context.surfaceColor(Colors.white),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -546,23 +597,13 @@ class _EbookShelfState extends State<_EbookShelf> {
 }
 
 class _EbookCard extends StatelessWidget {
-  const _EbookCard({
-    required this.book,
-    required this.downloaded,
-    required this.onTap,
-  });
+  const _EbookCard({required this.ebook, required this.onTap});
 
-  final HadithBook book;
-  final bool downloaded;
+  final Ebook ebook;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final isBangla =
-        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
-    final title = isBangla ? book.titleBn : book.titleEn;
-
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -573,49 +614,37 @@ class _EbookCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14.r),
-              child: Stack(
-                children: [
-                  Container(
-                    width: 128.w,
-                    height: 140.h,
-                    color: context.surfaceColor(Color(0xFFF0F3E4)),
-                    child: Opacity(
-                      opacity: book.isAvailable ? 1 : .45,
-                      child: Image.asset(
-                        'assets/images/book.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 6.h,
-                    right: 6.w,
-                    child: _StatusBadge(book: book, downloaded: downloaded),
-                  ),
-                ],
+              child: Container(
+                width: 128.w,
+                height: 140.h,
+                color: context.surfaceColor(const Color(0xFFF0F3E4)),
+                child: _EbookCover(url: ebook.coverImageUrl),
               ),
             ),
             SizedBox(height: 8.h),
             Text(
-              title,
+              ebook.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF2C3320)),
+                color: context.inkColor(const Color(0xFF2C3320)),
                 height: 1.3,
               ),
             ),
-            SizedBox(height: 2.h),
-            Text(
-              book.isAvailable
-                  ? '${book.hadithCount} ${appText.categoryHadith}'
-                  : appText.hadithBookComingSoon,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF9BA85B)),
-            ),
+            if (ebook.author.isNotEmpty) ...[
+              SizedBox(height: 2.h),
+              Text(
+                ebook.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: const Color(0xFF9BA85B),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -623,26 +652,28 @@ class _EbookCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.book, required this.downloaded});
+/// The cover picture; the bundled book image stands in while it loads, when
+/// the book has no cover, or if the download fails.
+class _EbookCover extends StatelessWidget {
+  const _EbookCover({required this.url});
 
-  final HadithBook book;
-  final bool downloaded;
+  final String url;
 
   @override
   Widget build(BuildContext context) {
-    final (IconData icon, Color bg) = switch ((book.isAvailable, downloaded)) {
-      (false, _) => (Icons.lock_outline_rounded, const Color(0xFF9AA37E)),
-      (true, true) => (Icons.check_rounded, const Color(0xFF5F8B3E)),
-      (true, false) => (Icons.download_rounded, const Color(0xFF7C8A48)),
-    };
-    return Container(
-      padding: EdgeInsets.all(4.r),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(bg),
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Icon(icon, size: 13.sp, color: Colors.white),
+    final placeholder = Image.asset(
+      'assets/images/book.png',
+      fit: BoxFit.cover,
+    );
+    if (url.isEmpty) return placeholder;
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : placeholder,
+      errorBuilder: (_, _, _) => placeholder,
     );
   }
 }

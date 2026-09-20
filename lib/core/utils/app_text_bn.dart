@@ -494,6 +494,7 @@ const Map<String, String> appTextBn = <String, String>{
 
   // Settings feature
   'settingsTitle': 'সেটিংস',
+  'ebookOpenFailed': "ই-বুকটি খোলা যায়নি",
   'themeSwitchToDark': 'ডার্ক মোডে যান',
   'themeSwitchToLight': 'লাইট মোডে যান',
   'aboutUs': 'আমাদের সম্পর্কে',

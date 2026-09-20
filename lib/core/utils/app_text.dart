@@ -134,6 +134,7 @@ class AppText {
     required this.hadithReportMessage,
     required this.hadithShareFailed,
     required this.hadithReportFailed,
+    required this.ebookOpenFailed,
     required this.themeSwitchToDark,
     required this.themeSwitchToLight,
     required this.hadithBookmark,
@@ -668,6 +669,7 @@ class AppText {
   final String hadithReportMessage;
   final String hadithShareFailed;
   final String hadithReportFailed;
+  final String ebookOpenFailed;
   final String themeSwitchToDark;
   final String themeSwitchToLight;
   final String hadithBookmark;
@@ -1531,6 +1533,11 @@ class AppText {
         map,
         'hadithReportFailed',
         fallback?.hadithReportFailed ?? '',
+      ),
+      ebookOpenFailed: _read(
+        map,
+        'ebookOpenFailed',
+        fallback?.ebookOpenFailed ?? '',
       ),
       themeSwitchToDark: _read(
         map,
