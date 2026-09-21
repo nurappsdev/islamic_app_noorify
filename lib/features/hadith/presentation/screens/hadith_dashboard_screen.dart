@@ -38,10 +38,19 @@ class HadithDashboardScreen extends StatelessWidget {
   }
 }
 
-class _HadithDashboardView extends StatelessWidget {
+class _HadithDashboardView extends StatefulWidget {
   const _HadithDashboardView();
 
+  @override
+  State<_HadithDashboardView> createState() => _HadithDashboardViewState();
+}
+
+class _HadithDashboardViewState extends State<_HadithDashboardView> {
   static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  /// Whether the second ("My Nearest Or Competitor") series is drawn. Off at
+  /// first, so the chart starts with only My Position.
+  bool _showCompetitor = false;
 
   @override
   Widget build(BuildContext context) {
@@ -68,15 +77,19 @@ class _HadithDashboardView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Dark = minutes read (progress); light = the goal.
+                          // Dark = minutes read (my progress); light = the goal,
+                          // drawn only while its toggle is on.
                           _LegendDot(
                             color: const Color(0xFF3F6B4E),
                             label: appText.myPosition,
                           ),
-                          SizedBox(height: 10.h),
-                          _LegendDot(
+                          SizedBox(height: 6.h),
+                          _LegendToggle(
                             color: const Color(0xFFA9B96A),
                             label: appText.myNearestOrCompetitor,
+                            value: _showCompetitor,
+                            onChanged: (value) =>
+                                setState(() => _showCompetitor = value),
                           ),
                         ],
                       ),
@@ -107,7 +120,11 @@ class _HadithDashboardView extends StatelessWidget {
                               .read<HadithDashboardBloc>()
                               .add(LoadHadithDashboard(state.period)),
                         )
-                      : _ReadingChart(series: series),
+                      : _ReadingChart(
+                          series: series,
+                          showGoal: _showCompetitor,
+                          pointsText: history?.totals.pointsText ?? '',
+                        ),
                 ),
                 SizedBox(height: 24.h),
                 Row(
@@ -366,6 +383,64 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
+/// A legend entry that also switches its chart series on and off. Greyed out
+/// while off.
+class _LegendToggle extends StatelessWidget {
+  const _LegendToggle({
+    required this.color,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final Color color;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12.r,
+          height: 12.r,
+          decoration: BoxDecoration(
+            color: context.surfaceColor(
+              value ? color : const Color(0xFFCFD3C2),
+            ),
+            shape: BoxShape.circle,
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5.sp,
+              color: context.inkColor(
+                value ? const Color(0xFF6A7350) : const Color(0xFFA3A996),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 4.w),
+        Transform.scale(
+          scale: .7,
+          child: Switch(
+            value: value,
+            onChanged: onChanged,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            activeThumbColor: Colors.white,
+            activeTrackColor: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PeriodDropdown extends StatelessWidget {
   const _PeriodDropdown({
     required this.selected,
@@ -541,26 +616,45 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// Reading chart: two filled area lines — the goal minutes (light) behind the
-/// minutes read (dark) — with a bubble on the goal's peak.
+/// Reading chart: the minutes read (dark, "my position") with a bubble on its
+/// peak showing the points. With [showGoal], the goal minutes (light) are
+/// drawn behind it, with a bubble on their own peak.
 class _ReadingChart extends StatelessWidget {
-  const _ReadingChart({required this.series});
+  const _ReadingChart({
+    required this.series,
+    required this.showGoal,
+    required this.pointsText,
+  });
 
   final _ChartSeries series;
+  final bool showGoal;
+
+  /// The backend's points text; empty when it sent none.
+  final String pointsText;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size.infinite,
-      painter: _ReadingChartPainter(series: series),
+      painter: _ReadingChartPainter(
+        series: series,
+        showGoal: showGoal,
+        pointsText: pointsText,
+      ),
     );
   }
 }
 
 class _ReadingChartPainter extends CustomPainter {
-  _ReadingChartPainter({required this.series});
+  _ReadingChartPainter({
+    required this.series,
+    required this.showGoal,
+    required this.pointsText,
+  });
 
   final _ChartSeries series;
+  final bool showGoal;
+  final String pointsText;
 
   static const _readColor = Color(0xFF3F6B4E);
   static const _goalColor = Color(0xFFA9B96A);
@@ -585,7 +679,8 @@ class _ReadingChartPainter extends CustomPainter {
     final count = read.length;
 
     const leftPad = 34.0;
-    const topPad = 44.0; // room for the goal bubble
+    // Room for the bubble(s) above the peaks: two while the goal is shown.
+    final topPad = showGoal ? 68.0 : 44.0;
     const bottomPad = 22.0; // room for x labels
     final chartLeft = leftPad;
     final chartRight = size.width - 6;
@@ -594,7 +689,10 @@ class _ReadingChartPainter extends CustomPainter {
     final chartWidth = chartRight - chartLeft;
     final chartHeight = chartBottom - chartTop;
 
-    final peak = math.max(read.reduce(math.max), goal.reduce(math.max));
+    // A hidden goal doesn't stretch the scale.
+    final readPeak = read.reduce(math.max);
+    final goalPeak = goal.reduce(math.max);
+    final peak = showGoal ? math.max(readPeak, goalPeak) : readPeak;
     final step = _niceStep(peak);
     final maxY = step * _intervals;
 
@@ -643,15 +741,17 @@ class _ReadingChartPainter extends CustomPainter {
     final readPoints = pointsOf(read);
 
     // The goal sits behind the progress.
-    _area(
-      canvas,
-      goalPoints,
-      _goalColor,
-      chartLeft,
-      chartTop,
-      chartRight,
-      chartBottom,
-    );
+    if (showGoal) {
+      _area(
+        canvas,
+        goalPoints,
+        _goalColor,
+        chartLeft,
+        chartTop,
+        chartRight,
+        chartBottom,
+      );
+    }
     _area(
       canvas,
       readPoints,
@@ -677,16 +777,33 @@ class _ReadingChartPainter extends CustomPainter {
       }
     }
 
-    // Bubble on the goal's highest point, with the goal in minutes.
-    final goalPeak = goal.reduce(math.max);
-    if (goalPeak > 0) {
-      final peakIndex = goal.indexOf(goalPeak);
+    // Bubble on my highest point: the points, else the minutes read.
+    Offset? readAnchor;
+    if (readPeak > 0) {
+      final i = read.indexOf(readPeak);
+      readAnchor = Offset(readPoints[i].dx, readPoints[i].dy - 10);
       _bubble(
         canvas,
         size,
-        Offset(goalPoints[peakIndex].dx, goalPoints[peakIndex].dy - 10),
-        '${goalPeak.round()} min',
+        readAnchor,
+        pointsText.isNotEmpty ? pointsText : '${readPeak.round()} min',
       );
+    }
+
+    // Bubble on the goal's highest point, with the goal in minutes.
+    if (showGoal && goalPeak > 0) {
+      final i = goal.indexOf(goalPeak);
+      var goalAnchor = Offset(goalPoints[i].dx, goalPoints[i].dy - 10);
+      // Step above my bubble when the two would sit on top of each other.
+      if (readAnchor != null &&
+          (goalAnchor.dx - readAnchor.dx).abs() < 90 &&
+          (goalAnchor.dy - readAnchor.dy).abs() < 24) {
+        goalAnchor = Offset(
+          goalAnchor.dx,
+          math.min(goalAnchor.dy, readAnchor.dy) - 24,
+        );
+      }
+      _bubble(canvas, size, goalAnchor, '${goalPeak.round()} min');
     }
   }
 
@@ -785,5 +902,7 @@ class _ReadingChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ReadingChartPainter oldDelegate) =>
-      oldDelegate.series != series;
+      oldDelegate.series != series ||
+      oldDelegate.showGoal != showGoal ||
+      oldDelegate.pointsText != pointsText;
 }
