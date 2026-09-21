@@ -124,7 +124,8 @@ class _HadithPlannerScreenState extends State<HadithPlannerScreen> {
             ),
             if (!_showCompletedPlans)
               Positioned(
-                right: 58.w,
+                // In line with the right edge of the plan cards (16.w).
+                right: 16.w,
                 bottom: 104.h,
                 child: FilledButton.icon(
                   onPressed: _createPlan,
