@@ -34,12 +34,22 @@ import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
-  const HadithDetailArgs({this.subCategoryId, this.bookId, this.title})
-    : assert(subCategoryId != null || bookId != null);
+  const HadithDetailArgs({
+    this.subCategoryId,
+    this.bookId,
+    this.title,
+    this.initialHadithId,
+    this.initialHadithNumber,
+  }) : assert(subCategoryId != null || bookId != null);
 
   final String? subCategoryId;
   final String? bookId;
   final String? title;
+
+  /// Hadith to scroll to once the list is ready (see
+  /// [HadithDetailScreen.initialHadithId]).
+  final String? initialHadithId;
+  final int? initialHadithNumber;
 }
 
 /// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`) or of a
@@ -55,11 +65,19 @@ class HadithDetailScreen extends StatelessWidget {
     this.subCategoryId,
     this.bookId,
     this.title,
+    this.initialHadithId,
+    this.initialHadithNumber,
   });
 
   final String? subCategoryId;
   final String? bookId;
   final String? title;
+
+  /// When set, the list scrolls to this hadith (matched by id, else by
+  /// [initialHadithNumber]) as soon as it has been loaded and laid out, e.g.
+  /// to continue where the user stopped reading.
+  final String? initialHadithId;
+  final int? initialHadithNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -73,17 +91,27 @@ class HadithDetailScreen extends StatelessWidget {
         subCategoryId: subCategoryId,
         bookId: bookId,
         title: title,
+        initialHadithId: initialHadithId,
+        initialHadithNumber: initialHadithNumber,
       ),
     );
   }
 }
 
 class _HadithDetailView extends StatefulWidget {
-  const _HadithDetailView({this.subCategoryId, this.bookId, this.title});
+  const _HadithDetailView({
+    this.subCategoryId,
+    this.bookId,
+    this.title,
+    this.initialHadithId,
+    this.initialHadithNumber,
+  });
 
   final String? subCategoryId;
   final String? bookId;
   final String? title;
+  final String? initialHadithId;
+  final int? initialHadithNumber;
 
   @override
   State<_HadithDetailView> createState() => _HadithDetailViewState();
@@ -117,6 +145,14 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   List<String> _displayedIds = const [];
 
   bool _leaving = false;
+
+  /// Set once the scroll to the initial hadith has been started (or given up
+  /// on because the hadith isn't in the list).
+  bool _initialScrollHandled = false;
+
+  bool get _hasInitialTarget =>
+      (widget.initialHadithId ?? '').isNotEmpty ||
+      (widget.initialHadithNumber ?? 0) > 0;
 
   @override
   void initState() {
@@ -297,6 +333,67 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _settingsStore.save(value);
   }
 
+  // --- Scrolling to the initial hadith ----------------------------------------
+
+  /// The hadith to open on: by id, else by hadith number.
+  HadithDetail? _findInitialTarget(List<HadithDetail> hadiths) {
+    final id = widget.initialHadithId ?? '';
+    final number = widget.initialHadithNumber ?? 0;
+    if (id.isNotEmpty) {
+      final byId = hadiths.where((h) => h.id == id).firstOrNull;
+      if (byId != null) return byId;
+    }
+    if (number > 0) {
+      return hadiths.where((h) => h.hadithNumber == number).firstOrNull;
+    }
+    return null;
+  }
+
+  /// Brings the card of [hadithId] to the top of the list.
+  ///
+  /// Cards are built lazily, so one far down has no context until the list
+  /// has scrolled near it: jump to an estimate (then in steps toward it)
+  /// until its card exists, and finish with [Scrollable.ensureVisible] for
+  /// the exact position.
+  Future<void> _scrollToHadith(String hadithId) async {
+    const maxAttempts = 40;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      // Wait for the frame that lays out the list (and, after each jump, the
+      // cards built for the new position).
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final cardContext = _cardKeys[hadithId]?.currentContext;
+      if (cardContext != null && cardContext.mounted) {
+        await Scrollable.ensureVisible(cardContext, duration: Duration.zero);
+        return;
+      }
+
+      final index = _displayedIds.indexOf(hadithId);
+      if (index < 0) return;
+      final position = _scrollController.position;
+      final built = [
+        for (var i = 0; i < _displayedIds.length; i++)
+          if (_cardKeys[_displayedIds[i]]?.currentContext != null) i,
+      ];
+      double target;
+      if (attempt == 0 || built.isEmpty) {
+        // Average card extent (content / cards) times the target's index.
+        final average =
+            (position.maxScrollExtent + position.viewportDimension) /
+            _displayedIds.length;
+        target = average * index;
+      } else if (index > built.last) {
+        target = position.pixels + position.viewportDimension * .8;
+      } else {
+        target = position.pixels - position.viewportDimension * .8;
+      }
+      _scrollController.jumpTo(
+        target.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _teardownTracking();
@@ -331,6 +428,32 @@ class _HadithDetailViewState extends State<_HadithDetailView>
           context.read<HadithDetailBloc>().add(const LoadMoreHadithDetails());
         }
       });
+    }
+
+    // Opening on a given hadith: keep loading pages until it is in the list
+    // (showing placeholders meanwhile), then scroll to it once it is laid out.
+    var seekingInitial = false;
+    if (_hasInitialTarget &&
+        !_initialScrollHandled &&
+        state.status == HadithDetailStatus.success) {
+      final target = _findInitialTarget(state.hadiths);
+      if (target != null && target.id.isNotEmpty) {
+        _initialScrollHandled = true;
+        _scrollToHadith(target.id);
+      } else if (!state.hasMore) {
+        _initialScrollHandled = true; // not in this list: stay at the top
+      } else if (state.loadMoreFailure == null) {
+        seekingInitial = true;
+        if (!state.isLoadingMore) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.read<HadithDetailBloc>().add(
+                const LoadMoreHadithDetails(),
+              );
+            }
+          });
+        }
+      }
     }
 
     // Search matches the chapter and the section name. It only sees loaded
@@ -396,7 +519,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                   controller: _scrollController,
                   padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
                   children: [
-                    if (state.isLoading)
+                    if (state.isLoading || seekingInitial)
                       const _HadithSkeletons(count: 2)
                     else if (state.status == HadithDetailStatus.failure) ...[
                       _Message(state.failure?.message ?? ''),
