@@ -314,20 +314,6 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     );
   }
 
-  /// The Complete button of a card.
-  Future<void> _complete(String hadithId) async {
-    final failed = AppText.readOf(context).hadithTrackFailed;
-    final result = await _tracker.complete(hadithId);
-    if (result == HadithCompletion.failed && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(failed),
-          duration: const Duration(milliseconds: 2000),
-        ),
-      );
-    }
-  }
-
   void _updateSettings(HadithContentSettings value) {
     setState(() => _settings = value);
     _settingsStore.save(value);
@@ -543,11 +529,6 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                           hadith: hadith,
                           bookName: title,
                           settings: _settings,
-                          onComplete: hadith.id.isEmpty
-                              ? null
-                              : () => _complete(hadith.id),
-                          completed: _tracker.isCompleted(hadith.id),
-                          completing: _tracker.isCompleting(hadith.id),
                         ),
                         SizedBox(height: 14.h),
                       ],
@@ -692,22 +673,10 @@ class HadithDetailCard extends StatefulWidget {
     required this.hadith,
     required this.bookName,
     required this.settings,
-    this.onComplete,
-    this.completed = false,
-    this.completing = false,
   });
 
   final HadithDetail hadith;
   final HadithContentSettings settings;
-
-  /// Called by the Complete button under the card; no button when null.
-  final VoidCallback? onComplete;
-
-  /// Whether the hadith is already marked completed (the button says so).
-  final bool completed;
-
-  /// Whether a completion is being sent right now.
-  final bool completing;
 
   /// Name of the book / sub-category on screen, used in the report mail.
   final String bookName;
@@ -1192,7 +1161,7 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
       ),
     );
 
-    final stack = Stack(
+    return Stack(
       children: [
         RepaintBoundary(key: _boundaryKey, child: card),
         // Outside the boundary so the menu button is not in the screenshot.
@@ -1218,71 +1187,6 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
           ),
         ),
       ],
-    );
-
-    final onComplete = widget.onComplete;
-    if (onComplete == null) return stack;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        stack,
-        SizedBox(height: 10.h),
-        _CompleteButton(
-          completed: widget.completed,
-          completing: widget.completing,
-          onPressed: onComplete,
-        ),
-      ],
-    );
-  }
-}
-
-/// "Complete" under a hadith; turns into a "Completed" tick once done.
-class _CompleteButton extends StatelessWidget {
-  const _CompleteButton({
-    required this.completed,
-    required this.completing,
-    required this.onPressed,
-  });
-
-  final bool completed;
-  final bool completing;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return FilledButton.icon(
-      // Disabled while sending and once completed, so it can't fire twice.
-      onPressed: completed || completing ? null : onPressed,
-      icon: completing
-          ? SizedBox.square(
-              dimension: 16.r,
-              child: const CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : Icon(
-              completed
-                  ? Icons.check_circle_rounded
-                  : Icons.check_circle_outline_rounded,
-              size: 18.sp,
-            ),
-      label: Text(completed ? appText.hadithCompleted : appText.hadithComplete),
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF008000),
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: completed
-            ? const Color(0xFF008000).withValues(alpha: .55)
-            : const Color(0xFF008000),
-        disabledForegroundColor: Colors.white,
-        minimumSize: Size(double.infinity, 46.h),
-        textStyle: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w600),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.r),
-        ),
-      ),
     );
   }
 }
