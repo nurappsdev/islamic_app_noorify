@@ -52,6 +52,9 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
   /// first, so the chart starts with only My Position.
   bool _showCompetitor = false;
 
+  /// The point whose tooltip is open; null means the highest one.
+  int? _selectedPoint;
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -101,9 +104,12 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                         HadithHistoryPeriod.weekly => appText.weekly,
                         HadithHistoryPeriod.monthly => appText.monthly,
                       },
-                      onSelected: (period) => context
-                          .read<HadithDashboardBloc>()
-                          .add(LoadHadithDashboard(period)),
+                      onSelected: (period) {
+                        setState(() => _selectedPoint = null);
+                        context.read<HadithDashboardBloc>().add(
+                          LoadHadithDashboard(period),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -123,7 +129,8 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                       : _ReadingChart(
                           series: series,
                           showGoal: _showCompetitor,
-                          pointsText: history?.totals.pointsText ?? '',
+                          selectedIndex: _selectedPoint,
+                          onSelect: (i) => setState(() => _selectedPoint = i),
                         ),
                 ),
                 SizedBox(height: 24.h),
@@ -218,7 +225,12 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     final to = state.to;
     final history = state.history;
     if (from == null || to == null || history == null) {
-      return const _ChartSeries(read: [0, 0], goal: [0, 0], labels: ['', '']);
+      return const _ChartSeries(
+        read: [0, 0],
+        goal: [0, 0],
+        points: [null, null],
+        labels: ['', ''],
+      );
     }
     final byDate = {for (final day in history.days) _dateKey(day.date): day};
 
@@ -230,29 +242,58 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     ) {
       dates.add(d);
     }
-    final read = [for (final d in dates) byDate[_dateKey(d)]?.readMinutes ?? 0];
-    final goal = [for (final d in dates) byDate[_dateKey(d)]?.goalMinutes ?? 0];
+    final days = [for (final d in dates) byDate[_dateKey(d)]];
 
+    double? sumPoints(Iterable<HadithReadingDay?> ds) {
+      final values = [for (final d in ds) ?d?.points];
+      return values.isEmpty ? null : values.fold<double>(0, (a, b) => a + b);
+    }
+
+    // Daily: the one day, drawn as a peak between two zero points. Its points
+    // fall back to the range's total when the day carries none.
     if (dates.length == 1) {
       return _ChartSeries(
-        read: [0, read.single, 0],
-        goal: [0, goal.single, 0],
+        read: [0, days.single?.readMinutes ?? 0, 0],
+        goal: [0, days.single?.goalMinutes ?? 0, 0],
+        points: [null, days.single?.points ?? history.totals.totalPoints, null],
         labels: ['', todayCaption, ''],
       );
     }
+
+    // Monthly: groups of 5 days, so the chart stays readable. The last group
+    // ends today and takes the leftover day (30 days back -> 6 groups, e.g.
+    // "16 - 21 Sep").
+    if (state.period == HadithHistoryPeriod.monthly) {
+      const groupSize = 5;
+      final groups = math.max(1, (dates.length - 1) ~/ groupSize);
+      final read = <double>[];
+      final goal = <double>[];
+      final points = <double?>[];
+      final labels = <String>[];
+      for (var g = 0; g < groups; g++) {
+        final start = g * groupSize;
+        final end = g == groups - 1 ? dates.length - 1 : start + groupSize - 1;
+        final slice = days.sublist(start, end + 1);
+        read.add(slice.fold(0, (sum, d) => sum + (d?.readMinutes ?? 0)));
+        goal.add(slice.fold(0, (sum, d) => sum + (d?.goalMinutes ?? 0)));
+        points.add(sumPoints(slice));
+        // "16-21": the group's days; the tooltip carries only the points.
+        labels.add('${dates[start].day}-${dates[end].day}');
+      }
+      return _ChartSeries(
+        read: read,
+        goal: goal,
+        points: points,
+        labels: labels,
+      );
+    }
+
+    // Weekly: one point per day.
     return _ChartSeries(
-      read: read,
-      goal: goal,
-      labels: [
-        for (var i = 0; i < dates.length; i++)
-          if (state.period == HadithHistoryPeriod.weekly)
-            _weekdays[dates[i].weekday - 1]
-          // Monthly has too many days to label each one.
-          else if (i % 5 == 0)
-            '${dates[i].day}'
-          else
-            '',
-      ],
+      read: [for (final d in days) d?.readMinutes ?? 0],
+      goal: [for (final d in days) d?.goalMinutes ?? 0],
+      points: [for (final d in days) d?.points],
+      labels: [for (final d in dates) _weekdays[d.weekday - 1]],
     );
   }
 
@@ -267,17 +308,21 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
   }
 }
 
-/// What the chart draws: [read] minutes (the progress) and [goal] minutes per
-/// point, with an x-axis [labels] entry per point ('' for none).
+/// What the chart draws, one entry per point in every list: [read] minutes
+/// (the progress), [goal] minutes, the [points] earned (null if unknown), the
+/// x-axis [labels]. A point with an empty label is not a real one (the zero
+/// padding around a single day) and can't be selected.
 class _ChartSeries {
   const _ChartSeries({
     required this.read,
     required this.goal,
+    required this.points,
     required this.labels,
   });
 
   final List<double> read;
   final List<double> goal;
+  final List<double?> points;
   final List<String> labels;
 }
 
@@ -616,30 +661,47 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// Reading chart: the minutes read (dark, "my position") with a bubble on its
-/// peak showing the points. With [showGoal], the goal minutes (light) are
-/// drawn behind it, with a bubble on their own peak.
+/// Reading chart: the minutes read (dark, "my position") on a minutes axis,
+/// with a tooltip on one point showing its period, points and minutes. Tap or
+/// drag to move the tooltip; it starts on the highest point. With [showGoal],
+/// the goal minutes (light) are drawn behind it.
 class _ReadingChart extends StatelessWidget {
   const _ReadingChart({
     required this.series,
     required this.showGoal,
-    required this.pointsText,
+    required this.selectedIndex,
+    required this.onSelect,
   });
 
   final _ChartSeries series;
   final bool showGoal;
 
-  /// The backend's points text; empty when it sent none.
-  final String pointsText;
+  /// The point whose tooltip is open; null means the highest one.
+  final int? selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  void _select(double dx, double width) {
+    final i = _ReadingChartPainter.indexAt(dx, width, series.read.length);
+    // The zero padding around a single day isn't a point.
+    if (series.labels[i].isNotEmpty) onSelect(i);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.infinite,
-      painter: _ReadingChartPainter(
-        series: series,
-        showGoal: showGoal,
-        pointsText: pointsText,
+    return LayoutBuilder(
+      builder: (context, constraints) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (d) => _select(d.localPosition.dx, constraints.maxWidth),
+        onHorizontalDragUpdate: (d) =>
+            _select(d.localPosition.dx, constraints.maxWidth),
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _ReadingChartPainter(
+            series: series,
+            showGoal: showGoal,
+            selectedIndex: selectedIndex,
+          ),
+        ),
       ),
     );
   }
@@ -649,12 +711,22 @@ class _ReadingChartPainter extends CustomPainter {
   _ReadingChartPainter({
     required this.series,
     required this.showGoal,
-    required this.pointsText,
+    required this.selectedIndex,
   });
 
   final _ChartSeries series;
   final bool showGoal;
-  final String pointsText;
+  final int? selectedIndex;
+
+  static const _leftPad = 34.0;
+  static const _rightPad = 6.0;
+
+  /// The point nearest to horizontal position [dx] on a chart [width] wide.
+  static int indexAt(double dx, double width, int count) {
+    final chartWidth = width - _leftPad - _rightPad;
+    final t = chartWidth <= 0 ? 0.0 : (dx - _leftPad) / chartWidth;
+    return (t * (count - 1)).round().clamp(0, count - 1);
+  }
 
   static const _readColor = Color(0xFF3F6B4E);
   static const _goalColor = Color(0xFFA9B96A);
@@ -678,12 +750,11 @@ class _ReadingChartPainter extends CustomPainter {
     final goal = series.goal;
     final count = read.length;
 
-    const leftPad = 34.0;
-    // Room for the bubble(s) above the peaks: two while the goal is shown.
-    final topPad = showGoal ? 68.0 : 44.0;
+    // Room above the top gridline for the one-line tooltip.
+    const topPad = 44.0;
     const bottomPad = 22.0; // room for x labels
-    final chartLeft = leftPad;
-    final chartRight = size.width - 6;
+    final chartLeft = _leftPad;
+    final chartRight = size.width - _rightPad;
     final chartTop = topPad;
     final chartBottom = size.height - bottomPad;
     final chartWidth = chartRight - chartLeft;
@@ -720,6 +791,16 @@ class _ReadingChartPainter extends CustomPainter {
         anchorMiddleY: true,
       );
     }
+    // The axis is in minutes (per day, or per 5-day group when monthly).
+    _text(
+      canvas,
+      'min',
+      Offset(chartLeft - 8, chartTop - 18),
+      color: const Color(0xFF6A7350),
+      fontSize: 10,
+      align: TextAlign.right,
+      anchorRight: true,
+    );
 
     // X labels.
     for (var i = 0; i < series.labels.length; i++) {
@@ -762,50 +843,54 @@ class _ReadingChartPainter extends CustomPainter {
       chartBottom,
     );
 
-    // Node markers on the progress line, only while there are few enough.
-    if (count > 3 && count <= 8) {
-      for (final p in readPoints) {
-        canvas.drawCircle(p, 5, Paint()..color = Colors.white);
-        canvas.drawCircle(
-          p,
-          5,
-          Paint()
-            ..color = const Color(0xFF8FA08A)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.6,
-        );
-      }
-    }
+    // The tooltip's point: the one tapped, else my highest.
+    final selected = _selected(readPeak);
 
-    // Bubble on my highest point: the points, else the minutes read.
-    Offset? readAnchor;
-    if (readPeak > 0) {
-      final i = read.indexOf(readPeak);
-      readAnchor = Offset(readPoints[i].dx, readPoints[i].dy - 10);
-      _bubble(
-        canvas,
-        size,
-        readAnchor,
-        pointsText.isNotEmpty ? pointsText : '${readPeak.round()} min',
+    // Node markers on the progress line, only while there are few enough;
+    // the selected point always gets one.
+    for (var i = 0; i < count; i++) {
+      final isSelected = i == selected;
+      if (!isSelected && !(count > 3 && count <= 8)) continue;
+      if (series.labels[i].isEmpty) continue;
+      final radius = isSelected ? 6.5 : 5.0;
+      canvas.drawCircle(readPoints[i], radius, Paint()..color = Colors.white);
+      canvas.drawCircle(
+        readPoints[i],
+        radius,
+        Paint()
+          ..color = isSelected ? _readColor : const Color(0xFF8FA08A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6,
       );
     }
 
-    // Bubble on the goal's highest point, with the goal in minutes.
-    if (showGoal && goalPeak > 0) {
-      final i = goal.indexOf(goalPeak);
-      var goalAnchor = Offset(goalPoints[i].dx, goalPoints[i].dy - 10);
-      // Step above my bubble when the two would sit on top of each other.
-      if (readAnchor != null &&
-          (goalAnchor.dx - readAnchor.dx).abs() < 90 &&
-          (goalAnchor.dy - readAnchor.dy).abs() < 24) {
-        goalAnchor = Offset(
-          goalAnchor.dx,
-          math.min(goalAnchor.dy, readAnchor.dy) - 24,
-        );
-      }
-      _bubble(canvas, size, goalAnchor, '${goalPeak.round()} min');
+    // The tooltip shows only the points: the date is already on the x axis and
+    // the minutes on the y axis. Nothing when the points are unknown.
+    final points = selected == null ? null : series.points[selected];
+    if (selected != null &&
+        series.labels[selected].isNotEmpty &&
+        points != null) {
+      // Above the higher of the lines that are showing.
+      final top = showGoal
+          ? math.min(readPoints[selected].dy, goalPoints[selected].dy)
+          : readPoints[selected].dy;
+      _tooltip(canvas, size, Offset(readPoints[selected].dx, top - 12), [
+        ('${_number(points)} points', true),
+      ]);
     }
   }
+
+  /// The index whose tooltip is open: [selectedIndex] if still valid, else the
+  /// highest point of my progress (none when nothing has been read).
+  int? _selected(double readPeak) {
+    final i = selectedIndex;
+    if (i != null && i >= 0 && i < series.read.length) return i;
+    return readPeak > 0 ? series.read.indexOf(readPeak) : null;
+  }
+
+  /// `45` for whole numbers, `45.5` otherwise.
+  static String _number(double v) =>
+      v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
 
   void _area(
     Canvas canvas,
@@ -846,20 +931,40 @@ class _ReadingChartPainter extends CustomPainter {
     );
   }
 
-  void _bubble(Canvas canvas, Size size, Offset anchor, String label) {
-    const h = 22.0;
-    final tp = _layout(label, const Color(0xFF3E4A2A), 10);
-    final w = tp.width + 32;
-    final left = (anchor.dx - w / 2).clamp(0.0, size.width - w);
-    final rect = Rect.fromLTWH(left, anchor.dy - h, w, h);
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(11));
-    canvas.drawRRect(rrect, Paint()..color = const Color(0xFFCDD891));
-    canvas.drawCircle(
-      Offset(rect.left + 12, rect.center.dy),
-      3,
-      Paint()..color = const Color(0xFF6C7A3C),
+  /// A rounded tooltip of text [lines] — (text, emphasised) — sitting on
+  /// [anchor], kept inside the chart.
+  void _tooltip(
+    Canvas canvas,
+    Size size,
+    Offset anchor,
+    List<(String, bool)> lines,
+  ) {
+    const padX = 10.0;
+    const padY = 6.0;
+    final painters = [
+      for (final (text, strong) in lines)
+        _layout(
+          text,
+          strong ? const Color(0xFF2C3320) : const Color(0xFF5D6B44),
+          strong ? 11 : 9.5,
+        ),
+    ];
+    final w = painters.map((p) => p.width).reduce(math.max) + padX * 2;
+    final h = painters.fold<double>(0, (sum, p) => sum + p.height) + padY * 2;
+    final left = (anchor.dx - w / 2)
+        .clamp(0.0, math.max(0.0, size.width - w))
+        .toDouble();
+    final top = math.max(0.0, anchor.dy - h);
+    final rect = Rect.fromLTWH(left, top, w, h);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+      Paint()..color = const Color(0xFFCDD891),
     );
-    tp.paint(canvas, Offset(rect.left + 19, rect.center.dy - tp.height / 2));
+    var y = rect.top + padY;
+    for (final p in painters) {
+      p.paint(canvas, Offset(rect.left + padX, y));
+      y += p.height;
+    }
   }
 
   TextPainter _layout(
@@ -904,5 +1009,5 @@ class _ReadingChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _ReadingChartPainter oldDelegate) =>
       oldDelegate.series != series ||
       oldDelegate.showGoal != showGoal ||
-      oldDelegate.pointsText != pointsText;
+      oldDelegate.selectedIndex != selectedIndex;
 }

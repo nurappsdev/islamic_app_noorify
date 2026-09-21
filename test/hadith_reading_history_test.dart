@@ -109,6 +109,30 @@ void main() {
       final m = HadithReadingHistoryModel.fromJson(const {});
       expect(m.days, isEmpty);
       expect(m.totals.totalMinutes, 0);
+      expect(m.totals.totalPoints, isNull);
+    });
+
+    test('reads points per day and the backend\'s totalPoints', () {
+      final m = HadithReadingHistoryModel.fromJson({
+        'days': [
+          {'date': '2026-09-20', 'points': 10},
+          {'date': '2026-09-21', 'totalPoints': 15.5},
+          {'date': '2026-09-22'},
+        ],
+        'totals': {'totalPoints': 100},
+      });
+      expect(m.days.map((d) => d.points), [10, 15.5, null]);
+      expect(m.totals.totalPoints, 100);
+    });
+
+    test('sums totalPoints from the days when the totals lack it', () {
+      final m = HadithReadingHistoryModel.fromJson({
+        'days': [
+          {'date': '2026-09-20', 'points': 10},
+          {'date': '2026-09-21', 'points': 5},
+        ],
+      });
+      expect(m.totals.totalPoints, 15);
     });
   });
 

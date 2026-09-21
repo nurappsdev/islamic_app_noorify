@@ -23,6 +23,7 @@ class HadithReadingDayModel extends HadithReadingDay {
     required super.readMinutes,
     required super.goalMinutes,
     required super.hadithsRead,
+    super.points,
   });
 
   static HadithReadingDayModel? tryParse(Map<String, dynamic> json) {
@@ -33,7 +34,17 @@ class HadithReadingDayModel extends HadithReadingDay {
       readMinutes: _double(json['readMinutes']),
       goalMinutes: _double(json['goalMinutes']),
       hadithsRead: (json['hadithsRead'] as num?)?.toInt() ?? 0,
+      points: _points(json),
     );
+  }
+
+  /// The day's points, under whichever key the backend uses; null if absent.
+  static double? _points(Map<String, dynamic> json) {
+    for (final key in const ['points', 'totalPoints', 'pointsEarned']) {
+      final value = json[key];
+      if (value is num) return value.toDouble();
+    }
+    return null;
   }
 }
 
@@ -57,10 +68,19 @@ class HadithReadingHistoryModel extends HadithReadingHistory {
         ? (totals['hadithsRead'] as num).toInt()
         : days.fold<int>(0, (sum, d) => sum + d.hadithsRead);
 
+    // Same for the points: null only when nothing carries any.
+    final dayPoints = [for (final d in days) ?d.points];
+    final totalPoints = totals['totalPoints'] is num
+        ? (totals['totalPoints'] as num).toDouble()
+        : dayPoints.isEmpty
+        ? null
+        : dayPoints.fold<double>(0, (sum, p) => sum + p);
+
     return HadithReadingHistoryModel(
       days: days,
       totals: HadithReadingTotals(
         totalMinutes: totalMinutes,
+        totalPoints: totalPoints,
         hadithsRead: hadithsRead,
         pointsText: _text(totals['pointsText'] ?? data['pointsText']),
         progressText: _text(totals['progressText'] ?? data['progressText']),
