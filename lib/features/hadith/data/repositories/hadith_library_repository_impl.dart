@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_libra
 import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
@@ -137,6 +138,21 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   Future<Either<Failure, HadithReadingProgress>> getReadingProgress() async {
     try {
       return Right(await _remote.getReadingProgress());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, HadithLastRead?>> getLastRead() async {
+    try {
+      return Right(await _remote.getLastRead());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {

@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
@@ -51,6 +52,10 @@ abstract interface class HadithLibraryRepository {
   /// The reading progress overall and per category
   /// (`GET /hadiths/reading/progress/categories`, needs the login token).
   Future<Either<Failure, HadithReadingProgress>> getReadingProgress();
+
+  /// The hadith read most recently (`GET /hadiths/reading/last-read`, needs
+  /// the login token); null when nothing has been read yet.
+  Future<Either<Failure, HadithLastRead?>> getLastRead();
 
   /// One page of the hadiths of a sub-category
   /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book
