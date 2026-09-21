@@ -433,6 +433,8 @@ const Map<String, String> appTextBn = <String, String>{
   'getStart': 'শুরু করুন',
   'createPlanHeader': 'পরিকল্পনা তৈরি করুন',
   'planNameLabel': 'পরিকল্পনার নাম',
+  'planTargetDaysLabel': 'লক্ষ্য দিন',
+  'planTargetDaysHint': 'যেমন : ৩০',
   'writeHereHint': 'এখানে লিখুন . . .',
   'selectQuizCategory': 'কুইজ বিভাগ নির্বাচন করুন',
   'egQuranicScienceHint': 'যেমন : কুরআনিক বিজ্ঞান',

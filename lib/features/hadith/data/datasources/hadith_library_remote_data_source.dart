@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
@@ -83,6 +84,11 @@ abstract interface class HadithLibraryRemoteDataSource {
     required int page,
     required int limit,
   });
+
+  /// `POST /hadiths/plans` (needs the login token): creates a reading plan.
+  /// Body: `{name, bookId, categoryIds?, subCategoryIds?, description?,
+  /// targetDays?}`. Answers 201 on success.
+  Future<void> createPlan(HadithPlanDraft draft);
 
   /// `GET /hadiths/reading/last-read` (needs the login token): the hadith
   /// read most recently, or null when the user has not read any yet.
@@ -333,6 +339,38 @@ class HadithLibraryRemoteDataSourceImpl
       authenticated: true,
     );
     return HadithReadRecordPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<void> createPlan(HadithPlanDraft draft) async {
+    final token = _local.getToken();
+    final Response<dynamic> response;
+    try {
+      response = await _dio.post<dynamic>(
+        ApiConstants.hadithPlansEndPoint,
+        data: draft.toJson(),
+        options: Options(
+          headers: token == null ? null : {'Authorization': 'Bearer $token'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      // 400 nothing selected / wrong book, 404 book missing, 409 name taken:
+      // the API's own message says which.
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
   }
 
   @override

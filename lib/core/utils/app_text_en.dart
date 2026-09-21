@@ -434,6 +434,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'getStart': 'Get Start',
   'createPlanHeader': 'Create Plan',
   'planNameLabel': 'Plan Name',
+  'planTargetDaysLabel': 'Target Days',
+  'planTargetDaysHint': 'Eg : 30',
   'writeHereHint': 'Write Here . . .',
   'selectQuizCategory': 'Select Quiz Category',
   'egQuranicScienceHint': 'Eg : Quranic science',
