@@ -1,14 +1,30 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_comparison_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
 import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_history.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_comparison/hadith_comparison_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_dashboard/hadith_dashboard_bloc.dart';
 
 class _FakeRepository implements HadithLibraryRepository {
   final requests = <({String from, String to})>[];
+  final comparisonRequests = <({String from, String to})>[];
+
+  @override
+  Future<Either<Failure, HadithReadingComparison>> getReadingComparison({
+    required String from,
+    required String to,
+  }) async {
+    comparisonRequests.add((from: from, to: to));
+    return const Right(
+      HadithReadingComparison(comparedWith: 'first_place', competitor: null),
+    );
+  }
 
   @override
   Future<Either<Failure, HadithReadingHistory>> getReadingHistory({
@@ -133,6 +149,108 @@ void main() {
         ],
       });
       expect(m.totals.totalPoints, 15);
+    });
+  });
+
+  group('HadithReadingComparisonModel', () {
+    // Trimmed from a real /hadiths/reading/history/compare response.
+    final data = {
+      'from': '2026-09-21',
+      'to': '2026-09-21',
+      'comparedWith': 'first_place',
+      'users': [
+        {
+          'key': 'user1',
+          'rank': 28,
+          'isCurrentUser': true,
+          'name': 'Abdur Rahman',
+          'totalPoints': 375.5,
+          'days': [
+            {'date': '2026-09-21', 'readMinutes': 5.2, 'points': 1},
+          ],
+        },
+        {
+          'key': 'user2',
+          'rank': 1,
+          'isCurrentUser': false,
+          'name': 'Yousuf Ahmed',
+          'avatarUrl': 'https://example.com/a.png',
+          'totalPoints': 1055,
+          'days': [
+            {
+              'date': '2026-09-21',
+              'readMinutes': 12.5,
+              'goalMinutes': 30,
+              'points': 3,
+              'hadithsRead': 2,
+            },
+          ],
+          'totals': {'totalMinutes': 12.5, 'totalPoints': 1055},
+        },
+      ],
+      'difference': {'totalPoints': 1, 'isAhead': true},
+    };
+
+    test('takes the reader who is not the current user', () {
+      final m = HadithReadingComparisonModel.fromJson(data);
+      expect(m.comparedWith, 'first_place');
+      final c = m.competitor!;
+      expect(c.name, 'Yousuf Ahmed');
+      expect(c.rank, 1);
+      expect(c.totalPoints, 1055);
+      expect(c.days.single.date, DateTime(2026, 9, 21));
+      expect(c.days.single.readMinutes, 12.5);
+      expect(c.days.single.points, 3);
+    });
+
+    test('initials are the first letters of the name', () {
+      final c = HadithReadingComparisonModel.fromJson(data).competitor!;
+      expect(c.initials, 'YA');
+    });
+
+    test('no competitor when only the current user is returned', () {
+      final m = HadithReadingComparisonModel.fromJson({
+        'users': [
+          {'isCurrentUser': true, 'name': 'Me'},
+        ],
+      });
+      expect(m.competitor, isNull);
+      expect(
+        HadithReadingComparisonModel.fromJson(const {}).competitor,
+        isNull,
+      );
+    });
+  });
+
+  group('HadithComparisonBloc', () {
+    test('asks for the same dates as the period', () async {
+      final repo = _FakeRepository();
+      final bloc = HadithComparisonBloc(GetHadithReadingComparison(repo));
+      addTearDown(bloc.close);
+
+      bloc.add(const LoadHadithComparison(HadithHistoryPeriod.monthly));
+      final state = await bloc.stream.firstWhere(
+        (s) => s.status != HadithComparisonStatus.loading,
+      );
+
+      final range = hadithHistoryRange(HadithHistoryPeriod.monthly);
+      String f(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+          '${d.day.toString().padLeft(2, '0')}';
+      expect(repo.comparisonRequests.single, (
+        from: f(range.from),
+        to: f(range.to),
+      ));
+      expect(state.status, HadithComparisonStatus.success);
+      expect(state.period, HadithHistoryPeriod.monthly);
+    });
+
+    test('nothing is requested until the toggle sends an event', () {
+      final repo = _FakeRepository();
+      final bloc = HadithComparisonBloc(GetHadithReadingComparison(repo));
+      addTearDown(bloc.close);
+      expect(bloc.state.status, HadithComparisonStatus.initial);
+      expect(repo.comparisonRequests, isEmpty);
     });
   });
 

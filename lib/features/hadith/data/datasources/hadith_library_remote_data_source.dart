@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart'
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_comparison_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_progress_model.dart';
@@ -63,6 +64,14 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// the reading day by day between [from] and [to] (`YYYY-MM-DD`), with
   /// totals.
   Future<HadithReadingHistoryModel> getReadingHistory({
+    required String from,
+    required String to,
+  });
+
+  /// `GET /hadiths/reading/history/compare?from=...&to=...` (needs the login
+  /// token): the user next to another reader over the same dates
+  /// (`YYYY-MM-DD`).
+  Future<HadithReadingComparisonModel> getReadingComparison({
     required String from,
     required String to,
   });
@@ -245,13 +254,37 @@ class HadithLibraryRemoteDataSourceImpl
   Future<HadithReadingHistoryModel> getReadingHistory({
     required String from,
     required String to,
-  }) async {
+  }) async => HadithReadingHistoryModel.fromJson(
+    await _getAuthedData(ApiConstants.hadithReadingHistoryEndPoint, {
+      'from': from,
+      'to': to,
+    }, 'Reading history'),
+  );
+
+  @override
+  Future<HadithReadingComparisonModel> getReadingComparison({
+    required String from,
+    required String to,
+  }) async => HadithReadingComparisonModel.fromJson(
+    await _getAuthedData(ApiConstants.hadithReadingCompareEndPoint, {
+      'from': from,
+      'to': to,
+    }, 'Reading comparison'),
+  );
+
+  /// GETs [path] with the login token and returns the envelope's `data`
+  /// object, throwing the data-layer exceptions on any failure.
+  Future<Map<String, dynamic>> _getAuthedData(
+    String path,
+    Map<String, dynamic> query,
+    String what,
+  ) async {
     final token = _local.getToken();
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
-        ApiConstants.hadithReadingHistoryEndPoint,
-        queryParameters: {'from': from, 'to': to},
+        path,
+        queryParameters: query,
         options: Options(
           headers: token == null ? null : {'Authorization': 'Bearer $token'},
         ),
@@ -275,9 +308,9 @@ class HadithLibraryRemoteDataSourceImpl
 
     final data = json['data'];
     if (data is! Map<String, dynamic>) {
-      throw ParsingException('Reading history response is missing "data".');
+      throw ParsingException('$what response is missing "data".');
     }
-    return HadithReadingHistoryModel.fromJson(data);
+    return data;
   }
 
   @override
