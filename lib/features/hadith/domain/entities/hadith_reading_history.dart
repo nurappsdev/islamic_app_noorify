@@ -29,6 +29,7 @@ class HadithReadingDay {
     required this.readMinutes,
     required this.goalMinutes,
     required this.hadithsRead,
+    this.points,
   });
 
   /// Date only (no time part).
@@ -40,6 +41,9 @@ class HadithReadingDay {
   /// The user's reading goal for that day, in minutes.
   final double goalMinutes;
   final int hadithsRead;
+
+  /// Points earned that day; null when the backend doesn't send them.
+  final double? points;
 }
 
 /// The totals over the whole requested range.
@@ -49,10 +53,15 @@ class HadithReadingTotals {
     required this.hadithsRead,
     required this.pointsText,
     required this.progressText,
+    this.totalPoints,
   });
 
   final double totalMinutes;
   final int hadithsRead;
+
+  /// Points over the whole range; null when neither the backend nor any day
+  /// has them.
+  final double? totalPoints;
 
   /// Ready-made display texts from the backend; empty when it sent none.
   final String pointsText;
