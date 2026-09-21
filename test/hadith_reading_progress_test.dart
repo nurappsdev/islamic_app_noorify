@@ -81,7 +81,7 @@ void main() {
 
     setUp(() {
       repo = _FakeRepository();
-      bloc = HadithReadingProgressBloc(GetHadithReadingProgress(repo));
+      bloc = HadithReadingProgressBloc(GetHadithReadingProgress(repo).call);
     });
     tearDown(() => bloc.close());
 

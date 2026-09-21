@@ -17,6 +17,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_cate
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_sub_category_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_progress_ring.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Route arguments for [HadithCategoryScreen].
@@ -56,9 +57,9 @@ class HadithCategoryScreen extends StatelessWidget {
                 ..add(LoadHadithCategories(bookId)),
         ),
         BlocProvider(
-          create: (_) =>
-              HadithReadingProgressBloc(GetHadithReadingProgress(repository))
-                ..add(const LoadHadithReadingProgress()),
+          create: (_) => HadithReadingProgressBloc(
+            GetHadithReadingProgress(repository).call,
+          )..add(const LoadHadithReadingProgress()),
         ),
       ],
       child: _HadithCategoryView(bookId: bookId),
@@ -346,64 +347,9 @@ class _CategoryCard extends StatelessWidget {
               ),
             ),
             SizedBox(width: 10.w),
-            _CategoryProgressRing(categoryId: category.id),
+            HadithProgressRing(id: category.id),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// The reading progress of one category: a ring filled to the backend's
-/// `percentage`, with the number inside. Shows 0% when the backend has no
-/// progress for the category (or the request failed), and an empty ring
-/// while the first load is running.
-class _CategoryProgressRing extends StatelessWidget {
-  const _CategoryProgressRing({required this.categoryId});
-
-  final String categoryId;
-
-  @override
-  Widget build(BuildContext context) {
-    // Rebuild only when this category's own value changes.
-    final (isLoading, percentage) = context
-        .select<HadithReadingProgressBloc, (bool, double?)>(
-          (bloc) => (
-            bloc.state.isLoading && bloc.state.progress == null,
-            bloc.state.forCategory(categoryId)?.percentage,
-          ),
-        );
-    final clamped = (percentage ?? 0).clamp(0, 100).toDouble();
-    final size = 40.r;
-
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        fit: StackFit.expand,
-        children: [
-          CircularProgressIndicator(
-            // Full ring = the remaining portion; the arc drawn over it is the
-            // read portion.
-            value: isLoading ? 0 : clamped / 100,
-            strokeWidth: 3.5.r,
-            strokeCap: clamped > 0 ? StrokeCap.round : null,
-            backgroundColor: context.lineColor(const Color(0xFFE3E7D3)),
-            valueColor: const AlwaysStoppedAnimation(Color(0xFF8B9A4B)),
-          ),
-          if (!isLoading)
-            Center(
-              child: Text(
-                '${clamped.round()}%',
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: context.inkColor(const Color(0xFF2C3320)),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

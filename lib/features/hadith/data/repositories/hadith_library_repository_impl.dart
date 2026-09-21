@@ -150,6 +150,22 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
+  Future<Either<Failure, HadithReadingProgress>>
+  getSubCategoryReadingProgress() async {
+    try {
+      return Right(await _remote.getSubCategoryReadingProgress());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, HadithLastRead?>> getLastRead() async {
     try {
       return Right(await _remote.getLastRead());
