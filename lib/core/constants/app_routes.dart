@@ -10,7 +10,7 @@ import '../../features/hadith/data/hadith_book_catalog.dart';
 import '../../features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import '../../features/hadith/presentation/screens/hadith_book_reader_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
-import '../../features/hadith/presentation/screens/hadith_intro_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_entry_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_create_plan_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_dashboard_screen.dart';
@@ -287,7 +287,8 @@ class AppRoutes {
           settings,
         );
       case RouteNames.hadith:
-        return _page(const HadithIntroScreen(), settings);
+        // The intro only the first time; the library from then on.
+        return _page(const HadithEntryScreen(), settings);
       case RouteNames.hadithLibrary:
         return _page(const HadithLibraryScreen(), settings);
       case RouteNames.hadithLibraryList:
