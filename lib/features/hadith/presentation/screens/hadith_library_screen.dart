@@ -27,8 +27,10 @@ import 'package:shimmer/shimmer.dart';
 
 /// Hadith library landing screen.
 ///
-/// Reached from the "Let's Get Start" button on [HadithIntroScreen]. Shows a
-/// summary header, the collection library and a shelf of e-books.
+/// Reached from the Hadith card on Home (through [HadithEntryScreen]) on every
+/// visit but the first, and from the "Let's Get Start" button on
+/// [HadithIntroScreen] on the first. Shows a summary header, the collection
+/// library and a shelf of e-books.
 class HadithLibraryScreen extends StatelessWidget {
   const HadithLibraryScreen({super.key});
 
