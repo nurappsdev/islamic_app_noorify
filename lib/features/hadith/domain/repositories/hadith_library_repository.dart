@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_catego
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
@@ -83,6 +84,11 @@ abstract interface class HadithLibraryRepository {
     required int page,
     required int limit,
   });
+
+  /// Creates a reading plan (`POST /hadiths/plans`, needs the login token).
+  /// Fails with a [ServerFailure] carrying the API's message, e.g. when the
+  /// name is already taken or nothing was selected.
+  Future<Either<Failure, Unit>> createPlan(HadithPlanDraft draft);
 
   /// The hadith read most recently (`GET /hadiths/reading/last-read`, needs
   /// the login token); null when nothing has been read yet.

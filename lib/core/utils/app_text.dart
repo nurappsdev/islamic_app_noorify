@@ -413,6 +413,8 @@ class AppText {
     required this.getStart,
     required this.createPlanHeader,
     required this.planNameLabel,
+    required this.planTargetDaysLabel,
+    required this.planTargetDaysHint,
     required this.writeHereHint,
     required this.selectQuizCategory,
     required this.egQuranicScienceHint,
@@ -971,6 +973,8 @@ class AppText {
   final String getStart;
   final String createPlanHeader;
   final String planNameLabel;
+  final String planTargetDaysLabel;
+  final String planTargetDaysHint;
   final String writeHereHint;
   final String selectQuizCategory;
   final String egQuranicScienceHint;
@@ -2547,6 +2551,16 @@ class AppText {
         fallback?.createPlanHeader ?? '',
       ),
       planNameLabel: _read(map, 'planNameLabel', fallback?.planNameLabel ?? ''),
+      planTargetDaysLabel: _read(
+        map,
+        'planTargetDaysLabel',
+        fallback?.planTargetDaysLabel ?? '',
+      ),
+      planTargetDaysHint: _read(
+        map,
+        'planTargetDaysHint',
+        fallback?.planTargetDaysHint ?? '',
+      ),
       writeHereHint: _read(map, 'writeHereHint', fallback?.writeHereHint ?? ''),
       selectQuizCategory: _read(
         map,
