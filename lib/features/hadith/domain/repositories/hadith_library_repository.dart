@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_catego
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
@@ -73,6 +74,14 @@ abstract interface class HadithLibraryRepository {
   Future<Either<Failure, HadithReadingComparison>> getReadingComparison({
     required String from,
     required String to,
+  });
+
+  /// One page of the hadiths the user read, most recent first
+  /// (`GET /hadiths/reading/recent?page=...&limit=...`, needs the login
+  /// token).
+  Future<Either<Failure, HadithReadRecordPage>> getReadRecords({
+    required int page,
+    required int limit,
   });
 
   /// The hadith read most recently (`GET /hadiths/reading/last-read`, needs
