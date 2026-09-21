@@ -26,12 +26,16 @@ class HadithDashboardBloc
     Emitter<HadithDashboardState> emit,
   ) async {
     final generation = ++_generation;
-    final range = hadithHistoryRange(event.period);
+    final month = event.month;
+    final range = month == null
+        ? hadithHistoryRange(event.period)
+        : hadithMonthRange(month);
     // Cleared while loading, so a different period's data is never shown
     // under the newly selected filter.
     emit(
       HadithDashboardState(
         period: event.period,
+        month: month,
         status: HadithDashboardStatus.loading,
         from: range.from,
         to: range.to,
@@ -43,6 +47,7 @@ class HadithDashboardBloc
       (failure) => emit(
         HadithDashboardState(
           period: event.period,
+          month: month,
           status: HadithDashboardStatus.failure,
           from: range.from,
           to: range.to,
@@ -52,6 +57,7 @@ class HadithDashboardBloc
       (history) => emit(
         HadithDashboardState(
           period: event.period,
+          month: month,
           status: HadithDashboardStatus.success,
           from: range.from,
           to: range.to,

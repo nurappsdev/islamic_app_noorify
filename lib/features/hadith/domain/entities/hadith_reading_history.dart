@@ -22,6 +22,21 @@ enum HadithHistoryPeriod { daily, weekly, monthly }
   );
 }
 
+/// The `from` / `to` dates (date-only, inclusive) of the calendar [month] (any
+/// date in it): the 1st to the last day, or to today for the current month, as
+/// nothing can be read in the future.
+({DateTime from, DateTime to}) hadithMonthRange(
+  DateTime month, {
+  DateTime? now,
+}) {
+  final n = now ?? DateTime.now();
+  final today = DateTime(n.year, n.month, n.day);
+  final from = DateTime(month.year, month.month, 1);
+  // Day 0 of the next month is the last day of this one.
+  final last = DateTime(month.year, month.month + 1, 0);
+  return (from: from, to: last.isAfter(today) ? today : last);
+}
+
 /// One day of `GET /learning/reading/history`.
 class HadithReadingDay {
   const HadithReadingDay({

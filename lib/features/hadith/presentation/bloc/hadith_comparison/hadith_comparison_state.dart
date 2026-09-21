@@ -8,15 +8,17 @@ class HadithComparisonState {
   const HadithComparisonState({
     this.status = HadithComparisonStatus.initial,
     this.period,
+    this.month,
     this.competitor,
     this.failure,
   });
 
   final HadithComparisonStatus status;
 
-  /// The period [competitor] was loaded for, so a stale result is never drawn
-  /// under another period's dates.
+  /// The period (and month, if one was picked) [competitor] was loaded for, so
+  /// a stale result is never drawn under other dates.
   final HadithHistoryPeriod? period;
+  final DateTime? month;
 
   /// Null while loading, on failure, or when nobody else was returned.
   final HadithCompetitor? competitor;
