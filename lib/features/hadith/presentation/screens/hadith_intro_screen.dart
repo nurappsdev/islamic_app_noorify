@@ -6,9 +6,51 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
+/// The hadith of the intro screen: the text in quotation marks, and its source
+/// on a line below.
+class _HadithQuote extends StatelessWidget {
+  const _HadithQuote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          '“$hadithIntroQuote”',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: context.inkColor(const Color(0xFF4C5346)),
+            fontSize: 15.sp,
+            height: 1.7,
+          ),
+        ),
+        SizedBox(height: 14.h),
+        Text(
+          '— $hadithIntroQuoteSource',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: context.inkColor(const Color(0xFF7D8765)),
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The hadith shown on the intro screen (Bangla, whatever the app language),
+/// and where it comes from.
+const hadithIntroQuote =
+    'যে ব্যক্তি ইলম বা দ্বীনি জ্ঞান অর্জনের জন্য কোনো পথ অবলম্বন করে, '
+    'আল্লাহ তার জন্য জান্নাতের পথ সুগম করে দেন। আর ফেরেশতারা ইলম '
+    'অন্বেষণকারীর (শিক্ষার্থীর) কাজে সন্তুষ্ট হয়ে তাদের ডানা বিছিয়ে দেয়।';
+const hadithIntroQuoteSource = 'সুনানে আবু দাউদ, হাদিস: ৩৬৪১';
+
 /// Intro / "get started" screen for the Hadith section.
 ///
-/// Reached from the Hadith card on the Home screen. The primary action
+/// Reached from the Hadith card on the Home screen. Shows the title, a hadith
+/// about seeking knowledge with its source, and the primary action, which
 /// pushes the Hadith library screen.
 class HadithIntroScreen extends StatelessWidget {
   const HadithIntroScreen({super.key});
@@ -62,17 +104,9 @@ class HadithIntroScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      SizedBox(height: 18.h),
-                      Text(
-                        appText.hadithIntroSubtitle,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: context.inkColor(Color(0xFF4C5346)),
-                          fontSize: 13.sp,
-                          height: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: 40.h),
+                      SizedBox(height: 22.h),
+                      const _HadithQuote(),
+                      SizedBox(height: 36.h),
                       Icon(
                         Icons.menu_book_rounded,
                         size: 190.sp,
