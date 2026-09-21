@@ -70,30 +70,40 @@ class _HadithLibraryView extends StatelessWidget {
       backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
-          ListView(
-            padding: EdgeInsets.only(bottom: 92.h + bottomInset),
-            children: [
-              _HadithHeader(appText: appText),
-              SizedBox(height: 22.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(
-                  appText.hadithLibrary,
-                  onSeeAll: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.hadithLibraryList),
+          RefreshIndicator(
+            color: const Color(0xFF4F7A43),
+            backgroundColor: context.surfaceColor(Colors.white),
+            // Keep the spinner below the status bar, over the green header.
+            edgeOffset: MediaQuery.of(context).padding.top,
+            onRefresh: () => _refreshLibrary(context),
+            child: ListView(
+              // Always scrollable, so pulling works even if the content ever
+              // fits on screen.
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(bottom: 92.h + bottomInset),
+              children: [
+                _HadithHeader(appText: appText),
+                SizedBox(height: 22.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: _SectionTitle(
+                    appText.hadithLibrary,
+                    onSeeAll: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.hadithLibraryList),
+                  ),
                 ),
-              ),
-              SizedBox(height: 14.h),
-              _CollectionShelf(appText: appText),
-              SizedBox(height: 26.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(appText.hadithEbook),
-              ),
-              SizedBox(height: 14.h),
-              const _EbookShelf(),
-            ],
+                SizedBox(height: 14.h),
+                _CollectionShelf(appText: appText),
+                SizedBox(height: 26.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: _SectionTitle(appText.hadithEbook),
+                ),
+                SizedBox(height: 14.h),
+                const _EbookShelf(),
+              ],
+            ),
           ),
           const SafeArea(
             top: false,
@@ -106,6 +116,28 @@ class _HadithLibraryView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Reloads everything on the screen and completes once all three requests
+/// have finished, so the [RefreshIndicator] spins for exactly that long.
+Future<void> _refreshLibrary(BuildContext context) {
+  final library = context.read<HadithLibraryBloc>()
+    ..add(const LoadHadithLibrary());
+  final ebooks = context.read<EbooksBloc>()..add(const LoadEbooks());
+  final lastRead = context.read<HadithLastReadBloc>()
+    ..add(const LoadHadithLastRead());
+
+  // The first state after the event is `loading` (or the final one), never
+  // the stale one, so waiting for "not loading" waits for the fresh result.
+  // `orElse` covers a bloc that closes (screen popped) mid-refresh.
+  return Future.wait([
+    library.stream.firstWhere((s) => !s.isLoading, orElse: () => library.state),
+    ebooks.stream.firstWhere((s) => !s.isLoading, orElse: () => ebooks.state),
+    lastRead.stream.firstWhere(
+      (s) => !s.isLoading,
+      orElse: () => lastRead.state,
+    ),
+  ]);
 }
 
 class _HadithHeader extends StatelessWidget {
