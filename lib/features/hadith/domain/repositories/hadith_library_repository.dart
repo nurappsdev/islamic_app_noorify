@@ -53,6 +53,11 @@ abstract interface class HadithLibraryRepository {
   /// (`GET /hadiths/reading/progress/categories`, needs the login token).
   Future<Either<Failure, HadithReadingProgress>> getReadingProgress();
 
+  /// The reading progress overall and per sub-category
+  /// (`GET /hadiths/reading/progress/sub-categories`, needs the login token).
+  Future<Either<Failure, HadithReadingProgress>>
+  getSubCategoryReadingProgress();
+
   /// The hadith read most recently (`GET /hadiths/reading/last-read`, needs
   /// the login token); null when nothing has been read yet.
   Future<Either<Failure, HadithLastRead?>> getLastRead();

@@ -1,12 +1,19 @@
 import 'package:bloc/bloc.dart';
+import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_progress.dart';
+import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 
 import 'hadith_reading_progress_event.dart';
 import 'hadith_reading_progress_state.dart';
 
 export 'hadith_reading_progress_event.dart';
 export 'hadith_reading_progress_state.dart';
+
+/// Loads a [HadithReadingProgress]: the categories' or the sub-categories'
+/// use case (both are callable), so one bloc serves both screens.
+typedef HadithProgressLoader =
+    Future<Either<Failure, HadithReadingProgress>> Function();
 
 class HadithReadingProgressBloc
     extends Bloc<HadithReadingProgressEvent, HadithReadingProgressState> {
@@ -16,7 +23,7 @@ class HadithReadingProgressBloc
     on<RefreshHadithReadingProgress>(_onRefresh);
   }
 
-  final GetHadithReadingProgress _getProgress;
+  final HadithProgressLoader _getProgress;
 
   /// Bumped per request so a slow, superseded response can't overwrite a
   /// newer one.

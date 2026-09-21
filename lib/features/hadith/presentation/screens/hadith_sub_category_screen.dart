@@ -12,9 +12,12 @@ import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_libra
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_sub_categories.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_sub_category_reading_progress.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_sub_category/hadith_sub_category_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_progress_ring.dart';
 
 /// Route arguments for [HadithSubCategoryScreen].
 class HadithSubCategoryArgs {
@@ -28,8 +31,9 @@ class HadithSubCategoryArgs {
 /// (`GET /hadiths/categories/{id}/subcategories`).
 ///
 /// Reached by tapping a row on [HadithCategoryScreen]. Shows each
-/// sub-category's name and hadith count, with search, pagination and shimmer
-/// loading placeholders.
+/// sub-category's name, hadith count and reading progress
+/// (`GET /hadiths/reading/progress/sub-categories`, matched by id), with
+/// search, pagination and shimmer loading placeholders.
 class HadithSubCategoryScreen extends StatelessWidget {
   const HadithSubCategoryScreen({
     super.key,
@@ -42,12 +46,22 @@ class HadithSubCategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => HadithSubCategoryBloc(
-        GetHadithSubCategories(
-          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+    final repository = HadithLibraryRepositoryImpl(
+      HadithLibraryRemoteDataSourceImpl(),
+    );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              HadithSubCategoryBloc(GetHadithSubCategories(repository))
+                ..add(LoadHadithSubCategories(categoryId)),
         ),
-      )..add(LoadHadithSubCategories(categoryId)),
+        BlocProvider(
+          create: (_) => HadithReadingProgressBloc(
+            GetHadithSubCategoryReadingProgress(repository).call,
+          )..add(const LoadHadithReadingProgress()),
+        ),
+      ],
       child: _HadithSubCategoryView(categoryId: categoryId),
     );
   }
@@ -93,6 +107,15 @@ class _HadithSubCategoryViewState extends State<_HadithSubCategoryView> {
         SearchHadithSubCategories(term),
       );
     });
+  }
+
+  /// Called when the user comes back from a sub-category's hadiths (where they
+  /// may have read some), so the new percentages show straight away.
+  void _refreshProgress() {
+    if (!mounted) return;
+    context.read<HadithReadingProgressBloc>().add(
+      const RefreshHadithReadingProgress(),
+    );
   }
 
   void _onScroll() {
@@ -166,6 +189,7 @@ class _HadithSubCategoryViewState extends State<_HadithSubCategoryView> {
             _SubCategoryCard(
               subCategory: subCategory,
               hadithWord: appText.categoryHadith,
+              onReturn: _refreshProgress,
             ),
             SizedBox(height: 10.h),
           ],
@@ -226,10 +250,17 @@ class _SubCategorySkeletons extends StatelessWidget {
 }
 
 class _SubCategoryCard extends StatelessWidget {
-  const _SubCategoryCard({required this.subCategory, required this.hadithWord});
+  const _SubCategoryCard({
+    required this.subCategory,
+    required this.hadithWord,
+    required this.onReturn,
+  });
 
   final HadithSubCategory subCategory;
   final String hadithWord;
+
+  /// Called after the hadith list opened from this card is closed.
+  final VoidCallback onReturn;
 
   /// Always the Bangla name, falling back to `name` / the English name only
   /// when the API has no Bangla one.
@@ -243,13 +274,16 @@ class _SubCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context).pushNamed(
-        RouteNames.hadithDetail,
-        arguments: HadithDetailArgs(
-          subCategoryId: subCategory.id,
-          title: _title,
-        ),
-      ),
+      onTap: () async {
+        await Navigator.of(context).pushNamed(
+          RouteNames.hadithDetail,
+          arguments: HadithDetailArgs(
+            subCategoryId: subCategory.id,
+            title: _title,
+          ),
+        );
+        onReturn();
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
@@ -307,6 +341,8 @@ class _SubCategoryCard extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(width: 10.w),
+            HadithProgressRing(id: subCategory.id),
           ],
         ),
       ),

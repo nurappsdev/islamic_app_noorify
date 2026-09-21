@@ -53,6 +53,11 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// overall summary and the progress of every category.
   Future<HadithReadingProgressModel> getReadingProgress();
 
+  /// `GET /hadiths/reading/progress/sub-categories` (needs the login token):
+  /// the overall summary and the progress of every sub-category. Same shape as
+  /// [getReadingProgress].
+  Future<HadithReadingProgressModel> getSubCategoryReadingProgress();
+
   /// `GET /hadiths/reading/last-read` (needs the login token): the hadith
   /// read most recently, or null when the user has not read any yet.
   Future<HadithLastReadModel?> getLastRead();
@@ -186,12 +191,19 @@ class HadithLibraryRemoteDataSourceImpl
   }
 
   @override
-  Future<HadithReadingProgressModel> getReadingProgress() async {
+  Future<HadithReadingProgressModel> getReadingProgress() =>
+      _getProgress(ApiConstants.hadithReadingProgressCategoriesEndPoint);
+
+  @override
+  Future<HadithReadingProgressModel> getSubCategoryReadingProgress() =>
+      _getProgress(ApiConstants.hadithReadingProgressSubCategoriesEndPoint);
+
+  Future<HadithReadingProgressModel> _getProgress(String path) async {
     final token = _local.getToken();
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
-        ApiConstants.hadithReadingProgressCategoriesEndPoint,
+        path,
         options: Options(
           headers: token == null ? null : {'Authorization': 'Bearer $token'},
         ),
