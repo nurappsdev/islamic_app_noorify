@@ -335,6 +335,8 @@ class AppRoutes {
                   subCategoryId: detailArgs.subCategoryId,
                   bookId: detailArgs.bookId,
                   title: detailArgs.title,
+                  initialHadithId: detailArgs.initialHadithId,
+                  initialHadithNumber: detailArgs.initialHadithNumber,
                 )
               : const HadithLibraryListScreen(),
           settings,

@@ -405,8 +405,8 @@ class _LastReadPill extends StatelessWidget {
   }
 }
 
-/// Opens the sub-category the last-read hadith belongs to, then refreshes the
-/// pill since reading there may have moved the last-read hadith.
+/// Opens the sub-category the last-read hadith belongs to, scrolled to that
+/// hadith, then refreshes the pill since reading there may have moved the last-read hadith.
 Future<void> _openLastRead(
   BuildContext context,
   HadithLastRead lastRead,
@@ -418,6 +418,8 @@ Future<void> _openLastRead(
     arguments: HadithDetailArgs(
       subCategoryId: lastRead.subCategoryId,
       title: lastRead.subCategoryName(bangla: isBangla),
+      initialHadithId: lastRead.hadithId,
+      initialHadithNumber: lastRead.hadithNumber,
     ),
   );
   if (!bloc.isClosed) bloc.add(const LoadHadithLastRead());
