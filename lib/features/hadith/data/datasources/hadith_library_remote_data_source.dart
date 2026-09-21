@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart'
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_progress_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
@@ -57,6 +58,14 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// the overall summary and the progress of every sub-category. Same shape as
   /// [getReadingProgress].
   Future<HadithReadingProgressModel> getSubCategoryReadingProgress();
+
+  /// `GET /learning/reading/history?from=...&to=...` (needs the login token):
+  /// the reading day by day between [from] and [to] (`YYYY-MM-DD`), with
+  /// totals.
+  Future<HadithReadingHistoryModel> getReadingHistory({
+    required String from,
+    required String to,
+  });
 
   /// `GET /hadiths/reading/last-read` (needs the login token): the hadith
   /// read most recently, or null when the user has not read any yet.
@@ -230,6 +239,45 @@ class HadithLibraryRemoteDataSourceImpl
       throw ParsingException('Reading progress response is missing "data".');
     }
     return HadithReadingProgressModel.fromJson(data);
+  }
+
+  @override
+  Future<HadithReadingHistoryModel> getReadingHistory({
+    required String from,
+    required String to,
+  }) async {
+    final token = _local.getToken();
+    final Response<dynamic> response;
+    try {
+      response = await _dio.get<dynamic>(
+        ApiConstants.hadithReadingHistoryEndPoint,
+        queryParameters: {'from': from, 'to': to},
+        options: Options(
+          headers: token == null ? null : {'Authorization': 'Bearer $token'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+
+    final body = response.data;
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
+    final status = response.statusCode ?? 0;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
+    if (!isSuccess) {
+      throw ServerException(
+        _extractError(json) ?? 'Request failed ($status).',
+        statusCode: status,
+      );
+    }
+
+    final data = json['data'];
+    if (data is! Map<String, dynamic>) {
+      throw ParsingException('Reading history response is missing "data".');
+    }
+    return HadithReadingHistoryModel.fromJson(data);
   }
 
   @override
