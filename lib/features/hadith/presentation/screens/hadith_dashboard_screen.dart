@@ -1,34 +1,54 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_history.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_dashboard/hadith_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 
 /// Hadith reading dashboard, reached from index 3 ("Dashboard") of the Hadith
-/// navigation bar. Weekly reading chart, totals and recent history.
-class HadithDashboardScreen extends StatefulWidget {
+/// navigation bar. Reading chart (`GET /learning/reading/history`) with a
+/// daily / weekly / monthly filter, totals and recent history.
+///
+/// The chart plots the minutes read (progress) against the daily goal in
+/// minutes. Daily asks for today only, weekly for the 7 days before today up
+/// to today, monthly for the 30 days before today up to today.
+class HadithDashboardScreen extends StatelessWidget {
   const HadithDashboardScreen({super.key});
 
   @override
-  State<HadithDashboardScreen> createState() => _HadithDashboardScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => HadithDashboardBloc(
+        GetHadithReadingHistory(
+          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+        ),
+      )..add(const LoadHadithDashboard(HadithHistoryPeriod.daily)),
+      child: const _HadithDashboardView(),
+    );
+  }
 }
 
-class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
-  int _period = 0; // 0 = weekly, 1 = monthly
+class _HadithDashboardView extends StatelessWidget {
+  const _HadithDashboardView();
 
-  static const _weekly = <double>[520, 790, 970, 300, 320, 780, 250];
-  static const _weekDays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  static const _monthly = <double>[430, 610, 540, 880, 700, 950, 610];
-  static const _monthWeeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'];
+  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final values = _period == 0 ? _weekly : _monthly;
-    final labels = _period == 0 ? _weekDays : _monthWeeks;
+    final state = context.watch<HadithDashboardBloc>().state;
+    final history = state.history;
+    final series = _buildSeries(state, appText.zikrTodaysValueGraph);
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -48,6 +68,7 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Dark = minutes read (progress); light = the goal.
                           _LegendDot(
                             color: const Color(0xFF3F6B4E),
                             label: appText.myPosition,
@@ -61,36 +82,60 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
                       ),
                     ),
                     _PeriodDropdown(
-                      value: _period == 0 ? appText.weekly : appText.monthly,
-                      onSelected: (i) => setState(() => _period = i),
-                      weekly: appText.weekly,
-                      monthly: appText.monthly,
+                      selected: state.period,
+                      labelFor: (period) => switch (period) {
+                        HadithHistoryPeriod.daily => appText.daily,
+                        HadithHistoryPeriod.weekly => appText.weekly,
+                        HadithHistoryPeriod.monthly => appText.monthly,
+                      },
+                      onSelected: (period) => context
+                          .read<HadithDashboardBloc>()
+                          .add(LoadHadithDashboard(period)),
                     ),
                   ],
                 ),
                 SizedBox(height: 18.h),
                 SizedBox(
                   height: 250.h,
-                  child: _ReadingChart(
-                    values: values,
-                    labels: labels,
-                    competitorInitials: appText.competitorInitials,
-                  ),
+                  child: state.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : state.status == HadithDashboardStatus.failure
+                      ? _ChartError(
+                          message: state.failure?.message ?? '',
+                          retryLabel: appText.tryAgain,
+                          onRetry: () => context
+                              .read<HadithDashboardBloc>()
+                              .add(LoadHadithDashboard(state.period)),
+                        )
+                      : _ReadingChart(series: series),
                 ),
                 SizedBox(height: 24.h),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: _StatCard(
                         label: appText.totalReadingHadith,
-                        value: '765',
+                        value: history == null
+                            ? '—'
+                            : '${history.totals.hadithsRead}',
+                        notes: [
+                          if (history != null &&
+                              history.totals.pointsText.isNotEmpty)
+                            history.totals.pointsText,
+                          if (history != null &&
+                              history.totals.progressText.isNotEmpty)
+                            history.totals.progressText,
+                        ],
                       ),
                     ),
                     SizedBox(width: 14.w),
                     Expanded(
                       child: _StatCard(
                         label: appText.totalReadingTime,
-                        value: '65  hr 32 min',
+                        value: history == null
+                            ? '—'
+                            : _formatMinutes(history.totals.totalMinutes),
                       ),
                     ),
                   ],
@@ -142,6 +187,109 @@ class _HadithDashboardScreenState extends State<HadithDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// One point per calendar day of the requested range (days the backend
+  /// left out count as 0). A single day (daily) is drawn as a peak between two
+  /// zero points, captioned [todayCaption].
+  static _ChartSeries _buildSeries(
+    HadithDashboardState state,
+    String todayCaption,
+  ) {
+    final from = state.from;
+    final to = state.to;
+    final history = state.history;
+    if (from == null || to == null || history == null) {
+      return const _ChartSeries(read: [0, 0], goal: [0, 0], labels: ['', '']);
+    }
+    final byDate = {for (final day in history.days) _dateKey(day.date): day};
+
+    final dates = <DateTime>[];
+    for (
+      var d = from;
+      !d.isAfter(to);
+      d = DateTime(d.year, d.month, d.day + 1)
+    ) {
+      dates.add(d);
+    }
+    final read = [for (final d in dates) byDate[_dateKey(d)]?.readMinutes ?? 0];
+    final goal = [for (final d in dates) byDate[_dateKey(d)]?.goalMinutes ?? 0];
+
+    if (dates.length == 1) {
+      return _ChartSeries(
+        read: [0, read.single, 0],
+        goal: [0, goal.single, 0],
+        labels: ['', todayCaption, ''],
+      );
+    }
+    return _ChartSeries(
+      read: read,
+      goal: goal,
+      labels: [
+        for (var i = 0; i < dates.length; i++)
+          if (state.period == HadithHistoryPeriod.weekly)
+            _weekdays[dates[i].weekday - 1]
+          // Monthly has too many days to label each one.
+          else if (i % 5 == 0)
+            '${dates[i].day}'
+          else
+            '',
+      ],
+    );
+  }
+
+  static String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
+
+  /// `65 hr 32 min`, or just `32 min` under an hour.
+  static String _formatMinutes(double minutes) {
+    final total = minutes.round();
+    final hours = total ~/ 60;
+    final rest = total % 60;
+    return hours == 0 ? '$rest min' : '$hours hr $rest min';
+  }
+}
+
+/// What the chart draws: [read] minutes (the progress) and [goal] minutes per
+/// point, with an x-axis [labels] entry per point ('' for none).
+class _ChartSeries {
+  const _ChartSeries({
+    required this.read,
+    required this.goal,
+    required this.labels,
+  });
+
+  final List<double> read;
+  final List<double> goal;
+  final List<String> labels;
+}
+
+class _ChartError extends StatelessWidget {
+  const _ChartError({
+    required this.message,
+    required this.retryLabel,
+    required this.onRetry,
+  });
+
+  final String message;
+  final String retryLabel;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: context.inkColor(const Color(0xFF5D6B44)),
+          ),
+        ),
+        TextButton(onPressed: onRetry, child: Text(retryLabel)),
+      ],
     );
   }
 }
@@ -220,26 +368,24 @@ class _LegendDot extends StatelessWidget {
 
 class _PeriodDropdown extends StatelessWidget {
   const _PeriodDropdown({
-    required this.value,
+    required this.selected,
+    required this.labelFor,
     required this.onSelected,
-    required this.weekly,
-    required this.monthly,
   });
 
-  final String value;
-  final ValueChanged<int> onSelected;
-  final String weekly;
-  final String monthly;
+  final HadithHistoryPeriod selected;
+  final String Function(HadithHistoryPeriod) labelFor;
+  final ValueChanged<HadithHistoryPeriod> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<int>(
+    return PopupMenuButton<HadithHistoryPeriod>(
       onSelected: onSelected,
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       itemBuilder: (context) => [
-        PopupMenuItem(value: 0, child: Text(weekly)),
-        PopupMenuItem(value: 1, child: Text(monthly)),
+        for (final period in HadithHistoryPeriod.values)
+          PopupMenuItem(value: period, child: Text(labelFor(period))),
       ],
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -251,7 +397,7 @@ class _PeriodDropdown extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              value,
+              labelFor(selected),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
@@ -272,10 +418,17 @@ class _PeriodDropdown extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    this.notes = const [],
+  });
 
   final String label;
   final String value;
+
+  /// Small extra lines under the value (e.g. the backend's points text).
+  final List<String> notes;
 
   @override
   Widget build(BuildContext context) {
@@ -302,6 +455,16 @@ class _StatCard extends StatelessWidget {
                 color: context.inkColor(Color(0xFF2C3320)),
               ),
             ),
+            for (final note in notes) ...[
+              SizedBox(height: 4.h),
+              Text(
+                note,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: context.inkColor(const Color(0xFF6A7350)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -378,50 +541,51 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// Weekly reading chart: filled area line with node markers and a competitor
-/// "Ab" bubble above every point.
+/// Reading chart: two filled area lines — the goal minutes (light) behind the
+/// minutes read (dark) — with a bubble on the goal's peak.
 class _ReadingChart extends StatelessWidget {
-  const _ReadingChart({
-    required this.values,
-    required this.labels,
-    required this.competitorInitials,
-  });
+  const _ReadingChart({required this.series});
 
-  final List<double> values;
-  final List<String> labels;
-  final String competitorInitials;
+  final _ChartSeries series;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size.infinite,
-      painter: _ReadingChartPainter(
-        values: values,
-        labels: labels,
-        competitorInitials: competitorInitials,
-      ),
+      painter: _ReadingChartPainter(series: series),
     );
   }
 }
 
 class _ReadingChartPainter extends CustomPainter {
-  _ReadingChartPainter({
-    required this.values,
-    required this.labels,
-    required this.competitorInitials,
-  });
+  _ReadingChartPainter({required this.series});
 
-  final List<double> values;
-  final List<String> labels;
-  final String competitorInitials;
+  final _ChartSeries series;
 
-  static const _maxY = 1000.0;
-  static const _steps = [0, 250, 500, 750, 1000];
+  static const _readColor = Color(0xFF3F6B4E);
+  static const _goalColor = Color(0xFFA9B96A);
+  static const _intervals = 4;
+
+  /// A round step (1, 2, 5 x 10^n) so that [_intervals] of them cover [max].
+  static double _niceStep(double max) {
+    if (max <= 0) return 5; // nothing read and no goal: a small empty scale
+    final raw = max / _intervals;
+    final magnitude = math.pow(10, (math.log(raw) / math.ln10).floor());
+    for (final factor in const [1, 2, 5, 10]) {
+      final step = factor * magnitude.toDouble();
+      if (step >= raw) return step;
+    }
+    return 10 * magnitude.toDouble();
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
+    final read = series.read;
+    final goal = series.goal;
+    final count = read.length;
+
     const leftPad = 34.0;
-    const topPad = 44.0; // room for the "Ab" bubbles
+    const topPad = 44.0; // room for the goal bubble
     const bottomPad = 22.0; // room for x labels
     final chartLeft = leftPad;
     final chartRight = size.width - 6;
@@ -430,19 +594,26 @@ class _ReadingChartPainter extends CustomPainter {
     final chartWidth = chartRight - chartLeft;
     final chartHeight = chartBottom - chartTop;
 
-    double xAt(int i) => chartLeft + chartWidth * (i / (values.length - 1));
-    double yAt(double v) => chartBottom - chartHeight * (v / _maxY);
+    final peak = math.max(read.reduce(math.max), goal.reduce(math.max));
+    final step = _niceStep(peak);
+    final maxY = step * _intervals;
+
+    double xAt(int i) => chartLeft + chartWidth * (i / (count - 1));
+    double yAt(double v) => chartBottom - chartHeight * (v / maxY);
 
     // Grid lines + Y labels.
     final gridPaint = Paint()
       ..color = const Color(0xFFECEFE1)
       ..strokeWidth = 1;
-    for (final step in _steps) {
-      final y = yAt(step.toDouble());
+    for (var i = 0; i <= _intervals; i++) {
+      final value = step * i;
+      final y = yAt(value);
       canvas.drawLine(Offset(chartLeft, y), Offset(chartRight, y), gridPaint);
       _text(
         canvas,
-        '$step',
+        value == value.roundToDouble()
+            ? '${value.round()}'
+            : value.toStringAsFixed(1),
         Offset(chartLeft - 8, y),
         color: const Color(0xFF9AA279),
         fontSize: 9,
@@ -453,10 +624,11 @@ class _ReadingChartPainter extends CustomPainter {
     }
 
     // X labels.
-    for (var i = 0; i < labels.length; i++) {
+    for (var i = 0; i < series.labels.length; i++) {
+      if (series.labels[i].isEmpty) continue;
       _text(
         canvas,
-        labels[i],
+        series.labels[i],
         Offset(xAt(i), chartBottom + 6),
         color: const Color(0xFF6A7350),
         fontSize: 10,
@@ -464,32 +636,86 @@ class _ReadingChartPainter extends CustomPainter {
       );
     }
 
-    final points = [
-      for (var i = 0; i < values.length; i++) Offset(xAt(i), yAt(values[i])),
+    List<Offset> pointsOf(List<double> values) => [
+      for (var i = 0; i < count; i++) Offset(xAt(i), yAt(values[i])),
     ];
+    final goalPoints = pointsOf(goal);
+    final readPoints = pointsOf(read);
 
-    // Filled area.
-    final areaPath = Path()..moveTo(points.first.dx, chartBottom);
+    // The goal sits behind the progress.
+    _area(
+      canvas,
+      goalPoints,
+      _goalColor,
+      chartLeft,
+      chartTop,
+      chartRight,
+      chartBottom,
+    );
+    _area(
+      canvas,
+      readPoints,
+      _readColor,
+      chartLeft,
+      chartTop,
+      chartRight,
+      chartBottom,
+    );
+
+    // Node markers on the progress line, only while there are few enough.
+    if (count > 3 && count <= 8) {
+      for (final p in readPoints) {
+        canvas.drawCircle(p, 5, Paint()..color = Colors.white);
+        canvas.drawCircle(
+          p,
+          5,
+          Paint()
+            ..color = const Color(0xFF8FA08A)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6,
+        );
+      }
+    }
+
+    // Bubble on the goal's highest point, with the goal in minutes.
+    final goalPeak = goal.reduce(math.max);
+    if (goalPeak > 0) {
+      final peakIndex = goal.indexOf(goalPeak);
+      _bubble(
+        canvas,
+        size,
+        Offset(goalPoints[peakIndex].dx, goalPoints[peakIndex].dy - 10),
+        '${goalPeak.round()} min',
+      );
+    }
+  }
+
+  void _area(
+    Canvas canvas,
+    List<Offset> points,
+    Color color,
+    double left,
+    double top,
+    double right,
+    double bottom,
+  ) {
+    final areaPath = Path()..moveTo(points.first.dx, bottom);
     for (final p in points) {
       areaPath.lineTo(p.dx, p.dy);
     }
     areaPath
-      ..lineTo(points.last.dx, chartBottom)
+      ..lineTo(points.last.dx, bottom)
       ..close();
     canvas.drawPath(
       areaPath,
       Paint()
-        ..shader =
-            const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x559BA7D8), Color(0x0F9BA7D8)],
-            ).createShader(
-              Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom),
-            ),
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: .45), color.withValues(alpha: .12)],
+        ).createShader(Rect.fromLTRB(left, top, right, bottom)),
     );
 
-    // Line.
     final linePath = Path()..moveTo(points.first.dx, points.first.dy);
     for (final p in points.skip(1)) {
       linePath.lineTo(p.dx, p.dy);
@@ -497,31 +723,17 @@ class _ReadingChartPainter extends CustomPainter {
     canvas.drawPath(
       linePath,
       Paint()
-        ..color = const Color(0xFF3A4A2E)
+        ..color = color
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4,
     );
-
-    // Node markers + competitor bubbles.
-    for (final p in points) {
-      canvas.drawCircle(p, 5, Paint()..color = Colors.white);
-      canvas.drawCircle(
-        p,
-        5,
-        Paint()
-          ..color = const Color(0xFF8FA08A)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6,
-      );
-      _bubble(canvas, size, Offset(p.dx, p.dy - 16));
-    }
   }
 
-  void _bubble(Canvas canvas, Size size, Offset anchor) {
-    const w = 42.0;
+  void _bubble(Canvas canvas, Size size, Offset anchor, String label) {
     const h = 22.0;
-    var left = anchor.dx - w / 2;
-    left = left.clamp(0.0, size.width - w);
+    final tp = _layout(label, const Color(0xFF3E4A2A), 10);
+    final w = tp.width + 32;
+    final left = (anchor.dx - w / 2).clamp(0.0, size.width - w);
     final rect = Rect.fromLTWH(left, anchor.dy - h, w, h);
     final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(11));
     canvas.drawRRect(rrect, Paint()..color = const Color(0xFFCDD891));
@@ -530,15 +742,26 @@ class _ReadingChartPainter extends CustomPainter {
       3,
       Paint()..color = const Color(0xFF6C7A3C),
     );
-    _text(
-      canvas,
-      competitorInitials,
-      Offset(rect.left + 19, rect.center.dy),
-      color: const Color(0xFF3E4A2A),
-      fontSize: 10,
-      anchorMiddleY: true,
-    );
+    tp.paint(canvas, Offset(rect.left + 19, rect.center.dy - tp.height / 2));
   }
+
+  TextPainter _layout(
+    String text,
+    Color color,
+    double fontSize, {
+    TextAlign align = TextAlign.left,
+  }) => TextPainter(
+    text: TextSpan(
+      text: text,
+      style: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    textAlign: align,
+    textDirection: TextDirection.ltr,
+  )..layout();
 
   void _text(
     Canvas canvas,
@@ -551,18 +774,7 @@ class _ReadingChartPainter extends CustomPainter {
     bool anchorCenterX = false,
     bool anchorMiddleY = false,
   }) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      textAlign: align,
-      textDirection: TextDirection.ltr,
-    )..layout();
+    final tp = _layout(text, color, fontSize, align: align);
     var dx = offset.dx;
     if (anchorRight) dx -= tp.width;
     if (anchorCenterX) dx -= tp.width / 2;
@@ -573,5 +785,5 @@ class _ReadingChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ReadingChartPainter oldDelegate) =>
-      oldDelegate.values != values || oldDelegate.labels != labels;
+      oldDelegate.series != series;
 }
