@@ -1,37 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_read_records.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_read_record_row.dart';
+
+/// How close to the end of the list (in logical pixels) the next page starts
+/// loading.
+const _loadMoreThreshold = 240.0;
 
 /// Full reading-history list, reached from "See All" on [HadithDashboardScreen].
 ///
-/// Two tabs — hadith reads and e-book reads. Static mock entries for now.
-class HadithReadingHistoryScreen extends StatefulWidget {
-  const HadithReadingHistoryScreen({super.key});
+/// The user's reading history (`GET /hadiths/reading/recent`), 10 per page:
+/// the next 10 load as the list nears its end, until there are no more.
+class HadithReadingHistoryScreen extends StatelessWidget {
+  const HadithReadingHistoryScreen({super.key, this.getRecords});
+
+  /// Records per page of the full list.
+  static const pageSize = 10;
+
+  /// Where the records come from; the real API unless a test supplies one.
+  final GetHadithReadRecords? getRecords;
 
   @override
-  State<HadithReadingHistoryScreen> createState() =>
-      _HadithReadingHistoryScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => HadithReadRecordsBloc(
+        getRecords ??
+            GetHadithReadRecords(
+              HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+            ),
+        pageSize: pageSize,
+      )..add(const LoadHadithReadRecords()),
+      child: const _HadithReadingHistoryView(),
+    );
+  }
 }
 
-class _HadithReadingHistoryScreenState
-    extends State<HadithReadingHistoryScreen> {
-  int _tab = 0;
+class _HadithReadingHistoryView extends StatefulWidget {
+  const _HadithReadingHistoryView();
 
-  static const _entries = <String>[
-    '17 Aug  At 5 : 35 PM',
-    '17 Aug  At 5 : 35 PM',
-    '17 Aug  At 5 : 35 PM',
-    '17 Aug  At 5 : 35 PM',
-    '17 Aug  At 5 : 35 PM',
-  ];
+  @override
+  State<_HadithReadingHistoryView> createState() =>
+      _HadithReadingHistoryViewState();
+}
+
+class _HadithReadingHistoryViewState extends State<_HadithReadingHistoryView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      // The bloc ignores this while a page is loading or after the last one.
+      context.read<HadithReadRecordsBloc>().add(
+        const LoadMoreHadithReadRecords(),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final label = _tab == 0 ? appText.categoryHadith : appText.ebookLabel;
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -40,28 +87,111 @@ class _HadithReadingHistoryScreenState
           children: [
             SizedBox(height: 6.h),
             _Header(title: appText.readingHistoryTitle),
-            SizedBox(height: 18.h),
-            _HistoryTabs(
-              selected: _tab,
-              hadithLabel: appText.categoryHadith,
-              ebookLabel: appText.ebookLabel,
-              onChanged: (t) => setState(() => _tab = t),
-            ),
-            SizedBox(height: 8.h),
-            Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
-                itemCount: _entries.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 22.h,
-                  color: context.lineColor(Color(0xFFEDEFE0)),
-                ),
-                itemBuilder: (context, index) =>
-                    _HistoryRow(label: label, timestamp: _entries[index]),
-              ),
-            ),
+            SizedBox(height: 10.h),
+            Expanded(child: _HadithRecordsList(controller: _scrollController)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The paginated hadith reading history, with loading, error (retry) and empty
+/// states, and a spinner / retry row at the bottom while the next page loads.
+class _HadithRecordsList extends StatelessWidget {
+  const _HadithRecordsList({required this.controller});
+
+  final ScrollController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final state = context.watch<HadithReadRecordsBloc>().state;
+
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.status == HadithReadRecordsStatus.failure) {
+      return _Message(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () => context.read<HadithReadRecordsBloc>().add(
+          const LoadHadithReadRecords(),
+        ),
+      );
+    }
+    if (state.records.isEmpty) {
+      return _Message(message: appText.noResultsFound);
+    }
+
+    // A page too short to scroll (or scrolling less than the load-more
+    // distance) would never fire the scroll listener, so keep pulling pages
+    // until the list is long enough to scroll on its own (or runs out).
+    if (state.hasMore &&
+        !state.isLoadingMore &&
+        state.loadMoreFailure == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted || !controller.hasClients) return;
+        if (controller.position.maxScrollExtent <= _loadMoreThreshold) {
+          context.read<HadithReadRecordsBloc>().add(
+            const LoadMoreHadithReadRecords(),
+          );
+        }
+      });
+    }
+
+    final showFooter = state.isLoadingMore || state.loadMoreFailure != null;
+    return ListView.separated(
+      controller: controller,
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
+      itemCount: state.records.length + (showFooter ? 1 : 0),
+      separatorBuilder: (_, _) =>
+          Divider(height: 22.h, color: context.lineColor(Color(0xFFEDEFE0))),
+      itemBuilder: (context, index) {
+        if (index < state.records.length) {
+          return HadithReadRecordRow(record: state.records[index]);
+        }
+        return state.isLoadingMore
+            ? Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.h),
+                child: const Center(child: CircularProgressIndicator()),
+              )
+            : _Message(
+                message: state.loadMoreFailure!.message,
+                actionLabel: appText.tryAgain,
+                onAction: () => context.read<HadithReadRecordsBloc>().add(
+                  const LoadMoreHadithReadRecords(),
+                ),
+              );
+      },
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  const _Message({required this.message, this.actionLabel, this.onAction});
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(const Color(0xFF5D6B44)),
+            ),
+          ),
+          if (onAction != null)
+            TextButton(onPressed: onAction, child: Text(actionLabel ?? '')),
+        ],
       ),
     );
   }
@@ -104,110 +234,6 @@ class _Header extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HistoryTabs extends StatelessWidget {
-  const _HistoryTabs({
-    required this.selected,
-    required this.hadithLabel,
-    required this.ebookLabel,
-    required this.onChanged,
-  });
-
-  final int selected;
-  final String hadithLabel;
-  final String ebookLabel;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(
-        children: [_tab(context, hadithLabel, 0), _tab(context, ebookLabel, 1)],
-      ),
-    );
-  }
-
-  Widget _tab(BuildContext context, String label, int index) {
-    final active = selected == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => onChanged(index),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          height: 40.h,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(
-              active ? const Color(0xFFDDE8BA) : Colors.transparent,
-            ),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border(
-              bottom: BorderSide(
-                color: context.lineColor(
-                  active ? Colors.transparent : const Color(0xFFC7D2A0),
-                ),
-              ),
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w500,
-              color: context.inkColor(
-                active ? const Color(0xFF3E4A2A) : const Color(0xFF2C3320),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.label, required this.timestamp});
-
-  final String label;
-  final String timestamp;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 34.r,
-          height: 34.r,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
-          ),
-          child: Icon(
-            Icons.menu_book_outlined,
-            size: 16.sp,
-            color: context.inkColor(Color(0xFF8B9865)),
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: context.inkColor(Color(0xFF2C3320)),
-          ),
-        ),
-        const Spacer(),
-        Text(
-          timestamp,
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
-        ),
-      ],
     );
   }
 }

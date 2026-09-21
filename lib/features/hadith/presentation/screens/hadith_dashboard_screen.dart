@@ -12,11 +12,17 @@ import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_libra
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_read_records.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_history.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_comparison/hadith_comparison_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_dashboard/hadith_dashboard_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_read_record_row.dart';
+
+/// How many reading-history entries the dashboard previews.
+const _recentPreviewCount = 3;
 
 /// Hadith reading dashboard, reached from index 3 ("Dashboard") of the Hadith
 /// navigation bar. Reading chart (`GET /learning/reading/history`) with a
@@ -48,6 +54,14 @@ class HadithDashboardScreen extends StatelessWidget {
         BlocProvider(
           create: (_) =>
               HadithComparisonBloc(GetHadithReadingComparison(repository)),
+        ),
+        // The reading history preview: just the 3 most recent. "See All" opens
+        // the full, paginated list.
+        BlocProvider(
+          create: (_) => HadithReadRecordsBloc(
+            GetHadithReadRecords(repository),
+            pageSize: _recentPreviewCount,
+          )..add(const LoadHadithReadRecords()),
         ),
       ],
       child: const _HadithDashboardView(),
@@ -275,17 +289,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                   ],
                 ),
                 SizedBox(height: 12.h),
-                for (final entry in const [
-                  ('Hadith', '17 Aug  At 5 : 35 PM'),
-                  ('E-book', '17 Aug  At 5 : 35 PM'),
-                  ('Hadith', '17 Aug  At 5 : 35 PM'),
-                ]) ...[
-                  _HistoryRow(label: entry.$1, timestamp: entry.$2),
-                  Divider(
-                    height: 22.h,
-                    color: context.lineColor(Color(0xFFEDEFE0)),
-                  ),
-                ],
+                const _RecentHistory(),
               ],
             ),
             const Align(
@@ -1000,43 +1004,64 @@ class _DashedBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.label, required this.timestamp});
-
-  final String label;
-  final String timestamp;
+/// The reading-history preview under the totals: the latest few hadiths read
+/// (`GET /hadiths/reading/recent`), each with its sub-category and when it was
+/// read. "See All" above it opens the full list.
+class _RecentHistory extends StatelessWidget {
+  const _RecentHistory();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final appText = AppText.of(context);
+    final state = context.watch<HadithReadRecordsBloc>().state;
+
+    if (state.isLoading) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (state.status == HadithReadRecordsStatus.failure) {
+      return Column(
+        children: [
+          Text(
+            state.failure?.message ?? '',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(const Color(0xFF5D6B44)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.read<HadithReadRecordsBloc>().add(
+              const LoadHadithReadRecords(),
+            ),
+            child: Text(appText.tryAgain),
+          ),
+        ],
+      );
+    }
+    if (state.records.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Center(
+          child: Text(
+            appText.noResultsFound,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(const Color(0xFF5D6B44)),
+            ),
+          ),
+        ),
+      );
+    }
+    return Column(
       children: [
-        Container(
-          width: 32.r,
-          height: 32.r,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
-          ),
-          child: Icon(
-            Icons.menu_book_outlined,
-            size: 15.sp,
-            color: context.inkColor(Color(0xFF8B9865)),
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: context.inkColor(Color(0xFF2C3320)),
-          ),
-        ),
-        const Spacer(),
-        Text(
-          timestamp,
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
-        ),
+        // The bloc asks for exactly this many; take() is only a guard.
+        for (final record in state.records.take(_recentPreviewCount)) ...[
+          HadithReadRecordRow(record: record),
+          Divider(height: 22.h, color: context.lineColor(Color(0xFFEDEFE0))),
+        ],
       ],
     );
   }

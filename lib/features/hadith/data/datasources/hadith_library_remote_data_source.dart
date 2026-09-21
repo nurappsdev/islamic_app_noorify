@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart'
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_read_record_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_comparison_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
@@ -74,6 +75,13 @@ abstract interface class HadithLibraryRemoteDataSource {
   Future<HadithReadingComparisonModel> getReadingComparison({
     required String from,
     required String to,
+  });
+
+  /// `GET /hadiths/reading/recent?page=...&limit=...` (needs the login token):
+  /// one page of the hadiths the user read, most recent first.
+  Future<HadithReadRecordPageModel> getReadRecords({
+    required int page,
+    required int limit,
   });
 
   /// `GET /hadiths/reading/last-read` (needs the login token): the hadith
@@ -314,6 +322,20 @@ class HadithLibraryRemoteDataSourceImpl
   }
 
   @override
+  Future<HadithReadRecordPageModel> getReadRecords({
+    required int page,
+    required int limit,
+  }) async {
+    final envelope = await _getList(
+      ApiConstants.hadithReadingRecentEndPoint,
+      {'page': page, 'limit': limit},
+      'Reading history',
+      authenticated: true,
+    );
+    return HadithReadRecordPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
   Future<HadithLastReadModel?> getLastRead() async {
     final token = _local.getToken();
     final Response<dynamic> response;
@@ -352,12 +374,25 @@ class HadithLibraryRemoteDataSourceImpl
   }
 
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,
-  /// throwing the data-layer exceptions on any failure.
+  /// throwing the data-layer exceptions on any failure. Public endpoints need
+  /// no token; pass [authenticated] to send the login token.
   Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})>
-  _getList(String path, Map<String, dynamic> query, String what) async {
+  _getList(
+    String path,
+    Map<String, dynamic> query,
+    String what, {
+    bool authenticated = false,
+  }) async {
+    final token = authenticated ? _local.getToken() : null;
     final Response<dynamic> response;
     try {
-      response = await _dio.get<dynamic>(path, queryParameters: query);
+      response = await _dio.get<dynamic>(
+        path,
+        queryParameters: query,
+        options: token == null
+            ? null
+            : Options(headers: {'Authorization': 'Bearer $token'}),
+      );
     } on DioException catch (e) {
       throw _mapDioException(e);
     }
