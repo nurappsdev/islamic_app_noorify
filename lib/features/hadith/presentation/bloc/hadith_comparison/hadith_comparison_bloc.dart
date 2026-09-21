@@ -55,6 +55,7 @@ class HadithComparisonBloc
           period: event.period,
           month: month,
           competitor: comparison.competitor,
+          myName: comparison.myName,
         ),
       ),
     );

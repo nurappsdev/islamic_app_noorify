@@ -127,7 +127,13 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
             comparison.month == state.month
         ? comparison.competitor
         : null;
-    final series = _buildSeries(state, rival, appText.zikrTodaysValueGraph);
+    final series = _buildSeries(
+      state,
+      rival,
+      // My initials come with the comparison, so only while it is shown.
+      rival == null ? '' : hadithInitials(comparison.myName),
+      appText.zikrTodaysValueGraph,
+    );
 
     return BlocListener<HadithComparisonBloc, HadithComparisonState>(
       listenWhen: (previous, current) =>
@@ -308,6 +314,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
   static _ChartSeries _buildSeries(
     HadithDashboardState state,
     HadithCompetitor? rival,
+    String myInitials,
     String todayCaption,
   ) {
     final from = state.from;
@@ -402,6 +409,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
       rival: rivalRead,
       rivalPoints: rivalPoints,
       rivalInitials: rival?.initials ?? '',
+      myInitials: myInitials,
     );
   }
 
@@ -432,6 +440,7 @@ class _ChartSeries {
     this.rival,
     this.rivalPoints,
     this.rivalInitials = '',
+    this.myInitials = '',
   });
 
   final List<double> read;
@@ -440,6 +449,9 @@ class _ChartSeries {
   final List<double>? rival;
   final List<double?>? rivalPoints;
   final String rivalInitials;
+
+  /// My own initials for my tooltip; empty until the comparison has loaded.
+  final String myInitials;
 }
 
 class _ChartError extends StatelessWidget {
@@ -1111,6 +1123,17 @@ class _ReadingChart extends StatelessWidget {
   }
 }
 
+/// One reader's tooltip: its [text], the chart [point] it belongs to, and its
+/// colours.
+class _Bubble {
+  const _Bubble(this.text, this.point, this.fill, this.ink);
+
+  final String text;
+  final Offset point;
+  final Color fill;
+  final Color ink;
+}
+
 class _ReadingChartPainter extends CustomPainter {
   _ReadingChartPainter({required this.series, required this.selectedIndex});
 
@@ -1149,8 +1172,8 @@ class _ReadingChartPainter extends CustomPainter {
     final rival = series.rival;
     final count = read.length;
 
-    // Room above the top gridline for the tooltip: two lines with a competitor.
-    final topPad = rival == null ? 44.0 : 60.0;
+    // Room above the top gridline for a tooltip sitting on the highest point.
+    const topPad = 44.0;
     const bottomPad = 22.0; // room for x labels
     final chartLeft = _leftPad;
     final chartRight = size.width - _rightPad;
@@ -1266,13 +1289,25 @@ class _ReadingChartPainter extends CustomPainter {
       );
     }
 
-    // The other reader's initials bubble above each of their points, as in
-    // the design. The selected point's bubble is the tooltip below instead.
-    final tooltipLines = _tooltipLines(selected);
+    // Each reader has their own tooltip, on their own point of the chart: mine
+    // (dark green) on my line, the competitor's (lime) on theirs. Only points
+    // are shown — the date is already on the x axis and the minutes on the y
+    // axis.
+    final mineText = _pointsText(
+      series.myInitials.isEmpty ? _myLabel : series.myInitials,
+      series.points,
+      selected,
+    );
+    final rivalText = series.rival == null
+        ? null
+        : _pointsText(series.rivalInitials, series.rivalPoints, selected);
+
+    // The competitor's initials bubble above each of their other points, as in
+    // the design; at the selected point their tooltip takes its place.
     if (rivalPoints != null && series.rivalInitials.isNotEmpty) {
       for (var i = 0; i < count; i++) {
         if (series.labels[i].isEmpty) continue;
-        if (i == selected && tooltipLines.isNotEmpty) continue;
+        if (i == selected && rivalText != null) continue;
         _initialsBubble(
           canvas,
           size,
@@ -1282,33 +1317,49 @@ class _ReadingChartPainter extends CustomPainter {
       }
     }
 
-    // The tooltip, above the higher of the lines that are showing.
-    if (selected != null && tooltipLines.isNotEmpty) {
-      final top = rivalPoints == null
-          ? readPoints[selected].dy
-          : math.min(readPoints[selected].dy, rivalPoints[selected].dy);
-      _tooltip(
-        canvas,
-        size,
-        Offset(readPoints[selected].dx, top - 12),
-        tooltipLines,
-      );
+    if (selected != null && series.labels[selected].isNotEmpty) {
+      // A marker on the competitor's line too, so their tooltip visibly sits
+      // on their own point, as mine does.
+      if (rivalPoints != null) {
+        canvas.drawCircle(
+          rivalPoints[selected],
+          9,
+          Paint()..color = _rivalDark.withValues(alpha: .25),
+        );
+        canvas.drawCircle(
+          rivalPoints[selected],
+          4.5,
+          Paint()..color = _rivalDark,
+        );
+      }
+      _tooltips(canvas, size, [
+        if (mineText != null)
+          _Bubble(mineText, readPoints[selected], _readColor, Colors.white),
+        if (rivalText != null && rivalPoints != null)
+          _Bubble(
+            rivalText,
+            rivalPoints[selected],
+            const Color(0xFFCDD891),
+            const Color(0xFF2C3320),
+          ),
+      ]);
     }
   }
 
-  /// The tooltip text of point [selected]: only points, as the date is already
-  /// on the x axis and the minutes on the y axis. Mine first, then the other
-  /// reader's (tagged with their initials) while they are shown; a line is
-  /// left out when its points are unknown.
-  List<(String, bool)> _tooltipLines(int? selected) {
-    if (selected == null || series.labels[selected].isEmpty) return const [];
-    final mine = series.points[selected];
-    final theirs = series.rival == null ? null : series.rivalPoints?[selected];
-    return [
-      if (mine != null) ('${_number(mine)} points', true),
-      if (theirs != null)
-        ('${series.rivalInitials}: ${_number(theirs)} points', false),
-    ];
+  /// What my tooltip says until my initials are known (the comparison hasn't
+  /// loaded, e.g. the competitor toggle is off).
+  static const _myLabel = 'MY';
+  static const _rivalDark = Color(0xFF6C7A3C);
+
+  /// `AB - 1 point` / `YA - 4 points` for point [selected]: the reader's
+  /// initials and their own points; null when there is no such real point or
+  /// its points are unknown.
+  String? _pointsText(String who, List<double?>? points, int? selected) {
+    if (selected == null || points == null) return null;
+    if (series.labels[selected].isEmpty) return null;
+    final value = points[selected];
+    if (value == null) return null;
+    return '$who - ${_number(value)} ${value == 1 ? 'point' : 'points'}';
   }
 
   /// The index whose tooltip is open: [selectedIndex] if still valid, else the
@@ -1414,39 +1465,64 @@ class _ReadingChartPainter extends CustomPainter {
     tp.paint(canvas, Offset(rect.left + 18, rect.center.dy - tp.height / 2));
   }
 
-  /// A rounded tooltip of text [lines] — (text, emphasised) — sitting on
-  /// [anchor], kept inside the chart.
-  void _tooltip(
-    Canvas canvas,
-    Size size,
-    Offset anchor,
-    List<(String, bool)> lines,
-  ) {
+  /// Draws one tooltip per reader, each on its own point: above it, like the
+  /// design. When the two points are so close that the bubbles would collide,
+  /// they move apart sideways — one to the left of the point, the other to the
+  /// right — instead of sharing one spot. All are kept inside the chart.
+  void _tooltips(Canvas canvas, Size size, List<_Bubble> bubbles) {
+    if (bubbles.isEmpty) return;
     const padX = 10.0;
-    const padY = 6.0;
-    final painters = [
-      for (final (text, strong) in lines)
-        _layout(
-          text,
-          strong ? const Color(0xFF2C3320) : const Color(0xFF5D6B44),
-          strong ? 11 : 9.5,
-        ),
-    ];
-    final w = painters.map((p) => p.width).reduce(math.max) + padX * 2;
-    final h = painters.fold<double>(0, (sum, p) => sum + p.height) + padY * 2;
-    final left = (anchor.dx - w / 2)
-        .clamp(0.0, math.max(0.0, size.width - w))
-        .toDouble();
-    final top = math.max(0.0, anchor.dy - h);
-    final rect = Rect.fromLTWH(left, top, w, h);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-      Paint()..color = const Color(0xFFCDD891),
+    const height = 24.0;
+    const above = 12.0; // gap between a point and the bubble over it
+    const beside = 10.0; // gap between a point and the bubble next to it
+
+    final painters = [for (final b in bubbles) _layout(b.text, b.ink, 10.5)];
+    final widths = [for (final p in painters) p.width + padX * 2];
+
+    Rect place(double left, double top, int i) => Rect.fromLTWH(
+      left.clamp(0.0, math.max(0.0, size.width - widths[i])).toDouble(),
+      math.max(0.0, top),
+      widths[i],
+      height,
     );
-    var y = rect.top + padY;
-    for (final p in painters) {
-      p.paint(canvas, Offset(rect.left + padX, y));
-      y += p.height;
+    Rect over(int i) => place(
+      bubbles[i].point.dx - widths[i] / 2,
+      bubbles[i].point.dy - above - height,
+      i,
+    );
+    Rect leftOf(int i) => place(
+      bubbles[i].point.dx - beside - widths[i],
+      bubbles[i].point.dy - height / 2,
+      i,
+    );
+    Rect rightOf(int i) => place(
+      bubbles[i].point.dx + beside,
+      bubbles[i].point.dy - height / 2,
+      i,
+    );
+
+    var rects = [for (var i = 0; i < bubbles.length; i++) over(i)];
+    if (bubbles.length == 2 && rects[0].overlaps(rects[1])) {
+      // Both points share the tapped x. Mine goes left and theirs right — or
+      // the other way round at a chart edge where that doesn't fit.
+      final x = bubbles[0].point.dx;
+      final split = [leftOf(0), rightOf(1)];
+      final fits = split[0].right <= x - 4 && split[1].left >= x + 4;
+      rects = fits ? split : [rightOf(0), leftOf(1)];
+    }
+
+    for (var i = 0; i < bubbles.length; i++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rects[i], const Radius.circular(12)),
+        Paint()..color = bubbles[i].fill,
+      );
+      painters[i].paint(
+        canvas,
+        Offset(
+          rects[i].left + padX,
+          rects[i].center.dy - painters[i].height / 2,
+        ),
+      );
     }
   }
 

@@ -37,22 +37,26 @@ class HadithReadingComparisonModel extends HadithReadingComparison {
   const HadithReadingComparisonModel({
     required super.comparedWith,
     required super.competitor,
+    super.myName,
   });
 
   /// [data] is the envelope's `data`; the competitor is the first entry of
-  /// `users` that isn't the current user.
+  /// `users` that isn't the current user, whose own entry gives the user's
+  /// name.
   factory HadithReadingComparisonModel.fromJson(Map<String, dynamic> data) {
     final users = data['users'];
+    final all = [if (users is List) ...users.whereType<Map<String, dynamic>>()];
     final others = [
-      if (users is List)
-        for (final user in users.whereType<Map<String, dynamic>>())
-          if (user['isCurrentUser'] != true) user,
+      for (final user in all)
+        if (user['isCurrentUser'] != true) user,
     ];
+    final mine = all.where((user) => user['isCurrentUser'] == true).firstOrNull;
     return HadithReadingComparisonModel(
       comparedWith: data['comparedWith']?.toString() ?? '',
       competitor: others.isEmpty
           ? null
           : HadithCompetitorModel.fromJson(others.first),
+      myName: mine?['name']?.toString() ?? '',
     );
   }
 }

@@ -230,6 +230,33 @@ void main() {
       expect(c.days.single.points, 3);
     });
 
+    test('my own name comes from the entry marked as the current user', () {
+      final m = HadithReadingComparisonModel.fromJson(data);
+      expect(m.myName, 'Abdur Rahman');
+      expect(hadithInitials(m.myName), 'AR');
+      expect(m.competitor!.name, 'Yousuf Ahmed');
+      expect(m.competitor!.initials, 'YA');
+    });
+
+    test('my name is empty without my own entry', () {
+      expect(
+        HadithReadingComparisonModel.fromJson({
+          'users': [
+            {'isCurrentUser': false, 'name': 'Other'},
+          ],
+        }).myName,
+        '',
+      );
+      expect(HadithReadingComparisonModel.fromJson(const {}).myName, '');
+    });
+
+    test('initials: one letter per word, at most two, upper case', () {
+      expect(hadithInitials('abdur rahman'), 'AR');
+      expect(hadithInitials('  Yousuf   Ahmed Khan '), 'YA');
+      expect(hadithInitials('Madonna'), 'M');
+      expect(hadithInitials(''), '');
+    });
+
     test('initials are the first letters of the name', () {
       final c = HadithReadingComparisonModel.fromJson(data).competitor!;
       expect(c.initials, 'YA');

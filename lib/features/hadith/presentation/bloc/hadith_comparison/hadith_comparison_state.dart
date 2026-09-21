@@ -10,6 +10,7 @@ class HadithComparisonState {
     this.period,
     this.month,
     this.competitor,
+    this.myName = '',
     this.failure,
   });
 
@@ -22,6 +23,9 @@ class HadithComparisonState {
 
   /// Null while loading, on failure, or when nobody else was returned.
   final HadithCompetitor? competitor;
+
+  /// The user's own name from the same response, for their initials.
+  final String myName;
   final Failure? failure;
 
   bool get isLoading => status == HadithComparisonStatus.loading;
