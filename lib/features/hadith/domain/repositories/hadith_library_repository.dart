@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_catego
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
@@ -81,6 +82,16 @@ abstract interface class HadithLibraryRepository {
   /// (`GET /hadiths/reading/recent?page=...&limit=...`, needs the login
   /// token).
   Future<Either<Failure, HadithReadRecordPage>> getReadRecords({
+    required int page,
+    required int limit,
+  });
+
+  /// One page of the user's reading plans, each with its hadith counts
+  /// (`GET /hadiths/plans?status=...&page=...&limit=...`, needs the login
+  /// token). [status] is `in_progress`, `completed` or `abandoned`; every
+  /// plan when null.
+  Future<Either<Failure, HadithPlanPage>> getPlans({
+    String? status,
     required int page,
     required int limit,
   });

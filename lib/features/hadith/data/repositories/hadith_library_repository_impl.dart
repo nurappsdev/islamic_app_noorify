@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_catego
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
@@ -212,6 +213,27 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }) async {
     try {
       return Right(await _remote.getReadRecords(page: page, limit: limit));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, HadithPlanPage>> getPlans({
+    String? status,
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      return Right(
+        await _remote.getPlans(status: status, page: page, limit: limit),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {
