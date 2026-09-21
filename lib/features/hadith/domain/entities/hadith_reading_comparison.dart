@@ -20,22 +20,23 @@ class HadithCompetitor {
   final List<HadithReadingDay> days;
 
   /// Up to two capital letters of [name] ("Yousuf Ahmed" -> "YA").
-  String get initials {
-    final letters = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty)
-        .map((word) => word.substring(0, 1).toUpperCase())
-        .take(2)
-        .join();
-    return letters;
-  }
+  String get initials => hadithInitials(name);
 }
+
+/// Up to two capital letters of [name], one per word ("Yousuf Ahmed" -> "YA").
+String hadithInitials(String name) => name
+    .trim()
+    .split(RegExp(r'\s+'))
+    .where((word) => word.isNotEmpty)
+    .map((word) => word.substring(0, 1).toUpperCase())
+    .take(2)
+    .join();
 
 class HadithReadingComparison {
   const HadithReadingComparison({
     required this.comparedWith,
     required this.competitor,
+    this.myName = '',
   });
 
   /// Who the user is compared with, e.g. `first_place`.
@@ -43,4 +44,8 @@ class HadithReadingComparison {
 
   /// Null when the response has no reader other than the user.
   final HadithCompetitor? competitor;
+
+  /// The user's own name in the same response (the entry marked
+  /// `isCurrentUser`); empty when it has none.
+  final String myName;
 }
