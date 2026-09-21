@@ -10,11 +10,15 @@ import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_libra
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_ebooks.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_library_books.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebooks/ebooks_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_last_read/hadith_last_read_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_detail_screen.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
@@ -43,6 +47,11 @@ class HadithLibraryScreen extends StatelessWidget {
         BlocProvider(
           create: (_) =>
               EbooksBloc(GetEbooks(repository))..add(const LoadEbooks()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              HadithLastReadBloc(GetHadithLastRead(repository))
+                ..add(const LoadHadithLastRead()),
         ),
       ],
       child: const _HadithLibraryView(),
@@ -304,6 +313,13 @@ class _LastReadPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    final lastRead = context.watch<HadithLastReadBloc>().state.lastRead;
+    final label = lastRead == null
+        ? '—'
+        : '${lastRead.source(bangla: isBangla)} ( ${lastRead.hadithNumber} )';
+
     return Container(
       padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
       decoration: BoxDecoration(
@@ -324,29 +340,55 @@ class _LastReadPill extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Riadus -Salehin ( 71 )',
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(color: Colors.white, fontSize: 13.sp),
             ),
           ),
-          Container(
-            width: 30.r,
-            height: 30.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: context.lineColor(Colors.white.withValues(alpha: .7)),
+          InkWell(
+            onTap: lastRead == null
+                ? null
+                : () => _openLastRead(context, lastRead, isBangla),
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 30.r,
+              height: 30.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.lineColor(Colors.white.withValues(alpha: .7)),
+                ),
               ),
-            ),
-            child: Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.white,
-              size: 18.sp,
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white,
+                size: 18.sp,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Opens the sub-category the last-read hadith belongs to, then refreshes the
+/// pill since reading there may have moved the last-read hadith.
+Future<void> _openLastRead(
+  BuildContext context,
+  HadithLastRead lastRead,
+  bool isBangla,
+) async {
+  final bloc = context.read<HadithLastReadBloc>();
+  await Navigator.of(context).pushNamed(
+    RouteNames.hadithDetail,
+    arguments: HadithDetailArgs(
+      subCategoryId: lastRead.subCategoryId,
+      title: lastRead.subCategoryName(bangla: isBangla),
+    ),
+  );
+  if (!bloc.isClosed) bloc.add(const LoadHadithLastRead());
 }
 
 class _SectionTitle extends StatelessWidget {
