@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_catego
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
@@ -62,6 +63,14 @@ abstract interface class HadithLibraryRepository {
   /// The reading day by day between [from] and [to] (`YYYY-MM-DD`, inclusive)
   /// with totals (`GET /learning/reading/history`, needs the login token).
   Future<Either<Failure, HadithReadingHistory>> getReadingHistory({
+    required String from,
+    required String to,
+  });
+
+  /// The user next to another reader between [from] and [to] (`YYYY-MM-DD`,
+  /// inclusive) (`GET /hadiths/reading/history/compare`, needs the login
+  /// token).
+  Future<Either<Failure, HadithReadingComparison>> getReadingComparison({
     required String from,
     required String to,
   });

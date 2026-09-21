@@ -56,6 +56,8 @@ class ApiConstants {
   static const String hadithLastReadEndPoint = "/hadiths/reading/last-read";
   static const String hadithReadingHistoryEndPoint =
       "/learning/reading/history";
+  static const String hadithReadingCompareEndPoint =
+      "/hadiths/reading/history/compare";
 
   static const String ebooksEndPoint = "/ebooks";
 
