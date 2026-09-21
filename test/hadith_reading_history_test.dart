@@ -72,6 +72,33 @@ void main() {
     });
   });
 
+  group('hadithMonthRange', () {
+    final now = DateTime(2026, 9, 21, 15, 30);
+
+    test('a past month is its 1st to its last day', () {
+      final r = hadithMonthRange(DateTime(2026, 8, 15), now: now);
+      expect(r.from, DateTime(2026, 8, 1));
+      expect(r.to, DateTime(2026, 8, 31));
+    });
+
+    test('the current month ends today', () {
+      final r = hadithMonthRange(DateTime(2026, 9), now: now);
+      expect(r.from, DateTime(2026, 9, 1));
+      expect(r.to, DateTime(2026, 9, 21));
+    });
+
+    test('knows the length of February, leap year or not', () {
+      expect(
+        hadithMonthRange(DateTime(2024, 2), now: now).to,
+        DateTime(2024, 2, 29),
+      );
+      expect(
+        hadithMonthRange(DateTime(2025, 2), now: now).to,
+        DateTime(2025, 2, 28),
+      );
+    });
+  });
+
   group('HadithReadingHistoryModel', () {
     test('reads days, totals and the display texts', () {
       final m = HadithReadingHistoryModel.fromJson({
@@ -251,6 +278,38 @@ void main() {
       addTearDown(bloc.close);
       expect(bloc.state.status, HadithComparisonStatus.initial);
       expect(repo.comparisonRequests, isEmpty);
+    });
+  });
+
+  group('HadithDashboardBloc with a picked month', () {
+    test('asks for that whole month, and the competitor follows', () async {
+      final repo = _FakeRepository();
+      final dashboard = HadithDashboardBloc(GetHadithReadingHistory(repo));
+      final comparison = HadithComparisonBloc(GetHadithReadingComparison(repo));
+      addTearDown(dashboard.close);
+      addTearDown(comparison.close);
+
+      // A leap-year February long ago, so the result doesn't depend on today.
+      final month = DateTime(2020, 2);
+      // Listen to both before sending anything: a bloc stream doesn't replay.
+      final dashboardDone = dashboard.stream.firstWhere((s) => !s.isLoading);
+      final comparisonDone = comparison.stream.firstWhere(
+        (s) => s.status != HadithComparisonStatus.loading,
+      );
+      dashboard.add(
+        LoadHadithDashboard(HadithHistoryPeriod.monthly, month: month),
+      );
+      comparison.add(
+        LoadHadithComparison(HadithHistoryPeriod.monthly, month: month),
+      );
+      final state = await dashboardDone;
+      final compared = await comparisonDone;
+
+      const expected = (from: '2020-02-01', to: '2020-02-29');
+      expect(repo.requests.single, expected);
+      expect(repo.comparisonRequests.single, expected);
+      expect(state.month, month);
+      expect(compared.month, month);
     });
   });
 
