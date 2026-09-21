@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_d
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
+import 'package:islami_app_noorify/features/hadith/data/models/hadith_plan_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_read_record_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_comparison_model.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
@@ -81,6 +82,14 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// `GET /hadiths/reading/recent?page=...&limit=...` (needs the login token):
   /// one page of the hadiths the user read, most recent first.
   Future<HadithReadRecordPageModel> getReadRecords({
+    required int page,
+    required int limit,
+  });
+
+  /// `GET /hadiths/plans?status=...&page=...&limit=...` (needs the login
+  /// token): one page of the user's plans, each with its `counts`.
+  Future<HadithPlanPageModel> getPlans({
+    String? status,
     required int page,
     required int limit,
   });
@@ -339,6 +348,25 @@ class HadithLibraryRemoteDataSourceImpl
       authenticated: true,
     );
     return HadithReadRecordPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<HadithPlanPageModel> getPlans({
+    String? status,
+    required int page,
+    required int limit,
+  }) async {
+    final envelope = await _getList(
+      ApiConstants.hadithPlansEndPoint,
+      {
+        if (status != null && status.isNotEmpty) 'status': status,
+        'page': page,
+        'limit': limit,
+      },
+      'Hadith plans',
+      authenticated: true,
+    );
+    return HadithPlanPageModel.fromJson(envelope.items, envelope.meta);
   }
 
   @override
