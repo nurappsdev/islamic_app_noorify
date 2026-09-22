@@ -101,15 +101,18 @@ abstract interface class HadithLibraryRepository {
   /// name is already taken or nothing was selected.
   Future<Either<Failure, Unit>> createPlan(HadithPlanDraft draft);
 
-  /// Renames a plan, changes its target days, and / or its [status]
-  /// (`completed`, to mark it done — `PATCH /hadiths/plans/{id}`, needs the
-  /// login token). Fails with the API's message, e.g. when the new name is
-  /// already taken.
+  /// Renames a plan, changes its target days, its book, its
+  /// categories/sub-categories and / or its [status] (`completed`, to mark it
+  /// done — `PATCH /hadiths/plans/{id}`, needs the login token). Fails with
+  /// the API's message, e.g. when the new name is already taken.
   Future<Either<Failure, Unit>> updatePlan(
     String id, {
     String? name,
     int? targetDays,
     String? status,
+    String? bookId,
+    List<String>? categoryIds,
+    List<String>? subCategoryIds,
   });
 
   /// Deletes a plan (`DELETE /hadiths/plans/{id}`, needs the login token).

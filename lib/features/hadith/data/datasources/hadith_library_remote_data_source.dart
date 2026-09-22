@@ -101,14 +101,18 @@ abstract interface class HadithLibraryRemoteDataSource {
   Future<void> createPlan(HadithPlanDraft draft);
 
   /// `PATCH /hadiths/plans/{id}` (needs the login token): renames the plan,
-  /// changes its target days, and / or its [status] (`completed`, to mark it
-  /// done — moving it from "My Plan" to "My Complete"). 409 when the new name
-  /// is taken.
+  /// changes its target days, its [bookId], its [categoryIds] /
+  /// [subCategoryIds] and / or its [status] (`completed`, to mark it done —
+  /// moving it from "My Plan" to "My Complete"). 409 when the new name is
+  /// taken.
   Future<void> updatePlan(
     String id, {
     String? name,
     int? targetDays,
     String? status,
+    String? bookId,
+    List<String>? categoryIds,
+    List<String>? subCategoryIds,
   });
 
   /// `DELETE /hadiths/plans/{id}` (needs the login token): removes the plan;
@@ -444,11 +448,21 @@ class HadithLibraryRemoteDataSourceImpl
     String? name,
     int? targetDays,
     String? status,
+    String? bookId,
+    List<String>? categoryIds,
+    List<String>? subCategoryIds,
   }) => _sendAuthed(
     'PATCH',
     ApiConstants.hadithPlanEndPoint(id),
-    // Only what changes; the API leaves the rest as it is.
-    data: {'name': ?name, 'targetDays': ?targetDays, 'status': ?status},
+    // Only what's given; the API leaves the rest as it is.
+    data: {
+      'name': ?name,
+      'targetDays': ?targetDays,
+      'status': ?status,
+      'bookId': ?bookId,
+      'categoryIds': ?categoryIds,
+      'subCategoryIds': ?subCategoryIds,
+    },
   );
 
   @override

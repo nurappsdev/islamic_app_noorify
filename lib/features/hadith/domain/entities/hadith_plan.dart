@@ -9,6 +9,8 @@ class HadithPlan {
     required this.percentage,
     required this.isCompleted,
     this.bookId,
+    this.bookTitleEnglish = '',
+    this.bookTitleBangla = '',
     this.categoryIds = const [],
     this.targetDays,
   });
@@ -18,6 +20,11 @@ class HadithPlan {
 
   /// The book this plan's hadiths come from; null if the API left it out.
   final String? bookId;
+
+  /// The book's title, as `GET /hadiths/plans` embeds it alongside [bookId]
+  /// — shown read-only on the edit screen (the book can't be changed there).
+  final String bookTitleEnglish;
+  final String bookTitleBangla;
 
   /// The categories this plan covers, so "Get Start" can open their hadiths
   /// (`GET /hadiths?bookId=...&categoryId=...`) — the plan's own hadiths
