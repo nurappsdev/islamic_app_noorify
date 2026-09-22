@@ -122,6 +122,15 @@ abstract interface class HadithLibraryRemoteDataSource {
     required int page,
     required int limit,
   });
+
+  /// `GET /hadiths/reading/read?subCategoryId=...` (or `bookId=`/`planId=`,
+  /// needs the login token): the ids of the hadiths in scope already marked
+  /// `isRead: true`.
+  Future<Set<String>> getReadHadiths({
+    String? subCategoryId,
+    String? bookId,
+    String? planId,
+  });
 }
 
 class HadithLibraryRemoteDataSourceImpl
@@ -213,6 +222,24 @@ class HadithLibraryRemoteDataSourceImpl
       'limit': limit,
     }, 'Hadiths');
     return HadithDetailPageModel.fromJson(envelope.items, envelope.meta);
+  }
+
+  @override
+  Future<Set<String>> getReadHadiths({
+    String? subCategoryId,
+    String? bookId,
+    String? planId,
+  }) async {
+    final envelope = await _getList(ApiConstants.hadithReadingReadEndPoint, {
+      'subCategoryId': ?subCategoryId,
+      'bookId': ?bookId,
+      'planId': ?planId,
+    }, 'Read hadiths', authenticated: true);
+    return {
+      for (final item in envelope.items)
+        if (item['isRead'] == true)
+          (item['hadithId'] ?? item['_id'])?.toString() ?? '',
+    }..remove('');
   }
 
   @override

@@ -59,6 +59,7 @@ class ApiConstants {
   static const String hadithReadingCompareEndPoint =
       "/hadiths/reading/history/compare";
   static const String hadithReadingRecentEndPoint = "/hadiths/reading/recent";
+  static const String hadithReadingReadEndPoint = "/hadiths/reading/read";
   static const String hadithPlansEndPoint = "/hadiths/plans";
 
   /// One plan: `PATCH` renames / edits it, `DELETE` removes it.

@@ -25,6 +25,7 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_mod
 import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_details.dart';
+import 'package:islami_app_noorify/features/hadith/domain/usecases/get_read_hadiths.dart';
 import 'package:islami_app_noorify/features/hadith/domain/usecases/track_hadith_reading.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/controllers/hadith_reading_tracker.dart';
@@ -157,6 +158,12 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     ),
   );
 
+  /// Fetches which hadiths in this scope are already marked read server-side,
+  /// so their Yes checkbox opens checked (see [_loadReadStatus]).
+  final GetReadHadiths _getReadHadiths = GetReadHadiths(
+    HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+  );
+
   /// Id of the hadith currently in focus, for the per-hadith timer circles.
   /// Updated on every [_tracker] tick, so it starts/stops with it (paused
   /// while the screen is backgrounded or another route is on top).
@@ -202,6 +209,20 @@ class _HadithDetailViewState extends State<_HadithDetailView>
       ..addListener(_onTrackerChanged)
       ..load()
       ..start(_focusedHadithId, onTick: _onTrackerTick);
+    _loadReadStatus();
+  }
+
+  /// Marks the hadiths of this scope already read server-side as completed
+  /// in [_tracker] (`GET /hadiths/reading/read`), so their Yes checkbox opens
+  /// checked instead of only after this device reports them itself.
+  Future<void> _loadReadStatus() async {
+    final result = await _getReadHadiths(
+      subCategoryId: widget.subCategoryId,
+      bookId: widget.bookId,
+      planId: widget.planId,
+    );
+    if (!mounted) return;
+    result.fold((_) {}, _tracker.markAlreadyRead);
   }
 
   void _onTrackerTick(String? focusedHadithId) {

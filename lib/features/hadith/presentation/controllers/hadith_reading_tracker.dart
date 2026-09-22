@@ -162,6 +162,17 @@ class HadithReadingTracker extends ChangeNotifier {
   /// reading timer in the UI. Frozen once that hadith [isCompleted].
   int dwellSeconds(String hadithId) => _dwell[hadithId] ?? 0;
 
+  /// Seeds hadiths already reported read server-side (`GET
+  /// /hadiths/reading/read`), so their Yes checkbox shows checked and
+  /// disabled right away instead of only after this device reports them.
+  /// Unlike [submit], this makes no request of its own.
+  void markAlreadyRead(Iterable<String> hadithIds) {
+    if (hadithIds.isEmpty || _disposed) return;
+    final before = _completed.length;
+    _completed.addAll(hadithIds);
+    if (_completed.length != before) notifyListeners();
+  }
+
   bool isCompleted(String hadithId) => _completed.contains(hadithId);
 
   bool isCompleting(String hadithId) => _completing.contains(hadithId);

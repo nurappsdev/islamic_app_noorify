@@ -129,4 +129,13 @@ abstract interface class HadithLibraryRepository {
     required int page,
     required int limit,
   });
+
+  /// The ids of the hadiths already marked as read within a scope (`GET
+  /// /hadiths/reading/read?subCategoryId=...`, or `bookId=`/`planId=`, needs
+  /// the login token). Pass one of [subCategoryId] / [bookId] / [planId].
+  Future<Either<Failure, Set<String>>> getReadHadiths({
+    String? subCategoryId,
+    String? bookId,
+    String? planId,
+  });
 }
