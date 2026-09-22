@@ -37,13 +37,17 @@ class HadithDetailArgs {
   const HadithDetailArgs({
     this.subCategoryId,
     this.bookId,
+    this.planId,
     this.title,
     this.initialHadithId,
     this.initialHadithNumber,
-  }) : assert(subCategoryId != null || bookId != null);
+  }) : assert(subCategoryId != null || bookId != null || planId != null);
 
   final String? subCategoryId;
   final String? bookId;
+
+  /// A reading plan whose hadiths are listed (each with its read state).
+  final String? planId;
   final String? title;
 
   /// Hadith to scroll to once the list is ready (see
@@ -52,18 +56,21 @@ class HadithDetailArgs {
   final int? initialHadithNumber;
 }
 
-/// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`) or of a
-/// whole book (`GET /hadiths?bookId=...`).
+/// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`), of a
+/// whole book (`GET /hadiths?bookId=...`) or of a reading plan
+/// (`GET /hadiths/plans/{planId}/hadiths`).
 ///
-/// Reached by tapping a row on [HadithSubCategoryScreen], or the "Total
-/// Hadith" button on a collection card of the library screen. Each hadith is a
-/// card with its Arabic text, Bangla translation, reference (takhrij), grade
-/// and source, paginated with shimmer placeholders.
+/// Reached by tapping a row on [HadithSubCategoryScreen], the "Total
+/// Hadith" button on a collection card of the library screen, or "Get Start"
+/// on a plan of the planner. Each hadith is a card with its Arabic text,
+/// Bangla translation, reference (takhrij), grade and source, paginated with
+/// shimmer placeholders.
 class HadithDetailScreen extends StatelessWidget {
   const HadithDetailScreen({
     super.key,
     this.subCategoryId,
     this.bookId,
+    this.planId,
     this.title,
     this.initialHadithId,
     this.initialHadithNumber,
@@ -71,6 +78,7 @@ class HadithDetailScreen extends StatelessWidget {
 
   final String? subCategoryId;
   final String? bookId;
+  final String? planId;
   final String? title;
 
   /// When set, the list scrolls to this hadith (matched by id, else by
@@ -82,14 +90,22 @@ class HadithDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => HadithDetailBloc(
-        GetHadithDetails(
-          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
-        ),
-      )..add(LoadHadithDetails(subCategoryId: subCategoryId, bookId: bookId)),
+      create: (_) =>
+          HadithDetailBloc(
+            GetHadithDetails(
+              HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+            ),
+          )..add(
+            LoadHadithDetails(
+              subCategoryId: subCategoryId,
+              bookId: bookId,
+              planId: planId,
+            ),
+          ),
       child: _HadithDetailView(
         subCategoryId: subCategoryId,
         bookId: bookId,
+        planId: planId,
         title: title,
         initialHadithId: initialHadithId,
         initialHadithNumber: initialHadithNumber,
@@ -102,6 +118,7 @@ class _HadithDetailView extends StatefulWidget {
   const _HadithDetailView({
     this.subCategoryId,
     this.bookId,
+    this.planId,
     this.title,
     this.initialHadithId,
     this.initialHadithNumber,
@@ -109,6 +126,7 @@ class _HadithDetailView extends StatefulWidget {
 
   final String? subCategoryId;
   final String? bookId;
+  final String? planId;
   final String? title;
   final String? initialHadithId;
   final int? initialHadithNumber;
@@ -514,6 +532,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                           LoadHadithDetails(
                             subCategoryId: widget.subCategoryId,
                             bookId: widget.bookId,
+                            planId: widget.planId,
                           ),
                         ),
                         child: Text(appText.tryAgain),

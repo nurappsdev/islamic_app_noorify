@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_plan_model.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan.dart';
 import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
@@ -61,6 +63,7 @@ HadithPlan _plan(int i) => HadithPlan(
   id: 'p$i',
   name: 'Plan $i',
   status: 'in_progress',
+  targetDays: 10 * i,
   totalHadiths: 10 + i,
   completedHadiths: 0,
   percentage: 0,
@@ -74,6 +77,29 @@ class _FakeRepository implements HadithLibraryRepository {
   final int total;
   Failure? failure;
   final requests = <({String? status, int page, int limit})>[];
+
+  /// The edits and deletes the planner sent, and what answering them does.
+  final updates = <({String id, String? name, int? targetDays})>[];
+  final deletes = <String>[];
+  Failure? actionFailure;
+
+  @override
+  Future<Either<Failure, Unit>> updatePlan(
+    String id, {
+    String? name,
+    int? targetDays,
+  }) async {
+    updates.add((id: id, name: name, targetDays: targetDays));
+    final error = actionFailure;
+    return error == null ? const Right(unit) : Left(error);
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deletePlan(String id) async {
+    deletes.add(id);
+    final error = actionFailure;
+    return error == null ? const Right(unit) : Left(error);
+  }
 
   @override
   Future<Either<Failure, HadithPlanPage>> getPlans({
@@ -214,7 +240,7 @@ void main() {
             create: (_) => LanguageBloc(),
             child: MaterialApp(
               routes: routes,
-              home: HadithPlannerScreen(getPlans: GetHadithPlans(repo)),
+              home: HadithPlannerScreen(repository: repo),
             ),
           ),
         ),
@@ -320,6 +346,246 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repo.requests, hasLength(1));
+    });
+
+    /// Opens the ⋮ menu of the first plan.
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.more_vert_rounded).first);
+      await tester.pumpAndSettle();
+    }
+
+    /// Lets the bloc's async work finish after an action.
+    Future<void> settle(WidgetTester tester) async {
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+    }
+
+    group('the ⋮ menu', () {
+      testWidgets('offers Edit and Delete, each with its icon', (tester) async {
+        await pumpPlanner(tester, _FakeRepository(total: 2));
+        // Before opening: no menu entries yet.
+        expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+
+        await openMenu(tester);
+
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+        expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+        // The pencil is also on the "Create Plan" button: 2 = it + the menu.
+        expect(find.byIcon(Icons.edit_outlined), findsNWidgets(2));
+      });
+
+      testWidgets('Delete asks first, then deletes and reloads the list', (
+        tester,
+      ) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+        // The question names the plan; nothing is sent yet.
+        expect(find.text('Delete this plan?'), findsOneWidget);
+        expect(find.text('Plan 1'), findsWidgets);
+        expect(repo.deletes, isEmpty);
+
+        await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+        await settle(tester);
+
+        expect(repo.deletes, ['p1']);
+        // Reloaded: the first load plus one after the delete.
+        expect(repo.requests, hasLength(2));
+      });
+
+      testWidgets('cancelling the question deletes nothing', (tester) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        expect(repo.deletes, isEmpty);
+        expect(repo.requests, hasLength(1));
+      });
+
+      testWidgets('a failed delete shows the API message and keeps the list', (
+        tester,
+      ) async {
+        final repo = _FakeRepository(total: 2)
+          ..actionFailure = const ServerFailure('Plan not found');
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+        await settle(tester);
+
+        expect(repo.deletes, ['p1']);
+        expect(find.text('Plan not found'), findsOneWidget);
+        // No reload: nothing changed on the server.
+        expect(repo.requests, hasLength(1));
+        expect(find.text('Plan 1'), findsOneWidget);
+      });
+
+      testWidgets('Edit starts from the current name and target days', (
+        tester,
+      ) async {
+        await pumpPlanner(tester, _FakeRepository(total: 2));
+
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Plan'), findsOneWidget);
+        final name = tester.widget<TextField>(
+          find.byKey(const Key('edit-plan-name')),
+        );
+        final days = tester.widget<TextField>(
+          find.byKey(const Key('edit-plan-days')),
+        );
+        expect(name.controller!.text, 'Plan 1');
+        // _plan(1) targets 10 days.
+        expect(days.controller!.text, '10');
+      });
+
+      testWidgets('Save sends only what changed, then reloads', (tester) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        // Only the name.
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const Key('edit-plan-name')),
+          'Renamed',
+        );
+        await tester.tap(find.text('Save'));
+        await settle(tester);
+        expect(repo.updates.last, (
+          id: 'p1',
+          name: 'Renamed',
+          targetDays: null,
+        ));
+        expect(repo.requests, hasLength(2));
+
+        // Only the days.
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('edit-plan-days')), '25');
+        await tester.tap(find.text('Save'));
+        await settle(tester);
+        expect(repo.updates.last, (id: 'p1', name: null, targetDays: 25));
+        expect(repo.requests, hasLength(3));
+      });
+
+      testWidgets('Save with nothing changed sends nothing', (tester) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+
+        expect(repo.updates, isEmpty);
+        expect(repo.requests, hasLength(1));
+      });
+
+      testWidgets('a plan needs a name: Save is off while it is empty', (
+        tester,
+      ) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('edit-plan-name')), '   ');
+        await tester.pump();
+
+        final save = tester.widget<FilledButton>(
+          find.widgetWithText(FilledButton, 'Save'),
+        );
+        expect(save.onPressed, isNull);
+      });
+
+      testWidgets('a name already taken shows the API message', (tester) async {
+        final repo = _FakeRepository(total: 2)
+          ..actionFailure = const ServerFailure(
+            'A plan with this name already exists',
+            statusCode: 409,
+          );
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const Key('edit-plan-name')),
+          'Plan 2',
+        );
+        await tester.tap(find.text('Save'));
+        await settle(tester);
+
+        expect(
+          find.text('A plan with this name already exists'),
+          findsOneWidget,
+        );
+        // The list wasn't reloaded, and still shows the old name.
+        expect(repo.requests, hasLength(1));
+        expect(find.text('Plan 1'), findsOneWidget);
+      });
+    });
+
+    group('Get Start', () {
+      final getStart = AppText.forLanguage(AppLanguage.english).getStart;
+
+      testWidgets('opens that plan\'s hadiths, and reloads when back', (
+        tester,
+      ) async {
+        final repo = _FakeRepository(total: 2);
+        Object? arguments;
+        await pumpPlanner(
+          tester,
+          repo,
+          routes: {
+            RouteNames.hadithDetail: (context) {
+              arguments = ModalRoute.of(context)!.settings.arguments;
+              return Scaffold(
+                body: TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('leave'),
+                ),
+              );
+            },
+          },
+        );
+
+        // The second plan's button.
+        await tester.tap(find.text(getStart).at(1));
+        await tester.pumpAndSettle();
+
+        final args = arguments as HadithDetailArgs;
+        expect(args.planId, 'p2');
+        expect(args.title, 'Plan 2');
+        // A plan, so neither a sub-category nor a book.
+        expect(args.subCategoryId, isNull);
+        expect(args.bookId, isNull);
+
+        // Reading there moves the progress: coming back reloads the plans.
+        expect(repo.requests, hasLength(1));
+        await tester.tap(find.text('leave'));
+        await settle(tester);
+        expect(repo.requests, hasLength(2));
+      });
     });
   });
 }

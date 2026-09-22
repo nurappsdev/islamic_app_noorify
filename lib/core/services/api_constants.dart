@@ -61,6 +61,13 @@ class ApiConstants {
   static const String hadithReadingRecentEndPoint = "/hadiths/reading/recent";
   static const String hadithPlansEndPoint = "/hadiths/plans";
 
+  /// One plan: `PATCH` renames / edits it, `DELETE` removes it.
+  static String hadithPlanEndPoint(String id) => "$hadithPlansEndPoint/$id";
+
+  /// The hadiths of one plan, each with its read state.
+  static String hadithPlanHadithsEndPoint(String id) =>
+      "${hadithPlanEndPoint(id)}/hadiths";
+
   static const String ebooksEndPoint = "/ebooks";
 
   static String hadithSubCategoriesEndPoint(String categoryId) =>
