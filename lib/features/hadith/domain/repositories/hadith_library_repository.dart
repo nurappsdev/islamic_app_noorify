@@ -45,10 +45,10 @@ abstract interface class HadithLibraryRepository {
     String? searchTerm,
   });
 
-  /// Reports the active reading time of a hadith (`POST
-  /// /hadiths/reading/track`). [date] is `YYYY-MM-DD`.
+  /// Reports the active reading time of one or more hadiths (`POST
+  /// /learning/reading/track`). [date] is `YYYY-MM-DD`.
   Future<Either<Failure, Unit>> trackReading({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required String date,

@@ -356,37 +356,45 @@ class _HadithDetailViewState extends State<_HadithDetailView>
       ..stop();
   }
 
-  /// Back button / gesture. After more than 30 seconds on the screen, asks
-  /// whether the hadith read most was completed and reports the time (Yes:
-  /// completed, No: not completed); otherwise leaves straight away.
+  /// Back button / gesture. Collects every hadith read for more than 30
+  /// seconds and not yet reported, and — if there are any — asks whether to
+  /// mark them all as read. Yes reports them (one batched call); No reports
+  /// nothing at all. Otherwise leaves straight away.
   Future<void> _handleExit() async {
     if (_leaving) return;
     _leaving = true;
-    final candidate = _tracker.reportCandidate;
-    if (_tracker.shouldAskOnLeave && candidate != null) {
+    final candidates = _tracker.reportCandidates;
+    if (candidates.isNotEmpty) {
       final hadiths = context.read<HadithDetailBloc>().state.hadiths;
-      final number = hadiths
-          .where((h) => h.id == candidate)
-          .map((h) => h.hadithNumber)
-          .firstOrNull;
+      final numbers = <int>[];
+      for (final id in candidates) {
+        final number = hadiths
+            .where((h) => h.id == id)
+            .map((h) => h.hadithNumber)
+            .firstOrNull;
+        if (number != null && number != 0) numbers.add(number);
+      }
+      numbers.sort();
       // Time spent deciding is not reading time.
       _tracker.pause();
-      final completed = await _askCompleted(number);
+      final confirmed = await _askCompletedBatch(numbers);
       if (!mounted) return;
-      // One report, then leave; give it a moment to land first.
-      await _tracker
-          .submit(candidate, completed: completed == true)
-          .timeout(
-            const Duration(seconds: 4),
-            onTimeout: () => HadithCompletion.failed,
-          );
+      if (confirmed == true) {
+        // One report, then leave; give it a moment to land first.
+        await _tracker
+            .submit(candidates, completed: true)
+            .timeout(
+              const Duration(seconds: 4),
+              onTimeout: () => HadithCompletion.failed,
+            );
+      }
     }
     // Reported (or nothing to report): nothing may keep running from here on.
     _teardownTracking();
     if (mounted) Navigator.of(context).pop();
   }
 
-  Future<bool?> _askCompleted(int? hadithNumber) {
+  Future<bool?> _askCompletedBatch(List<int> hadithNumbers) {
     final appText = AppText.readOf(context);
     return showDialog<bool>(
       context: context,
@@ -397,10 +405,10 @@ class _HadithDetailViewState extends State<_HadithDetailView>
           appText.hadithCompletedQuestion,
           style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
         ),
-        content: hadithNumber == null || hadithNumber == 0
+        content: hadithNumbers.isEmpty
             ? null
             : Text(
-                '${appText.categoryHadith} $hadithNumber',
+                '${appText.categoryHadith}: ${hadithNumbers.join(', ')}',
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: dialogContext.inkColor(const Color(0xFF5D6B44)),
@@ -1384,6 +1392,16 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
             ],
           ),
         ),
+        if (widget.tracker != null && widget.clock != null)
+          PositionedDirectional(
+            bottom: 10.r,
+            end: 10.r,
+            child: _HadithCompleteCheckbox(
+              hadithId: hadith.id,
+              tracker: widget.tracker!,
+              clock: widget.clock!,
+            ),
+          ),
       ],
     );
   }
@@ -1462,8 +1480,10 @@ class _MoreButton extends StatelessWidget {
 
 /// Per-hadith reading timer: a small ring that fills over a minute and
 /// resets, with the elapsed time in its center. Green and filling while
-/// [hadithId] is the one in focus, grey and frozen otherwise — so scrolling
-/// away visibly pauses it and scrolling back resumes it where it left off.
+/// [hadithId] is the one in focus, grey and frozen while it's not — so
+/// scrolling away visibly pauses it and scrolling back resumes it where it
+/// left off. Once reported (see [HadithReadingTracker.isCompleted]), it
+/// turns into a static checkmark: the timer has stopped for good.
 class _HadithTimerBadge extends StatelessWidget {
   const _HadithTimerBadge({
     required this.hadithId,
@@ -1481,20 +1501,26 @@ class _HadithTimerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (hadithId.isEmpty) return const SizedBox.shrink();
     return ListenableBuilder(
-      listenable: Listenable.merge([focusedId, clock]),
+      listenable: Listenable.merge([focusedId, clock, tracker]),
       builder: (context, _) => _TimerCircle(
         seconds: tracker.dwellSeconds(hadithId),
         active: focusedId.value == hadithId,
+        completed: tracker.isCompleted(hadithId),
       ),
     );
   }
 }
 
 class _TimerCircle extends StatelessWidget {
-  const _TimerCircle({required this.seconds, required this.active});
+  const _TimerCircle({
+    required this.seconds,
+    required this.active,
+    required this.completed,
+  });
 
   final int seconds;
   final bool active;
+  final bool completed;
 
   /// The ring completes one lap per minute of reading.
   static const _lapSeconds = 60;
@@ -1512,10 +1538,10 @@ class _TimerCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     // Nothing spent on this hadith yet and it's not the one in focus: no
     // badge to show.
-    if (seconds <= 0 && !active) return const SizedBox.shrink();
-    final color = active ? _active : _idle;
+    if (seconds <= 0 && !active && !completed) return const SizedBox.shrink();
+    final color = completed || active ? _active : _idle;
     return Tooltip(
-      message: active ? 'Reading…' : 'Paused',
+      message: completed ? 'Read' : (active ? 'Reading…' : 'Paused'),
       child: SizedBox(
         width: 30.r,
         height: 30.r,
@@ -1526,30 +1552,145 @@ class _TimerCircle extends StatelessWidget {
               width: 30.r,
               height: 30.r,
               child: CircularProgressIndicator(
-                value: (seconds % _lapSeconds) / _lapSeconds,
+                // Frozen full once done, otherwise the current lap.
+                value: completed ? 1 : (seconds % _lapSeconds) / _lapSeconds,
                 strokeWidth: 2.5,
                 backgroundColor: color.withValues(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation(color),
               ),
             ),
-            Padding(
-              // Keeps the label off the ring; FittedBox shrinks it instead
-              // of overflowing once minutes reach two digits (10+ minutes).
-              padding: EdgeInsets.all(5.r),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  _label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 8.sp,
-                    fontWeight: FontWeight.w700,
-                    color: color,
+            if (completed)
+              Icon(Icons.check_rounded, size: 14.sp, color: color)
+            else
+              Padding(
+                // Keeps the label off the ring; FittedBox shrinks it instead
+                // of overflowing once minutes reach two digits (10+ minutes).
+                padding: EdgeInsets.all(5.r),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Yes" checkbox that appears bottom-right of a card once
+/// [hadithId] has been read for more than [HadithReadingConfig.minSeconds] —
+/// checking it reports that hadith as completed right away (the same POST
+/// the 5-minute dialog and the leave dialog use), after which the checkbox
+/// shows checked and disabled and the timer above has stopped.
+class _HadithCompleteCheckbox extends StatelessWidget {
+  const _HadithCompleteCheckbox({
+    required this.hadithId,
+    required this.tracker,
+    required this.clock,
+  });
+
+  final String hadithId;
+  final HadithReadingTracker tracker;
+  final ValueListenable<int> clock;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hadithId.isEmpty) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: Listenable.merge([clock, tracker]),
+      builder: (context, _) {
+        final completed = tracker.isCompleted(hadithId);
+        final completing = tracker.isCompleting(hadithId);
+        final eligible =
+            tracker.dwellSeconds(hadithId) > HadithReadingConfig.minSeconds;
+        if (!completed && !eligible) return const SizedBox.shrink();
+        return _YesCheckbox(
+          checked: completed,
+          busy: completing,
+          onTap: completed || completing
+              ? null
+              : () => tracker.complete(hadithId),
+        );
+      },
+    );
+  }
+}
+
+class _YesCheckbox extends StatelessWidget {
+  const _YesCheckbox({required this.checked, required this.busy, this.onTap});
+
+  final bool checked;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  static const _green = Color(0xFF008000);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(
+              checked ? _green : const Color(0xFFECF0DC),
+            ),
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: context.lineColor(
+                checked ? _green : const Color(0xFFDCE3C4),
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (busy)
+                SizedBox(
+                  width: 12.r,
+                  height: 12.r,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    valueColor: AlwaysStoppedAnimation(
+                      checked ? Colors.white : _green,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  checked
+                      ? Icons.check_box_rounded
+                      : Icons.check_box_outline_blank_rounded,
+                  size: 14.sp,
+                  color: checked
+                      ? Colors.white
+                      : context.inkColor(const Color(0xFF4C5A34)),
+                ),
+              SizedBox(width: 4.w),
+              Text(
+                AppText.of(context).yes,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: checked
+                      ? Colors.white
+                      : context.inkColor(const Color(0xFF4C5A34)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
