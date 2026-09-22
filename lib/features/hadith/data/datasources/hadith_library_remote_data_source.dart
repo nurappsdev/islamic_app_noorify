@@ -99,15 +99,25 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// targetDays?}`. Answers 201 on success.
   Future<void> createPlan(HadithPlanDraft draft);
 
+  /// `PATCH /hadiths/plans/{id}` (needs the login token): renames the plan
+  /// and / or changes its target days. 409 when the new name is taken.
+  Future<void> updatePlan(String id, {String? name, int? targetDays});
+
+  /// `DELETE /hadiths/plans/{id}` (needs the login token): removes the plan;
+  /// its name becomes free again.
+  Future<void> deletePlan(String id);
+
   /// `GET /hadiths/reading/last-read` (needs the login token): the hadith
   /// read most recently, or null when the user has not read any yet.
   Future<HadithLastReadModel?> getLastRead();
 
   /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId` or
-  /// `bookId`.
+  /// `bookId`; or, with [planId], `GET /hadiths/plans/{planId}/hadiths` (needs
+  /// the login token): the hadiths of one plan.
   Future<HadithDetailPageModel> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? planId,
     required int page,
     required int limit,
   });
@@ -179,9 +189,22 @@ class HadithLibraryRemoteDataSourceImpl
   Future<HadithDetailPageModel> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? planId,
     required int page,
     required int limit,
   }) async {
+    if (planId != null) {
+      // A plan's hadiths come with their read state, and only for its owner.
+      final envelope = await _getList(
+        ApiConstants.hadithPlanHadithsEndPoint(planId),
+        {'page': page, 'limit': limit},
+        'Plan hadiths',
+        authenticated: true,
+      );
+      return HadithDetailPageModel.fromJson([
+        for (final item in envelope.items) unwrapPlanHadith(item),
+      ], envelope.meta);
+    }
     final envelope = await _getList(ApiConstants.hadithsEndPoint, {
       'subCategoryId': ?subCategoryId,
       'bookId': ?bookId,
@@ -370,14 +393,38 @@ class HadithLibraryRemoteDataSourceImpl
   }
 
   @override
-  Future<void> createPlan(HadithPlanDraft draft) async {
+  Future<void> createPlan(HadithPlanDraft draft) => _sendAuthed(
+    'POST',
+    ApiConstants.hadithPlansEndPoint,
+    data: draft.toJson(),
+  );
+
+  @override
+  Future<void> updatePlan(String id, {String? name, int? targetDays}) =>
+      _sendAuthed(
+        'PATCH',
+        ApiConstants.hadithPlanEndPoint(id),
+        // Only what changes; the API leaves the rest as it is.
+        data: {'name': ?name, 'targetDays': ?targetDays},
+      );
+
+  @override
+  Future<void> deletePlan(String id) =>
+      _sendAuthed('DELETE', ApiConstants.hadithPlanEndPoint(id));
+
+  /// Sends [method] to [path] with the login token, and throws the data-layer
+  /// exceptions unless the API answers with a success. A refusal carries the
+  /// API's own message — 400 invalid, 404 not found, 409 name taken — so the
+  /// user sees why.
+  Future<void> _sendAuthed(String method, String path, {Object? data}) async {
     final token = _local.getToken();
     final Response<dynamic> response;
     try {
-      response = await _dio.post<dynamic>(
-        ApiConstants.hadithPlansEndPoint,
-        data: draft.toJson(),
+      response = await _dio.request<dynamic>(
+        path,
+        data: data,
         options: Options(
+          method: method,
           headers: token == null ? null : {'Authorization': 'Bearer $token'},
         ),
       );
@@ -392,8 +439,6 @@ class HadithLibraryRemoteDataSourceImpl
     final status = response.statusCode ?? 0;
     final isSuccess = status >= 200 && status < 300 && json['success'] != false;
     if (!isSuccess) {
-      // 400 nothing selected / wrong book, 404 book missing, 409 name taken:
-      // the API's own message says which.
       throw ServerException(
         _extractError(json) ?? 'Request failed ($status).',
         statusCode: status,

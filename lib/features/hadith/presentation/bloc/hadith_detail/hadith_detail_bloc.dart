@@ -17,6 +17,7 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   final GetHadithDetails _getHadithDetails;
   String? _subCategoryId;
   String? _bookId;
+  String? _planId;
 
   /// Bumped for every fresh first-page load so a slow, superseded response
   /// can't overwrite a newer one.
@@ -28,11 +29,13 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   ) async {
     _subCategoryId = event.subCategoryId;
     _bookId = event.bookId;
+    _planId = event.planId;
     final generation = ++_generation;
     emit(const HadithDetailState(status: HadithDetailStatus.loading));
     final result = await _getHadithDetails(
       subCategoryId: _subCategoryId,
       bookId: _bookId,
+      planId: _planId,
     );
     if (generation != _generation) return;
     result.fold(
@@ -64,6 +67,7 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
     final result = await _getHadithDetails(
       subCategoryId: _subCategoryId,
       bookId: _bookId,
+      planId: _planId,
       page: state.page + 1,
     );
     if (generation != _generation) return;

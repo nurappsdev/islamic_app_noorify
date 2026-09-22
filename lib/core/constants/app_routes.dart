@@ -335,6 +335,7 @@ class AppRoutes {
               ? HadithDetailScreen(
                   subCategoryId: detailArgs.subCategoryId,
                   bookId: detailArgs.bookId,
+                  planId: detailArgs.planId,
                   title: detailArgs.title,
                   initialHadithId: detailArgs.initialHadithId,
                   initialHadithNumber: detailArgs.initialHadithNumber,

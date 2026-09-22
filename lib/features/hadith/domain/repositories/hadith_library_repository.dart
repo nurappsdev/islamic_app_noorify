@@ -101,17 +101,31 @@ abstract interface class HadithLibraryRepository {
   /// name is already taken or nothing was selected.
   Future<Either<Failure, Unit>> createPlan(HadithPlanDraft draft);
 
+  /// Renames a plan and / or changes its target days
+  /// (`PATCH /hadiths/plans/{id}`, needs the login token). Fails with the
+  /// API's message, e.g. when the new name is already taken.
+  Future<Either<Failure, Unit>> updatePlan(
+    String id, {
+    String? name,
+    int? targetDays,
+  });
+
+  /// Deletes a plan (`DELETE /hadiths/plans/{id}`, needs the login token).
+  Future<Either<Failure, Unit>> deletePlan(String id);
+
   /// The hadith read most recently (`GET /hadiths/reading/last-read`, needs
   /// the login token); null when nothing has been read yet.
   Future<Either<Failure, HadithLastRead?>> getLastRead();
 
   /// One page of the hadiths of a sub-category
   /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book
-  /// (`...&bookId=...`), in display order. Pass one of [subCategoryId] /
-  /// [bookId].
+  /// (`...&bookId=...`), in display order; or of one reading plan
+  /// (`GET /hadiths/plans/{planId}/hadiths`, needs the login token). Pass one
+  /// of [subCategoryId] / [bookId] / [planId].
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? planId,
     required int page,
     required int limit,
   });

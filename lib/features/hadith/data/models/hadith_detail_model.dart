@@ -83,6 +83,20 @@ extension HadithDetailJson on HadithDetail {
   };
 }
 
+/// An item of `GET /hadiths/plans/{id}/hadiths` as a plain hadith map.
+///
+/// That endpoint returns each hadith together with its read state. The
+/// hadith may be nested (an object under `hadith` or `hadithId`) or the item
+/// itself may be the hadith with extra fields; both come out as the hadith's
+/// own map, which [HadithDetailModel.fromJson] reads.
+Map<String, dynamic> unwrapPlanHadith(Map<String, dynamic> item) {
+  for (final key in const ['hadith', 'hadithId']) {
+    final nested = item[key];
+    if (nested is Map<String, dynamic>) return nested;
+  }
+  return item;
+}
+
 class HadithDetailPageModel extends HadithDetailPage {
   const HadithDetailPageModel({
     required super.hadiths,

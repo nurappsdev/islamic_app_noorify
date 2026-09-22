@@ -262,6 +262,33 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> updatePlan(
+    String id, {
+    String? name,
+    int? targetDays,
+  }) => _unit(() => _remote.updatePlan(id, name: name, targetDays: targetDays));
+
+  @override
+  Future<Either<Failure, Unit>> deletePlan(String id) =>
+      _unit(() => _remote.deletePlan(id));
+
+  /// Runs a call that returns nothing, mapping what it throws to a failure.
+  Future<Either<Failure, Unit>> _unit(Future<void> Function() call) async {
+    try {
+      await call();
+      return const Right(unit);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
+
+  @override
   Future<Either<Failure, HadithLastRead?>> getLastRead() async {
     try {
       return Right(await _remote.getLastRead());
@@ -280,6 +307,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? planId,
     required int page,
     required int limit,
   }) async {
@@ -288,6 +316,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
         await _remote.getHadiths(
           subCategoryId: subCategoryId,
           bookId: bookId,
+          planId: planId,
           page: page,
           limit: limit,
         ),
