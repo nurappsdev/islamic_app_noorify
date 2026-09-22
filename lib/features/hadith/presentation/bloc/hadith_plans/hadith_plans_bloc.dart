@@ -74,3 +74,14 @@ class HadithPlansBloc extends Bloc<HadithPlansEvent, HadithPlansState> {
     );
   }
 }
+
+/// The user's completed plans (`status: completed`) for the "My Complete"
+/// tab — a distinct type from [HadithPlansBloc] so both can be provided at
+/// once and read unambiguously by type.
+class HadithCompletedPlansBloc extends HadithPlansBloc {
+  // Not a super parameter: `status` is fixed here, not forwarded from a
+  // constructor argument, so the super call must stay explicit.
+  // ignore: use_super_parameters
+  HadithCompletedPlansBloc(GetHadithPlans getPlans)
+    : super(getPlans, status: 'completed');
+}

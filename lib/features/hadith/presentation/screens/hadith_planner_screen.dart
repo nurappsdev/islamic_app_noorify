@@ -28,13 +28,15 @@ const _loadMoreThreshold = 240.0;
 /// "My Plan" lists the user's plans that are in progress
 /// (`GET /hadiths/plans?status=in_progress`), 10 per page, each with its name,
 /// hadith count and progress; it starts on [_EmptyPlans] when there are none.
-/// The "Create Plan" action opens the create form, and the list reloads when
-/// a plan has been created.
+/// "My Complete" lists the same, but with `status=completed`. The "Create
+/// Plan" action opens the create form, and "My Plan" reloads when a plan has
+/// been created.
 ///
 /// On a plan, "Get Start" opens the plan's hadiths ([HadithDetailScreen]) and
-/// the ⋮ menu offers Edit (name and target days, `PATCH`) and Delete
-/// (`DELETE`, after a confirmation); the list reloads after either. "Complete
-/// Plan" still shows a static list.
+/// the ⋮ menu offers Edit (name and target days, `PATCH`), Delete (`DELETE`,
+/// after a confirmation) and Complete (`PATCH {status: "completed"}`, after a
+/// confirmation); both lists reload after any of the three, since Complete
+/// moves the plan from one to the other.
 class HadithPlannerScreen extends StatelessWidget {
   const HadithPlannerScreen({super.key, this.repository});
 
@@ -52,6 +54,10 @@ class HadithPlannerScreen extends StatelessWidget {
           create: (_) =>
               HadithPlansBloc(GetHadithPlans(repo), status: 'in_progress')
                 ..add(const LoadHadithPlans()),
+        ),
+        BlocProvider(
+          create: (_) => HadithCompletedPlansBloc(GetHadithPlans(repo))
+            ..add(const LoadHadithPlans()),
         ),
         BlocProvider(
           create: (_) => HadithPlanActionsBloc(
@@ -76,11 +82,6 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
   bool _showCompletedPlans = false;
   final _scrollController = ScrollController();
 
-  static const _completedPlans = <_HadithPlan>[
-    _HadithPlan(title: 'Plan 1', hadithCount: 7),
-    _HadithPlan(title: 'Plan 2', hadithCount: 19),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -96,8 +97,15 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
   void _onScroll() {
     final position = _scrollController.position;
     if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
-      // The bloc ignores this while a page is loading or after the last one.
-      context.read<HadithPlansBloc>().add(const LoadMoreHadithPlans());
+      // Whichever tab is on screen; the bloc ignores this while a page is
+      // loading or after the last one.
+      if (_showCompletedPlans) {
+        context.read<HadithCompletedPlansBloc>().add(
+          const LoadMoreHadithPlans(),
+        );
+      } else {
+        context.read<HadithPlansBloc>().add(const LoadMoreHadithPlans());
+      }
     }
   }
 
@@ -162,11 +170,23 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
     if (confirmed) actions.add(DeleteHadithPlanRequested(id));
   }
 
-  /// An edit or a delete has finished: reload the list on success, and say why
-  /// on failure (e.g. "A plan with this name already exists").
+  /// ⋮ > Complete: after a confirmation (`PATCH {status: "completed"}`) — the
+  /// plan leaves "My Plan" and shows up under "My Complete".
+  Future<void> _completePlan(_HadithPlan plan) async {
+    final id = plan.id;
+    if (id == null) return;
+    final actions = context.read<HadithPlanActionsBloc>();
+    final confirmed = await showCompletePlanDialog(context, name: plan.title);
+    if (confirmed) actions.add(CompleteHadithPlanRequested(id));
+  }
+
+  /// An edit, a delete or a complete has finished: reload both lists on
+  /// success (a complete moves the plan between them), and say why on
+  /// failure (e.g. "A plan with this name already exists").
   void _onActionResult(BuildContext context, HadithPlanActionsState state) {
     if (state.status == HadithPlanActionStatus.success) {
       context.read<HadithPlansBloc>().add(const LoadHadithPlans());
+      context.read<HadithCompletedPlansBloc>().add(const LoadHadithPlans());
     } else if (state.status == HadithPlanActionStatus.failure) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -199,22 +219,13 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
                 SizedBox(height: 12.h),
                 Expanded(
                   child: _showCompletedPlans
-                      ? _PlanList(
-                          plans: _completedPlans,
-                          trailingBuilder: (_) => Text(
-                            appText.planStatusComplete,
-                            style: TextStyle(
-                              color: const Color(0xFFA1AD59),
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )
+                      ? _CompletedPlans(controller: _scrollController)
                       : _MyPlans(
                           controller: _scrollController,
                           onGetStart: _openPlan,
                           onEdit: _editPlan,
                           onDelete: _deletePlan,
+                          onComplete: _completePlan,
                         ),
                 ),
               ],
@@ -264,6 +275,7 @@ class _MyPlans extends StatelessWidget {
     required this.onGetStart,
     required this.onEdit,
     required this.onDelete,
+    required this.onComplete,
   });
 
   final ScrollController controller;
@@ -271,9 +283,10 @@ class _MyPlans extends StatelessWidget {
   /// "Get Start" on a plan: open its hadiths.
   final ValueChanged<_HadithPlan> onGetStart;
 
-  /// ⋮ > Edit and ⋮ > Delete on a plan.
+  /// ⋮ > Edit, ⋮ > Delete and ⋮ > Complete on a plan.
   final ValueChanged<_HadithPlan> onEdit;
   final ValueChanged<_HadithPlan> onDelete;
+  final ValueChanged<_HadithPlan> onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +356,11 @@ class _MyPlans extends StatelessWidget {
             child: Text(appText.getStart, style: TextStyle(fontSize: 12.sp)),
           ),
           SizedBox(width: 2.w),
-          _PlanMenu(onEdit: () => onEdit(plan), onDelete: () => onDelete(plan)),
+          _PlanMenu(
+            onEdit: () => onEdit(plan),
+            onDelete: () => onDelete(plan),
+            onComplete: () => onComplete(plan),
+          ),
         ],
       ),
       footer: state.isLoadingMore
@@ -357,6 +374,101 @@ class _MyPlans extends StatelessWidget {
               message: state.loadMoreFailure!.message,
               actionLabel: appText.tryAgain,
               onAction: () => context.read<HadithPlansBloc>().add(
+                const LoadMoreHadithPlans(),
+              ),
+            ),
+    );
+  }
+}
+
+/// The "My Complete" tab: the user's completed plans from the API
+/// (`status=completed`), with loading, error (retry) and empty states. Pages
+/// are loaded as the list nears its end. No ⋮ menu — Edit, Delete and
+/// Complete only apply to a plan still in progress.
+class _CompletedPlans extends StatelessWidget {
+  const _CompletedPlans({required this.controller});
+
+  final ScrollController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final state = context.watch<HadithCompletedPlansBloc>().state;
+
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.status == HadithPlansStatus.failure) {
+      return _PlanMessage(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () => context.read<HadithCompletedPlansBloc>().add(
+          const LoadHadithPlans(),
+        ),
+      );
+    }
+    if (state.plans.isEmpty) {
+      return Transform.translate(
+        offset: Offset(0, -34.h),
+        child: Text(
+          appText.noCompletedPlansMessage,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: const Color(0xFF989898),
+            fontSize: 13.sp,
+            height: 1.35,
+          ),
+        ),
+      );
+    }
+
+    // A page too short to scroll (or scrolling less than the load-more
+    // distance) would never fire the scroll listener, so keep pulling pages
+    // until the list is long enough to scroll on its own (or runs out).
+    if (state.hasMore &&
+        !state.isLoadingMore &&
+        state.loadMoreFailure == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted || !controller.hasClients) return;
+        if (controller.position.maxScrollExtent <= _loadMoreThreshold) {
+          context.read<HadithCompletedPlansBloc>().add(
+            const LoadMoreHadithPlans(),
+          );
+        }
+      });
+    }
+
+    return _PlanList(
+      controller: controller,
+      plans: [
+        for (final plan in state.plans)
+          _HadithPlan(
+            id: plan.id,
+            title: plan.name,
+            hadithCount: plan.totalHadiths,
+            percentage: plan.percentage,
+            targetDays: plan.targetDays,
+          ),
+      ],
+      trailingBuilder: (_) => Text(
+        appText.planStatusComplete,
+        style: TextStyle(
+          color: const Color(0xFFA1AD59),
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      footer: state.isLoadingMore
+          ? Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: const Center(child: CircularProgressIndicator()),
+            )
+          : state.loadMoreFailure == null
+          ? null
+          : _PlanMessage(
+              message: state.loadMoreFailure!.message,
+              actionLabel: appText.tryAgain,
+              onAction: () => context.read<HadithCompletedPlansBloc>().add(
                 const LoadMoreHadithPlans(),
               ),
             ),
@@ -429,20 +541,26 @@ class _HadithPlan {
   final int? targetDays;
 }
 
-enum _PlanAction { edit, delete }
+enum _PlanAction { edit, delete, complete }
 
-/// The ⋮ button of a plan: a menu with an Edit and a Delete entry, each with
-/// its icon.
+/// The ⋮ button of a plan: a menu with Edit, Delete and Complete entries,
+/// each with its icon.
 class _PlanMenu extends StatelessWidget {
-  const _PlanMenu({required this.onEdit, required this.onDelete});
+  const _PlanMenu({
+    required this.onEdit,
+    required this.onDelete,
+    required this.onComplete,
+  });
 
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     const deleteColor = Color(0xFFC15B4B);
+    const completeColor = Color(0xFF008000);
     return PopupMenuButton<_PlanAction>(
       tooltip: '',
       padding: EdgeInsets.zero,
@@ -462,6 +580,7 @@ class _PlanMenu extends StatelessWidget {
       onSelected: (action) => switch (action) {
         _PlanAction.edit => onEdit(),
         _PlanAction.delete => onDelete(),
+        _PlanAction.complete => onComplete(),
       },
       itemBuilder: (_) => [
         PopupMenuItem(
@@ -475,6 +594,23 @@ class _PlanMenu extends StatelessWidget {
               ),
               SizedBox(width: 10.w),
               Text(appText.planEdit),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: _PlanAction.complete,
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                size: 18.sp,
+                color: completeColor,
+              ),
+              SizedBox(width: 10.w),
+              Text(
+                appText.planComplete,
+                style: const TextStyle(color: completeColor),
+              ),
             ],
           ),
         ),

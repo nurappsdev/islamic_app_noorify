@@ -100,9 +100,16 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// targetDays?}`. Answers 201 on success.
   Future<void> createPlan(HadithPlanDraft draft);
 
-  /// `PATCH /hadiths/plans/{id}` (needs the login token): renames the plan
-  /// and / or changes its target days. 409 when the new name is taken.
-  Future<void> updatePlan(String id, {String? name, int? targetDays});
+  /// `PATCH /hadiths/plans/{id}` (needs the login token): renames the plan,
+  /// changes its target days, and / or its [status] (`completed`, to mark it
+  /// done — moving it from "My Plan" to "My Complete"). 409 when the new name
+  /// is taken.
+  Future<void> updatePlan(
+    String id, {
+    String? name,
+    int? targetDays,
+    String? status,
+  });
 
   /// `DELETE /hadiths/plans/{id}` (needs the login token): removes the plan;
   /// its name becomes free again.
@@ -432,13 +439,17 @@ class HadithLibraryRemoteDataSourceImpl
   );
 
   @override
-  Future<void> updatePlan(String id, {String? name, int? targetDays}) =>
-      _sendAuthed(
-        'PATCH',
-        ApiConstants.hadithPlanEndPoint(id),
-        // Only what changes; the API leaves the rest as it is.
-        data: {'name': ?name, 'targetDays': ?targetDays},
-      );
+  Future<void> updatePlan(
+    String id, {
+    String? name,
+    int? targetDays,
+    String? status,
+  }) => _sendAuthed(
+    'PATCH',
+    ApiConstants.hadithPlanEndPoint(id),
+    // Only what changes; the API leaves the rest as it is.
+    data: {'name': ?name, 'targetDays': ?targetDays, 'status': ?status},
+  );
 
   @override
   Future<void> deletePlan(String id) =>
