@@ -377,10 +377,11 @@ class _HadithDetailViewState extends State<_HadithDetailView>
       ..stop();
   }
 
-  /// Back button / gesture. Collects every hadith read for more than 30
-  /// seconds and not yet reported, and — if there are any — asks whether to
-  /// mark them all as read. Yes reports them (one batched call); No reports
-  /// nothing at all. Otherwise leaves straight away.
+  /// Back button / gesture. Collects every hadith read for more than
+  /// [HadithReadingConfig.minSeconds] and not yet reported, and — if there
+  /// are any — asks whether to mark them all as read. Yes reports them (one
+  /// batched call); No reports nothing at all. Otherwise leaves straight
+  /// away.
   Future<void> _handleExit() async {
     if (_leaving) return;
     _leaving = true;

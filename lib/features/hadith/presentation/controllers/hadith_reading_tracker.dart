@@ -11,7 +11,7 @@ abstract final class HadithReadingConfig {
   /// before it counts as a candidate to report: the leave dialog offers to
   /// mark it read, and its Yes checkbox becomes visible. At or below it,
   /// nothing is reported for that hadith.
-  static const minSeconds = 30;
+  static const minSeconds = 20;
 
   /// Once a hadith has been in focus for this many seconds, the screen asks
   /// "Your reading time is complete" on its own, without waiting for the

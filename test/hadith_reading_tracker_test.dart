@@ -59,17 +59,17 @@ void main() {
     }
   }
 
-  test('30 seconds or less: not a candidate, nothing sent', () {
-    spend(20, on: 'a');
+  test('20 seconds or less: not a candidate, nothing sent', () {
+    spend(15, on: 'a');
     expect(tracker.shouldAskOnLeave, isFalse);
-    spend(10, on: 'a'); // exactly 30
-    expect(tracker.elapsedSeconds, 30);
+    spend(5, on: 'a'); // exactly 20
+    expect(tracker.elapsedSeconds, 20);
     expect(tracker.shouldAskOnLeave, isFalse);
     expect(repo.calls, isEmpty);
   });
 
-  test('more than 30 seconds: it becomes a candidate', () {
-    spend(31, on: 'a');
+  test('more than 20 seconds: it becomes a candidate', () {
+    spend(21, on: 'a');
     expect(tracker.shouldAskOnLeave, isTrue);
     expect(tracker.reportCandidates, ['a']);
   });
