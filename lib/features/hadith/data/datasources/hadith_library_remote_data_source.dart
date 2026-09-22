@@ -44,11 +44,12 @@ abstract interface class HadithLibraryRemoteDataSource {
     String? searchTerm,
   });
 
-  /// `POST /hadiths/reading/track` (needs the login token): reports the
-  /// [seconds] spent reading one hadith on [date] (`YYYY-MM-DD`), and whether
-  /// it was [completed]. Body: `{hadithId, seconds, completed, date}`.
+  /// `POST /learning/reading/track` (needs the login token): reports the
+  /// [seconds] spent reading [hadithIds] on [date] (`YYYY-MM-DD`), and
+  /// whether they were [completed]. Body:
+  /// `{hadithIds, seconds, completed, date}`.
   Future<void> trackReading({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required String date,
@@ -216,7 +217,7 @@ class HadithLibraryRemoteDataSourceImpl
 
   @override
   Future<void> trackReading({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required String date,
@@ -227,7 +228,7 @@ class HadithLibraryRemoteDataSourceImpl
       response = await _dio.post<dynamic>(
         ApiConstants.hadithReadingTrackEndPoint,
         data: {
-          'hadithId': hadithId,
+          'hadithIds': hadithIds,
           'seconds': seconds,
           'completed': completed,
           'date': date,

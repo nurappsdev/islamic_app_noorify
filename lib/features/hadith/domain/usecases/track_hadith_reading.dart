@@ -3,19 +3,20 @@ import 'package:dartz/dartz.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
 
-/// Reports how long a hadith was actively read, and whether it was completed.
+/// Reports how long one or more hadiths were actively read, and whether they
+/// were completed.
 class TrackHadithReading {
   const TrackHadithReading(this._repository);
 
   final HadithLibraryRepository _repository;
 
   Future<Either<Failure, Unit>> call({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required DateTime date,
   }) => _repository.trackReading(
-    hadithId: hadithId,
+    hadithIds: hadithIds,
     seconds: seconds,
     completed: completed,
     date: _formatDate(date),

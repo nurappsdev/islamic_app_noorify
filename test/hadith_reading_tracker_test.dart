@@ -10,8 +10,8 @@ import 'package:islami_app_noorify/features/hadith/presentation/controllers/hadi
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Call {
-  _Call(this.hadithId, this.seconds, this.completed, this.date);
-  final String hadithId;
+  _Call(this.hadithIds, this.seconds, this.completed, this.date);
+  final List<String> hadithIds;
   final int seconds;
   final bool completed;
   final String date;
@@ -26,12 +26,12 @@ class _FakeRepository implements HadithLibraryRepository {
 
   @override
   Future<Either<Failure, Unit>> trackReading({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required String date,
   }) async {
-    calls.add(_Call(hadithId, seconds, completed, date));
+    calls.add(_Call(hadithIds, seconds, completed, date));
     await gate?.future;
     return fail ? const Left(NetworkFailure('offline')) : const Right(unit);
   }
@@ -59,7 +59,7 @@ void main() {
     }
   }
 
-  test('30 seconds or less: no dialog, nothing sent', () {
+  test('30 seconds or less: not a candidate, nothing sent', () {
     spend(20, on: 'a');
     expect(tracker.shouldAskOnLeave, isFalse);
     spend(10, on: 'a'); // exactly 30
@@ -68,13 +68,13 @@ void main() {
     expect(repo.calls, isEmpty);
   });
 
-  test('more than 30 seconds: the dialog is asked', () {
+  test('more than 30 seconds: it becomes a candidate', () {
     spend(31, on: 'a');
     expect(tracker.shouldAskOnLeave, isTrue);
-    expect(tracker.reportCandidate, 'a');
+    expect(tracker.reportCandidates, ['a']);
   });
 
-  test('no dialog when no hadith was ever in focus', () {
+  test('no candidates when no hadith was ever in focus', () {
     spend(45);
     expect(tracker.elapsedSeconds, 45);
     expect(tracker.shouldAskOnLeave, isFalse);
@@ -89,38 +89,71 @@ void main() {
     expect(tracker.elapsedSeconds, 15);
   });
 
-  test('attributes the time to the hadith in focus the longest', () {
-    spend(10, on: 'a');
-    spend(25, on: 'b');
-    spend(5, on: 'a');
-    expect(tracker.elapsedSeconds, 40);
-    expect(tracker.reportCandidate, 'b');
+  test('each hadith accrues its own dwell time', () {
+    spend(35, on: 'a');
+    spend(40, on: 'b');
+    expect(tracker.dwellSeconds('a'), 35);
+    expect(tracker.dwellSeconds('b'), 40);
+    expect(tracker.reportCandidates, unorderedEquals(['a', 'b']));
   });
 
-  test('Yes sends the total time with completed true, once', () async {
-    spend(45, on: 'a');
-    expect(await tracker.complete('a'), HadithCompletion.done);
+  test(
+    'completing a hadith reports it, marks it completed, and its timer stops',
+    () async {
+      spend(45, on: 'a');
+      expect(await tracker.complete('a'), HadithCompletion.done);
 
+      expect(repo.calls, hasLength(1));
+      expect(repo.calls.single.hadithIds, ['a']);
+      expect(repo.calls.single.seconds, 45);
+      expect(repo.calls.single.completed, isTrue);
+      expect(repo.calls.single.date, '2026-09-20');
+      expect(tracker.isCompleted('a'), isTrue);
+      expect(tracker.shouldAskOnLeave, isFalse); // already reported
+
+      // The timer for 'a' has stopped: further ticks don't add dwell time.
+      spend(10, on: 'a');
+      expect(tracker.dwellSeconds('a'), 45);
+
+      expect(await tracker.complete('a'), HadithCompletion.alreadyCompleted);
+      expect(repo.calls, hasLength(1));
+    },
+  );
+
+  test('a batch submit reports the sum of each hadith\'s dwell seconds', () async {
+    spend(35, on: 'a');
+    spend(40, on: 'b');
+    expect(
+      await tracker.submit(['a', 'b'], completed: true),
+      HadithCompletion.done,
+    );
     expect(repo.calls, hasLength(1));
-    expect(repo.calls.single.hadithId, 'a');
-    expect(repo.calls.single.seconds, 45);
-    expect(repo.calls.single.completed, isTrue);
-    expect(repo.calls.single.date, '2026-09-20');
+    expect(repo.calls.single.hadithIds, ['a', 'b']);
+    expect(repo.calls.single.seconds, 75);
     expect(tracker.isCompleted('a'), isTrue);
-    expect(tracker.shouldAskOnLeave, isFalse); // already reported
-
-    expect(await tracker.complete('a'), HadithCompletion.alreadyCompleted);
-    expect(repo.calls, hasLength(1));
+    expect(tracker.isCompleted('b'), isTrue);
   });
 
-  test('No sends the same time with completed false', () async {
-    spend(70, on: 'a');
-    expect(await tracker.submit('a', completed: false), HadithCompletion.done);
-    expect(repo.calls.single.seconds, 70);
-    expect(repo.calls.single.completed, isFalse);
-    expect(tracker.isCompleted('a'), isFalse);
-    expect(tracker.shouldAskOnLeave, isFalse);
-  });
+  test(
+    'a batch submit drops ids already completed, and sends nothing once none are left',
+    () async {
+      spend(35, on: 'a');
+      spend(40, on: 'b');
+      await tracker.complete('a');
+
+      expect(
+        await tracker.submit(['a', 'b'], completed: true),
+        HadithCompletion.done,
+      );
+      expect(repo.calls.last.hadithIds, ['b']); // 'a' already done, dropped
+
+      expect(
+        await tracker.submit(['a', 'b'], completed: true),
+        HadithCompletion.alreadyCompleted,
+      );
+      expect(repo.calls, hasLength(2)); // no third call
+    },
+  );
 
   test('a second tap while the first is in flight sends nothing', () async {
     spend(40, on: 'a');
@@ -136,19 +169,23 @@ void main() {
     repo.fail = true;
     expect(await tracker.complete('a'), HadithCompletion.failed);
     expect(tracker.isCompleted('a'), isFalse);
-    expect(tracker.shouldAskOnLeave, isTrue);
+    expect(tracker.reportCandidates, contains('a'));
 
     repo.fail = false;
     expect(await tracker.complete('a'), HadithCompletion.done);
     expect(repo.calls.last.seconds, 40);
   });
 
-  test('a later report sends only the time since the last one', () async {
-    spend(12, on: 'a');
-    await tracker.complete('a'); // Complete button after 12 s
-    spend(20, on: 'b');
+  test('each hadith is reported independently, one at a time', () async {
+    spend(35, on: 'a');
+    await tracker.complete('a');
+    spend(40, on: 'b');
     await tracker.complete('b');
-    expect(repo.calls.map((c) => c.seconds), [12, 20]);
+    expect(repo.calls.map((c) => c.hadithIds), [
+      ['a'],
+      ['b'],
+    ]);
+    expect(repo.calls.map((c) => c.seconds), [35, 40]);
   });
 
   test('completed hadiths are remembered across sessions', () async {
@@ -214,11 +251,11 @@ void main() {
       fakeAsync((async) {
         tracker.start(() => 'a');
         async.elapse(const Duration(seconds: 40));
-        expect(tracker.reportCandidate, 'a');
+        expect(tracker.reportCandidates, ['a']);
 
         tracker.dispose();
         expect(async.pendingTimers, isEmpty);
-        expect(tracker.reportCandidate, isNull); // dwell cleared
+        expect(tracker.reportCandidates, isEmpty); // dwell cleared
         async.elapse(const Duration(seconds: 60));
         expect(tracker.elapsedSeconds, 40); // nothing kept counting
 

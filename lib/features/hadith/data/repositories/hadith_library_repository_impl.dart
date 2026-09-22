@@ -115,14 +115,14 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
 
   @override
   Future<Either<Failure, Unit>> trackReading({
-    required String hadithId,
+    required List<String> hadithIds,
     required int seconds,
     required bool completed,
     required String date,
   }) async {
     try {
       await _remote.trackReading(
-        hadithId: hadithId,
+        hadithIds: hadithIds,
         seconds: seconds,
         completed: completed,
         date: date,
