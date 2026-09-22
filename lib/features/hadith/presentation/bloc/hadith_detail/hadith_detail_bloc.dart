@@ -17,6 +17,7 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   final GetHadithDetails _getHadithDetails;
   String? _subCategoryId;
   String? _bookId;
+  String? _categoryId;
   String? _planId;
 
   /// Bumped for every fresh first-page load so a slow, superseded response
@@ -29,12 +30,14 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   ) async {
     _subCategoryId = event.subCategoryId;
     _bookId = event.bookId;
+    _categoryId = event.categoryId;
     _planId = event.planId;
     final generation = ++_generation;
     emit(const HadithDetailState(status: HadithDetailStatus.loading));
     final result = await _getHadithDetails(
       subCategoryId: _subCategoryId,
       bookId: _bookId,
+      categoryId: _categoryId,
       planId: _planId,
     );
     if (generation != _generation) return;
@@ -67,6 +70,7 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
     final result = await _getHadithDetails(
       subCategoryId: _subCategoryId,
       bookId: _bookId,
+      categoryId: _categoryId,
       planId: _planId,
       page: state.page + 1,
     );

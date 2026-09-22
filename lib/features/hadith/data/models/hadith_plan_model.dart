@@ -12,6 +12,8 @@ class HadithPlanModel extends HadithPlan {
     required super.completedHadiths,
     required super.percentage,
     required super.isCompleted,
+    super.bookId,
+    super.categoryIds,
     super.targetDays,
   });
 
@@ -19,11 +21,27 @@ class HadithPlanModel extends HadithPlan {
   factory HadithPlanModel.fromJson(Map<String, dynamic> json) {
     final counts = _map(json['counts']);
     final target = (json['targetDays'] as num?)?.toInt();
+    // `bookId` may come populated (an object with `_id`) or as a plain id.
+    final rawBookId = json['bookId'];
+    final bookId = rawBookId is Map<String, dynamic>
+        ? rawBookId['_id']?.toString()
+        : rawBookId?.toString();
+    final rawCategoryIds = json['categoryIds'];
     return HadithPlanModel(
       id: (json['_id'] ?? json['id'])?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       targetDays: target != null && target > 0 ? target : null,
+      bookId: bookId != null && bookId.isNotEmpty ? bookId : null,
+      categoryIds: rawCategoryIds is List
+          ? [
+              for (final entry in rawCategoryIds)
+                if (entry is Map<String, dynamic>)
+                  entry['_id']?.toString() ?? ''
+                else
+                  entry?.toString() ?? '',
+            ].where((id) => id.isNotEmpty).toList()
+          : const [],
       totalHadiths: (counts['totalHadiths'] as num?)?.toInt() ?? 0,
       completedHadiths: (counts['completedHadiths'] as num?)?.toInt() ?? 0,
       percentage: ((counts['percentage'] as num?)?.toDouble() ?? 0)

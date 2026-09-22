@@ -112,15 +112,25 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
     }
   }
 
-  /// "Get Start": opens the plan's hadiths. Reading there moves the plan's
+  /// "Get Start": opens the plan's hadiths. The plan's own hadiths endpoint
+  /// (`GET /hadiths/plans/{id}/hadiths`) comes back without the hadith
+  /// content, so this opens the same book + category through the public
+  /// hadiths list instead (`GET /hadiths?bookId=...&categoryId=...`), which
+  /// is what the plan was created from. Reading there moves the plan's
   /// progress, so the list reloads when the user comes back.
   Future<void> _openPlan(_HadithPlan plan) async {
     final id = plan.id;
-    if (id == null) return;
+    final bookId = plan.bookId;
+    final categoryId = plan.categoryId;
+    if (id == null || bookId == null || categoryId == null) return;
     final bloc = context.read<HadithPlansBloc>();
     await Navigator.of(context).pushNamed(
       RouteNames.hadithDetail,
-      arguments: HadithDetailArgs(planId: id, title: plan.title),
+      arguments: HadithDetailArgs(
+        bookId: bookId,
+        categoryId: categoryId,
+        title: plan.title,
+      ),
     );
     if (!bloc.isClosed) bloc.add(const LoadHadithPlans());
   }
@@ -308,6 +318,8 @@ class _MyPlans extends StatelessWidget {
         for (final plan in state.plans)
           _HadithPlan(
             id: plan.id,
+            bookId: plan.bookId,
+            categoryId: plan.categoryIds.firstOrNull,
             title: plan.name,
             hadithCount: plan.totalHadiths,
             percentage: plan.percentage,
@@ -394,6 +406,8 @@ class _HadithPlan {
     required this.title,
     required this.hadithCount,
     this.id,
+    this.bookId,
+    this.categoryId,
     this.percentage,
     this.targetDays,
   });
@@ -401,6 +415,12 @@ class _HadithPlan {
   final String? id;
   final String title;
   final int hadithCount;
+
+  /// The book and category "Get Start" opens (`GET
+  /// /hadiths?bookId=...&categoryId=...`); null for the static "Complete
+  /// Plan" examples, which can't be opened.
+  final String? bookId;
+  final String? categoryId;
 
   /// How much of the plan has been read (`0..100`); null when unknown.
   final double? percentage;
