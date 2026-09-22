@@ -290,20 +290,24 @@ class AppRoutes {
         // The intro only the first time; the library from then on.
         return _page(const HadithEntryScreen(), settings);
       case RouteNames.hadithLibrary:
-        return _page(const HadithLibraryScreen(), settings);
+        // No page transition: these four are the Hadith flow's bottom-nav
+        // tabs, switched via HadithBottomNav — an animated slide/fade would
+        // drag the (identically positioned) nav bar along with it, making it
+        // look like it jumps instead of staying put.
+        return _instantPage(const HadithLibraryScreen(), settings);
       case RouteNames.hadithLibraryList:
         return _page(const HadithLibraryListScreen(), settings);
       case RouteNames.hadithPlanner:
-        return _page(const HadithPlannerScreen(), settings);
+        return _instantPage(const HadithPlannerScreen(), settings);
       case RouteNames.hadithCreatePlan:
         return MaterialPageRoute<String>(
           builder: (_) => const HadithCreatePlanScreen(),
           settings: settings,
         );
       case RouteNames.hadithSaved:
-        return _page(const HadithSavedScreen(), settings);
+        return _instantPage(const HadithSavedScreen(), settings);
       case RouteNames.hadithDashboard:
-        return _page(const HadithDashboardScreen(), settings);
+        return _instantPage(const HadithDashboardScreen(), settings);
       case RouteNames.hadithReadingHistory:
         return _page(const HadithReadingHistoryScreen(), settings);
       case RouteNames.hadithCategory:
@@ -433,5 +437,20 @@ class AppRoutes {
     RouteSettings settings,
   ) {
     return MaterialPageRoute<void>(builder: (_) => child, settings: settings);
+  }
+
+  /// Like [_page], but swaps in [child] immediately instead of animating —
+  /// for routes that replace one another in place (e.g. a bottom-nav tab bar
+  /// that must not appear to move).
+  static PageRouteBuilder<dynamic> _instantPage(
+    Widget child,
+    RouteSettings settings,
+  ) {
+    return PageRouteBuilder<void>(
+      settings: settings,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+      pageBuilder: (_, _, _) => child,
+    );
   }
 }
