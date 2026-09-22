@@ -112,12 +112,14 @@ abstract interface class HadithLibraryRemoteDataSource {
   /// read most recently, or null when the user has not read any yet.
   Future<HadithLastReadModel?> getLastRead();
 
-  /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId` or
-  /// `bookId`; or, with [planId], `GET /hadiths/plans/{planId}/hadiths` (needs
-  /// the login token): the hadiths of one plan.
+  /// `GET /hadiths?page=...&limit=...` filtered by `subCategoryId`,
+  /// `categoryId` or `bookId`; or, with [planId], `GET
+  /// /hadiths/plans/{planId}/hadiths` (needs the login token): the hadiths of
+  /// one plan.
   Future<HadithDetailPageModel> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? categoryId,
     String? planId,
     required int page,
     required int limit,
@@ -199,6 +201,7 @@ class HadithLibraryRemoteDataSourceImpl
   Future<HadithDetailPageModel> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? categoryId,
     String? planId,
     required int page,
     required int limit,
@@ -218,6 +221,7 @@ class HadithLibraryRemoteDataSourceImpl
     final envelope = await _getList(ApiConstants.hadithsEndPoint, {
       'subCategoryId': ?subCategoryId,
       'bookId': ?bookId,
+      'categoryId': ?categoryId,
       'page': page,
       'limit': limit,
     }, 'Hadiths');

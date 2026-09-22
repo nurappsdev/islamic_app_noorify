@@ -39,14 +39,25 @@ class HadithDetailArgs {
   const HadithDetailArgs({
     this.subCategoryId,
     this.bookId,
+    this.categoryId,
     this.planId,
     this.title,
     this.initialHadithId,
     this.initialHadithNumber,
-  }) : assert(subCategoryId != null || bookId != null || planId != null);
+  }) : assert(
+         subCategoryId != null ||
+             bookId != null ||
+             categoryId != null ||
+             planId != null,
+       );
 
   final String? subCategoryId;
   final String? bookId;
+
+  /// A whole category's hadiths, e.g. a reading plan's ("Get Start" uses
+  /// [bookId] and this together, since the plan's own hadiths endpoint is
+  /// unreliable).
+  final String? categoryId;
 
   /// A reading plan whose hadiths are listed (each with its read state).
   final String? planId;
@@ -59,7 +70,9 @@ class HadithDetailArgs {
 }
 
 /// The hadiths of one sub-category (`GET /hadiths?subCategoryId=...`), of a
-/// whole book (`GET /hadiths?bookId=...`) or of a reading plan
+/// whole category (`GET /hadiths?bookId=...&categoryId=...` — how a reading
+/// plan's "Get Start" opens its hadiths), of a whole book
+/// (`GET /hadiths?bookId=...`), or of a reading plan
 /// (`GET /hadiths/plans/{planId}/hadiths`).
 ///
 /// Reached by tapping a row on [HadithSubCategoryScreen], the "Total
@@ -72,6 +85,7 @@ class HadithDetailScreen extends StatelessWidget {
     super.key,
     this.subCategoryId,
     this.bookId,
+    this.categoryId,
     this.planId,
     this.title,
     this.initialHadithId,
@@ -80,6 +94,7 @@ class HadithDetailScreen extends StatelessWidget {
 
   final String? subCategoryId;
   final String? bookId;
+  final String? categoryId;
   final String? planId;
   final String? title;
 
@@ -101,12 +116,14 @@ class HadithDetailScreen extends StatelessWidget {
             LoadHadithDetails(
               subCategoryId: subCategoryId,
               bookId: bookId,
+              categoryId: categoryId,
               planId: planId,
             ),
           ),
       child: _HadithDetailView(
         subCategoryId: subCategoryId,
         bookId: bookId,
+        categoryId: categoryId,
         planId: planId,
         title: title,
         initialHadithId: initialHadithId,
@@ -120,6 +137,7 @@ class _HadithDetailView extends StatefulWidget {
   const _HadithDetailView({
     this.subCategoryId,
     this.bookId,
+    this.categoryId,
     this.planId,
     this.title,
     this.initialHadithId,
@@ -128,6 +146,7 @@ class _HadithDetailView extends StatefulWidget {
 
   final String? subCategoryId;
   final String? bookId;
+  final String? categoryId;
   final String? planId;
   final String? title;
   final String? initialHadithId;
@@ -563,6 +582,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                 LoadHadithDetails(
                   subCategoryId: widget.subCategoryId,
                   bookId: widget.bookId,
+                  categoryId: widget.categoryId,
                   planId: widget.planId,
                 ),
               ),

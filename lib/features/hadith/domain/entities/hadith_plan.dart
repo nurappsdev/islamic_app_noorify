@@ -8,11 +8,21 @@ class HadithPlan {
     required this.completedHadiths,
     required this.percentage,
     required this.isCompleted,
+    this.bookId,
+    this.categoryIds = const [],
     this.targetDays,
   });
 
   final String id;
   final String name;
+
+  /// The book this plan's hadiths come from; null if the API left it out.
+  final String? bookId;
+
+  /// The categories this plan covers, so "Get Start" can open their hadiths
+  /// (`GET /hadiths?bookId=...&categoryId=...`) — the plan's own hadiths
+  /// endpoint is unreliable.
+  final List<String> categoryIds;
 
   /// `in_progress`, `completed` or `abandoned`.
   final String status;

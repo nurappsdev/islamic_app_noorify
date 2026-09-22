@@ -3,13 +3,19 @@ abstract class HadithDetailEvent {
 }
 
 /// Loads (or reloads) the first page of the hadiths of a sub-category, of a
-/// whole book or of a reading plan — pass one of [subCategoryId] / [bookId] /
-/// [planId].
+/// whole category, of a whole book or of a reading plan — pass one of
+/// [subCategoryId] / [categoryId] / [bookId] / [planId].
 class LoadHadithDetails extends HadithDetailEvent {
-  const LoadHadithDetails({this.subCategoryId, this.bookId, this.planId});
+  const LoadHadithDetails({
+    this.subCategoryId,
+    this.bookId,
+    this.categoryId,
+    this.planId,
+  });
 
   final String? subCategoryId;
   final String? bookId;
+  final String? categoryId;
   final String? planId;
 }
 

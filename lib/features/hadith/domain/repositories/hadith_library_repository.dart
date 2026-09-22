@@ -118,13 +118,15 @@ abstract interface class HadithLibraryRepository {
   Future<Either<Failure, HadithLastRead?>> getLastRead();
 
   /// One page of the hadiths of a sub-category
-  /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`) or of a whole book
-  /// (`...&bookId=...`), in display order; or of one reading plan
+  /// (`GET /hadiths?subCategoryId=...&page=...&limit=...`), of a whole
+  /// category (`...&categoryId=...`) or of a whole book (`...&bookId=...`),
+  /// in display order; or of one reading plan
   /// (`GET /hadiths/plans/{planId}/hadiths`, needs the login token). Pass one
-  /// of [subCategoryId] / [bookId] / [planId].
+  /// of [subCategoryId] / [categoryId] / [bookId] / [planId].
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? categoryId,
     String? planId,
     required int page,
     required int limit,

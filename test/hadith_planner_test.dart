@@ -68,6 +68,8 @@ HadithPlan _plan(int i) => HadithPlan(
   completedHadiths: 0,
   percentage: 0,
   isCompleted: false,
+  bookId: 'book$i',
+  categoryIds: ['cat$i'],
 );
 
 /// Serves [total] plans, [limit] per page, and remembers every request.
@@ -145,6 +147,9 @@ void main() {
       expect(page.plans.first.id, '6ab123dc0a38d3cb8f0c54cd');
       expect(page.plans.first.status, 'in_progress');
       expect(page.plans.first.isCompleted, isFalse);
+      // `bookId` comes populated (an object); `categoryIds` are plain ids.
+      expect(page.plans.first.bookId, '6aae74f6ac63e38856600b06');
+      expect(page.plans.first.categoryIds, ['6aaf545bac63e38856601db0']);
       expect(page.total, 2);
       expect(page.hasMore, isFalse);
     });
@@ -574,11 +579,13 @@ void main() {
         await tester.pumpAndSettle();
 
         final args = arguments as HadithDetailArgs;
-        expect(args.planId, 'p2');
+        // The plan's own hadiths endpoint comes back without hadith content,
+        // so "Get Start" opens the same book + category instead.
+        expect(args.bookId, 'book2');
+        expect(args.categoryId, 'cat2');
         expect(args.title, 'Plan 2');
-        // A plan, so neither a sub-category nor a book.
         expect(args.subCategoryId, isNull);
-        expect(args.bookId, isNull);
+        expect(args.planId, isNull);
 
         // Reading there moves the progress: coming back reloads the plans.
         expect(repo.requests, hasLength(1));

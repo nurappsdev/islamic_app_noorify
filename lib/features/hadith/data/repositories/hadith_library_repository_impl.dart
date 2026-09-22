@@ -307,6 +307,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
+    String? categoryId,
     String? planId,
     required int page,
     required int limit,
@@ -316,6 +317,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
         await _remote.getHadiths(
           subCategoryId: subCategoryId,
           bookId: bookId,
+          categoryId: categoryId,
           planId: planId,
           page: page,
           limit: limit,
