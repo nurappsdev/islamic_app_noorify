@@ -266,7 +266,10 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     String id, {
     String? name,
     int? targetDays,
-  }) => _unit(() => _remote.updatePlan(id, name: name, targetDays: targetDays));
+    String? status,
+  }) => _unit(
+    () => _remote.updatePlan(id, name: name, targetDays: targetDays, status: status),
+  );
 
   @override
   Future<Either<Failure, Unit>> deletePlan(String id) =>

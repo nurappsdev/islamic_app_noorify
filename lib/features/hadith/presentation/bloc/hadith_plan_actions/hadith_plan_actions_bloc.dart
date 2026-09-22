@@ -11,8 +11,9 @@ import 'hadith_plan_actions_state.dart';
 export 'hadith_plan_actions_event.dart';
 export 'hadith_plan_actions_state.dart';
 
-/// Editing and deleting a plan from the planner's ⋮ menu. Each ends in
-/// `success` (the planner reloads its list) or `failure` (it shows why).
+/// Editing, deleting and completing a plan from the planner's ⋮ menu. Each
+/// ends in `success` (the planner reloads its lists) or `failure` (it shows
+/// why).
 class HadithPlanActionsBloc
     extends Bloc<HadithPlanActionsEvent, HadithPlanActionsState> {
   HadithPlanActionsBloc(this._update, this._delete)
@@ -25,6 +26,10 @@ class HadithPlanActionsBloc
     );
     on<DeleteHadithPlanRequested>(
       (event, emit) => _run(emit, () => _delete(event.id)),
+    );
+    on<CompleteHadithPlanRequested>(
+      (event, emit) =>
+          _run(emit, () => _update(event.id, status: 'completed')),
     );
   }
 

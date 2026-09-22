@@ -72,35 +72,62 @@ HadithPlan _plan(int i) => HadithPlan(
   categoryIds: ['cat$i'],
 );
 
-/// Serves [total] plans, [limit] per page, and remembers every request.
+/// Serves [total] plans (all `in_progress` to start), [limit] per page,
+/// remembers every request, and applies `updatePlan` / `deletePlan` to its
+/// own plans so `getPlans` reflects them afterwards — e.g. completing a plan
+/// really does move it from one status's page to the other's.
 class _FakeRepository implements HadithLibraryRepository {
-  _FakeRepository({this.total = 0, this.failure});
+  _FakeRepository({this.total = 0, this.failure})
+    : _plans = [for (var i = 1; i <= total; i++) _plan(i)];
 
   final int total;
   Failure? failure;
   final requests = <({String? status, int page, int limit})>[];
 
   /// The edits and deletes the planner sent, and what answering them does.
-  final updates = <({String id, String? name, int? targetDays})>[];
+  final updates =
+      <({String id, String? name, int? targetDays, String? status})>[];
   final deletes = <String>[];
   Failure? actionFailure;
+
+  final List<HadithPlan> _plans;
 
   @override
   Future<Either<Failure, Unit>> updatePlan(
     String id, {
     String? name,
     int? targetDays,
+    String? status,
   }) async {
-    updates.add((id: id, name: name, targetDays: targetDays));
+    updates.add((id: id, name: name, targetDays: targetDays, status: status));
     final error = actionFailure;
-    return error == null ? const Right(unit) : Left(error);
+    if (error != null) return Left(error);
+    final index = _plans.indexWhere((p) => p.id == id);
+    if (index != -1) {
+      final current = _plans[index];
+      _plans[index] = HadithPlan(
+        id: current.id,
+        name: name ?? current.name,
+        status: status ?? current.status,
+        targetDays: targetDays ?? current.targetDays,
+        totalHadiths: current.totalHadiths,
+        completedHadiths: current.completedHadiths,
+        percentage: current.percentage,
+        isCompleted: current.isCompleted,
+        bookId: current.bookId,
+        categoryIds: current.categoryIds,
+      );
+    }
+    return const Right(unit);
   }
 
   @override
   Future<Either<Failure, Unit>> deletePlan(String id) async {
     deletes.add(id);
     final error = actionFailure;
-    return error == null ? const Right(unit) : Left(error);
+    if (error != null) return Left(error);
+    _plans.removeWhere((p) => p.id == id);
+    return const Right(unit);
   }
 
   @override
@@ -112,14 +139,17 @@ class _FakeRepository implements HadithLibraryRepository {
     requests.add((status: status, page: page, limit: limit));
     final error = failure;
     if (error != null) return Left(error);
+    final matching = status == null
+        ? _plans
+        : _plans.where((p) => p.status == status).toList();
     final first = (page - 1) * limit;
-    final count = (total - first).clamp(0, limit);
+    final count = (matching.length - first).clamp(0, limit);
     return Right(
       HadithPlanPage(
-        plans: [for (var i = first; i < first + count; i++) _plan(i + 1)],
+        plans: matching.sublist(first, first + count),
         page: page,
-        totalPage: (total / limit).ceil(),
-        total: total,
+        totalPage: (matching.length / limit).ceil(),
+        total: matching.length,
       ),
     );
   }
@@ -268,7 +298,7 @@ void main() {
         expect(find.text('11 Hadith · 0%'), findsOneWidget);
         expect(find.text('12 Hadith · 0%'), findsOneWidget);
         // The list came from the API, asking for in-progress plans.
-        expect(repo.requests.first.status, 'in_progress');
+        expect(repo.requests.map((r) => r.status), contains('in_progress'));
       },
     );
 
@@ -296,7 +326,7 @@ void main() {
       }
 
       expect(find.text('Plan 1'), findsOneWidget);
-      expect(repo.requests, hasLength(2));
+      expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(2));
     });
 
     testWidgets('creating a plan reloads the list', (tester) async {
@@ -314,7 +344,7 @@ void main() {
           ),
         },
       );
-      expect(repo.requests, hasLength(1));
+      expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
 
       await tester.tap(find.text('Create Plan'));
       await tester.pumpAndSettle();
@@ -324,7 +354,7 @@ void main() {
       }
 
       // Back on the planner, which asked the API again.
-      expect(repo.requests, hasLength(2));
+      expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(2));
       expect(find.text('Plan 1'), findsOneWidget);
     });
 
@@ -350,7 +380,7 @@ void main() {
       await tester.tap(find.text('back'));
       await tester.pumpAndSettle();
 
-      expect(repo.requests, hasLength(1));
+      expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
     });
 
     /// Opens the ⋮ menu of the first plan.
@@ -367,7 +397,9 @@ void main() {
     }
 
     group('the ⋮ menu', () {
-      testWidgets('offers Edit and Delete, each with its icon', (tester) async {
+      testWidgets('offers Edit, Complete and Delete, each with its icon', (
+        tester,
+      ) async {
         await pumpPlanner(tester, _FakeRepository(total: 2));
         // Before opening: no menu entries yet.
         expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
@@ -376,7 +408,12 @@ void main() {
 
         expect(find.text('Edit'), findsOneWidget);
         expect(find.text('Delete'), findsOneWidget);
+        expect(find.text('Complete'), findsOneWidget);
         expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
+        expect(
+          find.byIcon(Icons.check_circle_outline_rounded),
+          findsOneWidget,
+        );
         // The pencil is also on the "Create Plan" button: 2 = it + the menu.
         expect(find.byIcon(Icons.edit_outlined), findsNWidgets(2));
       });
@@ -400,7 +437,7 @@ void main() {
 
         expect(repo.deletes, ['p1']);
         // Reloaded: the first load plus one after the delete.
-        expect(repo.requests, hasLength(2));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(2));
       });
 
       testWidgets('cancelling the question deletes nothing', (tester) async {
@@ -414,7 +451,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(repo.deletes, isEmpty);
-        expect(repo.requests, hasLength(1));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
       });
 
       testWidgets('a failed delete shows the API message and keeps the list', (
@@ -433,7 +470,57 @@ void main() {
         expect(repo.deletes, ['p1']);
         expect(find.text('Plan not found'), findsOneWidget);
         // No reload: nothing changed on the server.
-        expect(repo.requests, hasLength(1));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
+        expect(find.text('Plan 1'), findsOneWidget);
+      });
+
+      testWidgets(
+        'Complete asks first, then completes and moves the plan to My Complete',
+        (tester) async {
+          final repo = _FakeRepository(total: 2);
+          await pumpPlanner(tester, repo);
+
+          await openMenu(tester);
+          await tester.tap(find.text('Complete'));
+          await tester.pumpAndSettle();
+          // The question names the plan; nothing is sent yet.
+          expect(find.text('Mark this plan as complete?'), findsOneWidget);
+          expect(find.text('Plan 1'), findsWidgets);
+          expect(repo.updates, isEmpty);
+
+          await tester.tap(find.widgetWithText(FilledButton, 'Complete'));
+          await settle(tester);
+
+          expect(repo.updates.last, (
+            id: 'p1',
+            name: null,
+            targetDays: null,
+            status: 'completed',
+          ));
+          // "My Plan" lost it...
+          expect(find.text('Plan 1'), findsNothing);
+          expect(find.text('Plan 2'), findsOneWidget);
+
+          // ...and it shows up under "My Complete".
+          await tester.tap(find.text('Complete Plan'));
+          await tester.pumpAndSettle();
+          expect(find.text('Plan 1'), findsOneWidget);
+        },
+      );
+
+      testWidgets('cancelling the question completes nothing', (
+        tester,
+      ) async {
+        final repo = _FakeRepository(total: 2);
+        await pumpPlanner(tester, repo);
+
+        await openMenu(tester);
+        await tester.tap(find.text('Complete'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+
+        expect(repo.updates, isEmpty);
         expect(find.text('Plan 1'), findsOneWidget);
       });
 
@@ -476,8 +563,9 @@ void main() {
           id: 'p1',
           name: 'Renamed',
           targetDays: null,
+          status: null,
         ));
-        expect(repo.requests, hasLength(2));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(2));
 
         // Only the days.
         await openMenu(tester);
@@ -486,8 +574,11 @@ void main() {
         await tester.enterText(find.byKey(const Key('edit-plan-days')), '25');
         await tester.tap(find.text('Save'));
         await settle(tester);
-        expect(repo.updates.last, (id: 'p1', name: null, targetDays: 25));
-        expect(repo.requests, hasLength(3));
+        expect(
+          repo.updates.last,
+          (id: 'p1', name: null, targetDays: 25, status: null),
+        );
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(3));
       });
 
       testWidgets('Save with nothing changed sends nothing', (tester) async {
@@ -501,7 +592,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(repo.updates, isEmpty);
-        expect(repo.requests, hasLength(1));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
       });
 
       testWidgets('a plan needs a name: Save is off while it is empty', (
@@ -545,7 +636,7 @@ void main() {
           findsOneWidget,
         );
         // The list wasn't reloaded, and still shows the old name.
-        expect(repo.requests, hasLength(1));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
         expect(find.text('Plan 1'), findsOneWidget);
       });
     });
@@ -588,10 +679,10 @@ void main() {
         expect(args.planId, isNull);
 
         // Reading there moves the progress: coming back reloads the plans.
-        expect(repo.requests, hasLength(1));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
         await tester.tap(find.text('leave'));
         await settle(tester);
-        expect(repo.requests, hasLength(2));
+        expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(2));
       });
     });
   });
