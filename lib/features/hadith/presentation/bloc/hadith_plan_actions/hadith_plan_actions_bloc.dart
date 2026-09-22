@@ -11,20 +11,13 @@ import 'hadith_plan_actions_state.dart';
 export 'hadith_plan_actions_event.dart';
 export 'hadith_plan_actions_state.dart';
 
-/// Editing, deleting and completing a plan from the planner's ⋮ menu. Each
-/// ends in `success` (the planner reloads its lists) or `failure` (it shows
-/// why).
+/// Deleting and completing a plan from the planner's ⋮ menu (editing is its
+/// own screen and bloc, [HadithEditPlanBloc]). Each ends in `success` (the
+/// planner reloads its lists) or `failure` (it shows why).
 class HadithPlanActionsBloc
     extends Bloc<HadithPlanActionsEvent, HadithPlanActionsState> {
   HadithPlanActionsBloc(this._update, this._delete)
     : super(const HadithPlanActionsState()) {
-    on<EditHadithPlanRequested>(
-      (event, emit) => _run(
-        emit,
-        HadithPlanActionKind.edit,
-        () => _update(event.id, name: event.name, targetDays: event.targetDays),
-      ),
-    );
     on<DeleteHadithPlanRequested>(
       (event, emit) =>
           _run(emit, HadithPlanActionKind.delete, () => _delete(event.id)),

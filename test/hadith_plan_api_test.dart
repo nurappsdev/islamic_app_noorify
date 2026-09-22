@@ -222,6 +222,44 @@ void main() {
       expect(t.http.last.data, {'targetDays': 40});
     });
 
+    test('the edit screen sends the full form, matching the API example', () async {
+      final t = _setup();
+
+      await t.source.updatePlan(
+        'p1',
+        name: 'string',
+        categoryIds: const ['6aae76beac63e38856600b8e'],
+        subCategoryIds: const [],
+        targetDays: 10,
+      );
+      expect(t.http.last.data, {
+        'name': 'string',
+        'categoryIds': ['6aae76beac63e38856600b8e'],
+        'subCategoryIds': <String>[],
+        'targetDays': 10,
+      });
+    });
+
+    test('a changed book is sent as bookId too', () async {
+      final t = _setup();
+
+      await t.source.updatePlan(
+        'p1',
+        name: 'string',
+        bookId: 'new-book-id',
+        categoryIds: const ['6aae76beac63e38856600b8e'],
+        subCategoryIds: const [],
+        targetDays: 10,
+      );
+      expect(t.http.last.data, {
+        'name': 'string',
+        'bookId': 'new-book-id',
+        'categoryIds': ['6aae76beac63e38856600b8e'],
+        'subCategoryIds': <String>[],
+        'targetDays': 10,
+      });
+    });
+
     test('a taken name is a 409 with the API message', () async {
       final t = _setup(
         status: 409,

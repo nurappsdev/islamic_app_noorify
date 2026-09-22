@@ -13,6 +13,8 @@ class HadithPlanModel extends HadithPlan {
     required super.percentage,
     required super.isCompleted,
     super.bookId,
+    super.bookTitleEnglish,
+    super.bookTitleBangla,
     super.categoryIds,
     super.targetDays,
   });
@@ -21,10 +23,12 @@ class HadithPlanModel extends HadithPlan {
   factory HadithPlanModel.fromJson(Map<String, dynamic> json) {
     final counts = _map(json['counts']);
     final target = (json['targetDays'] as num?)?.toInt();
-    // `bookId` may come populated (an object with `_id`) or as a plain id.
+    // `bookId` may come populated (an object with `_id`, `sourceEnglish` and
+    // `sourceBangla`) or as a plain id (then there's no title to show).
     final rawBookId = json['bookId'];
-    final bookId = rawBookId is Map<String, dynamic>
-        ? rawBookId['_id']?.toString()
+    final bookObject = rawBookId is Map<String, dynamic> ? rawBookId : null;
+    final bookId = bookObject != null
+        ? bookObject['_id']?.toString()
         : rawBookId?.toString();
     final rawCategoryIds = json['categoryIds'];
     return HadithPlanModel(
@@ -33,6 +37,8 @@ class HadithPlanModel extends HadithPlan {
       status: json['status']?.toString() ?? '',
       targetDays: target != null && target > 0 ? target : null,
       bookId: bookId != null && bookId.isNotEmpty ? bookId : null,
+      bookTitleEnglish: bookObject?['sourceEnglish']?.toString() ?? '',
+      bookTitleBangla: bookObject?['sourceBangla']?.toString() ?? '',
       categoryIds: rawCategoryIds is List
           ? [
               for (final entry in rawCategoryIds)

@@ -13,6 +13,7 @@ import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_entry_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_create_plan_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_dashboard_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_detail_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_planner_screen.dart';
@@ -302,6 +303,14 @@ class AppRoutes {
       case RouteNames.hadithCreatePlan:
         return MaterialPageRoute<String>(
           builder: (_) => const HadithCreatePlanScreen(),
+          settings: settings,
+        );
+      case RouteNames.hadithEditPlan:
+        final editArgs = settings.arguments;
+        return MaterialPageRoute<bool>(
+          builder: (_) => editArgs is HadithEditPlanArgs
+              ? HadithEditPlanScreen(args: editArgs)
+              : const HadithPlannerScreen(),
           settings: settings,
         );
       case RouteNames.hadithSaved:

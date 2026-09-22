@@ -15,9 +15,11 @@ import 'package:islami_app_noorify/features/hadith/domain/usecases/update_hadith
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_plan_actions/hadith_plan_actions_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_plans/hadith_plans_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_plan_dialogs.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// How close to the end of the list (in logical pixels) the next page starts
 /// loading.
@@ -33,11 +35,12 @@ const _loadMoreThreshold = 240.0;
 /// Plan" action opens the create form, and "My Plan" reloads when a plan has
 /// been created.
 ///
-/// On a plan, "Get Start" opens the plan's hadiths ([HadithDetailScreen]) and
-/// the ⋮ menu offers Edit (name and target days, `PATCH`), Delete (`DELETE`,
-/// after a confirmation) and Complete (`PATCH {status: "completed"}`, after a
-/// confirmation); both lists reload after any of the three, since Complete
-/// moves the plan from one to the other.
+/// On a "My Plan" card, "Get Start" opens the plan's hadiths
+/// ([HadithDetailScreen]) and the ⋮ menu offers Edit (`PATCH`), Delete
+/// (`DELETE`, after a confirmation) and Complete (`PATCH {status:
+/// "completed"}`, after a confirmation). A "My Complete" card has its own
+/// delete icon, the same `DELETE` after a confirmation. Both lists reload
+/// after any of these, since Complete moves a plan from one to the other.
 class HadithPlannerScreen extends StatelessWidget {
   const HadithPlannerScreen({super.key, this.repository});
 
@@ -144,22 +147,27 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
     if (!bloc.isClosed) bloc.add(const LoadHadithPlans());
   }
 
-  /// ⋮ > Edit: asks for the new name and target days, then saves only what
-  /// changed (sending the unchanged name back could clash with itself).
+  /// ⋮ > Edit: opens the full-screen edit form (same design as Create Plan),
+  /// pre-filled with the plan's name, target days and categories. A truthy
+  /// result means it saved, so both lists are reloaded.
   Future<void> _editPlan(_HadithPlan plan) async {
     final id = plan.id;
-    if (id == null) return;
-    final actions = context.read<HadithPlanActionsBloc>();
-    final edit = await showEditPlanDialog(
-      context,
-      name: plan.title,
-      targetDays: plan.targetDays,
+    final bookId = plan.bookId;
+    if (id == null || bookId == null) return;
+    final result = await Navigator.of(context).pushNamed(
+      RouteNames.hadithEditPlan,
+      arguments: HadithEditPlanArgs(
+        planId: id,
+        name: plan.title,
+        bookId: bookId,
+        bookTitle: plan.bookTitle,
+        categoryIds: plan.categoryIds,
+        targetDays: plan.targetDays,
+      ),
     );
-    if (edit == null) return;
-    final name = edit.name == plan.title ? null : edit.name;
-    final days = edit.targetDays == plan.targetDays ? null : edit.targetDays;
-    if (name == null && days == null) return;
-    actions.add(EditHadithPlanRequested(id, name: name, targetDays: days));
+    if (result != true || !mounted) return;
+    context.read<HadithPlansBloc>().add(const LoadHadithPlans());
+    context.read<HadithCompletedPlansBloc>().add(const LoadHadithPlans());
   }
 
   /// ⋮ > Delete: after a confirmation.
@@ -224,7 +232,10 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
                 SizedBox(height: 12.h),
                 Expanded(
                   child: _showCompletedPlans
-                      ? _CompletedPlans(controller: _scrollController)
+                      ? _CompletedPlans(
+                          controller: _scrollController,
+                          onDelete: _deletePlan,
+                        )
                       : _MyPlans(
                           controller: _scrollController,
                           onGetStart: _openPlan,
@@ -296,6 +307,8 @@ class _MyPlans extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     final state = context.watch<HadithPlansBloc>().state;
 
     if (state.isLoading) {
@@ -337,7 +350,9 @@ class _MyPlans extends StatelessWidget {
           _HadithPlan(
             id: plan.id,
             bookId: plan.bookId,
+            bookTitle: bangla ? plan.bookTitleBangla : plan.bookTitleEnglish,
             categoryId: plan.categoryIds.firstOrNull,
+            categoryIds: plan.categoryIds,
             title: plan.name,
             hadithCount: plan.totalHadiths,
             percentage: plan.percentage,
@@ -388,9 +403,13 @@ class _MyPlans extends StatelessWidget {
 /// are loaded as the list nears its end. No ⋮ menu — Edit, Delete and
 /// Complete only apply to a plan still in progress.
 class _CompletedPlans extends StatelessWidget {
-  const _CompletedPlans({required this.controller});
+  const _CompletedPlans({required this.controller, required this.onDelete});
 
   final ScrollController controller;
+
+  /// The delete icon on a completed plan: removes it (`DELETE`), after a
+  /// confirmation.
+  final ValueChanged<_HadithPlan> onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -452,13 +471,27 @@ class _CompletedPlans extends StatelessWidget {
             targetDays: plan.targetDays,
           ),
       ],
-      trailingBuilder: (_) => Text(
-        appText.planStatusComplete,
-        style: TextStyle(
-          color: const Color(0xFFA1AD59),
-          fontSize: 12.sp,
-          fontWeight: FontWeight.w500,
-        ),
+      trailingBuilder: (plan) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            appText.planStatusComplete,
+            style: TextStyle(
+              color: const Color(0xFFA1AD59),
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(width: 4.w),
+          IconButton(
+            onPressed: () => onDelete(plan),
+            icon: Icon(
+              Icons.delete_outline_rounded,
+              size: 18.sp,
+              color: const Color(0xFFC15B4B),
+            ),
+          ),
+        ],
       ),
       footer: state.isLoadingMore
           ? const _PlanSkeletons(count: 1)
@@ -614,7 +647,9 @@ class _HadithPlan {
     required this.hadithCount,
     this.id,
     this.bookId,
+    this.bookTitle = '',
     this.categoryId,
+    this.categoryIds = const [],
     this.percentage,
     this.targetDays,
   });
@@ -627,7 +662,15 @@ class _HadithPlan {
   /// /hadiths?bookId=...&categoryId=...`); null for the static "Complete
   /// Plan" examples, which can't be opened.
   final String? bookId;
+
+  /// The book's title, in the app's language — shown read-only on the edit
+  /// screen.
+  final String bookTitle;
   final String? categoryId;
+
+  /// Every category on the plan, for the edit screen; [categoryId] is just
+  /// the first of these.
+  final List<String> categoryIds;
 
   /// How much of the plan has been read (`0..100`); null when unknown.
   final double? percentage;
