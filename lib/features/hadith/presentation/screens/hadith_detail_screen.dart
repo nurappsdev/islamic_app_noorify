@@ -509,6 +509,89 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     }
   }
 
+  /// The list area: a skeleton, a failure/empty message, or the hadiths
+  /// themselves as a lazily-built [ListView.builder] (this list can run to
+  /// hundreds of hadiths, so cards off-screen must not stay built).
+  Widget _buildListBody({
+    required HadithDetailState state,
+    required AppText appText,
+    required List<HadithDetail> hadiths,
+    required bool searching,
+    required bool seekingInitial,
+    required String title,
+  }) {
+    if (state.isLoading || seekingInitial) {
+      return const _CenteredList(child: _HadithSkeletons(count: 2));
+    }
+    if (state.status == HadithDetailStatus.failure) {
+      return _CenteredList(
+        child: Column(
+          children: [
+            _Message(state.failure?.message ?? ''),
+            TextButton(
+              onPressed: () => context.read<HadithDetailBloc>().add(
+                LoadHadithDetails(
+                  subCategoryId: widget.subCategoryId,
+                  bookId: widget.bookId,
+                  planId: widget.planId,
+                ),
+              ),
+              child: Text(appText.tryAgain),
+            ),
+          ],
+        ),
+      );
+    }
+    if (hadiths.isEmpty && !(searching && state.hasMore)) {
+      return _CenteredList(child: _Message(appText.noResultsFound));
+    }
+
+    // Loading-more skeleton, or a retry row for a failed page — whichever
+    // applies, tacked on as one extra list item so the list itself stays a
+    // single, lazily-built ListView.builder.
+    Widget? footer;
+    if (state.isLoadingMore || (searching && state.hasMore)) {
+      footer = const _HadithSkeletons(count: 1);
+    } else if (state.loadMoreFailure != null) {
+      footer = Column(
+        children: [
+          _Message(state.loadMoreFailure!.message),
+          TextButton(
+            onPressed: () => context.read<HadithDetailBloc>().add(
+              const LoadMoreHadithDetails(),
+            ),
+            child: Text(appText.tryAgain),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      key: _listKey,
+      controller: _scrollController,
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
+      itemCount: hadiths.length + (footer == null ? 0 : 1),
+      itemBuilder: (context, index) {
+        if (index >= hadiths.length) return footer!;
+        final hadith = hadiths[index];
+        return Padding(
+          padding: EdgeInsets.only(bottom: 14.h),
+          child: HadithDetailCard(
+            key: hadith.id.isEmpty
+                ? null
+                : _cardKeys.putIfAbsent(hadith.id, GlobalKey.new),
+            hadith: hadith,
+            bookName: title,
+            settings: _settings,
+            tracker: _tracker,
+            focusedId: _focusedId,
+            clock: _clock,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -575,6 +658,15 @@ class _HadithDetailViewState extends State<_HadithDetailView>
         ? widget.title!
         : appText.categoryHadith;
 
+    final listBody = _buildListBody(
+      state: state,
+      appText: appText,
+      hadiths: hadiths,
+      searching: searching,
+      seekingInitial: seekingInitial,
+      title: title,
+    );
+
     return PopScope(
       // Back is handled by _handleExit (completion question + report).
       canPop: false,
@@ -610,58 +702,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                 ),
               ),
               SizedBox(height: 14.h),
-              Expanded(
-                child: ListView(
-                  key: _listKey,
-                  controller: _scrollController,
-                  padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
-                  children: [
-                    if (state.isLoading || seekingInitial)
-                      const _HadithSkeletons(count: 2)
-                    else if (state.status == HadithDetailStatus.failure) ...[
-                      _Message(state.failure?.message ?? ''),
-                      TextButton(
-                        onPressed: () => context.read<HadithDetailBloc>().add(
-                          LoadHadithDetails(
-                            subCategoryId: widget.subCategoryId,
-                            bookId: widget.bookId,
-                            planId: widget.planId,
-                          ),
-                        ),
-                        child: Text(appText.tryAgain),
-                      ),
-                    ] else if (hadiths.isEmpty && !(searching && state.hasMore))
-                      _Message(appText.noResultsFound)
-                    else ...[
-                      for (final hadith in hadiths) ...[
-                        HadithDetailCard(
-                          key: hadith.id.isEmpty
-                              ? null
-                              : _cardKeys.putIfAbsent(hadith.id, GlobalKey.new),
-                          hadith: hadith,
-                          bookName: title,
-                          settings: _settings,
-                          tracker: _tracker,
-                          focusedId: _focusedId,
-                          clock: _clock,
-                        ),
-                        SizedBox(height: 14.h),
-                      ],
-                      if (state.isLoadingMore || (searching && state.hasMore))
-                        const _HadithSkeletons(count: 1),
-                      if (state.loadMoreFailure != null) ...[
-                        _Message(state.loadMoreFailure!.message),
-                        TextButton(
-                          onPressed: () => context.read<HadithDetailBloc>().add(
-                            const LoadMoreHadithDetails(),
-                          ),
-                          child: Text(appText.tryAgain),
-                        ),
-                      ],
-                    ],
-                  ],
-                ),
-              ),
+              Expanded(child: listBody),
             ],
           ),
         ),
@@ -747,6 +788,23 @@ class _Message extends StatelessWidget {
           color: context.inkColor(Color(0xFF5D6B44)),
         ),
       ),
+    );
+  }
+}
+
+/// Loading / failure / empty content, padded and scrollable the same way as
+/// the main hadith list (just never large enough to need [ListView.builder]
+/// itself).
+class _CenteredList extends StatelessWidget {
+  const _CenteredList({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
+      children: [child],
     );
   }
 }
