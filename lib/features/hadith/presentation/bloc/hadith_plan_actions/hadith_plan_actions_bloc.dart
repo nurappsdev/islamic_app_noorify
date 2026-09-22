@@ -21,15 +21,20 @@ class HadithPlanActionsBloc
     on<EditHadithPlanRequested>(
       (event, emit) => _run(
         emit,
+        HadithPlanActionKind.edit,
         () => _update(event.id, name: event.name, targetDays: event.targetDays),
       ),
     );
     on<DeleteHadithPlanRequested>(
-      (event, emit) => _run(emit, () => _delete(event.id)),
+      (event, emit) =>
+          _run(emit, HadithPlanActionKind.delete, () => _delete(event.id)),
     );
     on<CompleteHadithPlanRequested>(
-      (event, emit) =>
-          _run(emit, () => _update(event.id, status: 'completed')),
+      (event, emit) => _run(
+        emit,
+        HadithPlanActionKind.complete,
+        () => _update(event.id, status: 'completed'),
+      ),
     );
   }
 
@@ -38,22 +43,26 @@ class HadithPlanActionsBloc
 
   Future<void> _run(
     Emitter<HadithPlanActionsState> emit,
+    HadithPlanActionKind kind,
     Future<Either<Failure, Unit>> Function() action,
   ) async {
     // One at a time: a second tap while the first is still running is ignored.
     if (state.isWorking) return;
-    emit(const HadithPlanActionsState(status: HadithPlanActionStatus.working));
+    emit(
+      HadithPlanActionsState(status: HadithPlanActionStatus.working, kind: kind),
+    );
     final result = await action();
     if (emit.isDone) return;
     result.fold(
       (failure) => emit(
         HadithPlanActionsState(
           status: HadithPlanActionStatus.failure,
+          kind: kind,
           failure: failure,
         ),
       ),
       (_) => emit(
-        const HadithPlanActionsState(status: HadithPlanActionStatus.success),
+        HadithPlanActionsState(status: HadithPlanActionStatus.success, kind: kind),
       ),
     );
   }

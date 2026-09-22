@@ -181,12 +181,16 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
   }
 
   /// An edit, a delete or a complete has finished: reload both lists on
-  /// success (a complete moves the plan between them), and say why on
-  /// failure (e.g. "A plan with this name already exists").
+  /// success (a complete moves the plan between them) and, for a complete,
+  /// switch to "My Complete" so the plan is right there; say why on failure
+  /// (e.g. "A plan with this name already exists").
   void _onActionResult(BuildContext context, HadithPlanActionsState state) {
     if (state.status == HadithPlanActionStatus.success) {
       context.read<HadithPlansBloc>().add(const LoadHadithPlans());
       context.read<HadithCompletedPlansBloc>().add(const LoadHadithPlans());
+      if (state.kind == HadithPlanActionKind.complete) {
+        setState(() => _showCompletedPlans = true);
+      }
     } else if (state.status == HadithPlanActionStatus.failure) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()

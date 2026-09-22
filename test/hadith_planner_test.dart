@@ -475,7 +475,8 @@ void main() {
       });
 
       testWidgets(
-        'Complete asks first, then completes and moves the plan to My Complete',
+        'Complete asks first, then completes, switches to My Complete and '
+        'shows the plan there',
         (tester) async {
           final repo = _FakeRepository(total: 2);
           await pumpPlanner(tester, repo);
@@ -497,14 +498,10 @@ void main() {
             targetDays: null,
             status: 'completed',
           ));
-          // "My Plan" lost it...
-          expect(find.text('Plan 1'), findsNothing);
-          expect(find.text('Plan 2'), findsOneWidget);
-
-          // ...and it shows up under "My Complete".
-          await tester.tap(find.text('Complete Plan'));
-          await tester.pumpAndSettle();
+          // Switched to "My Complete" on its own: Plan 1 shows there, and
+          // Plan 2 (still "My Plan") is off screen.
           expect(find.text('Plan 1'), findsOneWidget);
+          expect(find.text('Plan 2'), findsNothing);
         },
       );
 
