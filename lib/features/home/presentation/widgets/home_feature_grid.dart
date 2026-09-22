@@ -14,6 +14,7 @@ class HomeFeatureGrid extends StatelessWidget {
       appText.categoryQuran,
       Icons.menu_book_outlined,
       const Color(0xFFA5B58F),
+      routeName: RouteNames.quran,
     ),
     _HomeFeature(
       appText.categoryHadith,
