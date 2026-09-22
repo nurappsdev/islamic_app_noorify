@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -156,6 +157,15 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     ),
   );
 
+  /// Id of the hadith currently in focus, for the per-hadith timer circles.
+  /// Updated on every [_tracker] tick, so it starts/stops with it (paused
+  /// while the screen is backgrounded or another route is on top).
+  final _focusedId = ValueNotifier<String?>(null);
+
+  /// Ticks once a second in step with [_tracker], to refresh the timer
+  /// circles without rebuilding the whole screen.
+  final _clock = ValueNotifier<int>(0);
+
   /// One key per card, to find which hadith is on screen.
   final _cardKeys = <String, GlobalKey>{};
 
@@ -163,6 +173,14 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   List<String> _displayedIds = const [];
 
   bool _leaving = false;
+
+  /// Ids of hadiths the auto-complete dialog has already been shown for, so
+  /// it never asks twice in the same visit.
+  final _autoPrompted = <String>{};
+
+  /// Whether the auto-complete dialog is currently up (so a tick landing
+  /// mid-dialog doesn't queue another one).
+  bool _autoDialogShowing = false;
 
   /// Set once the scroll to the initial hadith has been started (or given up
   /// on because the hadith isn't in the list).
@@ -183,7 +201,80 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _tracker
       ..addListener(_onTrackerChanged)
       ..load()
-      ..start(_focusedHadithId);
+      ..start(_focusedHadithId, onTick: _onTrackerTick);
+  }
+
+  void _onTrackerTick(String? focusedHadithId) {
+    if (!mounted) return;
+    _focusedId.value = focusedHadithId;
+    _clock.value++;
+    _maybeShowAutoComplete(focusedHadithId);
+  }
+
+  /// Once [hadithId] has been in focus for
+  /// [HadithReadingConfig.autoCompleteSeconds], asks "Your reading time is
+  /// complete" on its own — without the user having to leave the screen.
+  void _maybeShowAutoComplete(String? hadithId) {
+    if (hadithId == null || _leaving || _autoDialogShowing) return;
+    if (_autoPrompted.contains(hadithId)) return;
+    if (_tracker.isCompleted(hadithId) || _tracker.isCompleting(hadithId)) {
+      return;
+    }
+    if (_tracker.dwellSeconds(hadithId) <
+        HadithReadingConfig.autoCompleteSeconds) {
+      return;
+    }
+    _autoPrompted.add(hadithId);
+    _showAutoCompleteDialog(hadithId);
+  }
+
+  Future<void> _showAutoCompleteDialog(String hadithId) async {
+    _autoDialogShowing = true;
+    // Time spent on the dialog is not reading time.
+    _tracker.pause();
+    final appText = AppText.readOf(context);
+    final hadiths = context.read<HadithDetailBloc>().state.hadiths;
+    final number = hadiths
+        .where((h) => h.id == hadithId)
+        .map((h) => h.hadithNumber)
+        .firstOrNull;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        // Only the Yes button dismisses this one.
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: dialogContext.surfaceColor(Colors.white),
+          title: Text(
+            appText.hadithReadingTimeComplete,
+            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+          ),
+          content: number == null || number == 0
+              ? null
+              : Text(
+                  '${appText.categoryHadith} $number',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: dialogContext.inkColor(const Color(0xFF5D6B44)),
+                  ),
+                ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF008000),
+              ),
+              child: Text(appText.yes),
+            ),
+          ],
+        ),
+      ),
+    );
+    _autoDialogShowing = false;
+    if (!mounted) return;
+    if (!_leaving) _tracker.resume();
+    await _tracker.complete(hadithId);
   }
 
   @override
@@ -405,6 +496,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _cardKeys.clear();
     _displayedIds = const [];
     _scrollController.dispose();
+    _focusedId.dispose();
+    _clock.dispose();
     super.dispose();
   }
 
@@ -548,6 +641,9 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                           hadith: hadith,
                           bookName: title,
                           settings: _settings,
+                          tracker: _tracker,
+                          focusedId: _focusedId,
+                          clock: _clock,
                         ),
                         SizedBox(height: 14.h),
                       ],
@@ -692,6 +788,9 @@ class HadithDetailCard extends StatefulWidget {
     required this.hadith,
     required this.bookName,
     required this.settings,
+    this.tracker,
+    this.focusedId,
+    this.clock,
   });
 
   final HadithDetail hadith;
@@ -699,6 +798,17 @@ class HadithDetailCard extends StatefulWidget {
 
   /// Name of the book / sub-category on screen, used in the report mail.
   final String bookName;
+
+  /// Holds how long each hadith has been read, for the timer circle. Null
+  /// where there is no reading tracker (e.g. the offline saved reader), in
+  /// which case no timer circle shows.
+  final HadithReadingTracker? tracker;
+
+  /// Id of the hadith currently in focus (see [_HadithDetailViewState]).
+  final ValueListenable<String?>? focusedId;
+
+  /// Ticks once a second so the timer circle refreshes.
+  final ValueListenable<int>? clock;
 
   @override
   State<HadithDetailCard> createState() => _HadithDetailCardState();
@@ -1035,6 +1145,17 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
                     ),
                   ),
                 ),
+                if (widget.tracker != null &&
+                    widget.focusedId != null &&
+                    widget.clock != null) ...[
+                  SizedBox(width: 8.w),
+                  _HadithTimerBadge(
+                    hadithId: hadith.id,
+                    tracker: widget.tracker!,
+                    focusedId: widget.focusedId!,
+                    clock: widget.clock!,
+                  ),
+                ],
                 const Spacer(),
                 if (hadith.textEnglish.isNotEmpty)
                   OutlinedButton.icon(
@@ -1275,6 +1396,102 @@ class _MoreButton extends StatelessWidget {
             size: 16.sp,
             color: context.inkColor(Color(0xFF4C5A34)),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Per-hadith reading timer: a small ring that fills over a minute and
+/// resets, with the elapsed time in its center. Green and filling while
+/// [hadithId] is the one in focus, grey and frozen otherwise — so scrolling
+/// away visibly pauses it and scrolling back resumes it where it left off.
+class _HadithTimerBadge extends StatelessWidget {
+  const _HadithTimerBadge({
+    required this.hadithId,
+    required this.tracker,
+    required this.focusedId,
+    required this.clock,
+  });
+
+  final String hadithId;
+  final HadithReadingTracker tracker;
+  final ValueListenable<String?> focusedId;
+  final ValueListenable<int> clock;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hadithId.isEmpty) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: Listenable.merge([focusedId, clock]),
+      builder: (context, _) => _TimerCircle(
+        seconds: tracker.dwellSeconds(hadithId),
+        active: focusedId.value == hadithId,
+      ),
+    );
+  }
+}
+
+class _TimerCircle extends StatelessWidget {
+  const _TimerCircle({required this.seconds, required this.active});
+
+  final int seconds;
+  final bool active;
+
+  /// The ring completes one lap per minute of reading.
+  static const _lapSeconds = 60;
+
+  static const _active = Color(0xFF008000);
+  static const _idle = Color(0xFF9AA583);
+
+  String get _label {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return minutes > 0 ? '$minutes:${secs.toString().padLeft(2, '0')}' : '$secs';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Nothing spent on this hadith yet and it's not the one in focus: no
+    // badge to show.
+    if (seconds <= 0 && !active) return const SizedBox.shrink();
+    final color = active ? _active : _idle;
+    return Tooltip(
+      message: active ? 'Reading…' : 'Paused',
+      child: SizedBox(
+        width: 30.r,
+        height: 30.r,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 30.r,
+              height: 30.r,
+              child: CircularProgressIndicator(
+                value: (seconds % _lapSeconds) / _lapSeconds,
+                strokeWidth: 2.5,
+                backgroundColor: color.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation(color),
+              ),
+            ),
+            Padding(
+              // Keeps the label off the ring; FittedBox shrinks it instead
+              // of overflowing once minutes reach two digits (10+ minutes).
+              padding: EdgeInsets.all(5.r),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 8.sp,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

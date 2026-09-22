@@ -11,6 +11,11 @@ abstract final class HadithReadingConfig {
   /// leaving it asks "Have you completed reading this Hadith?" and reports the
   /// time. At or below it, they leave normally and nothing is sent.
   static const minSeconds = 30;
+
+  /// Once a hadith has been in focus for this many seconds, the screen asks
+  /// "Your reading time is complete" on its own, without waiting for the
+  /// user to leave.
+  static const autoCompleteSeconds = 300;
 }
 
 enum HadithCompletion { done, alreadyCompleted, failed }
@@ -59,6 +64,10 @@ class HadithReadingTracker extends ChangeNotifier {
   /// Says which hadith is in focus; set by [start], cleared by [stop].
   String? Function()? _focus;
 
+  /// Notified with the focused hadith id on every tick, e.g. to drive a
+  /// per-hadith reading timer in the UI. Set by [start], cleared by [stop].
+  void Function(String? focusedId)? _onTick;
+
   /// Loads the hadiths already completed on this device.
   Future<void> load() async {
     try {
@@ -71,9 +80,14 @@ class HadithReadingTracker extends ChangeNotifier {
   }
 
   /// Starts the clock. [focusedHadithId] says which hadith is in view right
-  /// now (null while none is).
-  void start(String? Function() focusedHadithId) {
+  /// now (null while none is). [onTick], if given, is called with the
+  /// focused hadith id every second the clock actually ticks.
+  void start(
+    String? Function() focusedHadithId, {
+    void Function(String? focusedId)? onTick,
+  }) {
     _focus = focusedHadithId;
+    _onTick = onTick;
     _schedule();
   }
 
@@ -91,6 +105,7 @@ class HadithReadingTracker extends ChangeNotifier {
   /// to the screen's state). Safe to call more than once.
   void stop() {
     _focus = null;
+    _onTick = null;
     _timer?.cancel();
     _timer = null;
   }
@@ -134,9 +149,14 @@ class HadithReadingTracker extends ChangeNotifier {
     if (_paused) return;
     _elapsed++;
     if (hadithId != null) _dwell[hadithId] = (_dwell[hadithId] ?? 0) + 1;
+    _onTick?.call(hadithId);
   }
 
   int get elapsedSeconds => _elapsed;
+
+  /// Seconds [hadithId] has spent in focus so far, e.g. for a per-hadith
+  /// reading timer in the UI.
+  int dwellSeconds(String hadithId) => _dwell[hadithId] ?? 0;
 
   bool isCompleted(String hadithId) => _completed.contains(hadithId);
 
