@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
@@ -298,7 +299,7 @@ class _MyPlans extends StatelessWidget {
     final state = context.watch<HadithPlansBloc>().state;
 
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const _PlanSkeletonList();
     }
     if (state.status == HadithPlansStatus.failure) {
       return _PlanMessage(
@@ -368,10 +369,7 @@ class _MyPlans extends StatelessWidget {
         ],
       ),
       footer: state.isLoadingMore
-          ? Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: const Center(child: CircularProgressIndicator()),
-            )
+          ? const _PlanSkeletons(count: 1)
           : state.loadMoreFailure == null
           ? null
           : _PlanMessage(
@@ -400,7 +398,7 @@ class _CompletedPlans extends StatelessWidget {
     final state = context.watch<HadithCompletedPlansBloc>().state;
 
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const _PlanSkeletonList();
     }
     if (state.status == HadithPlansStatus.failure) {
       return _PlanMessage(
@@ -463,10 +461,7 @@ class _CompletedPlans extends StatelessWidget {
         ),
       ),
       footer: state.isLoadingMore
-          ? Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h),
-              child: const Center(child: CircularProgressIndicator()),
-            )
+          ? const _PlanSkeletons(count: 1)
           : state.loadMoreFailure == null
           ? null
           : _PlanMessage(
@@ -476,6 +471,102 @@ class _CompletedPlans extends StatelessWidget {
                 const LoadMoreHadithPlans(),
               ),
             ),
+    );
+  }
+}
+
+/// The initial-load placeholder for either tab: a scrollable column of
+/// [_PlanSkeletons], padded like the real list ([_PlanList]).
+class _PlanSkeletonList extends StatelessWidget {
+  const _PlanSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
+      children: const [_PlanSkeletons(count: 5)],
+    );
+  }
+}
+
+/// Shimmer placeholders shaped like [_PlanCard], for the initial load or
+/// while paging in more.
+class _PlanSkeletons extends StatelessWidget {
+  const _PlanSkeletons({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: context.surfaceColor(const Color(0xFFE3ECC5)),
+      highlightColor: context.surfaceColor(const Color(0xFFF6F9EC)),
+      child: Column(
+        children: [
+          for (var i = 0; i < count; i++) ...[
+            if (i > 0) SizedBox(height: 12.h),
+            const _PlanCardSkeleton(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanCardSkeleton extends StatelessWidget {
+  const _PlanCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget bar(double width, double height) => Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4.r),
+      ),
+    );
+
+    return Container(
+      height: 76.h,
+      padding: EdgeInsets.symmetric(horizontal: 12.w),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(21.r),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 47.w,
+            height: 47.w,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+          ),
+          SizedBox(width: 9.w),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                bar(120.w, 12.h),
+                SizedBox(height: 10.h),
+                bar(80.w, 10.h),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Container(
+            width: 89.w,
+            height: 36.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
