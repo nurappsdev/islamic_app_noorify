@@ -331,4 +331,29 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
       return const Left(UnknownFailure());
     }
   }
+
+  @override
+  Future<Either<Failure, Set<String>>> getReadHadiths({
+    String? subCategoryId,
+    String? bookId,
+    String? planId,
+  }) async {
+    try {
+      return Right(
+        await _remote.getReadHadiths(
+          subCategoryId: subCategoryId,
+          bookId: bookId,
+          planId: planId,
+        ),
+      );
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message, statusCode: e.statusCode));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ParsingException catch (e) {
+      return Left(ParsingFailure(e.message));
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
+  }
 }
