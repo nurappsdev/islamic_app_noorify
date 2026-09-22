@@ -506,6 +506,8 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithCompleted': "সম্পন্ন হয়েছে",
   'hadithCompletedQuestion':
       "আপনি কি এই হাদিসটি পড়া সম্পন্ন করেছেন? সম্পন্ন করে থাকলে আপনার অ্যাকাউন্টে পয়েন্ট যোগ করা হবে।",
+  'hadithReadingTimeComplete':
+      "আপনার পড়ার সময় সম্পন্ন হয়েছে। অনুগ্রহ করে হ্যাঁ চাপুন।",
   'hadithTrackFailed':
       "আপনার পড়ার অগ্রগতি সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
   'folderNameInputHint': "ফোল্ডারের নাম এখানে লিখুন।",
