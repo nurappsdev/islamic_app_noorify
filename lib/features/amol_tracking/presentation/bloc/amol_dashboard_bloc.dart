@@ -67,12 +67,17 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
     ShiftDate event,
     Emitter<AmolDashboardState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        date: state.date.add(event.step * event.direction),
-        clearRangeStart: true,
-      ),
-    );
+    var next = state.date.add(event.step * event.direction);
+    // Stepping "next" (forward) can only ever land back on today at best —
+    // without this, stepping forward from a date that didn't come from the
+    // normal sliding window (e.g. an explicit calendar month picked from
+    // the monthly dropdown) could overshoot past today by adding a fixed
+    // step, then never landing exactly back on it again no matter how many
+    // times "next" is tapped afterwards.
+    if (event.direction > 0 && next.isAfter(state.today)) {
+      next = state.today;
+    }
+    emit(state.copyWith(date: next, clearRangeStart: true));
     await _load(emit);
   }
 
