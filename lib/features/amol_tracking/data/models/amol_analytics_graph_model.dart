@@ -1,5 +1,6 @@
 import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_point_model.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_range_model.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_summary_model.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
 
 /// Data-layer representation of [AmolAnalyticsGraph], parsed from the `data`
@@ -26,6 +27,12 @@ class AmolAnalyticsGraphModel extends AmolAnalyticsGraph {
     required super.pillars,
     super.range,
     super.navigation,
+    super.summary,
+    super.todaysTrack,
+    super.myName,
+    super.earnedPoints,
+    super.maxPoints,
+    super.serverCompletionPercentage,
   });
 
   factory AmolAnalyticsGraphModel.fromJson(Map<String, dynamic> json) {
@@ -53,6 +60,18 @@ class AmolAnalyticsGraphModel extends AmolAnalyticsGraph {
           )
         : null;
 
+    final rawSummary = json['summary'];
+    final summary = rawSummary is Map
+        ? AmolAnalyticsSummaryModel.fromJson(Map<String, dynamic>.from(rawSummary))
+        : null;
+
+    final rawTodaysTrack = json['todaysAmolTrack'];
+    final todaysTrack = rawTodaysTrack is Map
+        ? AmolAnalyticsTodaysTrackModel.fromJson(
+            Map<String, dynamic>.from(rawTodaysTrack),
+          )
+        : null;
+
     return AmolAnalyticsGraphModel(
       timeframe: json['timeframe']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
@@ -64,6 +83,13 @@ class AmolAnalyticsGraphModel extends AmolAnalyticsGraph {
       pillars: pillars,
       range: range,
       navigation: navigation,
+      summary: summary,
+      todaysTrack: todaysTrack,
+      // `myName`/`userName` are the same value; either can be present.
+      myName: (json['myName'] ?? json['userName'])?.toString(),
+      earnedPoints: json['earnedPoints'] as num?,
+      maxPoints: json['maxPoints'] as num?,
+      serverCompletionPercentage: json['completionPercentage'] as num?,
     );
   }
 }
