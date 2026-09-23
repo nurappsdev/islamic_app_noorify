@@ -23,6 +23,12 @@ class HomeFeatureGrid extends StatelessWidget {
       routeName: RouteNames.hadith,
     ),
     _HomeFeature(
+      appText.featureAsmaUlHusna,
+      Icons.workspace_premium,
+      const Color(0xFF37C915),
+      routeName: RouteNames.asma,
+    ),
+    _HomeFeature(
       appText.featureDua,
       Icons.volunteer_activism,
       const Color(0xFFFF7D67),
@@ -33,12 +39,6 @@ class HomeFeatureGrid extends StatelessWidget {
       Icons.nightlight_round,
       const Color(0xFFFFD21E),
       routeName: RouteNames.zikr,
-    ),
-    _HomeFeature(
-      appText.featureAsmaUlHusna,
-      Icons.workspace_premium,
-      const Color(0xFF37C915),
-      routeName: RouteNames.asma,
     ),
     _HomeFeature(
       appText.featureQuizAndLearn,
