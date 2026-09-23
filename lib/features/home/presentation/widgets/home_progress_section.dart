@@ -14,6 +14,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimm
 import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
+import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
 
 /// Fallback bearing (degrees clockwise from true north) shown before the
 /// dashboard API's `kiblahAngle` has loaded.
@@ -201,7 +202,13 @@ class _CompassCard extends StatelessWidget {
               ],
             ),
           ),
-          QiblahCompassDial(qiblahAngle: qiblahAngle, size: 150.w),
+          QiblahHeadingListener(
+            builder: (context, access, heading, accuracy) => QiblahCompassDial(
+              qiblahAngle: qiblahAngle,
+              heading: access == QiblahAccess.ready ? (heading ?? 0) : 0,
+              size: 150.w,
+            ),
+          ),
         ],
       ),
     );

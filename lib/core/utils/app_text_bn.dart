@@ -176,6 +176,7 @@ const Map<String, String> appTextBn = <String, String>{
   'compassUnsupported': 'এই ডিভাইসে কম্পাস সেন্সর নেই।',
   'compassOpenSettings': 'সেটিংস খুলুন',
   'compassEnableLocation': 'লোকেশন চালু করুন',
+  'compassCalibrationHint': 'নির্ভুলতা বাড়াতে ফোনটি ৮-আকারে ঘোরান',
   'kiblahCompassTitle': 'কিবলা কম্পাস',
   'compassDirectionLeft': 'বামে',
   'compassDirectionRight': 'ডানে',
