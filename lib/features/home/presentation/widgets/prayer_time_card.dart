@@ -119,6 +119,8 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final isNight = isNightPrayerTheme(now: _now(), fajr: _fajr);
+    final topDateColor = isNight ? Colors.white : Colors.black;
     return SizedBox(
       height: 319.h,
       child: Padding(
@@ -191,7 +193,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                       appText.hijriDatePlaceholder,
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
-                                    color: Colors.black,
+                                    color: topDateColor,
                                   ),
                                 ),
                               ),
@@ -207,7 +209,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                   appText.bengaliDatePlaceholder,
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
-                                    color: Colors.black,
+                                    color: topDateColor,
                                   ),
                                 ),
                               ),
