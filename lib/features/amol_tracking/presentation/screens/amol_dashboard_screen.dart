@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
+import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 
@@ -133,21 +134,38 @@ class _AmolDashboardView extends StatelessWidget {
     final competitorLabel = graph == null
         ? _fallbackCompetitorLabel
         : _initials(graph.competitorName, fallback: appText.competitorInitials);
+    // The signed-in device's own name (set on the profile screen), not
+    // anything from the server response — mirrors the competitor's pill
+    // but labeled with the local user's initials instead.
+    final myLabel = _initials(
+      profileNameNotifier.value ?? appText.competitorName,
+      fallback: 'Me',
+    );
+    // The server's own `summary` carries the same earned/possible points
+    // and percentage as `graph.completionPercentage`/`maxTotalPoints`, but
+    // authoritative (its own business rules, already formatted into
+    // `pointsText`) rather than approximated by summing pillar max scores
+    // client-side — prefer it whenever the server included it.
+    final summary = graph?.summary;
     final myPoints = graph == null
         ? _fallbackPoints
-        : graph.myTotalPoints.round();
+        : (summary?.totalEarnedPoints ?? graph.myTotalPoints).round();
     final totalPoints = graph == null
         ? _fallbackTotalPoints
-        : graph.maxTotalPoints.round();
+        : (summary?.totalPossiblePoints ?? graph.maxTotalPoints).round();
     final pointLabel = graph == null
         ? '${appText.point} : 30/40'
+        : (summary != null && summary.pointsText.isNotEmpty)
+        ? summary.pointsText
         : '${appText.point} : ${_formatPoints(graph.myTotalPoints)}/${_formatPoints(graph.maxTotalPoints)}';
-    final progress = graph == null
-        ? .86
-        : (graph.completionPercentage / 100).clamp(0, 1).toDouble();
-    final progressLabel = graph == null
-        ? '86 %'
-        : '${graph.completionPercentage.round()} %';
+    final percentValue = graph == null
+        ? 86.0
+        : (summary?.percentage ??
+                  graph.serverCompletionPercentage ??
+                  graph.completionPercentage)
+              .toDouble();
+    final progress = (percentValue / 100).clamp(0.0, 1.0);
+    final progressLabel = '${percentValue.round()} %';
     final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
     // Prefer the server's own resolved range (it's the ground truth for
     // exactly which days the response covers) over a locally-guessed
@@ -235,6 +253,7 @@ class _AmolDashboardView extends StatelessWidget {
                   _AmolLineChart(
                     categories: categories,
                     values: values,
+                    myLabel: myLabel,
                     competitorValues: competitorValues,
                     competitorLabel: competitorLabel,
                     maxY: maxY,
@@ -473,7 +492,7 @@ class _Legend extends StatelessWidget {
         ),
         SizedBox(width: 18.w),
         _LegendDot(
-          color: _CompetitorBubble.dotColor,
+          color: _LineChartPainter.competitorLineColor,
           label: appText.myNearestOrCompetitor,
         ),
       ],
@@ -513,10 +532,11 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-class _AmolLineChart extends StatelessWidget {
+class _AmolLineChart extends StatefulWidget {
   const _AmolLineChart({
     required this.categories,
     required this.values,
+    required this.myLabel,
     required this.competitorValues,
     required this.competitorLabel,
     required this.maxY,
@@ -525,11 +545,27 @@ class _AmolLineChart extends StatelessWidget {
   final List<String> categories;
   final List<double> values;
 
+  /// The local signed-in user's initials, shown on a pill at each of
+  /// [values]'s points (mirrors [competitorLabel]'s pill).
+  final String myLabel;
+
   /// The nearest competitor's score per category, `null` where the server
   /// has none for that pillar (no bubble is drawn there).
   final List<double?> competitorValues;
   final String competitorLabel;
   final double maxY;
+
+  @override
+  State<_AmolLineChart> createState() => _AmolLineChartState();
+}
+
+class _AmolLineChartState extends State<_AmolLineChart> {
+  /// Which category column is showing its tap tooltip, `null` when none is.
+  int? _selectedIndex;
+
+  void _select(int index) {
+    setState(() => _selectedIndex = _selectedIndex == index ? null : index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -548,12 +584,22 @@ class _AmolLineChart extends StatelessWidget {
           (width - plotLeft - plotRight).clamp(0.0, double.infinity),
           (height - plotTop - plotBottom).clamp(0.0, double.infinity),
         );
-        final points = _computePoints(plotRect, values, maxY).cast<Offset>();
+        final points = _computePoints(
+          plotRect,
+          widget.values,
+          widget.maxY,
+        ).cast<Offset>();
         final competitorPoints = _computePoints(
           plotRect,
-          competitorValues,
-          maxY,
+          widget.competitorValues,
+          widget.maxY,
         );
+        final categoryCount = widget.categories.length;
+        final stepX = categoryCount > 1
+            ? plotRect.width / (categoryCount - 1)
+            : plotRect.width;
+        final selected = _selectedIndex;
+
         return SizedBox(
           height: height,
           width: width,
@@ -564,12 +610,31 @@ class _AmolLineChart extends StatelessWidget {
                 size: Size(width, height),
                 painter: _LineChartPainter(
                   plotRect: plotRect,
-                  categories: categories,
+                  categories: widget.categories,
                   points: points,
                   competitorPoints: competitorPoints,
-                  maxY: maxY,
+                  maxY: widget.maxY,
                 ),
               ),
+              // Tapping the empty chart background (outside any category's
+              // column) dismisses the tooltip.
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => setState(() => _selectedIndex = null),
+                ),
+              ),
+              for (var i = 0; i < categoryCount; i++)
+                Positioned(
+                  left: (i * stepX - stepX / 2).clamp(0.0, width),
+                  top: 0,
+                  width: stepX,
+                  height: plotRect.bottom,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => _select(i),
+                  ),
+                ),
               for (final point in competitorPoints)
                 if (point != null)
                   Positioned(
@@ -577,14 +642,64 @@ class _AmolLineChart extends StatelessWidget {
                     top: (point.dy - 32.h).clamp(0.0, height),
                     child: FractionalTranslation(
                       translation: const Offset(-0.5, 0),
-                      child: _CompetitorBubble(label: competitorLabel),
+                      child: _ScoreBubble(
+                        label: widget.competitorLabel,
+                        pillColor: _LineChartPainter.competitorLineColor,
+                      ),
                     ),
                   ),
+              for (final point in points)
+                Positioned(
+                  left: point.dx,
+                  top: (point.dy + 8.h).clamp(0.0, height),
+                  child: FractionalTranslation(
+                    translation: const Offset(-0.5, 0),
+                    child: _ScoreBubble(
+                      label: widget.myLabel,
+                      pillColor: _LineChartPainter.lineColor,
+                    ),
+                  ),
+                ),
+              if (selected != null)
+                Positioned(
+                  left: (selected * stepX + plotRect.left).clamp(
+                    56.w,
+                    (width - 56.w).clamp(56.w, double.infinity),
+                  ),
+                  top: _tooltipTop(points, competitorPoints, selected),
+                  child: FractionalTranslation(
+                    translation: const Offset(-0.5, 0),
+                    child: _ScoreTooltip(
+                      title: widget.categories[selected],
+                      myLabel: widget.myLabel,
+                      myScore: widget.values[selected],
+                      competitorLabel: widget.competitorLabel,
+                      competitorScore: selected < widget.competitorValues.length
+                          ? widget.competitorValues[selected]
+                          : null,
+                    ),
+                  ),
+                ),
             ],
           ),
         );
       },
     );
+  }
+
+  /// Anchors the tooltip just above whichever of the two lines is higher
+  /// (smaller `dy`) at [index], so it never covers either marker.
+  double _tooltipTop(
+    List<Offset> points,
+    List<Offset?> competitorPoints,
+    int index,
+  ) {
+    final myY = index < points.length ? points[index].dy : double.infinity;
+    final competitorY = index < competitorPoints.length
+        ? competitorPoints[index]?.dy ?? double.infinity
+        : double.infinity;
+    final topY = myY < competitorY ? myY : competitorY;
+    return (topY - 64.h).clamp(0.0, double.infinity);
   }
 
   /// Maps [values] onto [rect] using [maxY] as the y-axis ceiling. A `null`
@@ -609,12 +724,13 @@ class _AmolLineChart extends StatelessWidget {
   }
 }
 
-class _CompetitorBubble extends StatelessWidget {
-  const _CompetitorBubble({required this.label});
+/// The small pill shown at each of "my"/the competitor's chart points,
+/// carrying a 1-2 letter initials [label].
+class _ScoreBubble extends StatelessWidget {
+  const _ScoreBubble({required this.label, required this.pillColor});
 
   final String label;
-
-  static const dotColor = Color(0xFFB9C776);
+  final Color pillColor;
 
   @override
   Widget build(BuildContext context) {
@@ -622,7 +738,7 @@ class _CompetitorBubble extends StatelessWidget {
       height: 22.r,
       padding: EdgeInsets.symmetric(horizontal: 7.w),
       decoration: BoxDecoration(
-        color: context.surfaceColor(dotColor.withValues(alpha: .55)),
+        color: context.surfaceColor(pillColor.withValues(alpha: .55)),
         borderRadius: BorderRadius.circular(11.r),
       ),
       child: Row(
@@ -647,6 +763,115 @@ class _CompetitorBubble extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Shown when a category column is tapped: the exact myScore/competitorScore
+/// values behind that point on the chart.
+class _ScoreTooltip extends StatelessWidget {
+  const _ScoreTooltip({
+    required this.title,
+    required this.myLabel,
+    required this.myScore,
+    required this.competitorLabel,
+    required this.competitorScore,
+  });
+
+  final String title;
+  final String myLabel;
+  final double myScore;
+  final String competitorLabel;
+  final double? competitorScore;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      constraints: BoxConstraints(minWidth: 112.w),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(10.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .12),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w700,
+              color: context.inkColor(Colors.black87),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          _TooltipRow(
+            color: _LineChartPainter.lineColor,
+            label: myLabel,
+            value: _formatPoints(myScore),
+          ),
+          SizedBox(height: 2.h),
+          _TooltipRow(
+            color: _LineChartPainter.competitorLineColor,
+            label: competitorLabel,
+            value: competitorScore == null ? '—' : _formatPoints(competitorScore!),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TooltipRow extends StatelessWidget {
+  const _TooltipRow({
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 7.r,
+          height: 7.r,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        SizedBox(width: 5.w),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: context.inkColor(Colors.black87),
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w700,
+            color: context.inkColor(Colors.black),
+          ),
+        ),
+      ],
     );
   }
 }

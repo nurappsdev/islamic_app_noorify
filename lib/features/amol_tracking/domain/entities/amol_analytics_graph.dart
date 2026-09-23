@@ -1,5 +1,6 @@
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_point.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_range.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_summary.dart';
 
 /// The full payload of
 /// `GET /amol/analytics/graph?timeframe=daily|weekly|monthly&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&offset=N`.
@@ -15,6 +16,12 @@ class AmolAnalyticsGraph {
     required this.pillars,
     this.range,
     this.navigation,
+    this.summary,
+    this.todaysTrack,
+    this.myName,
+    this.earnedPoints,
+    this.maxPoints,
+    this.serverCompletionPercentage,
   });
 
   final String timeframe;
@@ -33,9 +40,29 @@ class AmolAnalyticsGraph {
   /// the server says there's nothing further that way.
   final AmolAnalyticsNavigation? navigation;
 
+  /// The server's own earned/possible points + percentage for this window,
+  /// already formatted into `pointsText` — prefer this over
+  /// [maxTotalPoints]/[completionPercentage] (which only approximate it by
+  /// summing [pillars]) whenever it's present.
+  final AmolAnalyticsSummary? summary;
+
+  /// Today's progress, included alongside whichever window was requested.
+  final AmolAnalyticsTodaysTrack? todaysTrack;
+
+  /// The signed-in user's name as the server knows it (`myName`/`userName`
+  /// in the response — both the same value).
+  final String? myName;
+
+  /// Top-level `earnedPoints`/`maxPoints`/`completionPercentage` — the same
+  /// numbers [summary] carries, kept here too since the API exposes both.
+  final num? earnedPoints;
+  final num? maxPoints;
+  final num? serverCompletionPercentage;
+
   /// The API has no single "total possible points" field — only each
   /// pillar's `maxScore` — so the summary card's "earned/max" label sums
-  /// them here.
+  /// them here. Only a fallback for when the server's own [summary]/
+  /// [maxPoints] aren't present.
   num get maxTotalPoints =>
       pillars.fold<num>(0, (sum, pillar) => sum + pillar.maxScore);
 
