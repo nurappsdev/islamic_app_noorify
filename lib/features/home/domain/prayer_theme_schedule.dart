@@ -9,17 +9,24 @@ class PrayerClockTime {
   int get totalMinutes => hour * 60 + minute;
 }
 
+const nightPrayerThemeAsset = 'assets/images/theme4.png';
+
 String prayerThemeAsset({
   required DateTime now,
   required PrayerClockTime fajr,
 }) {
   final minute = now.hour * 60 + now.minute;
-  if (minute < fajr.totalMinutes) return 'assets/images/theme4.png';
+  if (minute < fajr.totalMinutes) return nightPrayerThemeAsset;
   if (minute <= 10 * 60) return 'assets/images/theme1.png';
   if (minute <= 16 * 60) return 'assets/images/theme2.png';
   if (minute <= 19 * 60 + 30) return 'assets/images/theme3.png';
-  return 'assets/images/theme4.png';
+  return nightPrayerThemeAsset;
 }
+
+/// Whether the night background ([nightPrayerThemeAsset]) is showing —
+/// before Fajr or after the Maghrib/evening window.
+bool isNightPrayerTheme({required DateTime now, required PrayerClockTime fajr}) =>
+    prayerThemeAsset(now: now, fajr: fajr) == nightPrayerThemeAsset;
 
 DateTime nextPrayerThemeBoundary({
   required DateTime now,
