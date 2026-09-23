@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/a
 import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/home_calendar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
@@ -137,6 +138,8 @@ class HomeProgressSection extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         _CompassCard(qiblahAngle: qiblahAngle, qiblahLabel: qiblahLabel),
+        SizedBox(height: 8.h),
+        const HomeCalendarCard(),
       ],
     );
   }

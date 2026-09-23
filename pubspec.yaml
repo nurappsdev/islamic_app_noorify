@@ -66,6 +66,7 @@ dependencies:
   pdfx: ^2.11.0
   flutter_compass: ^0.8.1
   geolocator: ^14.0.2
+  hijri: ^3.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
