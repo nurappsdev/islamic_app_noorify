@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
+import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_shimmer.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
 
 /// Full-screen live Qiblah compass, opened from [HomeProgressSection]'s
@@ -51,20 +52,39 @@ class QiblahCompassScreen extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          child: Column(
-            children: [
-              QiblahHeadingListener(
-                builder: (context, access, heading, accuracy) => _CompassBody(
-                  access: access,
-                  qiblahAngle: qiblahAngle,
-                  heading: heading,
-                  accuracy: accuracy,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final contentWidth = constraints.maxWidth - 32.w;
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: ConstrainedBox(
+                // Centers the compass in the available viewport when it
+                // fits, and falls back to scrolling instead of overflowing
+                // on short screens or with large accessibility text sizes.
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 24.h).clamp(
+                    0,
+                    double.infinity,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    QiblahHeadingListener(
+                      builder: (context, access, heading, accuracy) =>
+                          _CompassBody(
+                            access: access,
+                            qiblahAngle: qiblahAngle,
+                            heading: heading,
+                            accuracy: accuracy,
+                            maxWidth: contentWidth,
+                          ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -77,6 +97,7 @@ class _CompassBody extends StatelessWidget {
     required this.qiblahAngle,
     required this.heading,
     required this.accuracy,
+    required this.maxWidth,
   });
 
   final QiblahAccess access;
@@ -87,14 +108,17 @@ class _CompassBody extends StatelessWidget {
   /// means unreliable/unknown, which is also worth a calibration nudge.
   final double? accuracy;
 
+  /// Available width for the dial to size itself within, so it never
+  /// overflows on narrow screens.
+  final double maxWidth;
+
+  double get _dialSize => 300.w < maxWidth ? 300.w : maxWidth;
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     if (access == QiblahAccess.checking) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 80),
-        child: CircularProgressIndicator(color: AppColor.primary),
-      );
+      return QiblahCompassShimmer(dialSize: _dialSize);
     }
     if (access == QiblahAccess.serviceDisabled) {
       return _AccessMessage(
@@ -124,8 +148,8 @@ class _CompassBody extends StatelessWidget {
         '${appText.kiblahLabel} ${relativeAngle.round()}° $direction';
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(height: 12.h),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
           decoration: BoxDecoration(
@@ -141,7 +165,7 @@ class _CompassBody extends StatelessWidget {
         QiblahCompassDial(
           qiblahAngle: qiblahAngle,
           heading: heading!,
-          size: 300.w,
+          size: _dialSize,
         ),
         if (accuracy == null || accuracy! >= 45) ...[
           SizedBox(height: 20.h),
@@ -177,7 +201,7 @@ class _AccessMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 80.h, left: 24.w, right: 24.w),
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
