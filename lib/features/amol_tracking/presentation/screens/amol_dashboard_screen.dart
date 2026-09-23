@@ -52,6 +52,9 @@ DateTime _startOfWindow(_AmolPeriod period, AmolDashboardState state) {
   return state.date.subtract(period.step - const Duration(days: 1));
 }
 
+bool _isSameDate(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
 extension on _AmolPeriod {
   String label(AppText appText) => switch (this) {
     _AmolPeriod.daily => appText.daily,
@@ -177,6 +180,15 @@ class _AmolDashboardView extends StatelessWidget {
             ? formatAmolDate(state.date, appText)
             : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}');
     final navigation = graph?.navigation;
+    // Whether stepping "next" would go anywhere: computed locally rather
+    // than trusted from the server's `navigation.hasNext` — that field
+    // wasn't reliably flipping true again after navigating back with
+    // "previous" (across daily/weekly/monthly alike, including daily,
+    // which never even sends an `offset`), permanently disabling the next
+    // arrow. Since [ShiftDate] already clamps forward movement to never
+    // pass today, whether "next" has anywhere to go is fully known
+    // locally: yes, whenever the viewed date isn't already today.
+    final hasNext = !_isSameDate(state.date, state.today);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -204,7 +216,7 @@ class _AmolDashboardView extends StatelessWidget {
                     onPrevious: navigation == null || navigation.hasPrevious
                         ? () => bloc.add(ShiftDate(period.step, -1))
                         : null,
-                    onNext: navigation == null || navigation.hasNext
+                    onNext: hasNext
                         ? () => bloc.add(ShiftDate(period.step, 1))
                         : null,
                   ),
