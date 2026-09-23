@@ -128,7 +128,7 @@ class HomeCalendarCard extends StatefulWidget {
 }
 
 class _HomeCalendarCardState extends State<HomeCalendarCard> {
-  _CalTab _tab = _CalTab.bangla;
+  _CalTab _tab = _CalTab.english;
 
   late int _enYear;
   late int _enMonth;
@@ -381,7 +381,7 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final showBanglaHijriLine = _tab == _CalTab.bangla;
-    final showEnglishGloss = _tab != _CalTab.english;
+    final showEnglishGloss = _tab == _CalTab.arabic;
     return HomeCard(
       padding: EdgeInsets.all(12.w),
       child: Column(
