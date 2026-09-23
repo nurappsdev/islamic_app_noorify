@@ -1,7 +1,8 @@
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_point.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_range.dart';
 
 /// The full payload of
-/// `GET /amol/analytics/graph?date=YYYY-MM-DD&timeframe=daily|weekly|monthly`.
+/// `GET /amol/analytics/graph?timeframe=daily|weekly|monthly&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&offset=N`.
 class AmolAnalyticsGraph {
   const AmolAnalyticsGraph({
     required this.timeframe,
@@ -12,6 +13,8 @@ class AmolAnalyticsGraph {
     required this.competitorTotalPoints,
     required this.competitorName,
     required this.pillars,
+    this.range,
+    this.navigation,
   });
 
   final String timeframe;
@@ -22,6 +25,13 @@ class AmolAnalyticsGraph {
   final num competitorTotalPoints;
   final String competitorName;
   final List<AmolAnalyticsPoint> pillars;
+
+  /// The date window the server actually resolved this response for.
+  final AmolAnalyticsRange? range;
+
+  /// Lets the UI step to the adjacent window and disable a direction once
+  /// the server says there's nothing further that way.
+  final AmolAnalyticsNavigation? navigation;
 
   /// The API has no single "total possible points" field — only each
   /// pillar's `maxScore` — so the summary card's "earned/max" label sums

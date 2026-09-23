@@ -10,10 +10,14 @@ import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_dat
 /// [ServerException] / [NetworkException] / [ParsingException]; never
 /// returns error states.
 abstract interface class AmolAnalyticsRemoteDataSource {
-  /// `GET /amol/analytics/graph?date=YYYY-MM-DD&timeframe=daily|weekly|monthly`.
+  /// `GET /amol/analytics/graph?timeframe=daily|weekly|monthly&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&offset=N`.
+  /// `offset` is omitted for `daily` (the server only takes it for the
+  /// sliding weekly/7-day and monthly/33-day windows).
   Future<AmolAnalyticsGraphModel> getGraph({
-    required String date,
+    required String startDate,
+    required String endDate,
     required String timeframe,
+    int? offset,
   });
 }
 
@@ -28,14 +32,21 @@ class AmolAnalyticsRemoteDataSourceImpl
 
   @override
   Future<AmolAnalyticsGraphModel> getGraph({
-    required String date,
+    required String startDate,
+    required String endDate,
     required String timeframe,
+    int? offset,
   }) async {
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
         ApiConstants.amolAnalyticsGraphEndPoint,
-        queryParameters: {'date': date, 'timeframe': timeframe},
+        queryParameters: {
+          'timeframe': timeframe,
+          'startDate': startDate,
+          'endDate': endDate,
+          if (offset != null) 'offset': offset,
+        },
         options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {
