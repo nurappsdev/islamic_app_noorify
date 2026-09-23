@@ -90,40 +90,41 @@ class HomeHeader extends StatelessWidget {
             icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
           ),
         ),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox.square(
-              dimension: 36.r,
-              child: IconButton(
-                tooltip: appText.notifications,
-                onPressed: () {},
-                padding: EdgeInsets.zero,
-                style: IconButton.styleFrom(
-                  backgroundColor: context.surfaceColor(palette.tint),
-                  foregroundColor: AppColor.primary,
-                ),
-                icon: Icon(Icons.notifications_none, size: 20.sp),
-              ),
-            ),
-            Positioned(
-              top: 6.h,
-              right: 8.w,
-              child: Container(
-                width: 9.r,
-                height: 9.r,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF6969),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: context.lineColor(palette.background),
-                    width: 1.2,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        // Notification bell hidden until notifications are wired up.
+        // Stack(
+        //   clipBehavior: Clip.none,
+        //   children: [
+        //     SizedBox.square(
+        //       dimension: 36.r,
+        //       child: IconButton(
+        //         tooltip: appText.notifications,
+        //         onPressed: () {},
+        //         padding: EdgeInsets.zero,
+        //         style: IconButton.styleFrom(
+        //           backgroundColor: context.surfaceColor(palette.tint),
+        //           foregroundColor: AppColor.primary,
+        //         ),
+        //         icon: Icon(Icons.notifications_none, size: 20.sp),
+        //       ),
+        //     ),
+        //     Positioned(
+        //       top: 6.h,
+        //       right: 8.w,
+        //       child: Container(
+        //         width: 9.r,
+        //         height: 9.r,
+        //         decoration: BoxDecoration(
+        //           color: const Color(0xFFFF6969),
+        //           shape: BoxShape.circle,
+        //           border: Border.all(
+        //             color: context.lineColor(palette.background),
+        //             width: 1.2,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ],
+        // ),
       ],
     );
   }
