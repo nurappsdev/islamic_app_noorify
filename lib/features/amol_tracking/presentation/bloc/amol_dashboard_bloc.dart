@@ -8,9 +8,15 @@ import 'amol_dashboard_state.dart';
 export 'amol_dashboard_event.dart';
 export 'amol_dashboard_state.dart';
 
-/// `_timeframeByPeriod`'s index lines up with `_AmolPeriod.values`
-/// (daily/weekly/monthly) in `amol_dashboard_screen.dart`.
+/// Index-aligned with `_AmolPeriod.values` (daily/weekly/monthly) in
+/// `amol_dashboard_screen.dart`.
 const _timeframeByPeriod = ['daily', 'weekly', 'monthly'];
+
+/// Sliding-window length per period, confirmed against the real API: daily
+/// is a single day, weekly a 7-day window, monthly a 33-day window
+/// (`startDate`/`endDate` a request actually resolved to, e.g. weekly
+/// `2026-09-17` to `2026-09-23`, monthly `2026-08-22` to `2026-09-23`).
+const _windowDaysByPeriod = [1, 7, 33];
 
 class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
   AmolDashboardBloc(this._getGraph, {DateTime Function()? now})
@@ -38,16 +44,22 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
   int _requestId = 0;
 
   /// Switching tabs always re-anchors on `today` (rather than keeping
-  /// whatever date the previous tab had navigated to), so tapping Weekly
-  /// fires `date=today&timeframe=weekly` (today back to the previous 7
-  /// days) and tapping Monthly fires `date=today&timeframe=monthly` (today
-  /// back to the previous month) immediately.
+  /// whatever date the previous tab had navigated to) and drops any
+  /// explicit calendar-month range, so tapping Weekly fires the current
+  /// 7-day window ending today and tapping Monthly fires the current
+  /// 33-day window ending today, immediately.
   Future<void> _onSelectPeriod(
     SelectPeriod event,
     Emitter<AmolDashboardState> emit,
   ) async {
     if (state.selectedPeriod == event.period) return;
-    emit(state.copyWith(selectedPeriod: event.period, date: state.today));
+    emit(
+      state.copyWith(
+        selectedPeriod: event.period,
+        date: state.today,
+        clearRangeStart: true,
+      ),
+    );
     await _load(emit);
   }
 
@@ -55,16 +67,20 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
     ShiftDate event,
     Emitter<AmolDashboardState> emit,
   ) async {
-    emit(state.copyWith(date: state.date.add(event.step * event.direction)));
+    emit(
+      state.copyWith(
+        date: state.date.add(event.step * event.direction),
+        clearRangeStart: true,
+      ),
+    );
     await _load(emit);
   }
 
   /// Jumps straight to one calendar month, e.g. picked from the monthly
-  /// tab's "last 12 months" dropdown: the current month anchors on
-  /// [AmolDashboardState.today] (matching the default today-based window);
-  /// any other month anchors on its last day, so the same
-  /// `date=...&timeframe=monthly` request the server already understands
-  /// covers that month.
+  /// tab's "last 12 months" dropdown. The current month keeps the normal
+  /// 33-day sliding window ending today (matching what tapping the Monthly
+  /// tab itself shows); any other month uses its true calendar bounds
+  /// (1st to last day) instead of forcing it through the sliding window.
   Future<void> _onSelectMonth(
     SelectMonth event,
     Emitter<AmolDashboardState> emit,
@@ -72,21 +88,44 @@ class AmolDashboardBloc extends Bloc<AmolDashboardEvent, AmolDashboardState> {
     final isCurrentMonth =
         event.month.year == state.today.year &&
         event.month.month == state.today.month;
-    final target = isCurrentMonth ? state.today : _lastDayOfMonth(event.month);
-    emit(state.copyWith(date: target));
+    if (isCurrentMonth) {
+      emit(state.copyWith(date: state.today, clearRangeStart: true));
+    } else {
+      emit(
+        state.copyWith(
+          date: _lastDayOfMonth(event.month),
+          rangeStart: DateTime(event.month.year, event.month.month, 1),
+        ),
+      );
+    }
     await _load(emit);
   }
 
-  /// Hits `GET /amol/analytics/graph?date=[isoDate]&timeframe=[timeframe]`
-  /// for the state's current date/period, e.g. daily on 2026-09-15 ->
-  /// `date=2026-09-15&timeframe=daily`; shifting a week back on the weekly
-  /// tab -> `date=2026-09-08&timeframe=weekly`.
+  /// Hits `GET /amol/analytics/graph?timeframe=[timeframe]&startDate=[..]&endDate=[..]&offset=[..]`
+  /// for the state's current window, e.g. weekly ending 2026-09-23 ->
+  /// `timeframe=weekly&startDate=2026-09-17&endDate=2026-09-23&offset=0`;
+  /// shifting a week back -> `...&startDate=2026-09-10&endDate=2026-09-16&offset=1`.
   Future<void> _load(Emitter<AmolDashboardState> emit) async {
     final requestId = ++_requestId;
     emit(state.copyWith(status: AmolDashboardStatus.loading));
+
+    final endDate = state.date;
+    final windowDays = _windowDaysByPeriod[state.selectedPeriod];
+    final startDate =
+        state.rangeStart ?? endDate.subtract(Duration(days: windowDays - 1));
+    final isDaily = state.selectedPeriod == 0;
+    // Only meaningful for the regular sliding-window navigation (not an
+    // explicit calendar-month jump, and not daily, which the server takes
+    // no offset for at all).
+    final offset = (isDaily || state.rangeStart != null)
+        ? null
+        : (state.today.difference(endDate).inDays / windowDays).round();
+
     final result = await _getGraph(
-      date: _isoDate(state.date),
+      startDate: _isoDate(startDate),
+      endDate: _isoDate(endDate),
       timeframe: _timeframeByPeriod[state.selectedPeriod],
+      offset: offset,
     );
     // A newer request already started (another tab/date/month tapped while
     // this one was in flight) — drop this now-stale response instead of

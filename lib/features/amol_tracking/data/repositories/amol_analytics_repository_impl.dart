@@ -13,11 +13,20 @@ class AmolAnalyticsRepositoryImpl implements AmolAnalyticsRepository {
 
   @override
   Future<Either<Failure, AmolAnalyticsGraph>> getGraph({
-    required String date,
+    required String startDate,
+    required String endDate,
     required String timeframe,
+    int? offset,
   }) async {
     try {
-      return Right(await _remote.getGraph(date: date, timeframe: timeframe));
+      return Right(
+        await _remote.getGraph(
+          startDate: startDate,
+          endDate: endDate,
+          timeframe: timeframe,
+          offset: offset,
+        ),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {

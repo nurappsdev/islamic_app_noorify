@@ -44,6 +44,13 @@ List<DateTime> _lastTwelveMonths(DateTime today) => [
   for (var i = 0; i < 12; i++) DateTime(today.year, today.month - i),
 ];
 
+/// The requested window's start date, mirroring the bloc's own calculation
+/// — used only as a label fallback before the server's `range` has loaded.
+DateTime _startOfWindow(_AmolPeriod period, AmolDashboardState state) {
+  if (state.rangeStart != null) return state.rangeStart!;
+  return state.date.subtract(period.step - const Duration(days: 1));
+}
+
 extension on _AmolPeriod {
   String label(AppText appText) => switch (this) {
     _AmolPeriod.daily => appText.daily,
@@ -51,10 +58,13 @@ extension on _AmolPeriod {
     _AmolPeriod.monthly => appText.monthly,
   };
 
+  // Matches the bloc's `_windowDaysByPeriod` sliding-window lengths, so
+  // stepping the date navigator lines up with what each request actually
+  // resolves to server-side.
   Duration get step => switch (this) {
     _AmolPeriod.daily => const Duration(days: 1),
     _AmolPeriod.weekly => const Duration(days: 7),
-    _AmolPeriod.monthly => const Duration(days: 30),
+    _AmolPeriod.monthly => const Duration(days: 33),
   };
 }
 
@@ -139,6 +149,16 @@ class _AmolDashboardView extends StatelessWidget {
         ? '86 %'
         : '${graph.completionPercentage.round()} %';
     final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
+    // Prefer the server's own resolved range (it's the ground truth for
+    // exactly which days the response covers) over a locally-guessed
+    // label; only fall back to local formatting before the first response
+    // lands.
+    final rangeLabel =
+        graph?.range?.formattedRange ??
+        (period == _AmolPeriod.daily
+            ? formatAmolDate(state.date, appText)
+            : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}');
+    final navigation = graph?.navigation;
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -161,10 +181,14 @@ class _AmolDashboardView extends StatelessWidget {
                   ),
                   SizedBox(height: 14.h),
                   _DateNavigator(
-                    label: formatAmolDate(state.date, appText),
+                    label: rangeLabel,
                     subtitle: '${period.label(appText)} ${appText.amolTrack}',
-                    onPrevious: () => bloc.add(ShiftDate(period.step, -1)),
-                    onNext: () => bloc.add(ShiftDate(period.step, 1)),
+                    onPrevious: navigation == null || navigation.hasPrevious
+                        ? () => bloc.add(ShiftDate(period.step, -1))
+                        : null,
+                    onNext: navigation == null || navigation.hasNext
+                        ? () => bloc.add(ShiftDate(period.step, 1))
+                        : null,
                   ),
                   if (period == _AmolPeriod.monthly) ...[
                     SizedBox(height: 10.h),
@@ -293,8 +317,11 @@ class _DateNavigator extends StatelessWidget {
 
   final String label;
   final String subtitle;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
+
+  /// `null` disables the arrow — the server said there's nothing further
+  /// that way (`navigation.hasPrevious`/`hasNext`).
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
@@ -404,23 +431,28 @@ class _NavArrow extends StatelessWidget {
   const _NavArrow({required this.icon, required this.onTap});
 
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null;
     return SizedBox.square(
       dimension: 32.r,
       child: IconButton(
         onPressed: onTap,
         padding: EdgeInsets.zero,
         style: IconButton.styleFrom(
-          backgroundColor: context.surfaceColor(Colors.white),
+          backgroundColor: context.surfaceColor(
+            enabled ? Colors.white : const Color(0xFFF2F3EA),
+          ),
           side: BorderSide(color: context.lineColor(Color(0xFFDCE9B8))),
         ),
         icon: Icon(
           icon,
           size: 16.sp,
-          color: context.inkColor(Color(0xFF7E8C61)),
+          color: context.inkColor(
+            enabled ? const Color(0xFF7E8C61) : const Color(0xFFC5CAB8),
+          ),
         ),
       ),
     );
@@ -534,6 +566,7 @@ class _AmolLineChart extends StatelessWidget {
                   plotRect: plotRect,
                   categories: categories,
                   points: points,
+                  competitorPoints: competitorPoints,
                   maxY: maxY,
                 ),
               ),
@@ -623,15 +656,25 @@ class _LineChartPainter extends CustomPainter {
     required this.plotRect,
     required this.categories,
     required this.points,
+    required this.competitorPoints,
     required this.maxY,
   });
 
   final Rect plotRect;
   final List<String> categories;
   final List<Offset> points;
+
+  /// Same order as [points]; a `null` entry breaks the dashed line for
+  /// that segment instead of interpolating across a pillar the server has
+  /// no competitor score for.
+  final List<Offset?> competitorPoints;
   final double maxY;
 
   static const lineColor = Color(0xFF5D8067);
+  // Matches _CompetitorBubble.dotColor / the legend's competitor dot, so
+  // "my" vs "competitor" reads as the same color pairing everywhere on
+  // the chart.
+  static const competitorLineColor = Color(0xFFB9C776);
   static const _areaFillColor = Color(0xFF7C93D6);
   static const _gridColor = Color(0xFFE7E9DD);
   static const _labelColor = Color(0xFF8C9484);
@@ -703,6 +746,38 @@ class _LineChartPainter extends CustomPainter {
       canvas.drawCircle(point, 2.2.r, Paint()..color = lineColor);
     }
 
+    // Competitor line: dashed, in the legend's competitor color, so "my"
+    // (solid green) and "competitor" (dashed olive) are unmistakable at a
+    // glance. Drawn as separate contiguous segments so a pillar the server
+    // has no competitor score for breaks the line instead of interpolating
+    // across it.
+    final competitorPaint = Paint()
+      ..color = competitorLineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.r
+      ..strokeCap = StrokeCap.round;
+    var segment = <Offset>[];
+    void flushSegment() {
+      if (segment.length > 1) {
+        _drawDashedPolyline(canvas, segment, competitorPaint);
+      }
+      segment = [];
+    }
+
+    for (final point in competitorPoints) {
+      if (point == null) {
+        flushSegment();
+      } else {
+        segment.add(point);
+      }
+    }
+    flushSegment();
+
+    for (final point in competitorPoints) {
+      if (point == null) continue;
+      canvas.drawCircle(point, 3.r, Paint()..color = competitorLineColor);
+    }
+
     for (var i = 0; i < categories.length; i++) {
       final x = i < points.length ? points[i].dx : plotRect.left;
       canvas.save();
@@ -732,9 +807,40 @@ class _LineChartPainter extends CustomPainter {
     painter.paint(canvas, offset);
   }
 
+  /// Draws [points] as a dashed polyline (no dashing support in
+  /// `dart:ui`/Canvas directly, so short solid segments are stepped along
+  /// each leg by hand).
+  static void _drawDashedPolyline(
+    Canvas canvas,
+    List<Offset> points,
+    Paint paint,
+  ) {
+    const dashLength = 5.0;
+    const gapLength = 4.0;
+    for (var i = 0; i < points.length - 1; i++) {
+      final start = points[i];
+      final end = points[i + 1];
+      final legLength = (end - start).distance;
+      if (legLength == 0) continue;
+      final direction = (end - start) / legLength;
+      var travelled = 0.0;
+      while (travelled < legLength) {
+        final dashEnd = (travelled + dashLength).clamp(0.0, legLength);
+        canvas.drawLine(
+          start + direction * travelled,
+          start + direction * dashEnd,
+          paint,
+        );
+        travelled += dashLength + gapLength;
+      }
+    }
+  }
+
   @override
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
-      oldDelegate.points != points || oldDelegate.plotRect != plotRect;
+      oldDelegate.points != points ||
+      oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.plotRect != plotRect;
 }
 
 class _MyPointsBar extends StatelessWidget {
