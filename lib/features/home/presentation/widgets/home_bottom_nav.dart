@@ -50,7 +50,6 @@ class HomeBottomNav extends StatelessWidget {
               onPressed: () =>
                   Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
             ),
-            const _NavItem(icon: Icons.grid_view_rounded),
           ],
         ),
       ),
