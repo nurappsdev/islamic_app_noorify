@@ -177,6 +177,7 @@ const Map<String, String> appTextEn = <String, String>{
   'compassUnsupported': "This device doesn't have a compass sensor.",
   'compassOpenSettings': 'Open Settings',
   'compassEnableLocation': 'Enable Location',
+  'compassCalibrationHint': 'Move your phone in a figure-8 to improve accuracy',
   'kiblahCompassTitle': 'Kiblah Compass',
   'compassDirectionLeft': 'Left',
   'compassDirectionRight': 'Right',

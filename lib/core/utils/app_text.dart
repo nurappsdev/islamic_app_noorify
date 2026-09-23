@@ -188,6 +188,7 @@ class AppText {
     required this.compassUnsupported,
     required this.compassOpenSettings,
     required this.compassEnableLocation,
+    required this.compassCalibrationHint,
     required this.kiblahCompassTitle,
     required this.compassDirectionLeft,
     required this.compassDirectionRight,
@@ -756,6 +757,7 @@ class AppText {
   final String compassUnsupported;
   final String compassOpenSettings;
   final String compassEnableLocation;
+  final String compassCalibrationHint;
   final String kiblahCompassTitle;
   final String compassDirectionLeft;
   final String compassDirectionRight;
@@ -1821,6 +1823,11 @@ class AppText {
         map,
         'compassEnableLocation',
         fallback?.compassEnableLocation ?? '',
+      ),
+      compassCalibrationHint: _read(
+        map,
+        'compassCalibrationHint',
+        fallback?.compassCalibrationHint ?? '',
       ),
       kiblahCompassTitle: _read(
         map,

@@ -1,7 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -12,92 +9,18 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
-
-enum _CompassAccess {
-  checking,
-  ready,
-  serviceDisabled,
-  permissionDenied,
-  unsupported,
-}
+import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
 
 /// Full-screen live Qiblah compass, opened from [HomeProgressSection]'s
 /// "View Full Screen" button (design `img_41.png`). [qiblahAngle] is the
 /// bearing (degrees clockwise from true north) `GET /home/dashboard`
-/// already resolved for the user; this screen adds the live device heading
-/// on top of it via `flutter_compass` and reads back how far to turn.
-class QiblahCompassScreen extends StatefulWidget {
+/// already resolved for the user; [QiblahHeadingListener] adds the live
+/// device heading on top of it via `flutter_compass` so this screen can
+/// read back how far to turn.
+class QiblahCompassScreen extends StatelessWidget {
   const QiblahCompassScreen({super.key, required this.qiblahAngle});
 
   final double qiblahAngle;
-
-  @override
-  State<QiblahCompassScreen> createState() => _QiblahCompassScreenState();
-}
-
-class _QiblahCompassScreenState extends State<QiblahCompassScreen>
-    with WidgetsBindingObserver {
-  _CompassAccess _access = _CompassAccess.checking;
-  StreamSubscription<CompassEvent>? _subscription;
-  double? _heading;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _init();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Location services/permission are commonly changed from the OS
-    // settings screen this widget can send the user to below.
-    final awaitingSettings =
-        _access == _CompassAccess.serviceDisabled ||
-        _access == _CompassAccess.permissionDenied;
-    if (state == AppLifecycleState.resumed && awaitingSettings) {
-      _init();
-    }
-  }
-
-  Future<void> _init() async {
-    if (FlutterCompass.events == null) {
-      if (mounted) setState(() => _access = _CompassAccess.unsupported);
-      return;
-    }
-
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (mounted) setState(() => _access = _CompassAccess.serviceDisabled);
-      return;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      if (mounted) setState(() => _access = _CompassAccess.permissionDenied);
-      return;
-    }
-
-    await _subscription?.cancel();
-    _subscription = FlutterCompass.events!.listen((event) {
-      if (!mounted || event.heading == null) return;
-      setState(() {
-        _heading = event.heading;
-        _access = _CompassAccess.ready;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _subscription?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -132,11 +55,13 @@ class _QiblahCompassScreenState extends State<QiblahCompassScreen>
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           child: Column(
             children: [
-              _CompassBody(
-                access: _access,
-                qiblahAngle: widget.qiblahAngle,
-                heading: _heading,
-                onRetry: _init,
+              QiblahHeadingListener(
+                builder: (context, access, heading, accuracy) => _CompassBody(
+                  access: access,
+                  qiblahAngle: qiblahAngle,
+                  heading: heading,
+                  accuracy: accuracy,
+                ),
               ),
             ],
           ),
@@ -151,38 +76,41 @@ class _CompassBody extends StatelessWidget {
     required this.access,
     required this.qiblahAngle,
     required this.heading,
-    required this.onRetry,
+    required this.accuracy,
   });
 
-  final _CompassAccess access;
+  final QiblahAccess access;
   final double qiblahAngle;
   final double? heading;
-  final VoidCallback onRetry;
+
+  /// The sensor's estimated error in degrees (lower is better); `null`
+  /// means unreliable/unknown, which is also worth a calibration nudge.
+  final double? accuracy;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    if (access == _CompassAccess.checking) {
+    if (access == QiblahAccess.checking) {
       return const Padding(
         padding: EdgeInsets.only(top: 80),
         child: CircularProgressIndicator(color: AppColor.primary),
       );
     }
-    if (access == _CompassAccess.serviceDisabled) {
+    if (access == QiblahAccess.serviceDisabled) {
       return _AccessMessage(
         message: appText.compassLocationServicesDisabled,
         actionLabel: appText.compassEnableLocation,
         onAction: () => Geolocator.openLocationSettings(),
       );
     }
-    if (access == _CompassAccess.permissionDenied) {
+    if (access == QiblahAccess.permissionDenied) {
       return _AccessMessage(
         message: appText.compassPermissionDenied,
         actionLabel: appText.compassOpenSettings,
         onAction: () => Geolocator.openAppSettings(),
       );
     }
-    if (access == _CompassAccess.unsupported) {
+    if (access == QiblahAccess.unsupported) {
       return _AccessMessage(message: appText.compassUnsupported);
     }
 
@@ -215,6 +143,21 @@ class _CompassBody extends StatelessWidget {
           heading: heading!,
           size: 300.w,
         ),
+        if (accuracy == null || accuracy! >= 45) ...[
+          SizedBox(height: 20.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32.w),
+            child: Text(
+              appText.compassCalibrationHint,
+              textAlign: TextAlign.center,
+              style: homeSansStyle(
+                context: context,
+                fontSize: 12.sp,
+                color: context.appPalette.textPrimary.withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
