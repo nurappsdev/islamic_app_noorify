@@ -3,12 +3,31 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
+import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
+import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
+import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
+
+/// Fallback bearing (degrees clockwise from true north) shown before the
+/// dashboard API's `kiblahAngle` has loaded.
+const _fallbackQiblahAngle = 270.0;
+
+/// `kiblahAngle` arrives pre-formatted, e.g. `"Kiblah 277.6° West"` — build
+/// the same shape locally for the fallback shown before it has loaded.
+String _fallbackQiblahLabel(AppText appText, double angle) {
+  final normalized = angle % 360;
+  final direction = normalized >= 180
+      ? appText.compassDirectionWest
+      : appText.compassDirectionEast;
+  return '${appText.kiblahLabel} ${angle.round()}° $direction';
+}
 
 /// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
 /// already knows how to localize. `nafl_and_more` isn't here: it drives the
@@ -61,6 +80,17 @@ class HomeProgressSection extends StatelessWidget {
       }
     }
 
+    // The API's `kiblahAngle` arrives pre-formatted (e.g. "Kiblah 277.6°
+    // West"), not a bare number, so it's shown as-is and only its numeric
+    // bearing is pulled out for the dial.
+    final rawKiblah = dashboardState.hasData
+        ? dashboardState.dashboard!.userSummary.kiblahAngle
+        : null;
+    final qiblahAngle = parseQiblahBearing(rawKiblah) ?? _fallbackQiblahAngle;
+    final qiblahLabel = (rawKiblah != null && rawKiblah.isNotEmpty)
+        ? rawKiblah
+        : _fallbackQiblahLabel(appText, qiblahAngle);
+
     return Column(
       children: [
         GridView.builder(
@@ -104,7 +134,76 @@ class HomeProgressSection extends StatelessWidget {
             ),
           ),
         ),
+        SizedBox(height: 8.h),
+        _CompassCard(qiblahAngle: qiblahAngle, qiblahLabel: qiblahLabel),
       ],
+    );
+  }
+}
+
+class _CompassCard extends StatelessWidget {
+  const _CompassCard({required this.qiblahAngle, required this.qiblahLabel});
+
+  final double qiblahAngle;
+  final String qiblahLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+
+    return HomeCard(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appText.compassTitle,
+                  style: homeSerifStyle(context: context, fontSize: 18.sp),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  qiblahLabel,
+                  style: homeSansStyle(context: context, fontSize: 13.sp),
+                ),
+                SizedBox(height: 14.h),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          QiblahCompassScreen(qiblahAngle: qiblahAngle),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColor.primary,
+                    side: BorderSide(
+                      color: context.lineColor(AppColor.primary),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 8.h,
+                    ),
+                    minimumSize: Size(0, 32.h),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      appText.viewFullScreen,
+                      style: TextStyle(fontSize: 12.sp),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          QiblahCompassDial(qiblahAngle: qiblahAngle, size: 150.w),
+        ],
+      ),
     );
   }
 }

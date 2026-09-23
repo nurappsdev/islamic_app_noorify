@@ -165,6 +165,21 @@ const Map<String, String> appTextEn = <String, String>{
   'newFolder': 'New folder',
   'categoryQuiz': 'Quiz',
   'categoryNaflAndMore': 'Nafl & More',
+  'compassTitle': 'Compass',
+  'kiblahLabel': 'Kiblah',
+  'viewFullScreen': 'View Full Screen',
+  'compassDirectionEast': 'East',
+  'compassDirectionWest': 'West',
+  'compassLocationServicesDisabled':
+      'Turn on location services to find the Qiblah direction.',
+  'compassPermissionDenied':
+      'Noorify needs location access to point the compass toward the Kaaba.',
+  'compassUnsupported': "This device doesn't have a compass sensor.",
+  'compassOpenSettings': 'Open Settings',
+  'compassEnableLocation': 'Enable Location',
+  'kiblahCompassTitle': 'Kiblah Compass',
+  'compassDirectionLeft': 'Left',
+  'compassDirectionRight': 'Right',
   'salahFajr': 'Fajr',
   'salahDuhr': 'Duhr',
   'salahAsr': 'Asr',
@@ -509,8 +524,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'hadithCompleted': "Completed",
   'hadithCompletedQuestion':
       "Have you completed reading this Hadith? If you have completed it, points will be added to your account.",
-  'hadithReadingTimeComplete':
-      "Your reading time is complete. Please tap Yes.",
+  'hadithReadingTimeComplete': "Your reading time is complete. Please tap Yes.",
   'hadithTrackFailed': "Couldn't save your reading progress. Please try again.",
   'folderNameInputHint': "Write folder name here.",
   'cancelAction': "Cancel",

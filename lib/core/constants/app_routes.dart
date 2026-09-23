@@ -23,6 +23,7 @@ import '../../features/hadith/presentation/screens/hadith_sub_category_screen.da
 import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
+import '../../features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
@@ -257,6 +258,9 @@ class AppRoutes {
         );
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
+      case RouteNames.prayerCompass:
+        final qiblahAngle = settings.arguments as double? ?? 270;
+        return _page(QiblahCompassScreen(qiblahAngle: qiblahAngle), settings);
       case RouteNames.asma:
         return _page(
           BlocProvider(
