@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
   const HomeFeatureGrid({super.key});
@@ -72,12 +73,14 @@ class HomeFeatureGrid extends StatelessWidget {
           title: appText.zakatCalculator,
           icon: Icons.price_check,
           iconColor: context.inkColor(Color(0xFF0DA334)),
+          onTap: () => _openComingSoon(context, appText.zakatCalculator),
         ),
         SizedBox(height: 6.h),
         _LinkTile(
           title: appText.ageCalculate,
           icon: Icons.calculate,
           iconColor: const Color(0xFFAAB781),
+          onTap: () => _openComingSoon(context, appText.ageCalculate),
         ),
       ],
     );
@@ -131,33 +134,45 @@ class _FeatureTile extends StatelessWidget {
   }
 }
 
+void _openComingSoon(BuildContext context, String title) {
+  Navigator.of(
+    context,
+  ).push(MaterialPageRoute<void>(builder: (_) => ComingSoonScreen(title: title)));
+}
+
 class _LinkTile extends StatelessWidget {
   const _LinkTile({
     required this.title,
     required this.icon,
     required this.iconColor,
+    required this.onTap,
   });
 
   final String title;
   final IconData icon;
   final Color iconColor;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return HomeCard(
-      padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 9.h),
-      child: Row(
-        children: [
-          Icon(icon, color: context.inkColor(iconColor), size: 24.sp),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              title,
-              style: homeSansStyle(context: context, fontSize: 12.sp),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(11.r),
+      child: HomeCard(
+        padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 9.h),
+        child: Row(
+          children: [
+            Icon(icon, color: context.inkColor(iconColor), size: 24.sp),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                title,
+                style: homeSansStyle(context: context, fontSize: 12.sp),
+              ),
             ),
-          ),
-          const HomeCircleButton(icon: Icons.chevron_right),
-        ],
+            HomeCircleButton(icon: Icons.chevron_right, onPressed: onTap),
+          ],
+        ),
       ),
     );
   }
