@@ -38,9 +38,16 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
   DateTime _now() => widget.now?.call() ?? bangladeshNow();
 
-  double get _dayProgress {
+  bool get _isNightPhase {
     final times = _times;
-    return times == null ? 0 : dayProgress(_now(), times);
+    return times != null && isNightPhase(_now(), times);
+  }
+
+  double get _arcProgress {
+    final times = _times;
+    if (times == null) return 0;
+    final now = _now();
+    return isNightPhase(now, times) ? nightProgress(now, times) : dayProgress(now, times);
   }
 
   String _formattedDate(AppText appText) {
@@ -226,7 +233,10 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 33.w,
                         child: SizedBox(
                           height: 142.h,
-                          child: PrayerDayProgress(progress: _dayProgress),
+                          child: PrayerDayProgress(
+                            progress: _arcProgress,
+                            isNight: _isNightPhase,
+                          ),
                         ),
                       ),
 

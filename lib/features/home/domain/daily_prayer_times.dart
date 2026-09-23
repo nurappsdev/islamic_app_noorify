@@ -104,6 +104,31 @@ double dayProgress(DateTime now, DailyPrayerTimes times) {
   return ((nowMinutes - sunrise) / (sunset - sunrise)).clamp(0.0, 1.0);
 }
 
+/// True when [now] falls between [DailyPrayerTimes.maghrib] and the next
+/// day's [DailyPrayerTimes.fajr] — the night span [nightProgress] tracks.
+bool isNightPhase(DateTime now, DailyPrayerTimes times) {
+  final maghrib = times.maghrib.totalMinutes;
+  final fajr = times.fajr.totalMinutes;
+  final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
+  return nowMinutes >= maghrib || nowMinutes < fajr;
+}
+
+/// Fraction (0..1) of the night elapsed between [DailyPrayerTimes.maghrib]
+/// and the next day's [DailyPrayerTimes.fajr] at [now] — 0 at/just after
+/// Maghrib, 1 at/after the next Fajr. Only meaningful when [isNightPhase]
+/// is true for the same [now]/[times].
+double nightProgress(DateTime now, DailyPrayerTimes times) {
+  final maghrib = times.maghrib.totalMinutes;
+  final fajr = times.fajr.totalMinutes;
+  final totalNightMinutes = (24 * 60 - maghrib) + fajr;
+  if (totalNightMinutes <= 0) return 0;
+  final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
+  final elapsed = nowMinutes >= maghrib
+      ? nowMinutes - maghrib
+      : (24 * 60 - maghrib) + nowMinutes;
+  return (elapsed / totalNightMinutes).clamp(0.0, 1.0);
+}
+
 extension PrayerClockTimeShift on PrayerClockTime {
   /// [minutes] may be negative; wraps around midnight.
   PrayerClockTime plusMinutes(int minutes) {

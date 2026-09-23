@@ -194,7 +194,12 @@ class _PrayerSummaryHeader extends StatelessWidget {
           child: SizedBox(
             height: 142.h,
             child: PrayerDayProgress(
-              progress: times == null ? 0 : dayProgress(now, times!),
+              progress: times == null
+                  ? 0
+                  : isNightPhase(now, times!)
+                  ? nightProgress(now, times!)
+                  : dayProgress(now, times!),
+              isNight: times != null && isNightPhase(now, times!),
             ),
           ),
         ),

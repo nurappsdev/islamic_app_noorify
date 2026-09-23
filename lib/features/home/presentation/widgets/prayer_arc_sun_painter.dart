@@ -3,16 +3,24 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Renders the day-progress arc together with the sun positioned along it,
-/// both driven by [progress] — the fraction (0..1) of daylight elapsed
-/// between sunrise and sunset.
+/// Renders the day-progress arc together with the sun (or, once Maghrib
+/// starts, a moon) positioned along it, both driven by [progress] — the
+/// fraction (0..1) elapsed across the current phase ([isNight] selects
+/// whether that phase is daylight, sunrise..sunset, or night,
+/// Maghrib..next Fajr).
 class PrayerDayProgress extends StatelessWidget {
-  const PrayerDayProgress({super.key, required this.progress});
+  const PrayerDayProgress({
+    super.key,
+    required this.progress,
+    this.isNight = false,
+  });
 
   final double progress;
+  final bool isNight;
 
   static const _strokeWidth = 10.0;
   static const _sunDiameter = 43.0;
+  static const _nightActiveColor = Color(0xFF6C7FB5);
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +38,7 @@ class PrayerDayProgress extends StatelessWidget {
               painter: PrayerArcPainter(
                 progress: progress,
                 strokeWidth: strokeWidth,
+                activeColor: isNight ? _nightActiveColor : null,
               ),
             ),
             Positioned(
@@ -37,7 +46,11 @@ class PrayerDayProgress extends StatelessWidget {
               top: sunCenter.dy - sunDiameter / 2,
               child: SizedBox.square(
                 dimension: sunDiameter,
-                child: const CustomPaint(painter: PrayerSunPainter()),
+                child: CustomPaint(
+                  painter: isNight
+                      ? const PrayerMoonPainter()
+                      : const PrayerSunPainter(),
+                ),
               ),
             ),
           ],
@@ -60,11 +73,18 @@ class PrayerDayProgress extends StatelessWidget {
 }
 
 class PrayerArcPainter extends CustomPainter {
-  const PrayerArcPainter({required this.progress, required this.strokeWidth});
+  const PrayerArcPainter({
+    required this.progress,
+    required this.strokeWidth,
+    this.activeColor,
+  });
 
-  /// Fraction (0..1) of daylight elapsed between sunrise and sunset.
+  /// Fraction (0..1) elapsed across the current phase (day or night).
   final double progress;
   final double strokeWidth;
+
+  /// Overrides the default (daylight) active-arc color, e.g. for night.
+  final Color? activeColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -80,7 +100,7 @@ class PrayerArcPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
     final activePaint = Paint()
-      ..color = const Color(0xFF5D8067)
+      ..color = activeColor ?? const Color(0xFF5D8067)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -97,7 +117,7 @@ class PrayerArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant PrayerArcPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress || oldDelegate.activeColor != activeColor;
 }
 
 class PrayerSunPainter extends CustomPainter {
@@ -106,6 +126,20 @@ class PrayerSunPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
+
+    // Soft glow behind the disc, for a warmer, less flat-looking sun.
+    canvas.drawCircle(
+      center,
+      size.width * .42,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFFFD37A).withValues(alpha: .55),
+            const Color(0xFFFFD37A).withValues(alpha: 0),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: size.width * .42)),
+    );
+
     final rayPaint = Paint()
       ..color = const Color(0xFFFFA328)
       ..strokeCap = StrokeCap.round
@@ -124,10 +158,77 @@ class PrayerSunPainter extends CustomPainter {
       canvas.drawLine(inner, outer, rayPaint);
     }
 
+    // Disc with a subtle light-to-dark gradient instead of a flat fill.
     canvas.drawCircle(
       center,
       size.width * .23,
-      Paint()..color = const Color(0xFFFFA328),
+      Paint()
+        ..shader = RadialGradient(
+          center: Alignment.topLeft,
+          colors: const [Color(0xFFFFD37A), Color(0xFFFF9A1F)],
+        ).createShader(
+          Rect.fromCircle(center: center, radius: size.width * .23),
+        ),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class PrayerMoonPainter extends CustomPainter {
+  const PrayerMoonPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width * .27;
+
+    // Soft glow behind the crescent.
+    canvas.drawCircle(
+      center,
+      size.width * .42,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFFEDEBFB).withValues(alpha: .45),
+            const Color(0xFFEDEBFB).withValues(alpha: 0),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: size.width * .42)),
+    );
+
+    // A crescent is a filled disc with a second, offset disc cut out of it
+    // (BlendMode.clear punches real transparency, so it reads correctly
+    // over any background).
+    canvas.saveLayer(Offset.zero & size, Paint());
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFDFBEF), Color(0xFFE3E0F5)],
+        ).createShader(Rect.fromCircle(center: center, radius: radius)),
+    );
+    canvas.drawCircle(
+      center.translate(size.width * .16, -size.height * .05),
+      radius * .82,
+      Paint()..blendMode = BlendMode.clear,
+    );
+    canvas.restore();
+
+    // A couple of small stars alongside the crescent.
+    final starPaint = Paint()..color = const Color(0xFFF4F1E3).withValues(alpha: .85);
+    canvas.drawCircle(
+      Offset(center.dx - radius * .95, center.dy - radius * .7),
+      size.width * .035,
+      starPaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx + radius * 1.05, center.dy + radius * .5),
+      size.width * .025,
+      starPaint,
     );
   }
 
