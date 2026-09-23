@@ -235,10 +235,11 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 0,
                         child: Column(
                           children: [
+                            SizedBox(height: 8.h,),
                             Text(
                               _formattedDate(appText),
                               style: homeSansStyle(
-                                fontSize: 15.sp,
+                                fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
                               ),
                             ),
@@ -259,13 +260,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 color: const Color(0xFF5B856F),
                               ),
                             ),
+
                           ],
                         ),
                       ),
 
                       // Current Prayer Badge
                       Positioned(
-                        top: 171.h,
+                        top: 178.h,
                         left: 0,
                         right: 0,
                         child: Center(
@@ -280,7 +282,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       Positioned(
                         left: 13.w,
                         right: 13.w,
-                        bottom: 15.h,
+                        bottom: 13.h,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
