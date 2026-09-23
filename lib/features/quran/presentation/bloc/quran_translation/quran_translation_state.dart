@@ -1,3 +1,4 @@
+import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Progress of an in-flight translation-edition download.
@@ -23,6 +24,7 @@ class QuranTranslationState {
     this.ayahOverrides = const {},
     this.loaded = false,
     this.arabicFontScale = 1.0,
+    this.arabicFontFamily = kDefaultArabicFontId,
     this.translationFontScale = 1.0,
     this.showArabic = true,
     this.showTranslation = true,
@@ -44,6 +46,9 @@ class QuranTranslationState {
 
   /// Zoom for the Arabic ayah text.
   final double arabicFontScale;
+
+  /// Id of the [ArabicFont] used to render the Arabic ayah text.
+  final String arabicFontFamily;
 
   /// Zoom for the translation text.
   final double translationFontScale;
@@ -80,6 +85,7 @@ class QuranTranslationState {
     Map<int, AppLanguage>? ayahOverrides,
     bool? loaded,
     double? arabicFontScale,
+    String? arabicFontFamily,
     double? translationFontScale,
     bool? showArabic,
     bool? showTranslation,
@@ -95,6 +101,7 @@ class QuranTranslationState {
       ayahOverrides: ayahOverrides ?? this.ayahOverrides,
       loaded: loaded ?? this.loaded,
       arabicFontScale: arabicFontScale ?? this.arabicFontScale,
+      arabicFontFamily: arabicFontFamily ?? this.arabicFontFamily,
       translationFontScale: translationFontScale ?? this.translationFontScale,
       showArabic: showArabic ?? this.showArabic,
       showTranslation: showTranslation ?? this.showTranslation,

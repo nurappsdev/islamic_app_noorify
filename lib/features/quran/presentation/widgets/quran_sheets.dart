@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
@@ -394,6 +395,14 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                   SizedBox(height: 14.h),
                   _SettingLabel(appText.quranArabicSizeLabel),
                   const QuranZoomControl(target: QuranZoomTarget.arabic),
+                  SizedBox(height: 10.h),
+                  _SettingLabel(appText.quranArabicFontLabel),
+                  SizedBox(height: 4.h),
+                  for (final font in kArabicFonts)
+                    _ArabicFontRow(
+                      font: font,
+                      selected: font.id == state.arabicFontFamily,
+                    ),
                   SizedBox(height: 8.h),
                   _SettingLabel(appText.quranTranslationSizeLabel),
                   const QuranZoomControl(target: QuranZoomTarget.translation),
@@ -442,6 +451,62 @@ class _SettingLabel extends StatelessWidget {
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
           color: context.inkColor(Color(0xFF5A6350)),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArabicFontRow extends StatelessWidget {
+  const _ArabicFontRow({required this.font, required this.selected});
+
+  final ArabicFont font;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.read<QuranTranslationBloc>().add(
+        SetArabicFontFamily(font.id),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+              size: 18.sp,
+              color: selected
+                  ? AppColor.primary
+                  : const Color(0xFF9AA187),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                font.label,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                  color: context.inkColor(
+                    selected ? AppColor.primary : const Color(0xFF3A4032),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              'بِسْمِ اللَّهِ',
+              textDirection: TextDirection.rtl,
+              style: font.apply(
+                TextStyle(
+                  fontSize: 18.sp,
+                  color: context.inkColor(const Color(0xFF3A4032)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

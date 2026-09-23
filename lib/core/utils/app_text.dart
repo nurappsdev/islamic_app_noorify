@@ -465,6 +465,7 @@ class AppText {
     required this.quranReaderSettingsTitle,
     required this.quranArabicLabel,
     required this.quranArabicSizeLabel,
+    required this.quranArabicFontLabel,
     required this.quranTranslationSizeLabel,
     required this.quranDownloadEditionCta,
     required this.quranEditionDownloading,
@@ -1035,6 +1036,7 @@ class AppText {
   final String quranReaderSettingsTitle;
   final String quranArabicLabel;
   final String quranArabicSizeLabel;
+  final String quranArabicFontLabel;
   final String quranTranslationSizeLabel;
   final String quranDownloadEditionCta;
   final String quranEditionDownloading;
@@ -2774,6 +2776,11 @@ class AppText {
         map,
         'quranArabicSizeLabel',
         fallback?.quranArabicSizeLabel ?? '',
+      ),
+      quranArabicFontLabel: _read(
+        map,
+        'quranArabicFontLabel',
+        fallback?.quranArabicFontLabel ?? '',
       ),
       quranTranslationSizeLabel: _read(
         map,

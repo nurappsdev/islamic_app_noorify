@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
@@ -351,6 +352,9 @@ class _ContinuousAyahTextState extends State<_ContinuousAyahText> {
     final multiplier = context.select<QuranTranslationBloc, double>(
       (bloc) => bloc.state.arabicFontScale,
     );
+    final arabicFont = context.select<QuranTranslationBloc, ArabicFont>(
+      (bloc) => arabicFontById(bloc.state.arabicFontFamily),
+    );
     return BlocConsumer<SurahPlaybackBloc, SurahPlaybackState>(
       listenWhen: (p, c) => p.currentAyahNo != c.currentAyahNo,
       listener: (context, state) {
@@ -365,10 +369,12 @@ class _ContinuousAyahTextState extends State<_ContinuousAyahText> {
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.right,
           text: TextSpan(
-            style: TextStyle(
-              color: context.inkColor(Colors.black87),
-              fontSize: 19.sp * multiplier,
-              height: 2.0,
+            style: arabicFont.apply(
+              TextStyle(
+                color: context.inkColor(Colors.black87),
+                fontSize: 19.sp * multiplier,
+                height: 2.0,
+              ),
             ),
             children: [
               for (var i = 0; i < widget.arabicAyahs.length; i++)

@@ -37,6 +37,7 @@ class QuranTranslationBloc
     on<SetSurahTranslationLang>(_onSetSurah);
     on<SetAyahTranslationLang>(_onSetAyah);
     on<SetArabicFontScale>(_onSetArabicFontScale);
+    on<SetArabicFontFamily>(_onSetArabicFontFamily);
     on<SetTranslationFontScale>(_onSetTranslationFontScale);
     on<SetShowArabic>(_onSetShowArabic);
     on<SetShowTranslation>(_onSetShowTranslation);
@@ -85,6 +86,7 @@ class QuranTranslationBloc
       state.copyWith(
         surahLang: lang,
         arabicFontScale: store.arabicFontScale(),
+        arabicFontFamily: store.arabicFontFamily(),
         translationFontScale: store.translationFontScale(),
         showArabic: store.showArabic(),
         showTranslation: store.showTranslation(),
@@ -135,6 +137,14 @@ class QuranTranslationBloc
   ) async {
     emit(state.copyWith(arabicFontScale: event.value));
     await (await _resolveStore()).setArabicFontScale(event.value);
+  }
+
+  Future<void> _onSetArabicFontFamily(
+    SetArabicFontFamily event,
+    Emitter<QuranTranslationState> emit,
+  ) async {
+    emit(state.copyWith(arabicFontFamily: event.fontId));
+    await (await _resolveStore()).setArabicFontFamily(event.fontId);
   }
 
   Future<void> _onSetTranslationFontScale(
