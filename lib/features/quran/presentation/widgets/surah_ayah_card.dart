@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
@@ -50,6 +51,7 @@ class SurahAyahCard extends StatelessWidget {
       translation = isBangla ? bengaliTranslation : englishTranslation;
     }
     final arabicScale = tState.arabicFontScale;
+    final arabicFont = arabicFontById(tState.arabicFontFamily);
     final translationScale = tState.translationFontScale;
     final showTranslation = tState.showTranslation;
     return BlocProvider(
@@ -267,7 +269,9 @@ class SurahAyahCard extends StatelessWidget {
                 arabic,
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
-                style: TextStyle(fontSize: 19.sp * arabicScale, height: 1.8),
+                style: arabicFont.apply(
+                  TextStyle(fontSize: 19.sp * arabicScale, height: 1.8),
+                ),
               ),
             ),
             if (showTranslation && translation.isNotEmpty) ...[

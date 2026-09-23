@@ -36,6 +36,13 @@ class SetArabicFontScale extends QuranTranslationEvent {
   final double value;
 }
 
+/// Updates the Arabic typeface, by [ArabicFont.id] (persisted).
+class SetArabicFontFamily extends QuranTranslationEvent {
+  const SetArabicFontFamily(this.fontId);
+
+  final String fontId;
+}
+
 /// Updates the translation-text zoom (persisted).
 class SetTranslationFontScale extends QuranTranslationEvent {
   const SetTranslationFontScale(this.value);

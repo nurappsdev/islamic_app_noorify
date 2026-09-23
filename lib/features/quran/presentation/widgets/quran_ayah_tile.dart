@@ -4,8 +4,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 
@@ -36,6 +38,9 @@ class QuranAyahTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final arabicFont = context.select<QuranTranslationBloc, ArabicFont>(
+      (bloc) => arabicFontById(bloc.state.arabicFontFamily),
+    );
     return BlocProvider(
       create: (_) => AyahBookmarkBloc(
         surahNo: surahNo,
@@ -52,10 +57,12 @@ class QuranAyahTile extends StatelessWidget {
               arabic,
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize: 21.sp,
-                height: 1.9,
-                color: context.inkColor(Colors.black87),
+              style: arabicFont.apply(
+                TextStyle(
+                  fontSize: 21.sp,
+                  height: 1.9,
+                  color: context.inkColor(Colors.black87),
+                ),
               ),
             ),
           ),

@@ -130,3 +130,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  fonts:
+    - family: Noorehuda
+      fonts:
+        - asset: assets/fonts/quran/Noorehuda.ttf
