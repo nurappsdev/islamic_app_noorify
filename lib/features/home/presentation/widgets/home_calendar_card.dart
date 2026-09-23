@@ -11,6 +11,31 @@ import 'package:islami_app_noorify/features/home/presentation/screens/home_scree
 
 enum _CalTab { bangla, arabic, english }
 
+const _banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+const _arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+/// Western digits in [value] mapped through [digits] (Bangla/Arabic-Indic);
+/// `null` leaves western digits untouched.
+String _localizeDigits(int value, List<String>? digits) {
+  if (digits == null) return '$value';
+  return '$value'.split('').map((c) => digits[int.parse(c)]).join();
+}
+
+const _monthNamesEn = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 const _hijriMonthNamesAr = [
   'محرم',
   'صفر',
@@ -26,9 +51,51 @@ const _hijriMonthNamesAr = [
   'ذو الحجة',
 ];
 
-const _hijriWeekdayShortAr = [
+/// Common Bangla transliteration of the Hijri month names, for the Hijri
+/// line shown under the Bangla tab.
+const _hijriMonthNamesBn = [
+  'মুহাররম',
+  'সফর',
+  'রবিউল আউয়াল',
+  'রবিউস সানি',
+  'জমাদিউল আউয়াল',
+  'জমাদিউস সানি',
+  'রজব',
+  'শাবান',
+  'রমজান',
+  'শাওয়াল',
+  'জিলকদ',
+  'জিলহজ',
+];
+
+const _hijriWeekdayShortAr = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+
+// Index 0 = Sunday .. 6 = Saturday, to match DateTime.weekday % 7. The 7-day
+// week is shared by every calendar system here, so one weekday index drives
+// all three name sets.
+const _weekdayFullEn = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
+
+const _weekdayFullBn = [
+  'রবিবার',
+  'সোমবার',
+  'মঙ্গলবার',
+  'বুধবার',
+  'বৃহস্পতিবার',
+  'শুক্রবার',
+  'শনিবার',
+];
+
+const _weekdayFullAr = [
   'الأحد',
-  'الإثنين',
+  'الاثنين',
   'الثلاثاء',
   'الأربعاء',
   'الخميس',
@@ -36,22 +103,7 @@ const _hijriWeekdayShortAr = [
   'السبت',
 ];
 
-const _englishMonthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-const _englishWeekdayShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const _weekdayShortEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 class _CalCell {
   const _CalCell({required this.day, required this.inMonth, required this.isToday});
@@ -61,8 +113,13 @@ class _CalCell {
   final bool isToday;
 }
 
-/// The Bangla / Arabic (Hijri) / English calendar card shown on the home
-/// screen, right after the Qiblah compass card.
+/// The Bangla / Arabic / English calendar card shown on the home screen,
+/// right after the Qiblah compass card. Each tab is its own native calendar
+/// system, not a relabeled Gregorian grid:
+/// - Bangla: the Bengali solar calendar, plus today's Hijri date written in
+///   Bangla script underneath.
+/// - Arabic: the Hijri lunar calendar, in Arabic script and digits.
+/// - English: the plain Gregorian calendar.
 class HomeCalendarCard extends StatefulWidget {
   const HomeCalendarCard({super.key});
 
@@ -93,8 +150,8 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     super.initState();
     final now = DateTime.now();
     _todayEn = DateTime(now.year, now.month, now.day);
-    _enYear = now.year;
-    _enMonth = now.month;
+    _enYear = _todayEn.year;
+    _enMonth = _todayEn.month;
 
     _todayBn = BanglaDate.fromGregorian(now);
     _bnYear = _todayBn.year;
@@ -107,6 +164,15 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     _hYear = hc.hYear;
     _hMonth = hc.hMonth;
   }
+
+  List<String>? get _digits => switch (_tab) {
+    _CalTab.bangla => _banglaDigits,
+    _CalTab.arabic => _arabicDigits,
+    _CalTab.english => null,
+  };
+
+  TextDirection get _textDirection =>
+      _tab == _CalTab.arabic ? TextDirection.rtl : TextDirection.ltr;
 
   int get _year => switch (_tab) {
     _CalTab.english => _enYear,
@@ -121,16 +187,79 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   };
 
   List<String> get _monthNames => switch (_tab) {
-    _CalTab.english => _englishMonthNames,
+    _CalTab.english => _monthNamesEn,
     _CalTab.bangla => BanglaDate.monthNames,
     _CalTab.arabic => _hijriMonthNamesAr,
   };
 
   List<String> get _weekdayShort => switch (_tab) {
-    _CalTab.english => _englishWeekdayShort,
+    _CalTab.english => _weekdayShortEn,
     _CalTab.bangla => BanglaDate.weekdayShortNames,
     _CalTab.arabic => _hijriWeekdayShortAr,
   };
+
+  /// Today's date written in this tab's own calendar system and script.
+  String _primaryTodayLine() {
+    final wIdx = _todayEn.weekday % 7; // Sun=0..Sat=6, shared 7-day week.
+    switch (_tab) {
+      case _CalTab.english:
+        return '${_weekdayFullEn[wIdx]}, ${_todayEn.day} '
+            '${_monthNamesEn[_todayEn.month - 1]} ${_todayEn.year}';
+      case _CalTab.bangla:
+        final d = _localizeDigits(_todayBn.day, _banglaDigits);
+        final y = _localizeDigits(_todayBn.year, _banglaDigits);
+        return '${_weekdayFullBn[wIdx]}, $d '
+            '${BanglaDate.monthNames[_todayBn.month - 1]} $y';
+      case _CalTab.arabic:
+        final d = _localizeDigits(_todayHDay, _arabicDigits);
+        final y = _localizeDigits(_todayHYear, _arabicDigits);
+        return '${_weekdayFullAr[wIdx]}، $d '
+            '${_hijriMonthNamesAr[_todayHMonth - 1]} $y';
+    }
+  }
+
+  /// Today's Hijri date written in Bangla script — shown only under the
+  /// Bangla tab.
+  String _hijriInBangla() {
+    final d = _localizeDigits(_todayHDay, _banglaDigits);
+    final y = _localizeDigits(_todayHYear, _banglaDigits);
+    return 'হিজরি: $d ${_hijriMonthNamesBn[_todayHMonth - 1]} $y';
+  }
+
+  String get _todayLabelEnglish {
+    final wIdx = _todayEn.weekday % 7;
+    return '${_weekdayFullEn[wIdx]}, ${_todayEn.day} '
+        '${_monthNamesEn[_todayEn.month - 1]} ${_todayEn.year}';
+  }
+
+  List<_CalCell> _buildGenericCells({
+    required int daysInMonth,
+    required int firstWeekday, // Dart weekday: Mon=1..Sun=7
+    required int prevMonthDays,
+    required bool Function(int day) isToday,
+  }) {
+    final leading = firstWeekday % 7; // Sun=0..Sat=6
+    final cells = <_CalCell>[];
+    for (var i = 0; i < leading; i++) {
+      cells.add(
+        _CalCell(
+          day: prevMonthDays - leading + 1 + i,
+          inMonth: false,
+          isToday: false,
+        ),
+      );
+    }
+    for (var d = 1; d <= daysInMonth; d++) {
+      cells.add(_CalCell(day: d, inMonth: true, isToday: isToday(d)));
+    }
+    final remainder = cells.length % 7;
+    if (remainder != 0) {
+      for (var i = 0; i < 7 - remainder; i++) {
+        cells.add(_CalCell(day: i + 1, inMonth: false, isToday: false));
+      }
+    }
+    return cells;
+  }
 
   List<_CalCell> _buildCells() {
     switch (_tab) {
@@ -177,35 +306,6 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     }
   }
 
-  List<_CalCell> _buildGenericCells({
-    required int daysInMonth,
-    required int firstWeekday, // Dart weekday: Mon=1..Sun=7
-    required int prevMonthDays,
-    required bool Function(int day) isToday,
-  }) {
-    final leading = firstWeekday % 7; // Sun=0 ... Sat=6
-    final cells = <_CalCell>[];
-    for (var i = 0; i < leading; i++) {
-      cells.add(
-        _CalCell(
-          day: prevMonthDays - leading + 1 + i,
-          inMonth: false,
-          isToday: false,
-        ),
-      );
-    }
-    for (var d = 1; d <= daysInMonth; d++) {
-      cells.add(_CalCell(day: d, inMonth: true, isToday: isToday(d)));
-    }
-    final remainder = cells.length % 7;
-    if (remainder != 0) {
-      for (var i = 0; i < 7 - remainder; i++) {
-        cells.add(_CalCell(day: i + 1, inMonth: false, isToday: false));
-      }
-    }
-    return cells;
-  }
-
   void _setMonth(int month) => setState(() {
     switch (_tab) {
       case _CalTab.english:
@@ -238,7 +338,7 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
           shrinkWrap: true,
           itemCount: names.length,
           itemBuilder: (context, index) => ListTile(
-            title: Text(names[index]),
+            title: Text(names[index], textDirection: _textDirection),
             trailing: index + 1 == current
                 ? const Icon(Icons.check, color: AppColor.primary)
                 : null,
@@ -280,6 +380,8 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final showBanglaHijriLine = _tab == _CalTab.bangla;
+    final showEnglishGloss = _tab != _CalTab.english;
     return HomeCard(
       padding: EdgeInsets.all(12.w),
       child: Column(
@@ -292,16 +394,51 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
             onChanged: (t) => setState(() => _tab = t),
           ),
           SizedBox(height: 12.h),
+          Text(
+            _primaryTodayLine(),
+            textDirection: _textDirection,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: context.inkColor(const Color(0xFF2A331C)),
+            ),
+          ),
+          if (showBanglaHijriLine) ...[
+            SizedBox(height: 2.h),
+            Text(
+              _hijriInBangla(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColor.primary,
+              ),
+            ),
+          ],
+          if (showEnglishGloss) ...[
+            SizedBox(height: 2.h),
+            Text(
+              _todayLabelEnglish,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: context.inkColor(const Color(0xFF9AA187)),
+              ),
+            ),
+          ],
+          SizedBox(height: 10.h),
           _MonthYearRow(
-            year: _year,
+            yearLabel: _localizeDigits(_year, _digits),
             monthName: _monthNames[_month - 1],
+            textDirection: _textDirection,
             onTapYear: _pickYear,
             onTapMonth: _pickMonth,
           ),
           SizedBox(height: 14.h),
           _WeekdayHeader(labels: _weekdayShort),
           SizedBox(height: 4.h),
-          _DayGrid(cells: _buildCells()),
+          _DayGrid(cells: _buildCells(), digits: _digits),
         ],
       ),
     );
@@ -367,14 +504,16 @@ class _TabRow extends StatelessWidget {
 
 class _MonthYearRow extends StatelessWidget {
   const _MonthYearRow({
-    required this.year,
+    required this.yearLabel,
     required this.monthName,
+    required this.textDirection,
     required this.onTapYear,
     required this.onTapMonth,
   });
 
-  final int year;
+  final String yearLabel;
   final String monthName;
+  final TextDirection textDirection;
   final VoidCallback onTapYear;
   final VoidCallback onTapMonth;
 
@@ -389,8 +528,8 @@ class _MonthYearRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _Segment(label: '$year', onTap: onTapYear),
-          _Segment(label: monthName, onTap: onTapMonth),
+          _Segment(label: yearLabel, onTap: onTapYear),
+          _Segment(label: monthName, textDirection: textDirection, onTap: onTapMonth),
         ],
       ),
     );
@@ -398,10 +537,15 @@ class _MonthYearRow extends StatelessWidget {
 }
 
 class _Segment extends StatelessWidget {
-  const _Segment({required this.label, required this.onTap});
+  const _Segment({
+    required this.label,
+    required this.onTap,
+    this.textDirection = TextDirection.ltr,
+  });
 
   final String label;
   final VoidCallback onTap;
+  final TextDirection textDirection;
 
   @override
   Widget build(BuildContext context) {
@@ -415,6 +559,7 @@ class _Segment extends StatelessWidget {
           children: [
             Text(
               label,
+              textDirection: textDirection,
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
@@ -462,9 +607,10 @@ class _WeekdayHeader extends StatelessWidget {
 }
 
 class _DayGrid extends StatelessWidget {
-  const _DayGrid({required this.cells});
+  const _DayGrid({required this.cells, required this.digits});
 
   final List<_CalCell> cells;
+  final List<String>? digits;
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +636,7 @@ class _DayGrid extends StatelessWidget {
                   )
                 : null,
             child: Text(
-              '${cell.day}',
+              _localizeDigits(cell.day, digits),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: cell.isToday ? FontWeight.w700 : FontWeight.w400,
