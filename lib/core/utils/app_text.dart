@@ -178,6 +178,19 @@ class AppText {
     required this.newFolder,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
+    required this.compassTitle,
+    required this.kiblahLabel,
+    required this.viewFullScreen,
+    required this.compassDirectionEast,
+    required this.compassDirectionWest,
+    required this.compassLocationServicesDisabled,
+    required this.compassPermissionDenied,
+    required this.compassUnsupported,
+    required this.compassOpenSettings,
+    required this.compassEnableLocation,
+    required this.kiblahCompassTitle,
+    required this.compassDirectionLeft,
+    required this.compassDirectionRight,
     required this.salahFajr,
     required this.salahDuhr,
     required this.salahAsr,
@@ -733,6 +746,19 @@ class AppText {
   final String newFolder;
   final String categoryQuiz;
   final String categoryNaflAndMore;
+  final String compassTitle;
+  final String kiblahLabel;
+  final String viewFullScreen;
+  final String compassDirectionEast;
+  final String compassDirectionWest;
+  final String compassLocationServicesDisabled;
+  final String compassPermissionDenied;
+  final String compassUnsupported;
+  final String compassOpenSettings;
+  final String compassEnableLocation;
+  final String kiblahCompassTitle;
+  final String compassDirectionLeft;
+  final String compassDirectionRight;
   final String salahFajr;
   final String salahDuhr;
   final String salahAsr;
@@ -1753,6 +1779,63 @@ class AppText {
         map,
         'categoryNaflAndMore',
         fallback?.categoryNaflAndMore ?? '',
+      ),
+      compassTitle: _read(map, 'compassTitle', fallback?.compassTitle ?? ''),
+      kiblahLabel: _read(map, 'kiblahLabel', fallback?.kiblahLabel ?? ''),
+      viewFullScreen: _read(
+        map,
+        'viewFullScreen',
+        fallback?.viewFullScreen ?? '',
+      ),
+      compassDirectionEast: _read(
+        map,
+        'compassDirectionEast',
+        fallback?.compassDirectionEast ?? '',
+      ),
+      compassDirectionWest: _read(
+        map,
+        'compassDirectionWest',
+        fallback?.compassDirectionWest ?? '',
+      ),
+      compassLocationServicesDisabled: _read(
+        map,
+        'compassLocationServicesDisabled',
+        fallback?.compassLocationServicesDisabled ?? '',
+      ),
+      compassPermissionDenied: _read(
+        map,
+        'compassPermissionDenied',
+        fallback?.compassPermissionDenied ?? '',
+      ),
+      compassUnsupported: _read(
+        map,
+        'compassUnsupported',
+        fallback?.compassUnsupported ?? '',
+      ),
+      compassOpenSettings: _read(
+        map,
+        'compassOpenSettings',
+        fallback?.compassOpenSettings ?? '',
+      ),
+      compassEnableLocation: _read(
+        map,
+        'compassEnableLocation',
+        fallback?.compassEnableLocation ?? '',
+      ),
+      kiblahCompassTitle: _read(
+        map,
+        'kiblahCompassTitle',
+        fallback?.kiblahCompassTitle ?? '',
+      ),
+      compassDirectionLeft: _read(
+        map,
+        'compassDirectionLeft',
+        fallback?.compassDirectionLeft ?? '',
+      ),
+      compassDirectionRight: _read(
+        map,
+        'compassDirectionRight',
+        fallback?.compassDirectionRight ?? '',
       ),
       salahFajr: _read(map, 'salahFajr', fallback?.salahFajr ?? ''),
       salahDuhr: _read(map, 'salahDuhr', fallback?.salahDuhr ?? ''),

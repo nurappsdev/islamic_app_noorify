@@ -32,6 +32,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allows Noorify to let you pick a profile photo from your gallery.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Noorify uses your location to point the Qiblah compass toward the Kaaba.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
