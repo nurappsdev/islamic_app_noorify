@@ -67,20 +67,21 @@ class QiblahCompassScreen extends StatelessWidget {
                     double.infinity,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    QiblahHeadingListener(
-                      builder: (context, access, heading, accuracy) =>
-                          _CompassBody(
-                            access: access,
-                            qiblahAngle: qiblahAngle,
-                            heading: heading,
-                            accuracy: accuracy,
-                            maxWidth: contentWidth,
-                          ),
-                    ),
-                  ],
+                // ConstrainedBox only enforces a minHeight; since its child
+                // here (the compass column) is narrower than the available
+                // width, it would otherwise be placed flush left instead of
+                // centered — Center fixes that.
+                child: Center(
+                  child: QiblahHeadingListener(
+                    builder: (context, access, heading, accuracy) =>
+                        _CompassBody(
+                          access: access,
+                          qiblahAngle: qiblahAngle,
+                          heading: heading,
+                          accuracy: accuracy,
+                          maxWidth: contentWidth,
+                        ),
+                  ),
                 ),
               ),
             );
