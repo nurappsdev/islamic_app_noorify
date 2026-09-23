@@ -99,8 +99,6 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
-
-                      SizedBox(height: 10.h),
                       const HomeFeatureGrid(),
                     ],
                   ),
