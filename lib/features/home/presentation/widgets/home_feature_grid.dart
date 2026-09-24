@@ -135,9 +135,9 @@ class _FeatureTile extends StatelessWidget {
 }
 
 void _openComingSoon(BuildContext context, String title) {
-  Navigator.of(
-    context,
-  ).push(MaterialPageRoute<void>(builder: (_) => ComingSoonScreen(title: title)));
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => ComingSoonScreen(title: title)),
+  );
 }
 
 class _LinkTile extends StatelessWidget {

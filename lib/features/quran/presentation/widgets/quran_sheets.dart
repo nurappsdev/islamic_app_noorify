@@ -474,13 +474,9 @@ class _ArabicFontRow extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_off,
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
               size: 18.sp,
-              color: selected
-                  ? AppColor.primary
-                  : const Color(0xFF9AA187),
+              color: selected ? AppColor.primary : const Color(0xFF9AA187),
             ),
             SizedBox(width: 10.w),
             Expanded(

@@ -26,19 +26,20 @@ class HomeDashboardModel extends HomeDashboard {
       userSummary: UserSummaryModel.fromJson(userSummaryJson),
       topHighlightCards: cards is List
           ? cards
-              .whereType<Map>()
-              .map(
-                (e) => HighlightCardModel.fromJson(Map<String, dynamic>.from(e)),
-              )
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      HighlightCardModel.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
       pillarCards: pillars is List
           ? pillars
-              .whereType<Map>()
-              .map(
-                (e) => PillarCardModel.fromJson(Map<String, dynamic>.from(e)),
-              )
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) => PillarCardModel.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
     );
   }

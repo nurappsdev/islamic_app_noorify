@@ -9,12 +9,6 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 class QuranScreen extends StatelessWidget {
   const QuranScreen({super.key});
 
-  void _goToHome(BuildContext context) {
-    if (ModalRoute.of(context)?.settings.name != RouteNames.home) {
-      Navigator.of(context).pushReplacementNamed(RouteNames.home);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -31,25 +25,6 @@ class QuranScreen extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: 8.h),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 18.w),
-                    child: IconButton(
-                      onPressed: () => _goToHome(context),
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.surfaceColor(
-                          Color(0xFFEDE7A6),
-                        ),
-                        foregroundColor: context.inkColor(AppColor.authLogo),
-                      ),
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -94,7 +69,7 @@ class QuranScreen extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => Navigator.of(
                         context,
-                      ).pushNamed(RouteNames.quranSurahs),
+                      ).pushReplacementNamed(RouteNames.quranSurahs),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColor.primary,
                         foregroundColor: Colors.white,

@@ -3,7 +3,11 @@
 /// falls on Gregorian 14 April, and Choitro (the last month) absorbs the
 /// leap day instead of the start date shifting year to year.
 class BanglaDate {
-  const BanglaDate({required this.year, required this.month, required this.day});
+  const BanglaDate({
+    required this.year,
+    required this.month,
+    required this.day,
+  });
 
   /// Bangla year.
   final int year;

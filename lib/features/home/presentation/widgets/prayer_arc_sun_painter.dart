@@ -117,7 +117,8 @@ class PrayerArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant PrayerArcPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.activeColor != activeColor;
+      oldDelegate.progress != progress ||
+      oldDelegate.activeColor != activeColor;
 }
 
 class PrayerSunPainter extends CustomPainter {
@@ -132,12 +133,15 @@ class PrayerSunPainter extends CustomPainter {
       center,
       size.width * .42,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFFFFD37A).withValues(alpha: .55),
-            const Color(0xFFFFD37A).withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: center, radius: size.width * .42)),
+        ..shader =
+            RadialGradient(
+              colors: [
+                const Color(0xFFFFD37A).withValues(alpha: .55),
+                const Color(0xFFFFD37A).withValues(alpha: 0),
+              ],
+            ).createShader(
+              Rect.fromCircle(center: center, radius: size.width * .42),
+            ),
     );
 
     final rayPaint = Paint()
@@ -163,12 +167,13 @@ class PrayerSunPainter extends CustomPainter {
       center,
       size.width * .23,
       Paint()
-        ..shader = RadialGradient(
-          center: Alignment.topLeft,
-          colors: const [Color(0xFFFFD37A), Color(0xFFFF9A1F)],
-        ).createShader(
-          Rect.fromCircle(center: center, radius: size.width * .23),
-        ),
+        ..shader =
+            RadialGradient(
+              center: Alignment.topLeft,
+              colors: const [Color(0xFFFFD37A), Color(0xFFFF9A1F)],
+            ).createShader(
+              Rect.fromCircle(center: center, radius: size.width * .23),
+            ),
     );
   }
 
@@ -189,12 +194,15 @@ class PrayerMoonPainter extends CustomPainter {
       center,
       size.width * .42,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            const Color(0xFFEDEBFB).withValues(alpha: .45),
-            const Color(0xFFEDEBFB).withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: center, radius: size.width * .42)),
+        ..shader =
+            RadialGradient(
+              colors: [
+                const Color(0xFFEDEBFB).withValues(alpha: .45),
+                const Color(0xFFEDEBFB).withValues(alpha: 0),
+              ],
+            ).createShader(
+              Rect.fromCircle(center: center, radius: size.width * .42),
+            ),
     );
 
     // A crescent is a filled disc with a second, offset disc cut out of it
@@ -219,7 +227,8 @@ class PrayerMoonPainter extends CustomPainter {
     canvas.restore();
 
     // A couple of small stars alongside the crescent.
-    final starPaint = Paint()..color = const Color(0xFFF4F1E3).withValues(alpha: .85);
+    final starPaint = Paint()
+      ..color = const Color(0xFFF4F1E3).withValues(alpha: .85);
     canvas.drawCircle(
       Offset(center.dx - radius * .95, center.dy - radius * .7),
       size.width * .035,

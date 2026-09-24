@@ -47,7 +47,9 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
     final times = _times;
     if (times == null) return 0;
     final now = _now();
-    return isNightPhase(now, times) ? nightProgress(now, times) : dayProgress(now, times);
+    return isNightPhase(now, times)
+        ? nightProgress(now, times)
+        : dayProgress(now, times);
   }
 
   String _formattedDate(AppText appText) {
@@ -247,7 +249,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 0,
                         child: Column(
                           children: [
-                            SizedBox(height: 8.h,),
+                            SizedBox(height: 8.h),
                             Text(
                               _formattedDate(appText),
                               style: homeSansStyle(
@@ -272,7 +274,6 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 color: const Color(0xFF5B856F),
                               ),
                             ),
-
                           ],
                         ),
                       ),
