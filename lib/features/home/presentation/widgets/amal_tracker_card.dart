@@ -273,7 +273,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       alignment: Alignment.topCenter,
       children: [
         SizedBox(
-          height: 108.h,
+          height: 100.h,
           child: Listener(
             onPointerDown: _onPointerDown,
             onPointerUp: _onPointerEnd,
@@ -334,13 +334,13 @@ class _AmalSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = HomeCard(
-      padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       backgroundColor: context.appPalette.tint,
       borderColor: context.appPalette.tint,
       child: Row(
         children: [
           _LeadingIcon(item: item),
-          SizedBox(width: 7.w),
+          SizedBox(width: 14.w),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -365,16 +365,17 @@ class _AmalSlide extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 4.w),
+          SizedBox(width: 8.w),
           AmolProgressRing(
             label: item.progressLabel,
             progress: item.progress,
-            dimension: 84.r,
-            holeDimension: 57.r,
+            dimension: 60.r,
+            holeDimension: 36.r,
+            strokeFactor: .18,
             holeColor: context.appPalette.tint,
             labelStyle: homeSansStyle(
               context: context,
-              fontSize: 11.sp,
+              fontSize: 10.sp,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -408,9 +409,9 @@ class _LeadingIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52.r,
-      height: 52.r,
-      padding: EdgeInsets.all(item.leadingText == null ? 12.r : 0),
+      width: 50.r,
+      height: 50.r,
+      padding: EdgeInsets.all(item.leadingText == null ? 11.r : 0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: context.appPalette.tintSoft,
