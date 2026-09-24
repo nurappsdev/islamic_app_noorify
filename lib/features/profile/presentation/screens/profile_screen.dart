@@ -99,11 +99,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ],
             ),
-            Positioned(
-              right: 4.w,
-              bottom: 76.h,
-              child: const _AddFamilyMemberButton(),
-            ),
+            // Positioned(
+            //   right: 4.w,
+            //   bottom: 76.h,
+            //   child: const _AddFamilyMemberButton(),
+            // ),
             Positioned(
               left: 16.w,
               right: 16.w,

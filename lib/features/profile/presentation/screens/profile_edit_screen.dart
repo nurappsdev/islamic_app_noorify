@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -118,6 +119,20 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
   }
 
+  Future<void> _copyEmail() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return;
+    final appText = AppText.readOf(context);
+    await Clipboard.setData(ClipboardData(text: email));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(appText.emailCopied),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final appText = AppText.readOf(context);
     if (_profile == null || !(_formKey.currentState?.validate() ?? false)) {
@@ -177,12 +192,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     required String hint,
     required IconData prefixIcon,
     bool enabled = true,
+    Widget? suffixIcon,
   }) {
     final radius = BorderRadius.circular(24.r);
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: context.surfaceColor(
         enabled ? Colors.white : const Color(0xFFF3F5E4),
@@ -281,6 +298,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         hint: appText.emailAddress,
                         prefixIcon: Icons.email_outlined,
                         enabled: false,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            Icons.copy_rounded,
+                            color: AppColor.authIcon,
+                            size: 16.sp,
+                          ),
+                          tooltip: appText.emailCopied,
+                          onPressed: _copyEmail,
+                        ),
                       ),
                     ),
                     SizedBox(height: 18.h),
