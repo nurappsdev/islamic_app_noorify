@@ -80,7 +80,10 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   static List<_AmalTrackerItem> _apiItems(
     AppText appText,
     List<HighlightCard> cards,
-  ) => cards.map((card) => _mapHighlightCard(appText, card)).toList();
+  ) => [
+    for (final card in cards)
+      if (card.hasData) _mapHighlightCard(appText, card),
+  ];
 
   static _AmalTrackerItem _mapHighlightCard(
     AppText appText,
@@ -103,21 +106,21 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
         );
       case 'monthly_first':
         return _AmalTrackerItem(
-          title: card.userName ?? appText.competitorName,
+          title: _leaderName(card),
           subtitle: '${appText.firstInTheMonth}\n${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'monthly_second':
         return _AmalTrackerItem(
-          title: card.userName ?? appText.khalidSaifullah,
+          title: _leaderName(card),
           subtitle: '${appText.secondInTheMonth}\n${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'last_month_winner':
         return _AmalTrackerItem(
-          title: card.userName ?? appText.competitorName,
+          title: _leaderName(card),
           subtitle: '${appText.lastMonthWinner}\n${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
@@ -140,6 +143,16 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
           progress: progress,
         );
     }
+  }
+
+  /// The leader's real name, or - when nobody holds the spot yet, or the API
+  /// only has its generic "Guest User" placeholder - the API's own label for
+  /// the card (e.g. "Winner of August 2026") rather than a made-up name.
+  static String _leaderName(HighlightCard card) {
+    final name = card.userName?.trim() ?? '';
+    if (name.isNotEmpty && name.toLowerCase() != 'guest user') return name;
+    final label = card.subtitle?.trim() ?? '';
+    return label.isNotEmpty ? label : card.title;
   }
 
   /// `"Point : 0/40"` -> `"0/40"`.

@@ -11,6 +11,7 @@ class HighlightCardModel extends HighlightCard {
     super.avatarUrl,
     super.subtitle,
     super.rank,
+    super.hasData,
   });
 
   factory HighlightCardModel.fromJson(Map<String, dynamic> json) {
@@ -24,6 +25,7 @@ class HighlightCardModel extends HighlightCard {
       avatarUrl: json['avatarUrl']?.toString(),
       subtitle: json['subtitle']?.toString(),
       rank: (json['rank'] as num?)?.toInt(),
+      hasData: json['hasData'] != false,
     );
   }
 }

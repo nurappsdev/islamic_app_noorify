@@ -11,6 +11,7 @@ class HighlightCard {
     this.avatarUrl,
     this.subtitle,
     this.rank,
+    this.hasData = true,
   });
 
   final String id;
@@ -29,4 +30,8 @@ class HighlightCard {
   final String? avatarUrl;
   final String? subtitle;
   final int? rank;
+
+  /// `false` when the API has nothing to show for this card yet (e.g. no
+  /// winner last month); the carousel skips such cards.
+  final bool hasData;
 }
