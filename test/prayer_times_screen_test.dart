@@ -52,7 +52,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const ValueKey('active-prayer-row')), findsOneWidget);
-    expect(find.byKey(const ValueKey('alarm-control')), findsNWidgets(5));
+    expect(find.byKey(const ValueKey('alarm-control')), findsNothing);
   });
 
   testWidgets('keeps the designed screen visible without prayer data', (
