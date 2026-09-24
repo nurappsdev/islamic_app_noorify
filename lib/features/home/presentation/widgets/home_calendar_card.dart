@@ -142,6 +142,10 @@ class HomeCalendarCard extends StatefulWidget {
 class _HomeCalendarCardState extends State<HomeCalendarCard> {
   _CalTab _tab = _CalTab.english;
 
+  /// Arabic tab only: show the Hijri calendar in Bangla (month names, digits,
+  /// weekdays) instead of Arabic.
+  bool _arabicInBangla = false;
+
   late int _enYear;
   late int _enMonth;
   late int _bnYear;
@@ -179,12 +183,13 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
 
   List<String>? get _digits => switch (_tab) {
     _CalTab.bangla => _banglaDigits,
-    _CalTab.arabic => _arabicDigits,
+    _CalTab.arabic => _arabicInBangla ? _banglaDigits : _arabicDigits,
     _CalTab.english => null,
   };
 
-  TextDirection get _textDirection =>
-      _tab == _CalTab.arabic ? TextDirection.rtl : TextDirection.ltr;
+  TextDirection get _textDirection => _tab == _CalTab.arabic && !_arabicInBangla
+      ? TextDirection.rtl
+      : TextDirection.ltr;
 
   int get _year => switch (_tab) {
     _CalTab.english => _enYear,
@@ -201,13 +206,14 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   List<String> get _monthNames => switch (_tab) {
     _CalTab.english => _monthNamesEn,
     _CalTab.bangla => BanglaDate.monthNames,
-    _CalTab.arabic => _hijriMonthNamesAr,
+    _CalTab.arabic => _arabicInBangla ? _hijriMonthNamesBn : _hijriMonthNamesAr,
   };
 
   List<String> get _weekdayShort => switch (_tab) {
     _CalTab.english => _weekdayShortEn,
     _CalTab.bangla => BanglaDate.weekdayShortNames,
-    _CalTab.arabic => _hijriWeekdayShortAr,
+    _CalTab.arabic =>
+      _arabicInBangla ? BanglaDate.weekdayShortNames : _hijriWeekdayShortAr,
   };
 
   /// Today's date written in this tab's own calendar system and script.
@@ -223,6 +229,12 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
         return '${_weekdayFullBn[wIdx]}, $d '
             '${BanglaDate.monthNames[_todayBn.month - 1]} $y';
       case _CalTab.arabic:
+        if (_arabicInBangla) {
+          final d = _localizeDigits(_todayHDay, _banglaDigits);
+          final y = _localizeDigits(_todayHYear, _banglaDigits);
+          return '${_weekdayFullBn[wIdx]}, $d '
+              '${_hijriMonthNamesBn[_todayHMonth - 1]} $y';
+        }
         final d = _localizeDigits(_todayHDay, _arabicDigits);
         final y = _localizeDigits(_todayHYear, _arabicDigits);
         return '${_weekdayFullAr[wIdx]}، $d '
@@ -396,6 +408,13 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     final showEnglishGloss = _tab == _CalTab.arabic;
     return HomeCard(
       padding: EdgeInsets.all(12.w),
+      shadows: [
+        BoxShadow(
+          color: const Color(0xFF8D9B70).withValues(alpha: .22),
+          blurRadius: 18,
+          offset: const Offset(0, 6),
+        ),
+      ],
       child: Column(
         children: [
           _TabRow(
@@ -405,7 +424,18 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
             englishLabel: appText.english,
             onChanged: (t) => setState(() => _tab = t),
           ),
-          SizedBox(height: 12.h),
+          if (_tab == _CalTab.arabic) ...[
+            SizedBox(height: 8.h),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _BanglaToggle(
+                selected: _arabicInBangla,
+                onTap: () => setState(() => _arabicInBangla = !_arabicInBangla),
+              ),
+            ),
+            SizedBox(height: 4.h),
+          ] else
+            SizedBox(height: 12.h),
           Text(
             _primaryTodayLine(),
             textDirection: _textDirection,
@@ -452,6 +482,40 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
           SizedBox(height: 4.h),
           _DayGrid(cells: _buildCells(), digits: _digits),
         ],
+      ),
+    );
+  }
+}
+
+/// Small pill on the Arabic tab: turns the Hijri calendar into Bangla.
+class _BanglaToggle extends StatelessWidget {
+  const _BanglaToggle({required this.selected, required this.onTap});
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColor.primary
+              : context.surfaceColor(const Color(0xFFEEF3D6)),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: AppColor.primary),
+        ),
+        child: Text(
+          'বাংলা',
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w700,
+            color: selected ? Colors.white : AppColor.primary,
+          ),
+        ),
       ),
     );
   }
