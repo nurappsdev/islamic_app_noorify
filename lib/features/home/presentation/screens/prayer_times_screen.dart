@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
@@ -167,7 +168,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    times?.hijriDate ?? appText.hijriDateUnavailable,
+                    times?.hijriDate ?? hijriDateLabel(now),
                     style: _italicStyle(10.sp),
                   ),
                 ),
@@ -177,10 +178,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: Text(
-                    times?.readableDate ?? _fallbackDate(now),
-                    style: _italicStyle(10.sp),
-                  ),
+                  child: Text(banglaDateLabel(now), style: _italicStyle(10.sp)),
                 ),
               ),
             ],

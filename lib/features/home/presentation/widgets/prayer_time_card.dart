@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
@@ -199,7 +200,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 alignment: Alignment.centerLeft,
                                 child: Text(
                                   _times?.hijriDate ??
-                                      appText.hijriDatePlaceholder,
+                                      hijriDateLabel(DateTime.now()),
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: topDateColor,
@@ -215,7 +216,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerRight,
                                 child: Text(
-                                  appText.bengaliDatePlaceholder,
+                                  banglaDateLabel(DateTime.now()),
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: topDateColor,
