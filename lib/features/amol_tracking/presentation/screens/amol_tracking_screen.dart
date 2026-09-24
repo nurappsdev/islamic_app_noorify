@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
@@ -852,9 +853,15 @@ class _DashboardButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const AmolDashboardScreen()),
-        ),
+        onTap: () async {
+          if (!await ensureLogin(context)) return;
+          if (!context.mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const AmolDashboardScreen(),
+            ),
+          );
+        },
         child: Container(
           height: 54.h,
           padding: EdgeInsets.symmetric(horizontal: 22.w),

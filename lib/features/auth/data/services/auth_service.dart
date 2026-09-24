@@ -225,7 +225,10 @@ class AuthService {
     }
   }
 
-  String messageForGoogleException(GoogleSignInException error, AppText appText) {
+  String messageForGoogleException(
+    GoogleSignInException error,
+    AppText appText,
+  ) {
     switch (error.code) {
       case GoogleSignInExceptionCode.canceled:
         return '';

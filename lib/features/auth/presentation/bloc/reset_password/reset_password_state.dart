@@ -3,7 +3,11 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 enum ResetPasswordStatus { initial, loading, success, failure }
 
 class ResetPasswordState {
-  const ResetPasswordState._({required this.status, this.message, this.failure});
+  const ResetPasswordState._({
+    required this.status,
+    this.message,
+    this.failure,
+  });
 
   const ResetPasswordState.initial()
     : this._(status: ResetPasswordStatus.initial);

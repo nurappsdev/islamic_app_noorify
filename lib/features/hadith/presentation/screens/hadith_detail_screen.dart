@@ -33,7 +33,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_b
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_login_required_dialog.dart';
+import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -236,7 +236,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   /// in [_tracker] (`GET /hadiths/reading/read`), so their Yes checkbox opens
   /// checked instead of only after this device reports them itself.
   Future<void> _loadReadStatus() async {
-    if (!hadithIsSignedIn) return;
+    if (!isUserSignedIn) return;
     final result = await _getReadHadiths(
       subCategoryId: widget.subCategoryId,
       bookId: widget.bookId,
@@ -259,7 +259,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   void _maybeShowAutoComplete(String? hadithId) {
     if (hadithId == null || _leaving || _autoDialogShowing) return;
     // Reporting needs a token; guests get the login dialog from the Yes box.
-    if (!hadithIsSignedIn) return;
+    if (!isUserSignedIn) return;
     if (_autoPrompted.contains(hadithId)) return;
     if (_tracker.isCompleted(hadithId) || _tracker.isCompleting(hadithId)) {
       return;
@@ -408,7 +408,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   Future<void> _handleExit() async {
     if (_leaving) return;
     _leaving = true;
-    final candidates = hadithIsSignedIn
+    final candidates = isUserSignedIn
         ? _tracker.reportCandidates
         : const <String>[];
     if (candidates.isNotEmpty) {
@@ -1669,7 +1669,7 @@ class _HadithCompleteCheckbox extends StatelessWidget {
           onTap: completed || completing
               ? null
               : () async {
-                  if (!await ensureHadithLogin(context)) return;
+                  if (!await ensureLogin(context)) return;
                   tracker.complete(hadithId);
                 },
         );

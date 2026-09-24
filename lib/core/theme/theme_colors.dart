@@ -86,7 +86,8 @@ abstract final class DarkColorMapper {
     final hsl = HSLColor.fromColor(c);
     if (hsl.lightness < 0.55) return c;
     final opaque = c.withAlpha(0xFF).toARGB32();
-    if (opaque == 0xFFFFFFFF) return AppColor.darkSurface.withValues(alpha: c.a);
+    if (opaque == 0xFFFFFFFF)
+      return AppColor.darkSurface.withValues(alpha: c.a);
     final exact = _fillExact[opaque];
     if (exact != null) return exact.withValues(alpha: c.a);
     return _darken(hsl, floor: 0.17, maxSaturation: 0.30);

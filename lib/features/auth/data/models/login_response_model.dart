@@ -45,7 +45,10 @@ class LoginResponseModel {
   static String? _firstNonEmpty(List<dynamic> candidates) {
     for (final c in candidates) {
       if (c is String && c.trim().isNotEmpty) {
-        return c.trim().replaceFirst(RegExp(r'^Bearer\s+', caseSensitive: false), '');
+        return c.trim().replaceFirst(
+          RegExp(r'^Bearer\s+', caseSensitive: false),
+          '',
+        );
       }
     }
     return null;

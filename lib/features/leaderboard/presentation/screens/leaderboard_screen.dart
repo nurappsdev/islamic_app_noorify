@@ -38,9 +38,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
-    final result = await LeaderboardService.instance.fetchTop(
-      period: _period,
-    );
+    final result = await LeaderboardService.instance.fetchTop(period: _period);
     if (!mounted) return;
     result.fold(
       (failure) => setState(() {
@@ -116,8 +114,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         .skip(3)
         .where((e) => query.isEmpty || e.name.toLowerCase().contains(query))
         .toList();
-    final showYourRank = !board.meta.isCurrentUserInTop &&
-        board.myPosition != null;
+    final showYourRank =
+        !board.meta.isCurrentUserInTop && board.myPosition != null;
 
     return [
       Align(
@@ -224,7 +222,10 @@ class _PeriodDropdown extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
       itemBuilder: (context) => periods
           .map(
-            (p) => PopupMenuItem<String>(value: p, child: Text(_label(appText, p))),
+            (p) => PopupMenuItem<String>(
+              value: p,
+              child: Text(_label(appText, p)),
+            ),
           )
           .toList(),
       child: Container(
@@ -246,7 +247,11 @@ class _PeriodDropdown extends StatelessWidget {
               ),
             ),
             SizedBox(width: 4.w),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 16.sp, color: textColor),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16.sp,
+              color: textColor,
+            ),
           ],
         ),
       ),
@@ -416,7 +421,10 @@ class _PodiumSlot extends StatelessWidget {
                   SizedBox(width: 3.w),
                   Text(
                     '${entry.points}',
-                    style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),

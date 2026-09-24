@@ -44,7 +44,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<AuthUserModel> register(RegisterRequestModel body) async {
-    final json = _envelope(await _send(ApiConstants.signUpEndPoint, body.toJson()));
+    final json = _envelope(
+      await _send(ApiConstants.signUpEndPoint, body.toJson()),
+    );
     final payload = json['data'];
     if (payload is! Map<String, dynamic>) {
       throw ParsingException('Registration response is missing "data".');
@@ -54,16 +56,19 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<VerifyOtpResultModel> verifyEmail(VerifyOtpRequestModel body) async {
-    final json =
-        _envelope(await _send(ApiConstants.verifyEmailEndPoint, body.toJson()));
+    final json = _envelope(
+      await _send(ApiConstants.verifyEmailEndPoint, body.toJson()),
+    );
     return VerifyOtpResultModel.fromEnvelope(json);
   }
 
   @override
   Future<String> resendOtp(ResendOtpRequestModel body) async {
-    final json =
-        _envelope(await _send(ApiConstants.resendOtpEndPoint, body.toJson()));
-    return json['message']?.toString() ?? 'A new code has been sent to your email.';
+    final json = _envelope(
+      await _send(ApiConstants.resendOtpEndPoint, body.toJson()),
+    );
+    return json['message']?.toString() ??
+        'A new code has been sent to your email.';
   }
 
   @override
@@ -71,8 +76,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final json = _envelope(
       await _send(ApiConstants.forgotPasswordPoint, body.toJson()),
     );
-    return json['message']?.toString() ??
-        'We sent a reset code to your email.';
+    return json['message']?.toString() ?? 'We sent a reset code to your email.';
   }
 
   @override
@@ -97,7 +101,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final data = json['data'];
     return LoginResponseModel.fromJson(
       data is Map<String, dynamic> ? data : json,
-      headerToken: response.headers.value('authorization') ??
+      headerToken:
+          response.headers.value('authorization') ??
           response.headers.value('x-access-token'),
     );
   }
@@ -125,10 +130,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     final body = response.data;
-    final json = body is Map<String, dynamic> ? body : const <String, dynamic>{};
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
     final status = response.statusCode ?? 0;
-    final isSuccess =
-        status >= 200 && status < 300 && json['success'] != false;
+    final isSuccess = status >= 200 && status < 300 && json['success'] != false;
 
     if (!isSuccess) {
       throw ServerException(
@@ -161,8 +167,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       case DioExceptionType.badResponse:
       case DioExceptionType.unknown:
         final data = e.response?.data;
-        final json =
-            data is Map<String, dynamic> ? data : const <String, dynamic>{};
+        final json = data is Map<String, dynamic>
+            ? data
+            : const <String, dynamic>{};
         return ServerException(
           _extractError(json) ??
               'Request failed (${e.response?.statusCode ?? 'network error'}).',

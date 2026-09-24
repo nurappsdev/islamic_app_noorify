@@ -4,11 +4,7 @@ import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart'
 enum RegisterStatus { initial, loading, success, failure }
 
 class RegisterState {
-  const RegisterState._({
-    required this.status,
-    this.user,
-    this.failure,
-  });
+  const RegisterState._({required this.status, this.user, this.failure});
 
   const RegisterState.initial() : this._(status: RegisterStatus.initial);
 
