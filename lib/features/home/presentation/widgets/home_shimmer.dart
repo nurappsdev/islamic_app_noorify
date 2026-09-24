@@ -51,7 +51,7 @@ class AmalTrackerCardShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return HomeShimmer(
       child: Container(
-        height: 100.h,
+        height: 60.r + 32.h,
         padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
         decoration: BoxDecoration(
           color: context.surfaceColor(Colors.white),

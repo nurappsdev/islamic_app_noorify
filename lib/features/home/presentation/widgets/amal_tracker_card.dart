@@ -273,7 +273,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       alignment: Alignment.topCenter,
       children: [
         SizedBox(
-          height: 100.h,
+          height: _AmalSlide.ringSize + 2 * _AmalSlide.verticalPadding,
           child: Listener(
             onPointerDown: _onPointerDown,
             onPointerUp: _onPointerEnd,
@@ -326,6 +326,12 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 }
 
 class _AmalSlide extends StatelessWidget {
+  /// The slider's height is derived from these, so changing the padding
+  /// really grows/shrinks the card (a fixed height would just absorb it).
+  static final double ringSize = 60.r;
+  static final double verticalPadding = 16.h;
+  static final double horizontalPadding = 20.w;
+
   const _AmalSlide({required this.item, required this.isTodaysTrack});
 
   final _AmalTrackerItem item;
@@ -334,8 +340,11 @@ class _AmalSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = HomeCard(
-      radius: 16,
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      radius: 24.r,
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
       backgroundColor: context.appPalette.tint,
       borderColor: context.appPalette.tint,
       child: Row(
@@ -370,13 +379,13 @@ class _AmalSlide extends StatelessWidget {
           AmolProgressRing(
             label: item.progressLabel,
             progress: item.progress,
-            dimension: 60.r,
-            holeDimension: 36.r,
+            dimension: ringSize,
+            holeDimension: 38.r,
             strokeFactor: .18,
             holeColor: context.appPalette.tint,
             labelStyle: homeSansStyle(
               context: context,
-              fontSize: 10.sp,
+              fontSize: 8.sp,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -387,7 +396,7 @@ class _AmalSlide extends StatelessWidget {
     if (!isTodaysTrack) return card;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(22.r),
+      borderRadius: BorderRadius.circular(16.r),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => AmolTrackingScreen(
