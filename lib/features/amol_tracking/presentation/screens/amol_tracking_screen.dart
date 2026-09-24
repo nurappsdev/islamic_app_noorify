@@ -165,8 +165,12 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     }
   }
 
-  void _onItemTap(String pillarKey, AmolItem item) {
+  Future<void> _onItemTap(String pillarKey, AmolItem item) async {
     if (_bloc.state.loggingItemKey != null) return;
+    // Viewing is public, but logging / unchecking (POST / DELETE) needs the
+    // login token.
+    if (!await ensureLogin(context)) return;
+    if (!mounted) return;
 
     if (_bloc.state.isItemChecked(item.itemKey, item.isCompleted)) {
       _bloc.add(
@@ -853,15 +857,9 @@ class _DashboardButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(30.r),
-        onTap: () async {
-          if (!await ensureLogin(context)) return;
-          if (!context.mounted) return;
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const AmolDashboardScreen(),
-            ),
-          );
-        },
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const AmolDashboardScreen()),
+        ),
         child: Container(
           height: 54.h,
           padding: EdgeInsets.symmetric(horizontal: 22.w),
