@@ -7,7 +7,6 @@ import 'package:islami_app_noorify/features/home/data/services/prayer_time_servi
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/prayer_times_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
@@ -371,6 +370,9 @@ class _PrayerRow extends StatelessWidget {
     final end = times == null
         ? '--:--'
         : formatPrayerTime(prayerEnd(period, times!));
+    final titleColor = active
+        ? Colors.white
+        : context.inkColor(const Color(0xFF2F3A22));
     return Row(
       children: [
         Container(
@@ -381,6 +383,15 @@ class _PrayerRow extends StatelessWidget {
               active ? const Color(0xFF829061) : const Color(0xFFDDEBB5),
             ),
             shape: BoxShape.circle,
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF829061).withValues(alpha: .45),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
           ),
           child: Center(
             child: Container(
@@ -395,80 +406,132 @@ class _PrayerRow extends StatelessWidget {
         ),
         SizedBox(width: 13.w),
         Expanded(
-          child: Container(
+          child: AnimatedContainer(
             key: active ? const ValueKey('active-prayer-row') : null,
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+            duration: const Duration(milliseconds: 250),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: context.surfaceColor(Colors.white),
-              borderRadius: BorderRadius.circular(12.r),
+              gradient: active
+                  ? const LinearGradient(
+                      colors: [Color(0xFF9DAB6F), Color(0xFF6F7F52)],
+                    )
+                  : null,
+              color: active ? null : context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
                 color: context.lineColor(
-                  active ? const Color(0xFF7F8E60) : const Color(0xFFDCE9B8),
+                  active ? const Color(0xFF6F7F52) : const Color(0xFFDCE9B8),
                 ),
-                width: active ? 2 : 1,
+                width: active ? 1.5 : 1,
               ),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x10000000),
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
+                  color: active
+                      ? const Color(0xFF6F7F52).withValues(alpha: .4)
+                      : const Color(0x10000000),
+                  blurRadius: active ? 14 : 5,
+                  offset: Offset(0, active ? 6 : 2),
                 ),
               ],
             ),
             child: Row(
               children: [
                 Container(
-                  width: 38.r,
-                  height: 38.r,
+                  width: 42.r,
+                  height: 42.r,
                   decoration: BoxDecoration(
-                    color: context.surfaceColor(Color(0xFFFFF8D7)),
-                    borderRadius: BorderRadius.circular(9.r),
+                    color: active
+                        ? Colors.white.withValues(alpha: .92)
+                        : context.surfaceColor(const Color(0xFFFFF8D7)),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Icon(
                     _icon,
                     color: context.inkColor(_iconColor),
-                    size: 23.sp,
+                    size: 25.sp,
                   ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        period.displayName(appText),
-                        style: TextStyle(fontSize: 12.sp),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              period.displayName(appText),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: titleColor,
+                              ),
+                            ),
+                          ),
+                          if (active) ...[
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFE27A),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                appText.prayerNowLabel,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF4A4210),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      SizedBox(height: 3.h),
+                      SizedBox(height: 5.h),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          '$start – $end',
-                          style: TextStyle(fontSize: 8.sp),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? Colors.white.withValues(alpha: .22)
+                                : context.surfaceColor(const Color(0xFFEEF4D6)),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 14.sp,
+                                color: active
+                                    ? Colors.white
+                                    : context.inkColor(const Color(0xFF7E8C61)),
+                              ),
+                              SizedBox(width: 5.w),
+                              Text(
+                                '$start – $end',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Tooltip(
-                  message:
-                      '${appText.setAlarmFor} ${period.displayName(appText)}',
-                  child: IconButton(
-                    key: const ValueKey('alarm-control'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => SetAlarmScreen(
-                          period: period,
-                          initialTime: times == null
-                              ? null
-                              : prayerStart(period, times!),
-                        ),
-                      ),
-                    ),
-                    icon: Icon(Icons.alarm, size: 19.sp),
-                    color: context.inkColor(Color(0xFF7E8C61)),
                   ),
                 ),
               ],
