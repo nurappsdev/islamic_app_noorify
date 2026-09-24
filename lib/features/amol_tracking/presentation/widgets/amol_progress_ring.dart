@@ -14,7 +14,11 @@ class AmolProgressRing extends StatelessWidget {
     required this.holeDimension,
     this.holeColor = const Color(0xFFDDE8AE),
     this.labelStyle,
+    this.strokeFactor = .12,
   });
+
+  /// Ring thickness as a fraction of [dimension].
+  final double strokeFactor;
 
   final String label;
   final double progress;
@@ -28,7 +32,10 @@ class AmolProgressRing extends StatelessWidget {
     return SizedBox.square(
       dimension: dimension,
       child: CustomPaint(
-        painter: AmolProgressRingPainter(progress: progress),
+        painter: AmolProgressRingPainter(
+          progress: progress,
+          strokeFactor: strokeFactor,
+        ),
         child: Center(
           child: Container(
             width: holeDimension,
@@ -52,13 +59,17 @@ class AmolProgressRing extends StatelessWidget {
 }
 
 class AmolProgressRingPainter extends CustomPainter {
-  const AmolProgressRingPainter({required this.progress});
+  const AmolProgressRingPainter({
+    required this.progress,
+    this.strokeFactor = .12,
+  });
 
   final double progress;
+  final double strokeFactor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.shortestSide * .12;
+    final strokeWidth = size.shortestSide * strokeFactor;
     final ringRect =
         Offset(strokeWidth / 2, strokeWidth / 2) &
         Size(size.width - strokeWidth, size.height - strokeWidth);
@@ -88,6 +99,7 @@ class AmolProgressRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant AmolProgressRingPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.strokeFactor != strokeFactor;
   }
 }
