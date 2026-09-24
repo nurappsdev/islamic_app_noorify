@@ -123,8 +123,10 @@ class HomeCard extends StatelessWidget {
     this.padding,
     this.borderColor,
     this.backgroundColor,
+    this.radius = 11,
   });
 
+  final double radius;
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? borderColor;
@@ -138,7 +140,7 @@ class HomeCard extends StatelessWidget {
       padding: padding ?? EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: context.surfaceColor(backgroundColor ?? palette.surface),
-        borderRadius: BorderRadius.circular(11.r),
+        borderRadius: BorderRadius.circular(radius.r),
         border: Border.all(
           color: context.lineColor(borderColor ?? palette.border),
         ),

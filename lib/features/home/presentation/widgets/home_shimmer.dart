@@ -55,7 +55,7 @@ class AmalTrackerCardShimmer extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
         decoration: BoxDecoration(
           color: context.surfaceColor(Colors.white),
-          borderRadius: BorderRadius.circular(18.r),
+          borderRadius: BorderRadius.circular(22.r),
         ),
         child: Row(
           children: [
