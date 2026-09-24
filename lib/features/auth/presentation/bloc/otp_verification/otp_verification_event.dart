@@ -4,10 +4,15 @@ abstract class OtpVerificationEvent {
 
 /// Fired when the user submits the 6-digit code.
 class OtpSubmitted extends OtpVerificationEvent {
-  const OtpSubmitted({required this.email, required this.otp});
+  const OtpSubmitted({
+    required this.email,
+    required this.otp,
+    this.startSession = false,
+  });
 
   final String email;
   final String otp;
+  final bool startSession;
 }
 
 /// Fired when the user taps "Resend code".

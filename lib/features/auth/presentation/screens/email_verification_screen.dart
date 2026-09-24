@@ -23,9 +23,13 @@ class EmailVerificationScreen extends StatefulWidget {
     this.email,
     this.onRequestOtp,
     this.onOtpVerified,
+    this.startSession = false,
   });
 
   final bool initiallyShowOtp;
+
+  /// Sign-up: verifying the code signs the user in (stores the access token).
+  final bool startSession;
 
   /// E-mail the OTP was sent to. Required for the verify call in OTP mode.
   final String? email;
@@ -103,7 +107,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   void _submitOtp() {
     FocusScope.of(context).unfocus();
     _otpBloc.add(
-      OtpSubmitted(email: _emailController.text.trim(), otp: _enteredOtp),
+      OtpSubmitted(
+        email: _emailController.text.trim(),
+        otp: _enteredOtp,
+        startSession: widget.startSession,
+      ),
     );
   }
 
