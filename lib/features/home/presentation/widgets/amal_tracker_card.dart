@@ -334,6 +334,7 @@ class _AmalSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = HomeCard(
+      radius: 16,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       backgroundColor: context.appPalette.tint,
       borderColor: context.appPalette.tint,
@@ -386,7 +387,7 @@ class _AmalSlide extends StatelessWidget {
     if (!isTodaysTrack) return card;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(18.r),
+      borderRadius: BorderRadius.circular(22.r),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => AmolTrackingScreen(
