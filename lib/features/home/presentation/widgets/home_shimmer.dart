@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 
@@ -51,16 +52,23 @@ class AmalTrackerCardShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return HomeShimmer(
       child: Container(
-        height: 60.r + 32.h,
-        padding: EdgeInsets.fromLTRB(9.w, 9.h, 9.w, 9.h),
+        height: AmalTrackerTile.height,
+        padding: EdgeInsets.symmetric(
+          horizontal: AmalTrackerTile.horizontalPadding,
+          vertical: AmalTrackerTile.verticalPadding,
+        ),
         decoration: BoxDecoration(
           color: context.surfaceColor(Colors.white),
-          borderRadius: BorderRadius.circular(22.r),
+          borderRadius: BorderRadius.circular(AmalTrackerTile.radius),
         ),
         child: Row(
           children: [
-            _ShimmerBox(width: 52.r, height: 52.r, radius: 12.r),
-            SizedBox(width: 7.w),
+            _ShimmerBox(
+              width: AmalTrackerTile.leadingSize,
+              height: AmalTrackerTile.leadingSize,
+              radius: 12.r,
+            ),
+            SizedBox(width: AmalTrackerTile.leadingGap),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -72,8 +80,12 @@ class AmalTrackerCardShimmer extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(width: 4.w),
-            _ShimmerBox(width: 84.r, height: 84.r, radius: 42.r),
+            SizedBox(width: AmalTrackerTile.ringGap),
+            _ShimmerBox(
+              width: AmalTrackerTile.ringSize,
+              height: AmalTrackerTile.ringSize,
+              radius: AmalTrackerTile.ringSize / 2,
+            ),
           ],
         ),
       ),

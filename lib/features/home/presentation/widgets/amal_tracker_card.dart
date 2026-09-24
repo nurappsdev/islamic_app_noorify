@@ -4,15 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
+import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});
@@ -273,7 +270,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       alignment: Alignment.topCenter,
       children: [
         SizedBox(
-          height: _AmalSlide.ringSize + 2 * _AmalSlide.verticalPadding,
+          height: AmalTrackerTile.height,
           child: Listener(
             onPointerDown: _onPointerDown,
             onPointerUp: _onPointerEnd,
@@ -326,12 +323,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 }
 
 class _AmalSlide extends StatelessWidget {
-  /// The slider's height is derived from these, so changing the padding
-  /// really grows/shrinks the card (a fixed height would just absorb it).
-  static final double ringSize = 60.r;
-  static final double verticalPadding = 16.h;
-  static final double horizontalPadding = 20.w;
-
   const _AmalSlide({required this.item, required this.isTodaysTrack});
 
   final _AmalTrackerItem item;
@@ -339,64 +330,18 @@ class _AmalSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final card = HomeCard(
-      radius: 24.r,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      backgroundColor: context.appPalette.tint,
-      borderColor: context.appPalette.tint,
-      child: Row(
-        children: [
-          _LeadingIcon(item: item),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: homeSansStyle(context: context, fontSize: 13.sp),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  item.subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: homeSansStyle(
-                    context: context,
-                    fontSize: 9.sp,
-                  ).copyWith(height: 1.3),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-          AmolProgressRing(
-            label: item.progressLabel,
-            progress: item.progress,
-            dimension: ringSize,
-            holeDimension: 38.r,
-            strokeFactor: .18,
-            holeColor: context.appPalette.tint,
-            labelStyle: homeSansStyle(
-              context: context,
-              fontSize: 8.sp,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
+    final card = AmalTrackerTile(
+      title: item.title,
+      subtitle: item.subtitle,
+      progressLabel: item.progressLabel,
+      progress: item.progress,
+      leadingText: item.leadingText,
     );
 
     if (!isTodaysTrack) return card;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(AmalTrackerTile.radius),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => AmolTrackingScreen(
@@ -407,40 +352,6 @@ class _AmalSlide extends StatelessWidget {
         ),
       ),
       child: card,
-    );
-  }
-}
-
-class _LeadingIcon extends StatelessWidget {
-  const _LeadingIcon({required this.item});
-
-  final _AmalTrackerItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 50.r,
-      height: 50.r,
-      padding: EdgeInsets.all(item.leadingText == null ? 11.r : 0),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: context.appPalette.tintSoft,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: item.leadingText == null
-          ? Image.asset(
-              'assets/noorifyLogo.png',
-              fit: BoxFit.contain,
-              color: context.inkColor(Color(0xFF879461)),
-            )
-          : Text(
-              item.leadingText!,
-              style: homeSansStyle(
-                context: context,
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
     );
   }
 }

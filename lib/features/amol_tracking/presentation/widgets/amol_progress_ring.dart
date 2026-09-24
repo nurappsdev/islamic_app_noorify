@@ -45,11 +45,19 @@ class AmolProgressRing extends StatelessWidget {
               color: context.surfaceColor(holeColor),
               shape: BoxShape.circle,
             ),
-            child: Text(
-              label,
-              style:
-                  labelStyle ??
-                  homeSansStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            // Scales a long value (e.g. "100.4 %") down instead of overflowing.
+            child: Padding(
+              padding: EdgeInsets.all(holeDimension * .06),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style:
+                      labelStyle ??
+                      homeSansStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
           ),
         ),
