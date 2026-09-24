@@ -92,29 +92,11 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 
     switch (card.type) {
       case 'todays_amol':
-        return _AmalTrackerItem(
-          title: appText.todaysAmolTrack,
-          subtitle: '${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
       case 'todays_highest':
-        return _AmalTrackerItem(
-          title: appText.todaysHighestValue,
-          subtitle: '${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
       case 'todays_second_highest':
-        return _AmalTrackerItem(
-          title: appText.todays2ndHighest,
-          subtitle: '${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
       case 'yesterdays_highest':
         return _AmalTrackerItem(
-          title: appText.yesterdaysHighest,
+          title: card.title,
           subtitle: '${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
@@ -142,7 +124,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
         );
       case 'my_monthly_position':
         return _AmalTrackerItem(
-          title: appText.myPositionInMonth,
+          title: card.title,
           subtitle: '${appText.point} : $fraction',
           progressLabel: progressLabel,
           progress: progress,
