@@ -62,7 +62,9 @@ class AmolAnalyticsGraphModel extends AmolAnalyticsGraph {
 
     final rawSummary = json['summary'];
     final summary = rawSummary is Map
-        ? AmolAnalyticsSummaryModel.fromJson(Map<String, dynamic>.from(rawSummary))
+        ? AmolAnalyticsSummaryModel.fromJson(
+            Map<String, dynamic>.from(rawSummary),
+          )
         : null;
 
     final rawTodaysTrack = json['todaysAmolTrack'];

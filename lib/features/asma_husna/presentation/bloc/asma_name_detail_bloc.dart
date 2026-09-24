@@ -12,8 +12,7 @@ export 'asma_name_detail_state.dart';
 /// [AsmaNameDetailScreen].
 class AsmaNameDetailBloc
     extends Bloc<AsmaNameDetailEvent, AsmaNameDetailState> {
-  AsmaNameDetailBloc(this._getNameDetail)
-    : super(const AsmaNameDetailState()) {
+  AsmaNameDetailBloc(this._getNameDetail) : super(const AsmaNameDetailState()) {
     on<LoadAsmaNameDetail>(_onLoad);
   }
 

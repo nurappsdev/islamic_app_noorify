@@ -54,7 +54,9 @@ class AmolAnalyticsRemoteDataSourceImpl
     }
 
     final body = response.data;
-    final json = body is Map<String, dynamic> ? body : const <String, dynamic>{};
+    final json = body is Map<String, dynamic>
+        ? body
+        : const <String, dynamic>{};
     final status = response.statusCode ?? 0;
     final isSuccess = status >= 200 && status < 300 && json['success'] != false;
     if (!isSuccess) {
@@ -93,8 +95,9 @@ class AmolAnalyticsRemoteDataSourceImpl
       case DioExceptionType.badResponse:
       case DioExceptionType.unknown:
         final data = e.response?.data;
-        final json =
-            data is Map<String, dynamic> ? data : const <String, dynamic>{};
+        final json = data is Map<String, dynamic>
+            ? data
+            : const <String, dynamic>{};
         return ServerException(
           _extractError(json) ??
               'Request failed (${e.response?.statusCode ?? 'network error'}).',

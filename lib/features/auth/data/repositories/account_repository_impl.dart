@@ -43,9 +43,7 @@ class AccountRepositoryImpl implements AccountRepository {
 
   @override
   Future<Either<Failure, String>> resendOtp(String email) {
-    return _guard(
-      () => _remote.resendOtp(ResendOtpRequestModel(email: email)),
-    );
+    return _guard(() => _remote.resendOtp(ResendOtpRequestModel(email: email)));
   }
 
   @override

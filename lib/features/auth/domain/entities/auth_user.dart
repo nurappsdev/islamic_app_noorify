@@ -25,6 +25,5 @@ class AuthUser {
           other.isEmailVerified == isEmailVerified;
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, email, phone, isEmailVerified);
+  int get hashCode => Object.hash(id, name, email, phone, isEmailVerified);
 }

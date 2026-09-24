@@ -23,9 +23,11 @@ class AmolPillarModel extends AmolPillar {
       formattedSubtext: json['formattedSubtext']?.toString() ?? '',
       items: items is List
           ? items
-              .whereType<Map>()
-              .map((e) => AmolItemModel.fromJson(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) => AmolItemModel.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
     );
   }

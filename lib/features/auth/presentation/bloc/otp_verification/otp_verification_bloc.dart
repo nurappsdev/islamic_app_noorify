@@ -35,10 +35,7 @@ class OtpVerificationBloc
 
     result.fold(
       (failure) => emit(
-        state.copyWith(
-          status: OtpVerificationStatus.failure,
-          failure: failure,
-        ),
+        state.copyWith(status: OtpVerificationStatus.failure, failure: failure),
       ),
       (result) => emit(
         state.copyWith(

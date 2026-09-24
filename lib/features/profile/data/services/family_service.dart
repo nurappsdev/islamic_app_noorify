@@ -14,9 +14,7 @@ class FamilyService {
   final FamilyRepository _repository = FamilyRepositoryImpl(
     FamilyRemoteDataSourceImpl(),
   );
-  late final GetFamilyMembers _getFamilyMembers = GetFamilyMembers(
-    _repository,
-  );
+  late final GetFamilyMembers _getFamilyMembers = GetFamilyMembers(_repository);
 
   /// Fetches the family members list; returns an empty list on failure so
   /// callers can render without special-casing errors.

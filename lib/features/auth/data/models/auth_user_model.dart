@@ -26,7 +26,9 @@ class AuthUserModel extends AuthUser {
     final id = (json['_id'] ?? json['id'])?.toString();
     final email = json['email']?.toString();
     if (id == null || email == null) {
-      throw ParsingException('Registration response is missing "_id" / "email".');
+      throw ParsingException(
+        'Registration response is missing "_id" / "email".',
+      );
     }
     return AuthUserModel(
       id: id,

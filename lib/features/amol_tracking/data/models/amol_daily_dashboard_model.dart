@@ -33,9 +33,11 @@ class AmolDailyDashboardModel extends AmolDailyDashboard {
       summary: AmolDailySummaryModel.fromJson(summaryJson),
       pillars: pillars is List
           ? pillars
-              .whereType<Map>()
-              .map((e) => AmolPillarModel.fromJson(Map<String, dynamic>.from(e)))
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (e) => AmolPillarModel.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
     );
   }

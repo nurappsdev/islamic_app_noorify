@@ -43,7 +43,10 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     final result = await _getAmolDaily(date: event.date);
     result.fold(
       (failure) => emit(
-        AmolDailyState.failure(failure, completionOverrides: completionOverrides),
+        AmolDailyState.failure(
+          failure,
+          completionOverrides: completionOverrides,
+        ),
       ),
       (dashboard) => emit(
         AmolDailyState.success(
@@ -70,12 +73,18 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
       pillarKey: event.pillarKey,
       itemKey: event.itemKey,
     );
-    result.fold((failure) {
-      _logFailures.add(failure.message);
-      emit(state.withLoggingItemKey(null));
-    }, (dashboard) => emit(
-      AmolDailyState.success(dashboard, completionOverrides: completionOverrides),
-    ));
+    result.fold(
+      (failure) {
+        _logFailures.add(failure.message);
+        emit(state.withLoggingItemKey(null));
+      },
+      (dashboard) => emit(
+        AmolDailyState.success(
+          dashboard,
+          completionOverrides: completionOverrides,
+        ),
+      ),
+    );
   }
 
   Future<void> _onUncheckItem(
@@ -95,12 +104,18 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
       pillarKey: event.pillarKey,
       itemKey: event.itemKey,
     );
-    result.fold((failure) {
-      _logFailures.add(failure.message);
-      emit(state.withLoggingItemKey(null));
-    }, (dashboard) => emit(
-      AmolDailyState.success(dashboard, completionOverrides: completionOverrides),
-    ));
+    result.fold(
+      (failure) {
+        _logFailures.add(failure.message);
+        emit(state.withLoggingItemKey(null));
+      },
+      (dashboard) => emit(
+        AmolDailyState.success(
+          dashboard,
+          completionOverrides: completionOverrides,
+        ),
+      ),
+    );
   }
 
   @override

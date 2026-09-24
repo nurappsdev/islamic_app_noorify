@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -257,7 +258,9 @@ class _PillarProgressCard extends StatelessWidget {
   }
 }
 
-void _openAmolTracking(BuildContext context, String category) {
+Future<void> _openAmolTracking(BuildContext context, String category) async {
+  if (!await ensureLogin(context)) return;
+  if (!context.mounted) return;
   Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => AmolTrackingScreen(initialExpandedCategory: category),

@@ -834,7 +834,9 @@ class _ScoreTooltip extends StatelessWidget {
           _TooltipRow(
             color: _LineChartPainter.competitorLineColor,
             label: competitorLabel,
-            value: competitorScore == null ? '—' : _formatPoints(competitorScore!),
+            value: competitorScore == null
+                ? '—'
+                : _formatPoints(competitorScore!),
           ),
         ],
       ),

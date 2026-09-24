@@ -12,9 +12,7 @@ class AmolTrackingRepositoryImpl implements AmolTrackingRepository {
   final AmolTrackingRemoteDataSource _remote;
 
   @override
-  Future<Either<Failure, AmolDailyDashboard>> getDaily({
-    required String date,
-  }) {
+  Future<Either<Failure, AmolDailyDashboard>> getDaily({required String date}) {
     return _guard(() => _remote.getDaily(date: date));
   }
 

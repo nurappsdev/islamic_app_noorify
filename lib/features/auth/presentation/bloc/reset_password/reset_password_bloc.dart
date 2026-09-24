@@ -12,7 +12,9 @@ class ResetPasswordBloc extends Bloc<ResetPasswordEvent, ResetPasswordState> {
   ResetPasswordBloc(this._resetPassword)
     : super(const ResetPasswordState.initial()) {
     on<ResetPasswordSubmitted>(_onSubmitted);
-    on<ResetPasswordReset>((_, emit) => emit(const ResetPasswordState.initial()));
+    on<ResetPasswordReset>(
+      (_, emit) => emit(const ResetPasswordState.initial()),
+    );
   }
 
   final ResetPassword _resetPassword;
