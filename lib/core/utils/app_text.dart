@@ -23,6 +23,7 @@ class AppText {
     required this.signUpSubtitle,
     required this.enterYourName,
     required this.emailAddress,
+    required this.emailCopied,
     required this.emailVerification,
     required this.sendOtp,
     required this.otpVerification,
@@ -571,6 +572,11 @@ class AppText {
     required this.tafsirTitle,
     required this.repeatLabel,
     required this.showTransliterationLabel,
+    required this.yearly,
+    required this.leaderboard,
+    required this.leaderboardTitle,
+    required this.yourRank,
+    required this.ptsToRank,
   });
 
   final String noorify;
@@ -586,6 +592,7 @@ class AppText {
   final String signUpSubtitle;
   final String enterYourName;
   final String emailAddress;
+  final String emailCopied;
   final String emailVerification;
   final String sendOtp;
   final String otpVerification;
@@ -1164,6 +1171,11 @@ class AppText {
   final String tafsirTitle;
   final String repeatLabel;
   final String showTransliterationLabel;
+  final String yearly;
+  final String leaderboard;
+  final String leaderboardTitle;
+  final String yourRank;
+  final String ptsToRank;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -1251,6 +1263,7 @@ class AppText {
       ),
       enterYourName: _read(map, 'enterYourName', fallback?.enterYourName ?? ''),
       emailAddress: _read(map, 'emailAddress', fallback?.emailAddress ?? ''),
+      emailCopied: _read(map, 'emailCopied', fallback?.emailCopied ?? ''),
       emailVerification: _read(
         map,
         'emailVerification',
@@ -3147,6 +3160,15 @@ class AppText {
         'showTransliterationLabel',
         fallback?.showTransliterationLabel ?? '',
       ),
+      yearly: _read(map, 'yearly', fallback?.yearly ?? ''),
+      leaderboard: _read(map, 'leaderboard', fallback?.leaderboard ?? ''),
+      leaderboardTitle: _read(
+        map,
+        'leaderboardTitle',
+        fallback?.leaderboardTitle ?? '',
+      ),
+      yourRank: _read(map, 'yourRank', fallback?.yourRank ?? ''),
+      ptsToRank: _read(map, 'ptsToRank', fallback?.ptsToRank ?? ''),
     );
   }
 

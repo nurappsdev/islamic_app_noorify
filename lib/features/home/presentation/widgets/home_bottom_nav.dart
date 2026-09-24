@@ -46,10 +46,16 @@ class HomeBottomNav extends StatelessWidget {
               onPressed: () => _goTo(context, RouteNames.quran),
             ),
             _NavItem(
-              icon: Icons.bookmark_border_rounded,
-              onPressed: () =>
-                  Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
+              icon: Icons.leaderboard_rounded,
+              label: appText.leaderboard,
+              selected: selectedIndex == 2,
+              onPressed: () => _goTo(context, RouteNames.leaderboard),
             ),
+            // _NavItem(
+            //   icon: Icons.bookmark_border_rounded,
+            //   onPressed: () =>
+            //       Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
+            // ),
           ],
         ),
       ),
