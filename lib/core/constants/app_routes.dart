@@ -103,9 +103,9 @@ class AppRoutes {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.home:
-        return _page(const HomeScreen(), settings);
+        return _instantPage(const HomeScreen(), settings);
       case RouteNames.leaderboard:
-        return _page(const LeaderboardScreen(), settings);
+        return _instantPage(const LeaderboardScreen(), settings);
       case RouteNames.profile:
         return _page(const ProfileScreen(), settings);
       case RouteNames.editProfile:
@@ -167,7 +167,7 @@ class AppRoutes {
           settings,
         );
       case RouteNames.quranSurahs:
-        return _page(_surahListWithBlocs(), settings);
+        return _instantPage(_surahListWithBlocs(), settings);
       case RouteNames.quranSurahDetail:
         final args = settings.arguments;
         final surahNo = args is SurahRouteArgs
