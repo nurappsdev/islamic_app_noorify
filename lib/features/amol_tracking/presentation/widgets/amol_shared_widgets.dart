@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
+import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
 
 const amolOlive = Color(0xFF8D9B70);
 const amolCardGreen = Color(0xFFE3ECAE);
@@ -52,6 +52,8 @@ class AmolHeader extends StatelessWidget {
   }
 }
 
+/// "Today's Amol track" card. Same design as the Home slider's card (both
+/// render [AmalTrackerTile]).
 class AmolSummaryCard extends StatelessWidget {
   const AmolSummaryCard({
     super.key,
@@ -66,61 +68,11 @@ class AmolSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(amolCardGreen),
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52.r,
-            height: 52.r,
-            padding: EdgeInsets.all(12.r),
-            decoration: BoxDecoration(
-              color: context.surfaceColor(Color(0xFFF7F8E8)),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Image.asset(
-              'assets/noorifyLogo.png',
-              fit: BoxFit.contain,
-              color: context.inkColor(Color(0xFF879461)),
-            ),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppText.of(context).todaysAmolTrack,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: context.inkColor(Colors.black),
-                  ),
-                ),
-                SizedBox(height: 5.h),
-                Text(
-                  pointLabel,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: context.inkColor(Colors.black87),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AmolProgressRing(
-            label: progressLabel,
-            progress: progress,
-            dimension: 74.r,
-            holeDimension: 50.r,
-            holeColor: amolCardGreen,
-            labelStyle: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
+    return AmalTrackerTile(
+      title: AppText.of(context).todaysAmolTrack,
+      subtitle: pointLabel,
+      progressLabel: progressLabel,
+      progress: progress,
     );
   }
 }
