@@ -30,7 +30,11 @@ class OtpVerificationBloc
     emit(state.copyWith(status: OtpVerificationStatus.loading));
 
     final result = await _verifyEmailOtp(
-      VerifyOtpParams(email: event.email, otp: event.otp),
+      VerifyOtpParams(
+        email: event.email,
+        otp: event.otp,
+        startSession: event.startSession,
+      ),
     );
 
     result.fold(

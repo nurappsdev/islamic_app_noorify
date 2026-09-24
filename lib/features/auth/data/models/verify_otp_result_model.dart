@@ -3,7 +3,11 @@ import 'package:islami_app_noorify/features/auth/domain/entities/otp_verificatio
 /// Parses the envelope of a successful `POST {verifyEmailEndPoint}` response:
 /// `{ success, message, data: { resetToken? / token? / accessToken? } }`.
 class VerifyOtpResultModel extends OtpVerificationResult {
-  const VerifyOtpResultModel({required super.message, super.resetToken});
+  const VerifyOtpResultModel({
+    required super.message,
+    super.resetToken,
+    super.accessToken,
+  });
 
   factory VerifyOtpResultModel.fromEnvelope(Map<String, dynamic> json) {
     final data = json['data'];
@@ -17,6 +21,12 @@ class VerifyOtpResultModel extends OtpVerificationResult {
     return VerifyOtpResultModel(
       message: json['message']?.toString() ?? 'OTP verified.',
       resetToken: token,
+      accessToken: _firstNonEmpty([
+        map['accessToken'],
+        map['access_token'],
+        map['jwt'],
+        map['token'],
+      ]),
     );
   }
 

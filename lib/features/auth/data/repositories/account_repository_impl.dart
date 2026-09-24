@@ -36,9 +36,17 @@ class AccountRepositoryImpl implements AccountRepository {
   Future<Either<Failure, OtpVerificationResult>> verifyEmailOtp(
     VerifyOtpParams params,
   ) {
-    return _guard<OtpVerificationResult>(
-      () => _remote.verifyEmail(VerifyOtpRequestModel.fromParams(params)),
-    );
+    return _guard<OtpVerificationResult>(() async {
+      final result = await _remote.verifyEmail(
+        VerifyOtpRequestModel.fromParams(params),
+      );
+      final token = result.accessToken;
+      if (params.startSession && token != null) {
+        // A verified new account is signed in straight away.
+        await _local.cacheToken(token);
+      }
+      return result;
+    });
   }
 
   @override

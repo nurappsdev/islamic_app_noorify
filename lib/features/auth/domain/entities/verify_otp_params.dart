@@ -1,9 +1,17 @@
 /// Value object for the "verify email OTP" call.
 class VerifyOtpParams {
-  const VerifyOtpParams({required this.email, required this.otp});
+  const VerifyOtpParams({
+    required this.email,
+    required this.otp,
+    this.startSession = false,
+  });
 
   final String email;
   final String otp;
+
+  /// Sign-up flow: keep the access token from the response as the session.
+  /// Left `false` for forgot-password, whose token only authorises a reset.
+  final bool startSession;
 
   /// Returns an error message, or `null` when the input looks valid.
   String? validate() {

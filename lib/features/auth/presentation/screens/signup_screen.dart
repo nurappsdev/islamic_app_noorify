@@ -10,7 +10,10 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:islami_app_noorify/features/auth/domain/entities/login_params.dart';
+import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:islami_app_noorify/features/auth/data/services/auth_service.dart';
@@ -148,16 +151,17 @@ class _SignupViewState extends State<_SignupView> {
   void _onRegisterStateChanged(BuildContext context, RegisterState state) {
     switch (state.status) {
       case RegisterStatus.success:
+        final password = _passwordController.text;
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => EmailVerificationScreen(
               initiallyShowOtp: true,
+              startSession: true,
               email: state.user?.email,
-              onOtpVerified: (_) {
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
-              },
+              onOtpVerified: (_) => _finishSignUp(
+                state.user?.email ?? _emailController.text.trim(),
+                password,
+              ),
             ),
           ),
         );
@@ -171,6 +175,29 @@ class _SignupViewState extends State<_SignupView> {
       case RegisterStatus.loading:
         break;
     }
+  }
+
+  /// After the OTP is verified: make sure a session exists (the verify call
+  /// stores the token when the API returns one, otherwise sign in with the
+  /// credentials just used), load the user, and open Home as that user.
+  Future<void> _finishSignUp(String email, String password) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!AuthLocalDataSourceImpl().hasToken) {
+      final result = await AccountRepositoryImpl(
+        AuthRemoteDataSourceImpl(),
+      ).login(LoginParams(email: email, password: password));
+      final failure = result.fold((f) => f, (_) => null);
+      if (failure != null) {
+        messenger.showSnackBar(SnackBar(content: Text(failure.message)));
+        navigator.pushNamedAndRemoveUntil(RouteNames.signIn, (_) => false);
+        return;
+      }
+    }
+    skipAuthGateNotifier.value = true;
+    unawaited(saveAppPreferences());
+    unawaited(ProfileService.instance.refresh());
+    navigator.pushNamedAndRemoveUntil(RouteNames.home, (_) => false);
   }
 
   Future<String> _defaultGoogleSignUpRouteResolver() async {
