@@ -518,6 +518,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'logoutConfirmMessage': 'Are you sure you want to logout?',
   'yes': 'Yes',
   'no': 'No',
+  'loginRequiredMessage': 'You need to log in first to view this content.',
 
   // Settings feature
   'settingsTitle': 'Settings',

@@ -517,6 +517,7 @@ const Map<String, String> appTextBn = <String, String>{
   'logoutConfirmMessage': 'আপনি কি লগআউট করতে নিশ্চিত?',
   'yes': 'হ্যাঁ',
   'no': 'না',
+  'loginRequiredMessage': 'এই কনটেন্ট দেখতে আপনাকে আগে লগইন করতে হবে।',
 
   // Settings feature
   'settingsTitle': 'সেটিংস',

@@ -522,6 +522,7 @@ class AppText {
     required this.logoutConfirmMessage,
     required this.yes,
     required this.no,
+    required this.loginRequiredMessage,
     required this.settingsTitle,
     required this.aboutUs,
     required this.ourProducts,
@@ -1115,6 +1116,7 @@ class AppText {
   final String logoutConfirmMessage;
   final String yes;
   final String no;
+  final String loginRequiredMessage;
 
   // Settings feature
   final String settingsTitle;
@@ -3026,6 +3028,11 @@ class AppText {
       ),
       yes: _read(map, 'yes', fallback?.yes ?? ''),
       no: _read(map, 'no', fallback?.no ?? ''),
+      loginRequiredMessage: _read(
+        map,
+        'loginRequiredMessage',
+        fallback?.loginRequiredMessage ?? '',
+      ),
       settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
       ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),

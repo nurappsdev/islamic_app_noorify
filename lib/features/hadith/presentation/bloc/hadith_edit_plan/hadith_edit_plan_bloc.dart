@@ -8,7 +8,8 @@ import 'hadith_edit_plan_state.dart';
 export 'hadith_edit_plan_event.dart';
 export 'hadith_edit_plan_state.dart';
 
-class HadithEditPlanBloc extends Bloc<HadithEditPlanEvent, HadithEditPlanState> {
+class HadithEditPlanBloc
+    extends Bloc<HadithEditPlanEvent, HadithEditPlanState> {
   HadithEditPlanBloc(this._updatePlan) : super(const HadithEditPlanState()) {
     on<SubmitHadithPlanEdit>(_onSubmit);
   }

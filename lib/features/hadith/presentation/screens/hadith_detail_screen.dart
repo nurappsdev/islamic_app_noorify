@@ -33,6 +33,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_b
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_login_required_dialog.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -235,6 +236,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   /// in [_tracker] (`GET /hadiths/reading/read`), so their Yes checkbox opens
   /// checked instead of only after this device reports them itself.
   Future<void> _loadReadStatus() async {
+    if (!hadithIsSignedIn) return;
     final result = await _getReadHadiths(
       subCategoryId: widget.subCategoryId,
       bookId: widget.bookId,
@@ -256,6 +258,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   /// complete" on its own — without the user having to leave the screen.
   void _maybeShowAutoComplete(String? hadithId) {
     if (hadithId == null || _leaving || _autoDialogShowing) return;
+    // Reporting needs a token; guests get the login dialog from the Yes box.
+    if (!hadithIsSignedIn) return;
     if (_autoPrompted.contains(hadithId)) return;
     if (_tracker.isCompleted(hadithId) || _tracker.isCompleting(hadithId)) {
       return;
@@ -404,7 +408,9 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   Future<void> _handleExit() async {
     if (_leaving) return;
     _leaving = true;
-    final candidates = _tracker.reportCandidates;
+    final candidates = hadithIsSignedIn
+        ? _tracker.reportCandidates
+        : const <String>[];
     if (candidates.isNotEmpty) {
       final hadiths = context.read<HadithDetailBloc>().state.hadiths;
       final numbers = <int>[];
@@ -1573,7 +1579,9 @@ class _TimerCircle extends StatelessWidget {
   String get _label {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
-    return minutes > 0 ? '$minutes:${secs.toString().padLeft(2, '0')}' : '$secs';
+    return minutes > 0
+        ? '$minutes:${secs.toString().padLeft(2, '0')}'
+        : '$secs';
   }
 
   @override
@@ -1660,7 +1668,10 @@ class _HadithCompleteCheckbox extends StatelessWidget {
           busy: completing,
           onTap: completed || completing
               ? null
-              : () => tracker.complete(hadithId),
+              : () async {
+                  if (!await ensureHadithLogin(context)) return;
+                  tracker.complete(hadithId);
+                },
         );
       },
     );
