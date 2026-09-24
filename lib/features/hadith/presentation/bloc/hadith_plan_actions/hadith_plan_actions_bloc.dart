@@ -42,7 +42,10 @@ class HadithPlanActionsBloc
     // One at a time: a second tap while the first is still running is ignored.
     if (state.isWorking) return;
     emit(
-      HadithPlanActionsState(status: HadithPlanActionStatus.working, kind: kind),
+      HadithPlanActionsState(
+        status: HadithPlanActionStatus.working,
+        kind: kind,
+      ),
     );
     final result = await action();
     if (emit.isDone) return;
@@ -55,7 +58,10 @@ class HadithPlanActionsBloc
         ),
       ),
       (_) => emit(
-        HadithPlanActionsState(status: HadithPlanActionStatus.success, kind: kind),
+        HadithPlanActionsState(
+          status: HadithPlanActionStatus.success,
+          kind: kind,
+        ),
       ),
     );
   }

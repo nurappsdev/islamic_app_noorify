@@ -86,4 +86,3 @@ Future<bool> showCompletePlanDialog(
   );
   return confirmed ?? false;
 }
-

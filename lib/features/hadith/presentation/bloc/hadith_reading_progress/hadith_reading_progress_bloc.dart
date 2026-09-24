@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_login_required_dialog.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
 
@@ -33,6 +34,8 @@ class HadithReadingProgressBloc
     LoadHadithReadingProgress event,
     Emitter<HadithReadingProgressState> emit,
   ) async {
+    // Needs the login token; a guest sees 0% progress.
+    if (!hadithIsSignedIn) return;
     emit(
       HadithReadingProgressState(
         status: HadithReadingProgressStatus.loading,
@@ -48,6 +51,7 @@ class HadithReadingProgressBloc
   ) => _fetch(emit);
 
   Future<void> _fetch(Emitter<HadithReadingProgressState> emit) async {
+    if (!hadithIsSignedIn) return;
     final generation = ++_generation;
     final result = await _getProgress();
     if (generation != _generation || emit.isDone) return;

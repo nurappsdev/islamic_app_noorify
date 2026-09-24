@@ -245,11 +245,12 @@ class HadithLibraryRemoteDataSourceImpl
     String? bookId,
     String? planId,
   }) async {
-    final envelope = await _getList(ApiConstants.hadithReadingReadEndPoint, {
-      'subCategoryId': ?subCategoryId,
-      'bookId': ?bookId,
-      'planId': ?planId,
-    }, 'Read hadiths', authenticated: true);
+    final envelope = await _getList(
+      ApiConstants.hadithReadingReadEndPoint,
+      {'subCategoryId': ?subCategoryId, 'bookId': ?bookId, 'planId': ?planId},
+      'Read hadiths',
+      authenticated: true,
+    );
     return {
       for (final item in envelope.items)
         if (item['isRead'] == true)

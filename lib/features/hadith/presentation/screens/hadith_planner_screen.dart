@@ -60,8 +60,9 @@ class HadithPlannerScreen extends StatelessWidget {
                 ..add(const LoadHadithPlans()),
         ),
         BlocProvider(
-          create: (_) => HadithCompletedPlansBloc(GetHadithPlans(repo))
-            ..add(const LoadHadithPlans()),
+          create: (_) =>
+              HadithCompletedPlansBloc(GetHadithPlans(repo))
+                ..add(const LoadHadithPlans()),
         ),
         BlocProvider(
           create: (_) => HadithPlanActionsBloc(
