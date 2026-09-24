@@ -14,49 +14,53 @@ class HomeBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
-      child: Container(
-        height: 50.h,
-        padding: EdgeInsets.symmetric(horizontal: 10.w),
-        decoration: BoxDecoration(
-          color: AppColor.primary,
-          borderRadius: BorderRadius.circular(24.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: .08),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _NavItem(
-              icon: Icons.home_outlined,
-              label: appText.home,
-              selected: selectedIndex == 0,
-              onPressed: () => _goTo(context, RouteNames.home),
-            ),
-            _NavItem(
-              icon: Icons.menu_book_outlined,
-              label: appText.categoryQuran,
-              selected: selectedIndex == 1,
-              onPressed: () => _goTo(context, RouteNames.quran),
-            ),
-            _NavItem(
-              icon: Icons.leaderboard_rounded,
-              label: appText.leaderboard,
-              selected: selectedIndex == 2,
-              onPressed: () => _goTo(context, RouteNames.leaderboard),
-            ),
-            // _NavItem(
-            //   icon: Icons.bookmark_border_rounded,
-            //   onPressed: () =>
-            //       Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
-            // ),
-          ],
+    // SafeArea keeps the bar above the system navigation buttons / gesture bar.
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
+        child: Container(
+          height: 50.h,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          decoration: BoxDecoration(
+            color: AppColor.primary,
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .08),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _NavItem(
+                icon: Icons.home_outlined,
+                label: appText.home,
+                selected: selectedIndex == 0,
+                onPressed: () => _goTo(context, RouteNames.home),
+              ),
+              _NavItem(
+                icon: Icons.menu_book_outlined,
+                label: appText.categoryQuran,
+                selected: selectedIndex == 1,
+                onPressed: () => _goTo(context, RouteNames.quranSurahs),
+              ),
+              _NavItem(
+                icon: Icons.leaderboard_rounded,
+                label: appText.leaderboard,
+                selected: selectedIndex == 2,
+                onPressed: () => _goTo(context, RouteNames.leaderboard),
+              ),
+              // _NavItem(
+              //   icon: Icons.bookmark_border_rounded,
+              //   onPressed: () =>
+              //       Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
+              // ),
+            ],
+          ),
         ),
       ),
     );

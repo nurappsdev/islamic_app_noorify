@@ -68,7 +68,15 @@ const _hijriMonthNamesBn = [
   'জিলহজ',
 ];
 
-const _hijriWeekdayShortAr = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+const _hijriWeekdayShortAr = [
+  'أحد',
+  'اثنين',
+  'ثلاثاء',
+  'أربعاء',
+  'خميس',
+  'جمعة',
+  'سبت',
+];
 
 // Index 0 = Sunday .. 6 = Saturday, to match DateTime.weekday % 7. The 7-day
 // week is shared by every calendar system here, so one weekday index drives
@@ -106,7 +114,11 @@ const _weekdayFullAr = [
 const _weekdayShortEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 class _CalCell {
-  const _CalCell({required this.day, required this.inMonth, required this.isToday});
+  const _CalCell({
+    required this.day,
+    required this.inMonth,
+    required this.isToday,
+  });
 
   final int day;
   final bool inMonth;
@@ -529,7 +541,11 @@ class _MonthYearRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _Segment(label: yearLabel, onTap: onTapYear),
-          _Segment(label: monthName, textDirection: textDirection, onTap: onTapMonth),
+          _Segment(
+            label: monthName,
+            textDirection: textDirection,
+            onTap: onTapMonth,
+          ),
         ],
       ),
     );

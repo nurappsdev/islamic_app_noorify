@@ -25,8 +25,10 @@ String prayerThemeAsset({
 
 /// Whether the night background ([nightPrayerThemeAsset]) is showing —
 /// before Fajr or after the Maghrib/evening window.
-bool isNightPrayerTheme({required DateTime now, required PrayerClockTime fajr}) =>
-    prayerThemeAsset(now: now, fajr: fajr) == nightPrayerThemeAsset;
+bool isNightPrayerTheme({
+  required DateTime now,
+  required PrayerClockTime fajr,
+}) => prayerThemeAsset(now: now, fajr: fajr) == nightPrayerThemeAsset;
 
 DateTime nextPrayerThemeBoundary({
   required DateTime now,

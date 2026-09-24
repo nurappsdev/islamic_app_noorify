@@ -56,5 +56,7 @@ final List<ArabicFont> kArabicFonts = [
   ),
 ];
 
-ArabicFont arabicFontById(String id) =>
-    kArabicFonts.firstWhere((f) => f.id == id, orElse: () => kArabicFonts.first);
+ArabicFont arabicFontById(String id) => kArabicFonts.firstWhere(
+  (f) => f.id == id,
+  orElse: () => kArabicFonts.first,
+);

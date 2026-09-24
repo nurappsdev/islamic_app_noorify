@@ -50,7 +50,7 @@ import '../../features/learning/presentation/screens/article_details_screen.dart
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
 import '../../features/quran/presentation/quran_route_args.dart';
-import '../../features/quran/presentation/screens/quran_screen.dart';
+import '../../features/quran/presentation/screens/quran_entry_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_detail_screen.dart';
 import '../../features/quran/presentation/screens/full_surah_screen.dart';
@@ -162,23 +162,12 @@ class AppRoutes {
       case RouteNames.learningTestResult:
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
-        return _page(const QuranScreen(), settings);
-      case RouteNames.quranSurahs:
         return _page(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => LastReadBloc()..add(const LoadLastRead()),
-              ),
-              BlocProvider(
-                create: (_) =>
-                    OfflineQuranBloc()..add(const CheckOfflineQuran()),
-              ),
-            ],
-            child: const SurahListScreen(),
-          ),
+          QuranEntryScreen(surahListBuilder: (_) => _surahListWithBlocs()),
           settings,
         );
+      case RouteNames.quranSurahs:
+        return _page(_surahListWithBlocs(), settings);
       case RouteNames.quranSurahDetail:
         final args = settings.arguments;
         final surahNo = args is SurahRouteArgs
@@ -447,6 +436,18 @@ class AppRoutes {
       default:
         return _page(const SignInScreen(), settings);
     }
+  }
+
+  static Widget _surahListWithBlocs() {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => LastReadBloc()..add(const LoadLastRead())),
+        BlocProvider(
+          create: (_) => OfflineQuranBloc()..add(const CheckOfflineQuran()),
+        ),
+      ],
+      child: const SurahListScreen(),
+    );
   }
 
   static MaterialPageRoute<dynamic> _page(
