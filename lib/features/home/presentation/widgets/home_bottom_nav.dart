@@ -21,7 +21,7 @@ class HomeBottomNav extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
         child: Container(
-          height: 50.h,
+          height: 58.h,
           padding: EdgeInsets.symmetric(horizontal: 10.w),
           decoration: BoxDecoration(
             color: AppColor.primary,
@@ -99,7 +99,7 @@ class _NavItem extends StatelessWidget {
       return IconButton(
         tooltip: label,
         onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 18.sp),
+        icon: Icon(icon, color: Colors.white, size: 22.sp),
       );
     }
 
@@ -109,20 +109,20 @@ class _NavItem extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(16.r),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
+          padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: const Color(0xFF738A69),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white, size: 16.sp),
+              Icon(icon, color: Colors.white, size: 20.sp),
               SizedBox(width: 4.w),
               Text(
                 label ?? '',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 9.sp,
+                  fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
