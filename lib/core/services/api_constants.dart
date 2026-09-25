@@ -99,7 +99,7 @@ class ApiConstants {
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";
 
-  static const String changePasswordEndPoint = "/auth/change-password";
+  static const String changePasswordEndPoint = "/settings/change-password";
   static const String deleteAccountEndPoint = "/auth/delete-account";
   static const String notification = "/notifications";
   static const String notificationBadgeEndPoint = "/notifications/badge";
