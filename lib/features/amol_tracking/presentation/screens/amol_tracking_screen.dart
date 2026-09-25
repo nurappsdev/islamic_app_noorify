@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -167,6 +168,15 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
 
   Future<void> _onItemTap(String pillarKey, AmolItem item) async {
     if (_bloc.state.loggingItemKey != null) return;
+    // Quiz is never ticked here: its check comes from the server once a quiz
+    // is completed. Tapping it just opens the Quiz section (no login check,
+    // no dialog, no tracking); on return the day is reloaded so a quiz
+    // finished meanwhile shows up checked.
+    if (pillarKey == 'quiz') {
+      await Navigator.of(context).pushNamed(RouteNames.winQuiz);
+      if (mounted) _reload();
+      return;
+    }
     // Viewing is public, but logging / unchecking (POST / DELETE) needs the
     // login token.
     if (!await ensureLogin(context)) return;
@@ -181,6 +191,21 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
         ),
       );
       return;
+    }
+
+    // Quran and Hadith count as read on the user's word, so ask first.
+    if (pillarKey == 'quran' || pillarKey == 'hadith') {
+      final confirmed = await _confirmReadTracking();
+      if (!mounted) return;
+      if (!confirmed) {
+        // No: leave without tracking, back to that feature's home screen.
+        unawaited(
+          Navigator.of(context).pushReplacementNamed(
+            pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith,
+          ),
+        );
+        return;
+      }
     }
 
     final times = _prayerTimes;
@@ -209,6 +234,29 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
         itemKey: item.itemKey,
       ),
     );
+  }
+
+  Future<bool> _confirmReadTracking() async {
+    final appText = AppText.readOf(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        content: const Text(
+          'Are you sure you have read this and want to track it?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.no),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   void _showPrayerNotStartedAlert() {
