@@ -40,6 +40,7 @@ class RouteNames {
   static const hadith = '/hadith';
   static const hadithLibrary = '/hadith/library';
   static const hadithLibraryList = '/hadith/library/all';
+  static const hadithEbookList = '/hadith/ebooks/all';
   static const hadithCategory = '/hadith/category';
   static const hadithSubCategory = '/hadith/sub-category';
   static const hadithDetail = '/hadith/details';

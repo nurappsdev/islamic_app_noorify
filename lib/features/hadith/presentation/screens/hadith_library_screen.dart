@@ -100,7 +100,12 @@ class _HadithLibraryView extends StatelessWidget {
                 SizedBox(height: 26.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: _SectionTitle(appText.hadithEbook),
+                  child: _SectionTitle(
+                    appText.hadithEbook,
+                    onSeeAll: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.hadithEbookList),
+                  ),
                 ),
                 SizedBox(height: 14.h),
                 const _EbookShelf(),
