@@ -17,6 +17,10 @@ abstract final class HadithReadingConfig {
   /// "Your reading time is complete" on its own, without waiting for the
   /// user to leave.
   static const autoCompleteSeconds = 300;
+
+  /// A guest's timer stops once a hadith has been in focus this long, and
+  /// the screen asks whether they want to sign in to track it.
+  static const guestPromptSeconds = 60;
 }
 
 enum HadithCompletion { done, alreadyCompleted, failed }
