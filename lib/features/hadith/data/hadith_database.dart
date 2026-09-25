@@ -469,4 +469,15 @@ class HadithDatabase {
       );
     });
   }
+
+  /// Deletes every bookmark and bookmark folder (the signed-in user's saved
+  /// hadiths). Downloaded book text is shared content and is kept.
+  Future<void> clearUserData() async {
+    final db = await open();
+    await db.transaction((txn) async {
+      await txn.delete(_bookmarkFolderMapTable);
+      await txn.delete(_bookmarkFoldersTable);
+      await txn.delete(_bookmarksTable);
+    });
+  }
 }
