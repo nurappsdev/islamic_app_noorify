@@ -222,7 +222,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Noorify',
+                          'Tuhfatul Muslim',
                           style: TextStyle(
                             color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,
@@ -235,7 +235,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  appText.noorify,
+                  appText.tuhfatulMuslim,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: context.inkColor(Colors.black),

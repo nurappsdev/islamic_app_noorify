@@ -10,14 +10,14 @@ import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class AppText {
   const AppText({
-    required this.noorify,
+    required this.tuhfatulMuslim,
     required this.splashTitle,
     required this.splashQuote,
     required this.emailOrPhoneHint,
     required this.passwordHint,
     required this.forgotPassword,
     required this.login,
-    required this.newToNoorify,
+    required this.newToTuhfatulMuslim,
     required this.createAccount,
     required this.guestUser,
     required this.signUpSubtitle,
@@ -581,14 +581,14 @@ class AppText {
     required this.ptsToRank,
   });
 
-  final String noorify;
+  final String tuhfatulMuslim;
   final String splashTitle;
   final String splashQuote;
   final String emailOrPhoneHint;
   final String passwordHint;
   final String forgotPassword;
   final String login;
-  final String newToNoorify;
+  final String newToTuhfatulMuslim;
   final String createAccount;
   final String guestUser;
   final String signUpSubtitle;
@@ -1242,7 +1242,7 @@ class AppText {
 
   factory AppText.fromMap(Map<dynamic, dynamic> map, {AppText? fallback}) {
     return AppText(
-      noorify: _read(map, 'noorify', fallback?.noorify ?? ''),
+      tuhfatulMuslim: _read(map, 'tuhfatulMuslim', fallback?.tuhfatulMuslim ?? ''),
       splashTitle: _read(map, 'splashTitle', fallback?.splashTitle ?? ''),
       splashQuote: _read(map, 'splashQuote', fallback?.splashQuote ?? ''),
       emailOrPhoneHint: _read(
@@ -1257,7 +1257,7 @@ class AppText {
         fallback?.forgotPassword ?? '',
       ),
       login: _read(map, 'login', fallback?.login ?? ''),
-      newToNoorify: _read(map, 'newToNoorify', fallback?.newToNoorify ?? ''),
+      newToTuhfatulMuslim: _read(map, 'newToTuhfatulMuslim', fallback?.newToTuhfatulMuslim ?? ''),
       createAccount: _read(map, 'createAccount', fallback?.createAccount ?? ''),
       guestUser: _read(map, 'guestUser', fallback?.guestUser ?? ''),
       signUpSubtitle: _read(

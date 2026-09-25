@@ -11,7 +11,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Islami App Noorify</string>
+	<string>Tuhfatul Muslim</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -19,7 +19,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>islami_app_noorify</string>
+	<string>Tuhfatul Muslim</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -31,9 +31,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allows Noorify to let you pick a profile photo from your gallery.</string>
+	<string>Allows Tuhfatul Muslim to let you pick a profile photo from your gallery.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Noorify uses your location to point the Qiblah compass toward the Kaaba.</string>
+	<string>Tuhfatul Muslim uses your location to point the Qiblah compass toward the Kaaba.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

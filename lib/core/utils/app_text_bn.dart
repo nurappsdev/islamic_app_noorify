@@ -1,5 +1,5 @@
 const Map<String, String> appTextBn = <String, String>{
-  'noorify': 'নূরিফাই ডেমো লোগো',
+  'tuhfatulMuslim': 'তুহফাতুল মুসলিম',
   'splashTitle': 'বিশ্বাসে খুঁজে নিন শান্তি',
   'splashQuote':
       'কুরআন তিলাওয়াত, দোয়া এবং সময়মতো নামাজের স্মরণ দিয়ে অর্থবহ দৈনন্দিন অভ্যাস গড়ে তুলুন।',
@@ -7,7 +7,7 @@ const Map<String, String> appTextBn = <String, String>{
   'passwordHint': 'পাসওয়ার্ড',
   'forgotPassword': 'পাসওয়ার্ড ভুলে গেছেন',
   'login': 'লগইন',
-  'newToNoorify': 'নূরিফাইতে নতুন?',
+  'newToTuhfatulMuslim': 'তুহফাতুল মুসলিমে নতুন?',
   'createAccount': 'অ্যাকাউন্ট তৈরি করুন',
   'guestUser': 'অতিথি হিসেবে চালিয়ে যান',
   'signUpSubtitle': 'আরও মননশীল ইসলামিক জীবনযাত্রার পথচলা শুরু করুন।',
@@ -173,7 +173,7 @@ const Map<String, String> appTextBn = <String, String>{
   'compassLocationServicesDisabled':
       'কিবলার দিক জানতে লোকেশন সার্ভিস চালু করুন।',
   'compassPermissionDenied':
-      'কাবার দিকে কম্পাস দেখাতে নূরিফাই-এর লোকেশন অনুমতি প্রয়োজন।',
+      'কাবার দিকে কম্পাস দেখাতে তুহফাতুল মুসলিম-এর লোকেশন অনুমতি প্রয়োজন।',
   'compassUnsupported': 'এই ডিভাইসে কম্পাস সেন্সর নেই।',
   'compassOpenSettings': 'সেটিংস খুলুন',
   'compassEnableLocation': 'লোকেশন চালু করুন',

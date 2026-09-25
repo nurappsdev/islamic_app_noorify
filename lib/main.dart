@@ -116,7 +116,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: appNavigatorKey,
           navigatorObservers: [appRouteObserver],
-          title: 'Noorify',
+          title: 'Tuhfatul Muslim',
           theme: lightTheme(),
           darkTheme: darkTheme(),
           themeAnimationDuration: const Duration(milliseconds: 300),
