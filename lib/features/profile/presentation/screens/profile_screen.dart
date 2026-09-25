@@ -198,8 +198,8 @@ class _ProfileHeroCard extends StatelessWidget {
     final appText = AppText.of(context);
     final progress = (profile?.profileCompletionPercentage ?? 0) / 100;
     final badges = profile?.badges ?? const <BadgeEntity>[];
-    final currentBadge = profile?.currentBadge;
-    return Container(
+    // final currentBadge = profile?.currentBadge;
+    final card = Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18.w, 28.h, 18.w, 22.h),
       decoration: BoxDecoration(
@@ -209,54 +209,71 @@ class _ProfileHeroCard extends StatelessWidget {
       child: Column(
         children: [
           _AvatarWithProgress(progress: progress),
-          SizedBox(height: 10.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
-            decoration: BoxDecoration(
-              color: context.surfaceColor(Color(0xFFDCE7AC)),
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            child: Text(
-              '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: context.inkColor(Color(0xFF3F4A2C)),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          ValueListenableBuilder<String?>(
-            valueListenable: profileNameNotifier,
-            builder: (context, name, _) {
-              return Text(
-                (name == null || name.isEmpty) ? appText.competitorName : name,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 19.sp,
-                  fontWeight: FontWeight.w600,
+          // The percentage pill overlaps the bottom of the avatar ring.
+          Transform.translate(
+            offset: Offset(0, -14.h),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(const Color(0xFFDCE7AC)),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: Text(
+                    '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: context.inkColor(const Color(0xFF7F8F52)),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            '${appText.trishal}, ${appText.mymensingh}',
-            style: TextStyle(
-              color: context.inkColor(Colors.white.withValues(alpha: .85)),
-              fontSize: 12.sp,
+                SizedBox(height: 12.h),
+                ValueListenableBuilder<String?>(
+                  valueListenable: profileNameNotifier,
+                  builder: (context, name, _) {
+                    return Text(
+                      (name == null || name.isEmpty)
+                          ? appText.competitorName
+                          : name,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  '${appText.trishal}, ${appText.mymensingh}',
+                  style: TextStyle(
+                    color: context.inkColor(
+                      Colors.white.withValues(alpha: .85),
+                    ),
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ],
             ),
           ),
-          if (currentBadge != null) ...[
-            SizedBox(height: 18.h),
-            _CurrentBadge(badge: currentBadge),
-          ],
+          // if (currentBadge != null) ...[
+          //   SizedBox(height: 18.h),
+          //   _CurrentBadge(badge: currentBadge),
+          // ],
           if (badges.isNotEmpty) ...[
             SizedBox(height: 18.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                for (final badge in badges) _BadgeCircle(badge: badge),
+                for (final badge in badges.take(4)) _BadgeCircle(badge: badge),
+                if (badges.length > 4)
+                  _MoreBadgesCircle(count: badges.length - 4),
               ],
             ),
           ],
@@ -266,6 +283,35 @@ class _ProfileHeroCard extends StatelessWidget {
             points: profile?.totalPoints ?? 0,
           ),
         ],
+      ),
+    );
+    // Edit button at the card's top-right corner.
+    return Stack(
+      children: [
+        card,
+        Positioned(right: 14.w, top: 14.h, child: const _EditProfileButton()),
+      ],
+    );
+  }
+}
+
+class _EditProfileButton extends StatelessWidget {
+  const _EditProfileButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.editProfile),
+      child: Container(
+        width: 30.r,
+        height: 30.r,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColor.primary,
+          border: Border.all(color: context.lineColor(Colors.white), width: 2),
+        ),
+        child: Icon(Icons.edit_rounded, size: 15.sp, color: Colors.white),
       ),
     );
   }
@@ -309,21 +355,59 @@ class _BadgeAvatar extends StatelessWidget {
       width: dimension,
       height: dimension,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Color(0xFFB9C36E),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .28),
         shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFF8B9B5A).withValues(alpha: .8),
+          width: 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
-      child: (url == null || url.isEmpty)
-          ? _BadgePlaceholderIcon(size: dimension * .5)
-          : Image.network(
-              url,
-              width: dimension,
-              height: dimension,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  _BadgePlaceholderIcon(size: dimension * .5),
-            ),
+      child: Opacity(
+        opacity: .6,
+        child: (url == null || url.isEmpty)
+            ? _BadgePlaceholderIcon(size: dimension * .5)
+            : Image.network(
+                url,
+                width: dimension,
+                height: dimension,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _BadgePlaceholderIcon(size: dimension * .5),
+              ),
+      ),
+    );
+  }
+}
+
+/// "+N" circle for the badges beyond the first four.
+class _MoreBadgesCircle extends StatelessWidget {
+  const _MoreBadgesCircle({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46.r,
+      height: 46.r,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .28),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFF8B9B5A).withValues(alpha: .8),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        '+$count',
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: .8),
+          fontSize: 12.sp,
+        ),
+      ),
     );
   }
 }
@@ -362,32 +446,6 @@ class _AvatarWithProgress extends StatelessWidget {
             backgroundColor: context.surfaceColor(Colors.white),
             placeholderIconColor: const Color(0xFFB7C17E),
           ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onTap: () =>
-                  Navigator.of(context).pushNamed(RouteNames.editProfile),
-              child: Container(
-                width: 26.r,
-                height: 26.r,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColor.primary,
-                  border: Border.all(
-                    color: context.lineColor(Colors.white),
-                    width: 2,
-                  ),
-                ),
-                child: Icon(
-                  Icons.edit_rounded,
-                  size: 13.sp,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -407,13 +465,13 @@ class _ProfileRingPainter extends CustomPainter {
         Size(size.width - strokeWidth, size.height - strokeWidth);
 
     final trackPaint = Paint()
-      ..color = Colors.white.withValues(alpha: .28)
+      ..color = const Color(0xFFD3E0A4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
     final progressPaint = Paint()
-      ..color = const Color(0xFF6FCF3E)
+      ..color = const Color(0xFF22D14B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -454,52 +512,46 @@ class _PositionPointsPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Container(
-      height: 46.h,
+      height: 50.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF8B9B5A),
-        borderRadius: BorderRadius.circular(23.r),
+        borderRadius: BorderRadius.circular(25.r),
+        border: Border.all(color: Colors.white, width: 1.2),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: Center(
-              child: Text(
-                '${appText.position} : $position',
-                style: TextStyle(color: Colors.white, fontSize: 12.sp),
-              ),
+          Text(
+            '${appText.position} : $position',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: .9),
+              fontSize: 14.sp,
             ),
           ),
-          Container(
-            width: 1,
-            height: 20.h,
-            color: context.surfaceColor(Colors.white.withValues(alpha: .4)),
-          ),
-          Expanded(
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${appText.pointsWord} : ',
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                  ),
-                  Icon(
-                    Icons.monetization_on,
-                    color: const Color(0xFFFFC83D),
-                    size: 15.sp,
-                  ),
-                  SizedBox(width: 3.w),
-                  Text(
-                    '$points',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${appText.pointsWord} : ',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .9),
+                  fontSize: 14.sp,
+                ),
               ),
-            ),
+              Icon(
+                Icons.monetization_on,
+                color: const Color(0xFFFFC83D),
+                size: 20.sp,
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                '$points',
+                style: TextStyle(
+                  color: const Color(0xFFDCE7AC),
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
