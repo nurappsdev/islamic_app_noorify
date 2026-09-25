@@ -19,6 +19,7 @@ class LegalDocumentScreen extends StatelessWidget {
   final LegalDocumentType type;
 
   String get _fallbackTitle => switch (type) {
+    LegalDocumentType.aboutUs => 'About Us',
     LegalDocumentType.termsOfService => 'Terms of Service',
     LegalDocumentType.privacyPolicy => 'Privacy Policy',
   };
@@ -33,20 +34,19 @@ class LegalDocumentScreen extends StatelessWidget {
       child: BlocBuilder<LegalDocumentCubit, LegalDocumentState>(
         builder: (context, state) {
           final ink = context.inkColor(AppColor.authLogo);
+          final title = state.document?.title.isNotEmpty == true
+              ? state.document!.title
+              : _fallbackTitle;
           return Scaffold(
-            backgroundColor: context.pageColor(AppColor.authBackground),
-            appBar: AppBar(
-              backgroundColor: context.pageColor(AppColor.authBackground),
-              elevation: 0,
-              foregroundColor: ink,
-              title: Text(
-                state.document?.title.isNotEmpty == true
-                    ? state.document!.title
-                    : _fallbackTitle,
-                style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w600),
+            backgroundColor: context.pageColor(Colors.white),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _LegalHeader(title: title),
+                  Expanded(child: _body(context, state, ink)),
+                ],
               ),
             ),
-            body: SafeArea(child: _body(context, state, ink)),
           );
         },
       ),
@@ -89,27 +89,88 @@ class LegalDocumentScreen extends StatelessWidget {
             'Last updated: ${document.lastUpdated}',
         ].join('  •  ');
         return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(18.w, 8.h, 18.w, 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (dates.isNotEmpty) ...[
-                Text(
-                  dates,
-                  style: TextStyle(
-                    color: ink.withValues(alpha: .6),
-                    fontSize: 12.sp,
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16.r),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(20.r),
+              border: Border.all(
+                color: context.lineColor(const Color(0xFFDDE8C1)),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (dates.isNotEmpty) ...[
+                  Text(
+                    dates,
+                    style: TextStyle(
+                      color: ink.withValues(alpha: .6),
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                ],
+                HtmlWidget(
+                  document.content,
+                  textStyle: TextStyle(
+                    color: ink,
+                    fontSize: 14.sp,
+                    height: 1.5,
                   ),
                 ),
-                SizedBox(height: 12.h),
               ],
-              HtmlWidget(
-                document.content,
-                textStyle: TextStyle(color: ink, fontSize: 14.sp, height: 1.5),
-              ),
-            ],
+            ),
           ),
         );
     }
+  }
+}
+
+/// Same header as the settings screen: lime back button, centered title.
+class _LegalHeader extends StatelessWidget {
+  const _LegalHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44.h,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 4.w),
+              child: IconButton(
+                onPressed: () => Navigator.maybePop(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFDFDE68),
+                  foregroundColor: const Color(0xFF303629),
+                ),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 56.w),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColor.primary,
+                fontSize: 19.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

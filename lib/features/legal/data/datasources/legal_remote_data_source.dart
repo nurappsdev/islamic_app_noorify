@@ -21,6 +21,7 @@ class LegalRemoteDataSourceImpl implements LegalRemoteDataSource {
   @override
   Future<LegalDocumentModel> getDocument(LegalDocumentType type) async {
     final path = switch (type) {
+      LegalDocumentType.aboutUs => ApiConstants.aboutUsEndPoint,
       LegalDocumentType.termsOfService => ApiConstants.termsOfServiceEndPoint,
       LegalDocumentType.privacyPolicy => ApiConstants.privacyPolicyEndPoint,
     };

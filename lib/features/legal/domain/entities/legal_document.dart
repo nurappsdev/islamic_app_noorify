@@ -1,5 +1,5 @@
 /// Which legal page to load from `/settings/...`.
-enum LegalDocumentType { termsOfService, privacyPolicy }
+enum LegalDocumentType { aboutUs, termsOfService, privacyPolicy }
 
 /// A Terms of Service / Privacy Policy page. [content] is an HTML fragment.
 class LegalDocument {
