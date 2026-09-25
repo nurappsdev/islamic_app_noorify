@@ -67,18 +67,18 @@ void main() {
 
       expect(bloc.state.obscurePassword, isTrue);
       expect(bloc.state.obscureConfirm, isTrue);
-      expect(bloc.state.saveInfo, isTrue);
+      expect(bloc.state.saveInfo, isFalse);
       expect(bloc.state.isLoading, isFalse);
 
       bloc.add(const sign_up.ToggleObscurePassword());
       bloc.add(const sign_up.ToggleObscureConfirm());
-      bloc.add(const sign_up.SetSaveInfo(false));
+      bloc.add(const sign_up.SetSaveInfo(true));
       bloc.add(const sign_up.SetLoading(true));
       await Future<void>.delayed(Duration.zero);
 
       expect(bloc.state.obscurePassword, isFalse);
       expect(bloc.state.obscureConfirm, isFalse);
-      expect(bloc.state.saveInfo, isFalse);
+      expect(bloc.state.saveInfo, isTrue);
       expect(bloc.state.isLoading, isTrue);
     });
   });
