@@ -72,7 +72,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Noorify',
+                          'Tuhfatul Muslim',
                           style: TextStyle(
                             color: context.inkColor(Color(0xFF7D8765)),
                             fontSize: 30.sp,
@@ -83,7 +83,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                     ),
                     SizedBox(height: 6.h),
                     Text(
-                      appText.noorify,
+                      appText.tuhfatulMuslim,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: context.inkColor(Colors.black),

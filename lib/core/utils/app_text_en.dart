@@ -1,5 +1,5 @@
 const Map<String, String> appTextEn = <String, String>{
-  'noorify': 'Noorify demo logo',
+  'tuhfatulMuslim': 'Tuhfatul Muslim',
   'splashTitle': 'Find Peace Through Faith',
   'splashQuote':
       'Build meaningful daily habits with Quran recitation, duas, and timely prayer reminders.',
@@ -7,7 +7,7 @@ const Map<String, String> appTextEn = <String, String>{
   'passwordHint': 'Password',
   'forgotPassword': 'Forgot Password',
   'login': 'Login',
-  'newToNoorify': 'New To Noorify?',
+  'newToTuhfatulMuslim': 'New To Tuhfatul Muslim?',
   'createAccount': 'Create Account',
   'guestUser': 'Continue as Guest',
   'signUpSubtitle':
@@ -174,7 +174,7 @@ const Map<String, String> appTextEn = <String, String>{
   'compassLocationServicesDisabled':
       'Turn on location services to find the Qiblah direction.',
   'compassPermissionDenied':
-      'Noorify needs location access to point the compass toward the Kaaba.',
+      'Tuhfatul Muslim needs location access to point the compass toward the Kaaba.',
   'compassUnsupported': "This device doesn't have a compass sensor.",
   'compassOpenSettings': 'Open Settings',
   'compassEnableLocation': 'Enable Location',

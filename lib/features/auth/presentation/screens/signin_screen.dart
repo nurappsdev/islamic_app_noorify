@@ -178,7 +178,7 @@ class _SignInViewState extends State<_SignInView> {
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Text(
-                            'Noorify',
+                            'Tuhfatul Muslim',
                             style: TextStyle(
                               color: context.inkColor(AppColor.authLogo),
                               fontSize: 28.sp,
@@ -191,7 +191,7 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    appText.noorify,
+                    appText.tuhfatulMuslim,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: context.inkColor(Colors.black),
@@ -279,7 +279,7 @@ class _SignInViewState extends State<_SignInView> {
                     spacing: 4.w,
                     children: [
                       Text(
-                        appText.newToNoorify,
+                        appText.newToTuhfatulMuslim,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: context.inkColor(AppColor.authLogo),

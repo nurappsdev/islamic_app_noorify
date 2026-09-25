@@ -14,10 +14,10 @@
     <!-- Lets the alarm notification launch AlarmRingingScreen straight over
          the lock screen. Normal permission, auto-granted at install; on
          Android 14+ some OEMs still require enabling it by hand in
-         Settings > Apps > Noorify > Alarms & reminders / full-screen notifications. -->
+         Settings > Apps > Tuhfatul Muslim > Alarms & reminders / full-screen notifications. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <application
-        android:label="islami_app_noorify"
+        android:label="Tuhfatul Muslim"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
