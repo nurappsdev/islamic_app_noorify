@@ -67,6 +67,7 @@ dependencies:
   flutter_compass: ^0.8.1
   geolocator: ^14.0.2
   hijri: ^3.0.1
+  flutter_widget_from_html_core: ^0.17.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
