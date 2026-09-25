@@ -45,6 +45,9 @@ class ApiConstants {
       "/amol/tracker/delete-item";
   static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
 
+  static const String termsOfServiceEndPoint = "/settings/terms-of-service";
+  static const String privacyPolicyEndPoint = "/settings/privacy-policy";
+
   static const String leaderboardTopEndPoint = "/leaderboard/top";
 
   static const String hadithBooksListEndPoint = "/hadiths/books/lists";

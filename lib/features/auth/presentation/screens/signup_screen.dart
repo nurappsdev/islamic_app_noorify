@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,6 +24,8 @@ import 'package:islami_app_noorify/features/auth/presentation/bloc/register/regi
 import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:islami_app_noorify/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
+import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
+import 'package:islami_app_noorify/features/legal/presentation/screens/legal_document_screen.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 class _Country {
@@ -97,6 +100,11 @@ class _SignupViewState extends State<_SignupView> {
       TextEditingController();
 
   final TextEditingController _genderController = TextEditingController();
+  late final TapGestureRecognizer _termsTap = TapGestureRecognizer()
+    ..onTap = () => _openLegal(LegalDocumentType.termsOfService);
+  late final TapGestureRecognizer _privacyTap = TapGestureRecognizer()
+    ..onTap = () => _openLegal(LegalDocumentType.privacyPolicy);
+
   String? _selectedGender;
   _Country _selectedCountry = _countries.first;
 
@@ -114,6 +122,8 @@ class _SignupViewState extends State<_SignupView> {
     _emailController.dispose();
     _phoneController.dispose();
     _genderController.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -162,6 +172,12 @@ class _SignupViewState extends State<_SignupView> {
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
+    );
+  }
+
+  void _openLegal(LegalDocumentType type) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => LegalDocumentScreen(type: type)),
     );
   }
 
@@ -464,11 +480,13 @@ class _SignupViewState extends State<_SignupView> {
                 TextSpan(text: '${appText.iAgreeToThe} '),
                 TextSpan(
                   text: appText.termsOfServices,
+                  recognizer: _termsTap,
                   style: const TextStyle(color: AppColor.primary),
                 ),
                 const TextSpan(text: ' & '),
                 TextSpan(
                   text: appText.privacyPolicy,
+                  recognizer: _privacyTap,
                   style: const TextStyle(color: AppColor.primary),
                 ),
               ],
@@ -670,13 +688,16 @@ class _SignupViewState extends State<_SignupView> {
                   // _socialSignupSection(appText),
                   // SizedBox(height: 28.h),
                   _termsRow(appText),
-                  SizedBox(height: 12.h),
-                  AuthButton(
-                    label: appText.createAccount,
-                    isLoading: _isLoading,
-                    height: 60.h,
-                    onPressed: _createAccount,
-                  ),
+                  // The button only appears once the terms checkbox is ticked.
+                  if (_termsAccepted) ...[
+                    SizedBox(height: 12.h),
+                    AuthButton(
+                      label: appText.createAccount,
+                      isLoading: _isLoading,
+                      height: 60.h,
+                      onPressed: _createAccount,
+                    ),
+                  ],
                   SizedBox(height: 10.h),
                   Wrap(
                     alignment: WrapAlignment.center,
