@@ -45,6 +45,18 @@ const _pillarTitleKeyByKey = {
 
 const _naflAndMorePillarKey = 'nafl_and_more';
 
+/// Pillars whose server `formattedSubtext` is a duration (e.g. `"1hr 37min"`)
+/// but which the home grid shows as `points/maxPoints`.
+const _pointsSubtextPillarKeys = {'quran', 'hadith'};
+
+String _formatPoints(num value) =>
+    value == value.roundToDouble() ? value.toInt().toString() : '$value';
+
+String _pillarSubtext(PillarCard pillar) =>
+    _pointsSubtextPillarKeys.contains(pillar.pillarKey)
+    ? '${_formatPoints(pillar.points)}/${_formatPoints(pillar.maxPoints)}'
+    : pillar.formattedSubtext;
+
 class HomeProgressSection extends StatelessWidget {
   const HomeProgressSection({super.key});
 
@@ -247,7 +259,7 @@ class _PillarProgressCard extends StatelessWidget {
             _ProgressBar(value: progress),
             SizedBox(height: 6.h),
             Text(
-              pillar.formattedSubtext,
+              _pillarSubtext(pillar),
               style: homeSansStyle(context: context, fontSize: 12.sp),
             ),
           ],
