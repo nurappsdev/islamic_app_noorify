@@ -33,34 +33,38 @@ class HomeHeader extends StatelessWidget {
         ),
         SizedBox(width: 7.w),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ValueListenableBuilder<String?>(
-                valueListenable: profileNameNotifier,
-                builder: (context, name, _) {
-                  return Text(
-                    (name == null || name.isEmpty)
-                        ? appText.competitorName
-                        : name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: homeSansStyle(
-                      context: context,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                appText.greeting,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: homeSansStyle(context: context, fontSize: 8.sp),
-              ),
-            ],
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ValueListenableBuilder<String?>(
+                  valueListenable: profileNameNotifier,
+                  builder: (context, name, _) {
+                    return Text(
+                      (name == null || name.isEmpty)
+                          ? appText.competitorName
+                          : name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: homeSansStyle(
+                        context: context,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  },
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  appText.greeting,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: homeSansStyle(context: context, fontSize: 8.sp),
+                ),
+              ],
+            ),
           ),
         ),
         SizedBox.square(
