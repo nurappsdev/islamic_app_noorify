@@ -132,6 +132,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
       rival,
       // My initials come with the comparison, so only while it is shown.
       rival == null ? '' : hadithInitials(comparison.myName),
+      comparison.myName,
       appText.zikrTodaysValueGraph,
     );
 
@@ -188,7 +189,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                           // Dark = my minutes read; light = the other reader's,
                           // loaded and drawn only while its toggle is on.
                           _LegendDot(
-                            color: const Color(0xFF3F6B4E),
+                            color: const Color(0xFF7A9A3A),
                             label: appText.myPosition,
                           ),
                           SizedBox(height: 6.h),
@@ -230,6 +231,16 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                                   month: state.month,
                                 ),
                               ),
+                        )
+                      : state.period == HadithHistoryPeriod.weekly
+                      ? _WeeklyBarChart(
+                          series: series,
+                          selectedIndex: _selectedPoint,
+                          // Tapping the open day again closes its details.
+                          onSelect: (i) => setState(
+                            () =>
+                                _selectedPoint = _selectedPoint == i ? null : i,
+                          ),
                         )
                       : _ReadingChart(
                           series: series,
@@ -315,6 +326,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     HadithDashboardState state,
     HadithCompetitor? rival,
     String myInitials,
+    String myName,
     String todayCaption,
   ) {
     final from = state.from;
@@ -410,6 +422,8 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
       rivalPoints: rivalPoints,
       rivalInitials: rival?.initials ?? '',
       myInitials: myInitials,
+      myName: myName,
+      rivalName: rival?.name ?? '',
     );
   }
 
@@ -441,6 +455,8 @@ class _ChartSeries {
     this.rivalPoints,
     this.rivalInitials = '',
     this.myInitials = '',
+    this.myName = '',
+    this.rivalName = '',
   });
 
   final List<double> read;
@@ -452,6 +468,10 @@ class _ChartSeries {
 
   /// My own initials for my tooltip; empty until the comparison has loaded.
   final String myInitials;
+
+  /// Full names for the weekly day details; empty when unknown.
+  final String myName;
+  final String rivalName;
 }
 
 class _ChartError extends StatelessWidget {
@@ -1150,7 +1170,7 @@ class _ReadingChartPainter extends CustomPainter {
     return (t * (count - 1)).round().clamp(0, count - 1);
   }
 
-  static const _readColor = Color(0xFF3F6B4E);
+  static const _readColor = Color(0xFF7A9A3A);
   static const _rivalColor = Color(0xFFA9B96A);
   static const _intervals = 4;
 
@@ -1568,4 +1588,253 @@ class _ReadingChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _ReadingChartPainter oldDelegate) =>
       oldDelegate.series != series ||
       oldDelegate.selectedIndex != selectedIndex;
+}
+
+/// Weekly chart (img_47): one pair of overlapping rounded bars per day — my
+/// minutes (darker) and, while the competitor is shown, theirs (lighter), the
+/// taller one behind. Tapping a day opens its details (img_48): reader name,
+/// time and points.
+class _WeeklyBarChart extends StatelessWidget {
+  const _WeeklyBarChart({
+    required this.series,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  final _ChartSeries series;
+  final int? selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (d) => onSelect(
+          _WeeklyBarPainter.indexAt(
+            d.localPosition.dx,
+            constraints.maxWidth,
+            series.read.length,
+          ),
+        ),
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _WeeklyBarPainter(
+            series: series,
+            selectedIndex: selectedIndex,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WeeklyBarPainter extends CustomPainter {
+  _WeeklyBarPainter({required this.series, required this.selectedIndex});
+
+  final _ChartSeries series;
+  final int? selectedIndex;
+
+  static const _leftPad = 34.0;
+  static const _rightPad = 6.0;
+  static const _topPad = 8.0;
+  static const _bottomPad = 24.0;
+  static const _mineColor = Color(0xFF7A9A3A);
+  static const _rivalColor = Color(0xFFD3DEA8);
+  static const _peakColor = Color(0xFF5F7F26);
+  static const _tooltipFill = Color(0xFFDDE8BA);
+  static const _ink = Color(0xFF2C3320);
+
+  /// The day whose slot contains horizontal position [dx].
+  static int indexAt(double dx, double width, int count) {
+    final slot = (width - _leftPad - _rightPad) / count;
+    return slot <= 0 ? 0 : ((dx - _leftPad) / slot).floor().clamp(0, count - 1);
+  }
+
+  static String _number(double v) =>
+      v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final read = series.read;
+    final rival = series.rival;
+    final count = read.length;
+    final left = _leftPad;
+    final right = size.width - _rightPad;
+    final top = _topPad;
+    final bottom = size.height - _bottomPad;
+    final height = bottom - top;
+    final slot = (right - left) / count;
+    final barWidth = slot * .58;
+
+    final peak = math.max(
+      read.reduce(math.max),
+      rival == null ? 0.0 : rival.reduce(math.max),
+    );
+    final step = _ReadingChartPainter._niceStep(peak);
+    final maxY = step * _ReadingChartPainter._intervals;
+    double yAt(double v) => bottom - height * (v / maxY);
+
+    // Dashed grid + y labels.
+    final grid = Paint()
+      ..color = const Color(0xFFE3E7D6)
+      ..strokeWidth = 1;
+    for (var i = 0; i <= _ReadingChartPainter._intervals; i++) {
+      final value = step * i;
+      final y = yAt(value);
+      for (var x = left; x < right; x += 7) {
+        canvas.drawLine(Offset(x, y), Offset(math.min(x + 3, right), y), grid);
+      }
+      _label(
+        canvas,
+        _number(value),
+        Offset(left - 8, y),
+        const Color(0xFF9AA279),
+        10,
+        right: true,
+        middleY: true,
+      );
+    }
+
+    RRect bar(double cx, double value) => RRect.fromRectAndCorners(
+      Rect.fromLTRB(cx - barWidth / 2, yAt(value), cx + barWidth / 2, bottom),
+      topLeft: Radius.circular(barWidth * .28),
+      topRight: Radius.circular(barWidth * .28),
+    );
+
+    final highest = read.indexOf(read.reduce(math.max));
+    for (var i = 0; i < count; i++) {
+      final cx = left + slot * (i + .5);
+      _label(
+        canvas,
+        series.labels[i],
+        Offset(cx, bottom + 8),
+        const Color(0xFF2C3320),
+        13,
+        centerX: true,
+      );
+
+      // Taller bar behind, shorter in front, so both stay visible.
+      final mine = (read[i], _mineColor);
+      final theirs = rival == null ? null : (rival[i], _rivalColor);
+      final bars = [mine, ?theirs]..sort((a, b) => b.$1.compareTo(a.$1));
+      for (final (value, color) in bars) {
+        if (value <= 0) continue;
+        canvas.drawRRect(bar(cx, value), Paint()..color = color);
+      }
+      // A day the reader is on top of gets the strongest tone.
+      if (i == highest &&
+          read[i] > 0 &&
+          (rival == null || read[i] >= rival[i])) {
+        canvas.drawRRect(bar(cx, read[i]), Paint()..color = _peakColor);
+        if (rival != null && rival[i] > 0) {
+          canvas.drawRRect(bar(cx, rival[i]), Paint()..color = _rivalColor);
+        }
+      }
+    }
+
+    // Marker on the selected day's top, else on the highest one (img_47).
+    final marked = selectedIndex ?? (read[highest] > 0 ? highest : null);
+    if (marked != null && read[marked] > 0) {
+      final c = Offset(left + slot * (marked + .5), yAt(read[marked]) + 14);
+      canvas.drawCircle(c, 8, Paint()..color = Colors.white);
+      canvas.drawCircle(c, 4, Paint()..color = _peakColor);
+    }
+
+    final sel = selectedIndex;
+    if (sel != null && sel >= 0 && sel < count) {
+      _details(
+        canvas,
+        size,
+        sel,
+        left + slot * (sel + .5),
+        yAt(math.max(read[sel], rival?[sel] ?? 0)),
+      );
+    }
+  }
+
+  /// The day's details card (img_48): each shown reader's name, time, points.
+  void _details(Canvas canvas, Size size, int i, double cx, double barTop) {
+    final readers = <(String, double, double?)>[
+      (
+        series.myName.isEmpty ? 'My Position' : series.myName,
+        series.read[i],
+        series.points[i],
+      ),
+      if (series.rival != null)
+        (
+          series.rivalName.isEmpty ? 'Competitor' : series.rivalName,
+          series.rival![i],
+          series.rivalPoints?[i],
+        ),
+    ];
+    final painters = <TextPainter>[];
+    for (var r = 0; r < readers.length; r++) {
+      final (name, minutes, points) = readers[r];
+      painters.addAll([
+        _tp(name, 13, FontWeight.w500),
+        _tp('Time : ${_number(minutes)} min', 13, FontWeight.w400),
+        _tp(
+          'Point : ${points == null ? '-' : _number(points)}',
+          13,
+          FontWeight.w400,
+        ),
+      ]);
+    }
+    const padX = 16.0;
+    const padY = 12.0;
+    const gap = 8.0;
+    final w = painters.map((p) => p.width).reduce(math.max) + padX * 2;
+    final h =
+        painters.fold<double>(padY * 2, (s, p) => s + p.height) +
+        gap * (painters.length - 1);
+    final x = (cx - w / 2).clamp(0.0, math.max(0.0, size.width - w)).toDouble();
+    final y = math.max(0.0, barTop - h - 6);
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(x, y, w, h),
+      const Radius.circular(18),
+    );
+    canvas.drawShadow(Path()..addRRect(rect), Colors.black, 6, true);
+    canvas.drawRRect(rect, Paint()..color = _tooltipFill);
+    var dy = y + padY;
+    for (final p in painters) {
+      p.paint(canvas, Offset(x + (w - p.width) / 2, dy));
+      dy += p.height + gap;
+    }
+  }
+
+  TextPainter _tp(String text, double size, FontWeight weight) => TextPainter(
+    text: TextSpan(
+      text: text,
+      style: TextStyle(color: _ink, fontSize: size, fontWeight: weight),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+
+  void _label(
+    Canvas canvas,
+    String text,
+    Offset at,
+    Color color,
+    double size, {
+    bool right = false,
+    bool centerX = false,
+    bool middleY = false,
+  }) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: TextStyle(color: color, fontSize: size),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    var dx = at.dx;
+    if (right) dx -= tp.width;
+    if (centerX) dx -= tp.width / 2;
+    tp.paint(canvas, Offset(dx, middleY ? at.dy - tp.height / 2 : at.dy));
+  }
+
+  @override
+  bool shouldRepaint(covariant _WeeklyBarPainter old) =>
+      old.series != series || old.selectedIndex != selectedIndex;
 }
