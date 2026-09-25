@@ -5,15 +5,35 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
+import 'package:islami_app_noorify/features/legal/presentation/screens/legal_document_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  static void _openLegal(BuildContext context, LegalDocumentType type) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => LegalDocumentScreen(type: type)),
+    );
+  }
+
   static List<_SettingsItem> _items(BuildContext context, AppText appText) => [
-    _SettingsItem(appText.aboutUs, Icons.person_outline),
+    _SettingsItem(
+      appText.aboutUs,
+      Icons.person_outline,
+      onTap: () => _openLegal(context, LegalDocumentType.aboutUs),
+    ),
     _SettingsItem(appText.ourProducts, Icons.eco_outlined),
-    _SettingsItem(appText.privacyPolicy, Icons.privacy_tip_outlined),
-    _SettingsItem(appText.termsOfServices, Icons.description_outlined),
+    _SettingsItem(
+      appText.privacyPolicy,
+      Icons.privacy_tip_outlined,
+      onTap: () => _openLegal(context, LegalDocumentType.privacyPolicy),
+    ),
+    _SettingsItem(
+      appText.termsOfServices,
+      Icons.description_outlined,
+      onTap: () => _openLegal(context, LegalDocumentType.termsOfService),
+    ),
     _SettingsItem(appText.adminSupport, Icons.support_agent_outlined),
     _SettingsItem(appText.feedback, Icons.feedback_outlined),
     _SettingsItem(
