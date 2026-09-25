@@ -1242,7 +1242,11 @@ class AppText {
 
   factory AppText.fromMap(Map<dynamic, dynamic> map, {AppText? fallback}) {
     return AppText(
-      tuhfatulMuslim: _read(map, 'tuhfatulMuslim', fallback?.tuhfatulMuslim ?? ''),
+      tuhfatulMuslim: _read(
+        map,
+        'tuhfatulMuslim',
+        fallback?.tuhfatulMuslim ?? '',
+      ),
       splashTitle: _read(map, 'splashTitle', fallback?.splashTitle ?? ''),
       splashQuote: _read(map, 'splashQuote', fallback?.splashQuote ?? ''),
       emailOrPhoneHint: _read(
@@ -1257,7 +1261,11 @@ class AppText {
         fallback?.forgotPassword ?? '',
       ),
       login: _read(map, 'login', fallback?.login ?? ''),
-      newToTuhfatulMuslim: _read(map, 'newToTuhfatulMuslim', fallback?.newToTuhfatulMuslim ?? ''),
+      newToTuhfatulMuslim: _read(
+        map,
+        'newToTuhfatulMuslim',
+        fallback?.newToTuhfatulMuslim ?? '',
+      ),
       createAccount: _read(map, 'createAccount', fallback?.createAccount ?? ''),
       guestUser: _read(map, 'guestUser', fallback?.guestUser ?? ''),
       signUpSubtitle: _read(
