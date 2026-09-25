@@ -15,6 +15,7 @@ import 'core/theme/dark_theme.dart';
 import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
+import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
@@ -46,6 +47,11 @@ Future<void> main() async {
       false;
 
   await AlarmScheduler.init();
+  // Guests own no alarms: clear any left armed by a previous session (e.g.
+  // one that logged out before logout started disarming them).
+  if (!AuthLocalDataSourceImpl().hasToken) {
+    await AlarmScheduler.cancelAllAlarms();
+  }
   // Alarms are re-armed from the server's list whenever the alarm screen
   // loads (see `AlarmListBloc`), not from the local cache here: the cache
   // holds client-made ids, so re-arming it too made every alarm ring twice.
