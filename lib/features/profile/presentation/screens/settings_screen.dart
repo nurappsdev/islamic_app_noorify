@@ -18,13 +18,23 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  static void _comingSoon(BuildContext context, AppText appText) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(appText.comingSoon)));
+  }
+
   static List<_SettingsItem> _items(BuildContext context, AppText appText) => [
     _SettingsItem(
       appText.aboutUs,
       Icons.person_outline,
       onTap: () => _openLegal(context, LegalDocumentType.aboutUs),
     ),
-    _SettingsItem(appText.ourProducts, Icons.eco_outlined),
+    _SettingsItem(
+      appText.ourProducts,
+      Icons.eco_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
     _SettingsItem(
       appText.privacyPolicy,
       Icons.privacy_tip_outlined,
@@ -35,8 +45,16 @@ class SettingsScreen extends StatelessWidget {
       Icons.description_outlined,
       onTap: () => _openLegal(context, LegalDocumentType.termsOfService),
     ),
-    _SettingsItem(appText.adminSupport, Icons.support_agent_outlined),
-    _SettingsItem(appText.feedback, Icons.feedback_outlined),
+    _SettingsItem(
+      appText.adminSupport,
+      Icons.support_agent_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
+    _SettingsItem(
+      appText.feedback,
+      Icons.feedback_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
     _SettingsItem(
       appText.appLanguage,
       Icons.translate_outlined,
