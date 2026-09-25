@@ -97,8 +97,11 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
         // device, a direct API call) that this device has never scheduled.
         if (serverAlarms != null) {
           unawaited(_cancelStaleLocalAlarms({for (final a in alarms) a.id}));
+          // Only the server's list may arm alarms. The local-cache fallback
+          // (dashboard failed: offline, or signed out) is display-only, or a
+          // guest would re-arm a previous account's cached alarms.
+          unawaited(AlarmScheduler.rescheduleAll(alarms));
         }
-        unawaited(AlarmScheduler.rescheduleAll(alarms));
         emit(
           state.copyWith(
             status: AlarmListStatus.success,

@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:vibration/vibration.dart';
 
+import 'package:islami_app_noorify/core/storage/hive_service.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
@@ -242,6 +243,29 @@ class AlarmScheduler {
     _nextOccurrence(alarm.hour, alarm.minute),
     chain: true,
   );
+
+  /// Disarms every alarm this device knows about — the cached custom alarms
+  /// and the user-picked prayer alarms — and forgets them. Used on logout and
+  /// for a signed-out (guest) session: OS-level alarms re-arm themselves daily
+  /// and survive reboots, so they'd otherwise keep ringing for whoever uses
+  /// the app next. Main isolate only (reads Hive).
+  static Future<void> cancelAllAlarms() async {
+    final ids = <String>{};
+    try {
+      final box = HiveService.alarms;
+      ids.addAll(box.keys.map((k) => k.toString()));
+      for (final type in await userPrayerAlarmTypes()) {
+        ids.add('prayer_$type');
+      }
+      for (final id in ids) {
+        try {
+          await cancelAlarm(id);
+        } catch (_) {}
+      }
+      await box.clear();
+      await saveUserPrayerAlarmTypes(const []);
+    } catch (_) {}
+  }
 
   static Future<void> cancelAlarm(String alarmId) async {
     final id = alarmManagerIdFor(alarmId);
