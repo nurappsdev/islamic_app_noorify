@@ -75,11 +75,11 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                   ],
               ],
             ),
-            Positioned(
-              right: 4.w,
-              bottom: 16.h,
-              child: const _AddFamilyMemberButton(),
-            ),
+            // Positioned(
+            //   right: 4.w,
+            //   bottom: 16.h,
+            //   child: const _AddFamilyMemberButton(),
+            // ),
           ],
         ),
       ),
