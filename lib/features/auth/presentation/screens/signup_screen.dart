@@ -25,6 +25,37 @@ import 'package:islami_app_noorify/features/auth/presentation/screens/email_veri
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
+class _Country {
+  const _Country(this.flag, this.name, this.dialCode);
+
+  final String flag;
+  final String name;
+  final String dialCode;
+}
+
+const _countries = <_Country>[
+  _Country('🇧🇩', 'Bangladesh', '+880'),
+  _Country('🇮🇳', 'India', '+91'),
+  _Country('🇵🇰', 'Pakistan', '+92'),
+  _Country('🇺🇸', 'United States', '+1'),
+  _Country('🇨🇦', 'Canada', '+1'),
+  _Country('🇬🇧', 'United Kingdom', '+44'),
+  _Country('🇸🇦', 'Saudi Arabia', '+966'),
+  _Country('🇦🇪', 'United Arab Emirates', '+971'),
+  _Country('🇶🇦', 'Qatar', '+974'),
+  _Country('🇰🇼', 'Kuwait', '+965'),
+  _Country('🇴🇲', 'Oman', '+968'),
+  _Country('🇧🇭', 'Bahrain', '+973'),
+  _Country('🇲🇾', 'Malaysia', '+60'),
+  _Country('🇸🇬', 'Singapore', '+65'),
+  _Country('🇮🇩', 'Indonesia', '+62'),
+  _Country('🇹🇷', 'Türkiye', '+90'),
+  _Country('🇪🇬', 'Egypt', '+20'),
+  _Country('🇦🇺', 'Australia', '+61'),
+  _Country('🇩🇪', 'Germany', '+49'),
+  _Country('🇫🇷', 'France', '+33'),
+];
+
 typedef GoogleSignUpRouteResolver = Future<String> Function();
 
 class SignupScreen extends StatelessWidget {
@@ -65,7 +96,9 @@ class _SignupViewState extends State<_SignupView> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
+  final TextEditingController _genderController = TextEditingController();
   String? _selectedGender;
+  _Country _selectedCountry = _countries.first;
 
   SignUpBloc get _auth => context.read<SignUpBloc>();
   SignUpState get _authState => _auth.state;
@@ -80,6 +113,7 @@ class _SignupViewState extends State<_SignupView> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _genderController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -87,7 +121,8 @@ class _SignupViewState extends State<_SignupView> {
 
   InputDecoration _fieldDecoration({
     required String hint,
-    required IconData prefixIcon,
+    IconData? prefixIcon,
+    Widget? prefix,
     Widget? suffixIcon,
     EdgeInsetsGeometry? contentPadding,
     bool isDense = false,
@@ -96,7 +131,14 @@ class _SignupViewState extends State<_SignupView> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
-      prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
+      prefixIcon:
+          prefix ??
+          (prefixIcon == null
+              ? null
+              : Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp)),
+      prefixIconConstraints: prefix == null
+          ? null
+          : const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffixIcon,
       isDense: isDense,
       filled: true,
@@ -142,7 +184,7 @@ class _SignupViewState extends State<_SignupView> {
         password: _passwordController.text,
         phone: _phoneController.text.trim().isEmpty
             ? null
-            : _phoneController.text.trim(),
+            : '${_selectedCountry.dialCode}${_phoneController.text.trim()}',
         gender: _selectedGender,
       ),
     );
@@ -240,40 +282,111 @@ class _SignupViewState extends State<_SignupView> {
     }
   }
 
-  /// Gender selector styled to match [_authField] exactly: same 48.h pill,
-  /// icon on the left, value/hint on one line, chevron on the right.
+  /// Gender selector built on the same read-only [TextField] + decoration as
+  /// [_authField], so icon, text position and padding are identical. A popup
+  /// menu supplies the options.
   Widget _genderField(AppText appText) {
-    return SizedBox(
-      height: 48.h,
-      child: DropdownButtonFormField<String>(
-        initialValue: _selectedGender,
-        isExpanded: true,
-        isDense: true,
-        borderRadius: BorderRadius.circular(16.r),
-        dropdownColor: context.surfaceColor(Colors.white),
-        style: TextStyle(
-          color: context.inkColor(AppColor.authLogo),
-          fontSize: 13.sp,
+    final label = switch (_selectedGender) {
+      'male' => appText.male,
+      'female' => appText.female,
+      _ => '',
+    };
+    if (_genderController.text != label) _genderController.text = label;
+    return LayoutBuilder(
+      builder: (context, constraints) => PopupMenuButton<String>(
+        position: PopupMenuPosition.under,
+        constraints: BoxConstraints(minWidth: constraints.maxWidth),
+        color: context.surfaceColor(Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
         ),
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColor.authIcon,
-          size: 20.sp,
-        ),
-        decoration: _fieldDecoration(
-          hint: appText.gender,
-          prefixIcon: Icons.wc_outlined,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 10.h,
+        onSelected: (value) => setState(() => _selectedGender = value),
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'male', child: Text(appText.male)),
+          PopupMenuItem(value: 'female', child: Text(appText.female)),
+        ],
+        child: IgnorePointer(
+          child: SizedBox(
+            height: 48.h,
+            child: TextField(
+              controller: _genderController,
+              readOnly: true,
+              decoration: _fieldDecoration(
+                hint: appText.gender,
+                prefixIcon: Icons.wc_outlined,
+                suffixIcon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColor.authIcon,
+                  size: 20.sp,
+                ),
+              ),
+            ),
           ),
         ),
-        items: [
-          DropdownMenuItem(value: 'male', child: Text(appText.male)),
-          DropdownMenuItem(value: 'female', child: Text(appText.female)),
+      ),
+    );
+  }
+
+  /// Phone field with the country dial-code dropdown inside the same border,
+  /// followed by a divider and the number input.
+  Widget _phoneField(AppText appText) {
+    final prefix = Padding(
+      padding: EdgeInsets.only(left: 14.w, right: 8.w),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<_Country>(
+              value: _selectedCountry,
+              isDense: true,
+              borderRadius: BorderRadius.circular(16.r),
+              dropdownColor: context.surfaceColor(Colors.white),
+              style: TextStyle(
+                color: context.inkColor(AppColor.authLogo),
+                fontSize: 13.sp,
+              ),
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: AppColor.authIcon,
+                size: 18.sp,
+              ),
+              selectedItemBuilder: (_) => [
+                for (final country in _countries)
+                  Text('${country.flag} ${country.dialCode}'),
+              ],
+              items: [
+                for (final country in _countries)
+                  DropdownMenuItem(
+                    value: country,
+                    child: Text(
+                      '${country.flag} ${country.name} ${country.dialCode}',
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _selectedCountry = value);
+              },
+            ),
+          ),
+          SizedBox(width: 8.w),
+          SizedBox(
+            height: 22.h,
+            child: VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: context.lineColor(AppColor.authFieldBorder),
+            ),
+          ),
         ],
-        onChanged: (value) => setState(() => _selectedGender = value),
+      ),
+    );
+    return SizedBox(
+      height: 48.h,
+      child: TextField(
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        textInputAction: TextInputAction.next,
+        decoration: _fieldDecoration(hint: appText.phoneNo, prefix: prefix),
       ),
     );
   }
@@ -366,6 +479,7 @@ class _SignupViewState extends State<_SignupView> {
     );
   }
 
+  // ignore: unused_element -- hidden for now, see build()
   Widget _socialSignupSection(AppText appText) {
     return Column(
       children: [
@@ -521,13 +635,7 @@ class _SignupViewState extends State<_SignupView> {
                     textInputAction: TextInputAction.next,
                   ),
                   SizedBox(height: 9.h),
-                  _authField(
-                    controller: _phoneController,
-                    hint: appText.phoneNo,
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.next,
-                  ),
+                  _phoneField(appText),
                   SizedBox(height: 9.h),
                   _genderField(appText),
                   SizedBox(height: 9.h),
@@ -557,8 +665,10 @@ class _SignupViewState extends State<_SignupView> {
                     ),
                   ),
                   SizedBox(height: 28.h),
-                  _socialSignupSection(appText),
-                  SizedBox(height: 28.h),
+                  // TODO: re-enable "Sign Up with Others" (Google / Facebook)
+                  // when social sign-up is ready.
+                  // _socialSignupSection(appText),
+                  // SizedBox(height: 28.h),
                   _termsRow(appText),
                   SizedBox(height: 12.h),
                   AuthButton(
