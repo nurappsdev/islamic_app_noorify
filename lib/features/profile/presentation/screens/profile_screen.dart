@@ -32,6 +32,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ProfileEntity? _profile;
   List<FamilyMemberEntity> _familyMembers = const [];
 
+  /// Set once the family list has loaded, so the empty message doesn't flash
+  /// while the request is still running.
+  bool _familyLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +53,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadFamilyMembers() async {
     final members = await FamilyService.instance.fetchFamilyMembers();
     if (!mounted) return;
-    setState(() => _familyMembers = members);
+    setState(() {
+      _familyMembers = members;
+      _familyLoaded = true;
+    });
   }
 
   @override
@@ -93,6 +100,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 SizedBox(height: 14.h),
+                if (_familyLoaded && _familyMembers.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Center(
+                      child: Text(
+                        'No data here',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: context.inkColor(const Color(0xFF6B7551)),
+                        ),
+                      ),
+                    ),
+                  ),
                 for (final member in _familyMembers) ...[
                   _FamilyMemberCard(member: member),
                   SizedBox(height: 10.h),
