@@ -626,6 +626,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                   points: points,
                   competitorPoints: competitorPoints,
                   maxY: widget.maxY,
+                  selectedIndex: selected,
                 ),
               ),
               // Tapping the empty chart background (outside any category's
@@ -812,33 +813,37 @@ class _ScoreTooltip extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w700,
-              color: context.inkColor(Colors.black87),
+      // The tooltip sits in a Positioned with no width, so its rows (which
+      // use Expanded) need a finite width: IntrinsicWidth provides one.
+      child: IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w700,
+                color: context.inkColor(Colors.black87),
+              ),
             ),
-          ),
-          SizedBox(height: 4.h),
-          _TooltipRow(
-            color: _LineChartPainter.lineColor,
-            label: myLabel,
-            value: _formatPoints(myScore),
-          ),
-          SizedBox(height: 2.h),
-          _TooltipRow(
-            color: _LineChartPainter.competitorLineColor,
-            label: competitorLabel,
-            value: competitorScore == null
-                ? '—'
-                : _formatPoints(competitorScore!),
-          ),
-        ],
+            SizedBox(height: 4.h),
+            _TooltipRow(
+              color: _LineChartPainter.lineColor,
+              label: myLabel,
+              value: _formatPoints(myScore),
+            ),
+            SizedBox(height: 2.h),
+            _TooltipRow(
+              color: _LineChartPainter.competitorLineColor,
+              label: competitorLabel,
+              value: competitorScore == null
+                  ? '—'
+                  : _formatPoints(competitorScore!),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -897,6 +902,7 @@ class _LineChartPainter extends CustomPainter {
     required this.points,
     required this.competitorPoints,
     required this.maxY,
+    this.selectedIndex,
   });
 
   final Rect plotRect;
@@ -908,6 +914,10 @@ class _LineChartPainter extends CustomPainter {
   /// no competitor score for.
   final List<Offset?> competitorPoints;
   final double maxY;
+
+  /// The category whose tooltip is open: its column gets a guide line and
+  /// its points are drawn enlarged with a halo. Null when none is open.
+  final int? selectedIndex;
 
   static const lineColor = Color(0xFF5D8067);
   // Matches _CompetitorBubble.dotColor / the legend's competitor dot, so
@@ -972,6 +982,21 @@ class _LineChartPainter extends CustomPainter {
       );
     }
 
+    final selected = selectedIndex;
+    if (selected != null && selected >= 0 && selected < points.length) {
+      final x = points[selected].dx;
+      final guide = Paint()
+        ..color = lineColor.withValues(alpha: .45)
+        ..strokeWidth = 1.2;
+      for (var y = plotRect.top; y < plotRect.bottom; y += 6) {
+        canvas.drawLine(
+          Offset(x, y),
+          Offset(x, (y + 3).clamp(plotRect.top, plotRect.bottom)),
+          guide,
+        );
+      }
+    }
+
     for (final point in points) {
       canvas.drawCircle(point, 5.r, Paint()..color = Colors.white);
       canvas.drawCircle(
@@ -1015,6 +1040,25 @@ class _LineChartPainter extends CustomPainter {
     for (final point in competitorPoints) {
       if (point == null) continue;
       canvas.drawCircle(point, 3.r, Paint()..color = competitorLineColor);
+    }
+
+    // Highlight the selected column's points on top of everything.
+    if (selected != null && selected >= 0 && selected < points.length) {
+      void highlight(Offset point, Color color) {
+        canvas.drawCircle(
+          point,
+          11.r,
+          Paint()..color = color.withValues(alpha: .22),
+        );
+        canvas.drawCircle(point, 6.5.r, Paint()..color = Colors.white);
+        canvas.drawCircle(point, 4.5.r, Paint()..color = color);
+      }
+
+      if (selected < competitorPoints.length &&
+          competitorPoints[selected] != null) {
+        highlight(competitorPoints[selected]!, competitorLineColor);
+      }
+      highlight(points[selected], lineColor);
     }
 
     for (var i = 0; i < categories.length; i++) {
@@ -1079,7 +1123,8 @@ class _LineChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
-      oldDelegate.plotRect != plotRect;
+      oldDelegate.plotRect != plotRect ||
+      oldDelegate.selectedIndex != selectedIndex;
 }
 
 class _MyPointsBar extends StatelessWidget {
