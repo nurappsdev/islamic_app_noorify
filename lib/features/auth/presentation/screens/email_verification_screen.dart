@@ -49,7 +49,7 @@ class EmailVerificationScreen extends StatefulWidget {
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
   static const _otpLength = 6;
 
   final TextEditingController _emailController = TextEditingController();
@@ -422,17 +422,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  appText.tuhfatulMuslim,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: context.inkColor(Colors.black),
-                    fontSize: 14.sp,
-                    height: 1.2,
-                    fontFamily: 'Times New Roman',
-                  ),
-                ),
+                // The logo already carries the app name.
+                // SizedBox(height: 8.h),
+                // Text(
+                // appText.tuhfatulMuslim,
+                // textAlign: TextAlign.center,
+                // style: TextStyle(
+                // color: context.inkColor(Colors.black),
+                // fontSize: 14.sp,
+                // height: 1.2,
+                // fontFamily: 'Times New Roman',
+                // ),
+                // ),
                 SizedBox(height: _isOtpMode ? 38.h : 32.h),
                 if (_isOtpMode) ...[
                   _buildOtpFields(),
