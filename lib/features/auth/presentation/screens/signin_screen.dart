@@ -45,6 +45,10 @@ class _SignInView extends StatefulWidget {
 
 class _SignInViewState extends State<_SignInView> {
   static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _errorColor = Color(0xFFD93025);
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -92,11 +96,41 @@ class _SignInViewState extends State<_SignInView> {
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
+      errorStyle: TextStyle(color: _errorColor, fontSize: 11.5.sp, height: 1.2),
+      errorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor, width: 1.2),
+      ),
     );
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) return 'Enter an email address';
+    if (!_emailPattern.hasMatch(email)) return 'Enter a valid email address';
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) return 'Enter a password';
+    if (password.length < 8 ||
+        !password.contains(RegExp(r'[A-Z]')) ||
+        !password.contains(RegExp(r'[0-9]')) ||
+        !password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_\-]'))) {
+      return 'Use at least 8 characters with an uppercase letter, '
+          'a number and a special character';
+    }
+    return null;
   }
 
   void _signIn() {
     FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<LoginBloc>().add(
       LoginSubmitted(
         email: _emailController.text.trim(),
@@ -201,50 +235,55 @@ class _SignInViewState extends State<_SignInView> {
                     ),
                   ),
                   SizedBox(height: 38.h),
-                  SizedBox(
-                    height: 45.h,
-                    child: TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [
-                        AutofillHints.email,
-                        AutofillHints.telephoneNumber,
-                      ],
-                      decoration: _fieldDecoration(
-                        hint: appText.emailOrPhoneHint,
-                        prefixIcon: Icons.mark_email_unread_outlined,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    height: 45.h,
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      autofillHints: const [AutofillHints.password],
-                      onSubmitted: (_) {
-                        if (_isLoading) return;
-                        _signIn();
-                      },
-                      decoration: _fieldDecoration(
-                        hint: appText.passwordHint,
-                        prefixIcon: Icons.key_outlined,
-                        suffixIcon: IconButton(
-                          tooltip: appText.togglePassword,
-                          onPressed: () =>
-                              _auth.add(const ToggleObscurePassword()),
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: AppColor.authIcon,
-                            size: 18.sp,
+                  Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          validator: _validateEmail,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [
+                            AutofillHints.email,
+                            AutofillHints.telephoneNumber,
+                          ],
+                          decoration: _fieldDecoration(
+                            hint: appText.emailOrPhoneHint,
+                            prefixIcon: Icons.mark_email_unread_outlined,
                           ),
                         ),
-                      ),
+                        SizedBox(height: 8.h),
+                        TextFormField(
+                          controller: _passwordController,
+                          validator: _validatePassword,
+                          obscureText: _obscurePassword,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.password],
+                          onFieldSubmitted: (_) {
+                            if (_isLoading) return;
+                            _signIn();
+                          },
+                          decoration: _fieldDecoration(
+                            hint: appText.passwordHint,
+                            prefixIcon: Icons.key_outlined,
+                            suffixIcon: IconButton(
+                              tooltip: appText.togglePassword,
+                              onPressed: () =>
+                                  _auth.add(const ToggleObscurePassword()),
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppColor.authIcon,
+                                size: 18.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   SizedBox(height: 4.h),
