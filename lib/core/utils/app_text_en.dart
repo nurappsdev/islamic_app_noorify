@@ -529,6 +529,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'hadithCompletedQuestion':
       "Have you completed reading this Hadith? If you have completed it, points will be added to your account.",
   'hadithReadingTimeComplete': "Your reading time is complete. Please tap Yes.",
+  'hadithGuestTrackQuestion': "Do you want to track this Hadith?",
   'hadithTrackFailed': "Couldn't save your reading progress. Please try again.",
   'folderNameInputHint': "Write folder name here.",
   'cancelAction': "Cancel",

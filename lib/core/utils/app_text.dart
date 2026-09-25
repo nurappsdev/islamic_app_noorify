@@ -140,6 +140,7 @@ class AppText {
     required this.hadithCompleted,
     required this.hadithCompletedQuestion,
     required this.hadithReadingTimeComplete,
+    required this.hadithGuestTrackQuestion,
     required this.hadithTrackFailed,
     required this.folderNameInputHint,
     required this.cancelAction,
@@ -717,6 +718,7 @@ class AppText {
   final String hadithCompleted;
   final String hadithCompletedQuestion;
   final String hadithReadingTimeComplete;
+  final String hadithGuestTrackQuestion;
   final String hadithTrackFailed;
   final String folderNameInputHint;
   final String cancelAction;
@@ -1651,6 +1653,11 @@ class AppText {
         map,
         'hadithReadingTimeComplete',
         fallback?.hadithReadingTimeComplete ?? '',
+      ),
+      hadithGuestTrackQuestion: _read(
+        map,
+        'hadithGuestTrackQuestion',
+        fallback?.hadithGuestTrackQuestion ?? '',
       ),
       hadithTrackFailed: _read(
         map,

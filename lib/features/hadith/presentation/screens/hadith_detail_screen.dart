@@ -201,6 +201,13 @@ class _HadithDetailViewState extends State<_HadithDetailView>
 
   bool _leaving = false;
 
+  /// Set once a guest has been asked to sign in; their timer then stays
+  /// stopped (until they actually sign in).
+  bool _guestPromptShown = false;
+
+  bool get _canResumeTracking =>
+      !_leaving && !(_guestPromptShown && !isUserSignedIn);
+
   /// Ids of hadiths the auto-complete dialog has already been shown for, so
   /// it never asks twice in the same visit.
   final _autoPrompted = <String>{};
@@ -258,8 +265,15 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   /// complete" on its own — without the user having to leave the screen.
   void _maybeShowAutoComplete(String? hadithId) {
     if (hadithId == null || _leaving || _autoDialogShowing) return;
-    // Reporting needs a token; guests get the login dialog from the Yes box.
-    if (!isUserSignedIn) return;
+    if (_guestPromptShown && !isUserSignedIn) return;
+    // Reporting needs a token: guests are offered Sign In after a minute.
+    if (!isUserSignedIn) {
+      if (_tracker.dwellSeconds(hadithId) >=
+          HadithReadingConfig.guestPromptSeconds) {
+        _showGuestTrackDialog();
+      }
+      return;
+    }
     if (_autoPrompted.contains(hadithId)) return;
     if (_tracker.isCompleted(hadithId) || _tracker.isCompleting(hadithId)) {
       return;
@@ -270,6 +284,42 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     }
     _autoPrompted.add(hadithId);
     _showAutoCompleteDialog(hadithId);
+  }
+
+  /// Guests only: the reading timer stops for good and the user is asked
+  /// whether to track the hadith. Yes opens Sign In, No stays on the screen.
+  Future<void> _showGuestTrackDialog() async {
+    _autoDialogShowing = true;
+    _guestPromptShown = true;
+    _tracker.pause(); // stays paused: the guest's timer is done
+    final appText = AppText.readOf(context);
+    final navigator = Navigator.of(context);
+    final yes = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: dialogContext.surfaceColor(Colors.white),
+        title: Text(
+          appText.hadithGuestTrackQuestion,
+          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.no),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF008000),
+            ),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+    _autoDialogShowing = false;
+    if (yes == true && mounted) navigator.pushNamed(RouteNames.signIn);
   }
 
   Future<void> _showAutoCompleteDialog(String hadithId) async {
@@ -340,7 +390,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
 
   @override
   void didPopNext() {
-    if (!_leaving) _tracker.resume();
+    if (_canResumeTracking) _tracker.resume();
   }
 
   @override
@@ -348,7 +398,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     switch (state) {
       case AppLifecycleState.resumed:
         // Not while the leave dialog is up: that time isn't reading.
-        if (!_leaving) _tracker.resume();
+        if (_canResumeTracking) _tracker.resume();
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
@@ -1669,7 +1719,10 @@ class _HadithCompleteCheckbox extends StatelessWidget {
           onTap: completed || completing
               ? null
               : () async {
-                  if (!await ensureLogin(context)) return;
+                  if (!isUserSignedIn) {
+                    Navigator.of(context).pushNamed(RouteNames.signIn);
+                    return;
+                  }
                   tracker.complete(hadithId);
                 },
         );
