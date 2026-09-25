@@ -11,6 +11,7 @@ import '../../features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dar
 import '../../features/hadith/presentation/screens/hadith_book_reader_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_category_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_entry_screen.dart';
+import '../../features/hadith/presentation/screens/hadith_ebook_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_library_list_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_create_plan_screen.dart';
 import '../../features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
@@ -294,6 +295,8 @@ class AppRoutes {
         return _instantPage(const HadithLibraryScreen(), settings);
       case RouteNames.hadithLibraryList:
         return _page(const HadithLibraryListScreen(), settings);
+      case RouteNames.hadithEbookList:
+        return _page(const HadithEbookListScreen(), settings);
       case RouteNames.hadithPlanner:
         return _instantPage(const HadithPlannerScreen(), settings);
       case RouteNames.hadithCreatePlan:
