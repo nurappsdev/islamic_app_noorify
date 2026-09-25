@@ -121,7 +121,7 @@ class _LeadingTile extends StatelessWidget {
       ),
       child: leadingText == null
           ? Image.asset(
-              'assets/noorifyLogo.png',
+              'assets/appLogo.png',
               fit: BoxFit.contain,
               color: context.inkColor(const Color(0xFF879461)),
             )

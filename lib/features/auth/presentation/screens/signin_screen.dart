@@ -44,7 +44,7 @@ class _SignInView extends StatefulWidget {
 }
 
 class _SignInViewState extends State<_SignInView> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
   static const _errorColor = Color(0xFFD93025);
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
@@ -223,17 +223,18 @@ class _SignInViewState extends State<_SignInView> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    appText.tuhfatulMuslim,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: context.inkColor(Colors.black),
-                      fontSize: 14.sp,
-                      height: 1.2,
-                      fontFamily: 'Times New Roman',
-                    ),
-                  ),
+                  // The logo already carries the app name.
+                  // SizedBox(height: 8.h),
+                  // Text(
+                  // appText.tuhfatulMuslim,
+                  // textAlign: TextAlign.center,
+                  // style: TextStyle(
+                  // color: context.inkColor(Colors.black),
+                  // fontSize: 14.sp,
+                  // height: 1.2,
+                  // fontFamily: 'Times New Roman',
+                  // ),
+                  // ),
                   SizedBox(height: 38.h),
                   Form(
                     key: _formKey,

@@ -23,7 +23,7 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
 
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -233,17 +233,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  appText.tuhfatulMuslim,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: context.inkColor(Colors.black),
-                    fontSize: 14.sp,
-                    height: 1.2,
-                    fontFamily: 'Times New Roman',
-                  ),
-                ),
+                // The logo already carries the app name.
+                // SizedBox(height: 8.h),
+                // Text(
+                // appText.tuhfatulMuslim,
+                // textAlign: TextAlign.center,
+                // style: TextStyle(
+                // color: context.inkColor(Colors.black),
+                // fontSize: 14.sp,
+                // height: 1.2,
+                // fontFamily: 'Times New Roman',
+                // ),
+                // ),
                 SizedBox(height: 40.h),
                 _passwordField(
                   controller: _newPasswordController,

@@ -18,7 +18,7 @@ class RamadanSplashScreen extends StatefulWidget {
 class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
   static const _splashDuration = Duration(milliseconds: 1800);
   static const _backgroundImagePath = 'assets/splasImg.png';
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
 
   @override
   void initState() {
@@ -81,17 +81,18 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                         );
                       },
                     ),
-                    SizedBox(height: 6.h),
-                    Text(
-                      appText.tuhfatulMuslim,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: context.inkColor(Colors.black),
-                        fontSize: 15.sp,
-                        height: 1.2,
-                        fontFamily: 'Times New Roman',
-                      ),
-                    ),
+                    // The logo already carries the app name.
+                    // SizedBox(height: 6.h),
+                    // Text(
+                    // appText.tuhfatulMuslim,
+                    // textAlign: TextAlign.center,
+                    // style: TextStyle(
+                    // color: context.inkColor(Colors.black),
+                    // fontSize: 15.sp,
+                    // height: 1.2,
+                    // fontFamily: 'Times New Roman',
+                    // ),
+                    // ),
                     SizedBox(height: 48.h),
                     Text(
                       appText.splashTitle,
