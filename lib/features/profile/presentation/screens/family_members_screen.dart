@@ -1,25 +1,43 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/profile/data/services/family_service.dart';
+import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
 
-class FamilyMembersScreen extends StatelessWidget {
+class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({super.key});
 
-  static List<_FamilyMember> _members(AppText appText) => [
-    _FamilyMember(rank: 4, name: appText.familyMemberNameAbdullah, points: 831),
-    _FamilyMember(rank: 5, name: appText.familyMemberNameSabit, points: 812),
-    _FamilyMember(rank: 6, name: appText.familyMemberNameAli, points: 786),
-    _FamilyMember(rank: 7, name: appText.familyMemberNameZulfikur, points: 769),
-    _FamilyMember(rank: 8, name: appText.familyMemberNameAsif, points: 720),
-  ];
+  @override
+  State<FamilyMembersScreen> createState() => _FamilyMembersScreenState();
+}
+
+class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
+  List<FamilyMemberEntity> _members = const [];
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  /// Same request the profile screen makes.
+  Future<void> _load() async {
+    final members = await FamilyService.instance.fetchFamilyMembers();
+    if (!mounted) return;
+    setState(() {
+      _members = members;
+      _loaded = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final members = _members(appText);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -32,10 +50,29 @@ class FamilyMembersScreen extends StatelessWidget {
                 SizedBox(height: 16.h),
                 const _SearchField(),
                 SizedBox(height: 18.h),
-                for (final member in members) ...[
-                  _FamilyMemberCard(member: member),
-                  SizedBox(height: 10.h),
-                ],
+                if (!_loaded)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: const Center(child: CircularProgressIndicator()),
+                  )
+                else if (_members.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Center(
+                      child: Text(
+                        'No data here',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: context.inkColor(const Color(0xFF6B7551)),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  for (final member in _members) ...[
+                    _FamilyMemberCard(member: member),
+                    SizedBox(height: 10.h),
+                  ],
               ],
             ),
             Positioned(
@@ -145,22 +182,10 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-class _FamilyMember {
-  const _FamilyMember({
-    required this.rank,
-    required this.name,
-    required this.points,
-  });
-
-  final int rank;
-  final String name;
-  final int points;
-}
-
 class _FamilyMemberCard extends StatelessWidget {
   const _FamilyMemberCard({required this.member});
 
-  final _FamilyMember member;
+  final FamilyMemberEntity member;
 
   @override
   Widget build(BuildContext context) {
@@ -174,27 +199,25 @@ class _FamilyMemberCard extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '#${member.rank}',
+            '#${member.globalRank}',
             style: TextStyle(
               fontSize: 13.sp,
               color: context.inkColor(Color(0xFF6B7551)),
             ),
           ),
           SizedBox(width: 10.w),
-          CircleAvatar(
-            radius: 15.r,
-            backgroundColor: context.surfaceColor(Color(0xFFCFCFEA)),
-            child: Text(
-              'Z',
-              style: TextStyle(
-                color: context.inkColor(Color(0xFF5B5B8C)),
-                fontSize: 12.sp,
-              ),
-            ),
+          _MemberAvatar(
+            avatarUrl: member.memberAvatarUrl,
+            name: member.memberName,
           ),
           SizedBox(width: 10.w),
           Expanded(
-            child: Text(member.name, style: TextStyle(fontSize: 13.sp)),
+            child: Text(
+              member.memberName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13.sp),
+            ),
           ),
           Icon(
             Icons.monetization_on,
@@ -203,10 +226,44 @@ class _FamilyMemberCard extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${member.points}',
+            '${member.memberTotalPoints}',
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MemberAvatar extends StatelessWidget {
+  const _MemberAvatar({required this.avatarUrl, required this.name});
+
+  final String? avatarUrl;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = name.trim();
+    final placeholder = CircleAvatar(
+      radius: 15.r,
+      backgroundColor: context.surfaceColor(Color(0xFFCFCFEA)),
+      child: Text(
+        trimmed.isEmpty ? '?' : trimmed[0].toUpperCase(),
+        style: TextStyle(
+          color: context.inkColor(Color(0xFF5B5B8C)),
+          fontSize: 12.sp,
+        ),
+      ),
+    );
+    final url = avatarUrl;
+    if (url == null || url.isEmpty) return placeholder;
+    return ClipOval(
+      child: Image.network(
+        url,
+        width: 30.r,
+        height: 30.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => placeholder,
       ),
     );
   }
