@@ -43,6 +43,7 @@ import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
 import '../../features/quiz/domain/repositories/quiz_repository.dart';
 import '../../features/quiz/domain/usecases/get_category_quiz.dart';
 import '../../features/quiz/domain/usecases/get_daily_quiz.dart';
+import '../../features/quiz/domain/usecases/get_daily_quiz_status.dart';
 import '../../features/quiz/domain/usecases/get_quiz_attempt_review.dart';
 import '../../features/quiz/domain/usecases/get_quiz_attempts.dart';
 import '../../features/quiz/domain/usecases/get_quiz_dashboard.dart';
@@ -56,6 +57,7 @@ import '../../features/quiz/presentation/bloc/quiz_attempt_review_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_categories_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_question_bloc.dart';
+import '../../features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
 import '../../features/quiz/presentation/quiz_route_args.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
@@ -155,11 +157,19 @@ class AppRoutes {
         abandonPlan: AbandonQuizPlan(_quizPlanRepository),
       );
 
-  /// Gives [child] the quiz categories, fetched as it opens.
-  static Widget _withQuizCategories(Widget child) => BlocProvider(
-    create: (_) =>
-        QuizCategoriesBloc(GetQuizCategories(_quizRepository))
-          ..add(const LoadQuizCategories()),
+  /// Gives [child] the quiz categories and daily quiz status, fetched as it opens.
+  static Widget _withQuizCategories(Widget child) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (_) =>
+            QuizCategoriesBloc(GetQuizCategories(_quizRepository))
+              ..add(const LoadQuizCategories()),
+      ),
+      BlocProvider(
+        create: (_) =>
+            DailyQuizStatusCubit(GetDailyQuizStatus(_quizRepository))..load(),
+      ),
+    ],
     child: child,
   );
 
