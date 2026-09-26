@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 const _softGreen = Color(0xFFDCE7B8);
@@ -85,7 +86,14 @@ class AmalTrackerCardContent extends StatelessWidget {
             counter: completedLabel ?? '$completed/$totalPrayers',
           ),
           const Spacer(),
-          PrayerProgressBarWidget(prayers: prayers),
+          PrayerProgressBarWidget(
+            prayers: prayers,
+            onPrayerTap: (prayer) => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AmolTrackingScreen(selectedPrayer: prayer.name),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -250,9 +258,14 @@ class PrayerSummaryWidget extends StatelessWidget {
 }
 
 class PrayerProgressBarWidget extends StatelessWidget {
-  const PrayerProgressBarWidget({super.key, required this.prayers});
+  const PrayerProgressBarWidget({
+    super.key,
+    required this.prayers,
+    this.onPrayerTap,
+  });
 
   final List<PrayerBarData> prayers;
+  final ValueChanged<PrayerBarData>? onPrayerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +275,10 @@ class PrayerProgressBarWidget extends StatelessWidget {
       children: [
         for (var i = 0; i < prayers.length; i++) ...[
           if (i > 0) SizedBox(width: 9.w),
-          PrayerBarItemWidget(prayer: prayers[i]),
+          PrayerBarItemWidget(
+            prayer: prayers[i],
+            onTap: onPrayerTap == null ? null : () => onPrayerTap!(prayers[i]),
+          ),
         ],
       ],
     );
@@ -270,64 +286,69 @@ class PrayerProgressBarWidget extends StatelessWidget {
 }
 
 class PrayerBarItemWidget extends StatelessWidget {
-  const PrayerBarItemWidget({super.key, required this.prayer});
+  const PrayerBarItemWidget({super.key, required this.prayer, this.onTap});
 
   final PrayerBarData prayer;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final active = prayer.isActive;
-    return Container(
-      width: 42.w,
-      height: prayer.points >= 2 ? 131.h : 100.h,
-      padding: EdgeInsets.only(bottom: 5.h),
-      decoration: BoxDecoration(
-        color: active ? _darkGreen : _softGreen,
-        borderRadius: BorderRadius.circular(30.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: active ? 0.18 : 0.08),
-            blurRadius: active ? 8.r : 4.r,
-            offset: Offset(0, 3.h),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: RotatedBox(
-                quarterTurns: 3,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 12.h),
-                  child: Text(
-                    prayer.name,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: active ? Colors.white : _midGreen,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: 42.w,
+        height: prayer.points >= 2 ? 131.h : 100.h,
+        padding: EdgeInsets.only(bottom: 5.h),
+        decoration: BoxDecoration(
+          color: active ? _darkGreen : _softGreen,
+          borderRadius: BorderRadius.circular(30.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: active ? 0.18 : 0.08),
+              blurRadius: active ? 8.r : 4.r,
+              offset: Offset(0, 3.h),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: RotatedBox(
+                  quarterTurns: 3,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 12.h),
+                    child: Text(
+                      prayer.name,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: active ? Colors.white : _midGreen,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          Container(
-            width: 27.r,
-            height: 27.r,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
+            Container(
+              width: 27.r,
+              height: 27.r,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '+${prayer.points}',
+                style: TextStyle(fontSize: 11.sp, color: _midGreen),
+              ),
             ),
-            child: Text(
-              '+${prayer.points}',
-              style: TextStyle(fontSize: 11.sp, color: _midGreen),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

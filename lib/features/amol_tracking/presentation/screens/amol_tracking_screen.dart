@@ -60,6 +60,7 @@ class AmolTrackingScreen extends StatefulWidget {
     this.progressLabel = '86 %',
     this.progress = .86,
     this.initialExpandedCategory = 'Fardh Prayer',
+    this.selectedPrayer,
     this.now,
   });
 
@@ -67,6 +68,10 @@ class AmolTrackingScreen extends StatefulWidget {
   final String progressLabel;
   final double progress;
   final String? initialExpandedCategory;
+
+  /// A Fardh prayer to bring into view once the day has loaded, e.g. `"Fajr"`
+  /// (matched case-insensitively; `"Magrib"` and `"Maghrib"` both work).
+  final String? selectedPrayer;
   final DateTime Function()? now;
 
   @override
@@ -90,6 +95,32 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
 
   DailyPrayerTimes? _prayerTimes;
   late final StreamSubscription<String> _logFailureSub;
+
+  late final String? _selectedItemKey = _prayerItemKey(widget.selectedPrayer);
+  final GlobalKey _selectedItemAnchor = GlobalKey();
+  bool _didScrollToSelected = false;
+
+  static String? _prayerItemKey(String? name) {
+    final key = name?.trim().toLowerCase();
+    if (key == null || key.isEmpty) return null;
+    return key == 'magrib' ? 'maghrib' : key;
+  }
+
+  /// Brings the tapped prayer's row into view the first time the day's
+  /// pillars are on screen.
+  void _scrollToSelectedPrayer() {
+    if (_didScrollToSelected || _selectedItemKey == null) return;
+    _didScrollToSelected = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final anchorContext = _selectedItemAnchor.currentContext;
+      if (!mounted || anchorContext == null) return;
+      Scrollable.ensureVisible(
+        anchorContext,
+        alignment: 0.4,
+        duration: Duration.zero,
+      );
+    });
+  }
 
   static String _isoDate(DateTime date) {
     final y = date.year.toString().padLeft(4, '0');
@@ -306,6 +337,8 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
               ? widget.progressLabel
               : _formatPercentage(dashboard.completionPercentage);
 
+          if (dashboard != null) _scrollToSelectedPrayer();
+
           return Scaffold(
             backgroundColor: context.pageColor(Colors.white),
             body: SafeArea(
@@ -340,6 +373,8 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                                   _toggleCategory(pillar.pillarKey),
                               loggingItemKey: state.loggingItemKey,
                               completionOverrides: state.completionOverrides,
+                              anchorItemKey: _selectedItemKey,
+                              anchorKey: _selectedItemAnchor,
                               onItemTap: (item) =>
                                   _onItemTap(pillar.pillarKey, item),
                             ),
@@ -599,6 +634,8 @@ class _PillarRow extends StatelessWidget {
     required this.loggingItemKey,
     required this.completionOverrides,
     required this.onItemTap,
+    this.anchorItemKey,
+    this.anchorKey,
   });
 
   final AmolPillar pillar;
@@ -607,6 +644,11 @@ class _PillarRow extends StatelessWidget {
   final String? loggingItemKey;
   final Map<String, bool> completionOverrides;
   final ValueChanged<AmolItem> onItemTap;
+
+  /// The item (if any) that [anchorKey] should be attached to, so the screen
+  /// can scroll it into view.
+  final String? anchorItemKey;
+  final GlobalKey? anchorKey;
 
   @override
   Widget build(BuildContext context) {
@@ -630,13 +672,20 @@ class _PillarRow extends StatelessWidget {
                 children: [
                   for (var i = 0; i < pillar.items.length; i++) ...[
                     if (i != 0) SizedBox(height: 6.h),
-                    _AmolItemRow(
-                      item: pillar.items[i],
-                      isLogging: loggingItemKey == pillar.items[i].itemKey,
-                      isChecked:
-                          completionOverrides[pillar.items[i].itemKey] ??
-                          pillar.items[i].isCompleted,
-                      onTap: () => onItemTap(pillar.items[i]),
+                    KeyedSubtree(
+                      key:
+                          pillar.pillarKey == 'fardh_prayer' &&
+                              pillar.items[i].itemKey == anchorItemKey
+                          ? anchorKey
+                          : null,
+                      child: _AmolItemRow(
+                        item: pillar.items[i],
+                        isLogging: loggingItemKey == pillar.items[i].itemKey,
+                        isChecked:
+                            completionOverrides[pillar.items[i].itemKey] ??
+                            pillar.items[i].isCompleted,
+                        onTap: () => onItemTap(pillar.items[i]),
+                      ),
                     ),
                   ],
                 ],
