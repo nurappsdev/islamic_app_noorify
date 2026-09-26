@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -27,6 +28,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_heade
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 
@@ -116,6 +118,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const _QuranCard(),
                       SizedBox(height: 16.h),
                       const _NaflMoreCard(),
+                      SizedBox(height: 16.h),
+                      const _ZikrCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -345,6 +349,36 @@ class _NaflMoreCard extends StatelessWidget {
           counter: nafl == null
               ? '0/7'
               : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
+        ),
+      ),
+    );
+  }
+}
+
+/// Zikr card: [ZikrCardContent] over [HomeGradientShape], fed from the
+/// `zikr` pillar of the home dashboard when it has loaded. The tracker has no
+/// Zikr section, so it opens the Zikr feature instead.
+class _ZikrCard extends StatelessWidget {
+  const _ZikrCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? zikr;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'zikr') zikr = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.zikr),
+      child: HomeGradientShape(
+        child: ZikrCardContent(
+          percentage: zikr?.percentage ?? 0,
+          counter: zikr == null
+              ? '0/7'
+              : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
         ),
       ),
     );
