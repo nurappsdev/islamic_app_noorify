@@ -10,7 +10,7 @@ const _paleGreen = Color(0xFFEAF1D6);
 const _progressFill = Color(0xFFDAE5B8);
 const _progressPercent = Color(0xFFEAF1D6);
 const _midGreen = Color(0xFF8FA05A);
-const _darkGreen = Color(0xFF9DAA5B);
+const _darkGreen = Color(0xFFA1AD59);
 const _deepText = Color(0xFF5E7A4E);
 
 /// One prayer bar in the chart. Kept as plain data so it can later be filled
@@ -20,11 +20,17 @@ class PrayerBarData {
     required this.name,
     required this.points,
     this.completed = false,
+    this.isActive = false,
   });
 
   final String name;
   final int points;
+
+  /// Prayed already; feeds the completed counter.
   final bool completed;
+
+  /// Its prayer period is running right now; gets the highlighted bar.
+  final bool isActive;
 
   static const defaults = [
     PrayerBarData(name: 'Fajr', points: 2),
@@ -270,7 +276,7 @@ class PrayerBarItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = prayer.completed;
+    final active = prayer.isActive;
     return Container(
       width: 42.w,
       height: prayer.points >= 2 ? 131.h : 100.h,
