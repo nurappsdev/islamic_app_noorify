@@ -28,6 +28,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_heade
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/sunnah_witr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
@@ -120,6 +121,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const _NaflMoreCard(),
                       SizedBox(height: 16.h),
                       const _ZikrCard(),
+                      SizedBox(height: 16.h),
+                      const _SunnahWitrCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -379,6 +382,35 @@ class _ZikrCard extends StatelessWidget {
           counter: zikr == null
               ? '0/7'
               : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
+        ),
+      ),
+    );
+  }
+}
+
+/// Sunnah and Witr card: [SunnahWitrCardContent] over [HomeGradientShape],
+/// fed from the `sunnah_witr` pillar of the home dashboard when it has loaded.
+class _SunnahWitrCard extends StatelessWidget {
+  const _SunnahWitrCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? sunnah;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'sunnah_witr') sunnah = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    return GestureDetector(
+      onTap: () => _openTracker(context, AmalSection.sunnahWitr),
+      child: HomeGradientShape(
+        child: SunnahWitrCardContent(
+          percentage: sunnah?.percentage ?? 0,
+          counter: sunnah == null
+              ? '0/6'
+              : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
         ),
       ),
     );
