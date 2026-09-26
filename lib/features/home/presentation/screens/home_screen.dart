@@ -6,9 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -71,6 +70,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
       (state) => state.status != HomeDashboardStatus.loading,
     );
     dashboardBloc.add(const LoadHomeDashboard());
+    unawaited(AmolDailyStore.instance.load());
 
     try {
       await Future.wait([dashboardDone, ProfileService.instance.refresh()]);
@@ -181,57 +181,15 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
   Timer? _clockTimer;
   DateTime _now = bangladeshNow();
 
-  final _getDaily = GetAmolDaily(
-    AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-  );
-
-  /// `itemKey`s of today's Fardh prayers the user has tracked (`fajr`,
-  /// `dhuhr`, ...), from the tracker's daily checklist.
-  Set<String> _completedKeys = const {};
-
   static const _itemKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-
-  Future<void> _loadCompleted() async {
-    final now = DateTime.now();
-    final date =
-        '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-    try {
-      final result = await _getDaily(date: date);
-      result.fold((_) {}, (daily) {
-        final pillar = daily.pillars
-            .where((p) => p.pillarKey == 'fardh_prayer')
-            .firstOrNull;
-        if (pillar == null || !mounted) return;
-        setState(() {
-          _completedKeys = {
-            for (final item in pillar.items)
-              if (item.isCompleted) item.itemKey,
-          };
-        });
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _openTracker({String? prayer}) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => AmolTrackingScreen(
-          selectedSection: AmalSection.fardhPrayer,
-          selectedPrayer: prayer,
-        ),
-      ),
-    );
-    // Prayers may have been ticked meanwhile.
-    if (mounted) _loadCompleted();
-  }
 
   @override
   void initState() {
     super.initState();
     _loadTimes();
-    _loadCompleted();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
     _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
       setState(() => _now = bangladeshNow());
@@ -262,8 +220,13 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     } catch (_) {}
   }
 
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
     _clockTimer?.cancel();
     super.dispose();
   }
@@ -279,12 +242,20 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
 
     final times = _times;
     final minuteNow = _now.hour * 60 + _now.minute;
+    // Tracked prayers, from the shared daily checklist (updates when the user
+    // ticks one in the tracker).
+    final completedKeys = {
+      for (final item
+          in AmolDailyStore.instance.pillar('fardh_prayer')?.items ??
+              const <AmolItem>[])
+        if (item.isCompleted) item.itemKey,
+    };
     final prayers = [
       for (final (i, prayer) in PrayerBarData.defaults.indexed)
         PrayerBarData(
           name: prayer.name,
           points: prayer.points,
-          completed: _completedKeys.contains(_itemKeys[i]),
+          completed: completedKeys.contains(_itemKeys[i]),
           // Red once its time has started (or passed) without being tracked;
           // a prayer that hasn't started yet stays the default colour.
           isMissed:
@@ -295,14 +266,21 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     ];
 
     return GestureDetector(
-      onTap: _openTracker,
+      onTap: () => _openTracker(context, AmalSection.fardhPrayer),
       child: HomeGradientShape(
         child: AmalTrackerCardContent(
           percentage: fardh?.percentage ?? 0,
           completedLabel: fardh?.formattedSubtext,
           prayers: prayers,
-          onOpenDashboard: _openTracker,
-          onPrayerTap: (prayer) => _openTracker(prayer: prayer.name),
+          onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
+          onPrayerTap: (prayer) => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => AmolTrackingScreen(
+                selectedSection: AmalSection.fardhPrayer,
+                selectedPrayer: prayer.name,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -392,56 +370,36 @@ class _NaflMoreCard extends StatefulWidget {
 }
 
 class _NaflMoreCardState extends State<_NaflMoreCard> {
-  final _getDaily = GetAmolDaily(
-    AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-  );
-  List<NaflItemData> _items = const [];
-
   @override
   void initState() {
     super.initState();
-    _load();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
   }
 
-  /// The item list and each item's tracked state come from the tracker's
-  /// daily checklist (`GET /amol/tracker/daily`).
-  Future<void> _load() async {
-    final now = DateTime.now();
-    final date =
-        '${now.year.toString().padLeft(4, '0')}-'
-        '${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-    try {
-      final result = await _getDaily(date: date);
-      result.fold((_) {}, (daily) {
-        final pillar = daily.pillars
-            .where((p) => p.pillarKey == 'nafl_and_more')
-            .firstOrNull;
-        if (pillar == null || !mounted) return;
-        setState(() {
-          _items = [
-            for (final item in pillar.items)
-              NaflItemData(
-                name: item.title,
-                points: item.maxPoints,
-                completed: item.isCompleted,
-              ),
-          ];
-        });
-      });
-    } catch (_) {}
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
   }
 
-  Future<void> _openTracker() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) =>
-            const AmolTrackingScreen(selectedSection: AmalSection.naflAndMore),
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// The items and each one's tracked state come from the shared daily
+  /// checklist (`nafl_and_more` pillar).
+  List<NaflItemData> get _items => [
+    for (final item
+        in AmolDailyStore.instance.pillar('nafl_and_more')?.items ??
+            const <AmolItem>[])
+      NaflItemData(
+        name: item.title,
+        points: item.maxPoints,
+        completed: item.isCompleted,
       ),
-    );
-    // Items may have been ticked meanwhile.
-    if (mounted) _load();
-  }
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -454,11 +412,11 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return GestureDetector(
-      onTap: _openTracker,
+      onTap: () => _openTracker(context, AmalSection.naflAndMore),
       child: HomeGradientShape(
         child: NaflMoreCardContent(
           percentage: nafl?.percentage ?? 0,
-          onOpenDashboard: _openTracker,
+          onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
           counter: nafl == null
               ? '0/7'
               : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
@@ -472,8 +430,31 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 /// Zikr card: [ZikrCardContent] over [HomeGradientShape], fed from the
 /// `zikr` pillar of the home dashboard when it has loaded. The tracker has no
 /// Zikr section, so it opens the Zikr feature instead.
-class _ZikrCard extends StatelessWidget {
+class _ZikrCard extends StatefulWidget {
   const _ZikrCard();
+
+  @override
+  State<_ZikrCard> createState() => _ZikrCardState();
+}
+
+class _ZikrCardState extends State<_ZikrCard> {
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -483,16 +464,34 @@ class _ZikrCard extends StatelessWidget {
     for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
       if (p.pillarKey == 'zikr') zikr = p;
     }
+    // The tracker's `zikr` pillar (when the server sends one) supplies the
+    // list and each zikr's tracked state; without it the card keeps its five
+    // numbered placeholders and the Home dashboard's numbers.
+    final tracked = AmolDailyStore.instance.pillar('zikr');
+    final items = tracked == null || tracked.items.isEmpty
+        ? ZikrItemData.placeholders
+        : [
+            for (final item in tracked.items)
+              ZikrItemData(name: item.title, completed: item.isCompleted),
+          ];
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return GestureDetector(
-      onTap: () => Navigator.of(context).pushNamed(RouteNames.zikr),
+      // With a tracker pillar, open the tracker on it (where Zikr is ticked);
+      // otherwise the Zikr feature.
+      onTap: () => tracked == null
+          ? Navigator.of(context).pushNamed(RouteNames.zikr)
+          : _openTracker(context, AmalSection.zikr),
       child: HomeGradientShape(
         child: ZikrCardContent(
-          percentage: zikr?.percentage ?? 0,
+          percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
           counter: zikr == null
               ? '0/7'
               : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
+          items: items,
+          onOpenZikr: tracked == null
+              ? null
+              : () => _openTracker(context, AmalSection.zikr),
         ),
       ),
     );
