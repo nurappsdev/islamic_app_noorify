@@ -6,11 +6,9 @@ import 'package:islami_app_noorify/features/home/presentation/screens/home_scree
 
 const _softGreen = Color(0xFFDCE7B8);
 const _paleGreen = Color(0xFFEAF1D6);
-// Complete-progress bar: fill is a touch darker than the reference's #DCE7B8
-// and the percentage segment a touch lighter than its #EAF1D5, so the two
-// read as clearly separate on the card gradient.
-const _progressFill = Color(0xFFD5E1AC);
-const _progressPercent = Color(0xFFEEF4DC);
+// Complete-progress bar colours, sampled from devImg/img_51.png.
+const _progressFill = Color(0xFFDAE5B8);
+const _progressPercent = Color(0xFFEAF1D6);
 const _midGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFF9DAA5B);
 const _deepText = Color(0xFF5E7A4E);
@@ -104,7 +102,8 @@ class ProgressHeaderWidget extends StatelessWidget {
     final label = percentage % 1 == 0
         ? percentage.toStringAsFixed(0)
         : percentage.toStringAsFixed(1);
-    final radius = BorderRadius.circular(20.r);
+    final radius = BorderRadius.circular(24.r);
+    final percentWidth = 56.w;
     return Row(
       children: [
         Expanded(
@@ -113,60 +112,72 @@ class ProgressHeaderWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: _progressPercent,
               borderRadius: radius,
+              border: Border.all(color: Colors.white, width: 1.2),
             ),
             child: ClipRRect(
               borderRadius: radius,
-              child: Row(
-                children: [
-                  // Track: the dark fill grows with the percentage and the
-                  // title stays centred over it.
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Positioned.fill(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: FractionallySizedBox(
-                              widthFactor: value,
-                              heightFactor: 1,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: _progressFill,
-                                  borderRadius: radius,
-                                ),
-                              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // The fill grows with the percentage but stops where the
+                  // percentage segment begins.
+                  // It never shrinks below the title, so the two colours stay
+                  // separate even at 0%.
+                  final maxFill = constraints.maxWidth - percentWidth;
+                  final fillWidth = (value * constraints.maxWidth).clamp(
+                    (160.w).clamp(0.0, maxFill),
+                    maxFill,
+                  );
+                  return Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: fillWidth,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: _progressFill,
+                            borderRadius: radius,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: fillWidth,
+                        child: Center(
+                          child: Text(
+                            'Complete Progress',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: homeSerifStyle(
+                              fontSize: 16.sp,
+                              color: Color(0xFF859065),
                             ),
                           ),
                         ),
-                        Text(
-                          'Complete progress',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: homeSerifStyle(
-                            fontSize: 16.sp,
-                            color: _midGreen,
+                      ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: percentWidth,
+                        child: Center(
+                          child: Text(
+                            '$label %',
+                            style: TextStyle(fontSize: 15.sp, color: _deepText),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  // Percentage: its own lighter segment, outside the fill.
-                  SizedBox(
-                    width: 56.w,
-                    child: Center(
-                      child: Text(
-                        '$label %',
-                        style: TextStyle(fontSize: 15.sp, color: _deepText),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ),
         ),
-        SizedBox(width: 30.w),
+        SizedBox(width: 34.w),
         InkWell(
           borderRadius: BorderRadius.circular(16.r),
           onTap: onTap,
