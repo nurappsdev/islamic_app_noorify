@@ -51,6 +51,18 @@ class ApiConstants {
 
   static const String leaderboardTopEndPoint = "/leaderboard/top";
 
+  static const String quizCategoriesEndPoint = "/quizzes/categories";
+  static const String quizDailyEndPoint = "/quizzes/daily";
+  static const String quizAttemptsEndPoint = "/quizzes/attempts";
+
+  /// A practice quiz drawn from one category.
+  static String quizCategoryQuizEndPoint(String categoryId) =>
+      "$quizCategoriesEndPoint/$categoryId/quiz";
+
+  /// One attempt in full, for the review screen.
+  static String quizAttemptEndPoint(String attemptId) =>
+      "$quizAttemptsEndPoint/$attemptId";
+
   static const String hadithBooksListEndPoint = "/hadiths/books/lists";
   static const String hadithCategoriesEndPoint = "/hadiths/categories";
   static const String hadithsEndPoint = "/hadiths";

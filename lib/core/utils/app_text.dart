@@ -499,6 +499,26 @@ class AppText {
     required this.completedHistory,
     required this.unableToLoadQuizHistory,
     required this.tryAgain,
+    required this.quizQuestionOfTotal,
+    required this.quizTimeRemaining,
+    required this.submit,
+    required this.noQuizAvailable,
+    required this.unableToLoadQuiz,
+    required this.unableToLoadQuizCategories,
+    required this.noQuizCategories,
+    required this.quizSubmitFailed,
+    required this.dailyQuiz,
+    required this.youCompletedTheQuiz,
+    required this.scoreLabel,
+    required this.reviewAnswers,
+    required this.explanationLabel,
+    required this.notAnswered,
+    required this.noQuizAttemptsYet,
+    required this.bestScore,
+    required this.averageScore,
+    required this.attemptsLabel,
+    required this.unableToLoadAttempt,
+    required this.questionUnavailable,
     required this.questionsWord,
     required this.learn,
     required this.planner,
@@ -1093,6 +1113,26 @@ class AppText {
   final String completedHistory;
   final String unableToLoadQuizHistory;
   final String tryAgain;
+  final String quizQuestionOfTotal;
+  final String quizTimeRemaining;
+  final String submit;
+  final String noQuizAvailable;
+  final String unableToLoadQuiz;
+  final String unableToLoadQuizCategories;
+  final String noQuizCategories;
+  final String quizSubmitFailed;
+  final String dailyQuiz;
+  final String youCompletedTheQuiz;
+  final String scoreLabel;
+  final String reviewAnswers;
+  final String explanationLabel;
+  final String notAnswered;
+  final String noQuizAttemptsYet;
+  final String bestScore;
+  final String averageScore;
+  final String attemptsLabel;
+  final String unableToLoadAttempt;
+  final String questionUnavailable;
   final String questionsWord;
   final String learn;
   final String planner;
@@ -2977,6 +3017,26 @@ class AppText {
         fallback?.unableToLoadQuizHistory ?? '',
       ),
       tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
+      quizQuestionOfTotal: _read(map, 'quizQuestionOfTotal', fallback?.quizQuestionOfTotal ?? ''),
+      quizTimeRemaining: _read(map, 'quizTimeRemaining', fallback?.quizTimeRemaining ?? ''),
+      submit: _read(map, 'submit', fallback?.submit ?? ''),
+      noQuizAvailable: _read(map, 'noQuizAvailable', fallback?.noQuizAvailable ?? ''),
+      unableToLoadQuiz: _read(map, 'unableToLoadQuiz', fallback?.unableToLoadQuiz ?? ''),
+      unableToLoadQuizCategories: _read(map, 'unableToLoadQuizCategories', fallback?.unableToLoadQuizCategories ?? ''),
+      noQuizCategories: _read(map, 'noQuizCategories', fallback?.noQuizCategories ?? ''),
+      quizSubmitFailed: _read(map, 'quizSubmitFailed', fallback?.quizSubmitFailed ?? ''),
+      dailyQuiz: _read(map, 'dailyQuiz', fallback?.dailyQuiz ?? ''),
+      youCompletedTheQuiz: _read(map, 'youCompletedTheQuiz', fallback?.youCompletedTheQuiz ?? ''),
+      scoreLabel: _read(map, 'scoreLabel', fallback?.scoreLabel ?? ''),
+      reviewAnswers: _read(map, 'reviewAnswers', fallback?.reviewAnswers ?? ''),
+      explanationLabel: _read(map, 'explanationLabel', fallback?.explanationLabel ?? ''),
+      notAnswered: _read(map, 'notAnswered', fallback?.notAnswered ?? ''),
+      noQuizAttemptsYet: _read(map, 'noQuizAttemptsYet', fallback?.noQuizAttemptsYet ?? ''),
+      bestScore: _read(map, 'bestScore', fallback?.bestScore ?? ''),
+      averageScore: _read(map, 'averageScore', fallback?.averageScore ?? ''),
+      attemptsLabel: _read(map, 'attemptsLabel', fallback?.attemptsLabel ?? ''),
+      unableToLoadAttempt: _read(map, 'unableToLoadAttempt', fallback?.unableToLoadAttempt ?? ''),
+      questionUnavailable: _read(map, 'questionUnavailable', fallback?.questionUnavailable ?? ''),
       questionsWord: _read(map, 'questionsWord', fallback?.questionsWord ?? ''),
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),
