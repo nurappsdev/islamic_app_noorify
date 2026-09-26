@@ -98,7 +98,7 @@ void main() {
     );
     await _pump(tester, repository: repo);
 
-    expect(find.textContaining('Challenge'), findsOneWidget);
+    expect(find.textContaining('challenge'), findsOneWidget);
     expect(find.textContaining('Start'), findsOneWidget);
   });
 
@@ -115,7 +115,7 @@ void main() {
     );
     await _pump(tester, repository: repo);
 
-    expect(find.textContaining('You Completed Your'), findsOneWidget);
+    expect(find.textContaining('You completed your'), findsOneWidget);
     expect(find.textContaining('2.5'), findsOneWidget);
     expect(find.textContaining('Start'), findsNothing);
   });

@@ -160,7 +160,6 @@ class _QuizHero extends StatelessWidget {
 
     return Container(
       height: 250.h,
-      padding: EdgeInsets.fromLTRB(20.w, 16.h, 26.w, 30.h),
       decoration: BoxDecoration(
         // CSS `linear-gradient(270deg, #E6E6E6 0%, #DCE8B8 100%)`: 270deg
         // runs right to left.
@@ -178,9 +177,11 @@ class _QuizHero extends StatelessWidget {
         ),
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Align(
-            alignment: Alignment.topLeft,
+          Positioned(
+            top: 16.h,
+            left: 20.w,
             child: IconButton(
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
@@ -191,10 +192,29 @@ class _QuizHero extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 22.w,
-            bottom: isCompleted ? 14.h : 6.h,
-            child: SizedBox(
-              width: 176.w,
+            right: 0,
+            top: 60.h,
+            child: isCompleted
+                ? Image.asset(
+                    'assets/quiz_completed.png',
+                    width: 160.w,
+                    height: 160.w,
+                    fit: BoxFit.contain,
+                  )
+                : Image.asset(
+                    'assets/quiz.png',
+                    width: 145.w,
+                    height: 145.w,
+                    fit: BoxFit.contain,
+                  ),
+          ),
+          Positioned(
+            left: 24.w,
+            top: 30.h,
+            bottom: 0,
+            right: 125.w,
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: isCompleted
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
@@ -204,18 +224,19 @@ class _QuizHero extends StatelessWidget {
                           appText.youCompletedTodaysChallenge,
                           style: TextStyle(
                             color: context.inkColor(const Color(0xFF84945F)),
-                            fontSize: 21.sp,
-                            height: 1.25,
+                            fontSize: 20.sp,
+                            height: 1.22,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         SizedBox(height: 14.h),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Image.asset(
                               'assets/quiz_reading_icon.png',
-                              width: 48.r,
-                              height: 48.r,
+                              width: 38.r,
+                              height: 38.r,
                               fit: BoxFit.contain,
                             ),
                             SizedBox(width: 8.w),
@@ -228,7 +249,7 @@ class _QuizHero extends StatelessWidget {
                                   color: context.inkColor(
                                     const Color(0xFF84945F),
                                   ),
-                                  fontSize: 13.sp,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -237,61 +258,44 @@ class _QuizHero extends StatelessWidget {
                         ),
                       ],
                     )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          appText.completeTodaysChallenge,
-                          style: TextStyle(
-                            color: AppColor.primary,
-                            fontSize: 22.sp,
-                            height: 1.25,
-                            fontWeight: FontWeight.w500,
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        appText.completeTodaysChallenge,
+                        style: TextStyle(
+                          color: context.inkColor(AppColor.primary),
+                          fontSize: 20.sp,
+                          height: 1.22,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      FilledButton(
+                        onPressed: () async {
+                          await openDailyQuiz(context);
+                          if (context.mounted) {
+                            context
+                                .read<DailyQuizStatusCubit?>()
+                                ?.load(silent: true);
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18.w,
+                            vertical: 11.h,
                           ),
                         ),
-                        SizedBox(height: 20.h),
-                        FilledButton(
-                          onPressed: () async {
-                            await openDailyQuiz(context);
-                            if (context.mounted) {
-                              context
-                                  .read<DailyQuizStatusCubit?>()
-                                  ?.load(silent: true);
-                            }
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColor.primary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 18.w,
-                              vertical: 11.h,
-                            ),
-                          ),
-                          child: Text(
-                            appText.letsGetStart,
-                            style: TextStyle(fontSize: 11.sp),
-                          ),
+                        child: Text(
+                          appText.letsGetStart,
+                          style: TextStyle(fontSize: 11.sp),
                         ),
-                      ],
-                    ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: isCompleted
-                ? Image.asset(
-                    'assets/quiz_completed.png',
-                    width: 140.w,
-                    height: 140.w,
-                    fit: BoxFit.contain,
-                  )
-                : Image.asset(
-                    'assets/quiz.png',
-                    width: 130.w,
-                    height: 130.w,
-                    fit: BoxFit.contain,
+                      ),
+                    ],
                   ),
+            ),
           ),
         ],
       ),
