@@ -36,10 +36,22 @@ import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
 import '../../features/quiz/presentation/screens/completed_history_screen.dart';
-import '../../features/quiz/data/datasources/quiz_local_data_source.dart';
+import '../../features/quiz/presentation/screens/quiz_attempt_review_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_shell.dart';
+import '../../features/quiz/data/datasources/quiz_remote_data_source.dart';
 import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
-import '../../features/quiz/domain/usecases/get_completed_quiz_history.dart';
+import '../../features/quiz/domain/repositories/quiz_repository.dart';
+import '../../features/quiz/domain/usecases/get_category_quiz.dart';
+import '../../features/quiz/domain/usecases/get_daily_quiz.dart';
+import '../../features/quiz/domain/usecases/get_quiz_attempt_detail.dart';
+import '../../features/quiz/domain/usecases/get_quiz_attempts.dart';
+import '../../features/quiz/domain/usecases/get_quiz_categories.dart';
+import '../../features/quiz/domain/usecases/submit_quiz_attempt.dart';
+import '../../features/quiz/presentation/bloc/quiz_attempt_review_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_bloc.dart';
+import '../../features/quiz/presentation/bloc/quiz_categories_bloc.dart';
+import '../../features/quiz/presentation/bloc/quiz_question_bloc.dart';
+import '../../features/quiz/presentation/quiz_route_args.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
@@ -101,6 +113,36 @@ import '../../features/zikr/presentation/zikr_route_args.dart';
 import 'route_names.dart';
 
 class AppRoutes {
+  /// Shared by every quiz screen; created on first use.
+  static final QuizRepository _quizRepository = QuizRepositoryImpl(
+    QuizRemoteDataSourceImpl(),
+  );
+
+  /// Gives [child] the quiz categories, fetched as it opens.
+  static Widget _withQuizCategories(Widget child) => BlocProvider(
+    create: (_) =>
+        QuizCategoriesBloc(GetQuizCategories(_quizRepository))
+          ..add(const LoadQuizCategories()),
+    child: child,
+  );
+
+  /// The Quiz & Learn section, opened on [tab], with its sticky nav bar.
+  static Widget _quizShell(int tab) => QuizShell(
+    initialTab: tab,
+    tabs: [
+      (_) => _withQuizCategories(const QuizCategoriesScreen()),
+      (_) => const LearningScreen(),
+      (_) => const PlannerScreen(),
+      (_) => BlocProvider(
+        // Only the latest few attempts are previewed here.
+        create: (_) =>
+            QuizBloc(GetQuizAttempts(_quizRepository), pageSize: 5)
+              ..add(const LoadCompletedQuizHistory()),
+        child: const QuizDashboardScreen(),
+      ),
+    ],
+  );
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.home:
@@ -118,17 +160,51 @@ class AppRoutes {
       case RouteNames.familyMembers:
         return _page(const FamilyMembersScreen(), settings);
       case RouteNames.winQuiz:
-        return _page(const QuizCategoriesScreen(), settings);
+        return _page(_quizShell(0), settings);
       case RouteNames.quizQuestion:
-        return _page(const QuizQuestionScreen(), settings);
+        final launch = settings.arguments is QuizLaunchArgs
+            ? settings.arguments as QuizLaunchArgs
+            : const QuizLaunchArgs.daily();
+        return _page(
+          BlocProvider(
+            create: (_) => QuizQuestionBloc(
+              launch: launch,
+              getDailyQuiz: GetDailyQuiz(_quizRepository),
+              getCategoryQuiz: GetCategoryQuiz(_quizRepository),
+              submitAttempt: SubmitQuizAttempt(_quizRepository),
+            )..add(const LoadQuiz()),
+            child: const QuizQuestionScreen(),
+          ),
+          settings,
+        );
       case RouteNames.quizComplete:
-        return _page(const QuizCompletionScreen(), settings);
+        final args = settings.arguments;
+        return _page(
+          _withQuizCategories(
+            QuizCompletionScreen(
+              args: args is QuizCompletionArgs ? args : null,
+            ),
+          ),
+          settings,
+        );
       case RouteNames.quizList:
-        return _page(const QuizListScreen(), settings);
+        return _page(_withQuizCategories(const QuizListScreen()), settings);
+      case RouteNames.quizAttemptReview:
+        final attemptId = settings.arguments as String? ?? '';
+        return _page(
+          BlocProvider(
+            create: (_) => QuizAttemptReviewBloc(
+              GetQuizAttemptDetail(_quizRepository),
+              attemptId: attemptId,
+            )..add(const LoadQuizAttemptReview()),
+            child: const QuizAttemptReviewScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learning:
-        return _page(const LearningScreen(), settings);
+        return _page(_quizShell(1), settings);
       case RouteNames.planner:
-        return _page(const PlannerScreen(), settings);
+        return _page(_quizShell(2), settings);
       case RouteNames.plannerDetails:
         final plan =
             settings.arguments as PlannerPlan? ??
@@ -141,15 +217,13 @@ class AppRoutes {
       case RouteNames.createPlan:
         return _page(const CreatePlanScreen(), settings);
       case RouteNames.quizDashboard:
-        return _page(const QuizDashboardScreen(), settings);
+        return _page(_quizShell(3), settings);
       case RouteNames.completedHistory:
         return _page(
           BlocProvider(
-            create: (_) => QuizBloc(
-              GetCompletedQuizHistory(
-                QuizRepositoryImpl(const QuizLocalDataSourceImpl()),
-              ),
-            )..add(const LoadCompletedQuizHistory()),
+            create: (_) =>
+                QuizBloc(GetQuizAttempts(_quizRepository))
+                  ..add(const LoadCompletedQuizHistory()),
             child: const CompletedHistoryScreen(),
           ),
           settings,

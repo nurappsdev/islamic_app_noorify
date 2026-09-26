@@ -7,7 +7,6 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
 import 'package:islami_app_noorify/features/planner/presentation/models/planner_plan.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// The user's active plans, reached from index 2 of the Quiz navigation bar.
 class PlannerScreen extends StatelessWidget {
@@ -82,10 +81,6 @@ class _PlannerView extends StatelessWidget {
                         ),
                 ),
               ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: QuizBottomNav(selectedIndex: 2),
             ),
             if (!state.showCompletedPlans)
               Positioned(

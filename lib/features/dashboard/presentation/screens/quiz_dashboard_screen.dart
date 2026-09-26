@@ -5,12 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
+/// Its Quiz History preview reads a [QuizBloc] provided above it.
 class QuizDashboardScreen extends StatelessWidget {
   const QuizDashboardScreen({super.key});
 
@@ -121,15 +125,8 @@ class _QuizDashboardView extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 25.h),
-                for (var index = 1; index <= 5; index++) ...[
-                  _HistoryCard(index: index),
-                  SizedBox(height: 8.h),
-                ],
+                const _HistoryPreview(),
               ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: QuizBottomNav(selectedIndex: 3),
             ),
           ],
         ),
@@ -525,90 +522,63 @@ class _PointsSummary extends StatelessWidget {
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.index});
+/// The latest attempts, as returned by `GET /quizzes/attempts`. The Quiz
+/// section keeps this tab alive, so it reloads whenever a page above it
+/// (a quiz, its result) closes - a new attempt shows up at once.
+class _HistoryPreview extends StatefulWidget {
+  const _HistoryPreview();
 
-  final int index;
+  @override
+  State<_HistoryPreview> createState() => _HistoryPreviewState();
+}
+
+class _HistoryPreviewState extends State<_HistoryPreview> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() =>
+      context.read<QuizBloc>().add(const LoadCompletedQuizHistory());
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Container(
-      height: 84.h,
-      padding: EdgeInsets.symmetric(horizontal: 11.w),
-      decoration: BoxDecoration(
-        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
-        borderRadius: BorderRadius.circular(25.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 51.w,
-            height: 51.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
-            ),
-            child: Icon(
-              Icons.image_outlined,
-              color: context.inkColor(Color(0xFF8B9865)),
-              size: 25.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${appText.categoryQuiz} $index ( ${appText.quranicScience} )',
-                  style: TextStyle(fontSize: 14.sp),
-                ),
-                SizedBox(height: 7.h),
-                Text(
-                  appText.questionsCountLabel,
-                  style: TextStyle(
-                    color: const Color(0xFFA1AD59),
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const _ScoreProgress(value: .60),
-        ],
-      ),
-    );
-  }
-}
-
-class _ScoreProgress extends StatelessWidget {
-  const _ScoreProgress({required this.value});
-
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 57.w,
-      height: 57.w,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: value,
-            strokeWidth: 5.w,
-            strokeCap: StrokeCap.round,
-            color: const Color(0xFFA1AD59),
-            backgroundColor: context.surfaceColor(Color(0xFFF0F0F6)),
-          ),
-          Text(
-            '${(value * 100).round()}%',
-            style: TextStyle(color: const Color(0xFFA1AD59), fontSize: 12.sp),
-          ),
-        ],
-      ),
-    );
+    final state = context.watch<QuizBloc>().state;
+    switch (state.status) {
+      case QuizStatus.initial:
+      case QuizStatus.loading:
+        return Padding(
+          padding: EdgeInsets.all(16.h),
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      case QuizStatus.failure:
+        return QuizStatusView(
+          message: state.errorMessage ?? appText.unableToLoadQuizHistory,
+          onRetry: () =>
+              context.read<QuizBloc>().add(const LoadCompletedQuizHistory()),
+        );
+      case QuizStatus.success:
+        if (state.attempts.isEmpty) {
+          return QuizStatusView(message: appText.noQuizAttemptsYet);
+        }
+        return Column(
+          children: [
+            for (final attempt in state.attempts) ...[
+              QuizAttemptCard(attempt: attempt),
+              SizedBox(height: 8.h),
+            ],
+          ],
+        );
+    }
   }
 }

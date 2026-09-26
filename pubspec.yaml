@@ -106,6 +106,7 @@ flutter:
     - assets/islamicImg.png
     - assets/asmaulHusnas.png
     - assets/asmaDetainImg.png
+    - assets/quiz.png
     - assets/data/
     - assets/database/
   #   - images/a_dot_burr.jpeg

@@ -5,7 +5,6 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 class LearningScreen extends StatelessWidget {
   const LearningScreen({super.key});
@@ -56,10 +55,6 @@ class LearningScreen extends StatelessWidget {
                 SizedBox(height: 17.h),
                 const _ArticleCard(),
               ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: QuizBottomNav(selectedIndex: 1),
             ),
           ],
         ),
