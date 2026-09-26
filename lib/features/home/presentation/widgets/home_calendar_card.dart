@@ -374,31 +374,56 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     if (selected != null) _setMonth(selected);
   }
 
+  /// Year list for the active calendar: this year, then the years after it
+  /// (2026, 2027, 2028, ...). Hijri stops at 1500 AH, the end of the
+  /// Umm al-Qura data.
+  List<int> get _selectableYears {
+    final first = switch (_tab) {
+      _CalTab.english => _todayEn.year,
+      _CalTab.bangla => _todayBn.year,
+      _CalTab.arabic => _todayHYear,
+    };
+    final last = _tab == _CalTab.arabic ? 1500 : first + 50;
+    final current = _year;
+    return [
+      // Keep an already-selected earlier year in the list.
+      if (current < first) current,
+      for (var y = first; y <= last; y++) y,
+    ];
+  }
+
   Future<void> _pickYear() async {
-    final appText = AppText.of(context);
-    final controller = TextEditingController(text: '$_year');
-    final result = await showDialog<int>(
+    final years = _selectableYears;
+    final current = _year;
+    const itemExtent = 56.0;
+    final currentIndex = years.indexOf(current).clamp(0, years.length - 1);
+    final selected = await showModalBottomSheet<int>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
+      builder: (sheetContext) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * .5,
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemExtent: itemExtent,
+            controller: ScrollController(
+              initialScrollOffset: currentIndex * itemExtent,
+            ),
+            itemCount: years.length,
+            itemBuilder: (context, index) => ListTile(
+              title: Text('${years[index]}', textAlign: TextAlign.center),
+              selected: years[index] == current,
+              trailing: years[index] == current
+                  ? const Icon(Icons.check, color: AppColor.primary)
+                  : null,
+              onTap: () => Navigator.of(sheetContext).pop(years[index]),
+            ),
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(appText.zikrCancel),
-          ),
-          TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(int.tryParse(controller.text)),
-            child: Text(appText.confirm),
-          ),
-        ],
       ),
     );
-    if (result != null) _setYear(result);
+    if (selected != null) _setYear(selected);
   }
 
   @override
