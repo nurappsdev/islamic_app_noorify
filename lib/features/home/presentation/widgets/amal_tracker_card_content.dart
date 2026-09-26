@@ -6,6 +6,11 @@ import 'package:islami_app_noorify/features/home/presentation/screens/home_scree
 
 const _softGreen = Color(0xFFDCE7B8);
 const _paleGreen = Color(0xFFEAF1D6);
+// Complete-progress bar: fill is a touch darker than the reference's #DCE7B8
+// and the percentage segment a touch lighter than its #EAF1D5, so the two
+// read as clearly separate on the card gradient.
+const _progressFill = Color(0xFFD5E1AC);
+const _progressPercent = Color(0xFFEEF4DC);
 const _midGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFF9DAA5B);
 const _deepText = Color(0xFF5E7A4E);
@@ -105,7 +110,10 @@ class ProgressHeaderWidget extends StatelessWidget {
         Expanded(
           child: Container(
             height: 54.h,
-            decoration: BoxDecoration(color: _paleGreen, borderRadius: radius),
+            decoration: BoxDecoration(
+              color: _progressPercent,
+              borderRadius: radius,
+            ),
             child: ClipRRect(
               borderRadius: radius,
               child: Row(
@@ -124,7 +132,7 @@ class ProgressHeaderWidget extends StatelessWidget {
                               heightFactor: 1,
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  color: _softGreen,
+                                  color: _progressFill,
                                   borderRadius: radius,
                                 ),
                               ),
