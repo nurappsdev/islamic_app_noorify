@@ -364,6 +364,8 @@ void main() {
         expect(find.textContaining('Score: 92%'), findsOneWidget);
         expect(find.text('Not completed'), findsOneWidget);
         expect(find.text('Continue'), findsOneWidget);
+        expect(find.text('Quizzes'), findsNothing);
+        expect(find.text('Remaining'), findsNothing);
       }
     });
 
@@ -470,5 +472,41 @@ void main() {
         expect(find.text('Hadith & Sunnah (17)'), findsOneWidget);
       }
     });
+
+    testWidgets('create plan header back button is aligned to the left ($lang)', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        Navigator(
+          onGenerateRoute: (_) => MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (_) => CreateQuizPlanBloc(
+                getCategories: GetQuizCategories(_FakeCategories()),
+                createPlan: CreateQuizPlan(plans),
+              )..add(const LoadQuizPlanCategories()),
+              child: const CreatePlanScreen(),
+            ),
+          ),
+        ),
+        bangla: bangla,
+      );
+      await tester.pumpAndSettle();
+
+      final iconButton = find.byType(IconButton);
+      expect(iconButton, findsOneWidget);
+      final buttonTopLeft = tester.getTopLeft(iconButton);
+      final buttonTopRight = tester.getTopRight(iconButton);
+      expect(buttonTopLeft.dx, lessThan(40));
+
+      final title = find.text(bangla ? 'পরিকল্পনা তৈরি করুন' : 'Create Plan');
+      expect(title, findsOneWidget);
+      final titleTopLeft = tester.getTopLeft(title);
+      expect(titleTopLeft.dx, greaterThanOrEqualTo(buttonTopRight.dx));
+
+      await tester.tap(iconButton);
+      await tester.pumpAndSettle();
+    });
   }
 }
+

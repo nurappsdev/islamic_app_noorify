@@ -246,12 +246,26 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               );
           }
         }
-        return Scaffold(
-          backgroundColor: context.pageColor(Colors.white),
-          body: SafeArea(
-            child: Column(
-              children: [
-                _CreatePlanHeader(onBack: () => Navigator.of(context).pop()),
+        return PopScope(
+          canPop: !_showingAdded,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            if (_showingAdded) setState(() => _showingAdded = false);
+          },
+          child: Scaffold(
+            backgroundColor: context.pageColor(Colors.white),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _CreatePlanHeader(
+                    onBack: () {
+                      if (_showingAdded) {
+                        setState(() => _showingAdded = false);
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                  ),
                 Expanded(child: body),
                 Padding(
                   padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 9.h),
@@ -289,9 +303,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
               ],
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 }
 
@@ -303,30 +318,39 @@ class _CreatePlanHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 62.h,
+      height: 54.h,
+      width: double.infinity,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Positioned(
-            left: 19.w,
-            top: 6.h,
-            child: IconButton(
-              onPressed: onBack,
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: Color(0xFF303629),
-                minimumSize: Size(33.w, 33.w),
-                padding: EdgeInsets.zero,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 16.w),
+              child: IconButton(
+                onPressed: onBack,
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFDFDE68),
+                  foregroundColor: context.inkColor(const Color(0xFF303629)),
+                  minimumSize: Size(33.w, 33.w),
+                  padding: EdgeInsets.zero,
+                ),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
               ),
-              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 15.sp),
             ),
           ),
-          Text(
-            AppText.of(context).createPlanHeader,
-            style: TextStyle(
-              color: context.inkColor(Color(0xFF84945F)),
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w400,
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 68.w),
+            child: Text(
+              AppText.of(context).createPlanHeader,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.inkColor(const Color(0xFF84945F)),
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
         ],
