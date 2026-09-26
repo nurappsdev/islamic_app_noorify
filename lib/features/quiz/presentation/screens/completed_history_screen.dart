@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
+// import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
+// import 'package:islami_app_noorify/core/utils/localized_text.dart';
+// import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_comparison_bloc.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_comparison_card.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
@@ -57,14 +60,20 @@ class CompletedHistoryScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             case QuizStatus.failure:
               return QuizStatusView(
-                message: state.errorMessage ?? appText.unableToLoadQuizHistory,
+                message: quizFailureMessage(appText, state.failure),
                 onRetry: () => context.read<QuizBloc>().add(
                   const LoadCompletedQuizHistory(),
                 ),
               );
             case QuizStatus.success:
               if (state.attempts.isEmpty) {
-                return QuizStatusView(message: appText.noQuizAttemptsYet);
+                return ListView(
+                  padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 24.h),
+                  children: [
+                    // const _HistoryComparison(),
+                    QuizStatusView(message: appText.noQuizAttemptsYet),
+                  ],
+                );
               }
               return NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
@@ -75,22 +84,29 @@ class CompletedHistoryScreen extends StatelessWidget {
                 },
                 child: ListView.separated(
                   padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 24.h),
-                  // Summary first, then the attempts, then a loader while the
-                  // next page is on its way.
+                  // The attempts, then a loader while the next page is on its
+                  // way. (With the comparison or summary card back: one more
+                  // item each, and every index below shifts by one.)
                   itemCount:
-                      state.attempts.length + (state.isLoadingMore ? 2 : 1),
+                      state.attempts.length + (state.isLoadingMore ? 1 : 0),
                   separatorBuilder: (_, _) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return _HistorySummary(summary: state.summary);
-                    }
-                    if (index > state.attempts.length) {
+                    // if (index == 0) return const _HistoryComparison();
+                    // Summary (attempts, best and average score) - hidden for
+                    // now; uncomment to show it.
+                    // if (index == 0) {
+                    //   return _HistorySummary(summary: state.summary);
+                    // }
+                    if (index >= state.attempts.length) {
                       return Padding(
                         padding: EdgeInsets.all(12.h),
                         child: const Center(child: CircularProgressIndicator()),
                       );
                     }
-                    return QuizAttemptCard(attempt: state.attempts[index - 1]);
+                    return QuizAttemptCard(
+                      attempt: state.attempts[index],
+                      showDate: true,
+                    );
                   },
                 ),
               );
@@ -101,47 +117,81 @@ class CompletedHistoryScreen extends StatelessWidget {
   }
 }
 
-/// The server's headline figures for the history.
-class _HistorySummary extends StatelessWidget {
-  const _HistorySummary({required this.summary});
+// Summary card (attempts, best score, average score) - hidden for now;
+// uncomment it and its use above to show it.
+// /// The server's headline figures for the history.
+// class _HistorySummary extends StatelessWidget {
+//   const _HistorySummary({required this.summary});
+//
+//   final QuizAttemptSummary summary;
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final appText = AppText.of(context);
+//     final items = [
+//       (appText.attemptsLabel, '${summary.attempts}'),
+//       (appText.bestScore, formatPercent(summary.bestScorePercentage)),
+//       (appText.averageScore, formatPercent(summary.averageScorePercentage)),
+//     ];
+//     return Container(
+//       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+//       decoration: BoxDecoration(
+//         color: context.surfaceColor(Color(0xFFDDE8BA)),
+//         borderRadius: BorderRadius.circular(25.r),
+//       ),
+//       child: Row(
+//         children: [
+//           for (final (label, value) in items)
+//             Expanded(
+//               child: Column(
+//                 children: [
+//                   Text(
+//                     context.localizedDigits(value),
+//                     style: TextStyle(color: AppColor.primary, fontSize: 16.sp),
+//                   ),
+//                   SizedBox(height: 4.h),
+//                   Text(
+//                     label,
+//                     textAlign: TextAlign.center,
+//                     style: TextStyle(fontSize: 11.sp),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-  final QuizAttemptSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final items = [
-      (appText.attemptsLabel, '${summary.attempts}'),
-      (appText.bestScore, formatPercent(summary.bestScorePercentage)),
-      (appText.averageScore, formatPercent(summary.averageScorePercentage)),
-    ];
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(Color(0xFFDDE8BA)),
-        borderRadius: BorderRadius.circular(25.r),
-      ),
-      child: Row(
-        children: [
-          for (final (label, value) in items)
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    context.localizedDigits(value),
-                    style: TextStyle(color: AppColor.primary, fontSize: 16.sp),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11.sp),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
+// Comparison card - hidden for now; uncomment it, its imports, its uses
+// above and its bloc in app_routes.dart to show it.
+// /// The user against the leaderboard leader over the last week
+// /// (`GET /quizzes/dashboard/history/compare`).
+// class _HistoryComparison extends StatelessWidget {
+//   const _HistoryComparison();
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final appText = AppText.of(context);
+//     final state = context.watch<QuizComparisonBloc>().state;
+//     final comparison = state.comparison;
+//     switch (state.status) {
+//       case QuizComparisonStatus.loading:
+//         return Padding(
+//           padding: EdgeInsets.all(16.h),
+//           child: const Center(child: CircularProgressIndicator()),
+//         );
+//       case QuizComparisonStatus.failure:
+//         return QuizStatusView(
+//           message: quizFailureMessage(appText, state.failure),
+//           onRetry: () => context.read<QuizComparisonBloc>().add(
+//             const LoadQuizComparison(),
+//           ),
+//         );
+//       case QuizComparisonStatus.success:
+//         if (comparison == null) return const SizedBox.shrink();
+//         return QuizComparisonCard(comparison: comparison);
+//     }
+//   }
+// }

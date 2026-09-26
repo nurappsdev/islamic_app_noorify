@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/features/quiz/data/datasources/quiz_remote_da
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
 import 'package:islami_app_noorify/features/quiz/domain/repositories/quiz_repository.dart';
 
@@ -51,9 +52,24 @@ class QuizRepositoryImpl implements QuizRepository {
   );
 
   @override
-  Future<Either<Failure, QuizAttemptDetail>> getAttemptDetail(
+  Future<Either<Failure, QuizAttemptDetail>> getAttemptReview(
     String attemptId,
-  ) => _guard(() => _remote.getAttemptDetail(attemptId));
+  ) => _guard(() => _remote.getAttemptReview(attemptId));
+
+  @override
+  Future<Either<Failure, QuizDashboardData>> getQuizDashboard(
+    QuizDashboardFilter filter,
+  ) => _guard(() => _remote.getDashboard(filter));
+
+  @override
+  Future<Either<Failure, QuizComparison>> getQuizDashboardComparison(
+    QuizComparisonFilter filter,
+  ) => _guard(() => _remote.getDashboardComparison(filter));
+
+  @override
+  Future<Either<Failure, QuizComparison>> getQuizDashboardHistoryComparison(
+    QuizComparisonFilter filter,
+  ) => _guard(() => _remote.getDashboardHistoryComparison(filter));
 
   Future<Either<Failure, T>> _guard<T>(Future<T> Function() call) async {
     try {

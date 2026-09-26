@@ -2,6 +2,12 @@ abstract class QuizDashboardEvent {
   const QuizDashboardEvent();
 }
 
+/// Fetches the dashboard and the comparison for the selected period and
+/// dates; also used by Try Again and to refresh.
+class LoadQuizDashboard extends QuizDashboardEvent {
+  const LoadQuizDashboard();
+}
+
 class SelectPeriod extends QuizDashboardEvent {
   const SelectPeriod(this.period);
 

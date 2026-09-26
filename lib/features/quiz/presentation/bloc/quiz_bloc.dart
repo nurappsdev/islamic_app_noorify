@@ -21,9 +21,8 @@ class QuizBloc extends Bloc<QuizEvent, QuizState> {
         attemptType: attemptType,
       );
       result.fold(
-        (failure) => emit(
-          QuizState(status: QuizStatus.failure, errorMessage: failure.message),
-        ),
+        (failure) =>
+            emit(QuizState(status: QuizStatus.failure, failure: failure)),
         (page) => emit(
           QuizState(
             status: QuizStatus.success,

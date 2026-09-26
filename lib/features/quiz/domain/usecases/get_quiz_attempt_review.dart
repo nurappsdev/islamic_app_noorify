@@ -4,11 +4,11 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:islami_app_noorify/features/quiz/domain/repositories/quiz_repository.dart';
 
-class GetQuizAttemptDetail {
-  const GetQuizAttemptDetail(this._repository);
+class GetQuizAttemptReview {
+  const GetQuizAttemptReview(this._repository);
 
   final QuizRepository _repository;
 
   Future<Either<Failure, QuizAttemptDetail>> call(String attemptId) =>
-      _repository.getAttemptDetail(attemptId);
+      _repository.getAttemptReview(attemptId);
 }

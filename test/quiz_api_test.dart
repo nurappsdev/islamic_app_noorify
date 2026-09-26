@@ -316,7 +316,7 @@ void main() {
       'attempt detail keeps server correctness and removed questions',
       () async {
         final s = _setup({
-          'GET /quizzes/attempts/att1': (
+          'GET /quizzes/attempts/att1/review': (
             200,
             _ok({
               'id': 'att1',
@@ -343,7 +343,7 @@ void main() {
             }),
           ),
         });
-        final detail = await s.source.getAttemptDetail('att1');
+        final detail = await s.source.getAttemptReview('att1');
         expect(detail.questions.first.isCorrect, isTrue);
         expect(detail.questions.first.correctAnswerKey, 'C');
         expect(detail.questions.last.question.isEmpty, isTrue);

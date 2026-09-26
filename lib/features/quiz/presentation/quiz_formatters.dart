@@ -28,3 +28,24 @@ String formatPoints(num value) {
 
 /// A percentage as sent, e.g. `92%`.
 String formatPercent(num value) => '${formatPoints(value)}%';
+
+/// A number the server may leave `null`, or `—` when it did.
+String formatOptional(num? value, String Function(num) format) =>
+    value == null ? '—' : format(value);
+
+/// [value] (local time) as e.g. `26 September 2026, 14:05`, with the app's
+/// month names.
+String formatQuizDateTime(DateTime value, List<String> monthNames) {
+  final local = value.toLocal();
+  final hour = local.hour.toString().padLeft(2, '0');
+  final minute = local.minute.toString().padLeft(2, '0');
+  return '${local.day} ${monthNames[local.month - 1]} ${local.year}, '
+      '$hour:$minute';
+}
+
+/// [value]'s local calendar day as e.g. `26 September 2026`, with the app's
+/// month names.
+String formatQuizDay(DateTime value, List<String> monthNames) {
+  final local = value.toLocal();
+  return '${local.day} ${monthNames[local.month - 1]} ${local.year}';
+}
