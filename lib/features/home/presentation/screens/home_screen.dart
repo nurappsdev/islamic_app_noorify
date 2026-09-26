@@ -25,6 +25,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
@@ -113,6 +114,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const _HadithReadingCard(),
                       SizedBox(height: 16.h),
                       const _QuranCard(),
+                      SizedBox(height: 16.h),
+                      const _NaflMoreCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -294,6 +297,41 @@ class _QuranCard extends StatelessWidget {
               ? 0
               : (quran.points / max).toDouble(),
           readingTimeLabel: quran?.formattedSubtext ?? '',
+        ),
+      ),
+    );
+  }
+}
+
+/// Nafl and more card: [NaflMoreCardContent] over [HomeGradientShape], fed
+/// from the `nafl_and_more` pillar of the home dashboard when it has loaded.
+class _NaflMoreCard extends StatelessWidget {
+  const _NaflMoreCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? nafl;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'nafl_and_more') nafl = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const AmolTrackingScreen(
+            selectedSection: AmalSection.naflAndMore,
+          ),
+        ),
+      ),
+      child: HomeGradientShape(
+        child: NaflMoreCardContent(
+          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          counter: nafl == null
+              ? '0/7'
+              : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
         ),
       ),
     );
