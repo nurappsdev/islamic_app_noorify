@@ -19,6 +19,7 @@ import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_am
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
@@ -62,6 +63,7 @@ enum AmalSection {
   quran('quran'),
   hadith('hadith'),
   quiz('quiz'),
+  zikr('zikr'),
   naflAndMore('nafl_and_more');
 
   const AmalSection(this.pillarKey);
@@ -124,6 +126,10 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   bool _focusActive = false;
   final GlobalKey _focusedAnchor = GlobalKey();
   bool _didScrollToFocused = false;
+
+  /// Set once the user ticks or unticks an item, so leaving the screen
+  /// refreshes the Home cards that show the same data.
+  bool _didChangeTracking = false;
   late final AmolDailyBloc _bloc = AmolDailyBloc(
     GetAmolDaily(
       AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
@@ -285,6 +291,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     if (!mounted) return;
 
     if (_bloc.state.isItemChecked(item.itemKey, item.isCompleted)) {
+      _didChangeTracking = true;
       _bloc.add(
         UncheckAmolDailyItem(
           logDate: _isoDate(_today),
@@ -329,6 +336,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
       }
     }
 
+    _didChangeTracking = true;
     _bloc.add(
       LogAmolDailyItem(
         logDate: _isoDate(_today),
@@ -389,6 +397,12 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   void dispose() {
     _logFailureSub.cancel();
     _bloc.close();
+    if (_didChangeTracking) {
+      // After the frame, so Home cards don't rebuild mid-teardown.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => AmolDailyStore.instance.load(),
+      );
+    }
     super.dispose();
   }
 

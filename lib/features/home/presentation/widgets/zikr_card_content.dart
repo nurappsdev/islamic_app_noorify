@@ -9,6 +9,25 @@ const _pillGreen = Color(0xFFDAE5B8);
 const _textGreen = Color(0xFF8FA05A);
 const _lineGreen = Color(0xFFA1AD59);
 
+/// One zikr on the stairs. Plain data so it can come straight from the API.
+class ZikrItemData {
+  const ZikrItemData({required this.name, this.completed = false});
+
+  final String name;
+
+  /// Tracked today; drawn in the dark (completed) style.
+  final bool completed;
+
+  /// The five numbered pills shown until real data arrives.
+  static const placeholders = [
+    ZikrItemData(name: 'Zikr 1'),
+    ZikrItemData(name: 'Zikr 2'),
+    ZikrItemData(name: 'Zikr 3'),
+    ZikrItemData(name: 'Zikr 4'),
+    ZikrItemData(name: 'Zikr 5'),
+  ];
+}
+
 /// Content layer for the Zikr card. Draws no background of its own - place it
 /// inside [HomeGradientShape]. Shares its header and title/counter block with
 /// [AmalTrackerCardContent].
@@ -17,6 +36,7 @@ class ZikrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.items = ZikrItemData.placeholders,
     this.onOpenZikr,
   });
 
@@ -25,6 +45,9 @@ class ZikrCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+
+  /// One pill per item, climbing left to right.
+  final List<ZikrItemData> items;
   final VoidCallback? onOpenZikr;
 
   @override
@@ -42,7 +65,7 @@ class ZikrCardContent extends StatelessWidget {
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: 'Zikr', counter: counter),
           SizedBox(height: 4.h),
-          const Expanded(child: _ZikrStairs()),
+          Expanded(child: _ZikrStairs(items: items)),
         ],
       ),
     );
@@ -53,10 +76,13 @@ class ZikrCardContent extends StatelessWidget {
 /// set against dashed guide lines. Positions are fractions of the area so it
 /// scales with the card.
 class _ZikrStairs extends StatelessWidget {
-  const _ZikrStairs();
+  const _ZikrStairs({required this.items});
 
-  // Left edge (of width) and vertical centre (of height) per pill.
-  static const _lefts = [0.04, 0.22, 0.41, 0.56, 0.70];
+  final List<ZikrItemData> items;
+
+  // Left edge (of width) per pill for the designed five; other counts are
+  // spread evenly over the same range.
+  static const _designLefts = [0.04, 0.22, 0.41, 0.56, 0.70];
   static const _guides = [0.18, 0.34, 0.50, 0.66, 0.82];
   static const _pillWidth = 0.27;
 
@@ -68,7 +94,14 @@ class _ZikrStairs extends StatelessWidget {
         final h = box.maxHeight;
         final pillW = w * _pillWidth;
         final gap = 4.8.h;
-        final count = _lefts.length;
+        final count = items.length;
+        if (count == 0) return const SizedBox.shrink();
+        final lefts = count == _designLefts.length
+            ? _designLefts
+            : [
+                for (var i = 0; i < count; i++)
+                  count == 1 ? 0.37 : 0.04 + i * 0.66 / (count - 1),
+              ];
         // Pills stack bottom-up with a fixed gap; shrink them only if five
         // plus the gaps won't fit.
         final pillH = [
@@ -82,7 +115,7 @@ class _ZikrStairs extends StatelessWidget {
         // The line meets each pill at its +1 circle.
         final anchors = [
           for (var i = 0; i < count; i++)
-            Offset(w * _lefts[i] + pillW - pillH * 0.5, centersY[i]),
+            Offset(w * lefts[i] + pillW - pillH * 0.5, centersY[i]),
         ];
         return Stack(
           clipBehavior: Clip.none,
@@ -96,13 +129,13 @@ class _ZikrStairs extends StatelessWidget {
                 ),
               ),
             ),
-            for (var i = 0; i < _lefts.length; i++)
+            for (var i = 0; i < count; i++)
               Positioned(
-                left: w * _lefts[i],
+                left: w * lefts[i],
                 top: centersY[i] - pillH / 2,
                 width: pillW,
                 height: pillH,
-                child: _ZikrPill(label: 'Zikr ${i + 1}'),
+                child: _ZikrPill(item: items[i]),
               ),
           ],
         );
@@ -112,9 +145,9 @@ class _ZikrStairs extends StatelessWidget {
 }
 
 class _ZikrPill extends StatelessWidget {
-  const _ZikrPill({required this.label});
+  const _ZikrPill({required this.item});
 
-  final String label;
+  final ZikrItemData item;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +157,7 @@ class _ZikrPill extends StatelessWidget {
         return Container(
           padding: EdgeInsets.only(left: h * 0.42, right: h * 0.08),
           decoration: BoxDecoration(
-            color: _pillGreen,
+            color: item.completed ? _lineGreen : _pillGreen,
             borderRadius: BorderRadius.circular(h),
             boxShadow: [
               BoxShadow(
@@ -141,9 +174,12 @@ class _ZikrPill extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    label,
+                    item.name,
                     maxLines: 1,
-                    style: TextStyle(fontSize: h * 0.42, color: _textGreen),
+                    style: TextStyle(
+                      fontSize: h * 0.42,
+                      color: item.completed ? Colors.white : _textGreen,
+                    ),
                   ),
                 ),
               ),
