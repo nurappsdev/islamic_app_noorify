@@ -63,6 +63,37 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   // which fetch their own data independently of HomeDashboardBloc.
   int _refreshTick = 0;
 
+  // The percentages on the cards come from the home dashboard, while the
+  // tracker only refreshes AmolDailyStore when the user ticks something and
+  // leaves. Refetch the dashboard whenever the store changes so the cards
+  // update as soon as the user is back.
+  bool _storeLoadedOnce = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _storeLoadedOnce = AmolDailyStore.instance.value != null;
+    AmolDailyStore.instance.addListener(_onAmolStoreChanged);
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onAmolStoreChanged);
+    super.dispose();
+  }
+
+  void _onAmolStoreChanged() {
+    // The first load only fills the checklist; nothing has changed yet.
+    if (!_storeLoadedOnce) {
+      _storeLoadedOnce = true;
+      return;
+    }
+    if (!mounted) return;
+    context.read<HomeDashboardBloc>().add(
+      const LoadHomeDashboard(silent: true),
+    );
+  }
+
   Future<void> _onRefresh() async {
     final dashboardBloc = context.read<HomeDashboardBloc>();
     // Subscribe before dispatching so the loading -> done transition can't
