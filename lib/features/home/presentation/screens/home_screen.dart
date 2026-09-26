@@ -500,8 +500,60 @@ class _ZikrCardState extends State<_ZikrCard> {
 
 /// Sunnah and Witr card: [SunnahWitrCardContent] over [HomeGradientShape],
 /// fed from the `sunnah_witr` pillar of the home dashboard when it has loaded.
-class _SunnahWitrCard extends StatelessWidget {
+class _SunnahWitrCard extends StatefulWidget {
   const _SunnahWitrCard();
+
+  @override
+  State<_SunnahWitrCard> createState() => _SunnahWitrCardState();
+}
+
+class _SunnahWitrCardState extends State<_SunnahWitrCard> {
+  /// Pill label -> the tracker `itemKey`s behind it. Isha's pill (+2) covers
+  /// the Isha Sunnah and Witr; only the Isha Sunnah drives its colour.
+  static const _pillItems = {
+    'Fajr': ['fajr_sunnah'],
+    'Duhr': ['dhuhr_sunnah'],
+    'Asr': ['asr_sunnah'],
+    'Magrib': ['maghrib_sunnah'],
+    'Esa': ['isha_sunnah', 'witr'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// Per-prayer points and tracked state from the shared daily checklist
+  /// (`sunnah_witr` pillar); empty until it loads.
+  List<SunnahPrayerData> get _prayers {
+    final items = AmolDailyStore.instance.pillar('sunnah_witr')?.items;
+    if (items == null) return const [];
+    final byKey = {for (final item in items) item.itemKey: item};
+    return [
+      for (final entry in _pillItems.entries)
+        if (byKey[entry.value.first] != null)
+          SunnahPrayerData(
+            prayerName: entry.key,
+            points: [
+              for (final key in entry.value) byKey[key]?.maxPoints ?? 0,
+            ].fold<num>(0, (sum, v) => sum + v),
+            sunnahCompleted: byKey[entry.value.first]!.isCompleted,
+          ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -521,6 +573,7 @@ class _SunnahWitrCard extends StatelessWidget {
           counter: sunnah == null
               ? '0/6'
               : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
+          prayers: _prayers,
         ),
       ),
     );
