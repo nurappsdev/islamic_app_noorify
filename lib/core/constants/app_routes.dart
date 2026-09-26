@@ -62,7 +62,25 @@ import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
 import '../../features/planner/presentation/screens/create_plan_screen.dart';
 import '../../features/dashboard/presentation/screens/quiz_dashboard_screen.dart';
-import '../../features/planner/presentation/models/planner_plan.dart';
+import '../../features/planner/data/datasources/quiz_plan_remote_data_source.dart';
+import '../../features/planner/data/repositories/quiz_plan_repository_impl.dart';
+import '../../features/planner/domain/entities/quiz_plan.dart';
+import '../../features/planner/domain/repositories/quiz_plan_repository.dart';
+import '../../features/planner/domain/usecases/abandon_quiz_plan.dart';
+import '../../features/planner/domain/usecases/create_quiz_plan.dart';
+import '../../features/planner/domain/usecases/get_planned_questions.dart';
+import '../../features/planner/domain/usecases/get_quiz_plan.dart';
+import '../../features/planner/domain/usecases/get_quiz_plans.dart';
+import '../../features/planner/domain/usecases/start_quiz_plan.dart';
+import '../../features/planner/domain/usecases/submit_planned_quiz.dart';
+import '../../features/planner/domain/usecases/update_quiz_plan.dart';
+import '../../features/planner/presentation/bloc/create_quiz_plan_bloc.dart';
+import '../../features/planner/presentation/bloc/planned_quiz_bloc.dart';
+import '../../features/planner/presentation/bloc/planner_bloc.dart';
+import '../../features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
+import '../../features/planner/presentation/screens/planned_quiz_result_screen.dart';
+import '../../features/planner/presentation/screens/planned_quiz_screen.dart';
+import '../../features/planner/presentation/widgets/quiz_plan_widgets.dart';
 import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
@@ -123,6 +141,20 @@ class AppRoutes {
     QuizRemoteDataSourceImpl(),
   );
 
+  /// Shared by the quiz plan screens; created on first use.
+  static final QuizPlanRepository _quizPlanRepository = QuizPlanRepositoryImpl(
+    QuizPlanRemoteDataSourceImpl(),
+  );
+
+  static QuizPlanDetailBloc _quizPlanDetailBloc(String planId) =>
+      QuizPlanDetailBloc(
+        planId: planId,
+        getPlan: GetQuizPlan(_quizPlanRepository),
+        startPlan: StartQuizPlan(_quizPlanRepository),
+        updatePlan: UpdateQuizPlan(_quizPlanRepository),
+        abandonPlan: AbandonQuizPlan(_quizPlanRepository),
+      );
+
   /// Gives [child] the quiz categories, fetched as it opens.
   static Widget _withQuizCategories(Widget child) => BlocProvider(
     create: (_) =>
@@ -137,7 +169,15 @@ class AppRoutes {
     tabs: [
       (_) => _withQuizCategories(const QuizCategoriesScreen()),
       (_) => const LearningScreen(),
-      (_) => const PlannerScreen(),
+      (_) => BlocProvider(
+        // Loads its plans itself, once it knows the user is signed in.
+        create: (_) => PlannerBloc(
+          getPlans: GetQuizPlans(_quizPlanRepository),
+          updatePlan: UpdateQuizPlan(_quizPlanRepository),
+          abandonPlan: AbandonQuizPlan(_quizPlanRepository),
+        ),
+        child: const PlannerScreen(),
+      ),
       (_) => MultiBlocProvider(
         providers: [
           BlocProvider(
@@ -221,16 +261,55 @@ class AppRoutes {
       case RouteNames.planner:
         return _page(_quizShell(2), settings);
       case RouteNames.plannerDetails:
-        final plan =
-            settings.arguments as PlannerPlan? ??
-            const PlannerPlan(
-              title: 'Plan 1',
-              quizCount: 10,
-              detailQuizCount: 4,
-            );
-        return _page(PlannerDetailScreen(plan: plan), settings);
+        // A plan from the list, or just its id.
+        final args = settings.arguments;
+        final plan = args is QuizPlan ? args : null;
+        final planId = plan?.id ?? (args is String ? args : '');
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                _quizPlanDetailBloc(planId)..add(const LoadQuizPlanDetail()),
+            child: PlannerDetailScreen(initialTitle: plan?.name ?? ''),
+          ),
+          settings,
+        );
+      case RouteNames.plannedQuiz:
+        final args = settings.arguments as PlannedQuizArgs;
+        return _page(
+          BlocProvider(
+            create: (_) => PlannedQuizBloc(
+              plan: args.plan,
+              portion: args.portion,
+              getQuestions: GetPlannedQuestions(_quizPlanRepository),
+              submit: SubmitPlannedQuiz(_quizPlanRepository),
+            )..add(const LoadPlannedQuestions()),
+            child: const PlannedQuizScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.plannedQuizResult:
+        final args = settings.arguments as PlannedQuizResultArgs;
+        return _page(
+          BlocProvider(
+            // The plan's progress after this quiz, from the server.
+            create: (_) =>
+                _quizPlanDetailBloc(args.plan.id)
+                  ..add(const LoadQuizPlanDetail()),
+            child: PlannedQuizResultScreen(args: args),
+          ),
+          settings,
+        );
       case RouteNames.createPlan:
-        return _page(const CreatePlanScreen(), settings);
+        return _page(
+          BlocProvider(
+            create: (_) => CreateQuizPlanBloc(
+              getCategories: GetQuizCategories(_quizRepository),
+              createPlan: CreateQuizPlan(_quizPlanRepository),
+            )..add(const LoadQuizPlanCategories()),
+            child: const CreatePlanScreen(),
+          ),
+          settings,
+        );
       case RouteNames.quizDashboard:
         return _page(_quizShell(3), settings);
       case RouteNames.completedHistory:

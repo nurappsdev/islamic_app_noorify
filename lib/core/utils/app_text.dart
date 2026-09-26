@@ -521,6 +521,40 @@ class AppText {
     required this.questionUnavailable,
     required this.allLabel,
     required this.noQuestionsInGroup,
+    required this.planStatusPlanned,
+    required this.planStatusInProgress,
+    required this.planStatusCompleted,
+    required this.planStatusAbandoned,
+    required this.startLabel,
+    required this.continueLabel,
+    required this.abandonPlan,
+    required this.abandonPlanQuestion,
+    required this.abandonPlanNote,
+    required this.scheduleLabel,
+    required this.notScheduled,
+    required this.clearLabel,
+    required this.notCompletedLabel,
+    required this.quizzesCompletedLabel,
+    required this.percentCompleteLabel,
+    required this.remainingLabel,
+    required this.numberOfQuizzes,
+    required this.questionsPerQuiz,
+    required this.planNameRequired,
+    required this.addAtLeastOneQuiz,
+    required this.selectCategoryFirst,
+    required this.planCreated,
+    required this.planUpdated,
+    required this.planAbandoned,
+    required this.planSave,
+    required this.nextQuizLabel,
+    required this.backToPlan,
+    required this.planQuizLabel,
+    required this.planErrorNotFound,
+    required this.planErrorAbandoned,
+    required this.planErrorNotStarted,
+    required this.planErrorPortionDone,
+    required this.planErrorInvalid,
+    required this.noPlannedQuestions,
     required this.correctLabel,
     required this.incorrectLabel,
     required this.unansweredLabel,
@@ -1165,6 +1199,40 @@ class AppText {
   final String questionUnavailable;
   final String allLabel;
   final String noQuestionsInGroup;
+  final String planStatusPlanned;
+  final String planStatusInProgress;
+  final String planStatusCompleted;
+  final String planStatusAbandoned;
+  final String startLabel;
+  final String continueLabel;
+  final String abandonPlan;
+  final String abandonPlanQuestion;
+  final String abandonPlanNote;
+  final String scheduleLabel;
+  final String notScheduled;
+  final String clearLabel;
+  final String notCompletedLabel;
+  final String quizzesCompletedLabel;
+  final String percentCompleteLabel;
+  final String remainingLabel;
+  final String numberOfQuizzes;
+  final String questionsPerQuiz;
+  final String planNameRequired;
+  final String addAtLeastOneQuiz;
+  final String selectCategoryFirst;
+  final String planCreated;
+  final String planUpdated;
+  final String planAbandoned;
+  final String planSave;
+  final String nextQuizLabel;
+  final String backToPlan;
+  final String planQuizLabel;
+  final String planErrorNotFound;
+  final String planErrorAbandoned;
+  final String planErrorNotStarted;
+  final String planErrorPortionDone;
+  final String planErrorInvalid;
+  final String noPlannedQuestions;
   final String correctLabel;
   final String incorrectLabel;
   final String unansweredLabel;
@@ -3150,6 +3218,124 @@ class AppText {
         map,
         'noQuestionsInGroup',
         fallback?.noQuestionsInGroup ?? '',
+      ),
+      planStatusPlanned: _read(
+        map,
+        'planStatusPlanned',
+        fallback?.planStatusPlanned ?? '',
+      ),
+      planStatusInProgress: _read(
+        map,
+        'planStatusInProgress',
+        fallback?.planStatusInProgress ?? '',
+      ),
+      planStatusCompleted: _read(
+        map,
+        'planStatusCompleted',
+        fallback?.planStatusCompleted ?? '',
+      ),
+      planStatusAbandoned: _read(
+        map,
+        'planStatusAbandoned',
+        fallback?.planStatusAbandoned ?? '',
+      ),
+      startLabel: _read(map, 'startLabel', fallback?.startLabel ?? ''),
+      continueLabel: _read(map, 'continueLabel', fallback?.continueLabel ?? ''),
+      abandonPlan: _read(map, 'abandonPlan', fallback?.abandonPlan ?? ''),
+      abandonPlanQuestion: _read(
+        map,
+        'abandonPlanQuestion',
+        fallback?.abandonPlanQuestion ?? '',
+      ),
+      abandonPlanNote: _read(
+        map,
+        'abandonPlanNote',
+        fallback?.abandonPlanNote ?? '',
+      ),
+      scheduleLabel: _read(map, 'scheduleLabel', fallback?.scheduleLabel ?? ''),
+      notScheduled: _read(map, 'notScheduled', fallback?.notScheduled ?? ''),
+      clearLabel: _read(map, 'clearLabel', fallback?.clearLabel ?? ''),
+      notCompletedLabel: _read(
+        map,
+        'notCompletedLabel',
+        fallback?.notCompletedLabel ?? '',
+      ),
+      quizzesCompletedLabel: _read(
+        map,
+        'quizzesCompletedLabel',
+        fallback?.quizzesCompletedLabel ?? '',
+      ),
+      percentCompleteLabel: _read(
+        map,
+        'percentCompleteLabel',
+        fallback?.percentCompleteLabel ?? '',
+      ),
+      remainingLabel: _read(
+        map,
+        'remainingLabel',
+        fallback?.remainingLabel ?? '',
+      ),
+      numberOfQuizzes: _read(
+        map,
+        'numberOfQuizzes',
+        fallback?.numberOfQuizzes ?? '',
+      ),
+      questionsPerQuiz: _read(
+        map,
+        'questionsPerQuiz',
+        fallback?.questionsPerQuiz ?? '',
+      ),
+      planNameRequired: _read(
+        map,
+        'planNameRequired',
+        fallback?.planNameRequired ?? '',
+      ),
+      addAtLeastOneQuiz: _read(
+        map,
+        'addAtLeastOneQuiz',
+        fallback?.addAtLeastOneQuiz ?? '',
+      ),
+      selectCategoryFirst: _read(
+        map,
+        'selectCategoryFirst',
+        fallback?.selectCategoryFirst ?? '',
+      ),
+      planCreated: _read(map, 'planCreated', fallback?.planCreated ?? ''),
+      planUpdated: _read(map, 'planUpdated', fallback?.planUpdated ?? ''),
+      planAbandoned: _read(map, 'planAbandoned', fallback?.planAbandoned ?? ''),
+      planSave: _read(map, 'planSave', fallback?.planSave ?? ''),
+      nextQuizLabel: _read(map, 'nextQuizLabel', fallback?.nextQuizLabel ?? ''),
+      backToPlan: _read(map, 'backToPlan', fallback?.backToPlan ?? ''),
+      planQuizLabel: _read(map, 'planQuizLabel', fallback?.planQuizLabel ?? ''),
+      planErrorNotFound: _read(
+        map,
+        'planErrorNotFound',
+        fallback?.planErrorNotFound ?? '',
+      ),
+      planErrorAbandoned: _read(
+        map,
+        'planErrorAbandoned',
+        fallback?.planErrorAbandoned ?? '',
+      ),
+      planErrorNotStarted: _read(
+        map,
+        'planErrorNotStarted',
+        fallback?.planErrorNotStarted ?? '',
+      ),
+      planErrorPortionDone: _read(
+        map,
+        'planErrorPortionDone',
+        fallback?.planErrorPortionDone ?? '',
+      ),
+      planErrorInvalid: _read(
+        map,
+        'planErrorInvalid',
+        fallback?.planErrorInvalid ?? '',
+      ),
+      noPlannedQuestions: _read(
+        map,
+        'noPlannedQuestions',
+        fallback?.noPlannedQuestions ?? '',
       ),
       correctLabel: _read(map, 'correctLabel', fallback?.correctLabel ?? ''),
       incorrectLabel: _read(

@@ -63,6 +63,22 @@ class ApiConstants {
   static String quizAttemptReviewEndPoint(String attemptId) =>
       "$quizAttemptsEndPoint/$attemptId/review";
 
+  static const String quizPlansEndPoint = "/quizzes/plans";
+
+  /// One plan: `GET` reads it, `PATCH` edits it, `DELETE` abandons it.
+  static String quizPlanEndPoint(String planId) => "$quizPlansEndPoint/$planId";
+
+  static String quizPlanStartEndPoint(String planId) =>
+      "${quizPlanEndPoint(planId)}/start";
+
+  static String quizPlanQuestionsEndPoint(String planId) =>
+      "${quizPlanEndPoint(planId)}/questions";
+
+  static String quizPlanPortionAttemptsEndPoint(
+    String planId,
+    String portionId,
+  ) => "${quizPlanEndPoint(planId)}/portions/$portionId/attempts";
+
   static const String quizDashboardEndPoint = "/quizzes/dashboard";
   static const String quizDashboardCompareEndPoint =
       "/quizzes/dashboard/compare";

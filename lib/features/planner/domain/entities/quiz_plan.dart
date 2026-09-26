@@ -17,8 +17,11 @@ enum QuizPlanStatus {
 
   final String apiValue;
 
-  static QuizPlanStatus fromApi(Object? value) => QuizPlanStatus.values
-      .firstWhere((s) => s != unknown && s.apiValue == value, orElse: () => unknown);
+  static QuizPlanStatus fromApi(Object? value) =>
+      QuizPlanStatus.values.firstWhere(
+        (s) => s != unknown && s.apiValue == value,
+        orElse: () => unknown,
+      );
 
   /// Still open: not finished and not given up.
   bool get isActive => this == planned || this == inProgress;
