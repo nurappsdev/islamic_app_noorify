@@ -127,11 +127,12 @@ class HomeGradientShape extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(24.r);
     return Container(
       width: double.infinity,
       height: 380.h,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: radius,
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -146,7 +147,24 @@ class HomeGradientShape extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 80.h,
+              child: Image.asset(
+                'assets/newShape.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
+            if (child != null) Positioned.fill(child: child!),
+          ],
+        ),
+      ),
     );
   }
 }
