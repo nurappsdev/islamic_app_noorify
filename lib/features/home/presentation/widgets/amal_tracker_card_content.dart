@@ -232,8 +232,9 @@ class PrayerSummaryWidget extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 24.sp,
-            fontWeight: FontWeight.w500,
+            fontSize: 26.sp,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
             color: _darkGreen,
           ),
         ),

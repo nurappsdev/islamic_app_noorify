@@ -48,7 +48,7 @@ class HadithReadingCardContent extends StatelessWidget {
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: 'Hadith Reading', counter: counter),
           const Spacer(),
-          Image.asset('assets/hadithimg.png', height: 118.h),
+          Image.asset('assets/hadithImg.png', height: 118.h),
           const Spacer(),
           if (readingTimeLabel.isNotEmpty)
             Text(
