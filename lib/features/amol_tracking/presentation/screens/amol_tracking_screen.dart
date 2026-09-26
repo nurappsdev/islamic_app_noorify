@@ -54,6 +54,32 @@ const _pillarTitleKeyByKey = {
   'nafl_and_more': 'Nafl & more',
 };
 
+/// The sections [AmolTrackingScreen] can bring into focus.
+enum AmalSection {
+  fardhPrayer('fardh_prayer'),
+  sunnahWitr('sunnah_witr'),
+  naflSalat('nafl_salat'),
+  quran('quran'),
+  hadith('hadith'),
+  quiz('quiz'),
+  naflAndMore('nafl_and_more');
+
+  const AmalSection(this.pillarKey);
+
+  /// The `pillarKey` `GET /amol/tracker/daily` uses for this section.
+  final String pillarKey;
+
+  /// Resolves a display name (`'Hadith'`, `'Nafl & more'`, ...) or a pillar
+  /// key; `null` for anything the tracker has no section for.
+  static AmalSection? tryParse(String? value) {
+    final key = _pillarKeyByTitle[value] ?? value;
+    for (final section in values) {
+      if (section.pillarKey == key) return section;
+    }
+    return null;
+  }
+}
+
 class AmolTrackingScreen extends StatefulWidget {
   const AmolTrackingScreen({
     super.key,
@@ -71,10 +97,10 @@ class AmolTrackingScreen extends StatefulWidget {
   final double progress;
   final String? initialExpandedCategory;
 
-  /// A section (e.g. `"Hadith"`, or a pillar key) to open as a floating,
+  /// A section to open as a floating,
   /// focused card while every other section is blurred and dimmed behind it.
   /// It is expanded too, and overrides [initialExpandedCategory].
-  final String? selectedSection;
+  final AmalSection? selectedSection;
 
   /// A Fardh prayer to bring into view once the day has loaded, e.g. `"Fajr"`
   /// (matched case-insensitively; `"Magrib"` and `"Maghrib"` both work).
@@ -87,9 +113,7 @@ class AmolTrackingScreen extends StatefulWidget {
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   late final DateTime _today = (widget.now ?? DateTime.now)();
-  late String? _focusedPillarKey = widget.selectedSection == null
-      ? null
-      : (_pillarKeyByTitle[widget.selectedSection] ?? widget.selectedSection);
+  late String? _focusedPillarKey = widget.selectedSection?.pillarKey;
   late String? _expandedPillarKey =
       _focusedPillarKey ??
       _pillarKeyByTitle[widget.initialExpandedCategory] ??

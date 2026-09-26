@@ -272,7 +272,10 @@ class _PillarProgressCard extends StatelessWidget {
 void _openAmolTracking(BuildContext context, String category) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => AmolTrackingScreen(selectedSection: category),
+      builder: (_) => AmolTrackingScreen(
+        selectedSection: AmalSection.tryParse(category),
+        initialExpandedCategory: category,
+      ),
     ),
   );
 }
