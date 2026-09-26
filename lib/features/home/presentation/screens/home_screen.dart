@@ -86,6 +86,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const HomeHeader(),
                       SizedBox(height: 10.h),
                       const AmalTrackerCard(),
+
                       SizedBox(height: 16.h),
                       KeyedSubtree(
                         key: ValueKey('prayer-time-card-$_refreshTick'),
@@ -96,6 +97,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         key: ValueKey('prohibited-prayer-times-$_refreshTick'),
                         child: const ProhibitedPrayerTimesCard(),
                       ),
+                      SizedBox(height: 16.h),
+                      const HomeGradientShape(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -112,6 +115,38 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Rounded panel with a top-to-bottom white -> light green gradient.
+class HomeGradientShape extends StatelessWidget {
+  const HomeGradientShape({super.key, this.child});
+
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 380.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFFFFF), Color(0xFFDCEBBB)],
+        ),
+        border: Border.all(color: const Color(0xFFDCEBBB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
