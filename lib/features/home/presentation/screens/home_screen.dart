@@ -136,6 +136,15 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   }
 }
 
+/// Opens the Amol tracker with [section] popped to the front.
+void _openTracker(BuildContext context, AmalSection section) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => AmolTrackingScreen(selectedSection: section),
+    ),
+  );
+}
+
 /// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
 /// fed from the home dashboard when it has loaded. The bar of the prayer whose
 /// period is running now is highlighted, using the same Aladhan times (and
@@ -223,9 +232,10 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
       ),
       child: HomeGradientShape(
         child: AmalTrackerCardContent(
-          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          percentage: fardh?.percentage ?? 0,
           completedLabel: fardh?.formattedSubtext,
           prayers: prayers,
+          onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
         ),
       ),
     );
@@ -256,7 +266,8 @@ class _HadithReadingCard extends StatelessWidget {
       ),
       child: HomeGradientShape(
         child: HadithReadingCardContent(
-          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          percentage: hadith?.percentage ?? 0,
+          onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
           counter: hadith == null
               ? '0/7'
               : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
@@ -292,6 +303,7 @@ class _QuranCard extends StatelessWidget {
       ),
       child: HomeGradientShape(
         child: QuranCardContent(
+          onOpenQuran: () => _openTracker(context, AmalSection.quran),
           counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
           progress: quran == null || max <= 0
               ? 0
@@ -328,7 +340,8 @@ class _NaflMoreCard extends StatelessWidget {
       ),
       child: HomeGradientShape(
         child: NaflMoreCardContent(
-          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          percentage: nafl?.percentage ?? 0,
+          onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
           counter: nafl == null
               ? '0/7'
               : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
