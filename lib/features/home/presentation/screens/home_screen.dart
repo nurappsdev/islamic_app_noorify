@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
 import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
@@ -231,13 +232,20 @@ class _HadithReadingCard extends StatelessWidget {
     }
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return HomeGradientShape(
-      child: HadithReadingCardContent(
-        percentage: dashboard?.userSummary.percentageToday ?? 0,
-        counter: hadith == null
-            ? '0/7'
-            : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
-        readingTimeLabel: hadith?.formattedSubtext ?? '',
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const AmolTrackingScreen(selectedSection: 'Hadith'),
+        ),
+      ),
+      child: HomeGradientShape(
+        child: HadithReadingCardContent(
+          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          counter: hadith == null
+              ? '0/7'
+              : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
+          readingTimeLabel: hadith?.formattedSubtext ?? '',
+        ),
       ),
     );
   }

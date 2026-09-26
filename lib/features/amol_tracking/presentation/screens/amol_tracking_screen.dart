@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -61,6 +62,7 @@ class AmolTrackingScreen extends StatefulWidget {
     this.progress = .86,
     this.initialExpandedCategory = 'Fardh Prayer',
     this.selectedPrayer,
+    this.selectedSection,
     this.now,
   });
 
@@ -68,6 +70,11 @@ class AmolTrackingScreen extends StatefulWidget {
   final String progressLabel;
   final double progress;
   final String? initialExpandedCategory;
+
+  /// A section (e.g. `"Hadith"`, or a pillar key) to open as a floating,
+  /// focused card while every other section is blurred and dimmed behind it.
+  /// It is expanded too, and overrides [initialExpandedCategory].
+  final String? selectedSection;
 
   /// A Fardh prayer to bring into view once the day has loaded, e.g. `"Fajr"`
   /// (matched case-insensitively; `"Magrib"` and `"Maghrib"` both work).
@@ -80,9 +87,19 @@ class AmolTrackingScreen extends StatefulWidget {
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
   late final DateTime _today = (widget.now ?? DateTime.now)();
+  late String? _focusedPillarKey = widget.selectedSection == null
+      ? null
+      : (_pillarKeyByTitle[widget.selectedSection] ?? widget.selectedSection);
   late String? _expandedPillarKey =
+      _focusedPillarKey ??
       _pillarKeyByTitle[widget.initialExpandedCategory] ??
       widget.initialExpandedCategory;
+
+  /// Flips true one frame after the first build so the focus effect animates
+  /// in instead of appearing already applied.
+  bool _focusActive = false;
+  final GlobalKey _focusedAnchor = GlobalKey();
+  bool _didScrollToFocused = false;
   late final AmolDailyBloc _bloc = AmolDailyBloc(
     GetAmolDaily(
       AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
@@ -144,6 +161,36 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
       ).showSnackBar(SnackBar(content: Text(message)));
     });
     unawaited(_loadPrayerTimes());
+    if (_focusedPillarKey != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _focusActive = true);
+      });
+    }
+  }
+
+  void _scrollToFocusedSection() {
+    if (_didScrollToFocused || _focusedPillarKey == null) return;
+    _didScrollToFocused = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final anchorContext = _focusedAnchor.currentContext;
+      if (!mounted || anchorContext == null) return;
+      Scrollable.ensureVisible(
+        anchorContext,
+        alignment: 0.1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  /// Tapping a dimmed section brings it to the front instead.
+  void _focusSection(String pillarKey) {
+    setState(() {
+      _focusedPillarKey = pillarKey;
+      _expandedPillarKey = pillarKey;
+      _didScrollToFocused = false;
+    });
+    _scrollToFocusedSection();
   }
 
   Future<void> _loadPrayerTimes() async {
@@ -337,7 +384,10 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
               ? widget.progressLabel
               : _formatPercentage(dashboard.completionPercentage);
 
-          if (dashboard != null) _scrollToSelectedPrayer();
+          if (dashboard != null) {
+            _scrollToSelectedPrayer();
+            _scrollToFocusedSection();
+          }
 
           return Scaffold(
             backgroundColor: context.pageColor(Colors.white),
@@ -366,17 +416,30 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                         SizedBox(height: 12.h),
                         if (dashboard != null)
                           for (final pillar in dashboard.pillars) ...[
-                            _PillarRow(
-                              pillar: pillar,
-                              expanded: _expandedPillarKey == pillar.pillarKey,
-                              onToggleExpanded: () =>
-                                  _toggleCategory(pillar.pillarKey),
-                              loggingItemKey: state.loggingItemKey,
-                              completionOverrides: state.completionOverrides,
-                              anchorItemKey: _selectedItemKey,
-                              anchorKey: _selectedItemAnchor,
-                              onItemTap: (item) =>
-                                  _onItemTap(pillar.pillarKey, item),
+                            _FocusableSection(
+                              key: pillar.pillarKey == _focusedPillarKey
+                                  ? _focusedAnchor
+                                  : null,
+                              mode: _focusedPillarKey == null || !_focusActive
+                                  ? _FocusMode.none
+                                  : pillar.pillarKey == _focusedPillarKey
+                                  ? _FocusMode.focused
+                                  : _FocusMode.dimmed,
+                              onTapWhenDimmed: () =>
+                                  _focusSection(pillar.pillarKey),
+                              child: _PillarRow(
+                                pillar: pillar,
+                                expanded:
+                                    _expandedPillarKey == pillar.pillarKey,
+                                onToggleExpanded: () =>
+                                    _toggleCategory(pillar.pillarKey),
+                                loggingItemKey: state.loggingItemKey,
+                                completionOverrides: state.completionOverrides,
+                                anchorItemKey: _selectedItemKey,
+                                anchorKey: _selectedItemAnchor,
+                                onItemTap: (item) =>
+                                    _onItemTap(pillar.pillarKey, item),
+                              ),
                             ),
                             SizedBox(height: 12.h),
                           ]
@@ -590,6 +653,113 @@ class _AccordionHeader extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+enum _FocusMode { none, focused, dimmed }
+
+/// Pops the focused section forward (scale + shadow) and pushes the rest
+/// behind a blur, fade and soft white gradient. Every change animates.
+class _FocusableSection extends StatelessWidget {
+  const _FocusableSection({
+    super.key,
+    required this.mode,
+    required this.onTapWhenDimmed,
+    required this.child,
+  });
+
+  final _FocusMode mode;
+  final VoidCallback onTapWhenDimmed;
+  final Widget child;
+
+  static const _duration = Duration(milliseconds: 380);
+
+  @override
+  Widget build(BuildContext context) {
+    final focused = mode == _FocusMode.focused;
+    final dimmed = mode == _FocusMode.dimmed;
+    final radius = BorderRadius.circular(16.r);
+
+    Widget content = AnimatedContainer(
+      duration: _duration,
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          if (focused)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 22.r,
+              spreadRadius: 1.r,
+              offset: Offset(0, 8.h),
+            ),
+        ],
+      ),
+      child: child,
+    );
+
+    content = TweenAnimationBuilder<double>(
+      tween: Tween(end: dimmed ? 2.5 : 0),
+      duration: _duration,
+      curve: Curves.easeOut,
+      child: Stack(
+        children: [
+          content,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                duration: _duration,
+                opacity: dimmed ? 1 : 0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: radius,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        context
+                            .surfaceColor(Colors.white)
+                            .withValues(alpha: 0.15),
+                        context
+                            .surfaceColor(const Color(0xFFDCEBBB))
+                            .withValues(alpha: 0.55),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      builder: (context, sigma, child) => sigma < 0.05
+          ? child!
+          : ImageFiltered(
+              imageFilter: ImageFilter.blur(
+                sigmaX: sigma,
+                sigmaY: sigma,
+                tileMode: TileMode.decal,
+              ),
+              child: child,
+            ),
+    );
+
+    return AnimatedScale(
+      scale: focused ? 1.03 : 1,
+      duration: _duration,
+      curve: Curves.easeOutBack,
+      child: AnimatedOpacity(
+        duration: _duration,
+        opacity: dimmed ? 0.55 : 1,
+        child: dimmed
+            ? GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTapWhenDimmed,
+                child: AbsorbPointer(child: content),
+              )
+            : content,
       ),
     );
   }
