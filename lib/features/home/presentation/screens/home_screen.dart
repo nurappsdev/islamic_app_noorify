@@ -21,6 +21,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/amal_track
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/hadith_reading_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
@@ -110,6 +111,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const _FardhPrayerCard(),
                       SizedBox(height: 16.h),
                       const _HadithReadingCard(),
+                      SizedBox(height: 16.h),
+                      const _QuranCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -255,6 +258,42 @@ class _HadithReadingCard extends StatelessWidget {
               ? '0/7'
               : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
           readingTimeLabel: hadith?.formattedSubtext ?? '',
+        ),
+      ),
+    );
+  }
+}
+
+/// Quran card: [QuranCardContent] over [HomeGradientShape], fed from the
+/// `quran` pillar of the home dashboard when it has loaded.
+class _QuranCard extends StatelessWidget {
+  const _QuranCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? quran;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'quran') quran = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    final max = quran?.maxPoints ?? 0;
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              const AmolTrackingScreen(selectedSection: AmalSection.quran),
+        ),
+      ),
+      child: HomeGradientShape(
+        child: QuranCardContent(
+          counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
+          progress: quran == null || max <= 0
+              ? 0
+              : (quran.points / max).toDouble(),
+          readingTimeLabel: quran?.formattedSubtext ?? '',
         ),
       ),
     );
