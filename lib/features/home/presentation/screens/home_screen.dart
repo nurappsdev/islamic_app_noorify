@@ -24,6 +24,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/amal_track
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/hadith_reading_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_card_slider.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/quiz_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
@@ -116,27 +117,26 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         child: const ProhibitedPrayerTimesCard(),
                       ),
                       SizedBox(height: 16.h),
-                      KeyedSubtree(
-                        key: ValueKey('fardh-prayer-$_refreshTick'),
-                        child: const _FardhPrayerCard(),
+                      HomeFeatureCardSlider(
+                        height: 350.h,
+                        children: [
+                          KeyedSubtree(
+                            key: ValueKey('fardh-prayer-$_refreshTick'),
+                            child: const _FardhPrayerCard(),
+                          ),
+                          const _HadithReadingCard(),
+                          const _QuranCard(),
+                          KeyedSubtree(
+                            key: ValueKey('nafl-more-$_refreshTick'),
+                            child: const _NaflMoreCard(),
+                          ),
+                          const _ZikrCard(),
+                          const _SunnahWitrCard(),
+                          const _QuizCard(),
+                        ],
                       ),
-                      SizedBox(height: 16.h),
-                      const _HadithReadingCard(),
-                      SizedBox(height: 16.h),
-                      const _QuranCard(),
-                      SizedBox(height: 16.h),
-                      KeyedSubtree(
-                        key: ValueKey('nafl-more-$_refreshTick'),
-                        child: const _NaflMoreCard(),
-                      ),
-                      SizedBox(height: 16.h),
-                      const _ZikrCard(),
-                      SizedBox(height: 16.h),
-                      const _SunnahWitrCard(),
-                      SizedBox(height: 16.h),
-                      const _QuizCard(),
-                      SizedBox(height: 14.h),
-                      const HomeProgressSection(),
+                      // SizedBox(height: 14.h),
+                      // const HomeProgressSection(),
                       SizedBox(height: 10.h),
                       const HomeFeatureGrid(),
                     ],
