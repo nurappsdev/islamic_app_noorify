@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 /// One fixed slot on the home screen that cycles through [children] with a
 /// vertical, Reels-style transition.
@@ -29,7 +30,7 @@ class HomeFeatureCardSlider extends StatefulWidget {
     this.resumeDelay = const Duration(seconds: 3),
     this.holdToScrollDelay = const Duration(milliseconds: 450),
     this.transitionDuration = const Duration(milliseconds: 650),
-    this.padding = const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
+    this.padding = const EdgeInsets.symmetric(vertical: 10),
     this.showIndicator = true,
     this.controller,
     this.onIndexChanged,
@@ -133,7 +134,10 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
     if (!mounted) return;
     // Skip this beat (and try again later) if the user is busy, the app is in
     // the background, or the slot is off-screen / under another route.
-    final idle = _downPosition == null && _appActive && TickerMode.valuesOf(context).enabled;
+    final idle =
+        _downPosition == null &&
+        _appActive &&
+        TickerMode.valuesOf(context).enabled;
     if (idle && _controller.hasClients) {
       _controller.nextPage(
         duration: widget.transitionDuration,
@@ -266,22 +270,21 @@ class _Page extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A card taller than the slot is scaled down to fit instead of overflowing.
+    // A card taller than the slot is scaled down to fit instead of overflowing,
+    // but is still laid out wide enough to fill the full width afterwards.
     final card = Padding(
       padding: padding,
-      child: LayoutBuilder(
-        builder: (context, box) => FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.topCenter,
-          child: SizedBox(width: box.maxWidth, child: child),
-        ),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: _ScaleToFitHeight(child: child),
       ),
     );
     return AnimatedBuilder(
       animation: controller,
       child: card,
       builder: (context, child) {
-        final current = controller.hasClients &&
+        final current =
+            controller.hasClients &&
                 controller.position.haveDimensions &&
                 controller.page != null
             ? controller.page!
@@ -336,6 +339,79 @@ class _Dots extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Sizes [child] to the full available width; when it comes out taller than
+/// the available height it is laid out wider by 1/scale and painted scaled
+/// down by `scale`, so it still fills the width after shrinking.
+class _ScaleToFitHeight extends SingleChildRenderObjectWidget {
+  const _ScaleToFitHeight({required Widget child}) : super(child: child);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderScaleToFitHeight();
+}
+
+class _RenderScaleToFitHeight extends RenderShiftedBox {
+  _RenderScaleToFitHeight() : super(null);
+
+  double _scale = 1;
+
+  @override
+  void performLayout() {
+    final child = this.child;
+    if (child == null) {
+      size = constraints.smallest;
+      return;
+    }
+    final maxW = constraints.maxWidth;
+    final maxH = constraints.maxHeight;
+    child.layout(
+      BoxConstraints(minWidth: maxW, maxWidth: maxW),
+      parentUsesSize: true,
+    );
+    _scale = 1;
+    if (child.size.height > maxH) {
+      _scale = maxH / child.size.height;
+      child.layout(
+        BoxConstraints(minWidth: maxW / _scale, maxWidth: maxW / _scale),
+        parentUsesSize: true,
+      );
+    }
+    size = constraints.constrain(Size(maxW, child.size.height * _scale));
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final child = this.child;
+    if (child == null) return;
+    if (_scale == 1) {
+      context.paintChild(child, offset);
+      return;
+    }
+    context.pushTransform(
+      needsCompositing,
+      offset,
+      Matrix4.diagonal3Values(_scale, _scale, 1),
+      (context, offset) => context.paintChild(child, offset),
+    );
+  }
+
+  @override
+  void applyPaintTransform(RenderBox child, Matrix4 transform) {
+    transform.scaleByDouble(_scale, _scale, 1, 1);
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    final child = this.child;
+    if (child == null) return false;
+    return result.addWithPaintTransform(
+      transform: Matrix4.diagonal3Values(_scale, _scale, 1),
+      position: position,
+      hitTest: (result, position) => child.hitTest(result, position: position),
     );
   }
 }
