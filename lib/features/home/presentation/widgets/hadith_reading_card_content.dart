@@ -5,7 +5,6 @@ import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_d
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
-const _bookGreen = Color(0xFFA1AD59);
 const _footerGreen = Color(0xFF9DAA62);
 
 /// Content layer for the Hadith-reading card. Draws no background of its own -
@@ -49,7 +48,7 @@ class HadithReadingCardContent extends StatelessWidget {
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: 'Hadith Reading', counter: counter),
           const Spacer(),
-          Icon(Icons.menu_book_rounded, size: 118.r, color: _bookGreen),
+          Image.asset('assets/hadithimg.png', height: 118.h),
           const Spacer(),
           if (readingTimeLabel.isNotEmpty)
             Text(
