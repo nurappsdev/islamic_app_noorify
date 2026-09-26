@@ -13,17 +13,31 @@ import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_categ
 /// One finished attempt in the quiz history, with its server-computed score.
 /// Tapping it opens the answer review.
 class QuizAttemptCard extends StatelessWidget {
-  const QuizAttemptCard({super.key, required this.attempt});
+  const QuizAttemptCard({
+    super.key,
+    required this.attempt,
+    this.showDate = false,
+  });
 
   final QuizAttempt attempt;
+
+  /// Adds the day the attempt was completed to its title, so the daily
+  /// quizzes in a long history can be told apart.
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final categoryName = context.localized(attempt.category?.name);
-    final title = attempt.attemptType == QuizAttemptType.daily
+    final name = attempt.attemptType == QuizAttemptType.daily
         ? appText.dailyQuiz
         : (categoryName.isEmpty ? appText.categoryQuiz : categoryName);
+    final completedAt = attempt.completedAt;
+    final title = showDate && completedAt != null
+        ? context.localizedDigits(
+            '$name - ${formatQuizDay(completedAt, appText.monthNames)}',
+          )
+        : name;
     return InkWell(
       onTap: attempt.id.isEmpty
           ? null
@@ -60,7 +74,7 @@ class QuizAttemptCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    maxLines: 1,
+                    maxLines: showDate ? 2 : 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 14.sp),
                   ),

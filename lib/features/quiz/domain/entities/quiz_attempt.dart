@@ -145,20 +145,29 @@ class QuizAttemptPage {
   bool get hasMore => page < totalPage;
 }
 
-/// A question of a finished attempt, with the answer revealed.
-class QuizReviewQuestion {
-  const QuizReviewQuestion({
+/// A question of a finished attempt, with the answer revealed and the
+/// server's verdict on it.
+class EvaluatedQuestion {
+  const EvaluatedQuestion({
     required this.id,
+    required this.categoryId,
+    required this.category,
     required this.question,
     required this.options,
     required this.checkedBy,
     required this.correctAnswerKey,
     required this.explanation,
+    required this.difficulty,
     required this.difficultyLabel,
+    required this.displayOrder,
+    required this.isActive,
     required this.isCorrect,
+    required this.status,
   });
 
   final String id;
+  final String? categoryId;
+  final QuizCategory? category;
 
   /// Empty when the question has since been removed from the bank.
   final LocalizedText question;
@@ -166,14 +175,57 @@ class QuizReviewQuestion {
   final String? checkedBy;
   final String? correctAnswerKey;
   final LocalizedText explanation;
+  final QuizDifficulty? difficulty;
   final LocalizedText difficultyLabel;
+  final int? displayOrder;
+  final bool isActive;
   final bool isCorrect;
+
+  /// The source of truth for how the question is marked.
+  final QuizAnswerStatus status;
 }
 
-/// One attempt in full (`GET /quizzes/attempts/{id}`), for the review screen.
+/// The attempt's questions grouped by [EvaluatedQuestion.status], as sent.
+class QuizAttemptReview {
+  const QuizAttemptReview({
+    required this.correct,
+    required this.incorrect,
+    required this.unanswered,
+  });
+
+  final List<EvaluatedQuestion> correct;
+  final List<EvaluatedQuestion> incorrect;
+  final List<EvaluatedQuestion> unanswered;
+}
+
+/// One attempt in full (`GET /quizzes/attempts/{id}/review`). The answered
+/// figures are `null` for an attempt recorded before answers were stored.
 class QuizAttemptDetail {
-  const QuizAttemptDetail({required this.attempt, required this.questions});
+  const QuizAttemptDetail({
+    required this.attempt,
+    required this.planId,
+    required this.portionId,
+    required this.answeredQuestions,
+    required this.unansweredQuestions,
+    required this.wrongAnswers,
+    required this.answeredPercentage,
+    required this.correctPercentage,
+    required this.accuracyPercentage,
+    required this.questions,
+    required this.review,
+  });
 
   final QuizAttempt attempt;
-  final List<QuizReviewQuestion> questions;
+  final String? planId;
+  final String? portionId;
+  final int? answeredQuestions;
+  final int? unansweredQuestions;
+  final int? wrongAnswers;
+  final num? answeredPercentage;
+  final num correctPercentage;
+  final num? accuracyPercentage;
+
+  /// Every question in the order it was asked.
+  final List<EvaluatedQuestion> questions;
+  final QuizAttemptReview review;
 }

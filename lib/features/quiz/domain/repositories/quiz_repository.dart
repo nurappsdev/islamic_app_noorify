@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
 
 /// Contract for the quiz API. Every call returns [Right] with the result or
@@ -34,6 +35,21 @@ abstract interface class QuizRepository {
     QuizAttemptType? attemptType,
   });
 
-  /// `GET /quizzes/attempts/{attemptId}`.
-  Future<Either<Failure, QuizAttemptDetail>> getAttemptDetail(String attemptId);
+  /// `GET /quizzes/attempts/{attemptId}/review`.
+  Future<Either<Failure, QuizAttemptDetail>> getAttemptReview(String attemptId);
+
+  /// `GET /quizzes/dashboard`.
+  Future<Either<Failure, QuizDashboardData>> getQuizDashboard(
+    QuizDashboardFilter filter,
+  );
+
+  /// `GET /quizzes/dashboard/compare`.
+  Future<Either<Failure, QuizComparison>> getQuizDashboardComparison(
+    QuizComparisonFilter filter,
+  );
+
+  /// `GET /quizzes/dashboard/history/compare`.
+  Future<Either<Failure, QuizComparison>> getQuizDashboardHistoryComparison(
+    QuizComparisonFilter filter,
+  );
 }

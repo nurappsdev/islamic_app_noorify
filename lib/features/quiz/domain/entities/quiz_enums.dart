@@ -35,3 +35,21 @@ enum QuizDifficulty {
 /// Where a quiz submission stands. Once it leaves [idle] the quiz is closed:
 /// the timer stops and only a retry of a [failed] submission is accepted.
 enum QuizSubmissionStatus { idle, submitting, submitted, failed }
+
+/// How a question of a finished attempt went, as the server reports it.
+enum QuizAnswerStatus {
+  correct('correct'),
+  incorrect('incorrect'),
+  unanswered('unanswered');
+
+  const QuizAnswerStatus(this.apiValue);
+
+  final String apiValue;
+
+  static QuizAnswerStatus? fromApi(Object? value) {
+    for (final status in QuizAnswerStatus.values) {
+      if (status.apiValue == value) return status;
+    }
+    return null;
+  }
+}

@@ -6,8 +6,10 @@ import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/quiz/data/models/quiz_attempt_model.dart';
 import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
+import 'package:islami_app_noorify/features/quiz/data/models/quiz_dashboard_model.dart';
 import 'package:islami_app_noorify/features/quiz/data/models/quiz_model.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
 
 /// Talks to the quiz REST endpoints. Throws [ServerException] /
@@ -38,8 +40,21 @@ abstract interface class QuizRemoteDataSource {
     QuizAttemptType? attemptType,
   });
 
-  /// `GET /quizzes/attempts/{attemptId}`.
-  Future<QuizAttemptDetailModel> getAttemptDetail(String attemptId);
+  /// `GET /quizzes/attempts/{attemptId}/review`.
+  Future<QuizAttemptDetailModel> getAttemptReview(String attemptId);
+
+  /// `GET /quizzes/dashboard`.
+  Future<QuizDashboardDataModel> getDashboard(QuizDashboardFilter filter);
+
+  /// `GET /quizzes/dashboard/compare`.
+  Future<QuizComparisonModel> getDashboardComparison(
+    QuizComparisonFilter filter,
+  );
+
+  /// `GET /quizzes/dashboard/history/compare`.
+  Future<QuizComparisonModel> getDashboardHistoryComparison(
+    QuizComparisonFilter filter,
+  );
 }
 
 class QuizRemoteDataSourceImpl implements QuizRemoteDataSource {
@@ -139,14 +154,58 @@ class QuizRemoteDataSourceImpl implements QuizRemoteDataSource {
   }
 
   @override
-  Future<QuizAttemptDetailModel> getAttemptDetail(String attemptId) async {
+  Future<QuizAttemptDetailModel> getAttemptReview(String attemptId) async {
     final json = await _send(
       () => _dio.get<dynamic>(
-        ApiConstants.quizAttemptEndPoint(attemptId),
+        ApiConstants.quizAttemptReviewEndPoint(attemptId),
         options: _authOptions(),
       ),
     );
     return QuizAttemptDetailModel.fromJson(_dataMap(json, 'Quiz attempt'));
+  }
+
+  @override
+  Future<QuizDashboardDataModel> getDashboard(
+    QuizDashboardFilter filter,
+  ) async {
+    final json = await _send(
+      () => _dio.get<dynamic>(
+        ApiConstants.quizDashboardEndPoint,
+        queryParameters: quizDashboardQuery(filter),
+        options: _authOptions(),
+      ),
+    );
+    return QuizDashboardDataModel.fromJson(
+      _dataMap(json, 'Quiz dashboard'),
+      meta: json['meta'],
+    );
+  }
+
+  @override
+  Future<QuizComparisonModel> getDashboardComparison(
+    QuizComparisonFilter filter,
+  ) => _getComparison(ApiConstants.quizDashboardCompareEndPoint, filter);
+
+  @override
+  Future<QuizComparisonModel> getDashboardHistoryComparison(
+    QuizComparisonFilter filter,
+  ) => _getComparison(ApiConstants.quizDashboardHistoryCompareEndPoint, filter);
+
+  Future<QuizComparisonModel> _getComparison(
+    String path,
+    QuizComparisonFilter filter,
+  ) async {
+    final json = await _send(
+      () => _dio.get<dynamic>(
+        path,
+        queryParameters: quizDashboardQuery(filter),
+        options: _authOptions(),
+      ),
+    );
+    return QuizComparisonModel.fromJson(
+      _dataMap(json, 'Quiz comparison'),
+      meta: json['meta'],
+    );
   }
 
   /// Runs [request] and returns its JSON envelope, or throws when the call
@@ -227,6 +286,22 @@ class QuizRemoteDataSourceImpl implements QuizRemoteDataSource {
     final message = json['message']?.toString();
     return (message != null && message.isNotEmpty) ? message : null;
   }
+}
+
+/// The query for the dashboard and compare endpoints: only the fields that
+/// are set, dates as `YYYY-MM-DD`.
+Map<String, Object> quizDashboardQuery(QuizDashboardFilter filter) {
+  final days = filter.days;
+  final from = filter.from;
+  final to = filter.to;
+  return {
+    'period': filter.period.apiValue,
+    'days': ?days,
+    if (from != null) 'from': formatQuizDate(from),
+    if (to != null) 'to': formatQuizDate(to),
+    'page': filter.page,
+    'limit': filter.limit,
+  };
 }
 
 /// [date]'s local calendar day as `YYYY-MM-DD`, the format the API expects.

@@ -136,51 +136,105 @@ class QuizAttemptPageModel extends QuizAttemptPage {
   }
 }
 
-class QuizReviewQuestionModel extends QuizReviewQuestion {
-  const QuizReviewQuestionModel({
+class EvaluatedQuestionModel extends EvaluatedQuestion {
+  const EvaluatedQuestionModel({
     required super.id,
+    required super.categoryId,
+    required super.category,
     required super.question,
     required super.options,
     required super.checkedBy,
     required super.correctAnswerKey,
     required super.explanation,
+    required super.difficulty,
     required super.difficultyLabel,
+    required super.displayOrder,
+    required super.isActive,
     required super.isCorrect,
+    required super.status,
   });
 
   /// A question deleted from the bank since comes back as `{id, question:
   /// null}` with the user's answer; it still counts, so it is kept.
-  factory QuizReviewQuestionModel.fromJson(Map<String, dynamic> json) {
-    return QuizReviewQuestionModel(
+  factory EvaluatedQuestionModel.fromJson(Map<String, dynamic> json) {
+    final checkedBy = readId(json['checkedBy']);
+    final isCorrect = json['isCorrect'] == true;
+    final category = readMap(json['category']);
+    final difficulty = readDifficulty(json['difficulty']);
+    return EvaluatedQuestionModel(
       id: readId(json['id']) ?? '',
+      categoryId: readId(json['categoryId']),
+      category: category == null ? null : QuizCategoryModel.fromJson(category),
       question: LocalizedText.fromJson(json['question']),
       options: QuizOptionModel.listFromJson(json['options']),
-      checkedBy: readId(json['checkedBy']),
+      checkedBy: checkedBy,
       correctAnswerKey: readId(json['correctAnswerKey']),
       explanation: LocalizedText.fromJson(json['explanation']),
-      difficultyLabel: readDifficulty(json['difficulty']).label,
-      isCorrect: json['isCorrect'] == true,
+      difficulty: difficulty.level,
+      difficultyLabel: difficulty.label,
+      displayOrder: readNum(json['displayOrder'])?.toInt(),
+      isActive: json['isActive'] != false,
+      isCorrect: isCorrect,
+      // `status` is the source of truth. Only a payload without it (an older
+      // server) is derived, by the same rule the server applies.
+      status:
+          QuizAnswerStatus.fromApi(json['status']) ??
+          (checkedBy == null
+              ? QuizAnswerStatus.unanswered
+              : (isCorrect
+                    ? QuizAnswerStatus.correct
+                    : QuizAnswerStatus.incorrect)),
     );
   }
+
+  static List<EvaluatedQuestion> listFromJson(Object? json) => json is List
+      ? json
+            .map(readMap)
+            .whereType<Map<String, dynamic>>()
+            .map(EvaluatedQuestionModel.fromJson)
+            .toList()
+      : const [];
 }
 
 class QuizAttemptDetailModel extends QuizAttemptDetail {
   const QuizAttemptDetailModel({
     required super.attempt,
+    required super.planId,
+    required super.portionId,
+    required super.answeredQuestions,
+    required super.unansweredQuestions,
+    required super.wrongAnswers,
+    required super.answeredPercentage,
+    required super.correctPercentage,
+    required super.accuracyPercentage,
     required super.questions,
+    required super.review,
   });
 
   factory QuizAttemptDetailModel.fromJson(Map<String, dynamic> json) {
-    final rows = json['questions'];
+    final questions = EvaluatedQuestionModel.listFromJson(json['questions']);
+    final review = readMap(json['review']);
+    List<EvaluatedQuestion> group(String name, QuizAnswerStatus status) =>
+        review == null
+        // Without the groups, split the ordered list by the same status.
+        ? questions.where((q) => q.status == status).toList()
+        : EvaluatedQuestionModel.listFromJson(review[name]);
     return QuizAttemptDetailModel(
       attempt: QuizAttemptModel.fromJson(json),
-      questions: rows is List
-          ? rows
-                .map(readMap)
-                .whereType<Map<String, dynamic>>()
-                .map(QuizReviewQuestionModel.fromJson)
-                .toList()
-          : const [],
+      planId: readId(json['planId']),
+      portionId: readId(json['portionId']),
+      answeredQuestions: readNum(json['answeredQuestions'])?.toInt(),
+      unansweredQuestions: readNum(json['unansweredQuestions'])?.toInt(),
+      wrongAnswers: readNum(json['wrongAnswers'])?.toInt(),
+      answeredPercentage: readNum(json['answeredPercentage']),
+      correctPercentage: readNum(json['correctPercentage']) ?? 0,
+      accuracyPercentage: readNum(json['accuracyPercentage']),
+      questions: questions,
+      review: QuizAttemptReview(
+        correct: group('correct', QuizAnswerStatus.correct),
+        incorrect: group('incorrect', QuizAnswerStatus.incorrect),
+        unanswered: group('unanswered', QuizAnswerStatus.unanswered),
+      ),
     );
   }
 }

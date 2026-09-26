@@ -7,18 +7,33 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_attempt_review_bloc.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_segmented_tabs.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 const _correctColor = Color(0xFF20C664);
 const _incorrectColor = Color(0xFFC90009);
+const _unansweredColor = Color(0xFF9E9E9E);
 
-/// Question-by-question review of a finished attempt. Correctness and the
-/// right answer come from the server. Expects a [QuizAttemptReviewBloc].
-class QuizAttemptReviewScreen extends StatelessWidget {
+/// Question-by-question review of a finished attempt
+/// (`GET /quizzes/attempts/{id}/review`). How each question is marked comes
+/// from the server's `status`. Expects a [QuizAttemptReviewBloc].
+class QuizAttemptReviewScreen extends StatefulWidget {
   const QuizAttemptReviewScreen({super.key});
+
+  @override
+  State<QuizAttemptReviewScreen> createState() =>
+      _QuizAttemptReviewScreenState();
+}
+
+class _QuizAttemptReviewScreenState extends State<QuizAttemptReviewScreen> {
+  /// All, then the server's correct / incorrect / unanswered groups.
+  int _tab = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -44,26 +59,28 @@ class QuizAttemptReviewScreen extends StatelessWidget {
                             );
                           case QuizAttemptReviewStatus.failure:
                             return QuizStatusView(
-                              message:
-                                  state.errorMessage ??
-                                  appText.unableToLoadAttempt,
-                              onRetry: () => context
-                                  .read<QuizAttemptReviewBloc>()
-                                  .add(const LoadQuizAttemptReview()),
+                              message: quizFailureMessage(
+                                appText,
+                                state.failure,
+                                forAttempt: true,
+                              ),
+                              // A missing attempt will not appear on retry.
+                              onRetry: state.failure?.statusCode == 404
+                                  ? null
+                                  : () => context
+                                        .read<QuizAttemptReviewBloc>()
+                                        .add(const LoadQuizAttemptReview()),
                             );
                           case QuizAttemptReviewStatus.success:
-                            if (detail == null) return const SizedBox();
-                            return ListView.separated(
-                              padding: EdgeInsets.only(bottom: 24.h),
-                              itemCount: detail.questions.length + 1,
-                              separatorBuilder: (_, _) =>
-                                  SizedBox(height: 10.h),
-                              itemBuilder: (context, index) => index == 0
-                                  ? _AttemptOverview(attempt: detail.attempt)
-                                  : _ReviewQuestionCard(
-                                      number: index,
-                                      question: detail.questions[index - 1],
-                                    ),
+                            if (detail == null) {
+                              return QuizStatusView(
+                                message: appText.quizErrorGeneric,
+                              );
+                            }
+                            return _ReviewBody(
+                              detail: detail,
+                              tab: _tab,
+                              onTabChanged: (tab) => setState(() => _tab = tab),
                             );
                         }
                       },
@@ -73,6 +90,71 @@ class QuizAttemptReviewScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReviewBody extends StatelessWidget {
+  const _ReviewBody({
+    required this.detail,
+    required this.tab,
+    required this.onTabChanged,
+  });
+
+  final QuizAttemptDetail detail;
+  final int tab;
+  final ValueChanged<int> onTabChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final review = detail.review;
+    // The ordered list for All; the server's own groups for the rest.
+    final groups = [
+      detail.questions,
+      review.correct,
+      review.incorrect,
+      review.unanswered,
+    ];
+    final labels = [
+      appText.allLabel,
+      appText.correctLabel,
+      appText.incorrectLabel,
+      appText.unansweredLabel,
+    ];
+    final questions = groups[tab];
+    // Numbered by the place each question had in the attempt.
+    final numberOf = {
+      for (var i = 0; i < detail.questions.length; i++)
+        detail.questions[i].id: i + 1,
+    };
+
+    return ListView(
+      padding: EdgeInsets.only(bottom: 24.h),
+      children: [
+        _AttemptOverview(detail: detail),
+        SizedBox(height: 12.h),
+        QuizSegmentedTabs(
+          fontSize: 11.sp,
+          selectedIndex: tab,
+          onChanged: onTabChanged,
+          labels: [
+            for (var i = 0; i < labels.length; i++)
+              context.localizedDigits('${labels[i]} (${groups[i].length})'),
+          ],
+        ),
+        SizedBox(height: 10.h),
+        if (questions.isEmpty)
+          QuizStatusView(message: appText.noQuestionsInGroup)
+        else
+          for (final question in questions) ...[
+            _EvaluatedQuestionCard(
+              number: numberOf[question.id] ?? 0,
+              question: question,
+            ),
+            SizedBox(height: 10.h),
+          ],
+      ],
     );
   }
 }
@@ -107,14 +189,17 @@ class _ReviewHeader extends StatelessWidget {
   );
 }
 
+/// The attempt's figures exactly as the server sent them.
 class _AttemptOverview extends StatelessWidget {
-  const _AttemptOverview({required this.attempt});
+  const _AttemptOverview({required this.detail});
 
-  final QuizAttempt attempt;
+  final QuizAttemptDetail detail;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final attempt = detail.attempt;
+    final completedAt = attempt.completedAt;
     Widget line(String label, String value, [Color? color]) => Padding(
       padding: EdgeInsets.symmetric(vertical: 2.h),
       child: Text(
@@ -128,28 +213,73 @@ class _AttemptOverview extends StatelessWidget {
         color: context.surfaceColor(Color(0xFFDFE9B9)),
         borderRadius: BorderRadius.circular(18.r),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          QuizScoreRing(scorePercentage: attempt.scorePercentage),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                line(appText.questionsWord, '${attempt.totalQuestions}'),
-                line(
-                  appText.correctAnswers,
-                  '${attempt.correctAnswers}',
-                  context.inkColor(_correctColor),
+          Row(
+            children: [
+              QuizScoreRing(scorePercentage: attempt.scorePercentage),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    line(appText.questionsWord, '${attempt.totalQuestions}'),
+                    line(
+                      appText.correctAnswers,
+                      '${attempt.correctAnswers}',
+                      context.inkColor(_correctColor),
+                    ),
+                    line(
+                      appText.incorrectAnswers,
+                      '${attempt.incorrectAnswers}',
+                      context.inkColor(_incorrectColor),
+                    ),
+                    line(
+                      appText.unansweredLabel,
+                      formatOptional(
+                        detail.unansweredQuestions,
+                        (v) => '${v.toInt()}',
+                      ),
+                    ),
+                  ],
                 ),
-                line(
-                  appText.incorrectAnswers,
-                  '${attempt.incorrectAnswers}',
-                  context.inkColor(_incorrectColor),
-                ),
-                line(appText.timeSpent, formatClock(attempt.timeSpentSeconds)),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          QuizStatGrid(
+            stats: [
+              (
+                appText.answeredLabel,
+                formatOptional(detail.answeredPercentage, formatPercent),
+              ),
+              (
+                appText.correctPercentageLabel,
+                formatPercent(detail.correctPercentage),
+              ),
+              (
+                appText.accuracy,
+                formatOptional(detail.accuracyPercentage, formatPercent),
+              ),
+              (appText.scoreLabel, formatPercent(attempt.scorePercentage)),
+              (
+                appText.pointsWord,
+                '${formatPoints(attempt.pointsEarned)} / '
+                    '${formatPoints(attempt.maxPoints)}',
+              ),
+              (appText.timeSpent, formatClock(attempt.timeSpentSeconds)),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          if (completedAt != null)
+            line(
+              appText.completedAtLabel,
+              formatQuizDateTime(completedAt, appText.monthNames),
             ),
+          line(
+            appText.fiftyFiftyUsedLabel,
+            attempt.used5050Lifeline ? appText.yes : appText.no,
           ),
         ],
       ),
@@ -157,18 +287,36 @@ class _AttemptOverview extends StatelessWidget {
   }
 }
 
-class _ReviewQuestionCard extends StatelessWidget {
-  const _ReviewQuestionCard({required this.number, required this.question});
+class _EvaluatedQuestionCard extends StatelessWidget {
+  const _EvaluatedQuestionCard({required this.number, required this.question});
 
   final int number;
-  final QuizReviewQuestion question;
+  final EvaluatedQuestion question;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final text = context.localized(question.question);
     final explanation = context.localized(question.explanation);
-    final statusColor = question.isCorrect ? _correctColor : _incorrectColor;
+    final category = context.localized(question.category?.name);
+    final difficulty = context.localized(question.difficultyLabel);
+    final (statusColor, statusIcon, statusLabel) = switch (question.status) {
+      QuizAnswerStatus.correct => (
+        _correctColor,
+        Icons.check,
+        appText.correctLabel,
+      ),
+      QuizAnswerStatus.incorrect => (
+        _incorrectColor,
+        Icons.close,
+        appText.incorrectLabel,
+      ),
+      QuizAnswerStatus.unanswered => (
+        _unansweredColor,
+        Icons.remove,
+        appText.unansweredLabel,
+      ),
+    };
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -189,17 +337,29 @@ class _ReviewQuestionCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 8.w),
-              CircleAvatar(
-                radius: 12.r,
-                backgroundColor: context.surfaceColor(statusColor),
-                child: Icon(
-                  question.isCorrect ? Icons.check : Icons.close,
-                  color: Colors.white,
-                  size: 15.sp,
+              Tooltip(
+                message: statusLabel,
+                child: CircleAvatar(
+                  radius: 12.r,
+                  backgroundColor: context.surfaceColor(statusColor),
+                  child: Icon(statusIcon, color: Colors.white, size: 15.sp),
                 ),
               ),
             ],
           ),
+          if (category.isNotEmpty || difficulty.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            Wrap(
+              spacing: 6.w,
+              runSpacing: 4.h,
+              children: [
+                if (category.isNotEmpty)
+                  _Chip('${appText.quizCategoryLabel}: $category'),
+                if (difficulty.isNotEmpty)
+                  _Chip('${appText.difficultyLabel}: $difficulty'),
+              ],
+            ),
+          ],
           SizedBox(height: 10.h),
           for (final option in question.options) ...[
             _ReviewOptionTile(
@@ -210,17 +370,18 @@ class _ReviewQuestionCard extends StatelessWidget {
             ),
             SizedBox(height: 5.h),
           ],
-          if (question.checkedBy == null)
-            Padding(
-              padding: EdgeInsets.only(top: 4.h),
-              child: Text(
-                appText.notAnswered,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: context.inkColor(_incorrectColor),
-                ),
+          Padding(
+            padding: EdgeInsets.only(top: 4.h),
+            child: Text(
+              question.status == QuizAnswerStatus.unanswered
+                  ? appText.notAnswered
+                  : statusLabel,
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: context.inkColor(statusColor),
               ),
             ),
+          ),
           if (explanation.isNotEmpty) ...[
             SizedBox(height: 8.h),
             Text(
@@ -241,6 +402,28 @@ class _ReviewQuestionCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(Color(0xFFF2F6E7)),
+      borderRadius: BorderRadius.circular(10.r),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 10.sp,
+        color: context.inkColor(Color(0xFF56614F)),
+      ),
+    ),
+  );
 }
 
 /// An option, marked as the right answer and/or the user's (wrong) choice.

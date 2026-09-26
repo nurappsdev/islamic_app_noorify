@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 
+import 'package:islami_app_noorify/core/errors/failures.dart';
+
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_attempt_detail.dart';
+import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_attempt_review.dart';
 
 enum QuizAttemptReviewStatus { loading, success, failure }
 
@@ -9,12 +11,12 @@ class QuizAttemptReviewState {
   const QuizAttemptReviewState({
     this.status = QuizAttemptReviewStatus.loading,
     this.detail,
-    this.errorMessage,
+    this.failure,
   });
 
   final QuizAttemptReviewStatus status;
   final QuizAttemptDetail? detail;
-  final String? errorMessage;
+  final Failure? failure;
 }
 
 abstract class QuizAttemptReviewEvent {
@@ -26,8 +28,8 @@ class LoadQuizAttemptReview extends QuizAttemptReviewEvent {
   const LoadQuizAttemptReview();
 }
 
-/// One finished attempt with every answer revealed
-/// (`GET /quizzes/attempts/{id}`).
+/// One finished attempt with every answer revealed and grouped
+/// (`GET /quizzes/attempts/{id}/review`).
 class QuizAttemptReviewBloc
     extends Bloc<QuizAttemptReviewEvent, QuizAttemptReviewState> {
   QuizAttemptReviewBloc(this._getDetail, {required this.attemptId})
@@ -39,7 +41,7 @@ class QuizAttemptReviewBloc
         (failure) => emit(
           QuizAttemptReviewState(
             status: QuizAttemptReviewStatus.failure,
-            errorMessage: failure.message,
+            failure: failure,
           ),
         ),
         (detail) => emit(
@@ -52,6 +54,6 @@ class QuizAttemptReviewBloc
     });
   }
 
-  final GetQuizAttemptDetail _getDetail;
+  final GetQuizAttemptReview _getDetail;
   final String attemptId;
 }

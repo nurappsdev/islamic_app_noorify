@@ -59,9 +59,15 @@ class ApiConstants {
   static String quizCategoryQuizEndPoint(String categoryId) =>
       "$quizCategoriesEndPoint/$categoryId/quiz";
 
-  /// One attempt in full, for the review screen.
-  static String quizAttemptEndPoint(String attemptId) =>
-      "$quizAttemptsEndPoint/$attemptId";
+  /// One attempt with every answer revealed and grouped, for the review screen.
+  static String quizAttemptReviewEndPoint(String attemptId) =>
+      "$quizAttemptsEndPoint/$attemptId/review";
+
+  static const String quizDashboardEndPoint = "/quizzes/dashboard";
+  static const String quizDashboardCompareEndPoint =
+      "/quizzes/dashboard/compare";
+  static const String quizDashboardHistoryCompareEndPoint =
+      "/quizzes/dashboard/history/compare";
 
   static const String hadithBooksListEndPoint = "/hadiths/books/lists";
   static const String hadithCategoriesEndPoint = "/hadiths/categories";

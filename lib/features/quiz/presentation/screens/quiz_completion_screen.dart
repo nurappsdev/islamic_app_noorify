@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/quiz/presentation/quiz_navigation.da
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_route_args.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/screens/quiz_categories_screen.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 
 /// The server-scored result of a submitted quiz. Every figure is shown as the
 /// API returned it. Expects a `QuizCategoriesBloc` above it.
@@ -224,7 +225,7 @@ class _ResultSummary extends StatelessWidget {
     final appText = AppText.of(context);
     // Category practice earns no amol points, so its points are not shown.
     final showPoints = result.attemptType == QuizAttemptType.daily;
-    final stats = [
+    final stats = <QuizStat>[
       (appText.questionsWord, '${result.totalQuestions}'),
       (appText.correctAnswers, '${result.correctAnswers}'),
       (appText.incorrectAnswers, '${result.incorrectAnswers}'),
@@ -246,25 +247,7 @@ class _ResultSummary extends StatelessWidget {
       ),
       child: Column(
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = (constraints.maxWidth - 16.w) / 3;
-              return Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                children: [
-                  for (final (label, value) in stats)
-                    SizedBox(
-                      width: width,
-                      child: _ResultStat(
-                        label: label,
-                        value: context.localizedDigits(value),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
+          QuizStatGrid(stats: stats),
           if (result.id.isNotEmpty) ...[
             SizedBox(height: 14.h),
             FilledButton(
@@ -283,38 +266,4 @@ class _ResultSummary extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ResultStat extends StatelessWidget {
-  const _ResultStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 10.h),
-    decoration: BoxDecoration(
-      color: context.surfaceColor(Color(0xFFF2F6E7)),
-      borderRadius: BorderRadius.circular(13.r),
-    ),
-    child: Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(color: AppColor.primary, fontSize: 15.sp),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: context.inkColor(Color(0xFF56614F)),
-          ),
-        ),
-      ],
-    ),
-  );
 }

@@ -1,3 +1,4 @@
+import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 
 enum QuizStatus { initial, loading, success, failure }
@@ -10,7 +11,7 @@ class QuizState {
     this.page = 0,
     this.hasMore = false,
     this.isLoadingMore = false,
-    this.errorMessage,
+    this.failure,
   });
 
   final QuizStatus status;
@@ -23,7 +24,7 @@ class QuizState {
   final int page;
   final bool hasMore;
   final bool isLoadingMore;
-  final String? errorMessage;
+  final Failure? failure;
 
   QuizState copyWith({
     QuizStatus? status,

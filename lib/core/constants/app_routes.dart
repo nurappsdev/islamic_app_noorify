@@ -43,8 +43,13 @@ import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
 import '../../features/quiz/domain/repositories/quiz_repository.dart';
 import '../../features/quiz/domain/usecases/get_category_quiz.dart';
 import '../../features/quiz/domain/usecases/get_daily_quiz.dart';
-import '../../features/quiz/domain/usecases/get_quiz_attempt_detail.dart';
+import '../../features/quiz/domain/usecases/get_quiz_attempt_review.dart';
 import '../../features/quiz/domain/usecases/get_quiz_attempts.dart';
+import '../../features/quiz/domain/usecases/get_quiz_dashboard.dart';
+import '../../features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
+// import '../../features/quiz/domain/usecases/get_quiz_dashboard_history_comparison.dart';
+import '../../features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
+// import '../../features/quiz/presentation/bloc/quiz_comparison_bloc.dart';
 import '../../features/quiz/domain/usecases/get_quiz_categories.dart';
 import '../../features/quiz/domain/usecases/submit_quiz_attempt.dart';
 import '../../features/quiz/presentation/bloc/quiz_attempt_review_bloc.dart';
@@ -133,11 +138,21 @@ class AppRoutes {
       (_) => _withQuizCategories(const QuizCategoriesScreen()),
       (_) => const LearningScreen(),
       (_) => const PlannerScreen(),
-      (_) => BlocProvider(
-        // Only the latest few attempts are previewed here.
-        create: (_) =>
-            QuizBloc(GetQuizAttempts(_quizRepository), pageSize: 5)
-              ..add(const LoadCompletedQuizHistory()),
+      (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => QuizDashboardBloc(
+              getDashboard: GetQuizDashboard(_quizRepository),
+              getComparison: GetQuizDashboardComparison(_quizRepository),
+            )..add(const LoadQuizDashboard()),
+          ),
+          BlocProvider(
+            // Only the latest few attempts are previewed here.
+            create: (_) =>
+                QuizBloc(GetQuizAttempts(_quizRepository), pageSize: 5)
+                  ..add(const LoadCompletedQuizHistory()),
+          ),
+        ],
         child: const QuizDashboardScreen(),
       ),
     ],
@@ -194,7 +209,7 @@ class AppRoutes {
         return _page(
           BlocProvider(
             create: (_) => QuizAttemptReviewBloc(
-              GetQuizAttemptDetail(_quizRepository),
+              GetQuizAttemptReview(_quizRepository),
               attemptId: attemptId,
             )..add(const LoadQuizAttemptReview()),
             child: const QuizAttemptReviewScreen(),
@@ -220,10 +235,22 @@ class AppRoutes {
         return _page(_quizShell(3), settings);
       case RouteNames.completedHistory:
         return _page(
-          BlocProvider(
-            create: (_) =>
-                QuizBloc(GetQuizAttempts(_quizRepository))
-                  ..add(const LoadCompletedQuizHistory()),
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    QuizBloc(GetQuizAttempts(_quizRepository))
+                      ..add(const LoadCompletedQuizHistory()),
+              ),
+              // The history comparison card is hidden for now; restore this
+              // provider together with it.
+              // BlocProvider(
+              //   // The last seven days against the leaderboard leader.
+              //   create: (_) => QuizComparisonBloc(
+              //     GetQuizDashboardHistoryComparison(_quizRepository).call,
+              //   )..add(const LoadQuizComparison()),
+              // ),
+            ],
             child: const CompletedHistoryScreen(),
           ),
           settings,
