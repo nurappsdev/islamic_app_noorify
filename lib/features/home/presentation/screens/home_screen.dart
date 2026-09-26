@@ -22,6 +22,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/amal_track
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/hadith_reading_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/quiz_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
@@ -123,6 +124,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       const _ZikrCard(),
                       SizedBox(height: 16.h),
                       const _SunnahWitrCard(),
+                      SizedBox(height: 16.h),
+                      const _QuizCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -411,6 +414,35 @@ class _SunnahWitrCard extends StatelessWidget {
           counter: sunnah == null
               ? '0/6'
               : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
+        ),
+      ),
+    );
+  }
+}
+
+/// Quiz card: [QuizCardContent] over [HomeGradientShape], fed from the `quiz`
+/// pillar of the home dashboard when it has loaded.
+class _QuizCard extends StatelessWidget {
+  const _QuizCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? quiz;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'quiz') quiz = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    return GestureDetector(
+      onTap: () => _openTracker(context, AmalSection.quiz),
+      child: HomeGradientShape(
+        child: QuizCardContent(
+          percentage: quiz?.percentage ?? 0,
+          counter: quiz == null
+              ? '0/7'
+              : '${fmt(quiz.points)}/${fmt(quiz.maxPoints)}',
         ),
       ),
     );
