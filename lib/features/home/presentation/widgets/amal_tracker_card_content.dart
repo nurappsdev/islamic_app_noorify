@@ -13,6 +13,8 @@ const _progressPercent = Color(0xFFEAF1D6);
 const _midGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFFA1AD59);
 const _deepText = Color(0xFF5E7A4E);
+// Soft warning tone for a prayer whose time passed without being tracked.
+const _missedRed = Color(0xFFF3B5B5);
 
 /// One prayer bar in the chart. Kept as plain data so it can later be filled
 /// from an API instead of the defaults below.
@@ -21,17 +23,18 @@ class PrayerBarData {
     required this.name,
     required this.points,
     this.completed = false,
-    this.isActive = false,
+    this.isMissed = false,
   });
 
   final String name;
   final int points;
 
-  /// Prayed already; feeds the completed counter.
+  /// Tracked by the user; drawn dark green. Also feeds the completed counter.
   final bool completed;
 
-  /// Its prayer period is running right now; gets the highlighted bar.
-  final bool isActive;
+  /// Its time has started or passed and it isn't tracked; gets the soft red bar. Only
+  /// shown when the prayer isn't [completed].
+  final bool isMissed;
 
   static const defaults = [
     PrayerBarData(name: 'Fajr', points: 2),
@@ -52,6 +55,7 @@ class AmalTrackerCardContent extends StatelessWidget {
     this.totalPrayers = 7,
     this.completedLabel,
     this.onOpenDashboard,
+    this.onPrayerTap,
   });
 
   /// 0-100.
@@ -62,6 +66,10 @@ class AmalTrackerCardContent extends StatelessWidget {
   /// Overrides the computed "completed/total" text (e.g. the API's `0/7`).
   final String? completedLabel;
   final VoidCallback? onOpenDashboard;
+
+  /// Overrides what tapping a prayer bar does (default: open the tracker on
+  /// that prayer).
+  final ValueChanged<PrayerBarData>? onPrayerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +96,16 @@ class AmalTrackerCardContent extends StatelessWidget {
           const Spacer(),
           PrayerProgressBarWidget(
             prayers: prayers,
-            onPrayerTap: (prayer) => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => AmolTrackingScreen(
-                  selectedPrayer: prayer.name,
-                  selectedSection: AmalSection.fardhPrayer,
+            onPrayerTap:
+                onPrayerTap ??
+                (prayer) => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AmolTrackingScreen(
+                      selectedPrayer: prayer.name,
+                      selectedSection: AmalSection.fardhPrayer,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ),
         ],
       ),
@@ -297,7 +307,10 @@ class PrayerBarItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = prayer.isActive;
+    // Priority: tracked (dark green), then missed (soft red), else the
+    // default light green. The running prayer gets no special colour.
+    final active = prayer.completed;
+    final missed = !active && prayer.isMissed;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -306,7 +319,11 @@ class PrayerBarItemWidget extends StatelessWidget {
         height: prayer.points >= 2 ? 131.h : 100.h,
         padding: EdgeInsets.only(bottom: 5.h),
         decoration: BoxDecoration(
-          color: active ? _darkGreen : _softGreen,
+          color: active
+              ? _darkGreen
+              : missed
+              ? _missedRed
+              : _softGreen,
           borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(

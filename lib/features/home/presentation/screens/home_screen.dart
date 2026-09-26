@@ -116,7 +116,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         child: const ProhibitedPrayerTimesCard(),
                       ),
                       SizedBox(height: 16.h),
-                      const _FardhPrayerCard(),
+                      KeyedSubtree(
+                        key: ValueKey('fardh-prayer-$_refreshTick'),
+                        child: const _FardhPrayerCard(),
+                      ),
                       SizedBox(height: 16.h),
                       const _HadithReadingCard(),
                       SizedBox(height: 16.h),
@@ -162,9 +165,10 @@ void _openTracker(BuildContext context, AmalSection section) {
 }
 
 /// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
-/// fed from the home dashboard when it has loaded. The bar of the prayer whose
-/// period is running now is highlighted, using the same Aladhan times (and
-/// on-device cache) as [PrayerTimeCard].
+/// fed from the home dashboard when it has loaded. Each bar shows only the
+/// user's tracking status: dark green when tracked, soft red when its time has
+/// passed untracked. Prayer times are the same Aladhan times (and on-device
+/// cache) as [PrayerTimeCard].
 class _FardhPrayerCard extends StatefulWidget {
   const _FardhPrayerCard();
 
@@ -177,10 +181,57 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
   Timer? _clockTimer;
   DateTime _now = bangladeshNow();
 
+  final _getDaily = GetAmolDaily(
+    AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+  );
+
+  /// `itemKey`s of today's Fardh prayers the user has tracked (`fajr`,
+  /// `dhuhr`, ...), from the tracker's daily checklist.
+  Set<String> _completedKeys = const {};
+
+  static const _itemKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+  Future<void> _loadCompleted() async {
+    final now = DateTime.now();
+    final date =
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    try {
+      final result = await _getDaily(date: date);
+      result.fold((_) {}, (daily) {
+        final pillar = daily.pillars
+            .where((p) => p.pillarKey == 'fardh_prayer')
+            .firstOrNull;
+        if (pillar == null || !mounted) return;
+        setState(() {
+          _completedKeys = {
+            for (final item in pillar.items)
+              if (item.isCompleted) item.itemKey,
+          };
+        });
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _openTracker({String? prayer}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AmolTrackingScreen(
+          selectedSection: AmalSection.fardhPrayer,
+          selectedPrayer: prayer,
+        ),
+      ),
+    );
+    // Prayers may have been ticked meanwhile.
+    if (mounted) _loadCompleted();
+  }
+
   @override
   void initState() {
     super.initState();
     _loadTimes();
+    _loadCompleted();
     _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!mounted) return;
       setState(() => _now = bangladeshNow());
@@ -227,31 +278,31 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     }
 
     final times = _times;
-    final active = times == null ? null : currentPrayerPeriod(_now, times);
+    final minuteNow = _now.hour * 60 + _now.minute;
     final prayers = [
       for (final (i, prayer) in PrayerBarData.defaults.indexed)
         PrayerBarData(
           name: prayer.name,
           points: prayer.points,
-          completed: prayer.completed,
-          isActive: active != null && PrayerPeriod.values[i] == active,
+          completed: _completedKeys.contains(_itemKeys[i]),
+          // Red once its time has started (or passed) without being tracked;
+          // a prayer that hasn't started yet stays the default colour.
+          isMissed:
+              times != null &&
+              minuteNow >=
+                  prayerStart(PrayerPeriod.values[i], times).totalMinutes,
         ),
     ];
 
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => const AmolTrackingScreen(
-            selectedSection: AmalSection.fardhPrayer,
-          ),
-        ),
-      ),
+      onTap: _openTracker,
       child: HomeGradientShape(
         child: AmalTrackerCardContent(
           percentage: fardh?.percentage ?? 0,
           completedLabel: fardh?.formattedSubtext,
           prayers: prayers,
-          onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
+          onOpenDashboard: _openTracker,
+          onPrayerTap: (prayer) => _openTracker(prayer: prayer.name),
         ),
       ),
     );
