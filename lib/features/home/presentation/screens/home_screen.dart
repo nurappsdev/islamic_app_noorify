@@ -178,7 +178,7 @@ class HomeGradientShape extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 80.h,
+              bottom: 60.h,
               child: Image.asset(
                 'assets/newShape.png',
                 fit: BoxFit.cover,

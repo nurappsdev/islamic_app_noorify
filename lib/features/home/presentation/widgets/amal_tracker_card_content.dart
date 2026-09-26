@@ -57,7 +57,7 @@ class AmalTrackerCardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final completed = prayers.where((p) => p.completed).length;
     return Padding(
-      padding: EdgeInsets.fromLTRB(12.w, 14.h, 12.w, 14.h),
+      padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 28.h),
       child: Column(
         children: [
           ProgressHeaderWidget(
@@ -70,7 +70,7 @@ class AmalTrackerCardContent extends StatelessWidget {
                   ),
                 ),
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: 26.h),
           PrayerSummaryWidget(
             title: 'Fardh Prayer',
             counter: completedLabel ?? '$completed/$totalPrayers',
@@ -99,52 +99,58 @@ class ProgressHeaderWidget extends StatelessWidget {
     final label = percentage % 1 == 0
         ? percentage.toStringAsFixed(0)
         : percentage.toStringAsFixed(1);
-    final radius = BorderRadius.circular(16.r);
+    final radius = BorderRadius.circular(20.r);
     return Row(
       children: [
         Expanded(
           child: Container(
-            height: 48.h,
+            height: 54.h,
             decoration: BoxDecoration(color: _paleGreen, borderRadius: radius),
             child: ClipRRect(
               borderRadius: radius,
-              child: Stack(
+              child: Row(
                 children: [
-                  Positioned.fill(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: FractionallySizedBox(
-                        widthFactor: value,
-                        heightFactor: 1,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: _softGreen,
-                            borderRadius: radius,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    child: Row(
+                  // Track: the dark fill grows with the percentage and the
+                  // title stays centred over it.
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        Expanded(
-                          child: Text(
-                            'Complete progress',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: homeSerifStyle(
-                              fontSize: 16.sp,
-                              color: _midGreen,
+                        Positioned.fill(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: FractionallySizedBox(
+                              widthFactor: value,
+                              heightFactor: 1,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: _softGreen,
+                                  borderRadius: radius,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                         Text(
-                          '$label %',
-                          style: TextStyle(fontSize: 14.sp, color: _deepText),
+                          'Complete progress',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: homeSerifStyle(
+                            fontSize: 16.sp,
+                            color: _midGreen,
+                          ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Percentage: its own lighter segment, outside the fill.
+                  SizedBox(
+                    width: 56.w,
+                    child: Center(
+                      child: Text(
+                        '$label %',
+                        style: TextStyle(fontSize: 15.sp, color: _deepText),
+                      ),
                     ),
                   ),
                 ],
@@ -152,19 +158,19 @@ class ProgressHeaderWidget extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 10.w),
+        SizedBox(width: 30.w),
         InkWell(
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(16.r),
           onTap: onTap,
           child: Container(
-            width: 48.r,
-            height: 48.r,
+            width: 54.r,
+            height: 54.r,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: _softGreen, width: 1.2),
             ),
-            child: Icon(Icons.redo_rounded, size: 20.sp, color: _midGreen),
+            child: Icon(Icons.redo_rounded, size: 22.sp, color: _midGreen),
           ),
         ),
       ],
@@ -197,7 +203,9 @@ class PrayerSummaryWidget extends StatelessWidget {
         ),
         SizedBox(height: 10.h),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 8.h),
+          width: 86.w,
+          height: 46.h,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: _paleGreen.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(24.r),
@@ -224,11 +232,12 @@ class PrayerProgressBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         for (var i = 0; i < prayers.length; i++) ...[
-          if (i > 0) SizedBox(width: 6.w),
-          Expanded(child: PrayerBarItemWidget(prayer: prayers[i])),
+          if (i > 0) SizedBox(width: 9.w),
+          PrayerBarItemWidget(prayer: prayers[i]),
         ],
       ],
     );
@@ -244,11 +253,12 @@ class PrayerBarItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = prayer.completed;
     return Container(
-      height: 100.h + 22.h * prayer.points,
-      padding: EdgeInsets.only(bottom: 6.h),
+      width: 42.w,
+      height: prayer.points >= 2 ? 131.h : 100.h,
+      padding: EdgeInsets.only(bottom: 5.h),
       decoration: BoxDecoration(
         color: active ? _darkGreen : _softGreen,
-        borderRadius: BorderRadius.circular(40.r),
+        borderRadius: BorderRadius.circular(30.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: active ? 0.18 : 0.08),
@@ -265,7 +275,7 @@ class PrayerBarItemWidget extends StatelessWidget {
               child: RotatedBox(
                 quarterTurns: 3,
                 child: Padding(
-                  padding: EdgeInsets.only(right: 8.h),
+                  padding: EdgeInsets.only(right: 6.h),
                   child: Text(
                     prayer.name,
                     maxLines: 1,
@@ -280,8 +290,8 @@ class PrayerBarItemWidget extends StatelessWidget {
             ),
           ),
           Container(
-            width: 30.r,
-            height: 30.r,
+            width: 27.r,
+            height: 27.r,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -289,7 +299,7 @@ class PrayerBarItemWidget extends StatelessWidget {
             ),
             child: Text(
               '+${prayer.points}',
-              style: TextStyle(fontSize: 12.sp, color: _midGreen),
+              style: TextStyle(fontSize: 11.sp, color: _midGreen),
             ),
           ),
         ],
