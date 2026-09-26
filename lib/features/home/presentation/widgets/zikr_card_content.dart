@@ -41,7 +41,7 @@ class ZikrCardContent extends StatelessWidget {
           ),
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: 'Zikr', counter: counter),
-          SizedBox(height: 10.h),
+          SizedBox(height: 4.h),
           const Expanded(child: _ZikrStairs()),
         ],
       ),
@@ -56,10 +56,9 @@ class _ZikrStairs extends StatelessWidget {
   const _ZikrStairs();
 
   // Left edge (of width) and vertical centre (of height) per pill.
-  static const _lefts = [0.03, 0.235, 0.41, 0.53, 0.60];
-  static const _centersY = [0.86, 0.70, 0.52, 0.32, 0.12];
-  static const _guides = [0.16, 0.32, 0.48, 0.64, 0.80];
-  static const _pillWidth = 0.235;
+  static const _lefts = [0.04, 0.22, 0.41, 0.56, 0.70];
+  static const _guides = [0.18, 0.34, 0.50, 0.66, 0.82];
+  static const _pillWidth = 0.27;
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +66,23 @@ class _ZikrStairs extends StatelessWidget {
       builder: (context, box) {
         final w = box.maxWidth;
         final h = box.maxHeight;
-        final pillW = w * _pillWidth + 12.w;
-        final pillH = (h * 0.19).clamp(0.0, 40.0.h);
+        final pillW = w * _pillWidth;
+        final gap = 4.8.h;
+        final count = _lefts.length;
+        // Pills stack bottom-up with a fixed gap; shrink them only if five
+        // plus the gaps won't fit.
+        final pillH = [
+          h * 0.22,
+          46.0.h,
+          (h - gap * (count - 1)) / count,
+        ].reduce((a, b) => a < b ? a : b);
+        final centersY = [
+          for (var i = 0; i < count; i++) h - pillH / 2 - i * (pillH + gap),
+        ];
+        // The line meets each pill at its +1 circle.
         final anchors = [
-          for (var i = 0; i < _lefts.length; i++)
-            Offset(w * _lefts[i] + pillW, h * _centersY[i]),
+          for (var i = 0; i < count; i++)
+            Offset(w * _lefts[i] + pillW - pillH * 0.5, centersY[i]),
         ];
         return Stack(
           clipBehavior: Clip.none,
@@ -88,7 +99,7 @@ class _ZikrStairs extends StatelessWidget {
             for (var i = 0; i < _lefts.length; i++)
               Positioned(
                 left: w * _lefts[i],
-                top: h * _centersY[i] - pillH / 2,
+                top: centersY[i] - pillH / 2,
                 width: pillW,
                 height: pillH,
                 child: _ZikrPill(label: 'Zikr ${i + 1}'),
@@ -111,7 +122,7 @@ class _ZikrPill extends StatelessWidget {
       builder: (context, box) {
         final h = box.maxHeight;
         return Container(
-          padding: EdgeInsets.only(left: h * 0.4, right: h * 0.08),
+          padding: EdgeInsets.only(left: h * 0.42, right: h * 0.08),
           decoration: BoxDecoration(
             color: _pillGreen,
             borderRadius: BorderRadius.circular(h),
@@ -132,7 +143,7 @@ class _ZikrPill extends StatelessWidget {
                   child: Text(
                     label,
                     maxLines: 1,
-                    style: TextStyle(fontSize: h * 0.4, color: _textGreen),
+                    style: TextStyle(fontSize: h * 0.42, color: _textGreen),
                   ),
                 ),
               ),
