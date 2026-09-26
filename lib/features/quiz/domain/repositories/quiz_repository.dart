@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/daily_quiz_status.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
@@ -15,6 +16,9 @@ abstract interface class QuizRepository {
 
   /// `GET /quizzes/daily?date=YYYY-MM-DD`.
   Future<Either<Failure, Quiz>> getDailyQuiz(DateTime date);
+
+  /// `GET /quizzes/daily/status`.
+  Future<Either<Failure, DailyQuizStatus>> getDailyQuizStatus();
 
   /// `GET /quizzes/categories/{categoryId}/quiz?limit=N[&difficulty=..]`.
   Future<Either<Failure, Quiz>> getCategoryQuiz({

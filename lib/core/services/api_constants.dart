@@ -53,6 +53,7 @@ class ApiConstants {
 
   static const String quizCategoriesEndPoint = "/quizzes/categories";
   static const String quizDailyEndPoint = "/quizzes/daily";
+  static const String quizDailyStatusEndPoint = "/quizzes/daily/status";
   static const String quizAttemptsEndPoint = "/quizzes/attempts";
 
   /// A practice quiz drawn from one category.

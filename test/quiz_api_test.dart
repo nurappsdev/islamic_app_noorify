@@ -243,6 +243,40 @@ void main() {
       expect(quiz.questions.first.options.map((o) => o.key), ['A', 'C']);
     });
 
+    test('daily quiz status: bearer token, completed fields', () async {
+      final s = _setup({
+        'GET /quizzes/daily/status': (
+          200,
+          _ok({
+            'date': '2026-09-26',
+            'quizId': '6b0ffddb0f85723fd3e8d900',
+            'isAvailable': true,
+            'isCompleted': true,
+            'hasCompleted': true,
+            'attemptCount': 1,
+            'pointsEarned': 2.5,
+            'pointsGained': 2.5,
+            'quizScore': 2.5,
+            'maxPoints': 2.5,
+            'bestScorePercentage': 100,
+            'latestAttemptId': '6b0ffddb0f85723fd3e8d902',
+            'completedAt': '2026-09-26T08:00:00.000Z',
+          }),
+        ),
+      });
+      final status = await s.source.getDailyQuizStatus();
+      expect(s.http.last.uri.path, '/api/v1/quizzes/daily/status');
+      expect(s.http.last.headers['Authorization'], 'Bearer tkn');
+      expect(status.date, '2026-09-26');
+      expect(status.quizId, '6b0ffddb0f85723fd3e8d900');
+      expect(status.isCompleted, isTrue);
+      expect(status.hasCompleted, isTrue);
+      expect(status.completed, isTrue);
+      expect(status.pointsEarned, 2.5);
+      expect(status.displayPoints, 2.5);
+      expect(status.latestAttemptId, '6b0ffddb0f85723fd3e8d902');
+    });
+
     test('category quiz: dynamic id, limit and difficulty', () async {
       final s = _setup({
         'GET /quizzes/categories/cat9/quiz': (
