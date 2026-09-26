@@ -207,11 +207,20 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
         ),
     ];
 
-    return HomeGradientShape(
-      child: AmalTrackerCardContent(
-        percentage: dashboard?.userSummary.percentageToday ?? 0,
-        completedLabel: fardh?.formattedSubtext,
-        prayers: prayers,
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const AmolTrackingScreen(
+            selectedSection: AmalSection.fardhPrayer,
+          ),
+        ),
+      ),
+      child: HomeGradientShape(
+        child: AmalTrackerCardContent(
+          percentage: dashboard?.userSummary.percentageToday ?? 0,
+          completedLabel: fardh?.formattedSubtext,
+          prayers: prayers,
+        ),
       ),
     );
   }
@@ -235,7 +244,8 @@ class _HadithReadingCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => const AmolTrackingScreen(selectedSection: 'Hadith'),
+          builder: (_) =>
+              const AmolTrackingScreen(selectedSection: AmalSection.hadith),
         ),
       ),
       child: HomeGradientShape(

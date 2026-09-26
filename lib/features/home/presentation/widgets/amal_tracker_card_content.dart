@@ -90,7 +90,10 @@ class AmalTrackerCardContent extends StatelessWidget {
             prayers: prayers,
             onPrayerTap: (prayer) => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => AmolTrackingScreen(selectedPrayer: prayer.name),
+                builder: (_) => AmolTrackingScreen(
+                  selectedPrayer: prayer.name,
+                  selectedSection: AmalSection.fardhPrayer,
+                ),
               ),
             ),
           ),
