@@ -166,8 +166,10 @@ class ProhibitedPrayerWindows {
         end: times.sunrise.plusMinutes(15),
       ),
       zawal: ProhibitedPrayerWindow(
-        start: times.dhuhr.plusMinutes(-10),
-        end: times.dhuhr,
+        // Centred on solar noon: a few minutes either side of Dhuhr, which
+        // matches the windows other prayer-time apps show.
+        start: times.dhuhr.plusMinutes(-4),
+        end: times.dhuhr.plusMinutes(2),
       ),
       sunset: ProhibitedPrayerWindow(
         start: times.sunset.plusMinutes(-15),
