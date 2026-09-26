@@ -9,8 +9,10 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
 import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
@@ -98,7 +100,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         child: const ProhibitedPrayerTimesCard(),
                       ),
                       SizedBox(height: 16.h),
-                      const HomeGradientShape(),
+                      const _FardhPrayerCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -114,6 +116,28 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
+/// fed from the home dashboard when it has loaded.
+class _FardhPrayerCard extends StatelessWidget {
+  const _FardhPrayerCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? fardh;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'fardh_prayer') fardh = p;
+    }
+    return HomeGradientShape(
+      child: AmalTrackerCardContent(
+        percentage: dashboard?.userSummary.percentageToday ?? 0,
+        completedLabel: fardh?.formattedSubtext,
       ),
     );
   }
