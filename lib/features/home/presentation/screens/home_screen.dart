@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +11,9 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
 import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
+import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
@@ -122,9 +127,60 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 }
 
 /// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
-/// fed from the home dashboard when it has loaded.
-class _FardhPrayerCard extends StatelessWidget {
+/// fed from the home dashboard when it has loaded. The bar of the prayer whose
+/// period is running now is highlighted, using the same Aladhan times (and
+/// on-device cache) as [PrayerTimeCard].
+class _FardhPrayerCard extends StatefulWidget {
   const _FardhPrayerCard();
+
+  @override
+  State<_FardhPrayerCard> createState() => _FardhPrayerCardState();
+}
+
+class _FardhPrayerCardState extends State<_FardhPrayerCard> {
+  DailyPrayerTimes? _times;
+  Timer? _clockTimer;
+  DateTime _now = bangladeshNow();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimes();
+    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() => _now = bangladeshNow());
+      // Times may only reach the cache after PrayerTimeCard's fetch lands, or
+      // roll over at midnight; re-reading the cache costs no network call.
+      _refreshFromCache();
+    });
+  }
+
+  Future<void> _refreshFromCache() async {
+    try {
+      final service = await AladhanPrayerTimeService.create();
+      final cached = service.cachedPrayerTimes(_now);
+      if (mounted && cached != null) setState(() => _times = cached);
+    } catch (_) {}
+  }
+
+  Future<void> _loadTimes() async {
+    try {
+      final service = await AladhanPrayerTimeService.create();
+      final cached = service.cachedPrayerTimes(_now);
+      if (cached != null) {
+        if (mounted) setState(() => _times = cached);
+        return;
+      }
+      final fresh = await service.loadPrayerTimes(_now);
+      if (mounted && fresh != null) setState(() => _times = fresh);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,10 +190,24 @@ class _FardhPrayerCard extends StatelessWidget {
     for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
       if (p.pillarKey == 'fardh_prayer') fardh = p;
     }
+
+    final times = _times;
+    final active = times == null ? null : currentPrayerPeriod(_now, times);
+    final prayers = [
+      for (final (i, prayer) in PrayerBarData.defaults.indexed)
+        PrayerBarData(
+          name: prayer.name,
+          points: prayer.points,
+          completed: prayer.completed,
+          isActive: active != null && PrayerPeriod.values[i] == active,
+        ),
+    ];
+
     return HomeGradientShape(
       child: AmalTrackerCardContent(
         percentage: dashboard?.userSummary.percentageToday ?? 0,
         completedLabel: fardh?.formattedSubtext,
+        prayers: prayers,
       ),
     );
   }
