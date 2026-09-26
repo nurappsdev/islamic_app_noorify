@@ -12,7 +12,6 @@ import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failu
 import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_navigation.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// One quiz plan (`GET /quizzes/plans/{id}`): its schedule, progress and
@@ -294,15 +293,6 @@ class _PlanSummary extends StatelessWidget {
               }),
             ),
             style: TextStyle(fontSize: 11.sp),
-          ),
-          SizedBox(height: 10.h),
-          QuizStatGrid(
-            stats: [
-              (appText.questionsWord, '${plan.totalQuestions}'),
-              (appText.quizzesCountLabel, '${plan.totalQuizzes}'),
-              (appText.planStatusCompleted, '${plan.completedQuizzes}'),
-              (appText.remainingLabel, '${plan.remainingQuizzes}'),
-            ],
           ),
         ],
       ),
