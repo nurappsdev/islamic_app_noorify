@@ -11,6 +11,23 @@ const _pillGreen = Color(0xFFDAE5B8);
 const _textGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFFA1AD59);
 
+/// One prayer's Sunnah state on the ring. Plain data so it can come straight
+/// from the tracker API.
+class SunnahPrayerData {
+  const SunnahPrayerData({
+    required this.prayerName,
+    required this.points,
+    this.sunnahCompleted = false,
+  });
+
+  /// Matches the pill labels: `Fajr`, `Duhr`, `Asr`, `Magrib`, `Esa`.
+  final String prayerName;
+  final num points;
+
+  /// Tracked today; the pill is drawn dark green.
+  final bool sunnahCompleted;
+}
+
 /// Content layer for the Sunnah and Witr card. Draws no background of its own
 /// - place it inside [HomeGradientShape]. Shares its header and title/counter
 /// block with [AmalTrackerCardContent].
@@ -19,7 +36,7 @@ class SunnahWitrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/6',
-    this.activeName,
+    this.prayers = const [],
     this.onOpenTracker,
   });
 
@@ -29,8 +46,10 @@ class SunnahWitrCardContent extends StatelessWidget {
   /// Points earned / max points, e.g. `0/6`.
   final String counter;
 
-  /// Name of the pill drawn in the highlighted (dark) style, e.g. `Duhr`.
-  final String? activeName;
+  /// Per-prayer points and tracked state, matched to the pills by
+  /// [SunnahPrayerData.prayerName]. Prayers missing here show the design's
+  /// default points, not tracked.
+  final List<SunnahPrayerData> prayers;
   final VoidCallback? onOpenTracker;
 
   // Clockwise from the upper right, as in the design.
@@ -41,6 +60,13 @@ class SunnahWitrCardContent extends StatelessWidget {
     ('Magrib', 1, (left: 0.012, centerY: 0.53, width: 0.33), false),
     ('Esa', 2, (left: 0.142, centerY: 0.16, width: 0.327), false),
   ];
+
+  SunnahPrayerData? _dataFor(String name) {
+    for (final p in prayers) {
+      if (p.prayerName == name) return p;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +108,7 @@ class SunnahWitrCardContent extends StatelessWidget {
                         painter: _SegmentRingPainter(strokeWidth: h * 0.14),
                       ),
                     ),
-                    for (final (name, points, a, circleFirst) in _pills)
+                    for (final (name, defaultPoints, a, circleFirst) in _pills)
                       Positioned(
                         left: w * a.left,
                         top: h * a.centerY - pillH / 2,
@@ -90,9 +116,9 @@ class SunnahWitrCardContent extends StatelessWidget {
                         height: pillH,
                         child: _SunnahPill(
                           name: name,
-                          points: points,
+                          points: _dataFor(name)?.points ?? defaultPoints,
                           circleFirst: circleFirst,
-                          active: name == activeName,
+                          active: _dataFor(name)?.sunnahCompleted ?? false,
                         ),
                       ),
                   ],
@@ -115,7 +141,7 @@ class _SunnahPill extends StatelessWidget {
   });
 
   final String name;
-  final int points;
+  final num points;
   final bool circleFirst;
   final bool active;
 
@@ -133,7 +159,7 @@ class _SunnahPill extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Text(
-            '+$points',
+            '+${points == points.roundToDouble() ? points.toInt() : points}',
             style: TextStyle(fontSize: h * 0.36, color: _textGreen),
           ),
         );
