@@ -7,8 +7,6 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
-const _softGreen = Color(0xFFDCE7B8);
-const _midGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFFA1AD59);
 const _ringTrack = Color(0xFFDAE5B8);
 
@@ -18,15 +16,11 @@ const _ringTrack = Color(0xFFDAE5B8);
 class QuranCardContent extends StatelessWidget {
   const QuranCardContent({
     super.key,
-    this.statusLabel = 'Complete',
     this.counter = '0/11',
     this.progress = 0,
     this.readingTimeLabel = '',
     this.onOpenQuran,
   });
-
-  /// Text in the pill at the top left.
-  final String statusLabel;
 
   /// Points earned / max points, e.g. `7/11`.
   final String counter;
@@ -44,44 +38,11 @@ class QuranCardContent extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 22.h),
       child: Column(
         children: [
-          Row(
-            children: [
-              Container(
-                height: 46.h,
-                padding: EdgeInsets.symmetric(horizontal: 26.w),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(color: _softGreen, width: 1.2),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: homeSerifStyle(fontSize: 18.sp, color: Colors.black),
-                ),
-              ),
-              const Spacer(),
-              InkWell(
-                borderRadius: BorderRadius.circular(16.r),
-                onTap:
-                    onOpenQuran ??
-                    () => Navigator.of(context).pushNamed(RouteNames.quran),
-                child: Container(
-                  width: 54.r,
-                  height: 54.r,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: _softGreen, width: 1.2),
-                  ),
-                  child: Icon(
-                    Icons.redo_rounded,
-                    size: 22.sp,
-                    color: _midGreen,
-                  ),
-                ),
-              ),
-            ],
+          ProgressHeaderWidget(
+            percentage: progress.clamp(0.0, 1.0) * 100,
+            onTap:
+                onOpenQuran ??
+                () => Navigator.of(context).pushNamed(RouteNames.quran),
           ),
           SizedBox(height: 18.h),
           PrayerSummaryWidget(title: 'Quran', counter: counter),

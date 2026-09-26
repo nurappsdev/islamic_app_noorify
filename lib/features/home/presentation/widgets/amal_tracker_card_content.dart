@@ -134,75 +134,100 @@ class ProgressHeaderWidget extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: 54.h,
-            decoration: BoxDecoration(
-              color: _progressPercent,
-              borderRadius: radius,
-              border: Border.all(color: Colors.white, width: 1.2),
-            ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // The fill grows with the percentage but stops where the
-                  // percentage segment begins.
-                  // It never shrinks below the title, so the two colours stay
-                  // separate even at 0%.
-                  final maxFill = constraints.maxWidth - percentWidth;
-                  final fillWidth = (value * constraints.maxWidth).clamp(
-                    (160.w).clamp(0.0, maxFill),
-                    maxFill,
-                  );
-                  return Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: fillWidth,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: _progressFill,
-                            borderRadius: radius,
-                          ),
-                        ),
+          // At 100% the bar gives way to the same pill the Quran card uses.
+          child: percentage >= 100
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    height: 46.h,
+                    padding: EdgeInsets.symmetric(horizontal: 26.w),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(24.r),
+                      border: Border.all(color: _softGreen, width: 1.2),
+                    ),
+                    child: Text(
+                      'Completed',
+                      style: homeSerifStyle(
+                        fontSize: 18.sp,
+                        color: Colors.black,
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: fillWidth,
-                        child: Center(
-                          child: Text(
-                            'Complete Progress',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: homeSerifStyle(
-                              fontSize: 16.sp,
-                              color: Color(0xFF859065),
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 54.h,
+                  decoration: BoxDecoration(
+                    color: _progressPercent,
+                    borderRadius: radius,
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: radius,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // The fill grows with the percentage but stops where the
+                        // percentage segment begins.
+                        // It never shrinks below the title, so the two colours stay
+                        // separate even at 0%.
+                        final maxFill = constraints.maxWidth - percentWidth;
+                        final fillWidth = (value * constraints.maxWidth).clamp(
+                          (160.w).clamp(0.0, maxFill),
+                          maxFill,
+                        );
+                        return Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: fillWidth,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: _progressFill,
+                                  borderRadius: radius,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: percentWidth,
-                        child: Center(
-                          child: Text(
-                            '$label %',
-                            style: TextStyle(fontSize: 15.sp, color: _deepText),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: fillWidth,
+                              child: Center(
+                                child: Text(
+                                  'Complete Progress',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: homeSerifStyle(
+                                    fontSize: 16.sp,
+                                    color: Color(0xFF859065),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: percentWidth,
+                              child: Center(
+                                child: Text(
+                                  '$label %',
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    color: _deepText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
         ),
         SizedBox(width: 34.w),
         InkWell(
