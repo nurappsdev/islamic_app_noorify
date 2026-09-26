@@ -6,6 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
+import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
@@ -119,7 +122,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       SizedBox(height: 16.h),
                       const _QuranCard(),
                       SizedBox(height: 16.h),
-                      const _NaflMoreCard(),
+                      KeyedSubtree(
+                        key: ValueKey('nafl-more-$_refreshTick'),
+                        child: const _NaflMoreCard(),
+                      ),
                       SizedBox(height: 16.h),
                       const _ZikrCard(),
                       SizedBox(height: 16.h),
@@ -327,8 +333,64 @@ class _QuranCard extends StatelessWidget {
 
 /// Nafl and more card: [NaflMoreCardContent] over [HomeGradientShape], fed
 /// from the `nafl_and_more` pillar of the home dashboard when it has loaded.
-class _NaflMoreCard extends StatelessWidget {
+class _NaflMoreCard extends StatefulWidget {
   const _NaflMoreCard();
+
+  @override
+  State<_NaflMoreCard> createState() => _NaflMoreCardState();
+}
+
+class _NaflMoreCardState extends State<_NaflMoreCard> {
+  final _getDaily = GetAmolDaily(
+    AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+  );
+  List<NaflItemData> _items = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// The item list and each item's tracked state come from the tracker's
+  /// daily checklist (`GET /amol/tracker/daily`).
+  Future<void> _load() async {
+    final now = DateTime.now();
+    final date =
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    try {
+      final result = await _getDaily(date: date);
+      result.fold((_) {}, (daily) {
+        final pillar = daily.pillars
+            .where((p) => p.pillarKey == 'nafl_and_more')
+            .firstOrNull;
+        if (pillar == null || !mounted) return;
+        setState(() {
+          _items = [
+            for (final item in pillar.items)
+              NaflItemData(
+                name: item.title,
+                points: item.maxPoints,
+                completed: item.isCompleted,
+              ),
+          ];
+        });
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _openTracker() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            const AmolTrackingScreen(selectedSection: AmalSection.naflAndMore),
+      ),
+    );
+    // Items may have been ticked meanwhile.
+    if (mounted) _load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -341,20 +403,15 @@ class _NaflMoreCard extends StatelessWidget {
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => const AmolTrackingScreen(
-            selectedSection: AmalSection.naflAndMore,
-          ),
-        ),
-      ),
+      onTap: _openTracker,
       child: HomeGradientShape(
         child: NaflMoreCardContent(
           percentage: nafl?.percentage ?? 0,
-          onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
+          onOpenDashboard: _openTracker,
           counter: nafl == null
               ? '0/7'
               : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
+          items: _items,
         ),
       ),
     );
