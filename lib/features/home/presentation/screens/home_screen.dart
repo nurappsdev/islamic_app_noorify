@@ -18,6 +18,7 @@ import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dar
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
+import 'package:islami_app_noorify/features/home/presentation/widgets/hadith_reading_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
@@ -106,6 +107,8 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                       ),
                       SizedBox(height: 16.h),
                       const _FardhPrayerCard(),
+                      SizedBox(height: 16.h),
+                      const _HadithReadingCard(),
                       SizedBox(height: 14.h),
                       const HomeProgressSection(),
                       SizedBox(height: 10.h),
@@ -208,6 +211,33 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
         percentage: dashboard?.userSummary.percentageToday ?? 0,
         completedLabel: fardh?.formattedSubtext,
         prayers: prayers,
+      ),
+    );
+  }
+}
+
+/// Hadith-reading card: [HadithReadingCardContent] over [HomeGradientShape],
+/// fed from the `hadith` pillar of the home dashboard when it has loaded.
+class _HadithReadingCard extends StatelessWidget {
+  const _HadithReadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? hadith;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'hadith') hadith = p;
+    }
+
+    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    return HomeGradientShape(
+      child: HadithReadingCardContent(
+        percentage: dashboard?.userSummary.percentageToday ?? 0,
+        counter: hadith == null
+            ? '0/7'
+            : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
+        readingTimeLabel: hadith?.formattedSubtext ?? '',
       ),
     );
   }
