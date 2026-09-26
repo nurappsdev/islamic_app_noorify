@@ -30,7 +30,7 @@ class PrayerBarData {
     PrayerBarData(name: 'Fajr', points: 2),
     PrayerBarData(name: 'Dhuhr', points: 1),
     PrayerBarData(name: 'Asr', points: 1),
-    PrayerBarData(name: 'Maghrib', points: 1),
+    PrayerBarData(name: 'Magrib', points: 1),
     PrayerBarData(name: 'Isha', points: 2),
   ];
 }
@@ -294,7 +294,7 @@ class PrayerBarItemWidget extends StatelessWidget {
               child: RotatedBox(
                 quarterTurns: 3,
                 child: Padding(
-                  padding: EdgeInsets.only(right: 6.h),
+                  padding: EdgeInsets.only(left: 12.h),
                   child: Text(
                     prayer.name,
                     maxLines: 1,
