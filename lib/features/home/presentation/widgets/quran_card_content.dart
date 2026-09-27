@@ -19,6 +19,8 @@ class QuranCardContent extends StatelessWidget {
     this.counter = '0/11',
     this.progress = 0,
     this.readingTimeLabel = '',
+    this.title = 'Quran',
+    this.percentageLabel,
     this.onOpenQuran,
   });
 
@@ -30,6 +32,8 @@ class QuranCardContent extends StatelessWidget {
 
   /// Time read today, e.g. `1 hr 37 min`. Empty shows nothing under the title.
   final String readingTimeLabel;
+  final String title;
+  final String? percentageLabel;
   final VoidCallback? onOpenQuran;
 
   @override
@@ -40,12 +44,13 @@ class QuranCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: progress.clamp(0.0, 1.0) * 100,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenQuran ??
                 () => Navigator.of(context).pushNamed(RouteNames.quran),
           ),
           SizedBox(height: 18.h),
-          PrayerSummaryWidget(title: 'Quran', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           const Spacer(),
           _QuranRing(progress: progress, readingTimeLabel: readingTimeLabel),
         ],

@@ -11,6 +11,8 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart'
+    hide localizeDigits;
 import 'package:islami_app_noorify/features/alarm/presentation/screens/all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
@@ -19,6 +21,7 @@ import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
@@ -31,6 +34,10 @@ class HomeHeader extends StatelessWidget {
     final appText = AppText.of(context);
     final palette = context.appPalette;
     final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
+    final dashboard = context.watch<HomeDashboardBloc>().state.dashboard;
+    final dashboardName = context.localized(
+      dashboard?.userSummary.localizedFullName,
+    );
     return Row(
       children: [
         GestureDetector(
@@ -54,7 +61,9 @@ class HomeHeader extends StatelessWidget {
                   builder: (context, name, _) {
                     return Text(
                       (name == null || name.isEmpty)
-                          ? appText.competitorName
+                          ? (dashboardName.isEmpty
+                                ? appText.competitorName
+                                : dashboardName)
                           : name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -293,7 +302,15 @@ class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
     final String text;
     final bool isReminder;
     if (_showingGreeting) {
-      text = appText.greeting;
+      final dashboardGreeting = context.localized(
+        context
+            .watch<HomeDashboardBloc>()
+            .state
+            .dashboard
+            ?.userSummary
+            .localizedGreetingText,
+      );
+      text = dashboardGreeting.isEmpty ? appText.greeting : dashboardGreeting;
       isReminder = false;
     } else {
       final kinds = _rotationKinds(now);

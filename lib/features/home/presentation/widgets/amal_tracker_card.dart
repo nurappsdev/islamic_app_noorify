@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
@@ -72,23 +73,35 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   ];
 
   /// Builds the carousel items from `GET /home/dashboard`'s
-  /// `topHighlightCards`, keeping the app's own localized labels and only
-  /// pulling the dynamic bits (points, percentage, names, rank) from the API.
+  /// `topHighlightCards`, selecting the language-specific strings returned by
+  /// the API and retaining the app's labels as compatibility fallbacks.
   static List<_AmalTrackerItem> _apiItems(
+    BuildContext context,
     AppText appText,
     List<HighlightCard> cards,
   ) => [
     for (final card in cards)
-      if (card.hasData) _mapHighlightCard(appText, card),
+      if (card.hasData) _mapHighlightCard(context, appText, card),
   ];
 
   static _AmalTrackerItem _mapHighlightCard(
+    BuildContext context,
     AppText appText,
     HighlightCard card,
   ) {
-    final fraction = _fractionOf(card.pointsText);
+    final title = _localized(context, card.localizedTitle, card.title);
+    final pointsText = _localized(
+      context,
+      card.localizedPointsText,
+      card.pointsText,
+    );
+    final subtitle = _localized(context, card.localizedSubtitle, card.subtitle);
+    final fraction = _fractionOf(pointsText);
     final progress = (card.percentage / 100).clamp(0, 1).toDouble();
-    final progressLabel = _formatPercentage(card.percentage);
+    final localizedPercentage = context.localized(card.localizedPercentage);
+    final progressLabel = localizedPercentage.isEmpty
+        ? _formatPercentage(card.percentage)
+        : '$localizedPercentage %';
 
     switch (card.type) {
       case 'todays_amol':
@@ -96,46 +109,62 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       case 'todays_second_highest':
       case 'yesterdays_highest':
         return _AmalTrackerItem(
-          title: card.title,
-          subtitle: '${appText.point} : $fraction',
+          title: title,
+          subtitle: pointsText.isEmpty
+              ? '${appText.point} : $fraction'
+              : pointsText,
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'monthly_first':
         return _AmalTrackerItem(
           title: _leaderName(card),
-          subtitle: '${appText.firstInTheMonth}\n${appText.point} : $fraction',
+          subtitle: subtitle.isEmpty
+              ? '${appText.firstInTheMonth}\n${appText.point} : $fraction'
+              : subtitle,
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'monthly_second':
         return _AmalTrackerItem(
           title: _leaderName(card),
-          subtitle: '${appText.secondInTheMonth}\n${appText.point} : $fraction',
+          subtitle: subtitle.isEmpty
+              ? '${appText.secondInTheMonth}\n${appText.point} : $fraction'
+              : subtitle,
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'last_month_winner':
         return _AmalTrackerItem(
           title: _leaderName(card),
-          subtitle: '${appText.lastMonthWinner}\n${appText.point} : $fraction',
+          subtitle: subtitle.isEmpty
+              ? '${appText.lastMonthWinner}\n${appText.point} : $fraction'
+              : subtitle,
           progressLabel: progressLabel,
           progress: progress,
         );
       case 'my_monthly_position':
         return _AmalTrackerItem(
-          title: card.title,
-          subtitle: '${appText.point} : $fraction',
+          title: title,
+          subtitle: pointsText.isEmpty
+              ? '${appText.point} : $fraction'
+              : pointsText,
           progressLabel: progressLabel,
           progress: progress,
-          leadingText: card.rank?.toString(),
+          leadingText: _localized(
+            context,
+            card.localizedRank,
+            card.rank?.toString(),
+          ),
         );
       default:
         // Unknown card type from a newer backend: fall back to whatever the
         // API itself sent instead of dropping the card.
         return _AmalTrackerItem(
-          title: card.title,
-          subtitle: fraction.isEmpty ? (card.subtitle ?? '') : fraction,
+          title: title,
+          subtitle: pointsText.isEmpty
+              ? (subtitle.isEmpty ? fraction : subtitle)
+              : pointsText,
           progressLabel: progressLabel,
           progress: progress,
         );
@@ -150,6 +179,15 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     if (name.isNotEmpty && name.toLowerCase() != 'guest user') return name;
     final label = card.subtitle?.trim() ?? '';
     return label.isNotEmpty ? label : card.title;
+  }
+
+  static String _localized(
+    BuildContext context,
+    LocalizedText value,
+    String? fallback,
+  ) {
+    final text = context.localized(value);
+    return text.isEmpty ? (fallback ?? '') : text;
   }
 
   /// `"Point : 0/40"` -> `"0/40"`.
@@ -262,7 +300,11 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     if (dashboardState.isLoading) return const AmalTrackerCardShimmer();
 
     final items = dashboardState.hasData
-        ? _apiItems(appText, dashboardState.dashboard!.topHighlightCards)
+        ? _apiItems(
+            context,
+            appText,
+            dashboardState.dashboard!.topHighlightCards,
+          )
         : _items(appText);
     if (items.isEmpty) return const SizedBox.shrink();
     return Stack(

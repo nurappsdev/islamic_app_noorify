@@ -1,3 +1,5 @@
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+
 /// One deed-pillar's daily progress (Fardh Prayer, Quran, Zikr, ...) from
 /// the Home dashboard's `pillarCards`.
 class PillarCard {
@@ -8,6 +10,11 @@ class PillarCard {
     required this.maxPoints,
     required this.percentage,
     required this.formattedSubtext,
+    this.localizedTitle = LocalizedText.empty,
+    this.localizedPoints = LocalizedText.empty,
+    this.localizedMaxPoints = LocalizedText.empty,
+    this.localizedPercentage = LocalizedText.empty,
+    this.localizedFormattedSubtext = LocalizedText.empty,
   });
 
   /// Stable identifier, e.g. `fardh_prayer`, `quran`, `nafl_and_more`.
@@ -23,4 +30,10 @@ class PillarCard {
 
   /// Server-formatted progress text (e.g. `"0/7"`, `"1hr 37min"`).
   final String formattedSubtext;
+
+  final LocalizedText localizedTitle;
+  final LocalizedText localizedPoints;
+  final LocalizedText localizedMaxPoints;
+  final LocalizedText localizedPercentage;
+  final LocalizedText localizedFormattedSubtext;
 }

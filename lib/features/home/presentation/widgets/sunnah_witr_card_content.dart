@@ -36,6 +36,8 @@ class SunnahWitrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/6',
+    this.title = 'Sunnah and Witr',
+    this.percentageLabel,
     this.prayers = const [],
     this.onOpenTracker,
   });
@@ -45,6 +47,8 @@ class SunnahWitrCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/6`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
   /// Per-prayer points and tracked state, matched to the pills by
   /// [SunnahPrayerData.prayerName]. Prayers missing here show the design's
@@ -76,6 +80,7 @@ class SunnahWitrCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenTracker ??
                 () => Navigator.of(context).push(
@@ -87,7 +92,7 @@ class SunnahWitrCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Sunnah and Witr', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
           Expanded(
             child: LayoutBuilder(

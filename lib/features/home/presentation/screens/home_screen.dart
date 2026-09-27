@@ -11,6 +11,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amo
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
@@ -29,7 +30,6 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/quiz_card_
 import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/sunnah_witr_card_content.dart';
@@ -195,6 +195,34 @@ void _openTracker(BuildContext context, AmalSection section) {
   );
 }
 
+String _pillarText(
+  BuildContext context,
+  PillarCard? pillar,
+  LocalizedText Function(PillarCard pillar) localizedValue,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final value = context.localized(localizedValue(pillar));
+  return value.isEmpty ? fallback : value;
+}
+
+String _pillarCounter(
+  BuildContext context,
+  PillarCard? pillar,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final points = context.localized(pillar.localizedPoints);
+  final maxPoints = context.localized(pillar.localizedMaxPoints);
+  if (points.isNotEmpty && maxPoints.isNotEmpty) return '$points/$maxPoints';
+
+  String format(num value) =>
+      value == value.roundToDouble() ? value.toInt().toString() : '$value';
+  return context.localizedDigits(
+    '${format(pillar.points)}/${format(pillar.maxPoints)}',
+  );
+}
+
 /// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
 /// fed from the home dashboard when it has loaded. Each bar shows only the
 /// user's tracking status: dark green when tracked, soft red when its time has
@@ -299,7 +327,24 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     return HomeGradientShape(
       child: AmalTrackerCardContent(
         percentage: fardh?.percentage ?? 0,
-        completedLabel: fardh?.formattedSubtext,
+        percentageLabel: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedTitle,
+          'Fardh Prayer',
+        ),
+        completedLabel: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedFormattedSubtext,
+          fardh?.formattedSubtext ?? '',
+        ),
         prayers: prayers,
         onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
         onPrayerTap: (prayer) => Navigator.of(context).push(
@@ -329,15 +374,29 @@ class _HadithReadingCard extends StatelessWidget {
       if (p.pillarKey == 'hadith') hadith = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: HadithReadingCardContent(
         percentage: hadith?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedTitle,
+          'Hadith Reading',
+        ),
         onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
-        counter: hadith == null
-            ? '0/7'
-            : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
-        readingTimeLabel: hadith?.formattedSubtext ?? '',
+        counter: _pillarCounter(context, hadith, '0/7'),
+        readingTimeLabel: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedFormattedSubtext,
+          hadith?.formattedSubtext ?? '',
+        ),
       ),
     );
   }
@@ -357,16 +416,32 @@ class _QuranCard extends StatelessWidget {
       if (p.pillarKey == 'quran') quran = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     final max = quran?.maxPoints ?? 0;
     return HomeGradientShape(
       child: QuranCardContent(
         onOpenQuran: () => _openTracker(context, AmalSection.quran),
-        counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
+        percentageLabel: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedTitle,
+          'Quran',
+        ),
+        counter: _pillarCounter(context, quran, '0/11'),
         progress: quran == null || max <= 0
             ? 0
             : (quran.points / max).toDouble(),
-        readingTimeLabel: quran?.formattedSubtext ?? '',
+        readingTimeLabel: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedFormattedSubtext,
+          quran?.formattedSubtext ?? '',
+        ),
       ),
     );
   }
@@ -422,14 +497,23 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
       if (p.pillarKey == 'nafl_and_more') nafl = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: NaflMoreCardContent(
         percentage: nafl?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedTitle,
+          'Nafl and more',
+        ),
         onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
-        counter: nafl == null
-            ? '0/7'
-            : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
+        counter: _pillarCounter(context, nafl, '0/7'),
         items: _items,
       ),
     );
@@ -484,13 +568,22 @@ class _ZikrCardState extends State<_ZikrCard> {
               ZikrItemData(name: item.title, completed: item.isCompleted),
           ];
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: ZikrCardContent(
         percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
-        counter: zikr == null
-            ? '0/7'
-            : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
+        percentageLabel: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedTitle,
+          'Zikr',
+        ),
+        counter: _pillarCounter(context, zikr, '0/7'),
         items: items,
         // With a tracker pillar, the arrow opens the tracker on it (where
         // Zikr is ticked); otherwise the Zikr feature.
@@ -568,13 +661,22 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
       if (p.pillarKey == 'sunnah_witr') sunnah = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: SunnahWitrCardContent(
         percentage: sunnah?.percentage ?? 0,
-        counter: sunnah == null
-            ? '0/6'
-            : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
+        percentageLabel: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedTitle,
+          'Sunnah and Witr',
+        ),
+        counter: _pillarCounter(context, sunnah, '0/6'),
         prayers: _prayers,
       ),
     );
@@ -595,13 +697,22 @@ class _QuizCard extends StatelessWidget {
       if (p.pillarKey == 'quiz') quiz = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: QuizCardContent(
         percentage: quiz?.percentage ?? 0,
-        counter: quiz == null
-            ? '0/7'
-            : '${fmt(quiz.points)}/${fmt(quiz.maxPoints)}',
+        percentageLabel: _pillarText(
+          context,
+          quiz,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          quiz,
+          (pillar) => pillar.localizedTitle,
+          'Quiz',
+        ),
+        counter: _pillarCounter(context, quiz, '0/7'),
       ),
     );
   }

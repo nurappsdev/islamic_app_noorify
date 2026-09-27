@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
@@ -54,6 +55,8 @@ class AmalTrackerCardContent extends StatelessWidget {
     this.prayers = PrayerBarData.defaults,
     this.totalPrayers = 7,
     this.completedLabel,
+    this.title = 'Fardh Prayer',
+    this.percentageLabel,
     this.onOpenDashboard,
     this.onPrayerTap,
   });
@@ -65,6 +68,8 @@ class AmalTrackerCardContent extends StatelessWidget {
 
   /// Overrides the computed "completed/total" text (e.g. the API's `0/7`).
   final String? completedLabel;
+  final String title;
+  final String? percentageLabel;
   final VoidCallback? onOpenDashboard;
 
   /// Overrides what tapping a prayer bar does (default: open the tracker on
@@ -80,6 +85,7 @@ class AmalTrackerCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenDashboard ??
                 () => Navigator.of(context).push(
@@ -90,7 +96,7 @@ class AmalTrackerCardContent extends StatelessWidget {
           ),
           SizedBox(height: 26.h),
           PrayerSummaryWidget(
-            title: 'Fardh Prayer',
+            title: title,
             counter: completedLabel ?? '$completed/$totalPrayers',
           ),
           const Spacer(),
@@ -117,18 +123,23 @@ class ProgressHeaderWidget extends StatelessWidget {
   const ProgressHeaderWidget({
     super.key,
     required this.percentage,
+    this.percentageLabel,
     required this.onTap,
   });
 
   final num percentage;
+  final String? percentageLabel;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final value = (percentage / 100).clamp(0, 1).toDouble();
-    final label = percentage % 1 == 0
+    final calculatedLabel = percentage % 1 == 0
         ? percentage.toStringAsFixed(0)
         : percentage.toStringAsFixed(1);
+    final label = percentageLabel?.trim().isNotEmpty == true
+        ? percentageLabel!.trim()
+        : context.localizedDigits(calculatedLabel);
     final radius = BorderRadius.circular(24.r);
     final percentWidth = 56.w;
     return Row(
