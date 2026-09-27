@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
@@ -26,6 +28,9 @@ class PrayerTimeCard extends StatefulWidget {
   @override
   State<PrayerTimeCard> createState() => _PrayerTimeCardState();
 }
+
+bool _isBangla(BuildContext context) =>
+    context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
 
 class _PrayerTimeCardState extends State<PrayerTimeCard> {
   DailyPrayerTimes? _times;
@@ -53,13 +58,17 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
         : dayProgress(now, times);
   }
 
-  String _formattedDate(AppText appText) {
+  String _formattedDate(AppText appText, bool bangla) {
     final now = _now();
-    return '${now.day} ${appText.monthNames[now.month - 1]} ${now.year}';
+    return localizeDigits(
+      '${now.day} ${appText.monthNames[now.month - 1]} ${now.year}',
+      bangla: bangla,
+    );
   }
 
-  String _formattedTime() => formatPrayerTime(
-    PrayerClockTime(hour: _now().hour, minute: _now().minute),
+  String _formattedTime(bool bangla) => localizeClockText(
+    formatPrayerTime(PrayerClockTime(hour: _now().hour, minute: _now().minute)),
+    bangla: bangla,
   );
 
   @override
@@ -129,6 +138,9 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = _isBangla(context);
+    String clock(PrayerClockTime t) =>
+        localizeClockText(formatPrayerTime(t), bangla: bangla);
     final isNight = isNightPrayerTheme(now: _now(), fajr: _fajr);
     final topDateColor = isNight ? Colors.white : Colors.black;
     return SizedBox(
@@ -199,8 +211,10 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  _times?.hijriDate ??
-                                      hijriDateLabel(DateTime.now()),
+                                  bangla
+                                      ? hijriDateLabel(_now(), bangla: true)
+                                      : (_times?.hijriDate ??
+                                            hijriDateLabel(_now())),
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: topDateColor,
@@ -216,7 +230,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerRight,
                                 child: Text(
-                                  banglaDateLabel(DateTime.now()),
+                                  banglaDateLabel(_now(), english: !bangla),
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: topDateColor,
@@ -252,7 +266,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                           children: [
                             SizedBox(height: 8.h),
                             Text(
-                              _formattedDate(appText),
+                              _formattedDate(appText, bangla),
                               style: homeSansStyle(
                                 fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
@@ -260,7 +274,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             ),
 
                             Text(
-                              _formattedTime(),
+                              _formattedTime(bangla),
                               style: homeSansStyle(
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.w700,
@@ -304,12 +318,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunrise}, ${appText.trishal}',
                                 time: _times != null
-                                    ? formatPrayerTime(_times!.sunrise)
+                                    ? clock(_times!.sunrise)
                                     : appText.sunriseTimePlaceholder,
                                 isSunrise: true,
                                 secondaryLabel: appText.sehri,
                                 secondaryTime: _times != null
-                                    ? formatPrayerTime(_times!.fajr)
+                                    ? clock(_times!.fajr)
                                     : appText.sunriseTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),
@@ -321,12 +335,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunset}, ${appText.trishal}',
                                 time: _times != null
-                                    ? formatPrayerTime(_times!.sunset)
+                                    ? clock(_times!.sunset)
                                     : appText.sunsetTimePlaceholder,
                                 isSunrise: false,
                                 secondaryLabel: appText.iftar,
                                 secondaryTime: _times != null
-                                    ? formatPrayerTime(_times!.maghrib)
+                                    ? clock(_times!.maghrib)
                                     : appText.sunsetTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),
