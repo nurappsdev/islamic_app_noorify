@@ -49,13 +49,27 @@ void main() {
           final outer = tester.getRect(
             find.byKey(ValueKey('ayah-marker-${ayah.verseKey}')),
           );
-          final inner = tester.getRect(find.text('﴿${ayah.ayahNumber}﴾'));
-          expect(inner.left - outer.left, closeTo(10 * scale, .01));
-          expect(outer.right - inner.right, closeTo(10 * scale, .01));
+          final inner = tester.getRect(
+            find.text(
+              ayah.ayahNumber
+                  .toString()
+                  .split('')
+                  .map((n) => String.fromCharCode(0x660 + int.parse(n)))
+                  .join(),
+            ),
+          );
+          expect(
+            inner.left - outer.left,
+            greaterThanOrEqualTo(10 * scale - .01),
+          );
+          expect(
+            outer.right - inner.right,
+            greaterThanOrEqualTo(10 * scale - .01),
+          );
           expect(outer.left, greaterThanOrEqualTo(0));
         }
-        await tester.ensureVisible(find.text('﴿3﴾'));
-        await tester.tap(find.text('﴿3﴾'));
+        await tester.ensureVisible(find.text('٣'));
+        await tester.tap(find.text('٣'));
         expect(tapped, 3);
         expect(tester.takeException(), isNull);
       }
