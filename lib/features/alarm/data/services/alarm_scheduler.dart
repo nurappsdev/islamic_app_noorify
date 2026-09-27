@@ -298,10 +298,26 @@ class AlarmScheduler {
       _markDismissed(payload);
 
   static Future<void> dismissNotification(String alarmId) async {
-    await _notifications.cancel(id: alarmManagerIdFor(alarmId));
-    await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
-    await _silenceVibration();
+    // Do not wait for NotificationManager before cancelling the native
+    // vibration pattern. A repeating pattern may have been started by the
+    // alarm-manager isolate, and notification cancellation can be delayed or
+    // fail independently on some Android versions.
+    final vibrationCancellation = _silenceVibration();
+    try {
+      await _notifications.cancel(id: alarmManagerIdFor(alarmId));
+    } catch (_) {}
+    try {
+      await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
+    } catch (_) {}
+    await vibrationCancellation;
   }
+
+  /// Immediately cancels the process-wide native vibration pattern.
+  ///
+  /// This is deliberately separate from notification cleanup so a ringing
+  /// screen can stop haptics and a background-isolate vibration without
+  /// waiting for storage or NotificationManager calls to finish.
+  static Future<void> stopVibration() => _silenceVibration();
 
   /// Vibration is a process-wide native service, so this also cuts off the
   /// repeating pattern the background ringer started in its own isolate —
