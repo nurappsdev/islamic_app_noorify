@@ -100,7 +100,6 @@ class _PrayerEdgeTime extends StatelessWidget {
     final displayTime = showPrimary ? time : secondaryTime;
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 46.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
