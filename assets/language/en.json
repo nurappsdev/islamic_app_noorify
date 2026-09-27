@@ -157,6 +157,8 @@
   "quranicScience": "Quranic Science",
   "questionsCountLabel": "20 Questions",
   "greeting": "Assalamu Alaikum Wa Rahmatullah",
+  "prayerReminderPrefix": "Have you completed",
+  "prayerReminderSuffix": "prayer yet?",
   "timer": "Timer",
   "notifications": "Notifications",
   "featureDua": "Dua",
