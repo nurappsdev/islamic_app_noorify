@@ -268,6 +268,8 @@ class AppText {
     required this.quranicScience,
     required this.questionsCountLabel,
     required this.greeting,
+    required this.prayerReminderPrefix,
+    required this.prayerReminderSuffix,
     required this.timer,
     required this.notifications,
     required this.featureDua,
@@ -854,6 +856,14 @@ class AppText {
 
   // Home feature
   final String greeting;
+
+  /// Leads the rotating "have you completed X prayer yet?" header reminder,
+  /// e.g. `"Have you completed"` before the localized prayer name.
+  final String prayerReminderPrefix;
+
+  /// Trails the rotating prayer reminder after the localized prayer name,
+  /// e.g. `"prayer yet?"`.
+  final String prayerReminderSuffix;
   final String timer;
   final String notifications;
   final String featureDua;
@@ -2118,6 +2128,16 @@ class AppText {
         fallback?.questionsCountLabel ?? '',
       ),
       greeting: _read(map, 'greeting', fallback?.greeting ?? ''),
+      prayerReminderPrefix: _read(
+        map,
+        'prayerReminderPrefix',
+        fallback?.prayerReminderPrefix ?? '',
+      ),
+      prayerReminderSuffix: _read(
+        map,
+        'prayerReminderSuffix',
+        fallback?.prayerReminderSuffix ?? '',
+      ),
       timer: _read(map, 'timer', fallback?.timer ?? ''),
       notifications: _read(map, 'notifications', fallback?.notifications ?? ''),
       featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
