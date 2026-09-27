@@ -473,20 +473,14 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                           CrossAxisAlignment.stretch,
                                       children: [
                                         if (prefs.showArabic)
-                                          Text(
-                                            '${ayah.textArabic}\u2002﴿${ayah.ayahNumber}﴾',
-                                            textDirection: TextDirection.rtl,
-                                            style:
-                                                arabicFontById(
-                                                  prefs.arabicFontFamily,
-                                                ).apply(
-                                                  TextStyle(
-                                                    fontSize:
-                                                        25 *
-                                                        prefs.arabicFontScale,
-                                                    height: 1.9,
-                                                  ),
-                                                ),
+                                          QuranReadingText(
+                                            ayahs: [ayah],
+                                            active: active,
+                                            scale: prefs.arabicFontScale * 1.25,
+                                            font: arabicFontById(
+                                              prefs.arabicFontFamily,
+                                            ),
+                                            onTap: _showAyah,
                                           ),
                                         const SizedBox(height: 12),
                                         Text(

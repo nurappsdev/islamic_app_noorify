@@ -1,3 +1,4 @@
+import 'quran_ayah_marker.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -127,24 +128,10 @@ class _QuranReadingTextState extends State<QuranReadingText> {
             alignment: PlaceholderAlignment.middle,
             child: GestureDetector(
               onTap: () => widget.onTap(a),
-              child: Padding(
+              child: QuranAyahMarker(
                 key: ValueKey('ayah-marker-${a.verseKey}'),
-                padding: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.textScalerOf(
-                    context,
-                  ).scale(10 * widget.scale),
-                ),
-                child: Text(
-                  '﴿${a.ayahNumber}﴾',
-                  textDirection: TextDirection.rtl,
-                  style: widget.font.apply(
-                    TextStyle(
-                      fontSize: 20 * widget.scale,
-                      height: 1.4,
-                      color: context.inkColor(Colors.black),
-                    ),
-                  ),
-                ),
+                number: a.ayahNumber,
+                scale: widget.scale,
               ),
             ),
           ),
