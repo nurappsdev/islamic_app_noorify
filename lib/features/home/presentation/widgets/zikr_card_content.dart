@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -204,7 +205,7 @@ class _ZikrPill extends StatelessWidget {
                   ],
                 ),
                 child: Text(
-                  '+1',
+                  '+${context.localizedDigits('1')}',
                   style: TextStyle(fontSize: h * 0.38, color: _textGreen),
                 ),
               ),

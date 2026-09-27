@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -162,7 +163,7 @@ class _NaflPill extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Text(
-            _points(item.points),
+            context.localizedDigits(_points(item.points)),
             style: TextStyle(fontSize: h * 0.34, color: _textGreen),
           ),
         );

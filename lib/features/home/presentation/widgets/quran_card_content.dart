@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
@@ -52,7 +53,11 @@ class QuranCardContent extends StatelessWidget {
           SizedBox(height: 18.h),
           PrayerSummaryWidget(title: title, counter: counter),
           const Spacer(),
-          _QuranRing(progress: progress, readingTimeLabel: readingTimeLabel),
+          _QuranRing(
+            progress: progress,
+            readingTimeLabel: readingTimeLabel,
+            title: title,
+          ),
         ],
       ),
     );
@@ -60,10 +65,15 @@ class QuranCardContent extends StatelessWidget {
 }
 
 class _QuranRing extends StatelessWidget {
-  const _QuranRing({required this.progress, required this.readingTimeLabel});
+  const _QuranRing({
+    required this.progress,
+    required this.readingTimeLabel,
+    required this.title,
+  });
 
   final double progress;
   final String readingTimeLabel;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -93,14 +103,14 @@ class _QuranRing extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Quran Reading',
+                    title,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.sp, color: _darkGreen),
                   ),
                   if (readingTimeLabel.isNotEmpty) ...[
                     SizedBox(height: 12.h),
                     Text(
-                      readingTimeLabel,
+                      context.localizedDigits(readingTimeLabel),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15.sp, color: _darkGreen),
                     ),
