@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -57,7 +59,8 @@ class HadithReadingCardContent extends StatelessWidget {
           const Spacer(),
           if (readingTimeLabel.isNotEmpty)
             Text(
-              'Total Hadith Reading Time $readingTimeLabel',
+              '${AppText.of(context).totalReadingTime} '
+              '${context.localizedDigits(readingTimeLabel)}',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15.sp, color: _footerGreen),
             ),

@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -120,7 +122,7 @@ class SunnahWitrCardContent extends StatelessWidget {
                         width: w * a.width,
                         height: pillH,
                         child: _SunnahPill(
-                          name: name,
+                          name: _localizedPrayerName(AppText.of(context), name),
                           points: _dataFor(name)?.points ?? defaultPoints,
                           circleFirst: circleFirst,
                           active: _dataFor(name)?.sunnahCompleted ?? false,
@@ -164,7 +166,7 @@ class _SunnahPill extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Text(
-            '+${points == points.roundToDouble() ? points.toInt() : points}',
+            '+${context.localizedDigits('${points == points.roundToDouble() ? points.toInt() : points}')}',
             style: TextStyle(fontSize: h * 0.36, color: _textGreen),
           ),
         );
@@ -204,6 +206,15 @@ class _SunnahPill extends StatelessWidget {
     );
   }
 }
+
+String _localizedPrayerName(AppText appText, String key) => switch (key) {
+  'Fajr' => appText.prayerFajr,
+  'Duhr' => appText.prayerDhuhr,
+  'Asr' => appText.prayerAsr,
+  'Magrib' => appText.prayerMaghribAndIftar,
+  'Esa' => appText.prayerIsha,
+  _ => key,
+};
 
 /// Five dark arcs with small gaps, drawn behind the pills.
 class _SegmentRingPainter extends CustomPainter {

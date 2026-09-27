@@ -11,6 +11,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amo
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
@@ -36,6 +37,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/sunnah_wit
 import 'package:islami_app_noorify/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -127,6 +129,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final language = context.watch<LanguageBloc>().state.language;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Light status-bar icons on the dark background.
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -149,16 +152,21 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 
                       SizedBox(height: 16.h),
                       KeyedSubtree(
-                        key: ValueKey('prayer-time-card-$_refreshTick'),
+                        key: ValueKey(
+                          'prayer-time-card-${language.name}-$_refreshTick',
+                        ),
                         child: const PrayerTimeCard(),
                       ),
                       SizedBox(height: 24.h),
                       KeyedSubtree(
-                        key: ValueKey('prohibited-prayer-times-$_refreshTick'),
+                        key: ValueKey(
+                          'prohibited-prayer-times-${language.name}-$_refreshTick',
+                        ),
                         child: const ProhibitedPrayerTimesCard(),
                       ),
                       SizedBox(height: 16.h),
                       HomeFeatureCardSlider(
+                        key: ValueKey('home-feature-slider-${language.name}'),
                         height: 350.h,
                         children: [
                           KeyedSubtree(
@@ -322,7 +330,8 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     final prayers = [
       for (final (i, prayer) in PrayerBarData.defaults.indexed)
         PrayerBarData(
-          name: prayer.name,
+          name: PrayerPeriod.values[i].displayName(AppText.of(context)),
+          trackingName: prayer.trackingName,
           points: prayer.points,
           completed: completedKeys.contains(_itemKeys[i]),
           // Red once its time has started (or passed) without being tracked;
@@ -361,7 +370,7 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
           MaterialPageRoute<void>(
             builder: (_) => AmolTrackingScreen(
               selectedSection: AmalSection.fardhPrayer,
-              selectedPrayer: prayer.name,
+              selectedPrayer: prayer.trackingName,
             ),
           ),
         ),
@@ -572,7 +581,14 @@ class _ZikrCardState extends State<_ZikrCard> {
     // numbered placeholders and the Home dashboard's numbers.
     final tracked = AmolDailyStore.instance.pillar('zikr');
     final items = tracked == null || tracked.items.isEmpty
-        ? ZikrItemData.placeholders
+        ? [
+            for (var index = 1; index <= 5; index++)
+              ZikrItemData(
+                name:
+                    '${AppText.of(context).zikrTitle} '
+                    '${context.localizedDigits('$index')}',
+              ),
+          ]
         : [
             for (final item in tracked.items)
               ZikrItemData(name: item.title, completed: item.isCompleted),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
@@ -23,11 +24,13 @@ class PrayerBarData {
   const PrayerBarData({
     required this.name,
     required this.points,
+    this.trackingName,
     this.completed = false,
     this.isMissed = false,
   });
 
   final String name;
+  final String? trackingName;
   final int points;
 
   /// Tracked by the user; drawn dark green. Also feeds the completed counter.
@@ -38,11 +41,11 @@ class PrayerBarData {
   final bool isMissed;
 
   static const defaults = [
-    PrayerBarData(name: 'Fajr', points: 2),
-    PrayerBarData(name: 'Dhuhr', points: 1),
-    PrayerBarData(name: 'Asr', points: 1),
-    PrayerBarData(name: 'Magrib', points: 1),
-    PrayerBarData(name: 'Isha', points: 2),
+    PrayerBarData(name: 'Fajr', trackingName: 'Fajr', points: 2),
+    PrayerBarData(name: 'Dhuhr', trackingName: 'Dhuhr', points: 1),
+    PrayerBarData(name: 'Asr', trackingName: 'Asr', points: 1),
+    PrayerBarData(name: 'Magrib', trackingName: 'Magrib', points: 1),
+    PrayerBarData(name: 'Isha', trackingName: 'Isha', points: 2),
   ];
 }
 
@@ -107,7 +110,7 @@ class AmalTrackerCardContent extends StatelessWidget {
                 (prayer) => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => AmolTrackingScreen(
-                      selectedPrayer: prayer.name,
+                      selectedPrayer: prayer.trackingName ?? prayer.name,
                       selectedSection: AmalSection.fardhPrayer,
                     ),
                   ),
@@ -134,6 +137,7 @@ class ProgressHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = (percentage / 100).clamp(0, 1).toDouble();
+    final appText = AppText.of(context);
     final calculatedLabel = percentage % 1 == 0
         ? percentage.toStringAsFixed(0)
         : percentage.toStringAsFixed(1);
@@ -159,7 +163,7 @@ class ProgressHeaderWidget extends StatelessWidget {
                       border: Border.all(color: _softGreen, width: 1.2),
                     ),
                     child: Text(
-                      'Completed',
+                      appText.percentCompleteSuffix,
                       style: homeSerifStyle(
                         fontSize: 18.sp,
                         color: Colors.black,
@@ -208,7 +212,7 @@ class ProgressHeaderWidget extends StatelessWidget {
                               width: fillWidth,
                               child: Center(
                                 child: Text(
-                                  'Complete Progress',
+                                  appText.percentCompleteSuffix,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: homeSerifStyle(
@@ -225,7 +229,7 @@ class ProgressHeaderWidget extends StatelessWidget {
                               width: percentWidth,
                               child: Center(
                                 child: Text(
-                                  '$label %',
+                                  '${context.localizedDigits(label)} %',
                                   style: TextStyle(
                                     fontSize: 15.sp,
                                     color: _deepText,
@@ -302,7 +306,7 @@ class PrayerSummaryWidget extends StatelessWidget {
             borderRadius: BorderRadius.circular(24.r),
           ),
           child: Text(
-            counter,
+            context.localizedDigits(counter),
             style: TextStyle(
               fontSize: 24.sp,
               fontWeight: FontWeight.w400,
@@ -408,7 +412,7 @@ class PrayerBarItemWidget extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Text(
-                '+${prayer.points}',
+                '+${context.localizedDigits('${prayer.points}')}',
                 style: TextStyle(fontSize: 11.sp, color: _midGreen),
               ),
             ),

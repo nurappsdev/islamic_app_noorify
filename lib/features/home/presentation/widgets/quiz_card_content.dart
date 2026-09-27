@@ -4,6 +4,8 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -21,7 +23,7 @@ class QuizCardContent extends StatelessWidget {
     this.counter = '0/7',
     this.title = 'Quiz',
     this.percentageLabel,
-    this.labels = const ['Quiz 1', 'Quiz 2'],
+    this.labels,
     this.onOpenTracker,
   });
 
@@ -34,11 +36,18 @@ class QuizCardContent extends StatelessWidget {
   final String? percentageLabel;
 
   /// One overlapping glass tile per label, left to right.
-  final List<String> labels;
+  final List<String>? labels;
   final VoidCallback? onOpenTracker;
 
   @override
   Widget build(BuildContext context) {
+    final labels =
+        this.labels ??
+        [
+          for (var index = 1; index <= 2; index++)
+            '${AppText.of(context).categoryQuiz} '
+                '${context.localizedDigits('$index')}',
+        ];
     return Padding(
       padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 18.h),
       child: Column(
@@ -158,7 +167,7 @@ class QuizGlassCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Text(
-                  '+$points',
+                  '+${context.localizedDigits('$points')}',
                   style: TextStyle(
                     fontSize: badge * 0.36,
                     color: completed ? Colors.white : _pointGreen,
