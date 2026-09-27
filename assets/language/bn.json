@@ -157,6 +157,8 @@
   "quranicScience": "কুরআনিক বিজ্ঞান",
   "questionsCountLabel": "২০টি প্রশ্ন",
   "greeting": "আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ",
+  "prayerReminderPrefix": "আপনি কি",
+  "prayerReminderSuffix": "নামাজ আদায় করেছেন?",
   "timer": "টাইমার",
   "notifications": "নোটিফিকেশন",
   "featureDua": "দোয়া",

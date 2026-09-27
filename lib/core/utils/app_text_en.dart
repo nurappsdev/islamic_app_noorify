@@ -273,6 +273,8 @@ const Map<String, String> appTextEn = <String, String>{
 
   // Home feature
   'greeting': 'Assalamu Alaikum Wa Rahmatullah',
+  'prayerReminderPrefix': 'Have you completed',
+  'prayerReminderSuffix': 'prayer yet?',
   'timer': 'Timer',
   'notifications': 'Notifications',
   'featureDua': 'Dua',

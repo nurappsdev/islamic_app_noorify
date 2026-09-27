@@ -9,6 +9,9 @@ class _CurrentPrayerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = _isBangla(context);
+    String clock(PrayerClockTime t) =>
+        localizeClockText(formatPrayerTime(t), bangla: bangla);
     final times = this.times;
     final period = times == null ? null : currentPrayerPeriod(now, times);
     final label = times == null
@@ -17,10 +20,10 @@ class _CurrentPrayerBadge extends StatelessWidget {
     final rangeText = times == null
         ? '—'
         : period != null
-        ? '${formatPrayerTime(prayerStart(period, times))} – '
-              '${formatPrayerTime(prayerEnd(period, times))}'
-        : '${formatPrayerTime(times.sunrise)} – '
-              '${formatPrayerTime(times.dhuhr)}';
+        ? '${clock(prayerStart(period, times))} – '
+              '${clock(prayerEnd(period, times))}'
+        : '${clock(times.sunrise)} – '
+              '${clock(times.dhuhr)}';
     return Container(
       width: 190.w,
       height: 66.h,
@@ -97,7 +100,6 @@ class _PrayerEdgeTime extends StatelessWidget {
     final displayTime = showPrimary ? time : secondaryTime;
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 46.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

@@ -272,6 +272,8 @@ const Map<String, String> appTextBn = <String, String>{
 
   // Home feature
   'greeting': 'আসসালামু আলাইকুম ওয়া রাহমাতুল্লাহ',
+  'prayerReminderPrefix': 'আপনি কি',
+  'prayerReminderSuffix': 'নামাজ আদায় করেছেন?',
   'timer': 'টাইমার',
   'notifications': 'নোটিফিকেশন',
   'featureDua': 'দোয়া',

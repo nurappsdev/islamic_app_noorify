@@ -13,6 +13,8 @@ const _progressPercent = Color(0xFFEAF1D6);
 const _midGreen = Color(0xFF8FA05A);
 const _darkGreen = Color(0xFFA1AD59);
 const _deepText = Color(0xFF5E7A4E);
+// Soft warning tone for a prayer whose time passed without being tracked.
+const _missedRed = Color(0xFFF3B5B5);
 
 /// One prayer bar in the chart. Kept as plain data so it can later be filled
 /// from an API instead of the defaults below.
@@ -21,17 +23,18 @@ class PrayerBarData {
     required this.name,
     required this.points,
     this.completed = false,
-    this.isActive = false,
+    this.isMissed = false,
   });
 
   final String name;
   final int points;
 
-  /// Prayed already; feeds the completed counter.
+  /// Tracked by the user; drawn dark green. Also feeds the completed counter.
   final bool completed;
 
-  /// Its prayer period is running right now; gets the highlighted bar.
-  final bool isActive;
+  /// Its time has started or passed and it isn't tracked; gets the soft red bar. Only
+  /// shown when the prayer isn't [completed].
+  final bool isMissed;
 
   static const defaults = [
     PrayerBarData(name: 'Fajr', points: 2),
@@ -52,6 +55,7 @@ class AmalTrackerCardContent extends StatelessWidget {
     this.totalPrayers = 7,
     this.completedLabel,
     this.onOpenDashboard,
+    this.onPrayerTap,
   });
 
   /// 0-100.
@@ -62,6 +66,10 @@ class AmalTrackerCardContent extends StatelessWidget {
   /// Overrides the computed "completed/total" text (e.g. the API's `0/7`).
   final String? completedLabel;
   final VoidCallback? onOpenDashboard;
+
+  /// Overrides what tapping a prayer bar does (default: open the tracker on
+  /// that prayer).
+  final ValueChanged<PrayerBarData>? onPrayerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +96,16 @@ class AmalTrackerCardContent extends StatelessWidget {
           const Spacer(),
           PrayerProgressBarWidget(
             prayers: prayers,
-            onPrayerTap: (prayer) => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => AmolTrackingScreen(
-                  selectedPrayer: prayer.name,
-                  selectedSection: AmalSection.fardhPrayer,
+            onPrayerTap:
+                onPrayerTap ??
+                (prayer) => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AmolTrackingScreen(
+                      selectedPrayer: prayer.name,
+                      selectedSection: AmalSection.fardhPrayer,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ),
         ],
       ),
@@ -124,89 +134,122 @@ class ProgressHeaderWidget extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Container(
-            height: 54.h,
-            decoration: BoxDecoration(
-              color: _progressPercent,
-              borderRadius: radius,
-              border: Border.all(color: Colors.white, width: 1.2),
-            ),
-            child: ClipRRect(
-              borderRadius: radius,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // The fill grows with the percentage but stops where the
-                  // percentage segment begins.
-                  // It never shrinks below the title, so the two colours stay
-                  // separate even at 0%.
-                  final maxFill = constraints.maxWidth - percentWidth;
-                  final fillWidth = (value * constraints.maxWidth).clamp(
-                    (160.w).clamp(0.0, maxFill),
-                    maxFill,
-                  );
-                  return Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: fillWidth,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: _progressFill,
-                            borderRadius: radius,
-                          ),
-                        ),
+          // At 100% the bar gives way to the same pill the Quran card uses.
+          child: percentage >= 100
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    height: 46.h,
+                    padding: EdgeInsets.symmetric(horizontal: 26.w),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(24.r),
+                      border: Border.all(color: _softGreen, width: 1.2),
+                    ),
+                    child: Text(
+                      'Completed',
+                      style: homeSerifStyle(
+                        fontSize: 18.sp,
+                        color: Colors.black,
                       ),
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: fillWidth,
-                        child: Center(
-                          child: Text(
-                            'Complete Progress',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: homeSerifStyle(
-                              fontSize: 16.sp,
-                              color: Color(0xFF859065),
+                    ),
+                  ),
+                )
+              : Container(
+                  height: 54.h,
+                  decoration: BoxDecoration(
+                    color: _progressPercent,
+                    borderRadius: radius,
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: radius,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // The fill grows with the percentage but stops where the
+                        // percentage segment begins.
+                        // It never shrinks below the title, so the two colours stay
+                        // separate even at 0%.
+                        final maxFill = constraints.maxWidth - percentWidth;
+                        final fillWidth = (value * constraints.maxWidth).clamp(
+                          (160.w).clamp(0.0, maxFill),
+                          maxFill,
+                        );
+                        return Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: fillWidth,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: _progressFill,
+                                  borderRadius: radius,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: percentWidth,
-                        child: Center(
-                          child: Text(
-                            '$label %',
-                            style: TextStyle(fontSize: 15.sp, color: _deepText),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: fillWidth,
+                              child: Center(
+                                child: Text(
+                                  'Complete Progress',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: homeSerifStyle(
+                                    fontSize: 16.sp,
+                                    color: Color(0xFF859065),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: percentWidth,
+                              child: Center(
+                                child: Text(
+                                  '$label %',
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    color: _deepText,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
         ),
         SizedBox(width: 34.w),
-        InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: onTap,
-          child: Container(
-            width: 54.r,
-            height: 54.r,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: _softGreen, width: 1.2),
+        Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16.r),
+            onTap: onTap,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            child: Container(
+              width: 54.r,
+              height: 54.r,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: _softGreen, width: 1.2),
+              ),
+              child: Icon(Icons.redo_rounded, size: 22.sp, color: _midGreen),
             ),
-            child: Icon(Icons.redo_rounded, size: 22.sp, color: _midGreen),
           ),
         ),
       ],
@@ -232,8 +275,9 @@ class PrayerSummaryWidget extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 24.sp,
-            fontWeight: FontWeight.w500,
+            fontSize: 26.sp,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
             color: _darkGreen,
           ),
         ),
@@ -296,7 +340,10 @@ class PrayerBarItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = prayer.isActive;
+    // Priority: tracked (dark green), then missed (soft red), else the
+    // default light green. The running prayer gets no special colour.
+    final active = prayer.completed;
+    final missed = !active && prayer.isMissed;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -305,7 +352,11 @@ class PrayerBarItemWidget extends StatelessWidget {
         height: prayer.points >= 2 ? 131.h : 100.h,
         padding: EdgeInsets.only(bottom: 5.h),
         decoration: BoxDecoration(
-          color: active ? _darkGreen : _softGreen,
+          color: active
+              ? _darkGreen
+              : missed
+              ? _missedRed
+              : _softGreen,
           borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
