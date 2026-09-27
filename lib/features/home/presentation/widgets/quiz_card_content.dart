@@ -19,6 +19,8 @@ class QuizCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.title = 'Quiz',
+    this.percentageLabel,
     this.labels = const ['Quiz 1', 'Quiz 2'],
     this.onOpenTracker,
   });
@@ -28,6 +30,8 @@ class QuizCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
   /// One overlapping glass tile per label, left to right.
   final List<String> labels;
@@ -41,6 +45,7 @@ class QuizCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenTracker ??
                 () => Navigator.of(context).push(
@@ -52,7 +57,7 @@ class QuizCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Quiz', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
           Expanded(
             child: LayoutBuilder(

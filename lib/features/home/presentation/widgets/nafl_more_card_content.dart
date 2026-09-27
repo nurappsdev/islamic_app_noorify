@@ -40,6 +40,8 @@ class NaflMoreCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.title = 'Nafl and more',
+    this.percentageLabel,
     this.items = const [],
     this.onOpenDashboard,
   });
@@ -49,6 +51,8 @@ class NaflMoreCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
   final List<NaflItemData> items;
   final VoidCallback? onOpenDashboard;
 
@@ -60,6 +64,7 @@ class NaflMoreCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenDashboard ??
                 () => Navigator.of(context).push(
@@ -69,7 +74,7 @@ class NaflMoreCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Nafl and more', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
           Expanded(child: _NaflRing(items: items)),
         ],

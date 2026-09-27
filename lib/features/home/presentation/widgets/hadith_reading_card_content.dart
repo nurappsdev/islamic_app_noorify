@@ -16,6 +16,8 @@ class HadithReadingCardContent extends StatelessWidget {
     this.percentage = 0,
     this.counter = '0/7',
     this.readingTimeLabel = '',
+    this.title = 'Hadith Reading',
+    this.percentageLabel,
     this.onOpenDashboard,
   });
 
@@ -27,6 +29,8 @@ class HadithReadingCardContent extends StatelessWidget {
 
   /// Total reading time, e.g. `2 Hr 7 Min`. The footer is hidden when empty.
   final String readingTimeLabel;
+  final String title;
+  final String? percentageLabel;
   final VoidCallback? onOpenDashboard;
 
   @override
@@ -37,6 +41,7 @@ class HadithReadingCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenDashboard ??
                 () => Navigator.of(context).push(
@@ -46,7 +51,7 @@ class HadithReadingCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Hadith Reading', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           const Spacer(),
           Image.asset('assets/hadithImg.png', height: 118.h),
           const Spacer(),

@@ -1,3 +1,4 @@
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/user_summary.dart';
 
 class UserSummaryModel extends UserSummary {
@@ -12,9 +13,16 @@ class UserSummaryModel extends UserSummary {
     super.currentBadgeName,
     super.globalRank,
     super.kiblahAngle,
+    super.localizedFullName,
+    super.localizedGreetingText,
+    super.localizedCurrentBadgeName,
   });
 
   factory UserSummaryModel.fromJson(Map<String, dynamic> json) {
+    final localized = json['localized'];
+    final localizedJson = localized is Map
+        ? localized
+        : const <String, dynamic>{};
     return UserSummaryModel(
       fullName: json['fullName']?.toString() ?? '',
       greetingText: json['greetingText']?.toString() ?? '',
@@ -26,6 +34,13 @@ class UserSummaryModel extends UserSummary {
       currentBadgeName: json['currentBadgeName']?.toString(),
       globalRank: (json['globalRank'] as num?)?.toInt() ?? 0,
       kiblahAngle: json['kiblahAngle']?.toString(),
+      localizedFullName: LocalizedText.fromJson(localizedJson['fullName']),
+      localizedGreetingText: LocalizedText.fromJson(
+        localizedJson['greetingText'],
+      ),
+      localizedCurrentBadgeName: LocalizedText.fromJson(
+        localizedJson['currentBadgeName'],
+      ),
     );
   }
 }

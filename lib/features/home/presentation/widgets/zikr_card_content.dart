@@ -36,6 +36,8 @@ class ZikrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.title = 'Zikr',
+    this.percentageLabel,
     this.items = ZikrItemData.placeholders,
     this.onOpenZikr,
   });
@@ -45,6 +47,8 @@ class ZikrCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
   /// One pill per item, climbing left to right.
   final List<ZikrItemData> items;
@@ -58,12 +62,13 @@ class ZikrCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenZikr ??
                 () => Navigator.of(context).pushNamed(RouteNames.zikr),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Zikr', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 4.h),
           Expanded(child: _ZikrStairs(items: items)),
         ],
