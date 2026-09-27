@@ -1,3 +1,4 @@
+import '../../../domain/translation_edition.dart';
 import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -27,13 +28,19 @@ class QuranTranslationState {
     this.arabicFontFamily = kDefaultArabicFontId,
     this.translationFontScale = 1.0,
     this.showArabic = true,
-    this.showTranslation = true,
+    this.showTranslation = false,
     this.selectedEditionId = 'english',
     this.downloadedEditionIds = const {},
     this.editionDownload,
     this.surahEditionText = const {},
     this.editionTextSurahNo,
+    this.editions = const [],
+    this.editionsLoading = false,
+    this.editionsError = false,
   });
+
+  final List<TranslationEdition> editions;
+  final bool editionsLoading, editionsError;
 
   /// Translation language applied to every ayah (built-in editions only).
   final AppLanguage surahLang;
@@ -95,8 +102,14 @@ class QuranTranslationState {
     bool clearEditionDownload = false,
     Map<int, String>? surahEditionText,
     int? editionTextSurahNo,
+    List<TranslationEdition>? editions,
+    bool? editionsLoading,
+    bool? editionsError,
   }) {
     return QuranTranslationState(
+      editions: editions ?? this.editions,
+      editionsLoading: editionsLoading ?? this.editionsLoading,
+      editionsError: editionsError ?? this.editionsError,
       surahLang: surahLang ?? this.surahLang,
       ayahOverrides: ayahOverrides ?? this.ayahOverrides,
       loaded: loaded ?? this.loaded,

@@ -37,7 +37,7 @@ class QuranAudioHandler extends BaseAudioHandler {
     await _player.stop();
     mediaItem.add(item);
     await _player.setFilePath(path);
-    await _player.play();
+    unawaited(_player.play());
   }
 
   /// Stops the current clip without ending the background session/notif.
@@ -45,6 +45,12 @@ class QuranAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> play() => _player.play();
+
+  Stream<Duration> get positionStream => _player.positionStream;
+  Duration? get duration => _player.duration;
+
+  @override
+  Future<void> seek(Duration position) => _player.seek(position);
 
   @override
   Future<void> pause() => _player.pause();

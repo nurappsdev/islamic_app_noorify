@@ -1,713 +1,418 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/juz_list/juz_list_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_list/surah_list_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import '../bloc/surah_list/surah_list_bloc.dart';
+import '../bloc/juz_list/juz_list_bloc.dart';
+import '../bloc/last_read/last_read_bloc.dart';
+import '../bloc/offline_quran/offline_quran_bloc.dart';
+import '../quran_route_args.dart';
+import '../widgets/quran_shimmer.dart';
+import '../widgets/quran_design.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
-
   @override
   State<SurahListScreen> createState() => _SurahListScreenState();
 }
 
-class _SurahListScreenState extends State<SurahListScreen>
-    with SingleTickerProviderStateMixin, RouteAware {
-  // TabController is framework-required local state (needs a TickerProvider
-  // from this State); it holds no app data, so it stays outside the Bloc.
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  bool _offlineBuildKicked = false;
-
-  /// Kicks off the one-time offline build the moment we learn it isn't ready.
-  /// Reading keeps working via the network fallback while it runs. Tried once
-  /// per visit so a persistent failure (e.g. no network) doesn't loop.
-  void _maybeStartOfflineBuild(OfflineQuranState state) {
-    if (_offlineBuildKicked) return;
-    if (state.status == OfflineQuranStatus.needsSetup ||
-        state.status == OfflineQuranStatus.failed) {
-      _offlineBuildKicked = true;
-      context.read<OfflineQuranBloc>().add(const PrepareOfflineQuran());
-    }
-  }
-
+class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
+  final _surahs = SurahListBloc()..add(const LoadSurahs());
+  final _paras = JuzListBloc()..add(const LoadJuzList());
+  int _tab = 0;
+  String _search = '';
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route is PageRoute<dynamic>) {
-      appRouteObserver.subscribe(this, route);
-    }
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
   }
 
   @override
   void didPopNext() => context.read<LastReadBloc>().add(const LoadLastRead());
-
   @override
   void dispose() {
     appRouteObserver.unsubscribe(this);
-    _tabController.dispose();
+    _surahs.close();
+    _paras.close();
     super.dispose();
   }
 
+  bool _matches(String text) =>
+      text.toLowerCase().contains(_search.toLowerCase());
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
+    final text = AppText.of(context);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(18.w, 8.h, 18.w, 0),
-                  child: Column(
-                    children: [
-                      _TopBar(appText: appText),
-                      SizedBox(height: 14.h),
-                      const _LastReadCard(),
-                      SizedBox(height: 8.h),
-                      BlocConsumer<OfflineQuranBloc, OfflineQuranState>(
-                        listener: (context, state) =>
-                            _maybeStartOfflineBuild(state),
-                        builder: (context, state) =>
-                            _OfflineBuildStrip(state: state, appText: appText),
+      bottomNavigationBar: const QuranBottomNav(),
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 19),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: const Color(0xffe5ece5),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      iconSize: 17,
+                      tooltip: text.home,
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(
+                        Icons.menu_book_outlined,
+                        color: Color(0xff385c46),
                       ),
-                      TabBar(
-                        controller: _tabController,
-                        labelColor: AppColor.primary,
-                        unselectedLabelColor: context.inkColor(Colors.grey),
-                        indicatorColor: AppColor.primary,
-                        indicatorSize: TabBarIndicatorSize.label,
-                        labelStyle: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        tabs: [
-                          Tab(text: appText.tabSurah),
-                          Tab(text: appText.tabPara),
-                        ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    text.hifjoQuranTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: quranInk,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.expand_more,
+                    color: Color(0xff385c46),
+                    size: 20,
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: text.bookmarksTitle,
+                    onPressed: () =>
+                        Navigator.pushNamed(context, RouteNames.quranBookmarks),
+                    style: IconButton.styleFrom(
+                      side: const BorderSide(color: Color(0xffeee5d5)),
+                    ),
+                    icon: const Icon(
+                      Icons.bookmark_border,
+                      size: 19,
+                      color: quranInk,
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: quranInk),
+                    onSelected: (value) {
+                      if (value == 'offline') {
+                        context.read<OfflineQuranBloc>().add(
+                          const PrepareOfflineQuran(),
+                        );
+                      } else {
+                        Navigator.pushNamed(
+                          context,
+                          RouteNames.quranReadingHistory,
+                        );
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'history',
+                        child: Text(text.readingHistoryTitle),
+                      ),
+                      const PopupMenuItem(
+                        value: 'offline',
+                        child: Text('Download Quran for offline reading'),
                       ),
                     ],
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: const [_SurahTabView(), _ParaTabView()],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Align(
-            alignment: Alignment.bottomCenter,
-            child: HomeBottomNav(selectedIndex: 1),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Thin, self-hiding banner shown only while the one-time offline Quran build
-/// is running. Reading is unaffected — this is just a progress hint.
-class _OfflineBuildStrip extends StatelessWidget {
-  const _OfflineBuildStrip({required this.state, required this.appText});
-
-  final OfflineQuranState state;
-  final AppText appText;
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.status != OfflineQuranStatus.preparing) {
-      return const SizedBox.shrink();
-    }
-    final percent = state.progress == null
-        ? null
-        : (state.progress! * 100).round();
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 13.sp,
-            height: 13.sp,
-            child: const CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColor.primary,
-            ),
-          ),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              percent == null
-                  ? appText.offlineQuranPreparing
-                  : '${appText.offlineQuranPreparing}  $percent%',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: context.inkColor(Color(0xFF7A8368)),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.appText});
-
-  final AppText appText;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36.h,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                appText.hifjoQuranTitle,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: context.inkColor(Colors.black87),
-                ),
-              ),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 18.sp,
-                color: context.inkColor(Colors.black54),
-              ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.quranBookmarks),
-                  icon: Icon(
-                    Icons.bookmark_border_rounded,
-                    color: AppColor.primary,
-                    size: 20.sp,
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    color: AppColor.primary,
-                    size: 20.sp,
-                  ),
-                  onSelected: (value) {
-                    final route = value == 'history'
-                        ? RouteNames.quranReadingHistory
-                        : RouteNames.quranBookmarks;
-                    Navigator.of(context).pushNamed(route);
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'history',
-                      child: Text(appText.readingHistoryTitle),
-                    ),
-                    PopupMenuItem(
-                      value: 'bookmarks',
-                      child: Text(appText.bookmarksTitle),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LastReadCard extends StatelessWidget {
-  const _LastReadCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return BlocBuilder<LastReadBloc, LastReadState>(
-      builder: (context, state) {
-        final lastRead = state.entry;
-        return GestureDetector(
-          onTap: lastRead == null
-              ? null
-              : () => Navigator.of(context).pushNamed(
-                  RouteNames.quranSurahDetail,
-                  arguments: SurahRouteArgs(
-                    surahNo: lastRead.surahNo,
-                    surahName: lastRead.surahName,
-                  ),
-                ),
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF8FA05C), Color(0xFF56682F)],
-              ),
-              borderRadius: BorderRadius.circular(22.r),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22.r),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -8.w,
-                    bottom: -14.h,
-                    child: Opacity(
-                      opacity: .22,
-                      child: Image.asset(
-                        'assets/images/Quran.png',
-                        height: 110.h,
-                        fit: BoxFit.contain,
-                        color: Colors.white,
-                        colorBlendMode: BlendMode.srcIn,
+              const SizedBox(height: 8),
+              BlocBuilder<LastReadBloc, LastReadState>(
+                builder: (context, state) {
+                  final entry = state.entry;
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(42),
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      RouteNames.quranSurahDetail,
+                      arguments: SurahRouteArgs(
+                        surahNo: entry?.surahNo ?? 1,
+                        surahName: entry?.surahName ?? '',
+                        ayahNo: entry?.ayahNo ?? 1,
                       ),
                     ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Container(
+                      height: 175,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(42),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xffa2af60), Color(0xff5c8169)],
+                        ),
+                      ),
+                      child: Stack(
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.menu_book_rounded,
-                                color: Colors.white,
-                                size: 15.sp,
+                          Positioned(
+                            right: -2,
+                            bottom: -2,
+                            child: Image.asset(
+                              'assets/images/quran/Quran.png',
+                              width: 205,
+                            ),
+                          ),
+                          Positioned(
+                            right: 24,
+                            top: 12,
+                            child: InkWell(
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                RouteNames.quranReadingHistory,
                               ),
-                              SizedBox(width: 6.w),
-                              Text(
-                                appText.lastReadLabel,
-                                style: TextStyle(
+                              child: Text(
+                                '${text.viewReadingHistory} →',
+                                style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.white,
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                          if (lastRead != null)
-                            GestureDetector(
-                              onTap: () => Navigator.of(
-                                context,
-                              ).pushNamed(RouteNames.quranReadingHistory),
-                              child: Row(
-                                children: [
+                          Positioned(
+                            left: 29,
+                            top: 44,
+                            right: 155,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/quran/cib-readme 1.png',
+                                      width: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        text.lastReadLabel,
+                                        style: GoogleFonts.amiri(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+                                Text(
+                                  entry?.surahName ?? text.quranReadButton,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.amiri(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                                if (entry != null)
                                   Text(
-                                    appText.viewReadingHistory,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10.sp,
-                                      decoration: TextDecoration.underline,
+                                    '${text.ayahNoLabel}: ${entry.ayahNo}',
+                                    style: const TextStyle(
+                                      color: Color(0xffe5ecd6),
+                                      fontSize: 14,
                                     ),
                                   ),
-                                  SizedBox(width: 4.w),
-                                  Icon(
-                                    Icons.arrow_forward_rounded,
-                                    color: Colors.white,
-                                    size: 12.sp,
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
+                          ),
                         ],
                       ),
-                      SizedBox(height: 30.h),
-                      Text(
-                        lastRead?.surahName ?? appText.hifjoQuranTitle,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22.sp,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                  );
+                },
+              ),
+              BlocBuilder<OfflineQuranBloc, OfflineQuranState>(
+                builder: (context, state) {
+                  if (state.status == OfflineQuranStatus.preparing) {
+                    return LinearProgressIndicator(value: state.progress);
+                  }
+                  if (state.status == OfflineQuranStatus.failed) {
+                    return TextButton(
+                      onPressed: () => context.read<OfflineQuranBloc>().add(
+                        const PrepareOfflineQuran(),
                       ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        lastRead != null
-                            ? '${appText.ayahNoLabel}: ${lastRead.ayahNo}'
-                            : appText.startReadingPrompt,
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      child: Text(text.tryAgain),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ListRow extends StatelessWidget {
-  const _ListRow({
-    required this.number,
-    required this.title,
-    this.subtitleLeft,
-    this.subtitleRight,
-    this.trailingArabic,
-    required this.onTap,
-  });
-
-  final int number;
-  final String title;
-  final String? subtitleLeft;
-  final String? subtitleRight;
-  final String? trailingArabic;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
-        child: Row(
-          children: [
-            Container(
-              width: 34.w,
-              height: 34.w,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: context.lineColor(Color(0xFFC9D89A)),
-                  width: 1.4,
-                ),
-              ),
-              child: Text(
-                '$number',
-                style: TextStyle(
-                  color: AppColor.primary,
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 22),
+              Row(
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Times New Roman',
-                    ),
-                  ),
-                  if (subtitleLeft != null) ...[
-                    SizedBox(height: 3.h),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            subtitleLeft!,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: context.inkColor(Colors.grey),
-                              fontSize: 12.sp,
-                            ),
-                          ),
-                        ),
-                        if (subtitleRight != null) ...[
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w),
-                            child: Container(
-                              width: 3,
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: context.surfaceColor(Colors.grey),
-                                shape: BoxShape.circle,
+                  for (final (i, label) in [
+                    text.tabSurah,
+                    text.tabPara,
+                    'Page',
+                  ].indexed)
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _tab = i),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: _tab == i ? quranOlive : quranBorder,
                               ),
                             ),
                           ),
-                          Text(
-                            subtitleRight!,
-                            style: TextStyle(
-                              color: context.inkColor(Colors.grey),
-                              fontSize: 12.sp,
+                          child: Text(
+                            label,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: quranInk,
                             ),
                           ),
-                        ],
-                      ],
+                        ),
+                      ),
                     ),
-                  ],
                 ],
               ),
-            ),
-            if (trailingArabic != null) ...[
-              SizedBox(width: 10.w),
-              Text(
-                trailingArabic!,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontFamily: 'Times New Roman',
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: (value) => setState(() => _search = value.trim()),
+                decoration: InputDecoration(
+                  hintText: 'Search Surah Or Para',
+                  hintStyle: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xff9aa2b5),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 20,
+                    color: quranOlive,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: quranBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: const BorderSide(color: quranOlive),
+                  ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: _tab == 0
+                    ? BlocBuilder<SurahListBloc, SurahListState>(
+                        bloc: _surahs,
+                        builder: (context, state) {
+                          if (state.isLoading) return const SurahListShimmer();
+                          if (state.hasError) {
+                            return QuranRetry(
+                              onRetry: () => _surahs.add(const LoadSurahs()),
+                            );
+                          }
+                          final list = state.surahs
+                              .where(
+                                (s) => _matches(
+                                  '${s.number} ${s.name} ${s.nameArabic} ${s.translation}',
+                                ),
+                              )
+                              .toList();
+                          if (list.isEmpty) {
+                            return const Center(child: Text('No results'));
+                          }
+                          return ListView.builder(
+                            itemCount: list.length,
+                            itemBuilder: (context, i) {
+                              final s = list[i];
+                              return QuranListRow(
+                                number: s.number,
+                                title: s.name,
+                                arabic: s.nameArabic,
+                                subtitle:
+                                    '${s.revelationPlace == 'meccan'
+                                        ? 'Meccan'
+                                        : s.revelationPlace == 'medinan'
+                                        ? 'Medinian'
+                                        : s.revelationPlace}  ·  ${s.totalAyah} ${text.ayahWord}',
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  RouteNames.quranSurahDetail,
+                                  arguments: SurahRouteArgs(
+                                    surahNo: s.number,
+                                    surahName: s.name,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : _tab == 1
+                    ? BlocBuilder<JuzListBloc, JuzListState>(
+                        bloc: _paras,
+                        builder: (context, state) {
+                          if (state.isLoading) return const SurahListShimmer();
+                          if (state.hasError) {
+                            return QuranRetry(
+                              onRetry: () => _paras.add(const LoadJuzList()),
+                            );
+                          }
+                          final list = state.juzs
+                              .where(
+                                (p) => _matches(
+                                  '${p.number} ${p.nameBangla} ${p.surahs.map((s) => '${s.name} ${s.nameBangla}').join(' ')}',
+                                ),
+                              )
+                              .toList();
+                          if (list.isEmpty) {
+                            return const Center(child: Text('No results'));
+                          }
+                          return ListView.builder(
+                            itemCount: list.length,
+                            itemBuilder: (context, i) {
+                              final p = list[i];
+                              return QuranListRow(
+                                number: p.number,
+                                title: p.nameBangla,
+                                subtitle:
+                                    '${p.startSurahNo}:${p.startAyah} – ${p.endSurahNo}:${p.endAyah}  ·  ${p.versesCount} ${text.ayahWord}',
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  RouteNames.quranJuzReader,
+                                  arguments: p.number,
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'Browse by Surah or Para. Page numbers are shown while reading; page browsing is coming soon.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
               ),
             ],
-          ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-class _LoadingOrError extends StatelessWidget {
-  const _LoadingOrError({
-    required this.message,
-    required this.actionLabel,
-    required this.onRetry,
-  });
-
-  final String message;
-  final String actionLabel;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.inkColor(Colors.grey.shade700),
-              fontSize: 13.sp,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          TextButton(onPressed: onRetry, child: Text(actionLabel)),
-        ],
-      ),
-    );
-  }
-}
-
-class _SurahTabView extends StatelessWidget {
-  const _SurahTabView();
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return BlocProvider(
-      create: (_) => SurahListBloc()..add(const LoadSurahs()),
-      child: BlocBuilder<SurahListBloc, SurahListState>(
-        builder: (context, state) {
-          if (state.isLoading && state.surahs.isEmpty) {
-            return const SurahListShimmer();
-          }
-          if (state.hasError && state.surahs.isEmpty) {
-            return _LoadingOrError(
-              message: appText.quranLoadError,
-              actionLabel: appText.tryAgain,
-              onRetry: () =>
-                  context.read<SurahListBloc>().add(const LoadSurahs()),
-            );
-          }
-          return _PaginatedList<SurahSummary>(
-            items: state.surahs,
-            itemBuilder: (context, surah) => _ListRow(
-              number: surah.number,
-              title: surah.name,
-              subtitleLeft: revelationPlaceLabel(
-                appText,
-                surah.revelationPlace,
-              ),
-              subtitleRight: '${surah.totalAyah} ${appText.ayahWord}',
-              trailingArabic: surah.nameArabic,
-              onTap: () => Navigator.of(context).pushNamed(
-                RouteNames.quranSurahDetail,
-                arguments: SurahRouteArgs(
-                  surahNo: surah.number,
-                  surahName: surah.name,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _ParaTabView extends StatelessWidget {
-  const _ParaTabView();
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return BlocProvider(
-      create: (_) => JuzListBloc()..add(const LoadJuzList()),
-      child: BlocBuilder<JuzListBloc, JuzListState>(
-        builder: (context, state) {
-          if (state.isLoading && state.juzs.isEmpty) {
-            return const SurahListShimmer();
-          }
-          if (state.hasError && state.juzs.isEmpty) {
-            return _LoadingOrError(
-              message: appText.quranLoadError,
-              actionLabel: appText.tryAgain,
-              onRetry: () =>
-                  context.read<JuzListBloc>().add(const LoadJuzList()),
-            );
-          }
-          return _PaginatedList<JuzSummary>(
-            items: state.juzs,
-            itemBuilder: (context, juz) {
-              final surahName = state.surahNames[juz.startSurahNo] ?? '';
-              return _ListRow(
-                number: juz.number,
-                title: '${appText.juzWord} ${juz.number}',
-                subtitleLeft:
-                    '${appText.startsLabel}: $surahName ${juz.startAyah}',
-                onTap: () => Navigator.of(
-                  context,
-                ).pushNamed(RouteNames.quranJuzReader, arguments: juz.number),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Renders [items] 10 at a time, revealing the next 10 automatically (with
-/// a brief loading row) as the user scrolls near the bottom, instead of
-/// mounting the whole list at once.
-class _PaginatedList<T> extends StatefulWidget {
-  const _PaginatedList({
-    required this.items,
-    required this.itemBuilder,
-    this.pageSize = 10,
-  });
-
-  final List<T> items;
-  final Widget Function(BuildContext context, T item) itemBuilder;
-  final int pageSize;
-
-  @override
-  State<_PaginatedList<T>> createState() => _PaginatedListState<T>();
-}
-
-class _PaginatedListState<T> extends State<_PaginatedList<T>> {
-  final ScrollController _scrollController = ScrollController();
-  late int _visibleCount = _initialVisibleCount;
-  bool _isLoadingMore = false;
-
-  int get _initialVisibleCount => widget.items.length < widget.pageSize
-      ? widget.items.length
-      : widget.pageSize;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void didUpdateWidget(covariant _PaginatedList<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.items.length != oldWidget.items.length) {
-      _visibleCount = _initialVisibleCount;
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_isLoadingMore || _visibleCount >= widget.items.length) return;
-    final position = _scrollController.position;
-    if (position.pixels < position.maxScrollExtent - 200) return;
-    setState(() => _isLoadingMore = true);
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      setState(() {
-        _visibleCount = (_visibleCount + widget.pageSize).clamp(
-          0,
-          widget.items.length,
-        );
-        _isLoadingMore = false;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final visibleItems = widget.items.take(_visibleCount).toList();
-    return ListView.separated(
-      controller: _scrollController,
-      padding: EdgeInsets.fromLTRB(0, 4.h, 0, 100.h),
-      itemCount: visibleItems.length + (_isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, _) =>
-          Divider(height: 1, color: context.lineColor(Color(0xFFE3ECC5))),
-      itemBuilder: (context, index) {
-        if (index >= visibleItems.length) {
-          return const SurahListRowShimmer();
-        }
-        return widget.itemBuilder(context, visibleItems[index]);
-      },
     );
   }
 }

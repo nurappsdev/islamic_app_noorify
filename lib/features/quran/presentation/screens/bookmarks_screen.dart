@@ -101,6 +101,7 @@ class BookmarksScreen extends StatelessWidget {
                                   RouteNames.quranSurahDetail,
                                   arguments: SurahRouteArgs(
                                     surahNo: bookmark.surahNo,
+                                    ayahNo: bookmark.ayahNo,
                                     surahName: bookmark.surahName,
                                   ),
                                 ),

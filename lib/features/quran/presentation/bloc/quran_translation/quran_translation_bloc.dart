@@ -1,3 +1,4 @@
+import '../../../data/services/quran_content_service.dart';
 import 'package:bloc/bloc.dart';
 
 import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
@@ -22,12 +23,14 @@ class QuranTranslationBloc
     extends Bloc<QuranTranslationEvent, QuranTranslationState> {
   QuranTranslationBloc({
     QuranLocalStore? store,
+    QuranContentService? contentService,
     QuranOfflineDatabase? database,
     QuranOfflineService? offlineService,
     QuranReaderService? readerService,
     QuranTranslationDownloader? downloader,
     AppLanguage? initial,
-  }) : _store = store,
+  }) : _content = contentService ?? QuranContentService.shared,
+       _store = store,
        _db = database ?? QuranOfflineDatabase(),
        _offlineService = offlineService ?? QuranOfflineService(),
        _reader = readerService ?? QuranComReaderService(),
@@ -48,6 +51,7 @@ class QuranTranslationBloc
     on<LoadSurahEditionText>(_onLoadSurahEditionText);
   }
 
+  final QuranContentService _content;
   QuranLocalStore? _store;
   final QuranOfflineDatabase _db;
   final QuranOfflineService _offlineService;
@@ -72,10 +76,6 @@ class QuranTranslationBloc
     }
     final lang = store.translationLanguage() ?? event.uiFallback;
     var editionId = store.selectedTranslationEditionId();
-    // A custom edition that is no longer on the device falls back to English.
-    if (!isBuiltInEditionId(editionId) && !downloaded.contains(editionId)) {
-      editionId = kBuiltInEnglishId;
-    }
     // Keep the built-in edition in step with the persisted pill language.
     if (isBuiltInEditionId(editionId)) {
       editionId = lang == AppLanguage.bangla
@@ -180,12 +180,12 @@ class QuranTranslationBloc
     LoadTranslationEditions event,
     Emitter<QuranTranslationState> emit,
   ) async {
+    emit(state.copyWith(editionsLoading: true, editionsError: false));
     try {
-      emit(
-        state.copyWith(downloadedEditionIds: await _db.downloadedEditionIds()),
-      );
+      final editions = await _content.loadTranslations();
+      emit(state.copyWith(editions: editions, editionsLoading: false));
     } catch (_) {
-      // keep whatever we have
+      emit(state.copyWith(editionsLoading: false, editionsError: true));
     }
   }
 
@@ -299,7 +299,8 @@ class QuranTranslationBloc
       );
       return;
     }
-    final edition = translationEditionById(id);
+    final matching = state.editions.where((e) => e.id == id);
+    final edition = matching.isEmpty ? null : matching.first;
     if (edition?.resourceId == null) {
       emit(state.copyWith(surahEditionText: const {}));
       return;

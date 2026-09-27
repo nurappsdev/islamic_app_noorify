@@ -17,14 +17,12 @@ class JuzListBloc extends Bloc<JuzListEvent, JuzListState> {
     QuranOfflineService? offlineService,
     QuranReaderService? readerService,
     QuranApiService? apiService,
-  }) : _offlineService = offlineService ?? QuranOfflineService(),
-       _readerService = readerService ?? QuranComReaderService(),
+  }) : _readerService = readerService ?? QuranComReaderService(),
        _apiService = apiService ?? QuranOfflineFirstService(),
        super(const JuzListState()) {
     on<LoadJuzList>(_onLoad);
   }
 
-  final QuranOfflineService _offlineService;
   final QuranReaderService _readerService;
   final QuranApiService _apiService;
 
@@ -46,12 +44,6 @@ class JuzListBloc extends Bloc<JuzListEvent, JuzListState> {
   }
 
   Future<List<JuzSummary>> _loadJuzs() async {
-    try {
-      final juzs = await _offlineService.loadJuzList();
-      if (juzs.isNotEmpty) return juzs;
-    } catch (_) {
-      // fall through to the network
-    }
     return _readerService.loadJuzList();
   }
 }
