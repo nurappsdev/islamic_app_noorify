@@ -19,11 +19,13 @@ class SunnahPrayerData {
   const SunnahPrayerData({
     required this.prayerName,
     required this.points,
+    this.label,
     this.sunnahCompleted = false,
   });
 
   /// Matches the pill labels: `Fajr`, `Duhr`, `Asr`, `Magrib`, `Esa`.
   final String prayerName;
+  final String? label;
   final num points;
 
   /// Tracked today; the pill is drawn dark green.
@@ -122,7 +124,9 @@ class SunnahWitrCardContent extends StatelessWidget {
                         width: w * a.width,
                         height: pillH,
                         child: _SunnahPill(
-                          name: _localizedPrayerName(AppText.of(context), name),
+                          name: _dataFor(name)?.label?.trim().isNotEmpty == true
+                              ? _dataFor(name)!.label!.trim()
+                              : _localizedPrayerName(AppText.of(context), name),
                           points: _dataFor(name)?.points ?? defaultPoints,
                           circleFirst: circleFirst,
                           active: _dataFor(name)?.sunnahCompleted ?? false,

@@ -15,6 +15,7 @@ class PillarCard {
     this.localizedMaxPoints = LocalizedText.empty,
     this.localizedPercentage = LocalizedText.empty,
     this.localizedFormattedSubtext = LocalizedText.empty,
+    this.localizedChartLabels = const {},
   });
 
   /// Stable identifier, e.g. `fardh_prayer`, `quran`, `nafl_and_more`.
@@ -36,4 +37,8 @@ class PillarCard {
   final LocalizedText localizedMaxPoints;
   final LocalizedText localizedPercentage;
   final LocalizedText localizedFormattedSubtext;
+
+  /// Localized labels for the pillar's detailed chart keys, such as
+  /// `fajrSunnah` and `witr` on the Sunnah/Witr card.
+  final Map<String, LocalizedText> localizedChartLabels;
 }
