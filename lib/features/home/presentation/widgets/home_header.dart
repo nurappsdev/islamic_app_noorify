@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/theme/brand_colors.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
@@ -290,16 +291,15 @@ class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
     final now = bangladeshNow();
 
     final String text;
+    final bool isReminder;
     if (_showingGreeting) {
       text = appText.greeting;
+      isReminder = false;
     } else {
       final kinds = _rotationKinds(now);
-      text = _label(
-        kinds[_rotationIndex % kinds.length],
-        now,
-        appText,
-        bangla,
-      );
+      final kind = kinds[_rotationIndex % kinds.length];
+      text = _label(kind, now, appText, bangla);
+      isReminder = kind == _RotationKind.reminder;
     }
 
     return AnimatedSwitcher(
@@ -309,7 +309,12 @@ class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
         key: ValueKey(text),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: homeSansStyle(context: context, fontSize: 8.sp),
+        style: homeSansStyle(
+          context: context,
+          fontSize: 8.sp,
+          color: isReminder ? BrandColors.warning : null,
+          fontWeight: isReminder ? FontWeight.w600 : null,
+        ),
       ),
     );
   }
