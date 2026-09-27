@@ -1,3 +1,4 @@
+import '../widgets/quran_player_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,11 +8,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
@@ -132,7 +129,7 @@ class FullSurahScreen extends StatelessWidget {
                             tState.surahEditionText[i] ?? '',
                         ]
                       : (isBangla ? detail.bengaliAyahs : detail.englishAyahs);
-                  return _PlaybackAudioGate(
+                  return QuranPlaybackAudioGate(
                     detail: detail,
                     child: Column(
                       children: [
@@ -188,7 +185,7 @@ class FullSurahScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        _NowPlayingBar(detail: detail),
+                        QuranNowPlayingBar(detail: detail),
                       ],
                     ),
                   );
@@ -198,88 +195,6 @@ class FullSurahScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Wraps the full-surah player: keeps the surah's audio-download status in
-/// sync with the reciter and, when the user presses play before the audio is
-/// downloaded, shows the download modal and resumes playback afterwards.
-class _PlaybackAudioGate extends StatefulWidget {
-  const _PlaybackAudioGate({required this.detail, required this.child});
-
-  final SurahDetail detail;
-  final Widget child;
-
-  @override
-  State<_PlaybackAudioGate> createState() => _PlaybackAudioGateState();
-}
-
-class _PlaybackAudioGateState extends State<_PlaybackAudioGate> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<QuranTranslationBloc>().add(
-      LoadSurahEditionText(widget.detail.number),
-    );
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refreshStatus();
-    });
-  }
-
-  int get _reciterId =>
-      context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
-
-  void _refreshStatus() {
-    context.read<SurahAudioDownloadBloc>().add(
-      CheckSurahAudioStatus(
-        reciterId: _reciterId,
-        surahNo: widget.detail.number,
-        totalAyah: widget.detail.totalAyah,
-      ),
-    );
-  }
-
-  Future<void> _promptDownload() async {
-    if (ModalRoute.of(context)?.isCurrent != true) return;
-    final saved = await showSurahAudioSheet(
-      context,
-      downloadBloc: context.read<SurahAudioDownloadBloc>(),
-      reciterId: _reciterId,
-      surahNo: widget.detail.number,
-      totalAyah: widget.detail.totalAyah,
-    );
-    if (saved && mounted) {
-      context.read<SurahPlaybackBloc>().add(
-        PlaySurah(
-          surahNo: widget.detail.number,
-          totalAyah: widget.detail.totalAyah,
-          recitationId: _reciterId,
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<ReciterBloc, ReciterState>(
-          listenWhen: (p, c) => p.selectedId != c.selectedId,
-          listener: (context, _) => _refreshStatus(),
-        ),
-        BlocListener<SurahPlaybackBloc, SurahPlaybackState>(
-          listenWhen: (p, c) => !p.needsDownload && c.needsDownload,
-          listener: (context, _) => _promptDownload(),
-        ),
-        BlocListener<QuranTranslationBloc, QuranTranslationState>(
-          listenWhen: (p, c) => p.selectedEditionId != c.selectedEditionId,
-          listener: (context, _) => context.read<QuranTranslationBloc>().add(
-            LoadSurahEditionText(widget.detail.number),
-          ),
-        ),
-      ],
-      child: widget.child,
     );
   }
 }
@@ -472,254 +387,6 @@ class _CurrentAyahDetails extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-}
-
-class _NowPlayingBar extends StatelessWidget {
-  const _NowPlayingBar({required this.detail});
-
-  final SurahDetail detail;
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: context.surfaceColor(Color(0xFFEEF2DD)),
-        border: Border(
-          top: BorderSide(color: context.lineColor(Color(0xFFD8E2B0))),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 10.h),
-          child: BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
-            builder: (context, playState) {
-              // ayah 0 is the opening Bismillah — treat it as ayah 1 here.
-              final ayahNo = playState.currentAyahNo < 1
-                  ? 1
-                  : playState.currentAyahNo;
-              return BlocProvider<AyahBookmarkBloc>(
-                key: ValueKey(ayahNo),
-                create: (_) => AyahBookmarkBloc(
-                  surahNo: detail.number,
-                  ayahNo: ayahNo,
-                  surahName: detail.name,
-                  snippet: detail.name,
-                )..add(const LoadBookmarkStatus()),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 26.w,
-                      height: 26.w,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColor.primary,
-                        borderRadius: BorderRadius.circular(7.r),
-                      ),
-                      child: Text(
-                        '$ayahNo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: BlocBuilder<ReciterBloc, ReciterState>(
-                        builder: (context, reciterState) {
-                          final name = reciterState.selectedName;
-                          return InkWell(
-                            onTap: () => openReciterPicker(
-                              context,
-                              context.read<ReciterBloc>(),
-                            ),
-                            borderRadius: BorderRadius.circular(18.r),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 7.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context.surfaceColor(Colors.white),
-                                borderRadius: BorderRadius.circular(18.r),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      name.isEmpty
-                                          ? appText.selectReciterTitle
-                                          : name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: context.inkColor(
-                                          Color(0xFF6B6B6B),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 16.sp,
-                                    color: AppColor.primary,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(width: 4.w),
-                    InkWell(
-                      onTap: () {
-                        final current = context
-                            .read<SurahPlaybackBloc>()
-                            .state
-                            .repeatCount;
-                        final next = current == 1
-                            ? 2
-                            : current == 2
-                            ? 3
-                            : current == 3
-                            ? 5
-                            : 1;
-                        context.read<SurahPlaybackBloc>().add(
-                          SetRepeatCount(next),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16.r),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 4.w,
-                          vertical: 4.h,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.repeat_rounded,
-                              color: AppColor.primary,
-                              size: 18.sp,
-                            ),
-                            BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
-                              builder: (context, state) {
-                                if (state.repeatCount <= 1) {
-                                  return const SizedBox.shrink();
-                                }
-                                return Text(
-                                  '${state.repeatCount}',
-                                  style: TextStyle(
-                                    color: AppColor.primary,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        context.read<SurahPlaybackBloc>().add(
-                          SetActiveAyah(ayahNo),
-                        );
-                        final recitationId =
-                            context.read<ReciterBloc>().state.selectedId ??
-                            defaultRecitationId;
-                        context.read<SurahPlaybackBloc>().add(
-                          PlaySurah(
-                            surahNo: detail.number,
-                            totalAyah: detail.totalAyah,
-                            recitationId: recitationId,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(16.r),
-                      child: Padding(
-                        padding: EdgeInsets.all(4.w),
-                        child: Icon(
-                          Icons.replay_rounded,
-                          color: AppColor.primary,
-                          size: 18.sp,
-                        ),
-                      ),
-                    ),
-                    BlocBuilder<AyahBookmarkBloc, AyahBookmarkState>(
-                      builder: (context, bookmarkState) {
-                        return InkWell(
-                          onTap: () => context.read<AyahBookmarkBloc>().add(
-                            const ToggleAyahBookmark(),
-                          ),
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Padding(
-                            padding: EdgeInsets.all(4.w),
-                            child: Icon(
-                              bookmarkState.isBookmarked
-                                  ? Icons.bookmark
-                                  : Icons.bookmark_border,
-                              color: AppColor.primary,
-                              size: 18.sp,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    InkWell(
-                      onTap: () {
-                        if (playState.isPlaying) {
-                          context.read<SurahPlaybackBloc>().add(
-                            const PauseSurah(),
-                          );
-                          return;
-                        }
-                        final recitationId =
-                            context.read<ReciterBloc>().state.selectedId ??
-                            defaultRecitationId;
-                        context.read<SurahPlaybackBloc>().add(
-                          PlaySurah(
-                            surahNo: detail.number,
-                            totalAyah: detail.totalAyah,
-                            recitationId: recitationId,
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(18.r),
-                      child: Padding(
-                        padding: EdgeInsets.all(4.w),
-                        child: playState.isBuffering
-                            ? SizedBox(
-                                width: 18.sp,
-                                height: 18.sp,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColor.primary,
-                                ),
-                              )
-                            : Icon(
-                                playState.isPlaying
-                                    ? Icons.pause_circle_filled
-                                    : Icons.play_circle_fill,
-                                color: AppColor.primary,
-                                size: 24.sp,
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
     );
   }
 }

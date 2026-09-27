@@ -4,7 +4,7 @@ import 'quran_offline_database.dart';
 import 'quran_reader_service.dart';
 
 /// Downloads one whole translation edition (all 114 surahs) from
-/// `api.quran.com` into [QuranOfflineDatabase.translation_text].
+/// the internal Quran API into [QuranOfflineDatabase.translation_text].
 ///
 /// Resumable: each surah is committed as it arrives, so an interrupted run
 /// continues from the first surah that is not yet complete. Every write

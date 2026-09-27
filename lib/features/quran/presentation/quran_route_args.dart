@@ -2,8 +2,16 @@
 /// surah name alongside its number so the destination screen can show it
 /// immediately (before the surah detail finishes loading).
 class SurahRouteArgs {
-  const SurahRouteArgs({required this.surahNo, required this.surahName});
+  const SurahRouteArgs({
+    required this.surahNo,
+    required this.surahName,
+    this.ayahNo = 1,
+    this.endAyah,
+    this.paraNumber,
+  });
 
   final int surahNo;
+  final int ayahNo;
+  final int? endAyah, paraNumber;
   final String surahName;
 }

@@ -98,20 +98,15 @@ import '../../features/learning/presentation/screens/article_details_screen.dart
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
 import '../../features/quran/presentation/quran_route_args.dart';
-import '../../features/quran/presentation/screens/quran_entry_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
-import '../../features/quran/presentation/screens/surah_detail_screen.dart';
-import '../../features/quran/presentation/screens/full_surah_screen.dart';
-import '../../features/quran/presentation/screens/verse_reader_screen.dart';
+import '../../features/quran/presentation/screens/quran_reading_screen.dart';
+import '../../features/quran/presentation/screens/para_detail_screen.dart';
 import '../../features/quran/presentation/screens/bookmarks_screen.dart';
 import '../../features/quran/presentation/screens/reading_history_screen.dart';
-import '../../features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
-import '../../features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
 import '../../features/quran/presentation/bloc/last_read/last_read_bloc.dart';
 import '../../features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
 import '../../features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
 import '../../features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import '../../features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 import '../../features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
 import '../../features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
@@ -408,73 +403,39 @@ class AppRoutes {
       case RouteNames.learningTestResult:
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
-        return _page(
-          QuranEntryScreen(surahListBuilder: (_) => _surahListWithBlocs()),
-          settings,
-        );
       case RouteNames.quranSurahs:
         return _instantPage(_surahListWithBlocs(), settings);
       case RouteNames.quranSurahDetail:
-        final args = settings.arguments;
-        final surahNo = args is SurahRouteArgs
-            ? args.surahNo
-            : (args as int? ?? 1);
-        final surahName = args is SurahRouteArgs ? args.surahName : '';
-        final detailAudioDownloader = QuranAudioDownloader();
-        return _page(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
-              ),
-              BlocProvider(
-                create: (_) => ReciterBloc()..add(const LoadReciters()),
-              ),
-              BlocProvider(
-                create: (_) => AyahAudioBloc(downloader: detailAudioDownloader),
-              ),
-              BlocProvider(
-                create: (_) =>
-                    SurahAudioDownloadBloc(downloader: detailAudioDownloader),
-              ),
-            ],
-            child: SurahDetailScreen(surahNo: surahNo, surahName: surahName),
-          ),
-          settings,
-        );
       case RouteNames.quranFullSurah:
-        final surahNo = settings.arguments as int? ?? 1;
-        final fullSurahAudioDownloader = QuranAudioDownloader();
+        final rawArgs = settings.arguments;
+        final args = rawArgs is SurahRouteArgs
+            ? rawArgs
+            : SurahRouteArgs(surahNo: rawArgs as int? ?? 1, surahName: '');
+        final downloader = QuranAudioDownloader();
         return _page(
           MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) => SurahDetailBloc()..add(LoadSurahDetail(surahNo)),
-              ),
-              BlocProvider(
                 create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
               BlocProvider(
-                create: (_) =>
-                    SurahPlaybackBloc(downloader: fullSurahAudioDownloader),
-              ),
-              BlocProvider(
-                create: (_) => SurahAudioDownloadBloc(
-                  downloader: fullSurahAudioDownloader,
+                create: (_) => SurahPlaybackBloc(
+                  downloader: downloader,
+                  startAyah: args.paraNumber == null ? 1 : args.ayahNo,
+                  endAyah: args.endAyah,
                 ),
               ),
+              BlocProvider(
+                create: (_) => SurahAudioDownloadBloc(downloader: downloader),
+              ),
             ],
-            child: FullSurahScreen(surahNo: surahNo),
+            child: QuranReadingScreen(args: args),
           ),
           settings,
         );
       case RouteNames.quranJuzReader:
-        final juzNumber = settings.arguments as int? ?? 1;
         return _page(
-          BlocProvider(
-            create: (_) => VerseReaderBloc()..add(LoadJuzVerses(juzNumber)),
-            child: VerseReaderScreen(juzNumber: juzNumber),
-          ),
+          ParaDetailScreen(number: settings.arguments as int? ?? 1),
           settings,
         );
       case RouteNames.quranBookmarks:

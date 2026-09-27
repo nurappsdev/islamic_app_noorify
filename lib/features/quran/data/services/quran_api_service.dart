@@ -1,57 +1,39 @@
-import 'dart:convert';
+import '../../domain/surah_detail.dart';
+import '../../domain/surah_summary.dart';
+import 'quran_content_service.dart';
 
-import 'package:http/http.dart' as http;
-
-import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
-
-/// Free, keyless Quran API: https://quranapi.pages.dev
 abstract interface class QuranApiService {
   Future<List<SurahSummary>> loadSurahList();
-
   Future<SurahDetail> loadSurahDetail(int surahNo);
 }
 
-class QuranApiPagesService implements QuranApiService {
-  QuranApiPagesService({http.Client? client})
-    : _client = client ?? http.Client();
-
-  static const _host = 'quranapi.pages.dev';
-
-  final http.Client _client;
-
+/// Adapter for the existing offline downloader and legacy ayah widgets.
+/// Interactive reading uses bounded ranges through QuranContentService.
+class InternalQuranApiService implements QuranApiService {
+  InternalQuranApiService({QuranContentService? content})
+    : _content = content ?? QuranContentService.shared;
+  final QuranContentService _content;
   @override
-  Future<List<SurahSummary>> loadSurahList() async {
-    final uri = Uri.https(_host, '/api/surah.json');
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 12));
-    if (response.statusCode != 200) {
-      throw const FormatException('Failed to load surah list');
-    }
-    final body = jsonDecode(response.body);
-    if (body is! List) {
-      throw const FormatException('Invalid surah list response');
-    }
-    return [
-      for (var i = 0; i < body.length; i++)
-        SurahSummary.fromJson(i + 1, body[i] as Map<String, dynamic>),
-    ];
-  }
-
+  Future<List<SurahSummary>> loadSurahList() => _content.loadSurahs();
   @override
   Future<SurahDetail> loadSurahDetail(int surahNo) async {
-    final uri = Uri.https(_host, '/api/$surahNo.json');
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 12));
-    if (response.statusCode != 200) {
-      throw const FormatException('Failed to load surah detail');
-    }
-    final body = jsonDecode(response.body);
-    if (body is! Map<String, dynamic>) {
-      throw const FormatException('Invalid surah detail response');
-    }
-    return SurahDetail.fromJson(body);
+    final meta = await _content.loadSurah(surahNo);
+    final ayahs = await _content.loadRange(
+      surahNo,
+      from: 1,
+      to: meta.totalAyah,
+      translations: [20, 161],
+    );
+    return SurahDetail(
+      number: meta.number,
+      name: meta.name,
+      nameArabic: meta.nameArabic,
+      translation: meta.translation,
+      revelationPlace: meta.revelationPlace,
+      totalAyah: meta.totalAyah,
+      arabicAyahs: [for (final a in ayahs) a.textArabic],
+      englishAyahs: [for (final a in ayahs) a.translations[20]?.text ?? ''],
+      bengaliAyahs: [for (final a in ayahs) a.translations[161]?.text ?? ''],
+    );
   }
 }

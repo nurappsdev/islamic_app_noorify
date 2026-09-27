@@ -180,7 +180,7 @@ class QuranLocalStore {
   }
 
   /// Whether the translation text is shown in the reader. Defaults to true.
-  bool showTranslation() => _preferences.getBool(_showTranslationKey) ?? true;
+  bool showTranslation() => _preferences.getBool(_showTranslationKey) ?? false;
 
   Future<void> setShowTranslation(bool value) async {
     await _preferences.setBool(_showTranslationKey, value);

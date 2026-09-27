@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -41,7 +42,7 @@ class QuranOfflineDatabase {
   static final QuranOfflineDatabase _instance = QuranOfflineDatabase._();
 
   static const _fileName = 'quran_offline.db';
-  static const _version = 3;
+  static const _version = 4;
   static const _expectedAyahCount = 6236;
   static const surahCount = 114;
 
@@ -73,11 +74,147 @@ class QuranOfflineDatabase {
         }
         // v2 -> v3: additive — downloadable translation editions.
         await _createTranslationTables(db);
+        await _createInternalCache(db);
       },
     );
   }
 
+  Future<void> _createInternalCache(Database db) async {
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS internal_quran_meta (cache_key TEXT PRIMARY KEY, body TEXT NOT NULL)',
+    );
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS internal_quran_ayahs (surah INTEGER NOT NULL, ayah INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY (surah, ayah))',
+    );
+  }
+
+  Future<void> cacheInternalResponse(
+    String path,
+    Map<String, dynamic> response,
+  ) async {
+    if (path.startsWith('ayahs/')) return;
+    final db = await open();
+    if (!path.contains('/ayahs')) {
+      await db.insert('internal_quran_meta', {
+        'cache_key': path,
+        'body': jsonEncode(response),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      return;
+    }
+    final data = response['data'] as Map<String, dynamic>;
+    final surah = data['surah'] as Map<String, dynamic>;
+    final number = (surah['surahNumber'] as num).toInt();
+    await db.transaction((txn) async {
+      await txn.insert('internal_quran_meta', {
+        'cache_key': 'reader/$number',
+        'body': jsonEncode(surah),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      for (final raw in data['ayahs'] as List) {
+        final ayah = Map<String, dynamic>.from(raw as Map);
+        final previous = await txn.query(
+          'internal_quran_ayahs',
+          where: 'surah = ? AND ayah = ?',
+          whereArgs: [number, ayah['ayahNumber']],
+        );
+        final translations = <int, Object?>{};
+        if (previous.isNotEmpty) {
+          final old =
+              jsonDecode(previous.first['body'] as String)
+                  as Map<String, dynamic>;
+          for (final t in old['translations'] as List? ?? []) {
+            translations[(t['resourceId'] as num).toInt()] = t;
+          }
+        }
+        for (final t in ayah['translations'] as List? ?? []) {
+          translations[(t['resourceId'] as num).toInt()] = t;
+        }
+        ayah['translations'] = translations.values.toList();
+        await txn.insert('internal_quran_ayahs', {
+          'surah': number,
+          'ayah': ayah['ayahNumber'],
+          'body': jsonEncode(ayah),
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  Future<Map<String, dynamic>?> internalResponse(
+    String path,
+    Map<String, Object> query,
+  ) async {
+    if (path.startsWith('ayahs/')) return null;
+    final db = await open();
+    if (!path.contains('/ayahs')) {
+      final rows = await db.query(
+        'internal_quran_meta',
+        where: 'cache_key = ?',
+        whereArgs: [path],
+      );
+      if (rows.isNotEmpty) {
+        return jsonDecode(rows.first['body'] as String) as Map<String, dynamic>;
+      }
+      if (path.startsWith('paras/')) {
+        final list = await internalResponse('paras', const {});
+        if (list != null) {
+          for (final para in list['data'] as List) {
+            if ('${para['number']}' == path.split('/').last) {
+              return {'success': true, 'data': para};
+            }
+          }
+        }
+      }
+      return null;
+    }
+    final number = int.parse(path.split('/')[1]);
+    final from = query['from'] as int;
+    final to = query['to'] as int;
+    final metadata = await db.query(
+      'internal_quran_meta',
+      where: 'cache_key = ?',
+      whereArgs: ['reader/$number'],
+    );
+    if (metadata.isEmpty) return null;
+    final rows = await db.query(
+      'internal_quran_ayahs',
+      where: 'surah = ? AND ayah >= ? AND ayah <= ?',
+      whereArgs: [number, from, to],
+      orderBy: 'ayah',
+    );
+    if (rows.length != to - from + 1) return null;
+    final resources = (query['translations'] as String)
+        .split(',')
+        .map(int.parse)
+        .toSet();
+    final ayahs = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final ayah = jsonDecode(row['body'] as String) as Map<String, dynamic>;
+      final translations = ayah['translations'] as List;
+      final present = translations
+          .map((t) => (t['resourceId'] as num).toInt())
+          .toSet();
+      if (!present.containsAll(resources)) return null;
+      ayah['translations'] = translations
+          .where((t) => resources.contains((t['resourceId'] as num).toInt()))
+          .toList();
+      ayahs.add(ayah);
+    }
+    return {
+      'success': true,
+      'data': {
+        'surah': jsonDecode(metadata.first['body'] as String),
+        'ayahs': ayahs,
+      },
+      'meta': {
+        'page': 1,
+        'limit': ayahs.length,
+        'total': ayahs.length,
+        'totalPage': 1,
+      },
+    };
+  }
+
   Future<void> _createSchema(Database db) async {
+    await _createInternalCache(db);
     await db.execute('''
       CREATE TABLE quran_text (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,6 +287,9 @@ class QuranOfflineDatabase {
     try {
       if (!await File(await _localPath()).exists()) return false;
       final db = await open();
+      if (await internalResponse('offline-complete-v1', const {}) == null) {
+        return false;
+      }
       final metaCount = Sqflite.firstIntValue(
         await db.rawQuery('SELECT COUNT(*) FROM surah_meta'),
       );

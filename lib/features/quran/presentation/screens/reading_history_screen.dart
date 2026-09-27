@@ -101,6 +101,7 @@ class ReadingHistoryScreen extends StatelessWidget {
                                   RouteNames.quranSurahDetail,
                                   arguments: SurahRouteArgs(
                                     surahNo: entry.surahNo,
+                                    ayahNo: entry.ayahNo,
                                     surahName: entry.surahName,
                                   ),
                                 ),

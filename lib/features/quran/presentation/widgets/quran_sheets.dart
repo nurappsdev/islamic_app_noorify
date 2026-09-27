@@ -424,7 +424,19 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                   SizedBox(height: 10.h),
                   _SettingLabel(appText.quranTranslationLabel),
                   SizedBox(height: 4.h),
-                  for (final edition in kTranslationEditions)
+                  if (state.editionsLoading) const LinearProgressIndicator(),
+                  if (state.editionsError)
+                    TextButton(
+                      onPressed: () => context.read<QuranTranslationBloc>().add(
+                        const LoadTranslationEditions(),
+                      ),
+                      child: Text(appText.tryAgain),
+                    ),
+                  if (!state.editionsLoading &&
+                      !state.editionsError &&
+                      state.editions.isEmpty)
+                    const Text('No translations available'),
+                  for (final edition in state.editions)
                     _EditionRow(edition: edition, state: state),
                 ],
               ),
@@ -568,7 +580,7 @@ class _EditionRow extends StatelessWidget {
     }
 
     return InkWell(
-      onTap: downloaded && !isDownloading
+      onTap: !isDownloading
           ? () => bloc.add(SelectTranslationEdition(edition.id))
           : null,
       child: Padding(
