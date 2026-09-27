@@ -59,6 +59,16 @@ import '../../features/quiz/presentation/bloc/quiz_categories_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_question_bloc.dart';
 import '../../features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
 import '../../features/quiz/presentation/quiz_route_args.dart';
+import '../../features/learning/data/datasources/learning_remote_data_source.dart';
+import '../../features/learning/data/repositories/learning_repository_impl.dart';
+import '../../features/learning/domain/entities/article.dart';
+import '../../features/learning/domain/repositories/learning_repository.dart';
+import '../../features/learning/domain/usecases/get_article.dart';
+import '../../features/learning/domain/usecases/get_article_categories.dart';
+import '../../features/learning/domain/usecases/get_articles.dart';
+import '../../features/learning/presentation/bloc/article_categories_bloc.dart';
+import '../../features/learning/presentation/bloc/article_detail_bloc.dart';
+import '../../features/learning/presentation/bloc/articles_bloc.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
@@ -148,6 +158,11 @@ class AppRoutes {
     QuizPlanRemoteDataSourceImpl(),
   );
 
+  /// Shared by the Learning screens; keeps the articles read this session.
+  static final LearningRepository _learningRepository = LearningRepositoryImpl(
+    LearningRemoteDataSourceImpl(),
+  );
+
   static QuizPlanDetailBloc _quizPlanDetailBloc(String planId) =>
       QuizPlanDetailBloc(
         planId: planId,
@@ -178,7 +193,24 @@ class AppRoutes {
     initialTab: tab,
     tabs: [
       (_) => _withQuizCategories(const QuizCategoriesScreen()),
-      (_) => const LearningScreen(),
+      (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) =>
+                ArticleCategoriesBloc(GetArticleCategories(_learningRepository))
+                  ..add(const LoadArticleCategories()),
+          ),
+          BlocProvider(
+            // Only the latest few are previewed; See All opens the rest.
+            create: (_) => ArticlesBloc(
+              GetArticles(_learningRepository),
+              scope: const ArticleListScope.all(),
+              pageSize: 3,
+            )..add(const LoadArticles()),
+          ),
+        ],
+        child: const LearningScreen(),
+      ),
       (_) => BlocProvider(
         // Loads its plans itself, once it knows the user is signed in.
         create: (_) => PlannerBloc(
@@ -345,9 +377,32 @@ class AppRoutes {
           settings,
         );
       case RouteNames.learningArticles:
-        return _page(const ArticlesScreen(), settings);
+        // A category's articles, or all of them.
+        final scope = settings.arguments is ArticleListScope
+            ? settings.arguments as ArticleListScope
+            : const ArticleListScope.all();
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                ArticlesBloc(GetArticles(_learningRepository), scope: scope)
+                  ..add(const LoadArticles()),
+            child: const ArticlesScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learningArticleDetails:
-        return _page(const ArticleDetailsScreen(), settings);
+        // Only the id travels; the full article is fetched here.
+        final articleId = settings.arguments as String? ?? '';
+        return _page(
+          BlocProvider(
+            create: (_) => ArticleDetailBloc(
+              GetArticle(_learningRepository),
+              articleId: articleId,
+            )..add(const LoadArticle()),
+            child: const ArticleDetailsScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learningTest:
         return _page(const LearningTestScreen(), settings);
       case RouteNames.learningTestResult:

@@ -217,7 +217,7 @@ class _PlannedQuizBody extends StatelessWidget {
                 style: TextStyle(fontSize: 14.sp),
               ),
               SizedBox(height: 10.h),
-              for (final option in question.options) ...[
+              for (final option in state.visibleOptions) ...[
                 QuizAnswerTile(
                   label: option.key.toLowerCase(),
                   answer: context.localized(option.text),
@@ -229,6 +229,15 @@ class _PlannedQuizBody extends StatelessWidget {
                 SizedBox(height: 5.h),
               ],
             ],
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Center(
+          child: QuizFiftyFiftyButton(
+            label: appText.fiftyFiftyChance,
+            onTap: state.canUseFiftyFifty
+                ? () => bloc.add(const UsePlannedFiftyFifty())
+                : null,
           ),
         ),
         SizedBox(height: 10.h),

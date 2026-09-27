@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 
@@ -7,7 +8,9 @@ import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.da
 import 'package:islami_app_noorify/features/planner/domain/usecases/get_planned_questions.dart';
 import 'package:islami_app_noorify/features/planner/domain/usecases/submit_planned_quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_fifty_fifty.dart';
 
 enum PlannedQuizLoadStatus { loading, success, empty, failure }
 
@@ -21,6 +24,7 @@ class PlannedQuizState {
     this.isLoadingMore = false,
     this.currentIndex = 0,
     this.answers = const {},
+    this.hiddenOptions = const {},
     this.elapsedSeconds = 0,
     this.submissionStatus = QuizSubmissionStatus.idle,
     this.result,
@@ -43,6 +47,9 @@ class PlannedQuizState {
 
   /// The checked option key per question id, kept until submission.
   final Map<String, String> answers;
+
+  /// The option keys the 50/50 lifeline hid, per question id.
+  final Map<String, Set<String>> hiddenOptions;
   final int elapsedSeconds;
   final QuizSubmissionStatus submissionStatus;
   final PlannedQuizResult? result;
@@ -58,6 +65,24 @@ class PlannedQuizState {
   String? get selectedAnswer {
     final question = currentQuestion;
     return question == null ? null : answers[question.id];
+  }
+
+  /// The lifeline is used at most once per quiz.
+  bool get usedFiftyFifty => hiddenOptions.isNotEmpty;
+
+  bool get canUseFiftyFifty =>
+      !usedFiftyFifty &&
+      !isLocked &&
+      (currentQuestion?.options.length ?? 0) > 2;
+
+  List<QuizOption> get visibleOptions {
+    final question = currentQuestion;
+    if (question == null) return const [];
+    final hidden = hiddenOptions[question.id] ?? const {};
+    return [
+      for (final option in question.options)
+        if (!hidden.contains(option.key)) option,
+    ];
   }
 
   bool get isFirstQuestion => currentIndex == 0;
@@ -76,6 +101,7 @@ class PlannedQuizState {
     bool? isLoadingMore,
     int? currentIndex,
     Map<String, String>? answers,
+    Map<String, Set<String>>? hiddenOptions,
     int? elapsedSeconds,
     QuizSubmissionStatus? submissionStatus,
     PlannedQuizResult? result,
@@ -93,6 +119,7 @@ class PlannedQuizState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       currentIndex: currentIndex ?? this.currentIndex,
       answers: answers ?? this.answers,
+      hiddenOptions: hiddenOptions ?? this.hiddenOptions,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       submissionStatus: submissionStatus ?? this.submissionStatus,
       result: result ?? this.result,
@@ -118,6 +145,11 @@ class SelectPlannedAnswer extends PlannedQuizEvent {
   const SelectPlannedAnswer(this.optionKey);
 
   final String optionKey;
+}
+
+/// Spends the 50/50 lifeline on the current question.
+class UsePlannedFiftyFifty extends PlannedQuizEvent {
+  const UsePlannedFiftyFifty();
 }
 
 /// Moves on, fetching the next page first when the loaded ones run out.
@@ -149,12 +181,14 @@ class PlannedQuizBloc extends Bloc<PlannedQuizEvent, PlannedQuizState> {
     required this._getQuestions,
     required this._submit,
     DateTime Function()? clock,
+    this._random,
     this.pageSize = 10,
     this.tickInterval = const Duration(seconds: 1),
   }) : _clock = clock ?? DateTime.now,
        super(const PlannedQuizState()) {
     on<LoadPlannedQuestions>(_onLoad);
     on<SelectPlannedAnswer>(_onSelect);
+    on<UsePlannedFiftyFifty>(_onFiftyFifty);
     on<NextPlannedQuestion>(_onNext);
     on<PreviousPlannedQuestion>((event, emit) {
       if (state.isLocked || state.isFirstQuestion) return;
@@ -175,6 +209,7 @@ class PlannedQuizBloc extends Bloc<PlannedQuizEvent, PlannedQuizState> {
   final GetPlannedQuestions _getQuestions;
   final SubmitPlannedQuiz _submit;
   final DateTime Function() _clock;
+  final Random? _random;
   final int pageSize;
   final Duration tickInterval;
 
@@ -233,11 +268,26 @@ class PlannedQuizBloc extends Bloc<PlannedQuizEvent, PlannedQuizState> {
   void _onSelect(SelectPlannedAnswer event, Emitter<PlannedQuizState> emit) {
     final question = state.currentQuestion;
     if (question == null || state.isLocked) return;
-    if (!question.options.any((o) => o.key == event.optionKey)) return;
+    if (!state.visibleOptions.any((o) => o.key == event.optionKey)) return;
     if (state.answers[question.id] == event.optionKey) return;
     emit(
       state.copyWith(answers: {...state.answers, question.id: event.optionKey}),
     );
+  }
+
+  void _onFiftyFifty(
+    UsePlannedFiftyFifty event,
+    Emitter<PlannedQuizState> emit,
+  ) {
+    final question = state.currentQuestion;
+    if (question == null || !state.canUseFiftyFifty) return;
+    final hidden = pickFiftyFiftyRemovals(
+      [for (final option in question.options) option.key],
+      keep: state.answers[question.id],
+      random: _random,
+    );
+    if (hidden.isEmpty) return;
+    emit(state.copyWith(hiddenOptions: {question.id: hidden}));
   }
 
   Future<void> _onNext(
@@ -306,7 +356,7 @@ class PlannedQuizBloc extends Bloc<PlannedQuizEvent, PlannedQuizState> {
       portionId: portion.id,
       submission: PlannedQuizSubmission(
         timeSpentSeconds: elapsed,
-        used5050Lifeline: false,
+        used5050Lifeline: state.usedFiftyFifty,
         // Every question; one left unanswered goes as `null`, per the API.
         answers: [
           for (final question in state.questions)

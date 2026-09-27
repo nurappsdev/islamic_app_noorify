@@ -15,6 +15,11 @@ class SelectAnswer extends QuizQuestionEvent {
   final String optionKey;
 }
 
+/// Spends the 50/50 lifeline on the current question.
+class UseFiftyFifty extends QuizQuestionEvent {
+  const UseFiftyFifty();
+}
+
 class GoToNextQuestion extends QuizQuestionEvent {
   const GoToNextQuestion();
 }

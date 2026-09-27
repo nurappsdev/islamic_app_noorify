@@ -12,6 +12,7 @@ extension QuizAttemptSubmissionJson on QuizAttemptSubmission {
     if (quizId != null) 'quizId': quizId,
     if (categoryId != null) 'categoryId': categoryId,
     'timeSpentSeconds': timeSpentSeconds,
+    'used5050Lifeline': used5050Lifeline,
     'answers': [
       for (final answer in answers)
         {'questionId': answer.questionId, 'checkedBy': answer.checkedBy},

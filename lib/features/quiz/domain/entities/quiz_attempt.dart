@@ -19,6 +19,7 @@ class QuizAttemptSubmission {
     required this.quizId,
     required this.categoryId,
     required this.timeSpentSeconds,
+    this.used5050Lifeline = false,
     required this.answers,
   });
 
@@ -26,6 +27,7 @@ class QuizAttemptSubmission {
   final String? quizId;
   final String? categoryId;
   final int timeSpentSeconds;
+  final bool used5050Lifeline;
   final List<QuizAnswer> answers;
 }
 
