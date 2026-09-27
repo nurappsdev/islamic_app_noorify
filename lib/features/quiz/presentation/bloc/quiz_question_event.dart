@@ -2,8 +2,40 @@ abstract class QuizQuestionEvent {
   const QuizQuestionEvent();
 }
 
-class SelectAnswer extends QuizQuestionEvent {
-  const SelectAnswer(this.answerIndex);
+/// Fetches the quiz and, once it has questions, starts the clock. Also used by
+/// Try Again after a failed load.
+class LoadQuiz extends QuizQuestionEvent {
+  const LoadQuiz();
+}
 
-  final int answerIndex;
+/// Checks the option with [optionKey] for the current question.
+class SelectAnswer extends QuizQuestionEvent {
+  const SelectAnswer(this.optionKey);
+
+  final String optionKey;
+}
+
+/// Spends the 50/50 lifeline on the current question.
+class UseFiftyFifty extends QuizQuestionEvent {
+  const UseFiftyFifty();
+}
+
+class GoToNextQuestion extends QuizQuestionEvent {
+  const GoToNextQuestion();
+}
+
+class GoToPreviousQuestion extends QuizQuestionEvent {
+  const GoToPreviousQuestion();
+}
+
+/// Re-reads the clock. Sent every second, and when the app comes back to the
+/// foreground so time spent away is counted at once.
+class QuizTimerTicked extends QuizQuestionEvent {
+  const QuizTimerTicked();
+}
+
+/// Sends the answers for scoring - from the last question, when time runs out,
+/// or to retry a failed submission. Ignored while one is in flight or done.
+class SubmitQuiz extends QuizQuestionEvent {
+  const SubmitQuiz();
 }

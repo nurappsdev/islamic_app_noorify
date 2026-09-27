@@ -1,94 +1,150 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_categories_bloc.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_navigation.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_category_card.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
-class QuizCategoriesScreen extends StatelessWidget {
+/// Quiz home: today's challenge plus the first few categories. Expects a
+/// [QuizCategoriesBloc] and optional [DailyQuizStatusCubit] above it.
+class QuizCategoriesScreen extends StatefulWidget {
   const QuizCategoriesScreen({super.key});
 
-  static List<_QuizCategory> _categories(AppText appText) => [
-    _QuizCategory(
-      title: appText.exploreQuranicSciences,
-      quizzes: '120 ${appText.quizzesCountLabel}',
-      score: '950',
-    ),
-    _QuizCategory(
-      title: appText.seerahAndHistory,
-      quizzes: '85 ${appText.quizzesCountLabel}',
-      score: '810',
-    ),
-    _QuizCategory(
-      title: appText.islamicManners,
-      quizzes: '60 ${appText.quizzesCountLabel}',
-      score: '720',
-    ),
-  ];
+  /// How many categories the home shows; See All lists the rest.
+  static const _previewCount = 3;
+
+  @override
+  State<QuizCategoriesScreen> createState() => _QuizCategoriesScreenState();
+}
+
+class _QuizCategoriesScreenState extends State<QuizCategoriesScreen>
+    with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    context.read<DailyQuizStatusCubit?>()?.load(silent: true);
+  }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final categories = _categories(appText);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
-        child: Stack(
-          children: [
-            ListView(
-              padding: EdgeInsets.only(bottom: 90.h),
-              children: [
-                const _QuizHero(),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(23.w, 24.h, 23.w, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        appText.categories,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              Future.sync(
+                () => context.read<QuizCategoriesBloc>().add(
+                  const LoadQuizCategories(),
+                ),
+              ),
+              context.read<DailyQuizStatusCubit?>()?.load(silent: true) ??
+                  Future.value(),
+            ]);
+          },
+          child: ListView(
+            padding: EdgeInsets.only(bottom: 90.h),
+            children: [
+              const _QuizHero(),
+              Padding(
+                padding: EdgeInsets.fromLTRB(23.w, 24.h, 23.w, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      appText.categories,
+                      style: TextStyle(
+                        fontSize: 19.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed(RouteNames.quizList),
+                      child: Text(
+                        appText.seeAll,
                         style: TextStyle(
-                          fontSize: 19.sp,
-                          fontWeight: FontWeight.w500,
+                          color: context.inkColor(Colors.black),
+                          fontSize: 12.sp,
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(
-                          context,
-                        ).pushNamed(RouteNames.quizList),
-                        child: Text(
-                          appText.seeAll,
-                          style: TextStyle(
-                            color: context.inkColor(Colors.black),
-                            fontSize: 12.sp,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w),
-                  child: Column(
-                    children: [
-                      for (final category in categories) ...[
-                        _CategoryCard(category: category),
-                        SizedBox(height: 9.h),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: QuizBottomNav(selectedIndex: 0),
-            ),
-          ],
+              ),
+              const QuizCategoryPreview(count: QuizCategoriesScreen._previewCount),
+            ],
+          ),
         ),
       ),
     );
+  }
+}
+
+/// The first [count] categories from the nearest [QuizCategoriesBloc], with
+/// its loading, error and empty states.
+class QuizCategoryPreview extends StatelessWidget {
+  const QuizCategoryPreview({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final state = context.watch<QuizCategoriesBloc>().state;
+    switch (state.status) {
+      case QuizCategoriesStatus.initial:
+      case QuizCategoriesStatus.loading:
+        return Padding(
+          padding: EdgeInsets.all(24.h),
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      case QuizCategoriesStatus.failure:
+        return QuizStatusView(
+          message: appText.unableToLoadQuizCategories,
+          onRetry: () => context.read<QuizCategoriesBloc>().add(
+            const LoadQuizCategories(),
+          ),
+        );
+      case QuizCategoriesStatus.success:
+        if (state.categories.isEmpty) {
+          return QuizStatusView(message: appText.noQuizCategories);
+        }
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w),
+          child: Column(
+            children: [
+              for (final category in state.categories.take(count)) ...[
+                QuizCategoryCard(category: category),
+                SizedBox(height: 9.h),
+              ],
+            ],
+          ),
+        );
+    }
   }
 }
 
@@ -98,247 +154,152 @@ class _QuizHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final dailyState = context.watch<DailyQuizStatusCubit?>()?.state;
+    final dailyStatus = dailyState?.dailyStatus;
+    final isCompleted = dailyStatus?.completed ?? false;
+
     return Container(
       height: 250.h,
-      padding: EdgeInsets.fromLTRB(20.w, 16.h, 26.w, 30.h),
       decoration: BoxDecoration(
-        color: context.surfaceColor(Color(0xFFE3ECC1)),
+        // CSS `linear-gradient(270deg, #E6E6E6 0%, #DCE8B8 100%)`: 270deg
+        // runs right to left.
+        gradient: LinearGradient(
+          begin: Alignment.centerRight,
+          end: Alignment.centerLeft,
+          colors: [
+            context.surfaceColor(const Color(0xFFE6E6E6)),
+            context.surfaceColor(const Color(0xFFDCE8B8)),
+          ],
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(38.r),
           bottomRight: Radius.circular(38.r),
         ),
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Align(
-            alignment: Alignment.topLeft,
+          Positioned(
+            top: 16.h,
+            left: 20.w,
             child: IconButton(
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: Color(0xFF303629),
+                foregroundColor: const Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
           ),
           Positioned(
-            left: 22.w,
-            bottom: 6.h,
-            child: SizedBox(
-              width: 168.w,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    appText.completeTodaysChallenge,
-                    style: TextStyle(
-                      color: AppColor.primary,
-                      fontSize: 22.sp,
-                      height: 1.25,
-                      fontWeight: FontWeight.w500,
-                    ),
+            right: 0,
+            top: 60.h,
+            child: isCompleted
+                ? Image.asset(
+                    'assets/quiz_completed.png',
+                    width: 160.w,
+                    height: 160.w,
+                    fit: BoxFit.contain,
+                  )
+                : Image.asset(
+                    'assets/quiz.png',
+                    width: 145.w,
+                    height: 145.w,
+                    fit: BoxFit.contain,
                   ),
-                  SizedBox(height: 20.h),
-                  FilledButton(
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).pushNamed(RouteNames.quizQuestion),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 18.w,
-                        vertical: 11.h,
+          ),
+          Positioned(
+            left: 24.w,
+            top: 30.h,
+            bottom: 0,
+            right: 125.w,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: isCompleted
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appText.youCompletedTodaysChallenge,
+                          style: TextStyle(
+                            color: context.inkColor(const Color(0xFF84945F)),
+                            fontSize: 20.sp,
+                            height: 1.22,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/quiz_reading_icon.png',
+                              width: 38.r,
+                              height: 38.r,
+                              fit: BoxFit.contain,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                context.localizedDigits(
+                                  '${appText.todaysPointsLabel} : ${formatPoints(dailyStatus!.displayPoints)}',
+                                ),
+                                style: TextStyle(
+                                  color: context.inkColor(
+                                    const Color(0xFF84945F),
+                                  ),
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        appText.completeTodaysChallenge,
+                        style: TextStyle(
+                          color: context.inkColor(AppColor.primary),
+                          fontSize: 20.sp,
+                          height: 1.22,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      appText.letsGetStart,
-                      style: TextStyle(fontSize: 11.sp),
-                    ),
+                      SizedBox(height: 18.h),
+                      FilledButton(
+                        onPressed: () async {
+                          await openDailyQuiz(context);
+                          if (context.mounted) {
+                            context
+                                .read<DailyQuizStatusCubit?>()
+                                ?.load(silent: true);
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18.w,
+                            vertical: 11.h,
+                          ),
+                        ),
+                        child: Text(
+                          appText.letsGetStart,
+                          style: TextStyle(fontSize: 11.sp),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
             ),
           ),
-          Positioned(right: 0, bottom: 0, child: _QuizArtwork(size: 130.w)),
         ],
       ),
     );
   }
 }
 
-class _QuizArtwork extends StatelessWidget {
-  const _QuizArtwork({required this.size});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: size,
-    height: size,
-    child: Stack(
-      children: [
-        Positioned(
-          right: 12,
-          top: 16,
-          child: Transform.rotate(
-            angle: -.24,
-            child: Container(
-              width: size * .58,
-              height: size * .65,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6DD575),
-                borderRadius: BorderRadius.circular(7),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(11),
-                child: Text(
-                  'N',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: size * .18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 4,
-          top: 35,
-          child: Container(
-            width: size * .42,
-            height: size * .42,
-            decoration: const BoxDecoration(
-              color: Color(0xFF269C54),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.lightbulb_outline_rounded,
-              color: Colors.white,
-              size: 30,
-            ),
-          ),
-        ),
-        Positioned(
-          left: 2,
-          bottom: 11,
-          child: Transform.rotate(
-            angle: .5,
-            child: Icon(
-              Icons.search_rounded,
-              color: context.inkColor(Color(0xFF3E5C3C)),
-              size: size * .48,
-            ),
-          ),
-        ),
-        Positioned(
-          right: 20,
-          bottom: 0,
-          child: Icon(
-            Icons.auto_awesome_rounded,
-            color: const Color(0xFFC5B9D8),
-            size: size * .53,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category});
-  final _QuizCategory category;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: EdgeInsets.all(19.w),
-    decoration: BoxDecoration(
-      color: context.surfaceColor(Color(0xFFDFE9B9)),
-      borderRadius: BorderRadius.circular(18.r),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 27.r,
-              height: 27.r,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColor.primary),
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-              child: Icon(
-                Icons.menu_book_outlined,
-                size: 16.sp,
-                color: AppColor.primary,
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: () {},
-              iconAlignment: IconAlignment.end,
-              icon: Icon(Icons.north_east_rounded, size: 17.sp),
-              label: Text(AppText.of(context).explore),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.inkColor(Color(0xFF4D5542)),
-                side: const BorderSide(color: AppColor.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11.r),
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 16.h),
-        Text(
-          category.title,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-        ),
-        SizedBox(height: 14.h),
-        Text(
-          category.quizzes,
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: context.inkColor(Color(0xFF56614F)),
-          ),
-        ),
-        SizedBox(height: 14.h),
-        Row(
-          children: [
-            Text(
-              AppText.of(context).highScore,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: context.inkColor(Color(0xFF697269)),
-              ),
-            ),
-            SizedBox(width: 10.w),
-            Text(
-              category.score,
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF89958B)),
-            ),
-            Icon(
-              Icons.workspace_premium_outlined,
-              size: 14.sp,
-              color: const Color(0xFF89958B),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-class _QuizCategory {
-  const _QuizCategory({
-    required this.title,
-    required this.quizzes,
-    required this.score,
-  });
-  final String title;
-  final String quizzes;
-  final String score;
-}

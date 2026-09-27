@@ -501,6 +501,101 @@ class AppText {
     required this.completedHistory,
     required this.unableToLoadQuizHistory,
     required this.tryAgain,
+    required this.learningNoCategories,
+    required this.learningNoArticles,
+    required this.learningNoSearchResults,
+    required this.learningSearchArticles,
+    required this.learningArticleNotFound,
+    required this.learningCategoryNotFound,
+    required this.learningErrorInvalid,
+    required this.learningErrorRateLimit,
+    required this.learningNoContent,
+    required this.articlePublishedOn,
+    required this.articleByAuthor,
+    required this.quizQuestionOfTotal,
+    required this.quizTimeRemaining,
+    required this.submit,
+    required this.noQuizAvailable,
+    required this.unableToLoadQuiz,
+    required this.unableToLoadQuizCategories,
+    required this.noQuizCategories,
+    required this.quizSubmitFailed,
+    required this.dailyQuiz,
+    required this.youCompletedTheQuiz,
+    required this.scoreLabel,
+    required this.reviewAnswers,
+    required this.explanationLabel,
+    required this.notAnswered,
+    required this.noQuizAttemptsYet,
+    required this.bestScore,
+    required this.averageScore,
+    required this.attemptsLabel,
+    required this.unableToLoadAttempt,
+    required this.questionUnavailable,
+    required this.allLabel,
+    required this.noQuestionsInGroup,
+    required this.planStatusPlanned,
+    required this.planStatusInProgress,
+    required this.planStatusCompleted,
+    required this.planStatusAbandoned,
+    required this.startLabel,
+    required this.continueLabel,
+    required this.abandonPlan,
+    required this.abandonPlanQuestion,
+    required this.abandonPlanNote,
+    required this.scheduleLabel,
+    required this.notScheduled,
+    required this.clearLabel,
+    required this.notCompletedLabel,
+    required this.quizzesCompletedLabel,
+    required this.percentCompleteLabel,
+    required this.remainingLabel,
+    required this.numberOfQuizzes,
+    required this.questionsPerQuiz,
+    required this.planNameRequired,
+    required this.addAtLeastOneQuiz,
+    required this.selectCategoryFirst,
+    required this.planCreated,
+    required this.planUpdated,
+    required this.planAbandoned,
+    required this.planSave,
+    required this.nextQuizLabel,
+    required this.backToPlan,
+    required this.planQuizLabel,
+    required this.planErrorNotFound,
+    required this.planErrorAbandoned,
+    required this.planErrorNotStarted,
+    required this.planErrorPortionDone,
+    required this.planErrorInvalid,
+    required this.noPlannedQuestions,
+    required this.correctLabel,
+    required this.incorrectLabel,
+    required this.unansweredLabel,
+    required this.answeredLabel,
+    required this.correctPercentageLabel,
+    required this.totalTimeLabel,
+    required this.currentStreakLabel,
+    required this.averageMinutesPerDayLabel,
+    required this.completedAtLabel,
+    required this.fiftyFiftyUsedLabel,
+    required this.difficultyLabel,
+    required this.quizCategoryLabel,
+    required this.minutesLabel,
+    required this.daysWord,
+    required this.youLabel,
+    required this.rankLabel,
+    required this.aheadLabel,
+    required this.behindLabel,
+    required this.noCompetitorYet,
+    required this.quizComparisonTitle,
+    required this.dailyActivity,
+    required this.noQuizActivity,
+    required this.quizErrorNetwork,
+    required this.quizErrorSession,
+    required this.quizErrorForbidden,
+    required this.quizErrorNotFound,
+    required this.quizErrorInvalidRange,
+    required this.quizErrorGeneric,
     required this.questionsWord,
     required this.learn,
     required this.planner,
@@ -1103,6 +1198,101 @@ class AppText {
   final String completedHistory;
   final String unableToLoadQuizHistory;
   final String tryAgain;
+  final String learningNoCategories;
+  final String learningNoArticles;
+  final String learningNoSearchResults;
+  final String learningSearchArticles;
+  final String learningArticleNotFound;
+  final String learningCategoryNotFound;
+  final String learningErrorInvalid;
+  final String learningErrorRateLimit;
+  final String learningNoContent;
+  final String articlePublishedOn;
+  final String articleByAuthor;
+  final String quizQuestionOfTotal;
+  final String quizTimeRemaining;
+  final String submit;
+  final String noQuizAvailable;
+  final String unableToLoadQuiz;
+  final String unableToLoadQuizCategories;
+  final String noQuizCategories;
+  final String quizSubmitFailed;
+  final String dailyQuiz;
+  final String youCompletedTheQuiz;
+  final String scoreLabel;
+  final String reviewAnswers;
+  final String explanationLabel;
+  final String notAnswered;
+  final String noQuizAttemptsYet;
+  final String bestScore;
+  final String averageScore;
+  final String attemptsLabel;
+  final String unableToLoadAttempt;
+  final String questionUnavailable;
+  final String allLabel;
+  final String noQuestionsInGroup;
+  final String planStatusPlanned;
+  final String planStatusInProgress;
+  final String planStatusCompleted;
+  final String planStatusAbandoned;
+  final String startLabel;
+  final String continueLabel;
+  final String abandonPlan;
+  final String abandonPlanQuestion;
+  final String abandonPlanNote;
+  final String scheduleLabel;
+  final String notScheduled;
+  final String clearLabel;
+  final String notCompletedLabel;
+  final String quizzesCompletedLabel;
+  final String percentCompleteLabel;
+  final String remainingLabel;
+  final String numberOfQuizzes;
+  final String questionsPerQuiz;
+  final String planNameRequired;
+  final String addAtLeastOneQuiz;
+  final String selectCategoryFirst;
+  final String planCreated;
+  final String planUpdated;
+  final String planAbandoned;
+  final String planSave;
+  final String nextQuizLabel;
+  final String backToPlan;
+  final String planQuizLabel;
+  final String planErrorNotFound;
+  final String planErrorAbandoned;
+  final String planErrorNotStarted;
+  final String planErrorPortionDone;
+  final String planErrorInvalid;
+  final String noPlannedQuestions;
+  final String correctLabel;
+  final String incorrectLabel;
+  final String unansweredLabel;
+  final String answeredLabel;
+  final String correctPercentageLabel;
+  final String totalTimeLabel;
+  final String currentStreakLabel;
+  final String averageMinutesPerDayLabel;
+  final String completedAtLabel;
+  final String fiftyFiftyUsedLabel;
+  final String difficultyLabel;
+  final String quizCategoryLabel;
+  final String minutesLabel;
+  final String daysWord;
+  final String youLabel;
+  final String rankLabel;
+  final String aheadLabel;
+  final String behindLabel;
+  final String noCompetitorYet;
+  final String quizComparisonTitle;
+  final String dailyActivity;
+  final String noQuizActivity;
+  final String quizErrorNetwork;
+  final String quizErrorSession;
+  final String quizErrorForbidden;
+  final String quizErrorNotFound;
+  final String quizErrorInvalidRange;
+  final String quizErrorGeneric;
   final String questionsWord;
   final String learn;
   final String planner;
@@ -2997,6 +3187,357 @@ class AppText {
         fallback?.unableToLoadQuizHistory ?? '',
       ),
       tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
+      learningNoCategories: _read(
+        map,
+        'learningNoCategories',
+        fallback?.learningNoCategories ?? '',
+      ),
+      learningNoArticles: _read(
+        map,
+        'learningNoArticles',
+        fallback?.learningNoArticles ?? '',
+      ),
+      learningNoSearchResults: _read(
+        map,
+        'learningNoSearchResults',
+        fallback?.learningNoSearchResults ?? '',
+      ),
+      learningSearchArticles: _read(
+        map,
+        'learningSearchArticles',
+        fallback?.learningSearchArticles ?? '',
+      ),
+      learningArticleNotFound: _read(
+        map,
+        'learningArticleNotFound',
+        fallback?.learningArticleNotFound ?? '',
+      ),
+      learningCategoryNotFound: _read(
+        map,
+        'learningCategoryNotFound',
+        fallback?.learningCategoryNotFound ?? '',
+      ),
+      learningErrorInvalid: _read(
+        map,
+        'learningErrorInvalid',
+        fallback?.learningErrorInvalid ?? '',
+      ),
+      learningErrorRateLimit: _read(
+        map,
+        'learningErrorRateLimit',
+        fallback?.learningErrorRateLimit ?? '',
+      ),
+      learningNoContent: _read(
+        map,
+        'learningNoContent',
+        fallback?.learningNoContent ?? '',
+      ),
+      articlePublishedOn: _read(
+        map,
+        'articlePublishedOn',
+        fallback?.articlePublishedOn ?? '',
+      ),
+      articleByAuthor: _read(
+        map,
+        'articleByAuthor',
+        fallback?.articleByAuthor ?? '',
+      ),
+      quizQuestionOfTotal: _read(
+        map,
+        'quizQuestionOfTotal',
+        fallback?.quizQuestionOfTotal ?? '',
+      ),
+      quizTimeRemaining: _read(
+        map,
+        'quizTimeRemaining',
+        fallback?.quizTimeRemaining ?? '',
+      ),
+      submit: _read(map, 'submit', fallback?.submit ?? ''),
+      noQuizAvailable: _read(
+        map,
+        'noQuizAvailable',
+        fallback?.noQuizAvailable ?? '',
+      ),
+      unableToLoadQuiz: _read(
+        map,
+        'unableToLoadQuiz',
+        fallback?.unableToLoadQuiz ?? '',
+      ),
+      unableToLoadQuizCategories: _read(
+        map,
+        'unableToLoadQuizCategories',
+        fallback?.unableToLoadQuizCategories ?? '',
+      ),
+      noQuizCategories: _read(
+        map,
+        'noQuizCategories',
+        fallback?.noQuizCategories ?? '',
+      ),
+      quizSubmitFailed: _read(
+        map,
+        'quizSubmitFailed',
+        fallback?.quizSubmitFailed ?? '',
+      ),
+      dailyQuiz: _read(map, 'dailyQuiz', fallback?.dailyQuiz ?? ''),
+      youCompletedTheQuiz: _read(
+        map,
+        'youCompletedTheQuiz',
+        fallback?.youCompletedTheQuiz ?? '',
+      ),
+      scoreLabel: _read(map, 'scoreLabel', fallback?.scoreLabel ?? ''),
+      reviewAnswers: _read(map, 'reviewAnswers', fallback?.reviewAnswers ?? ''),
+      explanationLabel: _read(
+        map,
+        'explanationLabel',
+        fallback?.explanationLabel ?? '',
+      ),
+      notAnswered: _read(map, 'notAnswered', fallback?.notAnswered ?? ''),
+      noQuizAttemptsYet: _read(
+        map,
+        'noQuizAttemptsYet',
+        fallback?.noQuizAttemptsYet ?? '',
+      ),
+      bestScore: _read(map, 'bestScore', fallback?.bestScore ?? ''),
+      averageScore: _read(map, 'averageScore', fallback?.averageScore ?? ''),
+      attemptsLabel: _read(map, 'attemptsLabel', fallback?.attemptsLabel ?? ''),
+      unableToLoadAttempt: _read(
+        map,
+        'unableToLoadAttempt',
+        fallback?.unableToLoadAttempt ?? '',
+      ),
+      questionUnavailable: _read(
+        map,
+        'questionUnavailable',
+        fallback?.questionUnavailable ?? '',
+      ),
+      allLabel: _read(map, 'allLabel', fallback?.allLabel ?? ''),
+      noQuestionsInGroup: _read(
+        map,
+        'noQuestionsInGroup',
+        fallback?.noQuestionsInGroup ?? '',
+      ),
+      planStatusPlanned: _read(
+        map,
+        'planStatusPlanned',
+        fallback?.planStatusPlanned ?? '',
+      ),
+      planStatusInProgress: _read(
+        map,
+        'planStatusInProgress',
+        fallback?.planStatusInProgress ?? '',
+      ),
+      planStatusCompleted: _read(
+        map,
+        'planStatusCompleted',
+        fallback?.planStatusCompleted ?? '',
+      ),
+      planStatusAbandoned: _read(
+        map,
+        'planStatusAbandoned',
+        fallback?.planStatusAbandoned ?? '',
+      ),
+      startLabel: _read(map, 'startLabel', fallback?.startLabel ?? ''),
+      continueLabel: _read(map, 'continueLabel', fallback?.continueLabel ?? ''),
+      abandonPlan: _read(map, 'abandonPlan', fallback?.abandonPlan ?? ''),
+      abandonPlanQuestion: _read(
+        map,
+        'abandonPlanQuestion',
+        fallback?.abandonPlanQuestion ?? '',
+      ),
+      abandonPlanNote: _read(
+        map,
+        'abandonPlanNote',
+        fallback?.abandonPlanNote ?? '',
+      ),
+      scheduleLabel: _read(map, 'scheduleLabel', fallback?.scheduleLabel ?? ''),
+      notScheduled: _read(map, 'notScheduled', fallback?.notScheduled ?? ''),
+      clearLabel: _read(map, 'clearLabel', fallback?.clearLabel ?? ''),
+      notCompletedLabel: _read(
+        map,
+        'notCompletedLabel',
+        fallback?.notCompletedLabel ?? '',
+      ),
+      quizzesCompletedLabel: _read(
+        map,
+        'quizzesCompletedLabel',
+        fallback?.quizzesCompletedLabel ?? '',
+      ),
+      percentCompleteLabel: _read(
+        map,
+        'percentCompleteLabel',
+        fallback?.percentCompleteLabel ?? '',
+      ),
+      remainingLabel: _read(
+        map,
+        'remainingLabel',
+        fallback?.remainingLabel ?? '',
+      ),
+      numberOfQuizzes: _read(
+        map,
+        'numberOfQuizzes',
+        fallback?.numberOfQuizzes ?? '',
+      ),
+      questionsPerQuiz: _read(
+        map,
+        'questionsPerQuiz',
+        fallback?.questionsPerQuiz ?? '',
+      ),
+      planNameRequired: _read(
+        map,
+        'planNameRequired',
+        fallback?.planNameRequired ?? '',
+      ),
+      addAtLeastOneQuiz: _read(
+        map,
+        'addAtLeastOneQuiz',
+        fallback?.addAtLeastOneQuiz ?? '',
+      ),
+      selectCategoryFirst: _read(
+        map,
+        'selectCategoryFirst',
+        fallback?.selectCategoryFirst ?? '',
+      ),
+      planCreated: _read(map, 'planCreated', fallback?.planCreated ?? ''),
+      planUpdated: _read(map, 'planUpdated', fallback?.planUpdated ?? ''),
+      planAbandoned: _read(map, 'planAbandoned', fallback?.planAbandoned ?? ''),
+      planSave: _read(map, 'planSave', fallback?.planSave ?? ''),
+      nextQuizLabel: _read(map, 'nextQuizLabel', fallback?.nextQuizLabel ?? ''),
+      backToPlan: _read(map, 'backToPlan', fallback?.backToPlan ?? ''),
+      planQuizLabel: _read(map, 'planQuizLabel', fallback?.planQuizLabel ?? ''),
+      planErrorNotFound: _read(
+        map,
+        'planErrorNotFound',
+        fallback?.planErrorNotFound ?? '',
+      ),
+      planErrorAbandoned: _read(
+        map,
+        'planErrorAbandoned',
+        fallback?.planErrorAbandoned ?? '',
+      ),
+      planErrorNotStarted: _read(
+        map,
+        'planErrorNotStarted',
+        fallback?.planErrorNotStarted ?? '',
+      ),
+      planErrorPortionDone: _read(
+        map,
+        'planErrorPortionDone',
+        fallback?.planErrorPortionDone ?? '',
+      ),
+      planErrorInvalid: _read(
+        map,
+        'planErrorInvalid',
+        fallback?.planErrorInvalid ?? '',
+      ),
+      noPlannedQuestions: _read(
+        map,
+        'noPlannedQuestions',
+        fallback?.noPlannedQuestions ?? '',
+      ),
+      correctLabel: _read(map, 'correctLabel', fallback?.correctLabel ?? ''),
+      incorrectLabel: _read(
+        map,
+        'incorrectLabel',
+        fallback?.incorrectLabel ?? '',
+      ),
+      unansweredLabel: _read(
+        map,
+        'unansweredLabel',
+        fallback?.unansweredLabel ?? '',
+      ),
+      answeredLabel: _read(map, 'answeredLabel', fallback?.answeredLabel ?? ''),
+      correctPercentageLabel: _read(
+        map,
+        'correctPercentageLabel',
+        fallback?.correctPercentageLabel ?? '',
+      ),
+      totalTimeLabel: _read(
+        map,
+        'totalTimeLabel',
+        fallback?.totalTimeLabel ?? '',
+      ),
+      currentStreakLabel: _read(
+        map,
+        'currentStreakLabel',
+        fallback?.currentStreakLabel ?? '',
+      ),
+      averageMinutesPerDayLabel: _read(
+        map,
+        'averageMinutesPerDayLabel',
+        fallback?.averageMinutesPerDayLabel ?? '',
+      ),
+      completedAtLabel: _read(
+        map,
+        'completedAtLabel',
+        fallback?.completedAtLabel ?? '',
+      ),
+      fiftyFiftyUsedLabel: _read(
+        map,
+        'fiftyFiftyUsedLabel',
+        fallback?.fiftyFiftyUsedLabel ?? '',
+      ),
+      difficultyLabel: _read(
+        map,
+        'difficultyLabel',
+        fallback?.difficultyLabel ?? '',
+      ),
+      quizCategoryLabel: _read(
+        map,
+        'quizCategoryLabel',
+        fallback?.quizCategoryLabel ?? '',
+      ),
+      minutesLabel: _read(map, 'minutesLabel', fallback?.minutesLabel ?? ''),
+      daysWord: _read(map, 'daysWord', fallback?.daysWord ?? ''),
+      youLabel: _read(map, 'youLabel', fallback?.youLabel ?? ''),
+      rankLabel: _read(map, 'rankLabel', fallback?.rankLabel ?? ''),
+      aheadLabel: _read(map, 'aheadLabel', fallback?.aheadLabel ?? ''),
+      behindLabel: _read(map, 'behindLabel', fallback?.behindLabel ?? ''),
+      noCompetitorYet: _read(
+        map,
+        'noCompetitorYet',
+        fallback?.noCompetitorYet ?? '',
+      ),
+      quizComparisonTitle: _read(
+        map,
+        'quizComparisonTitle',
+        fallback?.quizComparisonTitle ?? '',
+      ),
+      dailyActivity: _read(map, 'dailyActivity', fallback?.dailyActivity ?? ''),
+      noQuizActivity: _read(
+        map,
+        'noQuizActivity',
+        fallback?.noQuizActivity ?? '',
+      ),
+      quizErrorNetwork: _read(
+        map,
+        'quizErrorNetwork',
+        fallback?.quizErrorNetwork ?? '',
+      ),
+      quizErrorSession: _read(
+        map,
+        'quizErrorSession',
+        fallback?.quizErrorSession ?? '',
+      ),
+      quizErrorForbidden: _read(
+        map,
+        'quizErrorForbidden',
+        fallback?.quizErrorForbidden ?? '',
+      ),
+      quizErrorNotFound: _read(
+        map,
+        'quizErrorNotFound',
+        fallback?.quizErrorNotFound ?? '',
+      ),
+      quizErrorInvalidRange: _read(
+        map,
+        'quizErrorInvalidRange',
+        fallback?.quizErrorInvalidRange ?? '',
+      ),
+      quizErrorGeneric: _read(
+        map,
+        'quizErrorGeneric',
+        fallback?.quizErrorGeneric ?? '',
+      ),
       questionsWord: _read(map, 'questionsWord', fallback?.questionsWord ?? ''),
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),

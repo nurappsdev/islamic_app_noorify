@@ -1,40 +1,121 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:islami_app_noorify/features/learning/presentation/bloc/articles_bloc.dart';
+import 'package:islami_app_noorify/features/learning/presentation/learning_failure_message.dart';
+import 'package:islami_app_noorify/features/learning/presentation/widgets/learning_widgets.dart';
 
-class ArticlesScreen extends StatelessWidget {
+/// One category's articles, or all of them, with search and infinite
+/// scroll. Expects an [ArticlesBloc] above it.
+class ArticlesScreen extends StatefulWidget {
   const ArticlesScreen({super.key});
 
   @override
+  State<ArticlesScreen> createState() => _ArticlesScreenState();
+}
+
+class _ArticlesScreenState extends State<ArticlesScreen> {
+  /// How close to the end of the list (in logical pixels) the next page
+  /// starts loading.
+  static const _loadMoreThreshold = 240.0;
+
+  static const _searchDebounce = Duration(milliseconds: 400);
+
+  final _scrollController = ScrollController();
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Waits for a pause in typing before hitting the API.
+  void _onSearchChanged(String term) {
+    _debounce?.cancel();
+    _debounce = Timer(_searchDebounce, () {
+      if (!mounted) return;
+      context.read<ArticlesBloc>().add(SearchArticles(term));
+    });
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      // The bloc ignores this while a page is loading or after the last one.
+      context.read<ArticlesBloc>().add(const LoadMoreArticles());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final bloc = context.read<ArticlesBloc>();
+    final state = context.watch<ArticlesBloc>().state;
+    final category = bloc.scope.category;
+    final description = category == null
+        ? ''
+        : context.localized(category.description);
+
+    // A first page too short to scroll would never fire the scroll listener,
+    // so keep pulling pages until the list overflows (or runs out).
+    if (state.canLoadMore && state.loadMoreFailure == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        if (_scrollController.position.maxScrollExtent <= 0) {
+          bloc.add(const LoadMoreArticles());
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
             ListView(
+              controller: _scrollController,
               padding: EdgeInsets.fromLTRB(12.w, 16.h, 12.w, 24.h),
               children: [
-                _ArticleHeader(
-                  title: AppText.of(context).allArticles,
+                LearningHeader(
+                  title: category == null
+                      ? appText.allArticles
+                      : context.localized(category.name),
                   onBack: () => Navigator.maybePop(context),
                 ),
-                SizedBox(height: 21.h),
-                _ArticlePreview(
-                  onTap: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.learningArticleDetails),
+                if (description.isNotEmpty) ...[
+                  SizedBox(height: 12.h),
+                  Text(
+                    description,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.inkColor(Color(0xFF718060)),
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ],
+                SizedBox(height: 16.h),
+                HadithSearchField(
+                  hint: appText.learningSearchArticles,
+                  onChanged: _onSearchChanged,
                 ),
-                SizedBox(height: 7.h),
-                _ArticlePreview(
-                  onTap: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.learningArticleDetails),
-                ),
+                SizedBox(height: 16.h),
+                ..._results(context, state),
               ],
             ),
             Align(
@@ -48,7 +129,7 @@ class ArticlesScreen extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.white.withValues(alpha: 0),
-                        const Color(0xFFE4EDBF),
+                        context.pageColor(const Color(0xFFE4EDBF)),
                       ],
                     ),
                   ),
@@ -60,112 +141,66 @@ class ArticlesScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _ArticleHeader extends StatelessWidget {
-  const _ArticleHeader({required this.title, required this.onBack});
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 38.h,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            onPressed: onBack,
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFDFDE68),
-              foregroundColor: Color(0xFF303629),
-            ),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(color: AppColor.primary, fontSize: 18.sp),
-        ),
-      ],
-    ),
-  );
-}
-
-class _ArticlePreview extends StatelessWidget {
-  const _ArticlePreview({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
+  List<Widget> _results(BuildContext context, ArticlesState state) {
     final appText = AppText.of(context);
-    return Material(
-      color: context.surfaceColor(Colors.white),
-      borderRadius: BorderRadius.circular(11.r),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(11.r),
-        child: Container(
-          padding: EdgeInsets.fromLTRB(8.w, 10.h, 8.w, 10.h),
-          decoration: BoxDecoration(
-            border: Border.all(color: context.lineColor(Color(0xFFDDE8B5))),
-            borderRadius: BorderRadius.circular(11.r),
+    final bloc = context.read<ArticlesBloc>();
+    switch (state.status) {
+      case LearningLoadStatus.loading:
+        return [
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: const Center(child: CircularProgressIndicator()),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                appText.articleTitleSabr,
-                style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
-              ),
-              SizedBox(height: 7.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: context.lineColor(Color(0xFFDDE8B5)),
-                  ),
-                  borderRadius: BorderRadius.circular(15.r),
-                ),
-                child: Text(
-                  appText.articleTagIslamicGuidance,
-                  style: TextStyle(fontSize: 11.sp),
-                ),
-              ),
-              SizedBox(height: 7.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10.r),
-                child: Image.asset(
-                  'assets/islamicImg.png',
-                  width: double.infinity,
-                  height: 170.h,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                appText.articleExcerptSabr,
-                style: TextStyle(fontSize: 11.sp, height: 1.4),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                appText.seeMore,
-                style: TextStyle(
-                  color: AppColor.primary,
-                  decoration: TextDecoration.underline,
-                  fontSize: 12.sp,
-                ),
-              ),
-              SizedBox(height: 9.h),
-              Text(
-                appText.postDatePlaceholder,
-                style: TextStyle(color: AppColor.primary, fontSize: 11.sp),
-              ),
-            ],
+        ];
+      case LearningLoadStatus.failure:
+        return [
+          LearningMessage(
+            message: learningFailureMessage(
+              appText,
+              state.failure,
+              LearningResource.articles,
+            ),
+            onRetry: () => bloc.add(const LoadArticles()),
           ),
+        ];
+      case LearningLoadStatus.success:
+        if (state.items.isEmpty) {
+          return [
+            LearningMessage(
+              message: state.searchTerm.isEmpty
+                  ? appText.learningNoArticles
+                  : appText.learningNoSearchResults,
+            ),
+          ];
+        }
+    }
+    return [
+      for (final article in state.items) ...[
+        ArticleCard(
+          article: article,
+          onTap: () => Navigator.of(
+            context,
+          ).pushNamed(RouteNames.learningArticleDetails, arguments: article.id),
         ),
-      ),
-    );
+        SizedBox(height: 7.h),
+      ],
+      if (state.isLoadingMore)
+        Padding(
+          padding: EdgeInsets.all(12.h),
+          child: const Center(child: CircularProgressIndicator()),
+        )
+      else if (state.loadMoreFailure != null)
+        LearningMessage(
+          message: learningFailureMessage(
+            appText,
+            state.loadMoreFailure,
+            LearningResource.articles,
+          ),
+          onRetry: () => bloc.add(const LoadMoreArticles()),
+        ),
+      // Room to scroll the last card clear of the fade.
+      SizedBox(height: 90.h),
+    ];
   }
 }

@@ -1,17 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/screens/quiz_shell.dart';
 
 /// Navigation bar dedicated to the Quiz & Learn flow.
 ///
-/// Quiz Categories is the Quiz flow's Home destination, at index 0.
+/// Quiz Categories is the Quiz flow's Home destination, at index 0. The bar
+/// lives once in [QuizShell]; a page pushed over the section can show its own
+/// copy, whose taps return to the section.
 class QuizBottomNav extends StatelessWidget {
-  const QuizBottomNav({super.key, this.selectedIndex = 0});
+  const QuizBottomNav({super.key, this.selectedIndex = 0, this.onSelected});
+
+  /// Home, Learn, Planner, Dashboard.
+  static const tabCount = 4;
+
+  static const _barColor = Color(0xFFA1AD59);
 
   final int selectedIndex;
+
+  /// Called with the tapped tab; without it the tap goes through
+  /// [QuizShell.switchTo].
+  final ValueChanged<int>? onSelected;
+
+  static List<({IconData icon, IconData? selectedIcon, String label})> _items(
+    AppText appText,
+  ) => [
+    (
+      icon: Icons.home_outlined,
+      selectedIcon: Icons.home_rounded,
+      label: appText.home,
+    ),
+    (
+      icon: Icons.emoji_objects_outlined,
+      selectedIcon: null,
+      label: appText.learn,
+    ),
+    (
+      icon: Icons.assignment_turned_in_outlined,
+      selectedIcon: null,
+      label: appText.planner,
+    ),
+    (
+      icon: Icons.grid_view_outlined,
+      selectedIcon: null,
+      label: appText.dashboard,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +54,11 @@ class QuizBottomNav extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
       child: Container(
-        height: 50.h,
-        padding: EdgeInsets.symmetric(horizontal: 10.w),
+        height: 62.h,
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
         decoration: BoxDecoration(
-          color: AppColor.primary,
-          borderRadius: BorderRadius.circular(24.r),
+          color: _barColor,
+          borderRadius: BorderRadius.circular(32.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: .08),
@@ -35,46 +70,18 @@ class QuizBottomNav extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _QuizNavItem(
-              icon: Icons.home_outlined,
-              label: appText.home,
-              selected: selectedIndex == 0,
-              onPressed: selectedIndex == 0
-                  ? null
-                  : () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed(RouteNames.winQuiz),
-            ),
-            _QuizNavItem(
-              icon: Icons.lightbulb_outline_rounded,
-              label: appText.learn,
-              selected: selectedIndex == 1,
-              onPressed: selectedIndex == 1
-                  ? null
-                  : () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed(RouteNames.learning),
-            ),
-            _QuizNavItem(
-              icon: Icons.fact_check_outlined,
-              label: appText.planner,
-              selected: selectedIndex == 2,
-              onPressed: selectedIndex == 2
-                  ? null
-                  : () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed(RouteNames.planner),
-            ),
-            _QuizNavItem(
-              icon: Icons.grid_view_rounded,
-              label: appText.dashboard,
-              selected: selectedIndex == 3,
-              onPressed: selectedIndex == 3
-                  ? null
-                  : () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed(RouteNames.quizDashboard),
-            ),
+            for (final (index, item) in _items(appText).indexed)
+              _QuizNavItem(
+                icon: item.icon,
+                selectedIcon: item.selectedIcon,
+                label: item.label,
+                selected: selectedIndex == index,
+                onPressed: selectedIndex == index
+                    ? null
+                    : () => onSelected != null
+                          ? onSelected!(index)
+                          : QuizShell.switchTo(context, index),
+              ),
           ],
         ),
       ),
@@ -85,12 +92,14 @@ class QuizBottomNav extends StatelessWidget {
 class _QuizNavItem extends StatelessWidget {
   const _QuizNavItem({
     required this.icon,
+    this.selectedIcon,
     this.label,
     this.selected = false,
     this.onPressed,
   });
 
   final IconData icon;
+  final IconData? selectedIcon;
   final String? label;
   final bool selected;
   final VoidCallback? onPressed;
@@ -101,7 +110,7 @@ class _QuizNavItem extends StatelessWidget {
       return IconButton(
         tooltip: label,
         onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 18.sp),
+        icon: Icon(icon, color: Colors.white, size: 22.sp),
       );
     }
 
@@ -109,23 +118,23 @@ class _QuizNavItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(24.r),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 7.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
           decoration: BoxDecoration(
-            color: const Color(0xFF738A69),
-            borderRadius: BorderRadius.circular(16.r),
+            color: const Color(0xFF5B8267),
+            borderRadius: BorderRadius.circular(24.r),
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white, size: 16.sp),
-              SizedBox(width: 4.w),
+              Icon(selectedIcon ?? icon, color: Colors.white, size: 20.sp),
+              SizedBox(width: 6.w),
               Text(
                 label ?? '',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 9.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

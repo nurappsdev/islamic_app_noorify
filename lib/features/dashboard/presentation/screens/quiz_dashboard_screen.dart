@@ -5,22 +5,58 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_activity_chart.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_comparison_card.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_segmented_tabs.dart';
+// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
-class QuizDashboardScreen extends StatelessWidget {
+/// Reads the [QuizDashboardBloc] (`/quizzes/dashboard` and
+/// `/quizzes/dashboard/compare`) and the [QuizBloc] history preview provided
+/// above it.
+class QuizDashboardScreen extends StatefulWidget {
   const QuizDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => QuizDashboardBloc(),
-      child: const _QuizDashboardView(),
-    );
+  State<QuizDashboardScreen> createState() => _QuizDashboardScreenState();
+}
+
+class _QuizDashboardScreenState extends State<QuizDashboardScreen>
+    with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
   }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// The Quiz section keeps this tab alive, so it refreshes whenever a page
+  /// above it (a quiz, its result) closes - a new attempt shows up at once.
+  @override
+  void didPopNext() {
+    context.read<QuizDashboardBloc>().add(const LoadQuizDashboard());
+    context.read<QuizBloc>().add(const LoadCompletedQuizHistory());
+  }
+
+  @override
+  Widget build(BuildContext context) => const _QuizDashboardView();
 }
 
 class _QuizDashboardView extends StatelessWidget {
@@ -31,6 +67,10 @@ class _QuizDashboardView extends StatelessWidget {
     final state = context.watch<QuizDashboardBloc>().state;
     final bloc = context.read<QuizDashboardBloc>();
     final appText = AppText.of(context);
+    final comparison = state.comparison;
+    // The current user and the other, by the server's `isCurrentUser`.
+    final me = comparison?.currentUser;
+    final other = comparison?.otherUser;
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -41,8 +81,9 @@ class _QuizDashboardView extends StatelessWidget {
               children: [
                 _DashboardHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 10.h),
-                _PeriodTabs(
-                  selectedPeriod: state.selectedPeriod,
+                QuizSegmentedTabs(
+                  labels: [appText.daily, appText.weekly, appText.monthly],
+                  selectedIndex: state.selectedPeriod,
                   onChanged: (period) => bloc.add(SelectPeriod(period)),
                 ),
                 SizedBox(height: 13.h),
@@ -60,14 +101,19 @@ class _QuizDashboardView extends StatelessWidget {
                     ).style.copyWith(color: Colors.black, fontSize: 16.sp),
                     children: [
                       TextSpan(
-                        text: '${appText.todays} - ',
+                        text:
+                            '${[appText.todays, appText.weekly, appText.monthly][state.selectedPeriod]} - ',
                         style: TextStyle(
                           fontFamily: 'serif',
                           fontSize: 22.sp,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
-                      TextSpan(text: appText.averageValue),
+                      TextSpan(
+                        text: context.localizedDigits(
+                          '${appText.averageScore} : ${formatOptional(state.dashboard?.totals.averageScorePercentage, formatPercent)}',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -79,28 +125,62 @@ class _QuizDashboardView extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      const _ScoreDonut(),
-                      if (state.showCompetitor)
+                      _ScoreDonut(
+                        mine: me?.dashboard.totals.totalPoints,
+                        theirs: other?.dashboard.totals.totalPoints,
+                      ),
+                      if (state.comparisonStatus ==
+                          QuizDashboardLoadStatus.loading)
+                        const CircularProgressIndicator(),
+                      if (state.showCompetitor && other != null)
                         Positioned(
                           top: 11.h,
                           right: 6.w,
                           child: _CompetitorCard(
+                            competitor: other,
                             onClose: () => bloc.add(const DismissCompetitor()),
                           ),
                         ),
                     ],
                   ),
                 ),
-                const _PointsSummary(),
+                if (state.comparisonStatus == QuizDashboardLoadStatus.failure)
+                  QuizStatusView(
+                    message: quizFailureMessage(
+                      appText,
+                      state.comparisonFailure,
+                    ),
+                    onRetry: () => bloc.add(const LoadQuizDashboard()),
+                  )
+                else
+                  _PointsSummary(
+                    mine: me?.dashboard.totals.totalPoints,
+                    theirs: other?.dashboard.totals.totalPoints,
+                  ),
+                // Comparison card - hidden for now; uncomment to show it.
+                // if (comparison != null) ...[
+                //   SizedBox(height: 16.h),
+                //   QuizComparisonCard(comparison: comparison),
+                // ],
+                // Stats card (attempts, questions, correct / incorrect /
+                // unanswered, accuracy, correct rate, points, total time,
+                // current streak, avg. min / day, best and average score) -
+                // hidden for now; uncomment it and its class below to show it.
+                // SizedBox(height: 20.h),
+                // const _DashboardFigures(),
                 SizedBox(height: 25.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      appText.quizHistory,
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w400,
+                    Flexible(
+                      child: Text(
+                        appText.quizHistory,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ),
                     TextButton(
@@ -121,15 +201,8 @@ class _QuizDashboardView extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 25.h),
-                for (var index = 1; index <= 5; index++) ...[
-                  _HistoryCard(index: index),
-                  SizedBox(height: 8.h),
-                ],
+                const _HistoryPreview(),
               ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: QuizBottomNav(selectedIndex: 3),
             ),
           ],
         ),
@@ -172,60 +245,6 @@ class _DashboardHeader extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PeriodTabs extends StatelessWidget {
-  const _PeriodTabs({required this.selectedPeriod, required this.onChanged});
-
-  final int selectedPeriod;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final labels = [appText.daily, appText.weekly, appText.monthly];
-    return SizedBox(
-      height: 44.h,
-      child: Row(
-        children: [
-          for (var index = 0; index < labels.length; index++)
-            Expanded(
-              child: InkWell(
-                onTap: () => onChanged(index),
-                borderRadius: BorderRadius.circular(13.r),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(
-                      selectedPeriod == index
-                          ? const Color(0xFFDDE8BA)
-                          : Colors.transparent,
-                    ),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: context.lineColor(
-                          selectedPeriod == index
-                              ? Colors.transparent
-                              : const Color(0xFFDDE8C1),
-                        ),
-                      ),
-                    ),
-                    borderRadius: BorderRadius.circular(13.r),
-                  ),
-                  child: Text(
-                    labels[index],
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -296,9 +315,20 @@ class _DateSelector extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_label(appText), style: TextStyle(fontSize: 16.sp)),
+                // One line each, so a long Bangla label cannot outgrow the box.
+                Text(
+                  _label(appText),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16.sp),
+                ),
                 SizedBox(height: 8.h),
-                Text(_subLabel(appText), style: TextStyle(fontSize: 14.sp)),
+                Text(
+                  _subLabel(appText),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
               ],
             ),
           ),
@@ -373,25 +403,48 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         SizedBox(width: 10.w),
-        Text(
-          label,
-          style: TextStyle(color: context.inkColor(color), fontSize: 14.sp),
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(color: context.inkColor(color), fontSize: 14.sp),
+          ),
         ),
       ],
     );
   }
 }
 
+/// The two users' points over the range, each an arc sized by its share.
 class _ScoreDonut extends StatelessWidget {
-  const _ScoreDonut();
+  const _ScoreDonut({required this.mine, required this.theirs});
+
+  final num? mine;
+  final num? theirs;
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(size: Size(245.w, 245.w), painter: _ScoreDonutPainter());
+    return CustomPaint(
+      size: Size(245.w, 245.w),
+      painter: _ScoreDonutPainter(
+        mine: (mine ?? 0).toDouble(),
+        theirs: (theirs ?? 0).toDouble(),
+        track: context.surfaceColor(const Color(0xFFF0F0F6)),
+      ),
+    );
   }
 }
 
 class _ScoreDonutPainter extends CustomPainter {
+  _ScoreDonutPainter({
+    required this.mine,
+    required this.theirs,
+    required this.track,
+  });
+
+  final double mine;
+  final double theirs;
+  final Color track;
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
@@ -407,26 +460,56 @@ class _ScoreDonutPainter extends CustomPainter {
       ..strokeWidth = size.width * .18
       ..strokeCap = StrokeCap.round;
     final rect = Rect.fromCircle(center: center, radius: radius);
-
-    canvas.drawArc(rect, math.pi * .82, math.pi * .72, false, green);
-    canvas.drawArc(rect, math.pi * 1.62, math.pi * 1.17, false, olive);
+    final total = mine + theirs;
+    if (total <= 0) {
+      // Nothing earned by either yet: an empty ring.
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()
+          ..color = track
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = size.width * .18,
+      );
+      return;
+    }
+    // A small gap between the arcs, as in the design, when both have points.
+    const gap = math.pi * .12;
+    final both = mine > 0 && theirs > 0;
+    final available = math.pi * 2 - (both ? gap * 2 : 0);
+    final mineSweep = available * mine / total;
+    const start = math.pi * .82;
+    if (mine > 0) canvas.drawArc(rect, start, mineSweep, false, green);
+    if (theirs > 0) {
+      canvas.drawArc(
+        rect,
+        start + mineSweep + (both ? gap : 0),
+        available - mineSweep,
+        false,
+        olive,
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _ScoreDonutPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _ScoreDonutPainter oldDelegate) =>
+      oldDelegate.mine != mine ||
+      oldDelegate.theirs != theirs ||
+      oldDelegate.track != track;
 }
 
 class _CompetitorCard extends StatelessWidget {
-  const _CompetitorCard({required this.onClose});
+  const _CompetitorCard({required this.competitor, required this.onClose});
 
+  final QuizComparedUser competitor;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 148.w,
-      height: 105.h,
-      padding: EdgeInsets.fromLTRB(20.w, 27.h, 15.w, 12.h),
+      // Sized by its content, so the points sit right under the name.
+      width: 164.w,
+      padding: EdgeInsets.fromLTRB(14.w, 10.h, 6.w, 12.h),
       decoration: BoxDecoration(
         color: context.surfaceColor(Color(0xFFDDE8BA)),
         borderRadius: BorderRadius.circular(20.r),
@@ -439,34 +522,58 @@ class _CompetitorCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                AppText.of(context).competitorName,
-                style: TextStyle(fontSize: 14.sp),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    competitor.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.inkColor(const Color(0xFF303629)),
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
+                ),
               ),
-              SizedBox(height: 16.h),
-              Text(
-                '${AppText.of(context).point} :1.5/1.0',
-                style: TextStyle(fontSize: 12.sp),
+              SizedBox(width: 4.w),
+              // Inside the card, beside the name, so nothing clips it.
+              IconButton(
+                onPressed: onClose,
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints.tightFor(width: 28.r, height: 28.r),
+                style: IconButton.styleFrom(
+                  backgroundColor: context.surfaceColor(Colors.white),
+                  shape: const CircleBorder(),
+                ),
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: const Color(0xFFE53935),
+                  size: 18.r,
+                ),
               ),
             ],
           ),
-          Positioned(
-            top: -20.h,
-            right: -10.w,
-            child: IconButton(
-              onPressed: onClose,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              icon: Icon(
-                Icons.cancel_outlined,
-                color: const Color(0xFFF44336),
-                size: 18.sp,
-              ),
+          SizedBox(height: 6.h),
+          Text(
+            context.localizedDigits(
+              '${AppText.of(context).point} : '
+              '${formatPoints(competitor.dashboard.totals.totalPoints)}',
+            ),
+            style: TextStyle(
+              color: context.inkColor(const Color(0xFF5D896D)),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -475,8 +582,12 @@ class _CompetitorCard extends StatelessWidget {
   }
 }
 
+/// Both users' points over the range; `—` until they have loaded.
 class _PointsSummary extends StatelessWidget {
-  const _PointsSummary();
+  const _PointsSummary({required this.mine, required this.theirs});
+
+  final num? mine;
+  final num? theirs;
 
   @override
   Widget build(BuildContext context) {
@@ -497,7 +608,10 @@ class _PointsSummary extends StatelessWidget {
                 borderRadius: BorderRadius.circular(26.r),
               ),
               child: Text(
-                '${AppText.of(context).myPoints} : 1.0',
+                context.localizedDigits(
+                  '${AppText.of(context).myPoints} : '
+                  '${formatOptional(mine, formatPoints)}',
+                ),
                 style: TextStyle(fontSize: 16.sp),
               ),
             ),
@@ -515,7 +629,10 @@ class _PointsSummary extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 7.w),
-                Text('1.5', style: TextStyle(fontSize: 16.sp)),
+                Text(
+                  context.localizedDigits(formatOptional(theirs, formatPoints)),
+                  style: TextStyle(fontSize: 16.sp),
+                ),
               ],
             ),
           ),
@@ -525,90 +642,117 @@ class _PointsSummary extends StatelessWidget {
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.index});
-
-  final int index;
+/// The latest attempts, as returned by `GET /quizzes/attempts`.
+class _HistoryPreview extends StatelessWidget {
+  const _HistoryPreview();
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Container(
-      height: 84.h,
-      padding: EdgeInsets.symmetric(horizontal: 11.w),
-      decoration: BoxDecoration(
-        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
-        borderRadius: BorderRadius.circular(25.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 51.w,
-            height: 51.w,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
-            ),
-            child: Icon(
-              Icons.image_outlined,
-              color: context.inkColor(Color(0xFF8B9865)),
-              size: 25.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${appText.categoryQuiz} $index ( ${appText.quranicScience} )',
-                  style: TextStyle(fontSize: 14.sp),
-                ),
-                SizedBox(height: 7.h),
-                Text(
-                  appText.questionsCountLabel,
-                  style: TextStyle(
-                    color: const Color(0xFFA1AD59),
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const _ScoreProgress(value: .60),
-        ],
-      ),
-    );
+    final state = context.watch<QuizBloc>().state;
+    switch (state.status) {
+      case QuizStatus.initial:
+      case QuizStatus.loading:
+        return Padding(
+          padding: EdgeInsets.all(16.h),
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      case QuizStatus.failure:
+        return QuizStatusView(
+          message: quizFailureMessage(appText, state.failure),
+          onRetry: () =>
+              context.read<QuizBloc>().add(const LoadCompletedQuizHistory()),
+        );
+      case QuizStatus.success:
+        if (state.attempts.isEmpty) {
+          return QuizStatusView(message: appText.noQuizAttemptsYet);
+        }
+        return Column(
+          children: [
+            for (final attempt in state.attempts) ...[
+              QuizAttemptCard(attempt: attempt),
+              SizedBox(height: 8.h),
+            ],
+          ],
+        );
+    }
   }
 }
 
-class _ScoreProgress extends StatelessWidget {
-  const _ScoreProgress({required this.value});
-
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 57.w,
-      height: 57.w,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: value,
-            strokeWidth: 5.w,
-            strokeCap: StrokeCap.round,
-            color: const Color(0xFFA1AD59),
-            backgroundColor: context.surfaceColor(Color(0xFFF0F0F6)),
-          ),
-          Text(
-            '${(value * 100).round()}%',
-            style: TextStyle(color: const Color(0xFFA1AD59), fontSize: 12.sp),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Stats card - hidden for now; see its use in the build above.
+// /// The range's figures from `GET /quizzes/dashboard`, and its days as a chart.
+// class _DashboardFigures extends StatelessWidget {
+//   const _DashboardFigures();
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final appText = AppText.of(context);
+//     final state = context.watch<QuizDashboardBloc>().state;
+//     final dashboard = state.dashboard;
+//     switch (state.dashboardStatus) {
+//       case QuizDashboardLoadStatus.initial:
+//       case QuizDashboardLoadStatus.loading:
+//         return Padding(
+//           padding: EdgeInsets.all(24.h),
+//           child: const Center(child: CircularProgressIndicator()),
+//         );
+//       case QuizDashboardLoadStatus.failure:
+//         return QuizStatusView(
+//           message: quizFailureMessage(appText, state.dashboardFailure),
+//           onRetry: () =>
+//               context.read<QuizDashboardBloc>().add(const LoadQuizDashboard()),
+//         );
+//       case QuizDashboardLoadStatus.success:
+//         if (dashboard == null) return const SizedBox.shrink();
+//         final t = dashboard.totals;
+//         String count(int? value) => value == null ? '—' : '$value';
+//         return Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Container(
+//               padding: EdgeInsets.all(14.w),
+//               decoration: BoxDecoration(
+//                 color: context.surfaceColor(Color(0xFFDFE9B9)),
+//                 borderRadius: BorderRadius.circular(18.r),
+//               ),
+//               child: QuizStatGrid(
+//                 stats: [
+//                   (appText.attemptsLabel, '${t.attempts}'),
+//                   (appText.questionsWord, '${t.totalQuestions}'),
+//                   (appText.correctAnswers, '${t.correctAnswers}'),
+//                   (appText.incorrectAnswers, count(t.wrongAnswers)),
+//                   (appText.unansweredLabel, count(t.unansweredQuestions)),
+//                   (
+//                     appText.accuracy,
+//                     formatOptional(t.accuracyPercentage, formatPercent),
+//                   ),
+//                   (
+//                     appText.correctPercentageLabel,
+//                     formatPercent(t.correctPercentage),
+//                   ),
+//                   (appText.pointsWord, formatPoints(t.totalPoints)),
+//                   (appText.totalTimeLabel, formatClock(t.totalSeconds)),
+//                   (
+//                     appText.currentStreakLabel,
+//                     '${t.currentStreak} ${appText.daysWord}',
+//                   ),
+//                   (
+//                     appText.averageMinutesPerDayLabel,
+//                     formatPoints(t.averageMinutesPerDay),
+//                   ),
+//                   (appText.bestScore, formatPercent(t.bestScorePercentage)),
+//                   (
+//                     appText.averageScore,
+//                     formatPercent(t.averageScorePercentage),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             // Daily activity chart - hidden for now; uncomment to show it.
+//             // SizedBox(height: 20.h),
+//             // QuizActivityChart(days: dashboard.days),
+//           ],
+//         );
+//     }
+//   }
+// }

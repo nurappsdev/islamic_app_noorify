@@ -12,8 +12,11 @@ class RouteNames {
   static const planner = '/planner';
   static const plannerDetails = '/planner/details';
   static const createPlan = '/planner/create';
+  static const plannedQuiz = '/planner/quiz';
+  static const plannedQuizResult = '/planner/quiz/result';
   static const quizDashboard = '/quiz/dashboard';
   static const completedHistory = '/quiz/completed-history';
+  static const quizAttemptReview = '/quiz/attempt-review';
   static const learningArticles = '/learning/articles';
   static const learningArticleDetails = '/learning/articles/details';
   static const learningTest = '/learning/test';

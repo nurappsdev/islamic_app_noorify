@@ -36,16 +36,63 @@ import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_completion_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_list_screen.dart';
 import '../../features/quiz/presentation/screens/completed_history_screen.dart';
-import '../../features/quiz/data/datasources/quiz_local_data_source.dart';
+import '../../features/quiz/presentation/screens/quiz_attempt_review_screen.dart';
+import '../../features/quiz/presentation/screens/quiz_shell.dart';
+import '../../features/quiz/data/datasources/quiz_remote_data_source.dart';
 import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
-import '../../features/quiz/domain/usecases/get_completed_quiz_history.dart';
+import '../../features/quiz/domain/repositories/quiz_repository.dart';
+import '../../features/quiz/domain/usecases/get_category_quiz.dart';
+import '../../features/quiz/domain/usecases/get_daily_quiz.dart';
+import '../../features/quiz/domain/usecases/get_daily_quiz_status.dart';
+import '../../features/quiz/domain/usecases/get_quiz_attempt_review.dart';
+import '../../features/quiz/domain/usecases/get_quiz_attempts.dart';
+import '../../features/quiz/domain/usecases/get_quiz_dashboard.dart';
+import '../../features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
+// import '../../features/quiz/domain/usecases/get_quiz_dashboard_history_comparison.dart';
+import '../../features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
+// import '../../features/quiz/presentation/bloc/quiz_comparison_bloc.dart';
+import '../../features/quiz/domain/usecases/get_quiz_categories.dart';
+import '../../features/quiz/domain/usecases/submit_quiz_attempt.dart';
+import '../../features/quiz/presentation/bloc/quiz_attempt_review_bloc.dart';
 import '../../features/quiz/presentation/bloc/quiz_bloc.dart';
+import '../../features/quiz/presentation/bloc/quiz_categories_bloc.dart';
+import '../../features/quiz/presentation/bloc/quiz_question_bloc.dart';
+import '../../features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
+import '../../features/quiz/presentation/quiz_route_args.dart';
+import '../../features/learning/data/datasources/learning_remote_data_source.dart';
+import '../../features/learning/data/repositories/learning_repository_impl.dart';
+import '../../features/learning/domain/entities/article.dart';
+import '../../features/learning/domain/repositories/learning_repository.dart';
+import '../../features/learning/domain/usecases/get_article.dart';
+import '../../features/learning/domain/usecases/get_article_categories.dart';
+import '../../features/learning/domain/usecases/get_articles.dart';
+import '../../features/learning/presentation/bloc/article_categories_bloc.dart';
+import '../../features/learning/presentation/bloc/article_detail_bloc.dart';
+import '../../features/learning/presentation/bloc/articles_bloc.dart';
 import '../../features/learning/presentation/screens/learning_screen.dart';
 import '../../features/planner/presentation/screens/planner_screen.dart';
 import '../../features/planner/presentation/screens/planner_detail_screen.dart';
 import '../../features/planner/presentation/screens/create_plan_screen.dart';
 import '../../features/dashboard/presentation/screens/quiz_dashboard_screen.dart';
-import '../../features/planner/presentation/models/planner_plan.dart';
+import '../../features/planner/data/datasources/quiz_plan_remote_data_source.dart';
+import '../../features/planner/data/repositories/quiz_plan_repository_impl.dart';
+import '../../features/planner/domain/entities/quiz_plan.dart';
+import '../../features/planner/domain/repositories/quiz_plan_repository.dart';
+import '../../features/planner/domain/usecases/abandon_quiz_plan.dart';
+import '../../features/planner/domain/usecases/create_quiz_plan.dart';
+import '../../features/planner/domain/usecases/get_planned_questions.dart';
+import '../../features/planner/domain/usecases/get_quiz_plan.dart';
+import '../../features/planner/domain/usecases/get_quiz_plans.dart';
+import '../../features/planner/domain/usecases/start_quiz_plan.dart';
+import '../../features/planner/domain/usecases/submit_planned_quiz.dart';
+import '../../features/planner/domain/usecases/update_quiz_plan.dart';
+import '../../features/planner/presentation/bloc/create_quiz_plan_bloc.dart';
+import '../../features/planner/presentation/bloc/planned_quiz_bloc.dart';
+import '../../features/planner/presentation/bloc/planner_bloc.dart';
+import '../../features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
+import '../../features/planner/presentation/screens/planned_quiz_result_screen.dart';
+import '../../features/planner/presentation/screens/planned_quiz_screen.dart';
+import '../../features/planner/presentation/widgets/quiz_plan_widgets.dart';
 import '../../features/learning/presentation/screens/articles_screen.dart';
 import '../../features/learning/presentation/screens/article_details_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
@@ -101,6 +148,98 @@ import '../../features/zikr/presentation/zikr_route_args.dart';
 import 'route_names.dart';
 
 class AppRoutes {
+  /// Shared by every quiz screen; created on first use.
+  static final QuizRepository _quizRepository = QuizRepositoryImpl(
+    QuizRemoteDataSourceImpl(),
+  );
+
+  /// Shared by the quiz plan screens; created on first use.
+  static final QuizPlanRepository _quizPlanRepository = QuizPlanRepositoryImpl(
+    QuizPlanRemoteDataSourceImpl(),
+  );
+
+  /// Shared by the Learning screens; keeps the articles read this session.
+  static final LearningRepository _learningRepository = LearningRepositoryImpl(
+    LearningRemoteDataSourceImpl(),
+  );
+
+  static QuizPlanDetailBloc _quizPlanDetailBloc(String planId) =>
+      QuizPlanDetailBloc(
+        planId: planId,
+        getPlan: GetQuizPlan(_quizPlanRepository),
+        startPlan: StartQuizPlan(_quizPlanRepository),
+        updatePlan: UpdateQuizPlan(_quizPlanRepository),
+        abandonPlan: AbandonQuizPlan(_quizPlanRepository),
+      );
+
+  /// Gives [child] the quiz categories and daily quiz status, fetched as it opens.
+  static Widget _withQuizCategories(Widget child) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (_) =>
+            QuizCategoriesBloc(GetQuizCategories(_quizRepository))
+              ..add(const LoadQuizCategories()),
+      ),
+      BlocProvider(
+        create: (_) =>
+            DailyQuizStatusCubit(GetDailyQuizStatus(_quizRepository))..load(),
+      ),
+    ],
+    child: child,
+  );
+
+  /// The Quiz & Learn section, opened on [tab], with its sticky nav bar.
+  static Widget _quizShell(int tab) => QuizShell(
+    initialTab: tab,
+    tabs: [
+      (_) => _withQuizCategories(const QuizCategoriesScreen()),
+      (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) =>
+                ArticleCategoriesBloc(GetArticleCategories(_learningRepository))
+                  ..add(const LoadArticleCategories()),
+          ),
+          BlocProvider(
+            // Only the latest few are previewed; See All opens the rest.
+            create: (_) => ArticlesBloc(
+              GetArticles(_learningRepository),
+              scope: const ArticleListScope.all(),
+              pageSize: 3,
+            )..add(const LoadArticles()),
+          ),
+        ],
+        child: const LearningScreen(),
+      ),
+      (_) => BlocProvider(
+        // Loads its plans itself, once it knows the user is signed in.
+        create: (_) => PlannerBloc(
+          getPlans: GetQuizPlans(_quizPlanRepository),
+          updatePlan: UpdateQuizPlan(_quizPlanRepository),
+          abandonPlan: AbandonQuizPlan(_quizPlanRepository),
+        ),
+        child: const PlannerScreen(),
+      ),
+      (_) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => QuizDashboardBloc(
+              getDashboard: GetQuizDashboard(_quizRepository),
+              getComparison: GetQuizDashboardComparison(_quizRepository),
+            )..add(const LoadQuizDashboard()),
+          ),
+          BlocProvider(
+            // Only the latest few attempts are previewed here.
+            create: (_) =>
+                QuizBloc(GetQuizAttempts(_quizRepository), pageSize: 5)
+                  ..add(const LoadCompletedQuizHistory()),
+          ),
+        ],
+        child: const QuizDashboardScreen(),
+      ),
+    ],
+  );
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteNames.home:
@@ -118,46 +257,152 @@ class AppRoutes {
       case RouteNames.familyMembers:
         return _page(const FamilyMembersScreen(), settings);
       case RouteNames.winQuiz:
-        return _page(const QuizCategoriesScreen(), settings);
+        return _page(_quizShell(0), settings);
       case RouteNames.quizQuestion:
-        return _page(const QuizQuestionScreen(), settings);
-      case RouteNames.quizComplete:
-        return _page(const QuizCompletionScreen(), settings);
-      case RouteNames.quizList:
-        return _page(const QuizListScreen(), settings);
-      case RouteNames.learning:
-        return _page(const LearningScreen(), settings);
-      case RouteNames.planner:
-        return _page(const PlannerScreen(), settings);
-      case RouteNames.plannerDetails:
-        final plan =
-            settings.arguments as PlannerPlan? ??
-            const PlannerPlan(
-              title: 'Plan 1',
-              quizCount: 10,
-              detailQuizCount: 4,
-            );
-        return _page(PlannerDetailScreen(plan: plan), settings);
-      case RouteNames.createPlan:
-        return _page(const CreatePlanScreen(), settings);
-      case RouteNames.quizDashboard:
-        return _page(const QuizDashboardScreen(), settings);
-      case RouteNames.completedHistory:
+        final launch = settings.arguments is QuizLaunchArgs
+            ? settings.arguments as QuizLaunchArgs
+            : const QuizLaunchArgs.daily();
         return _page(
           BlocProvider(
-            create: (_) => QuizBloc(
-              GetCompletedQuizHistory(
-                QuizRepositoryImpl(const QuizLocalDataSourceImpl()),
+            create: (_) => QuizQuestionBloc(
+              launch: launch,
+              getDailyQuiz: GetDailyQuiz(_quizRepository),
+              getCategoryQuiz: GetCategoryQuiz(_quizRepository),
+              submitAttempt: SubmitQuizAttempt(_quizRepository),
+            )..add(const LoadQuiz()),
+            child: const QuizQuestionScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.quizComplete:
+        final args = settings.arguments;
+        return _page(
+          _withQuizCategories(
+            QuizCompletionScreen(
+              args: args is QuizCompletionArgs ? args : null,
+            ),
+          ),
+          settings,
+        );
+      case RouteNames.quizList:
+        return _page(_withQuizCategories(const QuizListScreen()), settings);
+      case RouteNames.quizAttemptReview:
+        final attemptId = settings.arguments as String? ?? '';
+        return _page(
+          BlocProvider(
+            create: (_) => QuizAttemptReviewBloc(
+              GetQuizAttemptReview(_quizRepository),
+              attemptId: attemptId,
+            )..add(const LoadQuizAttemptReview()),
+            child: const QuizAttemptReviewScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.learning:
+        return _page(_quizShell(1), settings);
+      case RouteNames.planner:
+        return _page(_quizShell(2), settings);
+      case RouteNames.plannerDetails:
+        // A plan from the list, or just its id.
+        final args = settings.arguments;
+        final plan = args is QuizPlan ? args : null;
+        final planId = plan?.id ?? (args is String ? args : '');
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                _quizPlanDetailBloc(planId)..add(const LoadQuizPlanDetail()),
+            child: PlannerDetailScreen(initialTitle: plan?.name ?? ''),
+          ),
+          settings,
+        );
+      case RouteNames.plannedQuiz:
+        final args = settings.arguments as PlannedQuizArgs;
+        return _page(
+          BlocProvider(
+            create: (_) => PlannedQuizBloc(
+              plan: args.plan,
+              portion: args.portion,
+              getQuestions: GetPlannedQuestions(_quizPlanRepository),
+              submit: SubmitPlannedQuiz(_quizPlanRepository),
+            )..add(const LoadPlannedQuestions()),
+            child: const PlannedQuizScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.plannedQuizResult:
+        final args = settings.arguments as PlannedQuizResultArgs;
+        return _page(
+          BlocProvider(
+            // The plan's progress after this quiz, from the server.
+            create: (_) =>
+                _quizPlanDetailBloc(args.plan.id)
+                  ..add(const LoadQuizPlanDetail()),
+            child: PlannedQuizResultScreen(args: args),
+          ),
+          settings,
+        );
+      case RouteNames.createPlan:
+        return _page(
+          BlocProvider(
+            create: (_) => CreateQuizPlanBloc(
+              getCategories: GetQuizCategories(_quizRepository),
+              createPlan: CreateQuizPlan(_quizPlanRepository),
+            )..add(const LoadQuizPlanCategories()),
+            child: const CreatePlanScreen(),
+          ),
+          settings,
+        );
+      case RouteNames.quizDashboard:
+        return _page(_quizShell(3), settings);
+      case RouteNames.completedHistory:
+        return _page(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    QuizBloc(GetQuizAttempts(_quizRepository))
+                      ..add(const LoadCompletedQuizHistory()),
               ),
-            )..add(const LoadCompletedQuizHistory()),
+              // The history comparison card is hidden for now; restore this
+              // provider together with it.
+              // BlocProvider(
+              //   // The last seven days against the leaderboard leader.
+              //   create: (_) => QuizComparisonBloc(
+              //     GetQuizDashboardHistoryComparison(_quizRepository).call,
+              //   )..add(const LoadQuizComparison()),
+              // ),
+            ],
             child: const CompletedHistoryScreen(),
           ),
           settings,
         );
       case RouteNames.learningArticles:
-        return _page(const ArticlesScreen(), settings);
+        // A category's articles, or all of them.
+        final scope = settings.arguments is ArticleListScope
+            ? settings.arguments as ArticleListScope
+            : const ArticleListScope.all();
+        return _page(
+          BlocProvider(
+            create: (_) =>
+                ArticlesBloc(GetArticles(_learningRepository), scope: scope)
+                  ..add(const LoadArticles()),
+            child: const ArticlesScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learningArticleDetails:
-        return _page(const ArticleDetailsScreen(), settings);
+        // Only the id travels; the full article is fetched here.
+        final articleId = settings.arguments as String? ?? '';
+        return _page(
+          BlocProvider(
+            create: (_) => ArticleDetailBloc(
+              GetArticle(_learningRepository),
+              articleId: articleId,
+            )..add(const LoadArticle()),
+            child: const ArticleDetailsScreen(),
+          ),
+          settings,
+        );
       case RouteNames.learningTest:
         return _page(const LearningTestScreen(), settings);
       case RouteNames.learningTestResult:
