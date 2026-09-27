@@ -320,6 +320,38 @@ void main() {
       }
     });
 
+    testWidgets('competitor popup: name, points and a usable close button '
+        '($lang)', (tester) async {
+      await _pump(tester, dashboard(), bangla: bangla);
+      final name = find.text('A Very Long Leaderboard Leader Name');
+      expect(name, findsOneWidget);
+      // A long name gets two lines before it is cut short.
+      expect(tester.widget<Text>(name).maxLines, 2);
+      final close = find.byIcon(Icons.close_rounded);
+      expect(close, findsOneWidget);
+      // The close button sits wholly inside the card, so nothing clips it.
+      final card = find.ancestor(of: name, matching: find.byType(Container));
+      final cardRect = tester.getRect(card.last);
+      final closeRect = tester.getRect(
+        find.ancestor(of: close, matching: find.byType(IconButton)),
+      );
+      expect(cardRect.contains(closeRect.topLeft), isTrue);
+      expect(cardRect.contains(closeRect.bottomRight), isTrue);
+      // The points sit right under the name.
+      final points = find.descendant(
+        of: card.last,
+        matching: find.textContaining(' : '),
+      );
+      expect(
+        tester.getTopLeft(points.first).dy - tester.getBottomLeft(name).dy,
+        lessThan(20),
+      );
+      await tester.tap(close);
+      await tester.pump();
+      expect(name, findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('review renders every status ($lang)', (tester) async {
       await _pump(
         tester,

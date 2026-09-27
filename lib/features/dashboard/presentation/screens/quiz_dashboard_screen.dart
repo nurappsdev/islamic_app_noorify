@@ -507,9 +507,9 @@ class _CompetitorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 148.w,
-      height: 105.h,
-      padding: EdgeInsets.fromLTRB(20.w, 27.h, 15.w, 12.h),
+      // Sized by its content, so the points sit right under the name.
+      width: 164.w,
+      padding: EdgeInsets.fromLTRB(14.w, 10.h, 6.w, 12.h),
       decoration: BoxDecoration(
         color: context.surfaceColor(Color(0xFFDDE8BA)),
         borderRadius: BorderRadius.circular(20.r),
@@ -522,39 +522,58 @@ class _CompetitorCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                competitor.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 14.sp),
-              ),
-              const Spacer(),
-              Text(
-                context.localizedDigits(
-                  '${AppText.of(context).point} : '
-                  '${formatPoints(competitor.dashboard.totals.totalPoints)}',
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 4.h),
+                  child: Text(
+                    competitor.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: context.inkColor(const Color(0xFF303629)),
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
                 ),
-                style: TextStyle(fontSize: 12.sp),
+              ),
+              SizedBox(width: 4.w),
+              // Inside the card, beside the name, so nothing clips it.
+              IconButton(
+                onPressed: onClose,
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints.tightFor(width: 28.r, height: 28.r),
+                style: IconButton.styleFrom(
+                  backgroundColor: context.surfaceColor(Colors.white),
+                  shape: const CircleBorder(),
+                ),
+                icon: Icon(
+                  Icons.close_rounded,
+                  color: const Color(0xFFE53935),
+                  size: 18.r,
+                ),
               ),
             ],
           ),
-          Positioned(
-            top: -20.h,
-            right: -10.w,
-            child: IconButton(
-              onPressed: onClose,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              icon: Icon(
-                Icons.cancel_outlined,
-                color: const Color(0xFFF44336),
-                size: 18.sp,
-              ),
+          SizedBox(height: 6.h),
+          Text(
+            context.localizedDigits(
+              '${AppText.of(context).point} : '
+              '${formatPoints(competitor.dashboard.totals.totalPoints)}',
+            ),
+            style: TextStyle(
+              color: context.inkColor(const Color(0xFF5D896D)),
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

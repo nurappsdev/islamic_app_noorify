@@ -99,6 +99,9 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
+/// Tall enough for a two-line category name above the count and button.
+double get _exploreCardHeight => 152.h;
+
 /// The categories, side by side; the next page loads near the end.
 class _ExploreRow extends StatefulWidget {
   const _ExploreRow();
@@ -141,7 +144,7 @@ class _ExploreRowState extends State<_ExploreRow> {
     switch (state.status) {
       case LearningLoadStatus.loading:
         return SizedBox(
-          height: 129.h,
+          height: _exploreCardHeight,
           child: const Center(child: CircularProgressIndicator()),
         );
       case LearningLoadStatus.failure:
@@ -166,7 +169,7 @@ class _ExploreRowState extends State<_ExploreRow> {
     }
     final showTrailer = state.isLoadingMore || state.loadMoreFailure != null;
     return SizedBox(
-      height: 129.h,
+      height: _exploreCardHeight,
       child: ListView.builder(
         controller: _controller,
         scrollDirection: Axis.horizontal,
@@ -216,17 +219,22 @@ class _ExploreCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Shares the free space with the spacer below, so a long name is
-          // cut short rather than pushing the button out of the card.
+          // Gets most of the free space, so two lines fit; only a very
+          // long name (or large system text) is cut short.
           Flexible(
+            flex: 4,
             child: Text(
               context.localized(category.name),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13.sp),
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+              ),
             ),
           ),
-          SizedBox(height: 15.h),
+          SizedBox(height: 6.h),
           Text(
             context.localizedDigits(
               '${category.totalArticles} ${appText.articlesCountLabel}',
