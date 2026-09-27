@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show ValueListenable;
-import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -15,10 +14,8 @@ import 'package:flutter/rendering.dart';
 ///   the arriving one scales up and fades in.
 /// * Cards advance on their own every [autoPlayInterval], loop forever, pause
 ///   while a finger is down and resume [resumeDelay] after it lifts.
-/// * Press and hold for [holdToScrollDelay] (without moving) to hand the
-///   gesture to the parent: the slider drops its vertical drag, so the next
-///   drag scrolls the enclosing [ScrollView] / `NestedScrollView` instead.
-/// * Taps and buttons inside the cards work as normal.
+/// * Taps and buttons inside the cards work as normal. A held card never
+///   changes its own appearance.
 ///
 /// Only the visible card (and its neighbour mid-transition) is mounted.
 class HomeFeatureCardSlider extends StatefulWidget {
@@ -28,7 +25,6 @@ class HomeFeatureCardSlider extends StatefulWidget {
     this.height = 340,
     this.autoPlayInterval = const Duration(seconds: 5),
     this.resumeDelay = const Duration(seconds: 3),
-    this.holdToScrollDelay = const Duration(milliseconds: 450),
     this.transitionDuration = const Duration(milliseconds: 650),
     this.padding = const EdgeInsets.symmetric(vertical: 10),
     this.showIndicator = true,
@@ -45,9 +41,6 @@ class HomeFeatureCardSlider extends StatefulWidget {
 
   /// How long after the finger lifts before auto-play resumes.
   final Duration resumeDelay;
-
-  /// How long a still press must last before the parent may scroll.
-  final Duration holdToScrollDelay;
 
   final Duration transitionDuration;
 
@@ -83,9 +76,7 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
   final ValueNotifier<int> _index = ValueNotifier(0);
 
   Timer? _autoTimer;
-  Timer? _holdTimer;
   Offset? _downPosition;
-  bool _parentScroll = false;
   bool _appActive = true;
 
   int get _count => widget.children.length;
@@ -98,6 +89,7 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
     _controller =
         widget.controller ??
         PageController(initialPage: _loopOrigin - _loopOrigin % _count);
+    _lastKnownPage = _controller.initialPage.toDouble();
     _startAuto();
   }
 
@@ -111,7 +103,6 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _autoTimer?.cancel();
-    _holdTimer?.cancel();
     _index.dispose();
     if (_ownsController) _controller.dispose();
     super.dispose();
@@ -154,28 +145,10 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
   void _onPointerDown(PointerDownEvent e) {
     _pauseAuto();
     _downPosition = e.position;
-    _holdTimer?.cancel();
-    _holdTimer = Timer(widget.holdToScrollDelay, () {
-      // Still pressed and still: release the slider's vertical drag so the
-      // parent scrollable takes the next drag.
-      if (mounted && _downPosition != null) {
-        setState(() => _parentScroll = true);
-      }
-    });
-  }
-
-  void _onPointerMove(PointerMoveEvent e) {
-    final start = _downPosition;
-    if (start != null && (e.position - start).distance > kTouchSlop) {
-      // It's a swipe, not a hold.
-      _holdTimer?.cancel();
-    }
   }
 
   void _onPointerEnd(PointerEvent _) {
-    _holdTimer?.cancel();
     _downPosition = null;
-    if (_parentScroll) setState(() => _parentScroll = false);
     _startAuto(widget.resumeDelay);
   }
 
@@ -187,11 +160,19 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
     widget.onIndexChanged?.call(index);
   }
 
+  // The page the controller last reported while it had a measured viewport.
+  // Used as `_Page`'s fallback when the position is momentarily unmeasured
+  // (e.g. the first frame); falling back to `_controller.initialPage` (the
+  // loop-origin constant, ~10000) instead would make `_Page`'s
+  // distance-from-current calculation see a huge, clamped delta and render
+  // the card fully transparent for that frame.
+  double _lastKnownPage = 0;
+
   double get _page {
     if (_controller.hasClients && _controller.position.haveDimensions) {
-      return _controller.page ?? _controller.initialPage.toDouble();
+      _lastKnownPage = _controller.page ?? _lastKnownPage;
     }
-    return _controller.initialPage.toDouble();
+    return _lastKnownPage;
   }
 
   @override
@@ -199,7 +180,6 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: _onPointerDown,
-      onPointerMove: _onPointerMove,
       onPointerUp: _onPointerEnd,
       onPointerCancel: _onPointerEnd,
       child: SizedBox(
@@ -208,22 +188,23 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
           children: [
             Positioned.fill(
               child: ClipRect(
-                child: PageView.builder(
-                  controller: _controller,
-                  scrollDirection: Axis.vertical,
-                  physics: _parentScroll
-                      ? const NeverScrollableScrollPhysics()
-                      : const PageScrollPhysics(),
-                  onPageChanged: _onPageChanged,
-                  itemBuilder: (context, page) => _Page(
+                child: ScrollConfiguration(
+                  behavior: const _NoOverscrollIndicatorBehavior(),
+                  child: PageView.builder(
                     controller: _controller,
-                    page: page,
-                    fallbackPage: _page,
-                    height: widget.height,
-                    minScale: _minScale,
-                    travel: _travel,
-                    padding: widget.padding,
-                    child: widget.children[page % _count],
+                    scrollDirection: Axis.vertical,
+                    physics: const PageScrollPhysics(),
+                    onPageChanged: _onPageChanged,
+                    itemBuilder: (context, page) => _Page(
+                      controller: _controller,
+                      page: page,
+                      fallbackPage: _page,
+                      height: widget.height,
+                      minScale: _minScale,
+                      travel: _travel,
+                      padding: widget.padding,
+                      child: widget.children[page % _count],
+                    ),
                   ),
                 ),
               ),
@@ -244,6 +225,21 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
       ),
     );
   }
+}
+
+/// Suppresses the platform's default glow/stretch overscroll indicator on
+/// the card `PageView`, which otherwise flashes the scaffold's background
+/// behind a card during a held touch. Purely visual: scroll physics and
+/// gestures are untouched.
+class _NoOverscrollIndicatorBehavior extends ScrollBehavior {
+  const _NoOverscrollIndicatorBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
 }
 
 /// Applies the per-card transition from its distance to the current page.

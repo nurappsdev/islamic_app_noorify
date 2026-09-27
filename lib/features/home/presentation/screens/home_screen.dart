@@ -296,20 +296,17 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
         ),
     ];
 
-    return GestureDetector(
-      onTap: () => _openTracker(context, AmalSection.fardhPrayer),
-      child: HomeGradientShape(
-        child: AmalTrackerCardContent(
-          percentage: fardh?.percentage ?? 0,
-          completedLabel: fardh?.formattedSubtext,
-          prayers: prayers,
-          onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
-          onPrayerTap: (prayer) => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => AmolTrackingScreen(
-                selectedSection: AmalSection.fardhPrayer,
-                selectedPrayer: prayer.name,
-              ),
+    return HomeGradientShape(
+      child: AmalTrackerCardContent(
+        percentage: fardh?.percentage ?? 0,
+        completedLabel: fardh?.formattedSubtext,
+        prayers: prayers,
+        onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
+        onPrayerTap: (prayer) => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => AmolTrackingScreen(
+              selectedSection: AmalSection.fardhPrayer,
+              selectedPrayer: prayer.name,
             ),
           ),
         ),
@@ -333,22 +330,14 @@ class _HadithReadingCard extends StatelessWidget {
     }
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              const AmolTrackingScreen(selectedSection: AmalSection.hadith),
-        ),
-      ),
-      child: HomeGradientShape(
-        child: HadithReadingCardContent(
-          percentage: hadith?.percentage ?? 0,
-          onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
-          counter: hadith == null
-              ? '0/7'
-              : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
-          readingTimeLabel: hadith?.formattedSubtext ?? '',
-        ),
+    return HomeGradientShape(
+      child: HadithReadingCardContent(
+        percentage: hadith?.percentage ?? 0,
+        onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
+        counter: hadith == null
+            ? '0/7'
+            : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
+        readingTimeLabel: hadith?.formattedSubtext ?? '',
       ),
     );
   }
@@ -370,22 +359,14 @@ class _QuranCard extends StatelessWidget {
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     final max = quran?.maxPoints ?? 0;
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) =>
-              const AmolTrackingScreen(selectedSection: AmalSection.quran),
-        ),
-      ),
-      child: HomeGradientShape(
-        child: QuranCardContent(
-          onOpenQuran: () => _openTracker(context, AmalSection.quran),
-          counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
-          progress: quran == null || max <= 0
-              ? 0
-              : (quran.points / max).toDouble(),
-          readingTimeLabel: quran?.formattedSubtext ?? '',
-        ),
+    return HomeGradientShape(
+      child: QuranCardContent(
+        onOpenQuran: () => _openTracker(context, AmalSection.quran),
+        counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
+        progress: quran == null || max <= 0
+            ? 0
+            : (quran.points / max).toDouble(),
+        readingTimeLabel: quran?.formattedSubtext ?? '',
       ),
     );
   }
@@ -442,17 +423,14 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
     }
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return GestureDetector(
-      onTap: () => _openTracker(context, AmalSection.naflAndMore),
-      child: HomeGradientShape(
-        child: NaflMoreCardContent(
-          percentage: nafl?.percentage ?? 0,
-          onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
-          counter: nafl == null
-              ? '0/7'
-              : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
-          items: _items,
-        ),
+    return HomeGradientShape(
+      child: NaflMoreCardContent(
+        percentage: nafl?.percentage ?? 0,
+        onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
+        counter: nafl == null
+            ? '0/7'
+            : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
+        items: _items,
       ),
     );
   }
@@ -507,23 +485,18 @@ class _ZikrCardState extends State<_ZikrCard> {
           ];
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return GestureDetector(
-      // With a tracker pillar, open the tracker on it (where Zikr is ticked);
-      // otherwise the Zikr feature.
-      onTap: () => tracked == null
-          ? Navigator.of(context).pushNamed(RouteNames.zikr)
-          : _openTracker(context, AmalSection.zikr),
-      child: HomeGradientShape(
-        child: ZikrCardContent(
-          percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
-          counter: zikr == null
-              ? '0/7'
-              : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
-          items: items,
-          onOpenZikr: tracked == null
-              ? null
-              : () => _openTracker(context, AmalSection.zikr),
-        ),
+    return HomeGradientShape(
+      child: ZikrCardContent(
+        percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
+        counter: zikr == null
+            ? '0/7'
+            : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
+        items: items,
+        // With a tracker pillar, the arrow opens the tracker on it (where
+        // Zikr is ticked); otherwise the Zikr feature.
+        onOpenZikr: () => tracked == null
+            ? Navigator.of(context).pushNamed(RouteNames.zikr)
+            : _openTracker(context, AmalSection.zikr),
       ),
     );
   }
@@ -596,16 +569,13 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
     }
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return GestureDetector(
-      onTap: () => _openTracker(context, AmalSection.sunnahWitr),
-      child: HomeGradientShape(
-        child: SunnahWitrCardContent(
-          percentage: sunnah?.percentage ?? 0,
-          counter: sunnah == null
-              ? '0/6'
-              : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
-          prayers: _prayers,
-        ),
+    return HomeGradientShape(
+      child: SunnahWitrCardContent(
+        percentage: sunnah?.percentage ?? 0,
+        counter: sunnah == null
+            ? '0/6'
+            : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
+        prayers: _prayers,
       ),
     );
   }
@@ -626,15 +596,12 @@ class _QuizCard extends StatelessWidget {
     }
 
     String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
-    return GestureDetector(
-      onTap: () => _openTracker(context, AmalSection.quiz),
-      child: HomeGradientShape(
-        child: QuizCardContent(
-          percentage: quiz?.percentage ?? 0,
-          counter: quiz == null
-              ? '0/7'
-              : '${fmt(quiz.points)}/${fmt(quiz.maxPoints)}',
-        ),
+    return HomeGradientShape(
+      child: QuizCardContent(
+        percentage: quiz?.percentage ?? 0,
+        counter: quiz == null
+            ? '0/7'
+            : '${fmt(quiz.points)}/${fmt(quiz.maxPoints)}',
       ),
     );
   }
