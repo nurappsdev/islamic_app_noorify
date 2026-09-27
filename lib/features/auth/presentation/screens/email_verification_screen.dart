@@ -104,6 +104,46 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   String get _enteredOtp => _otpControllers.map((c) => c.text).join();
 
+  void _submitOtpWhenComplete() {
+    if (_enteredOtp.length == _otpLength && !_otpBloc.state.isLoading) {
+      _submitOtp();
+    }
+  }
+
+  void _handleOtpChanged(int index, String value) {
+    if (value.length > 1) {
+      // A full code is commonly pasted into a single field. Distribute it
+      // across the fields before checking whether it is ready to submit.
+      final isFullCode = value.length >= _otpLength;
+      final startIndex = isFullCode ? 0 : index;
+      final digits = isFullCode ? value.substring(0, _otpLength) : value;
+      final availableSlots = _otpLength - startIndex;
+
+      for (
+        var offset = 0;
+        offset < digits.length && offset < availableSlots;
+        offset++
+      ) {
+        _otpControllers[startIndex + offset].value = TextEditingValue(
+          text: digits[offset],
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      }
+
+      setState(() {});
+      _submitOtpWhenComplete();
+      return;
+    }
+
+    setState(() {});
+    if (value.isNotEmpty && index < _otpLength - 1) {
+      _otpFocusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _otpFocusNodes[index - 1].requestFocus();
+    }
+    _submitOtpWhenComplete();
+  }
+
   void _submitOtp() {
     FocusScope.of(context).unfocus();
     _otpBloc.add(
@@ -284,10 +324,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ? TextInputAction.done
                 : TextInputAction.next,
             textAlign: TextAlign.center,
-            maxLength: 1,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
             ],
             style: TextStyle(
               color: context.inkColor(AppColor.otpDigit),
@@ -323,14 +361,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ),
               ),
             ),
-            onChanged: (value) {
-              setState(() {});
-              if (value.isNotEmpty && index < _otpLength - 1) {
-                _otpFocusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                _otpFocusNodes[index - 1].requestFocus();
-              }
-            },
+            onChanged: (value) => _handleOtpChanged(index, value),
           ),
         );
       }),

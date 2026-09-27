@@ -753,16 +753,13 @@ class _SignupViewState extends State<_SignupView> {
                     // _socialSignupSection(appText),
                     // SizedBox(height: 28.h),
                     _termsRow(appText),
-                    // The button only appears once the terms checkbox is ticked.
-                    if (_termsAccepted) ...[
-                      SizedBox(height: 12.h),
-                      AuthButton(
-                        label: appText.createAccount,
-                        isLoading: _isLoading,
-                        height: 60.h,
-                        onPressed: _createAccount,
-                      ),
-                    ],
+                    SizedBox(height: 12.h),
+                    AuthButton(
+                      label: appText.createAccount,
+                      isLoading: _isLoading,
+                      height: 60.h,
+                      onPressed: _termsAccepted ? _createAccount : null,
+                    ),
                     SizedBox(height: 10.h),
                     Wrap(
                       alignment: WrapAlignment.center,
