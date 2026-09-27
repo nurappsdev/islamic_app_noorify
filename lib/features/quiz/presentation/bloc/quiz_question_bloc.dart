@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
@@ -10,6 +11,7 @@ import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart
 import 'package:islami_app_noorify/features/quiz/domain/usecases/get_category_quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/usecases/get_daily_quiz.dart';
 import 'package:islami_app_noorify/features/quiz/domain/usecases/submit_quiz_attempt.dart';
+import 'package:islami_app_noorify/features/quiz/presentation/quiz_fifty_fifty.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_route_args.dart';
 
 import 'quiz_question_event.dart';
@@ -27,11 +29,13 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
     required this._getCategoryQuiz,
     required this._submitAttempt,
     DateTime Function()? clock,
+    this._random,
     this.tickInterval = const Duration(seconds: 1),
   }) : _clock = clock ?? DateTime.now,
        super(const QuizQuestionState()) {
     on<LoadQuiz>(_onLoad);
     on<SelectAnswer>(_onSelect);
+    on<UseFiftyFifty>(_onFiftyFifty);
     on<GoToNextQuestion>(_onNext);
     on<GoToPreviousQuestion>(_onPrevious);
     on<QuizTimerTicked>(_onTick);
@@ -43,6 +47,7 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
   final GetCategoryQuiz _getCategoryQuiz;
   final SubmitQuizAttempt _submitAttempt;
   final DateTime Function() _clock;
+  final Random? _random;
 
   /// How often the countdown is re-read from the clock.
   final Duration tickInterval;
@@ -107,13 +112,25 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
   void _onSelect(SelectAnswer event, Emitter<QuizQuestionState> emit) {
     final question = state.currentQuestion;
     if (question == null || state.isLocked) return;
-    if (!question.options.any((option) => option.key == event.optionKey)) {
+    if (!state.visibleOptions.any((option) => option.key == event.optionKey)) {
       return;
     }
     if (state.answers[question.id] == event.optionKey) return;
     emit(
       state.copyWith(answers: {...state.answers, question.id: event.optionKey}),
     );
+  }
+
+  void _onFiftyFifty(UseFiftyFifty event, Emitter<QuizQuestionState> emit) {
+    final question = state.currentQuestion;
+    if (question == null || !state.canUseFiftyFifty) return;
+    final hidden = pickFiftyFiftyRemovals(
+      [for (final option in question.options) option.key],
+      keep: state.answers[question.id],
+      random: _random,
+    );
+    if (hidden.isEmpty) return;
+    emit(state.copyWith(hiddenOptions: {question.id: hidden}));
   }
 
   void _onNext(GoToNextQuestion event, Emitter<QuizQuestionState> emit) {
@@ -172,6 +189,7 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
           ? (quiz.category?.id ?? launch.categoryId)
           : null,
       timeSpentSeconds: elapsed,
+      used5050Lifeline: state.usedFiftyFifty,
       // Every question is sent; one left unanswered goes as `null`.
       answers: [
         for (final question in quiz.questions)

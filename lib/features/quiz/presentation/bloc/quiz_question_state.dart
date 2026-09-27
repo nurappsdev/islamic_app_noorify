@@ -10,6 +10,7 @@ class QuizQuestionState {
     this.quiz,
     this.currentIndex = 0,
     this.answers = const {},
+    this.hiddenOptions = const {},
     this.elapsedSeconds = 0,
     this.submissionStatus = QuizSubmissionStatus.idle,
     this.result,
@@ -23,6 +24,9 @@ class QuizQuestionState {
 
   /// The checked option key per question id, kept locally until submission.
   final Map<String, String> answers;
+
+  /// The option keys the 50/50 lifeline hid, per question id.
+  final Map<String, Set<String>> hiddenOptions;
   final int elapsedSeconds;
   final QuizSubmissionStatus submissionStatus;
 
@@ -39,6 +43,24 @@ class QuizQuestionState {
   String? get selectedAnswer {
     final question = currentQuestion;
     return question == null ? null : answers[question.id];
+  }
+
+  /// The lifeline is used at most once per quiz.
+  bool get usedFiftyFifty => hiddenOptions.isNotEmpty;
+
+  bool get canUseFiftyFifty =>
+      !usedFiftyFifty &&
+      !isLocked &&
+      (currentQuestion?.options.length ?? 0) > 2;
+
+  List<QuizOption> get visibleOptions {
+    final question = currentQuestion;
+    if (question == null) return const [];
+    final hidden = hiddenOptions[question.id] ?? const {};
+    return [
+      for (final option in question.options)
+        if (!hidden.contains(option.key)) option,
+    ];
   }
 
   bool get isFirstQuestion => currentIndex == 0;
@@ -64,6 +86,7 @@ class QuizQuestionState {
     Quiz? quiz,
     int? currentIndex,
     Map<String, String>? answers,
+    Map<String, Set<String>>? hiddenOptions,
     int? elapsedSeconds,
     QuizSubmissionStatus? submissionStatus,
     QuizAttemptResult? result,
@@ -76,6 +99,7 @@ class QuizQuestionState {
       quiz: quiz ?? this.quiz,
       currentIndex: currentIndex ?? this.currentIndex,
       answers: answers ?? this.answers,
+      hiddenOptions: hiddenOptions ?? this.hiddenOptions,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
       submissionStatus: submissionStatus ?? this.submissionStatus,
       result: result ?? this.result,

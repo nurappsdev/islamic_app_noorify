@@ -173,6 +173,8 @@ QuizQuestionBloc _bloc(
   );
 }
 
+final now0 = DateTime(2026, 9, 26, 10);
+
 Future<void> _settle() =>
     Future<void>.delayed(const Duration(milliseconds: 20));
 
@@ -427,6 +429,7 @@ void main() {
         'attemptType': 'daily',
         'quizId': 'quiz1',
         'timeSpentSeconds': 40,
+        'used5050Lifeline': false,
         'answers': [
           {'questionId': 'q1', 'checkedBy': 'C'},
           {'questionId': 'q2', 'checkedBy': null},
@@ -494,6 +497,69 @@ void main() {
       await _settle();
       await _settle();
       expect(bloc.state.submissionStatus, QuizSubmissionStatus.submitted);
+      await bloc.close();
+    });
+
+    test('50/50 leaves two options, keeps the pick, works once', () async {
+      final four = _question('q1')
+        ..['options'] = [
+          for (final key in ['A', 'B', 'C', 'D'])
+            {
+              'key': key,
+              'text': {'bn': key, 'en': key},
+            },
+        ];
+      final s = _setup({
+        'GET /quizzes/daily': (
+          200,
+          _ok({
+            'source': 'daily',
+            'id': 'quiz1',
+            'timeLimitSeconds': 180,
+            'totalQuestions': 2,
+            'questions': [
+              four,
+              {...four, 'id': 'q2'},
+            ],
+          }),
+        ),
+        'POST /quizzes/attempts': (201, _attemptResult),
+      });
+      final bloc = _bloc(s.source, const QuizLaunchArgs.daily(), () => now0);
+      bloc.add(const LoadQuiz());
+      await _settle();
+      await _settle();
+      expect(bloc.state.canUseFiftyFifty, isTrue);
+
+      bloc.add(const SelectAnswer('B'));
+      bloc.add(const UseFiftyFifty());
+      await _settle();
+      final visible = bloc.state.visibleOptions.map((o) => o.key);
+      expect(visible, hasLength(2));
+      expect(visible, contains('B'));
+      expect(bloc.state.canUseFiftyFifty, isFalse);
+
+      // A hidden option can no longer be picked.
+      final hidden = [
+        'A',
+        'B',
+        'C',
+        'D',
+      ].firstWhere((k) => !visible.contains(k));
+      bloc.add(SelectAnswer(hidden));
+      await _settle();
+      expect(bloc.state.selectedAnswer, 'B');
+
+      // Spent: the next question keeps all four.
+      bloc.add(const GoToNextQuestion());
+      bloc.add(const UseFiftyFifty());
+      await _settle();
+      expect(bloc.state.visibleOptions, hasLength(4));
+
+      bloc.add(const SubmitQuiz());
+      await _settle();
+      final body = s.http.last.data as Map<String, dynamic>;
+      expect(body['used5050Lifeline'], isTrue);
       await bloc.close();
     });
 

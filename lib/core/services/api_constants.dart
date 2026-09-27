@@ -86,6 +86,17 @@ class ApiConstants {
   static const String quizDashboardHistoryCompareEndPoint =
       "/quizzes/dashboard/history/compare";
 
+  static const String articlesEndPoint = "/articles";
+  static const String articleCategoriesEndPoint = "/articles/categories";
+
+  /// A category's articles.
+  static String articleCategoryArticlesEndPoint(String categoryId) =>
+      "$articleCategoriesEndPoint/$categoryId";
+
+  /// One article with its full content.
+  static String articleEndPoint(String articleId) =>
+      "$articlesEndPoint/$articleId";
+
   static const String hadithBooksListEndPoint = "/hadiths/books/lists";
   static const String hadithCategoriesEndPoint = "/hadiths/categories";
   static const String hadithsEndPoint = "/hadiths";

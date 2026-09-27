@@ -236,3 +236,37 @@ class QuizTimingProgress extends StatelessWidget {
     );
   }
 }
+
+/// The 50/50 lifeline; greyed out once spent or when it cannot be used.
+class QuizFiftyFiftyButton extends StatelessWidget {
+  const QuizFiftyFiftyButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+  });
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: onTap == null ? 0.5 : 1,
+    child: Material(
+      color: context.surfaceColor(Color(0xFFDDE8B5)),
+      borderRadius: BorderRadius.circular(28.r),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 15.h),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: context.inkColor(Color(0xFF5F8671)),
+              fontSize: 18.sp,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}

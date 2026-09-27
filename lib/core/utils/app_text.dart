@@ -499,6 +499,17 @@ class AppText {
     required this.completedHistory,
     required this.unableToLoadQuizHistory,
     required this.tryAgain,
+    required this.learningNoCategories,
+    required this.learningNoArticles,
+    required this.learningNoSearchResults,
+    required this.learningSearchArticles,
+    required this.learningArticleNotFound,
+    required this.learningCategoryNotFound,
+    required this.learningErrorInvalid,
+    required this.learningErrorRateLimit,
+    required this.learningNoContent,
+    required this.articlePublishedOn,
+    required this.articleByAuthor,
     required this.quizQuestionOfTotal,
     required this.quizTimeRemaining,
     required this.submit,
@@ -1177,6 +1188,17 @@ class AppText {
   final String completedHistory;
   final String unableToLoadQuizHistory;
   final String tryAgain;
+  final String learningNoCategories;
+  final String learningNoArticles;
+  final String learningNoSearchResults;
+  final String learningSearchArticles;
+  final String learningArticleNotFound;
+  final String learningCategoryNotFound;
+  final String learningErrorInvalid;
+  final String learningErrorRateLimit;
+  final String learningNoContent;
+  final String articlePublishedOn;
+  final String articleByAuthor;
   final String quizQuestionOfTotal;
   final String quizTimeRemaining;
   final String submit;
@@ -3145,6 +3167,61 @@ class AppText {
         fallback?.unableToLoadQuizHistory ?? '',
       ),
       tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
+      learningNoCategories: _read(
+        map,
+        'learningNoCategories',
+        fallback?.learningNoCategories ?? '',
+      ),
+      learningNoArticles: _read(
+        map,
+        'learningNoArticles',
+        fallback?.learningNoArticles ?? '',
+      ),
+      learningNoSearchResults: _read(
+        map,
+        'learningNoSearchResults',
+        fallback?.learningNoSearchResults ?? '',
+      ),
+      learningSearchArticles: _read(
+        map,
+        'learningSearchArticles',
+        fallback?.learningSearchArticles ?? '',
+      ),
+      learningArticleNotFound: _read(
+        map,
+        'learningArticleNotFound',
+        fallback?.learningArticleNotFound ?? '',
+      ),
+      learningCategoryNotFound: _read(
+        map,
+        'learningCategoryNotFound',
+        fallback?.learningCategoryNotFound ?? '',
+      ),
+      learningErrorInvalid: _read(
+        map,
+        'learningErrorInvalid',
+        fallback?.learningErrorInvalid ?? '',
+      ),
+      learningErrorRateLimit: _read(
+        map,
+        'learningErrorRateLimit',
+        fallback?.learningErrorRateLimit ?? '',
+      ),
+      learningNoContent: _read(
+        map,
+        'learningNoContent',
+        fallback?.learningNoContent ?? '',
+      ),
+      articlePublishedOn: _read(
+        map,
+        'articlePublishedOn',
+        fallback?.articlePublishedOn ?? '',
+      ),
+      articleByAuthor: _read(
+        map,
+        'articleByAuthor',
+        fallback?.articleByAuthor ?? '',
+      ),
       quizQuestionOfTotal: _read(
         map,
         'quizQuestionOfTotal',

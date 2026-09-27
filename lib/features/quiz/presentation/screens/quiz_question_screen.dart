@@ -201,7 +201,7 @@ class _QuizBody extends StatelessWidget {
                 style: TextStyle(fontSize: 14.sp),
               ),
               SizedBox(height: 10.h),
-              for (final option in question.options) ...[
+              for (final option in state.visibleOptions) ...[
                 QuizAnswerTile(
                   label: option.key.toLowerCase(),
                   answer: context.localized(option.text),
@@ -217,19 +217,11 @@ class _QuizBody extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         Center(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 15.h),
-            decoration: BoxDecoration(
-              color: context.surfaceColor(Color(0xFFDDE8B5)),
-              borderRadius: BorderRadius.circular(28.r),
-            ),
-            child: Text(
-              appText.fiftyFiftyChance,
-              style: TextStyle(
-                color: context.inkColor(Color(0xFF5F8671)),
-                fontSize: 18.sp,
-              ),
-            ),
+          child: QuizFiftyFiftyButton(
+            label: appText.fiftyFiftyChance,
+            onTap: state.canUseFiftyFifty
+                ? () => bloc.add(const UseFiftyFifty())
+                : null,
           ),
         ),
         SizedBox(height: 21.h),
