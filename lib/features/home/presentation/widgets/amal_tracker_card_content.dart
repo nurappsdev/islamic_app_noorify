@@ -230,18 +230,26 @@ class ProgressHeaderWidget extends StatelessWidget {
                 ),
         ),
         SizedBox(width: 34.w),
-        InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: onTap,
-          child: Container(
-            width: 54.r,
-            height: 54.r,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: _softGreen, width: 1.2),
+        Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16.r),
+            onTap: onTap,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
+            overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+            child: Container(
+              width: 54.r,
+              height: 54.r,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: _softGreen, width: 1.2),
+              ),
+              child: Icon(Icons.redo_rounded, size: 22.sp, color: _midGreen),
             ),
-            child: Icon(Icons.redo_rounded, size: 22.sp, color: _midGreen),
           ),
         ),
       ],
