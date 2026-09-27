@@ -44,6 +44,11 @@ void main() {
             'points': {'value': 0, 'bn': '০', 'en': '0'},
             'maxPoints': {'value': 11, 'bn': '১১', 'en': '11'},
             'formattedSubtext': {'bn': '০ মিনিট', 'en': '0 Min'},
+            'chartData': {
+              'fajrSunnah': {
+                'label': {'bn': 'ফজরের সুন্নত', 'en': 'Fajr Sunnah'},
+              },
+            },
           },
         },
       ],
@@ -72,5 +77,11 @@ void main() {
       '0 Min',
     );
     expect(dashboard.dashboardDate, DateTime(2026, 9, 27));
+    expect(
+      dashboard.pillarCards.single.localizedChartLabels['fajrSunnah']!.resolve(
+        AppLanguage.bangla,
+      ),
+      'ফজরের সুন্নত',
+    );
   });
 }

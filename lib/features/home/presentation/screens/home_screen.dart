@@ -496,16 +496,45 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 
   /// The items and each one's tracked state come from the shared daily
   /// checklist (`nafl_and_more` pillar).
-  List<NaflItemData> get _items => [
+  List<NaflItemData> _items(BuildContext context, PillarCard? pillar) => [
     for (final item
         in AmolDailyStore.instance.pillar('nafl_and_more')?.items ??
             const <AmolItem>[])
       NaflItemData(
-        name: item.title,
+        name: _localizedNaflItemName(context, pillar, item),
         points: item.maxPoints,
         completed: item.isCompleted,
       ),
   ];
+
+  String _localizedNaflItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final chartKey = switch (item.itemKey) {
+      'sadaqah' => 'sadaqah',
+      'roza_kaffarah' || 'nafl_fasting' => 'fasting',
+      'good_advice' => 'advice',
+      'physical_exercise' => 'exercise',
+      _ => null,
+    };
+    final apiLabel = chartKey == null
+        ? ''
+        : context.localized(pillar?.localizedChartLabels[chartKey]);
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    final appText = AppText.of(context);
+    return switch (item.itemKey) {
+      'sadaqah' => appText.moreSadaqah,
+      'roza_kaffarah' => appText.moreRozaKaffarah,
+      'nafl_fasting' => appText.moreNaflFasting,
+      'physical_exercise' => appText.morePhysicalExercise,
+      'good_advice' => appText.moreGivenGoodAdvice,
+      'skill_development' => appText.moreSkillDevelopment,
+      _ => item.title,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +562,7 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
         ),
         onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
         counter: _pillarCounter(context, nafl, '0/7'),
-        items: _items,
+        items: _items(context, nafl),
       ),
     );
   }
@@ -661,15 +690,28 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
 
   /// Per-prayer points and tracked state from the shared daily checklist
   /// (`sunnah_witr` pillar); empty until it loads.
-  List<SunnahPrayerData> get _prayers {
+  List<SunnahPrayerData> _prayers(BuildContext context, PillarCard? pillar) {
     final items = AmolDailyStore.instance.pillar('sunnah_witr')?.items;
     if (items == null) return const [];
     final byKey = {for (final item in items) item.itemKey: item};
+    const chartKeyByItemKey = {
+      'fajr_sunnah': 'fajrSunnah',
+      'dhuhr_sunnah': 'dhuhrSunnah',
+      'asr_sunnah': 'asrSunnah',
+      'maghrib_sunnah': 'maghribSunnah',
+      'isha_sunnah': 'ishaSunnah',
+      'witr': 'witr',
+    };
     return [
       for (final entry in _pillItems.entries)
         if (byKey[entry.value.first] != null)
           SunnahPrayerData(
             prayerName: entry.key,
+            label: context.localized(
+              pillar?.localizedChartLabels[chartKeyByItemKey[entry
+                  .value
+                  .first]],
+            ),
             points: [
               for (final key in entry.value) byKey[key]?.maxPoints ?? 0,
             ].fold<num>(0, (sum, v) => sum + v),
@@ -703,7 +745,7 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
           'Sunnah and Witr',
         ),
         counter: _pillarCounter(context, sunnah, '0/6'),
-        prayers: _prayers,
+        prayers: _prayers(context, sunnah),
       ),
     );
   }

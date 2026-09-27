@@ -14,6 +14,7 @@ class PillarCardModel extends PillarCard {
     super.localizedMaxPoints,
     super.localizedPercentage,
     super.localizedFormattedSubtext,
+    super.localizedChartLabels,
   });
 
   factory PillarCardModel.fromJson(Map<String, dynamic> json) {
@@ -21,6 +22,15 @@ class PillarCardModel extends PillarCard {
     final localizedJson = localized is Map
         ? localized
         : const <String, dynamic>{};
+    final chartData = localizedJson['chartData'];
+    final chartLabels = <String, LocalizedText>{
+      if (chartData is Map)
+        for (final entry in chartData.entries)
+          if (entry.key is String && entry.value is Map)
+            entry.key as String: LocalizedText.fromJson(
+              (entry.value as Map)['label'],
+            ),
+    };
     return PillarCardModel(
       pillarKey: json['pillarKey']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
@@ -35,6 +45,7 @@ class PillarCardModel extends PillarCard {
       localizedFormattedSubtext: LocalizedText.fromJson(
         localizedJson['formattedSubtext'],
       ),
+      localizedChartLabels: chartLabels,
     );
   }
 }
