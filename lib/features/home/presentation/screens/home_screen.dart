@@ -69,6 +69,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   // update as soon as the user is back.
   bool _storeLoadedOnce = false;
 
+  /// Prevents the store's refresh notification from scheduling a second Home
+  /// dashboard request while a pull-to-refresh request is already in flight.
+  bool _isPullRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +92,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
       _storeLoadedOnce = true;
       return;
     }
-    if (!mounted) return;
+    if (!mounted || _isPullRefreshing) return;
     context.read<HomeDashboardBloc>().add(
       const LoadHomeDashboard(silent: true),
     );
@@ -96,19 +100,25 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 
   Future<void> _onRefresh() async {
     final dashboardBloc = context.read<HomeDashboardBloc>();
+    _isPullRefreshing = true;
     // Subscribe before dispatching so the loading -> done transition can't
     // be missed.
     final dashboardDone = dashboardBloc.stream.firstWhere(
       (state) => state.status != HomeDashboardStatus.loading,
     );
     dashboardBloc.add(const LoadHomeDashboard());
-    unawaited(AmolDailyStore.instance.load());
 
     try {
-      await Future.wait([dashboardDone, ProfileService.instance.refresh()]);
+      await Future.wait([
+        dashboardDone,
+        ProfileService.instance.refresh(),
+        AmolDailyStore.instance.load(),
+      ]);
     } catch (_) {
       // A bloc/stream teardown mid-refresh (e.g. navigating away) shouldn't
       // surface as an error from the pull-to-refresh gesture.
+    } finally {
+      _isPullRefreshing = false;
     }
     if (!mounted) return;
     setState(() => _refreshTick++);

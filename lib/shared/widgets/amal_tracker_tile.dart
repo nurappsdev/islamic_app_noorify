@@ -13,6 +13,8 @@ class AmalTrackerTile extends StatelessWidget {
     super.key,
     required this.title,
     required this.subtitle,
+    this.userName,
+    this.monthLabel,
     required this.progressLabel,
     required this.progress,
     this.leadingText,
@@ -20,25 +22,27 @@ class AmalTrackerTile extends StatelessWidget {
 
   final String title;
   final String subtitle;
+  final String? userName;
+  final String? monthLabel;
   final String progressLabel;
   final double progress;
 
   /// Shown in the leading tile instead of the logo (e.g. a rank).
   final String? leadingText;
 
-  static double get radius => 28.r;
+  static double get radius => 20.r;
   static double get ringSize => 68.r;
   static double get ringHoleSize => 40.r;
   static const ringStrokeFactor = .18;
   static double get horizontalPadding => 20.w;
-  static double get verticalPadding => 16.h;
+  static double get verticalPadding => 8.h;
   static double get leadingSize => 50.r;
   static double get leadingGap => 14.w;
   static double get ringGap => 8.w;
 
   /// Height the tile needs; the Home slider (fixed-height page view) and its
   /// loading placeholder use it so padding changes really resize the card.
-  static double get height => ringSize + 2 * verticalPadding;
+  static double get height => 80.h + 2 * verticalPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +76,23 @@ class AmalTrackerTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: text(13.sp),
                 ),
-                SizedBox(height: 5.h),
+                if ((userName ?? '').isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    userName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text(10.sp, weight: FontWeight.w600),
+                  ),
+                ],
+                SizedBox(height: 2.h),
                 Text(
-                  subtitle,
-                  maxLines: 2,
+                  (monthLabel ?? '').isEmpty ? subtitle : monthLabel!,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: text(9.sp, height: 1.3),
                 ),

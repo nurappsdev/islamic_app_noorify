@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
 void main() {
   test('keeps the dashboard API localized strings for both languages', () {
     final dashboard = HomeDashboardModel.fromJson({
+      'date': '2026-09-27',
       'userSummary': {
         'fullName': 'Guest User',
         'greetingText': 'Assalamu-Alaikum Wa-Rahmatullah',
@@ -70,5 +71,6 @@ void main() {
       ),
       '0 Min',
     );
+    expect(dashboard.dashboardDate, DateTime(2026, 9, 27));
   });
 }
