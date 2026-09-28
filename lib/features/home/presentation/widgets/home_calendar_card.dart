@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/calendar/bangla_date.dart';
 import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
@@ -132,7 +133,8 @@ class _CalCell {
 /// system, not a relabeled Gregorian grid:
 /// - Bangla: the Bengali solar calendar, plus today's Hijri date written in
 ///   Bangla script underneath.
-/// - Arabic: the Hijri lunar calendar, in Arabic script and digits.
+/// - Arabic: the Hijri lunar calendar, shown either in Arabic script and
+///   digits or, by tapping the selected Arabic tab again, in its Bangla form.
 /// - English: the plain Gregorian calendar.
 class HomeCalendarCard extends StatefulWidget {
   const HomeCalendarCard({super.key});
@@ -145,7 +147,8 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   _CalTab _tab = _CalTab.english;
 
   /// Arabic tab only: show the Hijri calendar in Bangla (month names, digits,
-  /// weekdays) instead of Arabic.
+  /// weekdays) instead of Arabic script. Flipped by tapping the Arabic tab while
+  /// it is already selected (see [_TabRow]).
   bool _arabicInBangla = false;
 
   late int _enYear;
@@ -279,12 +282,6 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     return 'হিজরি: $d ${_hijriMonthNamesBn[_todayHMonth - 1]} $y';
   }
 
-  String get _todayLabelEnglish {
-    final wIdx = _todayEn.weekday % 7;
-    return '${_weekdayFullEn[wIdx]}, ${_todayEn.day} '
-        '${_monthNamesEn[_todayEn.month - 1]} ${_todayEn.year}';
-  }
-
   List<_CalCell> _buildGenericCells({
     required int daysInMonth,
     required int firstWeekday, // Dart weekday: Mon=1..Sun=7
@@ -388,6 +385,16 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     }
   });
 
+  /// The Arabic tab doubles as the Arabic <-> Bangla toggle: tapping it while
+  /// it is already showing flips the Hijri calendar's display language. The
+  /// date itself doesn't change. Any other tap just switches tabs.
+  void _onTabTapped(_CalTab tapped) => setState(() {
+    if (tapped == _CalTab.arabic && _tab == _CalTab.arabic) {
+      _arabicInBangla = !_arabicInBangla;
+    }
+    _tab = tapped;
+  });
+
   Future<void> _pickMonth() async {
     final names = _monthNames;
     final current = _month;
@@ -466,7 +473,6 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final showBanglaHijriLine = _tab == _CalTab.bangla;
-    final showEnglishGloss = _tab == _CalTab.arabic;
     return HomeCard(
       padding: EdgeInsets.all(12.w),
       shadows: [
@@ -483,20 +489,10 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
             banglaLabel: appText.bangla,
             arabicLabel: appText.quranArabicLabel,
             englishLabel: appText.english,
-            onChanged: (t) => setState(() => _tab = t),
+            arabicInBangla: _arabicInBangla,
+            onChanged: _onTabTapped,
           ),
-          if (_tab == _CalTab.arabic) ...[
-            SizedBox(height: 8.h),
-            Align(
-              alignment: Alignment.centerRight,
-              child: _BanglaToggle(
-                selected: _arabicInBangla,
-                onTap: () => setState(() => _arabicInBangla = !_arabicInBangla),
-              ),
-            ),
-            SizedBox(height: 4.h),
-          ] else
-            SizedBox(height: 12.h),
+          SizedBox(height: 12.h),
           Text(
             _primaryTodayLine(),
             textDirection: _textDirection,
@@ -519,17 +515,6 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
               ),
             ),
           ],
-          if (showEnglishGloss) ...[
-            SizedBox(height: 2.h),
-            Text(
-              _todayLabelEnglish,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: context.inkColor(const Color(0xFF9AA187)),
-              ),
-            ),
-          ],
           SizedBox(height: 10.h),
           _MonthYearRow(
             yearLabel: _localizeDigits(_year, _digits),
@@ -548,38 +533,82 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   }
 }
 
-/// Small pill on the Arabic tab: turns the Hijri calendar into Bangla.
-class _BanglaToggle extends StatelessWidget {
-  const _BanglaToggle({required this.selected, required this.onTap});
+/// The Arabic <-> Bangla indicator inside the selected Arabic tab: thumb on
+/// "ع" while the calendar is in Arabic (the default), on "বা" while it is in
+/// Bangla. It only shows the state; the tab it sits in is the tap target.
+class _ArabicFormatSwitch extends StatelessWidget {
+  const _ArabicFormatSwitch({required this.inBangla});
 
-  final bool selected;
-  final VoidCallback onTap;
+  final bool inBangla;
+
+  static const _duration = Duration(milliseconds: 200);
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+    final width = 38.w;
+    final height = 20.h;
+    return Semantics(
+      toggled: inBangla,
+      label: context.localized(
+        const LocalizedText(
+          en: 'Arabic calendar in Bangla',
+          bn: 'আরবি ক্যালেন্ডার বাংলায়',
+        ),
+      ),
+      child: Container(
+        key: const ValueKey('arabic-format-switch'),
+        width: width,
+        height: height,
         decoration: BoxDecoration(
-          color: selected
-              ? AppColor.primary
-              : context.surfaceColor(const Color(0xFFEEF3D6)),
-          borderRadius: BorderRadius.circular(20.r),
+          color: context.surfaceColor(const Color(0xFFEEF3D6)),
+          borderRadius: BorderRadius.circular(height),
           border: Border.all(color: AppColor.primary),
         ),
-        child: Text(
-          'বাংলা',
-          style: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w700,
-            color: selected ? Colors.white : AppColor.primary,
-          ),
+        child: Stack(
+          children: [
+            AnimatedAlign(
+              duration: _duration,
+              curve: Curves.easeOut,
+              alignment: inBangla
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: .5,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColor.primary,
+                    borderRadius: BorderRadius.circular(height),
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                _end('ع', selected: !inBangla),
+                _end('বা', selected: inBangla),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _end(String text, {required bool selected}) => Expanded(
+    child: Center(
+      child: AnimatedDefaultTextStyle(
+        duration: _duration,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : AppColor.primary,
+          height: 1.1,
+        ),
+        child: Text(text),
+      ),
+    ),
+  );
 }
 
 class _TabRow extends StatelessWidget {
@@ -588,6 +617,7 @@ class _TabRow extends StatelessWidget {
     required this.banglaLabel,
     required this.arabicLabel,
     required this.englishLabel,
+    required this.arabicInBangla,
     required this.onChanged,
   });
 
@@ -595,6 +625,12 @@ class _TabRow extends StatelessWidget {
   final String banglaLabel;
   final String arabicLabel;
   final String englishLabel;
+
+  /// Which form the Arabic tab is showing, for its built-in indicator.
+  final bool arabicInBangla;
+
+  /// Called with the tab tapped, including a tap on the tab already selected
+  /// (the Arabic tab uses that to flip its display language).
   final ValueChanged<_CalTab> onChanged;
 
   @override
@@ -608,28 +644,46 @@ class _TabRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         for (final entry in entries.entries)
-          InkWell(
-            onTap: () => onChanged(entry.key),
-            borderRadius: BorderRadius.circular(20.r),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: entry.key == tab
-                    ? context.surfaceColor(context.appPalette.tint)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                entry.value,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: entry.key == tab
-                      ? FontWeight.w700
-                      : FontWeight.w500,
+          Flexible(
+            child: InkWell(
+              onTap: () => onChanged(entry.key),
+              borderRadius: BorderRadius.circular(20.r),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
                   color: entry.key == tab
-                      ? context.inkColor(const Color(0xFF3A4A1F))
-                      : context.inkColor(const Color(0xFF8A927A)),
+                      ? context.surfaceColor(context.appPalette.tint)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                // Shrinks rather than overflows on a narrow screen or with
+                // large system text.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        entry.value,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: entry.key == tab
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: entry.key == tab
+                              ? context.inkColor(const Color(0xFF3A4A1F))
+                              : context.inkColor(const Color(0xFF8A927A)),
+                        ),
+                      ),
+                      // The toggle lives in the Arabic tab itself.
+                      if (entry.key == _CalTab.arabic &&
+                          tab == _CalTab.arabic) ...[
+                        SizedBox(width: 8.w),
+                        _ArabicFormatSwitch(inBangla: arabicInBangla),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),
