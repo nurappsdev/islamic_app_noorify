@@ -6,7 +6,9 @@ import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/calendar/bangla_date.dart';
+import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 
 enum _CalTab { bangla, arabic, english }
@@ -155,9 +157,11 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
 
   late final DateTime _todayEn;
   late final BanglaDate _todayBn;
-  late final int _todayHYear;
-  late final int _todayHMonth;
-  late final int _todayHDay;
+  // Today's Hijri date. It moves to the next day at Maghrib, so it is
+  // refreshed once Maghrib is known (see [_loadMaghrib]).
+  late int _todayHYear;
+  late int _todayHMonth;
+  late int _todayHDay;
 
   final _hijri = HijriCalendar();
 
@@ -173,12 +177,37 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     _bnYear = _todayBn.year;
     _bnMonth = _todayBn.month;
 
-    final hc = HijriCalendar.fromDate(now);
+    final hc = localHijriDate(bangladeshNow());
     _todayHYear = hc.hYear;
     _todayHMonth = hc.hMonth;
     _todayHDay = hc.hDay;
     _hYear = hc.hYear;
     _hMonth = hc.hMonth;
+    _loadMaghrib();
+  }
+
+  /// Re-derives today's Hijri date once today's Maghrib is known. It comes
+  /// from the on-device prayer-times cache, so no network call is made.
+  Future<void> _loadMaghrib() async {
+    try {
+      final now = bangladeshNow();
+      final service = await AladhanPrayerTimeService.create();
+      final maghrib = service.cachedPrayerTimes(now)?.maghrib;
+      if (!mounted || maghrib == null) return;
+      final hc = localHijriDate(now, maghrib: maghrib);
+      setState(() {
+        // Keep the month being viewed unless the user is still on today's.
+        if (_hYear == _todayHYear && _hMonth == _todayHMonth) {
+          _hYear = hc.hYear;
+          _hMonth = hc.hMonth;
+        }
+        _todayHYear = hc.hYear;
+        _todayHMonth = hc.hMonth;
+        _todayHDay = hc.hDay;
+      });
+    } catch (_) {
+      // Keeps the date without the Maghrib adjustment.
+    }
   }
 
   List<String>? get _digits => switch (_tab) {
@@ -285,6 +314,13 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     return cells;
   }
 
+  /// The Gregorian day the local (Bangladesh) Hijri month begins on: the
+  /// package's Saudi-based start, shifted by [hijriLocalOffsetDays].
+  DateTime _localHijriMonthStart(int year, int month) {
+    final start = _hijri.hijriToGregorian(year, month, 1);
+    return DateTime(start.year, start.month, start.day - hijriLocalOffsetDays);
+  }
+
   List<_CalCell> _buildCells() {
     switch (_tab) {
       case _CalTab.english:
@@ -315,7 +351,7 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
           final prevYear = _hMonth == 1 ? _hYear - 1 : _hYear;
           return _buildGenericCells(
             daysInMonth: _hijri.getDaysInMonth(_hYear, _hMonth),
-            firstWeekday: _hijri.hijriToGregorian(_hYear, _hMonth, 1).weekday,
+            firstWeekday: _localHijriMonthStart(_hYear, _hMonth).weekday,
             prevMonthDays: _hijri.getDaysInMonth(prevYear, prevMonth),
             isToday: (d) =>
                 _hYear == _todayHYear &&

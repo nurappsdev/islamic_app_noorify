@@ -19,7 +19,6 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc
 part 'prayer_time_card_painters.dart';
 part 'prayer_time_card_widgets.dart';
 
-
 class PrayerTimeCard extends StatefulWidget {
   const PrayerTimeCard({super.key, this.prayerTimeService, this.now});
 
@@ -212,10 +211,11 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  bangla
-                                      ? hijriDateLabel(_now(), bangla: true)
-                                      : (_times?.hijriDate ??
-                                            hijriDateLabel(_now())),
+                                  hijriDateLabel(
+                                    _now(),
+                                    bangla: bangla,
+                                    maghrib: _times?.maghrib,
+                                  ),
                                   style: homeSerifStyle(
                                     fontSize: 14.sp,
                                     color: topDateColor,
