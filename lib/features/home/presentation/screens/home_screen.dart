@@ -40,6 +40,7 @@ import 'package:islami_app_noorify/features/profile/data/services/profile_servic
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 import '../widgets/home_progress_section.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -207,13 +208,11 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 }
 
 /// Opens the Amol tracker with [section] popped to the front.
-void _openTracker(BuildContext context, AmalSection section) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => AmolTrackingScreen(selectedSection: section),
-    ),
-  );
-}
+void _openTracker(
+  BuildContext context,
+  AmalSection section, {
+  String? itemKey,
+}) => openAmolTracker(context, section: section, itemKey: itemKey);
 
 String _pillarText(
   BuildContext context,
@@ -368,15 +367,13 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
         ),
         prayers: prayers,
         onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
-        onPrayerTap: (prayer) => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => AmolTrackingScreen(
-              selectedSection: AmalSection.fardhPrayer,
-              selectedPrayer: prayer.trackingName,
-            ),
-          ),
+        onPrayerTap: (prayer) => _openTracker(
+          context,
+          AmalSection.fardhPrayer,
+          itemKey: _itemKeys[prayers.indexOf(prayer)],
         ),
       ),
+      onTap: () => _openTracker(context, AmalSection.fardhPrayer),
     );
   }
 }
@@ -419,6 +416,7 @@ class _HadithReadingCard extends StatelessWidget {
           hadith?.formattedSubtext ?? '',
         ),
       ),
+      onTap: () => _openTracker(context, AmalSection.hadith),
     );
   }
 }
@@ -464,6 +462,7 @@ class _QuranCard extends StatelessWidget {
           quran?.formattedSubtext ?? '',
         ),
       ),
+      onTap: () => _openTracker(context, AmalSection.quran),
     );
   }
 }
@@ -506,6 +505,7 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
         name: _localizedNaflItemName(context, pillar, item),
         points: item.maxPoints,
         completed: item.isCompleted,
+        itemKey: item.itemKey,
       ),
   ];
 
@@ -565,7 +565,13 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
         onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
         counter: _pillarCounter(context, nafl, '0/7'),
         items: _items(context, nafl),
+        onItemTap: (item) => _openTracker(
+          context,
+          AmalSection.naflAndMore,
+          itemKey: item.itemKey,
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.naflAndMore),
     );
   }
 }
@@ -622,8 +628,16 @@ class _ZikrCardState extends State<_ZikrCard> {
           ]
         : [
             for (final item in tracked.items)
-              ZikrItemData(name: item.title, completed: item.isCompleted),
+              ZikrItemData(
+                name: item.title,
+                completed: item.isCompleted,
+                itemKey: item.itemKey,
+              ),
           ];
+
+    void openZikr() => tracked == null
+        ? Navigator.of(context).pushNamed(RouteNames.zikr)
+        : _openTracker(context, AmalSection.zikr);
 
     return HomeGradientShape(
       child: ZikrCardContent(
@@ -644,10 +658,12 @@ class _ZikrCardState extends State<_ZikrCard> {
         items: items,
         // With a tracker pillar, the arrow opens the tracker on it (where
         // Zikr is ticked); otherwise the Zikr feature.
-        onOpenZikr: () => tracked == null
-            ? Navigator.of(context).pushNamed(RouteNames.zikr)
-            : _openTracker(context, AmalSection.zikr),
+        onOpenZikr: openZikr,
+        onItemTap: (item) => tracked == null
+            ? openZikr()
+            : _openTracker(context, AmalSection.zikr, itemKey: item.itemKey),
       ),
+      onTap: openZikr,
     );
   }
 }
@@ -748,7 +764,14 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
         ),
         counter: _pillarCounter(context, sunnah, '0/6'),
         prayers: _prayers(context, sunnah),
+        onOpenTracker: () => _openTracker(context, AmalSection.sunnahWitr),
+        onPrayerTap: (name) => _openTracker(
+          context,
+          AmalSection.sunnahWitr,
+          itemKey: _pillItems[name]?.first,
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.sunnahWitr),
     );
   }
 }
@@ -767,6 +790,12 @@ class _QuizCard extends StatelessWidget {
       if (p.pillarKey == 'quiz') quiz = p;
     }
 
+    final title = _pillarText(
+      context,
+      quiz,
+      (pillar) => pillar.localizedTitle,
+      AppText.of(context).categoryLabel('Quiz'),
+    );
     return HomeGradientShape(
       child: QuizCardContent(
         percentage: quiz?.percentage ?? 0,
@@ -776,28 +805,32 @@ class _QuizCard extends StatelessWidget {
           (pillar) => pillar.localizedPercentage,
           '',
         ),
-        title: _pillarText(
-          context,
-          quiz,
-          (pillar) => pillar.localizedTitle,
-          AppText.of(context).categoryLabel('Quiz'),
-        ),
+        title: title,
         counter: _pillarCounter(context, quiz, '0/7'),
+        // The first glass tile is the backend's quiz: its title and points,
+        // selected once it has been played.
+        firstQuiz: quizTileFromPillar(quiz, title: title),
+        onOpenTracker: () => _openTracker(context, AmalSection.quiz),
       ),
+      onTap: () => _openTracker(context, AmalSection.quiz),
     );
   }
 }
 
 /// Rounded panel with a top-to-bottom white -> light green gradient.
 class HomeGradientShape extends StatelessWidget {
-  const HomeGradientShape({super.key, this.child});
+  const HomeGradientShape({super.key, this.child, this.onTap});
 
   final Widget? child;
+
+  /// Makes the whole card tappable. A button or item inside the card that
+  /// handles its own tap still wins on its own area.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(24.r);
-    return Container(
+    final card = Container(
       width: double.infinity,
       height: 380.h,
       decoration: BoxDecoration(
@@ -823,7 +856,7 @@ class HomeGradientShape extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 60.h,
+              bottom: 40.h,
               child: Image.asset(
                 'assets/newShape.png',
                 fit: BoxFit.cover,
@@ -834,6 +867,14 @@ class HomeGradientShape extends StatelessWidget {
           ],
         ),
       ),
+    );
+    if (onTap == null) return card;
+    // No ripple or highlight: the card looks exactly as before; only its tap
+    // area grows to cover all of it.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
     );
   }
 }

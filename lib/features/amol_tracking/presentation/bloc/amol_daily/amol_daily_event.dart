@@ -5,9 +5,14 @@ abstract class AmolDailyEvent {
 /// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, the device's
 /// today by default — see the screen that dispatches this).
 class LoadAmolDaily extends AmolDailyEvent {
-  const LoadAmolDaily(this.date);
+  const LoadAmolDaily(this.date, {this.silent = false});
 
   final String date;
+
+  /// A background refresh of a checklist that is already on screen: it does
+  /// not switch the screen to its loading state (no flash of placeholders),
+  /// and a failure leaves what is showing as it is.
+  final bool silent;
 }
 
 /// Marks one checklist item done (`POST /amol/tracker/log-item`). The

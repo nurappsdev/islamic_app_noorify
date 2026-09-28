@@ -12,7 +12,14 @@ const _lineGreen = Color(0xFFA1AD59);
 
 /// One zikr on the stairs. Plain data so it can come straight from the API.
 class ZikrItemData {
-  const ZikrItemData({required this.name, this.completed = false});
+  const ZikrItemData({
+    required this.name,
+    this.completed = false,
+    this.itemKey,
+  });
+
+  /// The tracker's `itemKey` for this zikr, when it comes from the tracker.
+  final String? itemKey;
 
   final String name;
 
@@ -41,6 +48,7 @@ class ZikrCardContent extends StatelessWidget {
     this.percentageLabel,
     this.items = ZikrItemData.placeholders,
     this.onOpenZikr,
+    this.onItemTap,
   });
 
   /// 0-100.
@@ -54,6 +62,9 @@ class ZikrCardContent extends StatelessWidget {
   /// One pill per item, climbing left to right.
   final List<ZikrItemData> items;
   final VoidCallback? onOpenZikr;
+
+  /// A tap on one zikr's pill.
+  final ValueChanged<ZikrItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +82,9 @@ class ZikrCardContent extends StatelessWidget {
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 4.h),
-          Expanded(child: _ZikrStairs(items: items)),
+          Expanded(
+            child: _ZikrStairs(items: items, onItemTap: onItemTap),
+          ),
         ],
       ),
     );
@@ -82,9 +95,10 @@ class ZikrCardContent extends StatelessWidget {
 /// set against dashed guide lines. Positions are fractions of the area so it
 /// scales with the card.
 class _ZikrStairs extends StatelessWidget {
-  const _ZikrStairs({required this.items});
+  const _ZikrStairs({required this.items, this.onItemTap});
 
   final List<ZikrItemData> items;
+  final ValueChanged<ZikrItemData>? onItemTap;
 
   // Left edge (of width) per pill for the designed five; other counts are
   // spread evenly over the same range.
@@ -141,7 +155,11 @@ class _ZikrStairs extends StatelessWidget {
                 top: centersY[i] - pillH / 2,
                 width: pillW,
                 height: pillH,
-                child: _ZikrPill(item: items[i]),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onItemTap == null ? null : () => onItemTap!(items[i]),
+                  child: _ZikrPill(item: items[i]),
+                ),
               ),
           ],
         );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
 import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
@@ -93,7 +95,9 @@ class AmolTrackingScreen extends StatefulWidget {
     this.initialExpandedCategory = 'Fardh Prayer',
     this.selectedPrayer,
     this.selectedSection,
+    this.selectedItemKey,
     this.now,
+    @visibleForTesting this.bloc,
   });
 
   final String pointLabel;
@@ -109,13 +113,22 @@ class AmolTrackingScreen extends StatefulWidget {
   /// A Fardh prayer to bring into view once the day has loaded, e.g. `"Fajr"`
   /// (matched case-insensitively; `"Magrib"` and `"Maghrib"` both work).
   final String? selectedPrayer;
+
+  /// The exact checklist item to bring to the centre and highlight once the
+  /// day has loaded - its `itemKey` (`fajr`, `fajr_sunnah`, `sadaqah`, ...),
+  /// inside [selectedSection].
+  final String? selectedItemKey;
   final DateTime Function()? now;
+
+  /// Replaces the screen's own bloc (which it would create and load itself).
+  final AmolDailyBloc? bloc;
 
   @override
   State<AmolTrackingScreen> createState() => _AmolTrackingScreenState();
 }
 
-class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
+class _AmolTrackingScreenState extends State<AmolTrackingScreen>
+    with SingleTickerProviderStateMixin {
   late final DateTime _today = (widget.now ?? DateTime.now)();
   late String? _focusedPillarKey = widget.selectedSection?.pillarKey;
   late String? _expandedPillarKey =
@@ -123,52 +136,86 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
       _pillarKeyByTitle[widget.initialExpandedCategory] ??
       widget.initialExpandedCategory;
 
-  /// Flips true one frame after the first build so the focus effect animates
-  /// in instead of appearing already applied.
+  /// Flips true once the screen has arrived and the target is centred, so the
+  /// focus effect animates in on a settled screen instead of firing before the
+  /// data or the target is in place.
   bool _focusActive = false;
   final GlobalKey _focusedAnchor = GlobalKey();
-  bool _didScrollToFocused = false;
+  bool _revealStarted = false;
+
+  /// The section shown first for this visit only. A pure display choice: the
+  /// server's order, the store and Hive are never touched, and a screen opened
+  /// without a target keeps the original order.
+  String? _movedToTop;
+
+  /// Drives the slide of the sections when [_movedToTop] takes the first place.
+  late final AnimationController _reorder = AnimationController(
+    vsync: this,
+    duration: _reorderDuration,
+  );
+
+  /// Where each section is drawn at the start of the slide, relative to its
+  /// final place (`0` = already there).
+  final Map<String, double> _slideFrom = {};
+  final Map<String, GlobalKey> _slotKeys = {};
+
+  GlobalKey _slotKey(String pillarKey) =>
+      _slotKeys.putIfAbsent(pillarKey, GlobalKey.new);
+
+  /// [pillars] with the section moved to the top first and the others left in
+  /// their relative order.
+  List<AmolPillar> _displayOrder(List<AmolPillar> pillars) {
+    final top = _movedToTop;
+    final index = top == null
+        ? -1
+        : pillars.indexWhere((p) => p.pillarKey == top);
+    if (index <= 0) return pillars;
+    return [pillars[index], ...pillars.take(index), ...pillars.skip(index + 1)];
+  }
 
   /// Set once the user ticks or unticks an item, so leaving the screen
   /// refreshes the Home cards that show the same data.
   bool _didChangeTracking = false;
-  late final AmolDailyBloc _bloc = AmolDailyBloc(
-    GetAmolDaily(
-      AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-    ),
-    LogAmolItem(AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl())),
-    DeleteAmolItem(
-      AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
-    ),
-  )..add(LoadAmolDaily(_isoDate(_today)));
+  late final bool _ownsBloc = widget.bloc == null;
+  late final AmolDailyBloc _bloc =
+      widget.bloc ??
+      (AmolDailyBloc(
+        GetAmolDaily(
+          AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+        ),
+        LogAmolItem(
+          AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+        ),
+        DeleteAmolItem(
+          AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
+        ),
+        // Today's checklist is already loaded for the Home cards: show it at
+        // once, then refresh it quietly, instead of opening on placeholders.
+        initialDashboard: _sharedToday(),
+      )..add(LoadAmolDaily(_isoDate(_today), silent: true)));
+
+  AmolDailyDashboard? _sharedToday() {
+    final shared = AmolDailyStore.instance.value;
+    return shared != null && shared.dateIso == _isoDate(_today) ? shared : null;
+  }
 
   DailyPrayerTimes? _prayerTimes;
   late final StreamSubscription<String> _logFailureSub;
 
-  late final String? _selectedItemKey = _prayerItemKey(widget.selectedPrayer);
+  /// The item to centre and highlight, if the caller named one. Cleared when
+  /// the user moves focus to another section.
+  late String? _selectedItemKey =
+      widget.selectedItemKey ?? _prayerItemKey(widget.selectedPrayer);
   final GlobalKey _selectedItemAnchor = GlobalKey();
-  bool _didScrollToSelected = false;
+
+  /// The section the selected item belongs to.
+  String get _anchorPillarKey =>
+      widget.selectedSection?.pillarKey ?? 'fardh_prayer';
 
   static String? _prayerItemKey(String? name) {
     final key = name?.trim().toLowerCase();
     if (key == null || key.isEmpty) return null;
     return key == 'magrib' ? 'maghrib' : key;
-  }
-
-  /// Brings the tapped prayer's row into view the first time the day's
-  /// pillars are on screen.
-  void _scrollToSelectedPrayer() {
-    if (_didScrollToSelected || _selectedItemKey == null) return;
-    _didScrollToSelected = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final anchorContext = _selectedItemAnchor.currentContext;
-      if (!mounted || anchorContext == null) return;
-      Scrollable.ensureVisible(
-        anchorContext,
-        alignment: 0.4,
-        duration: Duration.zero,
-      );
-    });
   }
 
   static String _isoDate(DateTime date) {
@@ -193,26 +240,128 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
       ).showSnackBar(SnackBar(content: Text(message)));
     });
     unawaited(_loadPrayerTimes());
-    if (_focusedPillarKey != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _focusActive = true);
-      });
+  }
+
+  static const _reorderDuration = Duration(milliseconds: 620);
+  static const _centerDuration = Duration(milliseconds: 560);
+  static const _settlePause = Duration(milliseconds: 90);
+
+  /// Runs once, when the day's checklist first has data: waits for the screen
+  /// to finish arriving, centres the target, and only then lets the focus
+  /// effect play. Nothing here fires before the target is in place.
+  void _beginReveal() {
+    if (_revealStarted) return;
+    _revealStarted = true;
+    if (_focusedPillarKey == null && _selectedItemKey == null) return;
+    unawaited(_runReveal());
+  }
+
+  Future<void> _runReveal() async {
+    await _routeSettled();
+    if (!mounted) return;
+    // The expanded section is laid out for good by the end of the next frame.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final focused = _focusedPillarKey;
+    if (focused != null) await _moveToTop(focused);
+    if (!mounted) return;
+    // At the top the target is normally on screen already; only an item deep in
+    // a long section may still need bringing into view.
+    final target = _targetContext();
+    if (target != null && !_isFullyVisible(target)) await _centerOn(target);
+    if (!mounted) return;
+    await Future<void>.delayed(_settlePause);
+    if (!mounted || _focusedPillarKey == null) return;
+    setState(() => _focusActive = true);
+  }
+
+  /// Completes once this screen's arrival transition has finished (at once if
+  /// it already has, or if it was not opened by a route transition).
+  Future<void> _routeSettled() async {
+    final animation = ModalRoute.of(context)?.animation;
+    if (animation == null || animation.status == AnimationStatus.completed) {
+      return;
+    }
+    final done = Completer<void>();
+    void onStatus(AnimationStatus status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.dismissed) {
+        if (!done.isCompleted) done.complete();
+      }
+    }
+
+    animation.addStatusListener(onStatus);
+    try {
+      // A transition that never reports back must not hold the reveal forever.
+      await done.future.timeout(const Duration(milliseconds: 900));
+    } on TimeoutException {
+      // Carry on: the screen is up.
+    } finally {
+      animation.removeStatusListener(onStatus);
     }
   }
 
-  void _scrollToFocusedSection() {
-    if (_didScrollToFocused || _focusedPillarKey == null) return;
-    _didScrollToFocused = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final anchorContext = _focusedAnchor.currentContext;
-      if (!mounted || anchorContext == null) return;
-      Scrollable.ensureVisible(
-        anchorContext,
-        alignment: 0.1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
+  /// The selected item's row, or the focused section when there is no item (or
+  /// it isn't on screen).
+  BuildContext? _targetContext() =>
+      (_selectedItemKey == null ? null : _selectedItemAnchor.currentContext) ??
+      _focusedAnchor.currentContext;
+
+  /// Makes [pillarKey]'s section the first one, sliding it up while the
+  /// sections it passes slide down. The new order and the start of the slide
+  /// land in the same frame, so nothing jumps before it moves.
+  Future<void> _moveToTop(String pillarKey) async {
+    final pillars = _bloc.state.dashboard?.pillars;
+    if (pillars == null) return;
+    final index = pillars.indexWhere((p) => p.pillarKey == pillarKey);
+    if (index <= 0) return;
+
+    final targetBox = _slotBox(pillarKey);
+    final firstBox = _slotBox(pillars.first.pillarKey);
+    _slideFrom.clear();
+    if (targetBox != null && firstBox != null) {
+      final rise =
+          targetBox.localToGlobal(Offset.zero).dy -
+          firstBox.localToGlobal(Offset.zero).dy;
+      _slideFrom[pillarKey] = rise;
+      // Each section above it ends one target-height lower.
+      for (final passed in pillars.take(index)) {
+        _slideFrom[passed.pillarKey] = -targetBox.size.height;
+      }
+    }
+    _reorder.value = 0;
+    setState(() => _movedToTop = pillarKey);
+    if (_slideFrom.isEmpty) return;
+    try {
+      await _reorder.forward().orCancel;
+    } on TickerCanceled {
+      // The screen was closed mid-slide.
+    }
+  }
+
+  RenderBox? _slotBox(String pillarKey) {
+    final box = _slotKeys[pillarKey]?.currentContext?.findRenderObject();
+    return box is RenderBox && box.hasSize ? box : null;
+  }
+
+  bool _isFullyVisible(BuildContext target) {
+    final box = target.findRenderObject();
+    final viewport = Scrollable.maybeOf(target)?.context.findRenderObject();
+    if (box is! RenderBox || viewport is! RenderBox) return true;
+    final item = box.localToGlobal(Offset.zero) & box.size;
+    final view = viewport.localToGlobal(Offset.zero) & viewport.size;
+    return item.top >= view.top && item.bottom <= view.bottom;
+  }
+
+  /// Scrolls [target] to the middle of the visible list.
+  Future<void> _centerOn(BuildContext? target) async {
+    if (target == null || !target.mounted) return;
+    await Scrollable.ensureVisible(
+      target,
+      alignment: 0.5,
+      duration: _centerDuration,
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   /// Tapping a dimmed section brings it to the front instead.
@@ -220,9 +369,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     setState(() {
       _focusedPillarKey = pillarKey;
       _expandedPillarKey = pillarKey;
-      _didScrollToFocused = false;
+      // The item the caller named belonged to the section it named.
+      if (pillarKey != _anchorPillarKey) _selectedItemKey = null;
     });
-    _scrollToFocusedSection();
+    // After the frame, so the section is expanded and its anchor has moved.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_centerOn(_focusedAnchor.currentContext));
+    });
   }
 
   Future<void> _loadPrayerTimes() async {
@@ -406,8 +559,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
 
   @override
   void dispose() {
+    _reorder.dispose();
     _logFailureSub.cancel();
-    _bloc.close();
+    if (_ownsBloc) _bloc.close();
     if (_didChangeTracking) {
       // After the frame, so Home cards don't rebuild mid-teardown.
       WidgetsBinding.instance.addPostFrameCallback(
@@ -433,10 +587,14 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
               ? widget.progressLabel
               : _formatPercentage(dashboard.completionPercentage);
 
-          if (dashboard != null) {
-            _scrollToSelectedPrayer();
-            _scrollToFocusedSection();
-          }
+          if (dashboard != null) _beginReveal();
+          // A section the server didn't send would leave everything dimmed with
+          // nothing in front, so it isn't focused at all.
+          final focusedKey =
+              dashboard != null &&
+                  dashboard.pillars.any((p) => p.pillarKey == _focusedPillarKey)
+              ? _focusedPillarKey
+              : null;
 
           return Scaffold(
             backgroundColor: context.pageColor(Colors.white),
@@ -445,63 +603,79 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                 children: [
                   AmolHeader(title: appText.amolTracking),
                   Expanded(
-                    child: ListView(
+                    // Every section is laid out (not lazily built) so the slide
+                    // can measure one that starts off screen.
+                    child: SingleChildScrollView(
                       padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
-                      children: [
-                        AmolSummaryCard(
-                          pointLabel: pointLabel,
-                          progressLabel: progressLabel,
-                          progress: progress,
-                        ),
-                        SizedBox(height: 18.h),
-                        Text(
-                          context.localizedDigits(
-                            formatAmolDate(_today, appText),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AmolSummaryCard(
+                            pointLabel: pointLabel,
+                            progressLabel: progressLabel,
+                            progress: progress,
                           ),
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
-                            color: context.inkColor(Colors.black),
-                          ),
-                        ),
-                        SizedBox(height: 12.h),
-                        if (dashboard != null)
-                          for (final pillar in dashboard.pillars) ...[
-                            _FocusableSection(
-                              key: pillar.pillarKey == _focusedPillarKey
-                                  ? _focusedAnchor
-                                  : null,
-                              mode: _focusedPillarKey == null || !_focusActive
-                                  ? _FocusMode.none
-                                  : pillar.pillarKey == _focusedPillarKey
-                                  ? _FocusMode.focused
-                                  : _FocusMode.dimmed,
-                              onTapWhenDimmed: () =>
-                                  _focusSection(pillar.pillarKey),
-                              child: _PillarRow(
-                                pillar: pillar,
-                                expanded:
-                                    _expandedPillarKey == pillar.pillarKey,
-                                onToggleExpanded: () =>
-                                    _toggleCategory(pillar.pillarKey),
-                                loggingItemKey: state.loggingItemKey,
-                                completionOverrides: state.completionOverrides,
-                                anchorItemKey: _selectedItemKey,
-                                anchorKey: _selectedItemAnchor,
-                                onItemTap: (item) =>
-                                    _onItemTap(pillar.pillarKey, item),
-                              ),
+                          SizedBox(height: 18.h),
+                          Text(
+                            context.localizedDigits(
+                              formatAmolDate(_today, appText),
                             ),
-                            SizedBox(height: 12.h),
-                          ]
-                        else if (state.status == AmolDailyStatus.failure)
-                          _LoadFailedNotice(
-                            message: state.errorMessage,
-                            onRetry: _reload,
-                          )
-                        else
-                          const _PillarListShimmer(),
-                      ],
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                              color: context.inkColor(Colors.black),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          if (dashboard != null)
+                            for (final pillar in _displayOrder(
+                              dashboard.pillars,
+                            ))
+                              _ReorderSlot(
+                                key: _slotKey(pillar.pillarKey),
+                                animation: _reorder,
+                                slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
+                                isMover: pillar.pillarKey == _movedToTop,
+                                child: _FocusableSection(
+                                  key: pillar.pillarKey == focusedKey
+                                      ? _focusedAnchor
+                                      : null,
+                                  mode: focusedKey == null || !_focusActive
+                                      ? _FocusMode.none
+                                      : pillar.pillarKey == focusedKey
+                                      ? _FocusMode.focused
+                                      : _FocusMode.dimmed,
+                                  onTapWhenDimmed: () =>
+                                      _focusSection(pillar.pillarKey),
+                                  child: _PillarRow(
+                                    pillar: pillar,
+                                    expanded:
+                                        _expandedPillarKey == pillar.pillarKey,
+                                    onToggleExpanded: () =>
+                                        _toggleCategory(pillar.pillarKey),
+                                    loggingItemKey: state.loggingItemKey,
+                                    completionOverrides:
+                                        state.completionOverrides,
+                                    anchorItemKey:
+                                        pillar.pillarKey == _anchorPillarKey
+                                        ? _selectedItemKey
+                                        : null,
+                                    anchorKey: _selectedItemAnchor,
+                                    highlightAnchor: _focusActive,
+                                    onItemTap: (item) =>
+                                        _onItemTap(pillar.pillarKey, item),
+                                  ),
+                                ),
+                              )
+                          else if (state.status == AmolDailyStatus.failure)
+                            _LoadFailedNotice(
+                              message: state.errorMessage,
+                              onRetry: _reload,
+                            )
+                          else
+                            const _PillarListShimmer(),
+                        ],
+                      ),
                     ),
                   ),
                   Padding(
@@ -711,6 +885,49 @@ class _AccordionHeader extends StatelessWidget {
 
 enum _FocusMode { none, focused, dimmed }
 
+/// One section in the list. While the section moved to the top slides into
+/// place it is drawn [slideFrom] pixels from where it now sits, easing to `0`;
+/// the sections it passes fade slightly so the two don't fight over the space.
+/// The bottom padding is the gap between sections.
+class _ReorderSlot extends StatelessWidget {
+  const _ReorderSlot({
+    super.key,
+    required this.animation,
+    required this.slideFrom,
+    required this.isMover,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final double slideFrom;
+  final bool isMover;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      // The section itself is built once; only the transform changes per frame.
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: child,
+      ),
+      builder: (context, child) {
+        final t = animation.value;
+        final dy = slideFrom * (1 - Curves.easeInOutCubic.transform(t));
+        final passed = !isMover && slideFrom != 0;
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Opacity(
+            opacity: passed ? 1 - .4 * math.sin(math.pi * t) : 1,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Pops the focused section forward (scale + shadow) and pushes the rest
 /// behind a blur, fade and soft white gradient. Every change animates.
 class _FocusableSection extends StatelessWidget {
@@ -725,7 +942,9 @@ class _FocusableSection extends StatelessWidget {
   final VoidCallback onTapWhenDimmed;
   final Widget child;
 
-  static const _duration = Duration(milliseconds: 380);
+  static const _duration = Duration(milliseconds: 560);
+  static const _dimBlur = 1.0;
+  static const _dimOpacity = .78;
 
   @override
   Widget build(BuildContext context) {
@@ -752,9 +971,10 @@ class _FocusableSection extends StatelessWidget {
     );
 
     content = TweenAnimationBuilder<double>(
-      tween: Tween(end: dimmed ? 2.5 : 0),
+      // A light blur: the other sections stay readable behind the focused one.
+      tween: Tween(end: dimmed ? _dimBlur : 0),
       duration: _duration,
-      curve: Curves.easeOut,
+      curve: Curves.easeInOutCubic,
       child: Stack(
         children: [
           content,
@@ -763,6 +983,7 @@ class _FocusableSection extends StatelessWidget {
               child: AnimatedOpacity(
                 duration: _duration,
                 opacity: dimmed ? 1 : 0,
+                curve: Curves.easeInOutCubic,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: radius,
@@ -772,10 +993,10 @@ class _FocusableSection extends StatelessWidget {
                       colors: [
                         context
                             .surfaceColor(Colors.white)
-                            .withValues(alpha: 0.15),
+                            .withValues(alpha: 0.08),
                         context
                             .surfaceColor(const Color(0xFFDCEBBB))
-                            .withValues(alpha: 0.55),
+                            .withValues(alpha: 0.28),
                       ],
                     ),
                   ),
@@ -800,10 +1021,10 @@ class _FocusableSection extends StatelessWidget {
     return AnimatedScale(
       scale: focused ? 1.03 : 1,
       duration: _duration,
-      curve: Curves.easeOutBack,
+      curve: Curves.easeInOutCubic,
       child: AnimatedOpacity(
         duration: _duration,
-        opacity: dimmed ? 0.55 : 1,
+        opacity: dimmed ? _dimOpacity : 1,
         child: dimmed
             ? GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -857,6 +1078,7 @@ class _PillarRow extends StatelessWidget {
     required this.onItemTap,
     this.anchorItemKey,
     this.anchorKey,
+    this.highlightAnchor = false,
   });
 
   final AmolPillar pillar;
@@ -870,6 +1092,10 @@ class _PillarRow extends StatelessWidget {
   /// can scroll it into view.
   final String? anchorItemKey;
   final GlobalKey? anchorKey;
+
+  /// Whether the anchored item is shown highlighted (once the focus effect has
+  /// played).
+  final bool highlightAnchor;
 
   @override
   Widget build(BuildContext context) {
@@ -895,12 +1121,16 @@ class _PillarRow extends StatelessWidget {
                     if (i != 0) SizedBox(height: 6.h),
                     KeyedSubtree(
                       key:
-                          pillar.pillarKey == 'fardh_prayer' &&
+                          anchorItemKey != null &&
                               pillar.items[i].itemKey == anchorItemKey
                           ? anchorKey
                           : null,
                       child: _AmolItemRow(
                         item: pillar.items[i],
+                        highlighted:
+                            highlightAnchor &&
+                            anchorItemKey != null &&
+                            pillar.items[i].itemKey == anchorItemKey,
                         isLogging: loggingItemKey == pillar.items[i].itemKey,
                         isChecked:
                             completionOverrides[pillar.items[i].itemKey] ??
@@ -932,7 +1162,11 @@ class _AmolItemRow extends StatelessWidget {
     required this.isLogging,
     required this.isChecked,
     required this.onTap,
+    this.highlighted = false,
   });
+
+  /// The item the user came here for: softly tinted so it reads as selected.
+  final bool highlighted;
 
   final AmolItem item;
   final bool isLogging;
@@ -945,8 +1179,18 @@ class _AmolItemRow extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12.r),
       onTap: isLogging ? null : onTap,
-      child: Padding(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 520),
+        curve: Curves.easeInOutCubic,
         padding: EdgeInsets.symmetric(vertical: 6.h),
+        decoration: BoxDecoration(
+          color: highlighted
+              ? context
+                    .surfaceColor(const Color(0xFFDDEBB5))
+                    .withValues(alpha: .55)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
         child: Row(
           children: [
             Container(

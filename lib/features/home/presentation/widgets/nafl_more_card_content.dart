@@ -21,7 +21,11 @@ class NaflItemData {
     required this.name,
     required this.points,
     this.completed = false,
+    this.itemKey,
   });
+
+  /// The tracker's `itemKey` for this deed, when it comes from the tracker.
+  final String? itemKey;
 
   final String name;
   final num points;
@@ -45,6 +49,7 @@ class NaflMoreCardContent extends StatelessWidget {
     this.percentageLabel,
     this.items = const [],
     this.onOpenDashboard,
+    this.onItemTap,
   });
 
   /// 0-100.
@@ -56,6 +61,9 @@ class NaflMoreCardContent extends StatelessWidget {
   final String? percentageLabel;
   final List<NaflItemData> items;
   final VoidCallback? onOpenDashboard;
+
+  /// A tap on one deed's pill.
+  final ValueChanged<NaflItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +85,9 @@ class NaflMoreCardContent extends StatelessWidget {
           SizedBox(height: 26.h),
           PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
-          Expanded(child: _NaflRing(items: items)),
+          Expanded(
+            child: _NaflRing(items: items, onItemTap: onItemTap),
+          ),
         ],
       ),
     );
@@ -85,9 +95,10 @@ class NaflMoreCardContent extends StatelessWidget {
 }
 
 class _NaflRing extends StatelessWidget {
-  const _NaflRing({required this.items});
+  const _NaflRing({required this.items, this.onItemTap});
 
   final List<NaflItemData> items;
+  final ValueChanged<NaflItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +140,13 @@ class _NaflRing extends StatelessWidget {
                   top: centerY(row) - pillH / 2,
                   width: pillW,
                   height: pillH,
-                  child: _NaflPill(item: items[i], circleFirst: circleFirst),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onItemTap == null
+                        ? null
+                        : () => onItemTap!(items[i]),
+                    child: _NaflPill(item: items[i], circleFirst: circleFirst),
+                  ),
                 );
               }(),
           ],

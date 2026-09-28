@@ -44,6 +44,7 @@ class SunnahWitrCardContent extends StatelessWidget {
     this.percentageLabel,
     this.prayers = const [],
     this.onOpenTracker,
+    this.onPrayerTap,
   });
 
   /// 0-100.
@@ -59,6 +60,9 @@ class SunnahWitrCardContent extends StatelessWidget {
   /// default points, not tracked.
   final List<SunnahPrayerData> prayers;
   final VoidCallback? onOpenTracker;
+
+  /// A tap on one prayer's pill, with the pill's name (`Fajr`, `Duhr`, ...).
+  final ValueChanged<String>? onPrayerTap;
 
   // Clockwise from the upper right, as in the design.
   static const _pills = [
@@ -123,13 +127,23 @@ class SunnahWitrCardContent extends StatelessWidget {
                         top: h * a.centerY - pillH / 2,
                         width: w * a.width,
                         height: pillH,
-                        child: _SunnahPill(
-                          name: _dataFor(name)?.label?.trim().isNotEmpty == true
-                              ? _dataFor(name)!.label!.trim()
-                              : _localizedPrayerName(AppText.of(context), name),
-                          points: _dataFor(name)?.points ?? defaultPoints,
-                          circleFirst: circleFirst,
-                          active: _dataFor(name)?.sunnahCompleted ?? false,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onPrayerTap == null
+                              ? null
+                              : () => onPrayerTap!(name),
+                          child: _SunnahPill(
+                            name:
+                                _dataFor(name)?.label?.trim().isNotEmpty == true
+                                ? _dataFor(name)!.label!.trim()
+                                : _localizedPrayerName(
+                                    AppText.of(context),
+                                    name,
+                                  ),
+                            points: _dataFor(name)?.points ?? defaultPoints,
+                            circleFirst: circleFirst,
+                            active: _dataFor(name)?.sunnahCompleted ?? false,
+                          ),
                         ),
                       ),
                   ],
