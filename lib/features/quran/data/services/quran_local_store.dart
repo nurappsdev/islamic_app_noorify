@@ -149,8 +149,9 @@ class QuranLocalStore {
     await _preferences.setString(_translationLangKey, lang.name);
   }
 
-  /// Zoom applied to the Arabic ayah text. Defaults to 1.0.
-  double arabicFontScale() => _preferences.getDouble(_fontSizeKey) ?? 1.0;
+  /// Zoom applied to the Arabic ayah text. Defaults to 120%.
+  double arabicFontScale() =>
+      _preferences.getDouble(_fontSizeKey) ?? kDefaultArabicFontScale;
 
   Future<void> setArabicFontScale(double value) async {
     await _preferences.setDouble(_fontSizeKey, value);

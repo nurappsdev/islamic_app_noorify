@@ -18,11 +18,25 @@ class ArabicFont {
   TextStyle apply(TextStyle base) => styleBuilder(base);
 }
 
-const kDefaultArabicFontId = 'amiri_quran';
+const kDefaultArabicFontId = 'noorehuda';
+
+/// Arabic text zoom: the default (120%) and the range the slider and the
+/// reader's pinch gesture allow.
+const kDefaultArabicFontScale = 1.2;
+const kMinArabicFontScale = 0.8;
+const kMaxArabicFontScale = 2.5;
 
 final List<ArabicFont> kArabicFonts = [
+  // Bundled asset (assets/fonts/quran/Noorehuda.ttf), not Google Fonts:
+  // freely licensed by its author at noorehidayat.org ("no copyright
+  // notice, use freely").
   ArabicFont(
     id: kDefaultArabicFontId,
+    label: 'Noorehuda',
+    styleBuilder: (s) => s.copyWith(fontFamily: 'Noorehuda'),
+  ),
+  ArabicFont(
+    id: 'amiri_quran',
     label: 'Amiri Quran',
     styleBuilder: (s) => GoogleFonts.amiriQuran(textStyle: s),
   ),
@@ -45,14 +59,6 @@ final List<ArabicFont> kArabicFonts = [
     id: 'lateef',
     label: 'Lateef',
     styleBuilder: (s) => GoogleFonts.lateef(textStyle: s),
-  ),
-  // Bundled asset (assets/fonts/quran/Noorehuda.ttf), not Google Fonts:
-  // freely licensed by its author at noorehidayat.org ("no copyright
-  // notice, use freely").
-  ArabicFont(
-    id: 'noorehuda',
-    label: 'Noorehuda',
-    styleBuilder: (s) => s.copyWith(fontFamily: 'Noorehuda'),
   ),
 ];
 
