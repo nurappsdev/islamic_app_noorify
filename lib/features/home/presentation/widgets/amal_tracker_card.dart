@@ -11,7 +11,6 @@ import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
 
@@ -80,22 +79,17 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   /// the API and retaining the app's labels as compatibility fallbacks.
   static List<_AmalTrackerItem> _apiItems(
     BuildContext context,
-    AppText appText,
     List<HighlightCard> cards,
     String loggedInUserName,
-    String monthLabel,
   ) => [
     for (final card in cards)
-      if (card.hasData)
-        _mapHighlightCard(context, appText, card, loggedInUserName, monthLabel),
+      if (card.hasData) _mapHighlightCard(context, card, loggedInUserName),
   ];
 
   static _AmalTrackerItem _mapHighlightCard(
     BuildContext context,
-    AppText appText,
     HighlightCard card,
     String loggedInUserName,
-    String monthLabel,
   ) {
     final title = truncateWords(
       _localized(context, card.localizedTitle, card.title),
@@ -107,7 +101,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       card.pointsText,
     );
     final subtitle = _localized(context, card.localizedSubtitle, card.subtitle);
-    final fraction = _fractionOf(pointsText);
     final progress = (card.percentage / 100).clamp(0, 1).toDouble();
     final localizedPercentage = context.localized(card.localizedPercentage);
     final progressLabel = localizedPercentage.isEmpty
@@ -120,84 +113,30 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             dashboardName: loggedInUserName,
           );
 
-    switch (card.type) {
-      case 'todays_amol':
-      case 'todays_highest':
-      case 'todays_second_highest':
-      case 'yesterdays_highest':
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: pointsText.isEmpty
-              ? '${appText.point} : $fraction'
-              : pointsText,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-        );
-      case 'monthly_first':
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: subtitle.isEmpty
-              ? '${appText.firstInTheMonth}\n${appText.point} : $fraction'
-              : subtitle,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-        );
-      case 'monthly_second':
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: subtitle.isEmpty
-              ? '${appText.secondInTheMonth}\n${appText.point} : $fraction'
-              : subtitle,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-        );
-      case 'last_month_winner':
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: subtitle.isEmpty
-              ? '${appText.lastMonthWinner}\n${appText.point} : $fraction'
-              : subtitle,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-        );
-      case 'my_monthly_position':
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: pointsText.isEmpty
-              ? '${appText.point} : $fraction'
-              : pointsText,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-          leadingText: _localized(
-            context,
-            card.localizedRank,
-            card.rank?.toString(),
-          ),
-        );
-      default:
-        // Unknown card type from a newer backend: fall back to whatever the
-        // API itself sent instead of dropping the card.
-        return _AmalTrackerItem(
-          title: title,
-          subtitle: pointsText.isEmpty
-              ? (subtitle.isEmpty ? fraction : subtitle)
-              : pointsText,
-          progressLabel: progressLabel,
-          progress: progress,
-          userName: userName,
-          monthLabel: monthLabel,
-        );
-    }
+    return _AmalTrackerItem(
+      title: title,
+      subtitle: _pointsLine(pointsText, subtitle),
+      progressLabel: progressLabel,
+      progress: progress,
+      userName: userName,
+      // Only the user's own position shows its rank in the leading tile.
+      leadingText: card.type == 'my_monthly_position'
+          ? _localized(context, card.localizedRank, card.rank?.toString())
+          : null,
+    );
+  }
+
+  /// The card's points as the API words them in the app's language, e.g.
+  /// `Point : 72.25/1120` (points earned / points possible). Monthly cards put
+  /// a heading above the points in [subtitle], so when [pointsText] is missing
+  /// the points are its last line.
+  static String _pointsLine(String pointsText, String subtitle) {
+    if (pointsText.isNotEmpty) return pointsText;
+    final lines = subtitle
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty);
+    return lines.isEmpty ? '' : lines.last;
   }
 
   static String _localized(
@@ -209,28 +148,22 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     return text.isEmpty ? (fallback ?? '') : text;
   }
 
-  /// `"Point : 0/40"` -> `"0/40"`.
-  static String _fractionOf(String? pointsText) {
-    if (pointsText == null) return '';
-    final index = pointsText.indexOf(':');
-    return (index == -1 ? pointsText : pointsText.substring(index + 1)).trim();
-  }
-
   static String _formatPercentage(num percentage) {
     final isWhole = percentage % 1 == 0;
     return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
   }
 
+  /// The offline/not-yet-loaded placeholders: the same card layout with the
+  /// user's own name, and just the points line of each subtitle.
   static List<_AmalTrackerItem> _withDisplayInfo(
     List<_AmalTrackerItem> items,
     String userName,
-    String monthLabel,
   ) => [
     for (final item in items)
       item.copyWith(
         title: truncateWords(item.title, 15),
+        subtitle: item.subtitle.split('\n').last.trim(),
         userName: userName,
-        monthLabel: monthLabel,
       ),
   ];
 
@@ -329,7 +262,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final dashboardState = context.watch<HomeDashboardBloc>().state;
-    final language = context.watch<LanguageBloc>().state.language;
     if (dashboardState.isLoading) return const AmalTrackerCardShimmer();
 
     final dashboard = dashboardState.dashboard;
@@ -339,10 +271,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     final fallbackDashboardName = dashboardName.isEmpty
         ? dashboard?.userSummary.fullName
         : dashboardName;
-    final monthLabel = localizedShortMonthYear(
-      dashboard?.dashboardDate ?? DateTime.now(),
-      language,
-    );
 
     return ValueListenableBuilder<String?>(
       valueListenable: profileNameNotifier,
@@ -352,14 +280,8 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
           dashboardName: fallbackDashboardName,
         );
         final items = dashboardState.hasData
-            ? _apiItems(
-                context,
-                appText,
-                dashboard!.topHighlightCards,
-                loggedInUserName,
-                monthLabel,
-              )
-            : _withDisplayInfo(_items(appText), loggedInUserName, monthLabel);
+            ? _apiItems(context, dashboard!.topHighlightCards, loggedInUserName)
+            : _withDisplayInfo(_items(appText), loggedInUserName);
         if (items.isEmpty) return const SizedBox.shrink();
         return Stack(
           clipBehavior: Clip.none,
@@ -432,7 +354,6 @@ class _AmalSlide extends StatelessWidget {
       title: item.title,
       subtitle: item.subtitle,
       userName: item.userName,
-      monthLabel: item.monthLabel,
       progressLabel: item.progressLabel,
       progress: item.progress,
       leadingText: item.leadingText,
@@ -464,7 +385,6 @@ class _AmalTrackerItem {
     required this.progress,
     this.leadingText,
     this.userName,
-    this.monthLabel,
   });
 
   final String title;
@@ -473,21 +393,19 @@ class _AmalTrackerItem {
   final double progress;
   final String? leadingText;
   final String? userName;
-  final String? monthLabel;
 
   _AmalTrackerItem copyWith({
     String? title,
+    String? subtitle,
     String? userName,
-    String? monthLabel,
   }) {
     return _AmalTrackerItem(
       title: title ?? this.title,
-      subtitle: subtitle,
+      subtitle: subtitle ?? this.subtitle,
       progressLabel: progressLabel,
       progress: progress,
       leadingText: leadingText,
       userName: userName ?? this.userName,
-      monthLabel: monthLabel ?? this.monthLabel,
     );
   }
 }
