@@ -1,6 +1,4 @@
 import '../widgets/quran_download_sheet.dart';
-import '../widgets/quran_filter_sheet.dart';
-import '../widgets/quran_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -46,6 +44,24 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
 
   bool _matches(String text) =>
       text.toLowerCase().contains(_search.toLowerCase());
+  void _goToGlobalHome(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      var poppedToHome = false;
+      Navigator.of(context).popUntil((route) {
+        if (route.settings.name == RouteNames.home) {
+          poppedToHome = true;
+          return true;
+        }
+        return route.isFirst;
+      });
+      if (poppedToHome) return;
+    }
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      RouteNames.home,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
@@ -66,12 +82,13 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                       backgroundColor: const Color(0xffe5ece5),
                       child: IconButton(
                         padding: EdgeInsets.zero,
-                        iconSize: 17,
+                        iconSize: 18,
                         tooltip: text.home,
-                        onPressed: () => Navigator.maybePop(context),
+                        onPressed: () => _goToGlobalHome(context),
                         icon: const Icon(
-                          Icons.menu_book_outlined,
+                          Icons.arrow_back_ios_new_rounded,
                           color: Color(0xff385c46),
+                          size: 16,
                         ),
                       ),
                     ),
@@ -104,25 +121,6 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                         size: 19,
                         color: quranInk,
                       ),
-                    ),
-                    IconButton(
-                      tooltip: 'Filter Quran',
-                      icon: const Icon(Icons.tune, color: quranInk),
-                      onPressed: () async {
-                        final selected = await showQuranModal<SurahRouteArgs>(
-                          context,
-                          const QuranFilterSheet(
-                            initial: SurahRouteArgs(surahNo: 1, surahName: ''),
-                          ),
-                        );
-                        if (selected != null && context.mounted) {
-                          Navigator.pushNamed(
-                            context,
-                            RouteNames.quranSurahDetail,
-                            arguments: selected,
-                          );
-                        }
-                      },
                     ),
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, color: quranInk),
