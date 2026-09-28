@@ -122,10 +122,11 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
             if (widget.busy || _pinched) return;
             final velocity = details.primaryVelocity ?? 0;
             if (_dragDistance.abs() < 48 && velocity.abs() < 350) return;
-            final swipedLeft = velocity.abs() >= 350
-                ? velocity < 0
-                : _dragDistance < 0;
-            if (swipedLeft) {
+            final swipedRight = velocity.abs() >= 350
+                ? velocity > 0
+                : _dragDistance > 0;
+            // Pages turn like an Arabic book: swiping right moves forward.
+            if (swipedRight) {
               widget.onNext?.call();
             } else {
               widget.onPrevious?.call();
@@ -156,8 +157,10 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                       transitionBuilder: (child, animation) {
                         final incoming =
                             child.key == ValueKey(widget.pageNumber);
+                        // A next page enters from the left, following the
+                        // right-swipe that turned it.
                         final direction =
-                            (_forward ? 1.0 : -1.0) * (incoming ? 1 : -1);
+                            (_forward ? -1.0 : 1.0) * (incoming ? 1 : -1);
                         return SlideTransition(
                           position: Tween<Offset>(
                             begin: Offset(direction, 0),

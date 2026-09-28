@@ -11,14 +11,16 @@ class QuranAyahMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = context.inkColor(Colors.black);
-    final size = 28.0 * scale;
     final digits = number
         .toString()
         .split('')
         .map((digit) => String.fromCharCode(0x660 + int.parse(digit)))
         .join();
+    // A snug ring around the number: just wide enough for its digits, so
+    // single-digit ayahs get the smallest marker.
+    final size = (17.0 + 3 * digits.length) * scale;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 3 * scale),
       child: SizedBox.square(
         dimension: size,
         child: CustomPaint(
@@ -30,7 +32,7 @@ class QuranAyahMarker extends StatelessWidget {
               textScaler: TextScaler.noScaling,
               style: TextStyle(
                 fontFamily: 'Noorehuda',
-                fontSize: 12 * scale,
+                fontSize: 20 * scale,
                 height: 1,
                 color: color,
                 fontWeight: FontWeight.normal,

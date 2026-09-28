@@ -35,7 +35,7 @@ void main() {
       const MaterialApp(home: Scaffold(body: Text('anchor'))),
     );
     final context = tester.element(find.text('anchor'));
-    for (final (forward, expectedDx) in [(true, 1.0), (false, -1.0)]) {
+    for (final (forward, expectedDx) in [(true, -1.0), (false, 1.0)]) {
       final route = AppRoutes.onGenerateRoute(
         RouteSettings(
           name: RouteNames.quranSurahDetail,
@@ -184,10 +184,18 @@ void main() {
     final before = session.elapsedSeconds;
     final timer = find.byKey(const ValueKey('quran-reading-timer'));
     int displayedSeconds() {
-      final text = tester.widget<Text>(timer).data ?? '';
-      final match = RegExp(r'(\d+) min (\d+) sec').firstMatch(text);
-      expect(match, isNotNull);
-      return int.parse(match!.group(1)!) * 60 + int.parse(match.group(2)!);
+      // The pill shows mm:ss (or h:mm:ss).
+      final text =
+          tester
+              .widget<Text>(
+                find.descendant(of: timer, matching: find.byType(Text)),
+              )
+              .data ??
+          '';
+      expect(RegExp(r'^\d+(:\d\d){1,2}$').hasMatch(text), isTrue);
+      return text
+          .split(':')
+          .fold(0, (total, part) => total * 60 + int.parse(part));
     }
 
     final shownBefore = displayedSeconds();
@@ -195,7 +203,7 @@ void main() {
 
     await tester.drag(
       find.byKey(const ValueKey('quran-frame-interior')),
-      const Offset(-180, 0),
+      const Offset(180, 0),
     );
     await tester.pumpAndSettle();
     final nextRoute = ModalRoute.of(
@@ -210,7 +218,7 @@ void main() {
 
     await tester.drag(
       find.byKey(const ValueKey('quran-frame-interior')),
-      const Offset(180, 0),
+      const Offset(-180, 0),
     );
     await tester.pumpAndSettle();
     final previousRoute = ModalRoute.of(

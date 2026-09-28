@@ -52,7 +52,7 @@ void main() {
         greaterThan(0),
       );
       expect(tester.getRect(find.text('Fixed footer')), footerRect);
-      await tester.drag(interior, const Offset(-200, 0));
+      await tester.drag(interior, const Offset(200, 0));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
       expect(page, 3);
@@ -68,22 +68,22 @@ void main() {
         tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels,
         0,
       );
-      await tester.drag(interior, const Offset(200, 0));
+      await tester.drag(interior, const Offset(-200, 0));
       await tester.pumpAndSettle();
       expect(page, 2);
-      await tester.drag(interior, const Offset(200, 0));
+      await tester.drag(interior, const Offset(-200, 0));
       await tester.pumpAndSettle();
       expect(page, 2);
       expect(find.byTooltip('Next page'), findsNothing);
       expect(find.byTooltip('Previous page'), findsNothing);
       expect(find.text('Page 2'), findsNothing);
-      await tester.drag(interior, const Offset(-200, 0));
+      await tester.drag(interior, const Offset(200, 0));
       await tester.pumpAndSettle();
       expect(page, 3);
-      await tester.drag(interior, const Offset(-200, 0));
+      await tester.drag(interior, const Offset(200, 0));
       await tester.pumpAndSettle();
       expect(page, 4);
-      await tester.drag(interior, const Offset(-200, 0));
+      await tester.drag(interior, const Offset(200, 0));
       await tester.pumpAndSettle();
       expect(page, 4);
       expect(tester.takeException(), isNull);
