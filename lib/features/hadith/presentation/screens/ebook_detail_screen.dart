@@ -41,7 +41,7 @@ class _EbookDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final details = <(String, String)>[
-      (appText.languageTitle, ebook.language),
+      (appText.languageTitle, _localizedLanguage(appText, ebook.language)),
       (appText.hadithRefPublisher, ebook.publisher),
       (appText.hadithBookReference, ebook.reference),
     ].where((row) => row.$2.trim().isNotEmpty).toList();
@@ -112,6 +112,20 @@ class _EbookDetailView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The backend sends the book's language as a single English word
+/// (`"English"`); show it in the app's language. Anything else (a language the
+/// app has no name for) is shown as the backend sent it.
+String _localizedLanguage(AppText appText, String language) {
+  switch (language.trim().toLowerCase()) {
+    case 'english' || 'en':
+      return appText.english;
+    case 'bangla' || 'bengali' || 'bn':
+      return appText.bangla;
+    default:
+      return language;
   }
 }
 
