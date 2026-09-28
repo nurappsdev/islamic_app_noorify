@@ -5,14 +5,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_all_prayer_alarms.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
@@ -67,33 +65,58 @@ class _SetAllAlarmView extends StatefulWidget {
 
 class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
   final _offsetFieldKey = GlobalKey();
-  final _repository = AlarmRepositoryImpl(
-    AlarmRemoteDataSourceImpl(),
-    AlarmLocalDataSourceImpl(),
-  );
+  final _repository = AlarmRepositoryImpl();
   late final _setAllPrayerAlarms = SetAllPrayerAlarms(_repository);
 
-  /// Server-formatted waqt windows keyed by prayer type (`dhuhr` ->
-  /// `12:04 PM - 03:30 PM`) from `GET /alarms`; includes Tahajjud, which the
-  /// local [DailyPrayerTimes] don't have.
+  /// Waqt windows keyed by prayer type (`dhuhr` -> `12:04 PM - 03:30 PM`),
+  /// worked out from today's prayer times; includes Tahajjud, which
+  /// [DailyPrayerTimes] doesn't have.
   Map<String, String> _timeWindows = const {};
 
   @override
   void initState() {
     super.initState();
-    _loadTimeWindows();
+    _loadSaved();
   }
 
-  Future<void> _loadTimeWindows() async {
-    final result = await GetAlarmDashboard(_repository)();
+  /// Fills the screen from what is saved on the device: the waqt windows, and -
+  /// when some prayers are already on - which ones, plus their offset, sound
+  /// and ringtone, so it opens as it was left. With nothing saved yet every
+  /// prayer starts selected.
+  Future<void> _loadSaved() async {
+    final result = await GetPrayerAlarms(_repository)();
     if (!mounted) return;
-    result.fold((_) {}, (dashboard) {
+    final alarmBloc = context.read<AlarmBloc>();
+    result.fold((_) {}, (alarms) {
+      final on = alarms.where((alarm) => alarm.isEnabled).toList();
       setState(() {
         _timeWindows = {
-          for (final alarm in dashboard.prayerAlarms)
+          for (final alarm in alarms)
             if (alarm.timeWindow.isNotEmpty) alarm.prayerType: alarm.timeWindow,
         };
+        if (on.isEmpty) return;
+        _selectedPrayers
+          ..clear()
+          ..addAll(on.map((alarm) => alarm.prayerType));
+        _selectedRingtone = Ringtone(
+          id: on.first.ringtoneId,
+          name: on.first.ringtoneName,
+          duration: '',
+          audioUrl: on.first.ringtoneUrl,
+        );
       });
+      if (on.isEmpty) return;
+      if (on.first.offsetMinutesBefore > 0) {
+        alarmBloc.add(SelectOffset(on.first.offsetMinutesBefore));
+      }
+      switch (on.first.soundMode) {
+        case 'vibrate':
+          alarmBloc.add(const SetVibrate(true));
+        case 'ring':
+          alarmBloc.add(const SetRing(true));
+        default:
+          alarmBloc.add(const SetVibrateAndRing(true));
+      }
     });
   }
 
@@ -128,6 +151,8 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
         offsetMinutesBefore: state.offsetMinutes,
         soundMode: soundMode,
         ringtoneId: _selectedRingtone?.id ?? AlarmEntry.defaultRingtoneId,
+        ringtoneName: _selectedRingtone?.name ?? AlarmEntry.defaultRingtoneName,
+        ringtoneUrl: _selectedRingtone?.audioUrl ?? '',
         selectedPrayers: selectedPrayers,
       ),
     );
@@ -137,9 +162,9 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
       (failure) =>
           messenger.showSnackBar(SnackBar(content: Text(failure.message))),
       (_) async {
-        // Only these prayers may ring on this device (see
-        // `AlarmScheduler.reschedulePrayerAlarms`).
-        await AlarmScheduler.saveUserPrayerAlarmTypes(selectedPrayers);
+        // Saved on the device; now arm the alarms that are on and disarm the
+        // rest.
+        await syncLocalAlarms();
         if (!mounted) return;
         messenger.showSnackBar(SnackBar(content: Text(appText.allAlarmsSaved)));
         // `true` tells the caller the saved prayer alarms changed.

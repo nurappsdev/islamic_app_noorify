@@ -1,41 +1,33 @@
 import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
 
+/// The user's alarms. Everything here lives on the device: nothing is sent to
+/// or read from the server.
 abstract interface class AlarmRepository {
-  /// All saved alarms, sorted by time of day.
+  /// All custom alarms, sorted by time of day.
   Future<Either<Failure, List<AlarmEntry>>> getAlarms();
 
-  /// The alarm dashboard (`GET /alarms`) — the countdown text and the
-  /// prayer-alarms list shown on the "Prayers Alarm" tab.
-  Future<Either<Failure, AlarmDashboard>> getAlarmDashboard();
+  /// The six prayer alarms - their saved settings worked out against today's
+  /// prayer times - whether or not they are turned on.
+  Future<Either<Failure, List<PrayerAlarm>>> getPrayerAlarms();
 
-  /// The alarm ringtone catalog (`GET /alarms/ringtones`).
-  Future<Either<Failure, List<Ringtone>>> getRingtones();
-
-  /// Persists [alarm] and returns it back once saved.
+  /// Saves [alarm] and returns it back.
   Future<Either<Failure, AlarmEntry>> addAlarm(AlarmEntry alarm);
 
-  /// Flips the enabled state of the alarm identified by [id] via
-  /// `PATCH /alarms/custom/{id}`, then mirrors it in the local cache.
+  /// Turns the alarm identified by [id] on or off.
   Future<Either<Failure, void>> setAlarmEnabled({
     required String id,
     required bool enabled,
   });
 
-  /// Deletes the alarm identified by [id] via `DELETE /alarms/custom/{id}`,
-  /// then removes it from the local cache.
+  /// Deletes the alarm identified by [id].
   Future<Either<Failure, void>> deleteAlarm(String id);
 
-  /// Applies the same offset / sound mode / ringtone to every prayer in
-  /// [batch] via `POST /alarms/prayers/batch`.
+  /// Applies [batch] to the prayer alarms: selected prayers are turned on
+  /// with its settings, the rest are turned off.
   Future<Either<Failure, void>> setAllPrayerAlarms(PrayerAlarmBatch batch);
-
-  /// Deletes the ringtone catalog entry identified by [id] via
-  /// `DELETE /alarms/ringtones/{id}`.
-  Future<Either<Failure, void>> deleteRingtone(String id);
 }

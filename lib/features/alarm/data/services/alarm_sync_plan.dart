@@ -2,13 +2,14 @@ import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.da
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 
-/// Which alarms this device should have armed, worked out from what
-/// `GET /alarms` returned. Pure, so the rules are testable on their own;
+/// Which alarms this device should have armed, worked out from the alarms
+/// saved on the device. Pure, so the rules are testable on their own;
 /// `AlarmScheduler.sync` applies the result to the OS.
 class AlarmSyncPlan {
   const AlarmSyncPlan({
     required this.armed,
     required this.skipped,
+    required this.retained,
     required this.duplicateTimes,
   });
 
@@ -18,26 +19,37 @@ class AlarmSyncPlan {
   /// Alarm id -> why it must not ring. Each one is disarmed.
   final Map<String, String> skipped;
 
+  /// Alarm ids that are on but whose time can't be worked out right now (a
+  /// prayer alarm while the day's prayer times are unavailable). They are left
+  /// exactly as they are: neither re-armed nor cancelled.
+  final Set<String> retained;
+
   /// `HH:mm` values that more than one armed alarm shares (they ring back to
   /// back), for the log.
   final List<String> duplicateTimes;
 
   static String prayerAlarmId(String prayerType) => 'prayer_$prayerType';
 
-  /// [customAlarms] and [prayers] are the server's lists.
-  ///
-  /// [userPrayerTypes] are the prayers the user picked on this device in
-  /// "Set All Alarm": the server lists every prayer, often pre-enabled, but
-  /// only the picked ones may ring here. [ringtoneUrls] maps a ringtone id to
-  /// its audio URL for the prayer alarms, which don't carry one themselves.
+  /// What a prayer alarm's notification says. The alarm also rings from a
+  /// background isolate that has no access to the app's translations.
+  static const _prayerNames = {
+    'fajr': 'Fajr',
+    'dhuhr': 'Dhuhr',
+    'asr': 'Asr',
+    'maghrib': 'Maghrib',
+    'isha': 'Isha',
+    'tahajjud': 'Tahajjud',
+  };
+
+  /// [customAlarms] are the user's own alarms and [prayers] the prayer alarms,
+  /// each with the time it rings today.
   factory AlarmSyncPlan.build({
     required List<AlarmEntry> customAlarms,
     required List<PrayerAlarm> prayers,
-    required Set<String> userPrayerTypes,
-    Map<String, String> ringtoneUrls = const {},
   }) {
     final armed = <AlarmEntry>[];
     final skipped = <String, String>{};
+    final retained = <String>{};
 
     for (final alarm in customAlarms) {
       // Without an id it can't be told apart from another alarm, cancelled,
@@ -53,12 +65,10 @@ class AlarmSyncPlan {
     for (final prayer in prayers) {
       final id = prayerAlarmId(prayer.prayerType);
       final time = parseClockTime12h(prayer.alarmTime);
-      if (!userPrayerTypes.contains(prayer.prayerType)) {
-        skipped[id] = 'not selected on this device';
-      } else if (!prayer.isEnabled) {
+      if (!prayer.isEnabled) {
         skipped[id] = 'disabled';
       } else if (time == null) {
-        skipped[id] = 'unreadable time "${prayer.alarmTime}"';
+        retained.add(id);
       } else {
         armed.add(
           AlarmEntry(
@@ -69,10 +79,10 @@ class AlarmSyncPlan {
             vibrate: prayer.soundMode == 'vibrate',
             ring: prayer.soundMode == 'ring',
             enabled: true,
-            label: prayer.title,
+            label: _prayerNames[prayer.prayerType] ?? prayer.prayerType,
             ringtoneId: prayer.ringtoneId,
             ringtoneName: prayer.ringtoneName,
-            ringtoneUrl: ringtoneUrls[prayer.ringtoneId] ?? '',
+            ringtoneUrl: prayer.ringtoneUrl,
           ),
         );
       }
@@ -90,6 +100,7 @@ class AlarmSyncPlan {
     return AlarmSyncPlan(
       armed: armed,
       skipped: skipped,
+      retained: retained,
       duplicateTimes: duplicates.toList()..sort(),
     );
   }

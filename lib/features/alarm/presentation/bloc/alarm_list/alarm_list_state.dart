@@ -9,21 +9,14 @@ class AlarmListState {
     this.status = AlarmListStatus.initial,
     this.alarms = const [],
     this.prayerAlarms = const [],
-    this.serverCountdown,
     this.failure,
   });
 
   final AlarmListStatus status;
   final List<AlarmEntry> alarms;
 
-  /// From `GET /alarms`'s `prayerAlarms` — the "Prayers Alarm" tab.
+  /// The six prayer alarms - the "Prayers Alarm" tab - whether on or off.
   final List<PrayerAlarm> prayerAlarms;
-
-  /// The server's pre-formatted "Alarm will be ring in X hr Y min", which
-  /// accounts for prayer alarms too — preferred over any client-side
-  /// countdown computed from [alarms] alone. `null` until the dashboard
-  /// fetch succeeds at least once.
-  final String? serverCountdown;
 
   final Failure? failure;
 
@@ -33,7 +26,6 @@ class AlarmListState {
     AlarmListStatus? status,
     List<AlarmEntry>? alarms,
     List<PrayerAlarm>? prayerAlarms,
-    String? serverCountdown,
     Failure? failure,
     bool clearFailure = false,
   }) {
@@ -41,7 +33,6 @@ class AlarmListState {
       status: status ?? this.status,
       alarms: alarms ?? this.alarms,
       prayerAlarms: prayerAlarms ?? this.prayerAlarms,
-      serverCountdown: serverCountdown ?? this.serverCountdown,
       failure: clearFailure ? null : (failure ?? this.failure),
     );
   }

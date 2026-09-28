@@ -131,16 +131,9 @@ class ApiConstants {
   static String asmaUlHusnaDetailEndPoint(String id) =>
       "$asmaUlHusnaEndPoint/$id";
 
-  static const String alarmsDashboardEndPoint = "/alarms";
-  static const String alarmsCustomEndPoint = "/alarms/custom";
+  /// The only alarm endpoint the app uses: the ringtone catalog an admin
+  /// maintains (`GET`). Alarms themselves are saved on the device.
   static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
-  static const String alarmsPrayersBatchEndPoint = "/alarms/prayers/batch";
-
-  static String alarmCustomItemEndPoint(String id) =>
-      "$alarmsCustomEndPoint/$id";
-
-  static String alarmRingtoneItemEndPoint(String id) =>
-      "$alarmsRingtonesEndPoint/$id";
 
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";

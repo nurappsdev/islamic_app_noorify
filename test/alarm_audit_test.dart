@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/alarm/data/models/custom_alarm_model.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
@@ -28,13 +27,13 @@ PrayerAlarm _prayer(
   bool enabled = true,
 }) => PrayerAlarm(
   prayerType: type,
-  title: type,
   timeWindow: '',
   alarmTime: time,
   offsetMinutesBefore: 10,
   soundMode: 'vibrate_and_ring',
   ringtoneId: 'makkah_adhan',
   ringtoneName: 'Makkah',
+  ringtoneUrl: 'https://x/adhan.mp3',
   isEnabled: enabled,
 );
 
@@ -78,15 +77,9 @@ void main() {
     AlarmSyncPlan plan({
       List<AlarmEntry> custom = const [],
       List<PrayerAlarm> prayers = const [],
-      Set<String> picked = const {},
-    }) => AlarmSyncPlan.build(
-      customAlarms: custom,
-      prayers: prayers,
-      userPrayerTypes: picked,
-      ringtoneUrls: const {'makkah_adhan': 'https://x/adhan.mp3'},
-    );
+    }) => AlarmSyncPlan.build(customAlarms: custom, prayers: prayers);
 
-    test('arms enabled server alarms and disarms disabled ones', () {
+    test('arms enabled alarms and disarms disabled ones', () {
       final p = plan(custom: [_alarm('a'), _alarm('b', enabled: false)]);
       expect(p.armed.map((a) => a.id), ['a']);
       expect(p.skipped, {'b': 'disabled'});
@@ -98,26 +91,25 @@ void main() {
       expect(p.skipped, isEmpty);
     });
 
-    test('only prayers picked on this device ring, even if the server '
-        'pre-enables them', () {
+    test('arms the prayers that are on, at their alarm time, and disarms '
+        'the ones that are off', () {
       final p = plan(
-        prayers: [_prayer('fajr'), _prayer('isha')],
-        picked: {'fajr'},
+        prayers: [_prayer('fajr'), _prayer('isha', enabled: false)],
       );
       expect(p.armed.map((a) => a.id), ['prayer_fajr']);
-      expect(p.skipped['prayer_isha'], 'not selected on this device');
-      expect(p.armed.single.ringtoneUrl, 'https://x/adhan.mp3');
-      expect(p.armed.single.hour, 4);
-      expect(p.armed.single.minute, 10);
+      expect(p.skipped, {'prayer_isha': 'disabled'});
+      final fajr = p.armed.single;
+      expect((fajr.hour, fajr.minute), (4, 10));
+      expect(fajr.label, 'Fajr');
+      expect(fajr.ringtoneUrl, 'https://x/adhan.mp3');
     });
 
-    test('a prayer alarm with an unreadable time is disarmed', () {
-      final p = plan(
-        prayers: [_prayer('fajr', time: 'garbage')],
-        picked: {'fajr'},
-      );
+    test('a prayer that is on but has no time yet is left as it is, not '
+        'cancelled', () {
+      final p = plan(prayers: [_prayer('fajr', time: '--:--')]);
       expect(p.armed, isEmpty);
-      expect(p.skipped['prayer_fajr'], contains('unreadable time'));
+      expect(p.skipped, isEmpty);
+      expect(p.retained, {'prayer_fajr'});
     });
 
     test('reports alarms that share a time', () {
@@ -128,33 +120,6 @@ void main() {
         ],
       );
       expect(p.duplicateTimes, ['05:30']);
-    });
-  });
-
-  group('CustomAlarmModel', () {
-    test('an unreadable time is left off instead of ringing at 12:00 AM', () {
-      final alarm = CustomAlarmModel.fromJson({
-        'id': 'x',
-        'time': '',
-        'isEnabled': true,
-      });
-      expect(alarm.enabled, isFalse);
-    });
-
-    test('a readable time keeps the server\'s enabled flag', () {
-      final on = CustomAlarmModel.fromJson({
-        'id': 'x',
-        'time': '07:30 AM',
-        'isEnabled': true,
-      });
-      final off = CustomAlarmModel.fromJson({
-        'id': 'y',
-        'time': '07:30 AM',
-        'isEnabled': false,
-      });
-      expect(on.enabled, isTrue);
-      expect((on.hour, on.minute), (7, 30));
-      expect(off.enabled, isFalse);
     });
   });
 

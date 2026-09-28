@@ -1,56 +1,39 @@
+import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_dashboard.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
+import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
 
-/// Arms this device's alarms from a freshly fetched [dashboard] and disarms
-/// everything else (see [AlarmScheduler.sync]).
+/// Makes the OS alarm schedule match the alarms saved on this device: arms
+/// every alarm that is on, disarms the ones that are off or deleted, and
+/// cancels anything else the OS still holds for the app (see
+/// [AlarmScheduler.sync]).
 ///
-/// The server list is the only source: alarms are never generated locally.
-/// Call only with a dashboard that loaded successfully - a failed request
-/// (offline, signed out) must leave the current schedule alone.
-Future<void> syncDeviceAlarms(
-  AlarmDashboard dashboard, {
-  GetRingtones? getRingtones,
-}) async {
+/// The saved alarms are the only source; nothing comes from the server. Call it
+/// after every change to them and once at app start (it also recomputes the
+/// prayer alarms for today's prayer times). If the saved alarms can't be read
+/// it does nothing, so a storage error can never cancel everything.
+Future<void> syncLocalAlarms({AlarmRepository? repository}) async {
   try {
-    final ringtoneUrls = <String, String>{};
-    final catalog = await getRingtones?.call();
-    catalog?.fold((_) {}, (list) {
-      for (final ringtone in list) {
-        ringtoneUrls[ringtone.id] = ringtone.audioUrl;
-      }
-    });
+    final repo = repository ?? AlarmRepositoryImpl();
+    final alarms = await repo.getAlarms();
+    final prayers = await repo.getPrayerAlarms();
+    if (alarms.isLeft() || prayers.isLeft()) {
+      await AlarmLog.record(
+        'sync',
+        status: 'skipped',
+        detail: 'could not read the saved alarms',
+      );
+      return;
+    }
     await AlarmScheduler.sync(
       AlarmSyncPlan.build(
-        customAlarms: dashboard.customAlarms,
-        prayers: dashboard.prayerAlarms,
-        userPrayerTypes: await AlarmScheduler.userPrayerAlarmTypes(),
-        ringtoneUrls: ringtoneUrls,
+        customAlarms: alarms.getOrElse(() => const []),
+        prayers: prayers.getOrElse(() => const []),
       ),
     );
   } catch (e) {
-    // Best-effort: the next successful load syncs again.
+    // Best-effort: the next change or app start syncs again.
     await AlarmLog.record('sync', status: 'failed', detail: '$e');
   }
-}
-
-/// Fetches the dashboard and syncs from it. Run at app start for a signed-in
-/// user, so an alarm the server no longer lists stops ringing straight away
-/// instead of waiting for the alarm screen to be opened.
-Future<void> syncDeviceAlarmsFromServer({
-  required GetAlarmDashboard getAlarmDashboard,
-  GetRingtones? getRingtones,
-}) async {
-  final result = await getAlarmDashboard();
-  await result.fold(
-    (failure) => AlarmLog.record(
-      'sync',
-      status: 'skipped',
-      detail: 'could not load alarms: ${failure.message}',
-    ),
-    (dashboard) => syncDeviceAlarms(dashboard, getRingtones: getRingtones),
-  );
 }

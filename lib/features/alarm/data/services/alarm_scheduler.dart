@@ -18,6 +18,7 @@ import 'package:islami_app_noorify/core/storage/hive_service.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:islami_app_noorify/features/alarm/domain/prayer_alarm_builder.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
@@ -213,17 +214,16 @@ class AlarmScheduler {
 
   static Future<void> _serial = Future<void>.value();
 
-  /// Makes this device's OS schedule match [plan] - the server's alarm list -
-  /// exactly: arms every alarm in it (re-arming an id replaces the previous
-  /// one), disarms the ones it excludes, and finally cancels every other alarm
-  /// the OS still holds for this app. That last sweep is what removes alarms
-  /// the server no longer lists (deleted on another device, armed by an older
-  /// version, left behind by a failed cancel) and that nothing else on the
-  /// device remembers.
+  /// Makes this device's OS schedule match [plan] - the alarms saved on the
+  /// device - exactly: arms every alarm in it (re-arming an id replaces the
+  /// previous one), disarms the ones it excludes, and finally cancels every
+  /// other alarm the OS still holds for this app. That last sweep is what
+  /// removes alarms nothing else remembers: ones armed by an older version, or
+  /// left behind by a failed cancel.
   ///
-  /// Only call this with a list that was fetched successfully: an empty plan
-  /// from a failed request would disarm everything. Calls run one at a time so
-  /// a late sweep can't cancel what a newer sync just armed.
+  /// Only call this with a plan built from alarms that were read successfully:
+  /// an empty plan from a failed read would disarm everything. Calls run one at
+  /// a time so a late sweep can't cancel what a newer sync just armed.
   static Future<void> sync(AlarmSyncPlan plan) {
     final run = _serial.then((_) => _applyPlan(plan));
     _serial = run.catchError((Object _) {});
@@ -261,18 +261,22 @@ class AlarmScheduler {
         );
       }
     }
+    // Left exactly as they are, but not swept as unknown below.
+    for (final id in plan.retained) {
+      desired[alarmManagerIdFor(id)] = id;
+    }
     for (final entry in plan.skipped.entries) {
       await cancelAlarm(entry.key, reason: entry.value);
     }
 
-    // Everything else the OS holds is an alarm this device no longer wants.
+    // Everything else the OS holds is an alarm this device no longer has.
     for (final osId in await persistedOsAlarmIds()) {
       if (desired.containsKey(osId & ~1)) continue; // wanted, or its snooze
       await _cancelOsAlarm(osId);
       await AlarmLog.record(
         'sweep',
         status: 'cancelled',
-        detail: 'OS alarm $osId is not in the server list',
+        detail: 'OS alarm $osId is not one of the saved alarms',
       );
     }
     if (plan.duplicateTimes.isNotEmpty) {
@@ -324,21 +328,6 @@ class AlarmScheduler {
     } catch (_) {}
   }
 
-  static const _userPrayerTypesKey = 'user_prayer_alarm_types';
-
-  /// Prayer types (`fajr`, ...) the user explicitly set via "Set All Alarm".
-  static Future<Set<String>> userPrayerAlarmTypes() async {
-    final prefs = await SharedPreferences.getInstance();
-    return (prefs.getStringList(_userPrayerTypesKey) ?? const []).toSet();
-  }
-
-  /// Replaces the user's chosen prayer set; anything no longer in it is
-  /// disarmed on the next [reschedulePrayerAlarms].
-  static Future<void> saveUserPrayerAlarmTypes(List<String> types) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_userPrayerTypesKey, types);
-  }
-
   static Future<void> scheduleAlarm(
     AlarmEntry alarm, {
     AlarmSource source = AlarmSource.backend,
@@ -349,22 +338,20 @@ class AlarmScheduler {
     source: source,
   );
 
-  /// Disarms every alarm on this device and forgets them. Used on logout, when
-  /// the session expires, and for a signed-out (guest) session: OS-level
-  /// alarms re-arm themselves daily and survive reboots, so they'd otherwise
-  /// keep ringing for whoever uses the app next.
+  /// Disarms every alarm on this device and deletes the saved ones, custom
+  /// and prayer alike.
   ///
-  /// It cancels what the app knows about (cached alarms, picked prayers) *and*
-  /// every alarm the OS still holds for the app - server alarms are armed under
-  /// the server's id and are cached nowhere, so the app's own records alone
-  /// would miss them. Main isolate only (reads Hive).
-  static Future<void> cancelAllAlarms({String reason = 'session ended'}) async {
-    final ids = <String>{};
+  /// It cancels what the app knows about (the saved alarms and the prayer
+  /// alarm ids) *and* every alarm the OS still holds for the app, including
+  /// ones an older version armed under ids nothing remembers. Main isolate only
+  /// (reads Hive).
+  static Future<void> cancelAllAlarms({String reason = 'requested'}) async {
+    final ids = <String>{
+      for (final type in PrayerAlarmBuilder.prayerTypes)
+        AlarmSyncPlan.prayerAlarmId(type),
+    };
     try {
       ids.addAll(HiveService.alarms.keys.map((k) => k.toString()));
-      for (final type in await userPrayerAlarmTypes()) {
-        ids.add(AlarmSyncPlan.prayerAlarmId(type));
-      }
     } catch (_) {}
     for (final id in ids) {
       await cancelAlarm(id, reason: reason);
@@ -380,7 +367,7 @@ class AlarmScheduler {
     await _silenceVibration();
     try {
       await HiveService.alarms.clear();
-      await saveUserPrayerAlarmTypes(const []);
+      await HiveService.prayerAlarms.clear();
     } catch (_) {}
 
     await AlarmLog.record(
@@ -744,7 +731,7 @@ Future<void> _rearmDaily(int id, AlarmRingPayload payload) async {
       detail: '$e',
     );
     // Best-effort: if local storage isn't reachable here, the chain breaks
-    // for this alarm; the next `AlarmScheduler.rescheduleAll` (app startup)
+    // for this alarm; the next `syncLocalAlarms` (app startup)
     // repairs it from the saved alarm list.
   }
 }

@@ -9,8 +9,13 @@ class HiveService {
   /// Box that holds the authenticated session (auth token, etc.).
   static const String authBox = 'auth_box';
 
-  /// Box that holds saved alarms, one entry per alarm keyed by its id.
+  /// Box that holds the user's custom alarms, one entry per alarm keyed by
+  /// its id. The alarms live only on the device.
   static const String alarmsBox = 'alarms_box';
+
+  /// Box that holds the prayer alarm settings, one entry per prayer keyed by
+  /// its type (`fajr`, ...).
+  static const String prayerAlarmsBox = 'prayer_alarms_box';
 
   /// Box that holds the cached 99 Names of Allah (each with its full
   /// explanation), one entry per name keyed by its id.
@@ -23,6 +28,7 @@ class HiveService {
     await Hive.initFlutter();
     await Hive.openBox<dynamic>(authBox);
     await Hive.openBox<dynamic>(alarmsBox);
+    await Hive.openBox<dynamic>(prayerAlarmsBox);
     await Hive.openBox<dynamic>(asmaHusnaBox);
     _initialized = true;
   }
@@ -32,6 +38,9 @@ class HiveService {
 
   /// Already-opened alarms box. Safe to call after [init].
   static Box<dynamic> get alarms => Hive.box<dynamic>(alarmsBox);
+
+  /// Already-opened prayer alarm settings box. Safe to call after [init].
+  static Box<dynamic> get prayerAlarms => Hive.box<dynamic>(prayerAlarmsBox);
 
   /// Already-opened Asma-ul-Husna cache box. Safe to call after [init].
   static Box<dynamic> get asmaHusna => Hive.box<dynamic>(asmaHusnaBox);
