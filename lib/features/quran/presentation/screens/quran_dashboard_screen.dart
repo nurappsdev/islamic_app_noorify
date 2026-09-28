@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import '../../data/services/quran_local_store.dart';
+import '../quran_text.dart';
 import '../widgets/dashboard/quran_dashboard_charts.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart';
 import '../widgets/dashboard/quran_dashboard_legend.dart';
@@ -39,9 +40,11 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
   double _monthlyScrollProgress = 0.0;
 
   // Stat values initialized to the design spec with real store fallback
-  final String _totalReadingTime = '132 hr 32 min';
-  String _mostReadSurah = 'Sura - Ar-Rahman';
-  final String _mostReadSurahTime = '13 hr 32 min';
+  // Placeholder figures until reading time is tracked; the most read Surah
+  // comes from the reading history when there is one.
+  static const _totalReadingTime = Duration(hours: 132, minutes: 32);
+  static const _mostReadSurahTime = Duration(hours: 13, minutes: 32);
+  ({int number, String name}) _mostReadSurah = (number: 55, name: 'Ar-Rahman');
 
   @override
   void initState() {
@@ -66,7 +69,10 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
       }
       return;
     }
-    final progress = (_monthlyScrollController.offset / maxScroll).clamp(0.0, 1.0);
+    final progress = (_monthlyScrollController.offset / maxScroll).clamp(
+      0.0,
+      1.0,
+    );
     if ((progress - _monthlyScrollProgress).abs() > 0.005) {
       setState(() => _monthlyScrollProgress = progress);
     }
@@ -77,17 +83,20 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
       final store = await QuranLocalStore.create();
       final history = await store.history();
       if (history.isNotEmpty && mounted) {
-        final surahCounts = <String, int>{};
+        final surahCounts = <int, int>{};
+        final names = <int, String>{};
         for (final entry in history) {
+          surahCounts[entry.surahNo] = (surahCounts[entry.surahNo] ?? 0) + 1;
           if (entry.surahName.isNotEmpty) {
-            surahCounts[entry.surahName] = (surahCounts[entry.surahName] ?? 0) + 1;
+            names[entry.surahNo] = entry.surahName;
           }
         }
         if (surahCounts.isNotEmpty) {
-          final topSurah =
-              surahCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+          final top = surahCounts.entries
+              .reduce((a, b) => a.value > b.value ? a : b)
+              .key;
           setState(() {
-            _mostReadSurah = 'Sura - $topSurah';
+            _mostReadSurah = (number: top, name: names[top] ?? '');
           });
         }
       }
@@ -108,6 +117,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final t = QuranText.of(context);
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -122,7 +132,9 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
 
               // 1. Top Header: Back circle button and centered Dashboard title
               QuranDashboardHeader(
-                title: appText.dashboard.isNotEmpty ? appText.dashboard : 'Dashboard',
+                title: appText.dashboard.isNotEmpty
+                    ? appText.dashboard
+                    : 'Dashboard',
                 onBack: widget.onBack,
               ),
 
@@ -163,7 +175,9 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                       QuranDashboardPeriod.weekly =>
                         appText.weekly.isNotEmpty ? appText.weekly : 'Weekly',
                       QuranDashboardPeriod.monthly =>
-                        appText.monthly.isNotEmpty ? appText.monthly : 'Monthly',
+                        appText.monthly.isNotEmpty
+                            ? appText.monthly
+                            : 'Monthly',
                     },
                     onChanged: _selectFilter,
                   ),
@@ -173,26 +187,27 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
               SizedBox(height: 18.h),
 
               // 3. Main Chart Canvas
-              SizedBox(
-                height: 250.h,
-                child: _buildChart(context),
-              ),
+              // Height follows the width, so the chart keeps its shape on
+              // every phone size.
+              AspectRatio(aspectRatio: 1.4, child: _buildChart(context)),
 
               SizedBox(height: 24.h),
 
               // 4. Summary Card 1: Total Quran Reading time
               QuranTotalReadingTimeCard(
-                readingTime: _totalReadingTime,
-                label: 'Total Quran Reading time',
+                readingTime: t.duration(_totalReadingTime),
+                label: t.totalReadingTime,
               ),
 
               SizedBox(height: 16.h),
 
               // 5. Summary Card 2: Most Reading Sura
               QuranMostReadingSurahCard(
-                surahName: _mostReadSurah,
-                time: _mostReadSurahTime,
-                label: 'Most Reading Sura',
+                surahName: t.surahTitle(
+                  t.surahName(_mostReadSurah.number, _mostReadSurah.name),
+                ),
+                time: t.duration(_mostReadSurahTime),
+                label: t.mostReadSurah,
               ),
 
               SizedBox(height: 16.h),

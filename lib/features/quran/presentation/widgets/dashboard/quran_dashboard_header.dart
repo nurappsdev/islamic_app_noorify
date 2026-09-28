@@ -5,19 +5,15 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 
 /// Top bar header for the Quran Dashboard with back button and title.
 class QuranDashboardHeader extends StatelessWidget {
-  const QuranDashboardHeader({
-    super.key,
-    required this.title,
-    this.onBack,
-  });
+  const QuranDashboardHeader({super.key, required this.title, this.onBack});
 
   final String title;
   final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44.h,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -51,12 +47,19 @@ class QuranDashboardHeader extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            title,
-            style: TextStyle(
-              color: context.inkColor(const Color(0xFF677647)),
-              fontSize: 21.sp,
-              fontWeight: FontWeight.w600,
+          // Clear of the back button on both sides, so long titles stay
+          // centred without running under it.
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 48.r),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: context.inkColor(const Color(0xFF677647)),
+                fontSize: 21.sp,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

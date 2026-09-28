@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import '../../domain/quran_plan.dart';
 import '../../domain/surah_summary.dart';
 import '../../data/services/quran_plan_store.dart';
+import '../quran_text.dart';
 import '../widgets/quran_surah_picker_sheet.dart';
 
 class CreateQuranPlanScreen extends StatefulWidget {
@@ -31,7 +32,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
     final selected = await QuranSurahPickerSheet.show(
       context,
       selectedSurahNumber: _startSurah?.number,
-      title: 'Select Start Surah',
+      title: QuranText.read(context).selectStartSurah,
     );
     if (selected != null) {
       setState(() => _startSurah = selected);
@@ -42,7 +43,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
     final selected = await QuranSurahPickerSheet.show(
       context,
       selectedSurahNumber: _endSurah?.number,
-      title: 'Select End Surah',
+      title: QuranText.read(context).selectEndSurah,
     );
     if (selected != null) {
       setState(() => _endSurah = selected);
@@ -52,19 +53,26 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
   Future<void> _submit() async {
     final name = _nameController.text.trim();
     final daysText = _daysController.text.trim();
-    final days = int.tryParse(daysText);
+    final t = QuranText.read(context);
+    // Accept Bengali digits too.
+    final days = int.tryParse(
+      daysText.replaceAllMapped(
+        RegExp('[০-৯]'),
+        (m) => '${m[0]!.codeUnitAt(0) - 0x09E6}',
+      ),
+    );
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a plan name')));
+      ).showSnackBar(SnackBar(content: Text(t.enterPlanName)));
       return;
     }
 
     if (days == null || days <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid completion days')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.enterValidDays)));
       return;
     }
 
@@ -90,6 +98,11 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
     const oliveColor = Color(0xFF9EAA52);
     const borderColor = Color(0xFFD2E3A8);
     const titleColor = Color(0xFF7A8D49);
+    final t = QuranText.of(context);
+    String surahLabel(SurahSummary? surah, int fallbackNo, String fallback) =>
+        surah != null
+        ? t.surahTitle(t.surahName(surah.number, surah.name))
+        : t.example(t.surahTitle(t.surahName(fallbackNo, fallback)));
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -123,7 +136,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                     ),
                   ),
                   Text(
-                    'Create plan',
+                    t.createPlanTitle,
                     style: TextStyle(
                       color: titleColor,
                       fontSize: 18.sp,
@@ -141,7 +154,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                   children: [
                     // Field 1: Plan name
                     Text(
-                      'Plan name',
+                      t.planName,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -153,7 +166,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                       controller: _nameController,
                       style: TextStyle(fontSize: 14.sp),
                       decoration: InputDecoration(
-                        hintText: 'Write Here . . .',
+                        hintText: t.writeHere,
                         hintStyle: TextStyle(
                           color: const Color(0xFFB0BAA5),
                           fontSize: 13.sp,
@@ -183,7 +196,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
 
                     // Field 2: Completion days
                     Text(
-                      'Completion days',
+                      t.completionDays,
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -196,7 +209,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                       keyboardType: TextInputType.number,
                       style: TextStyle(fontSize: 14.sp),
                       decoration: InputDecoration(
-                        hintText: 'Write Here . . .',
+                        hintText: t.writeHere,
                         hintStyle: TextStyle(
                           color: const Color(0xFFB0BAA5),
                           fontSize: 13.sp,
@@ -236,7 +249,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                         children: [
                           // Select Start Sura
                           Text(
-                            'Select Start Sura',
+                            t.selectStartSurah,
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -260,18 +273,20 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    _startSurah != null
-                                        ? 'Sura ${_startSurah!.name}'
-                                        : 'Eg : Sura AL-Fatiha',
-                                    style: TextStyle(
-                                      color: _startSurah != null
-                                          ? const Color(0xFF282442)
-                                          : const Color(0xFFB0BAA5),
-                                      fontSize: 13.sp,
-                                      fontWeight: _startSurah != null
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
+                                  Flexible(
+                                    child: Text(
+                                      surahLabel(_startSurah, 1, 'Al-Fatiha'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _startSurah != null
+                                            ? const Color(0xFF282442)
+                                            : const Color(0xFFB0BAA5),
+                                        fontSize: 13.sp,
+                                        fontWeight: _startSurah != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                      ),
                                     ),
                                   ),
                                   Icon(
@@ -287,7 +302,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
 
                           // Select End Sura
                           Text(
-                            'Select End Sura',
+                            t.selectEndSurah,
                             style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -311,18 +326,20 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    _endSurah != null
-                                        ? 'Sura ${_endSurah!.name}'
-                                        : 'Eg : Sura An-Nas',
-                                    style: TextStyle(
-                                      color: _endSurah != null
-                                          ? const Color(0xFF282442)
-                                          : const Color(0xFFB0BAA5),
-                                      fontSize: 13.sp,
-                                      fontWeight: _endSurah != null
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
+                                  Flexible(
+                                    child: Text(
+                                      surahLabel(_endSurah, 114, 'An-Nas'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _endSurah != null
+                                            ? const Color(0xFF282442)
+                                            : const Color(0xFFB0BAA5),
+                                        fontSize: 13.sp,
+                                        fontWeight: _endSurah != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                      ),
                                     ),
                                   ),
                                   Icon(
@@ -347,17 +364,17 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
               padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 18.h),
               child: SizedBox(
                 width: double.infinity,
-                height: 52.h,
                 child: FilledButton(
                   onPressed: _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: oliveColor,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28.r),
                     ),
                   ),
                   child: Text(
-                    'Create',
+                    t.create,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16.sp,

@@ -79,7 +79,8 @@ void main() {
     expect(tester.getSize(page).height, initialHeight + 180);
     expect(tester.element(find.text('Player')), same(playerElement));
     expect(find.text('Player').hitTestable(), findsNothing);
-    await tester.drag(page, const Offset(-150, 0));
+    // Pages turn like an Arabic book: a right swipe goes forward.
+    await tester.drag(page, const Offset(150, 0));
     await tester.pumpAndSettle();
     expect(next, 1);
     expect(tester.getSize(page).height, initialHeight);

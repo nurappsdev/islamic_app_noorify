@@ -78,6 +78,7 @@ class QuranTotalReadingTimeCard extends StatelessWidget {
         children: [
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16.5.sp,
               fontWeight: FontWeight.w400,
@@ -87,6 +88,7 @@ class QuranTotalReadingTimeCard extends StatelessWidget {
           SizedBox(height: 12.h),
           Text(
             readingTime,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18.5.sp,
               fontWeight: FontWeight.w500,
@@ -119,6 +121,7 @@ class QuranMostReadingSurahCard extends StatelessWidget {
         children: [
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16.5.sp,
               fontWeight: FontWeight.w400,
@@ -126,8 +129,12 @@ class QuranMostReadingSurahCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // Wraps onto two lines when a long Surah name doesn't fit.
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 14.w,
+            runSpacing: 4.h,
             children: [
               Text(
                 surahName,
@@ -138,7 +145,6 @@ class QuranMostReadingSurahCard extends StatelessWidget {
                   color: context.inkColor(const Color(0xFF1E211A)),
                 ),
               ),
-              SizedBox(width: 14.w),
               Text(
                 time,
                 style: TextStyle(

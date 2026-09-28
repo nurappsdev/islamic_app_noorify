@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import '../../domain/quran_playlist.dart';
+import '../quran_text.dart';
 import 'quran_audio_player_screen.dart';
 
 class QuranPlaylistDetailScreen extends StatelessWidget {
@@ -26,6 +27,7 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const titleColor = Color(0xFF7A8D49);
     const borderColor = Color(0xFFD2E3A8);
+    final t = QuranText.of(context);
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -58,6 +60,8 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       playlist.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: titleColor,
                         fontSize: 18.sp,
@@ -88,7 +92,7 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            'Play All',
+                            t.playAll,
                             style: TextStyle(
                               color: titleColor,
                               fontSize: 13.sp,
@@ -109,7 +113,7 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
               child: playlist.items.isEmpty
                   ? Center(
                       child: Text(
-                        'No Surahs in this playlist',
+                        t.noSurahsInPlaylist,
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 14.sp,
@@ -142,7 +146,7 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
                                     painter: _PlaylistStarPainter(),
                                     child: Center(
                                       child: Text(
-                                        '${index + 1}',
+                                        t.n(index + 1),
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,
@@ -161,7 +165,12 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        item.surahName,
+                                        t.surahName(
+                                          item.surahNo,
+                                          item.surahName,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.amiri(
                                           fontSize: 17.sp,
                                           fontStyle: FontStyle.italic,
@@ -171,7 +180,8 @@ class QuranPlaylistDetailScreen extends StatelessWidget {
                                       ),
                                       SizedBox(height: 2.h),
                                       Text(
-                                        '${item.revelationPlace} • ${item.endAyah - item.startAyah + 1} Ayat',
+                                        '${t.revelationPlace(item.revelationPlace)} • '
+                                        '${t.ayahCount(item.endAyah - item.startAyah + 1)}',
                                         style: TextStyle(
                                           fontSize: 12.sp,
                                           color: const Color(0xFF9090AC),

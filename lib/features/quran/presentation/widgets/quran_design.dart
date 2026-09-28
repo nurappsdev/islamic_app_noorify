@@ -4,6 +4,7 @@ import '../screens/quran_plan_screen.dart';
 import '../screens/quran_saved_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../quran_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -45,73 +46,82 @@ class QuranListRow extends StatelessWidget {
   final String? arabic;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    child: Container(
-      constraints: const BoxConstraints(minHeight: 76),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: quranBorder)),
-      ),
-      child: Row(
-        children: [
-          CustomPaint(
-            painter: _NumberStar(),
-            child: SizedBox(
-              width: 35,
-              height: 35,
-              child: Center(
+  Widget build(BuildContext context) {
+    // The badge grows with the user's text size, so the number always fits.
+    final badge = MediaQuery.textScalerOf(context).scale(35);
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: quranBorder)),
+        ),
+        child: Row(
+          children: [
+            CustomPaint(
+              painter: _NumberStar(),
+              child: SizedBox.square(
+                dimension: badge,
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      QuranText.of(context).n(number),
+                      style: const TextStyle(
+                        color: Color(0xff608568),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.amiri(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: context.inkColor(const Color(0xff302647)),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xff9090ac),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (arabic != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
                 child: Text(
-                  '$number',
+                  arabic!,
+                  textDirection: TextDirection.rtl,
                   style: const TextStyle(
-                    color: Color(0xff608568),
-                    fontSize: 14,
+                    fontFamily: 'Noorehuda',
+                    fontSize: 20,
+                    color: quranInk,
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 17),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.amiri(
-                    fontSize: 18,
-                    fontStyle: FontStyle.italic,
-                    color: context.inkColor(const Color(0xff302647)),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xff9090ac),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (arabic != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text(
-                arabic!,
-                textDirection: TextDirection.rtl,
-                style: const TextStyle(
-                  fontFamily: 'Noorehuda',
-                  fontSize: 20,
-                  color: quranInk,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _NumberStar extends CustomPainter {
@@ -230,7 +240,6 @@ class QuranBottomNav extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        height: 72,
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -266,8 +275,8 @@ class QuranBottomNav extends StatelessWidget {
                             key: ValueKey('quran-nav-${item.$1}'),
                             borderRadius: BorderRadius.circular(28),
                             onTap: () => onSelected?.call(item.$1),
-                            child: SizedBox(
-                              height: 56,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

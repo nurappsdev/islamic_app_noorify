@@ -7,6 +7,7 @@ import '../../domain/bookmark.dart';
 import '../../data/services/quran_playlist_store.dart';
 import '../../data/services/quran_local_store.dart';
 import '../quran_route_args.dart';
+import '../quran_text.dart';
 import 'quran_playlist_detail_screen.dart';
 
 class QuranSavedScreen extends StatefulWidget {
@@ -69,6 +70,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
   @override
   Widget build(BuildContext context) {
     const borderColor = Color(0xFFD2E3A8);
+    final t = QuranText.of(context);
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -86,9 +88,9 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Row(
                 children: [
-                  _buildTab(index: 0, title: 'Saved'),
+                  Flexible(child: _buildTab(index: 0, title: t.saved)),
                   SizedBox(width: 12.w),
-                  _buildTab(index: 1, title: 'Play List'),
+                  Flexible(child: _buildTab(index: 1, title: t.playList)),
                 ],
               ),
             ),
@@ -102,8 +104,8 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
                       ),
                     )
                   : _tab == 1
-                  ? _buildPlaylistTab(borderColor)
-                  : _buildSavedTab(borderColor),
+                  ? _buildPlaylistTab(borderColor, t)
+                  : _buildSavedTab(borderColor, t),
             ),
           ],
         ),
@@ -124,6 +126,8 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
         ),
         child: Text(
           title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -136,11 +140,11 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
     );
   }
 
-  Widget _buildPlaylistTab(Color borderColor) {
+  Widget _buildPlaylistTab(Color borderColor, QuranText t) {
     if (_playlists.isEmpty) {
       return Center(
         child: Text(
-          'No playlists available',
+          t.noPlaylists,
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
         ),
       );
@@ -174,6 +178,8 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
                     children: [
                       Text(
                         pl.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w600,
@@ -182,7 +188,12 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
                       ),
                       SizedBox(height: 3.h),
                       Text(
-                        pl.surahSummaryText,
+                        t.playlistSummary([
+                          for (final item in pl.items.take(2))
+                            t.surahName(item.surahNo, item.surahName),
+                        ], pl.items.length),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: const Color(0xFF9090AC),
@@ -215,7 +226,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
     );
   }
 
-  Widget _buildSavedTab(Color borderColor) {
+  Widget _buildSavedTab(Color borderColor, QuranText t) {
     if (_bookmarks.isEmpty) {
       return Center(
         child: Column(
@@ -228,7 +239,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
             ),
             SizedBox(height: 12.h),
             Text(
-              'No saved bookmarks yet',
+              t.noBookmarks,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
             ),
           ],
@@ -260,7 +271,9 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
             ),
           ),
           title: Text(
-            b.surahName,
+            t.surahName(b.surahNo, b.surahName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
@@ -268,7 +281,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
             ),
           ),
           subtitle: Text(
-            'Ayah ${b.ayahNo}',
+            t.ayahLabel(b.ayahNo),
             style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9090AC)),
           ),
           trailing: const Icon(

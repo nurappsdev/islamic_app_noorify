@@ -3,6 +3,9 @@ import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_design.dart';
+import 'package:islami_app_noorify/features/quran/presentation/screens/quran_dashboard_screen.dart';
+import 'package:islami_app_noorify/features/quran/presentation/screens/quran_plan_screen.dart';
+import 'package:islami_app_noorify/features/quran/presentation/screens/quran_saved_screen.dart';
 import 'dart:async';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_download_sheet.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
@@ -100,78 +103,82 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
-  testWidgets(
-    'Quran bar opens Coming Soon for other sections and preserves its route',
-    (tester) async {
-      final navigator = GlobalKey<NavigatorState>();
-      Widget home(BuildContext context) => Scaffold(
-        body: TextButton(
-          onPressed: () => Navigator.pushNamed(context, RouteNames.quran),
-          child: const Text('Open Quran'),
-        ),
-      );
-      await tester.pumpWidget(
-        BlocProvider(
-          create: (_) => LanguageBloc(),
-          child: ScreenUtilInit(
-            designSize: const Size(375, 812),
-            builder: (_, child) => MaterialApp(
-              navigatorKey: navigator,
-              onGenerateInitialRoutes: (_) => [
-                MaterialPageRoute<void>(
-                  settings: const RouteSettings(name: RouteNames.home),
-                  builder: home,
-                ),
-              ],
-              routes: {
-                RouteNames.home: home,
-                RouteNames.quran: (_) =>
-                    const QuranTabShell(child: Scaffold(body: TextField())),
-              },
-            ),
+  testWidgets('Quran bar switches sections in place and preserves its route', (
+    tester,
+  ) async {
+    final navigator = GlobalKey<NavigatorState>();
+    Widget home(BuildContext context) => Scaffold(
+      body: TextButton(
+        onPressed: () => Navigator.pushNamed(context, RouteNames.quran),
+        child: const Text('Open Quran'),
+      ),
+    );
+    await tester.pumpWidget(
+      BlocProvider(
+        create: (_) => LanguageBloc(),
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, child) => MaterialApp(
+            navigatorKey: navigator,
+            onGenerateInitialRoutes: (_) => [
+              MaterialPageRoute<void>(
+                settings: const RouteSettings(name: RouteNames.home),
+                builder: home,
+              ),
+            ],
+            routes: {
+              RouteNames.home: home,
+              RouteNames.quran: (_) =>
+                  const QuranTabShell(child: Scaffold(body: TextField())),
+            },
           ),
         ),
+      ),
+    );
+    await tester.tap(find.text('Open Quran'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Home'));
+    await tester.pumpAndSettle();
+    expect(navigator.currentState!.canPop(), isTrue);
+    await tester.enterText(find.byType(TextField), 'Saved search');
+    final originalContent = tester.element(find.byType(TextField));
+    final originalBar = tester.element(find.byType(QuranBottomNav));
+    final originalRoute = ModalRoute.of(originalBar);
+    final barPosition = tester.getRect(find.byType(QuranBottomNav));
+    for (final (section, screen) in [
+      ('learn', ComingSoonScreen),
+      ('saved', QuranSavedScreen),
+      ('plan', QuranPlanScreen),
+      ('dashboard', QuranDashboardScreen),
+    ]) {
+      final tab = find.byKey(ValueKey('quran-nav-$section'));
+      await tester.tap(tab);
+      await tester.pumpAndSettle();
+      expect(find.byType(screen), findsOneWidget);
+      expect(tester.element(find.byType(QuranBottomNav)), same(originalBar));
+      expect(ModalRoute.of(tester.element(tab)), same(originalRoute));
+      expect(tester.getRect(find.byType(QuranBottomNav)), barPosition);
+      expect(
+        tester.widget<QuranBottomNav>(find.byType(QuranBottomNav)).selected,
+        section,
       );
-      await tester.tap(find.text('Open Quran'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Home'));
-      await tester.pumpAndSettle();
-      expect(navigator.currentState!.canPop(), isTrue);
-      await tester.enterText(find.byType(TextField), 'Saved search');
-      final originalContent = tester.element(find.byType(TextField));
-      final originalBar = tester.element(find.byType(QuranBottomNav));
-      final originalRoute = ModalRoute.of(originalBar);
-      final barPosition = tester.getRect(find.byType(QuranBottomNav));
-      for (final section in ['learn', 'topic', 'plan', 'dashboard']) {
-        final tab = find.byKey(ValueKey('quran-nav-$section'));
-        await tester.tap(tab);
-        await tester.pumpAndSettle();
-        expect(find.byType(ComingSoonScreen), findsOneWidget);
-        expect(tester.element(find.byType(QuranBottomNav)), same(originalBar));
-        expect(ModalRoute.of(tester.element(tab)), same(originalRoute));
-        expect(tester.getRect(find.byType(QuranBottomNav)), barPosition);
-        expect(
-          tester.widget<QuranBottomNav>(find.byType(QuranBottomNav)).selected,
-          section,
-        );
-        expect(tester.takeException(), isNull);
-      }
-      await navigator.currentState!.maybePop();
-      await tester.pumpAndSettle();
-      expect(find.byType(ComingSoonScreen), findsNothing);
-      expect(tester.element(find.byType(TextField)), same(originalContent));
-      expect(find.text('Saved search'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('quran-nav-learn')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('quran-nav-home')));
-      await tester.pumpAndSettle();
-      expect(tester.element(find.byType(TextField)), same(originalContent));
-      navigator.currentState!.pop();
-      await tester.pumpAndSettle();
-      expect(find.text('Open Quran'), findsOneWidget);
-      expect(navigator.currentState!.canPop(), isFalse);
-    },
-  );
+      expect(tester.takeException(), isNull);
+    }
+    await navigator.currentState!.maybePop();
+    await tester.pumpAndSettle();
+    expect(find.byType(QuranDashboardScreen), findsNothing);
+    expect(tester.element(find.byType(TextField)), same(originalContent));
+    expect(find.text('Saved search'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quran-nav-learn')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('quran-nav-home')));
+    await tester.pumpAndSettle();
+    expect(tester.element(find.byType(TextField)), same(originalContent));
+    navigator.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Open Quran'), findsOneWidget);
+    expect(navigator.currentState!.canPop(), isFalse);
+  });
   testWidgets(
     'download uses existing progress and reports Tajweed availability honestly',
     (tester) async {
@@ -264,18 +271,30 @@ void main() {
       await tester.tap(find.text('Filter'));
       await tester.pumpAndSettle();
       await preview(tester, 'filter');
+      // Search opens in a popup from the search icon.
+      await tester.tap(find.byKey(const ValueKey('quran-filter-search')));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'missing');
       await tester.pumpAndSettle();
       expect(find.text('No Surahs found'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'Baqarah');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('2. Al-Baqarah'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Al-Baqarah'),
+        ),
+      );
       await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
       await tester.drag(find.byType(PageView), const Offset(-250, 0));
       await tester.pumpAndSettle();
       tester.testTextInput.hide();
       await tester.pumpAndSettle();
-      await tester.drag(find.byType(ListView).first, const Offset(0, -200));
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -200),
+      );
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byType(QuranAyahWheel));
       await tester.pumpAndSettle();

@@ -3,25 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 
+import '../../quran_text.dart';
+
 /// Available period filters matching Hadith dashboard structure.
 enum QuranDashboardPeriod { daily, weekly, monthly }
 
 typedef QuranHistoryPeriod = QuranDashboardPeriod;
-
-const List<String> quranMonthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 /// Period filter dropdown button matching the Hadith dashboard mechanism:
 /// Daily / Weekly / Monthly, and inside Monthly the 12 calendar months.
@@ -71,7 +58,9 @@ class QuranPeriodDropdown extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              picked == null ? labelFor(period) : quranMonthNames[picked.month - 1],
+              picked == null
+                  ? labelFor(period)
+                  : QuranText.of(context).monthName(picked.month),
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w500,
@@ -136,8 +125,10 @@ class _QuranPeriodMenuState extends State<_QuranPeriodMenu> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final t = QuranText.of(context);
+    // A share of the screen rather than a fixed width.
     return SizedBox(
-      width: 220.w,
+      width: MediaQuery.sizeOf(context).width * .6,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +164,7 @@ class _QuranPeriodMenuState extends State<_QuranPeriodMenu> {
                   Padding(
                     padding: EdgeInsets.only(bottom: 8.h),
                     child: Text(
-                      '${now.year}',
+                      t.n(now.year),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
@@ -181,23 +172,24 @@ class _QuranPeriodMenuState extends State<_QuranPeriodMenu> {
                       ),
                     ),
                   ),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
+                  // Four equal columns sharing the menu's width.
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 8.h,
+                    crossAxisSpacing: 8.w,
+                    childAspectRatio: 1.8,
                     children: [
                       for (var m = 1; m <= 12; m++)
-                        SizedBox(
-                          width: 58.w,
-                          height: 32.h,
-                          child: _QuranMonthChip(
-                            name: quranMonthNames[m - 1].substring(0, 3),
-                            enabled: m <= now.month,
-                            selected:
-                                _month?.year == now.year && _month?.month == m,
-                            onTap: () => _pick(
-                              QuranHistoryPeriod.monthly,
-                              month: DateTime(now.year, m),
-                            ),
+                        _QuranMonthChip(
+                          name: t.monthShort(m),
+                          enabled: m <= now.month,
+                          selected:
+                              _month?.year == now.year && _month?.month == m,
+                          onTap: () => _pick(
+                            QuranHistoryPeriod.monthly,
+                            month: DateTime(now.year, m),
                           ),
                         ),
                     ],
@@ -229,8 +221,7 @@ class _QuranMenuRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 44.h,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         color: active ? const Color(0xFFEDF3D6) : Colors.transparent,
         child: Row(
           children: [
@@ -287,16 +278,22 @@ class _QuranMonthChip extends StatelessWidget {
             ),
           ),
         ),
-        child: Text(
-          name,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w500,
-            color: selected
-                ? Colors.white
-                : context.inkColor(
-                    enabled ? const Color(0xFF2C3320) : const Color(0xFFB4B9A6),
-                  ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            name,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
+              color: selected
+                  ? Colors.white
+                  : context.inkColor(
+                      enabled
+                          ? const Color(0xFF2C3320)
+                          : const Color(0xFFB4B9A6),
+                    ),
+            ),
           ),
         ),
       ),

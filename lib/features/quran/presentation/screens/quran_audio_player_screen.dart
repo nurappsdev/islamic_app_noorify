@@ -9,6 +9,7 @@ import '../../domain/surah_detail.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
+import '../quran_text.dart';
 import '../widgets/quran_player_widgets.dart';
 
 /// Plays a playlist's Surahs one after another through the shared Quran
@@ -184,6 +185,7 @@ class _PlayerView extends StatelessWidget {
     final isBuffering = playback?.isBuffering ?? false;
     final hasPrevious = currentIndex > 0;
     final hasNext = currentIndex < items.length - 1;
+    final t = QuranText.of(context);
 
     return Column(
       children: [
@@ -214,7 +216,7 @@ class _PlayerView extends StatelessWidget {
                 ),
               ),
               Text(
-                'Quran',
+                t.quran,
                 style: TextStyle(
                   color: _titleColor,
                   fontSize: 18.sp,
@@ -229,9 +231,11 @@ class _PlayerView extends StatelessWidget {
         // Hero Album Card with rich green gradient
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w),
+          // Height follows its content, so nothing is cut off on short
+          // screens or left empty on tall ones.
           child: Container(
-            height: 250.h,
             width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32.r),
               gradient: const LinearGradient(
@@ -255,28 +259,39 @@ class _PlayerView extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 // Semi-transparent Quran watermark in background
-                Positioned(
-                  bottom: -10.h,
+                // Fills the card and scales down with it.
+                Positioned.fill(
                   child: Opacity(
                     opacity: 0.18,
-                    child: Image.asset(
-                      'assets/images/Quran.png',
-                      width: 220.w,
-                      fit: BoxFit.contain,
+                    child: FractionallySizedBox(
+                      widthFactor: .6,
+                      alignment: Alignment.bottomCenter,
+                      child: Image.asset(
+                        'assets/images/Quran.png',
+                        fit: BoxFit.contain,
+                        alignment: Alignment.bottomCenter,
+                      ),
                     ),
                   ),
                 ),
-                // Track details, scaled down to fit short screens.
+                // Track details
                 if (currentItem != null)
                   Padding(
-                    padding: EdgeInsets.all(16.r),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 28.h,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            currentItem.surahName,
+                            t.surahName(
+                              currentItem.surahNo,
+                              currentItem.surahName,
+                            ),
+                            textAlign: TextAlign.center,
                             style: GoogleFonts.amiri(
                               fontSize: 26.sp,
                               fontStyle: FontStyle.italic,
@@ -292,7 +307,9 @@ class _PlayerView extends StatelessWidget {
                           ),
                           SizedBox(height: 6.h),
                           Text(
-                            '${currentItem.revelationPlace} • Ayat ${currentItem.startAyah}-${currentItem.endAyah}',
+                            '${t.revelationPlace(currentItem.revelationPlace)} • '
+                            '${t.ayahRange(currentItem.startAyah, currentItem.endAyah)}',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13.sp,
                               color: Colors.white.withValues(alpha: 0.85),
@@ -327,7 +344,7 @@ class _PlayerView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                tooltip: 'Previous Surah',
+                tooltip: t.previousSurah,
                 onPressed: hasPrevious
                     ? () => onSelect(currentIndex - 1)
                     : null,
@@ -340,7 +357,7 @@ class _PlayerView extends StatelessWidget {
               SizedBox(width: 24.w),
               Semantics(
                 button: true,
-                label: isPlaying ? 'Pause' : 'Play',
+                label: isPlaying ? t.pause : t.play,
                 child: GestureDetector(
                   key: const ValueKey('quran-player-play'),
                   onTap: currentItem == null
@@ -384,7 +401,7 @@ class _PlayerView extends StatelessWidget {
               ),
               SizedBox(width: 24.w),
               IconButton(
-                tooltip: 'Next Surah',
+                tooltip: t.nextSurah,
                 onPressed: hasNext ? () => onSelect(currentIndex + 1) : null,
                 iconSize: 38.sp,
                 icon: Icon(
@@ -457,7 +474,7 @@ class _PlayerView extends StatelessWidget {
                                       : Colors.transparent,
                                 ),
                                 child: Text(
-                                  '${i + 1}',
+                                  t.n(i + 1),
                                   style: TextStyle(
                                     fontSize: 11.sp,
                                     fontWeight: FontWeight.w600,
@@ -473,7 +490,10 @@ class _PlayerView extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      track.surahName,
+                                      t.surahName(
+                                        track.surahNo,
+                                        track.surahName,
+                                      ),
                                       style: TextStyle(
                                         fontSize: 14.sp,
                                         fontWeight: isCurrent
@@ -486,7 +506,10 @@ class _PlayerView extends StatelessWidget {
                                     ),
                                     SizedBox(height: 2.h),
                                     Text(
-                                      'Ayat ${track.startAyah}-${track.endAyah}',
+                                      t.ayahRange(
+                                        track.startAyah,
+                                        track.endAyah,
+                                      ),
                                       style: TextStyle(
                                         fontSize: 11.sp,
                                         color: const Color(0xFF9090AC),
@@ -537,13 +560,15 @@ class _TrackProgress extends StatelessWidget {
     final span = (item.endAyah - item.startAyah + 1).clamp(1, 1 << 30);
     final ayah = state.currentAyahNo;
     final done = state.finished ? span : (ayah - item.startAyah).clamp(0, span);
+    final t = QuranText.of(context);
     final label = state.finished
-        ? 'Finished'
+        ? t.finished
         : ayah == 0
-        ? 'Bismillah'
-        : 'Ayah $ayah of ${item.endAyah}';
-    return SizedBox(
-      width: 180.w,
+        ? t.bismillah
+        : t.ayahOf(ayah, item.endAyah);
+    // Half the card's width, whatever the screen.
+    return FractionallySizedBox(
+      widthFactor: .6,
       child: Column(
         children: [
           ClipRRect(

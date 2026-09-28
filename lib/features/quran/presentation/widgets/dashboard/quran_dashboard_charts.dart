@@ -2,21 +2,27 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../quran_text.dart';
+
 // ============================================================================
 // 1. WEEKLY CHART
 // ============================================================================
 
 class QuranWeeklyChart extends StatelessWidget {
-  const QuranWeeklyChart({
-    super.key,
-    this.showCompetitor = true,
-  });
+  const QuranWeeklyChart({super.key, this.showCompetitor = true});
 
   final bool showCompetitor;
 
-  static const _labels = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   static const _myValues = [470.0, 950.0, 170.0, 190.0, 200.0, 780.0, 170.0];
-  static const _competitorValues = [720.0, 820.0, 900.0, 930.0, 910.0, 860.0, 520.0];
+  static const _competitorValues = [
+    720.0,
+    820.0,
+    900.0,
+    930.0,
+    910.0,
+    860.0,
+    520.0,
+  ];
   static const _competitorBadges = [true, true, true, true, false, true, true];
 
   @override
@@ -26,7 +32,8 @@ class QuranWeeklyChart extends StatelessWidget {
         return CustomPaint(
           size: Size(constraints.maxWidth, constraints.maxHeight),
           painter: _WeeklyChartPainter(
-            labels: _labels,
+            labels: QuranText.of(context).weekdaysFromSaturday,
+            number: QuranText.of(context).n,
             myValues: _myValues,
             competitorValues: _competitorValues,
             competitorBadges: _competitorBadges,
@@ -41,6 +48,7 @@ class QuranWeeklyChart extends StatelessWidget {
 class _WeeklyChartPainter extends CustomPainter {
   _WeeklyChartPainter({
     required this.labels,
+    required this.number,
     required this.myValues,
     required this.competitorValues,
     required this.competitorBadges,
@@ -48,6 +56,7 @@ class _WeeklyChartPainter extends CustomPainter {
   });
 
   final List<String> labels;
+  final String Function(Object) number;
   final List<double> myValues;
   final List<double> competitorValues;
   final List<bool> competitorBadges;
@@ -75,7 +84,7 @@ class _WeeklyChartPainter extends CustomPainter {
       final y = chartBottom - chartHeight * (level / maxY);
       drawChartText(
         canvas,
-        '$level',
+        number(level),
         Offset(chartLeft - 6, y),
         color: const Color(0xFF8E9582),
         fontSize: 10.5,
@@ -114,7 +123,8 @@ class _WeeklyChartPainter extends CustomPainter {
     // 3. Competitor Area
     if (showCompetitor) {
       final compPoints = [
-        for (var i = 0; i < count; i++) Offset(xAt(i), yAt(competitorValues[i])),
+        for (var i = 0; i < count; i++)
+          Offset(xAt(i), yAt(competitorValues[i])),
       ];
       drawSplineArea(
         canvas: canvas,
@@ -155,17 +165,14 @@ class _WeeklyChartPainter extends CustomPainter {
         7.5,
         Paint()..color = const Color(0xFF5D7858).withValues(alpha: 0.22),
       );
-      canvas.drawCircle(
-        p,
-        3.5,
-        Paint()..color = const Color(0xFF5D7858),
-      );
+      canvas.drawCircle(p, 3.5, Paint()..color = const Color(0xFF5D7858));
     }
 
     // 6. Competitor badges
     if (showCompetitor) {
       final compPoints = [
-        for (var i = 0; i < count; i++) Offset(xAt(i), yAt(competitorValues[i])),
+        for (var i = 0; i < count; i++)
+          Offset(xAt(i), yAt(competitorValues[i])),
       ];
       for (var i = 0; i < count; i++) {
         if (competitorBadges[i]) {
@@ -177,7 +184,8 @@ class _WeeklyChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WeeklyChartPainter oldDelegate) =>
-      oldDelegate.showCompetitor != showCompetitor;
+      oldDelegate.showCompetitor != showCompetitor ||
+      oldDelegate.labels != labels;
 }
 
 // ============================================================================
@@ -196,26 +204,105 @@ class QuranMonthlyChart extends StatelessWidget {
   final double scrollProgress;
   final bool showCompetitor;
 
-  static final List<String> _days = [
-    for (var i = 1; i <= 30; i++) '$i',
-  ];
+  static final List<String> _days = [for (var i = 1; i <= 30; i++) '$i'];
 
   static final List<double> _myValues = [
-    470.0, 950.0, 170.0, 190.0, 750.0, 170.0, 950.0, 170.0, 190.0, 780.0, 170.0,
-    460.0, 920.0, 180.0, 200.0, 740.0, 170.0, 930.0, 170.0, 210.0, 760.0, 180.0,
-    450.0, 900.0, 170.0, 200.0, 750.0, 180.0, 920.0, 170.0,
+    470.0,
+    950.0,
+    170.0,
+    190.0,
+    750.0,
+    170.0,
+    950.0,
+    170.0,
+    190.0,
+    780.0,
+    170.0,
+    460.0,
+    920.0,
+    180.0,
+    200.0,
+    740.0,
+    170.0,
+    930.0,
+    170.0,
+    210.0,
+    760.0,
+    180.0,
+    450.0,
+    900.0,
+    170.0,
+    200.0,
+    750.0,
+    180.0,
+    920.0,
+    170.0,
   ];
 
   static final List<double> _competitorValues = [
-    720.0, 820.0, 900.0, 930.0, 840.0, 450.0, 720.0, 850.0, 910.0, 830.0, 480.0,
-    730.0, 810.0, 890.0, 920.0, 830.0, 470.0, 740.0, 860.0, 900.0, 840.0, 490.0,
-    710.0, 830.0, 880.0, 910.0, 850.0, 460.0, 750.0, 840.0,
+    720.0,
+    820.0,
+    900.0,
+    930.0,
+    840.0,
+    450.0,
+    720.0,
+    850.0,
+    910.0,
+    830.0,
+    480.0,
+    730.0,
+    810.0,
+    890.0,
+    920.0,
+    830.0,
+    470.0,
+    740.0,
+    860.0,
+    900.0,
+    840.0,
+    490.0,
+    710.0,
+    830.0,
+    880.0,
+    910.0,
+    850.0,
+    460.0,
+    750.0,
+    840.0,
   ];
 
   static final List<bool> _badges = [
-    true, true, true, true, true, true, true, true, true, true, true,
-    true, true, true, true, true, true, true, true, true, true, true,
-    true, true, true, true, true, true, true, true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
   ];
 
   @override
@@ -226,6 +313,7 @@ class QuranMonthlyChart extends StatelessWidget {
         final viewportChartWidth = constraints.maxWidth - leftPad - 8.0;
         final dayStep = viewportChartWidth / 10.0;
         final totalScrollWidth = dayStep * (_days.length - 1);
+        final t = QuranText.of(context);
 
         return Stack(
           children: [
@@ -235,7 +323,7 @@ class QuranMonthlyChart extends StatelessWidget {
               bottom: 40,
               width: constraints.maxWidth,
               child: CustomPaint(
-                painter: _YAxisGridPainter(leftPad: leftPad),
+                painter: _YAxisGridPainter(leftPad: leftPad, number: t.n),
               ),
             ),
             Positioned(
@@ -252,7 +340,7 @@ class QuranMonthlyChart extends StatelessWidget {
                   height: constraints.maxHeight - 24,
                   child: CustomPaint(
                     painter: _MonthlyScrollablePainter(
-                      days: _days,
+                      days: [for (final day in _days) t.n(day)],
                       myValues: _myValues,
                       competitorValues: _competitorValues,
                       badges: _badges,
@@ -277,7 +365,9 @@ class QuranMonthlyChart extends StatelessWidget {
 }
 
 class _YAxisGridPainter extends CustomPainter {
-  _YAxisGridPainter({required this.leftPad});
+  _YAxisGridPainter({required this.leftPad, required this.number});
+
+  final String Function(Object) number;
 
   final double leftPad;
 
@@ -295,7 +385,7 @@ class _YAxisGridPainter extends CustomPainter {
       final y = chartBottom - chartHeight * (level / maxY);
       drawChartText(
         canvas,
-        '$level',
+        number(level),
         Offset(leftPad - 6, y),
         color: const Color(0xFF8E9582),
         fontSize: 10.5,
@@ -313,7 +403,8 @@ class _YAxisGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _YAxisGridPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _YAxisGridPainter oldDelegate) =>
+      oldDelegate.number('1') != number('1');
 }
 
 class _MonthlyScrollablePainter extends CustomPainter {
@@ -366,7 +457,8 @@ class _MonthlyScrollablePainter extends CustomPainter {
     // Competitor area
     if (showCompetitor) {
       final compPoints = [
-        for (var i = 0; i < count; i++) Offset(xAt(i), yAt(competitorValues[i])),
+        for (var i = 0; i < count; i++)
+          Offset(xAt(i), yAt(competitorValues[i])),
       ];
       drawSplineArea(
         canvas: canvas,
@@ -407,17 +499,14 @@ class _MonthlyScrollablePainter extends CustomPainter {
         7.5,
         Paint()..color = const Color(0xFF5D7858).withValues(alpha: 0.22),
       );
-      canvas.drawCircle(
-        p,
-        3.5,
-        Paint()..color = const Color(0xFF5D7858),
-      );
+      canvas.drawCircle(p, 3.5, Paint()..color = const Color(0xFF5D7858));
     }
 
     // Competitor badges
     if (showCompetitor) {
       final compPoints = [
-        for (var i = 0; i < count; i++) Offset(xAt(i), yAt(competitorValues[i])),
+        for (var i = 0; i < count; i++)
+          Offset(xAt(i), yAt(competitorValues[i])),
       ];
       for (var i = 0; i < count; i++) {
         if (badges[i]) {
@@ -429,7 +518,8 @@ class _MonthlyScrollablePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _MonthlyScrollablePainter oldDelegate) =>
-      oldDelegate.showCompetitor != showCompetitor;
+      oldDelegate.showCompetitor != showCompetitor ||
+      oldDelegate.days.first != days.first;
 }
 
 class QuranScrollIndicatorBar extends StatelessWidget {
@@ -479,10 +569,7 @@ class QuranScrollIndicatorBar extends StatelessWidget {
 // ============================================================================
 
 class QuranDailyChart extends StatelessWidget {
-  const QuranDailyChart({
-    super.key,
-    this.showCompetitor = true,
-  });
+  const QuranDailyChart({super.key, this.showCompetitor = true});
 
   final bool showCompetitor;
 
@@ -492,7 +579,11 @@ class QuranDailyChart extends StatelessWidget {
       builder: (context, constraints) {
         return CustomPaint(
           size: Size(constraints.maxWidth, constraints.maxHeight),
-          painter: _DailyChartPainter(showCompetitor: showCompetitor),
+          painter: _DailyChartPainter(
+            showCompetitor: showCompetitor,
+            number: QuranText.of(context).n,
+            caption: QuranText.of(context).todaysValue,
+          ),
         );
       },
     );
@@ -500,9 +591,15 @@ class QuranDailyChart extends StatelessWidget {
 }
 
 class _DailyChartPainter extends CustomPainter {
-  const _DailyChartPainter({required this.showCompetitor});
+  const _DailyChartPainter({
+    required this.showCompetitor,
+    required this.number,
+    required this.caption,
+  });
 
   final bool showCompetitor;
+  final String Function(Object) number;
+  final String caption;
 
   static const _leftPad = 34.0;
   static const _rightPad = 8.0;
@@ -526,7 +623,7 @@ class _DailyChartPainter extends CustomPainter {
       final y = chartBottom - chartHeight * (level / maxY);
       drawChartText(
         canvas,
-        '$level',
+        number(level),
         Offset(chartLeft - 6, y),
         color: const Color(0xFF8E9582),
         fontSize: 10.5,
@@ -545,7 +642,7 @@ class _DailyChartPainter extends CustomPainter {
     // Centered label
     drawChartText(
       canvas,
-      'Todays Value In Graph',
+      caption,
       Offset(chartLeft + chartWidth / 2, chartBottom + 8),
       color: const Color(0xFF282442),
       fontSize: 13.5,
@@ -569,14 +666,17 @@ class _DailyChartPainter extends CustomPainter {
       canvas.drawPath(
         compPath,
         Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF8F9F4A).withValues(alpha: 0.28),
-              const Color(0xFF8F9F4A).withValues(alpha: 0.12),
-            ],
-          ).createShader(Rect.fromLTRB(compStartX, compApexY, compEndX, chartBottom)),
+          ..shader =
+              LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF8F9F4A).withValues(alpha: 0.28),
+                  const Color(0xFF8F9F4A).withValues(alpha: 0.12),
+                ],
+              ).createShader(
+                Rect.fromLTRB(compStartX, compApexY, compEndX, chartBottom),
+              ),
       );
 
       canvas.drawPath(
@@ -632,7 +732,8 @@ class _DailyChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DailyChartPainter oldDelegate) =>
-      oldDelegate.showCompetitor != showCompetitor;
+      oldDelegate.showCompetitor != showCompetitor ||
+      oldDelegate.caption != caption;
 }
 
 // ============================================================================
@@ -662,11 +763,14 @@ void drawSplineArea({
     canvas.drawPath(
       areaPath,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: gradientColors,
-        ).createShader(Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom)),
+        ..shader =
+            LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: gradientColors,
+            ).createShader(
+              Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom),
+            ),
     );
     canvas.drawPath(
       path,
@@ -705,11 +809,14 @@ void drawSplineArea({
   canvas.drawPath(
     areaPath,
     Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: gradientColors,
-      ).createShader(Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom)),
+      ..shader =
+          LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: gradientColors,
+          ).createShader(
+            Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom),
+          ),
   );
 
   canvas.drawPath(
@@ -732,10 +839,7 @@ void drawCompetitorBadge(Canvas canvas, Offset anchor) {
     const Radius.circular(9),
   );
 
-  canvas.drawRRect(
-    rrect,
-    Paint()..color = const Color(0xFFD8E6A2),
-  );
+  canvas.drawRRect(rrect, Paint()..color = const Color(0xFFD8E6A2));
 
   canvas.drawCircle(
     Offset(left + 10, top + h / 2),
@@ -790,11 +894,7 @@ void drawChartText(
 }) {
   final span = TextSpan(
     text: text,
-    style: TextStyle(
-      color: color,
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-    ),
+    style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
   );
   final tp = TextPainter(
     text: span,

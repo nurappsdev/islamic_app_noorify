@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
 import '../../domain/quran_plan.dart';
 import '../../data/services/quran_plan_store.dart';
 import '../quran_route_args.dart';
+import '../quran_text.dart';
 import 'create_quran_plan_screen.dart';
 
 class QuranPlanScreen extends StatefulWidget {
@@ -50,7 +50,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
       _loadPlans();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Plan "${result.name}" created successfully!'),
+          content: Text(QuranText.read(context).planCreated(result.name)),
           backgroundColor: const Color(0xFF6B8042),
           duration: const Duration(seconds: 2),
         ),
@@ -75,7 +75,11 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     _loadPlans();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Started "${newPlan.name}"!'),
+        content: Text(
+          QuranText.read(context).planStarted(
+            QuranText.read(context).presetPlanName(preset.id, newPlan.name),
+          ),
+        ),
         backgroundColor: const Color(0xFF6B8042),
         duration: const Duration(seconds: 2),
       ),
@@ -104,7 +108,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
+    final t = QuranText.of(context);
     const borderColor = Color(0xFFD2E3A8);
 
     final myActivePlans = _plans.where((p) => !p.isCompleted).toList();
@@ -126,28 +130,20 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                     ),
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  // Tabs share the width and shrink their text to fit, so
+                  // long (e.g. Bangla) labels never overflow small phones.
                   child: Row(
                     children: [
-                      _buildTopTab(
-                        index: 0,
-                        title: appText.myPlan.isNotEmpty
-                            ? appText.myPlan
-                            : 'My Plan',
-                      ),
-                      SizedBox(width: 8.w),
-                      _buildTopTab(
-                        index: 1,
-                        title: appText.searchPlan.isNotEmpty
-                            ? appText.searchPlan
-                            : 'Search Plan',
-                      ),
-                      SizedBox(width: 8.w),
-                      _buildTopTab(
-                        index: 2,
-                        title: appText.completePlan.isNotEmpty
-                            ? appText.completePlan
-                            : 'Complete Plan',
-                      ),
+                      for (final (i, title) in [
+                        t.myPlan,
+                        t.searchPlan,
+                        t.completePlan,
+                      ].indexed) ...[
+                        if (i > 0) SizedBox(width: 8.w),
+                        Flexible(
+                          child: _buildTopTab(index: i, title: title),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -159,7 +155,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                     child: TextField(
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Search plan...',
+                        hintText: t.searchPlanHint,
                         prefixIcon: const Icon(
                           Icons.search_rounded,
                           color: Color(0xFF7A8D49),
@@ -199,10 +195,10 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                           ),
                         )
                       : _tab == 0
-                      ? _buildMyPlanTab(myActivePlans)
+                      ? _buildMyPlanTab(myActivePlans, t)
                       : _tab == 1
-                      ? _buildSearchPlanTab()
-                      : _buildCompletePlanTab(completedPlans),
+                      ? _buildSearchPlanTab(t)
+                      : _buildCompletePlanTab(completedPlans, t),
                 ),
               ],
             ),
@@ -228,7 +224,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                   ),
                   icon: Icon(Icons.edit_note_rounded, size: 20.sp),
                   label: Text(
-                    'Create Plan',
+                    t.createPlan,
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -253,27 +249,27 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           color: isSelected ? const Color(0xFFD4E5A8) : Colors.transparent,
           borderRadius: BorderRadius.circular(16.r),
         ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 13.sp,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? const Color(0xFF232D1C)
-                : const Color(0xFF4A553E),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            title,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected
+                  ? const Color(0xFF232D1C)
+                  : const Color(0xFF4A553E),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMyPlanTab(List<QuranPlan> activePlans) {
+  Widget _buildMyPlanTab(List<QuranPlan> activePlans, QuranText t) {
     if (activePlans.isEmpty) {
-      return Center(
-        child: _PlanEmptyIllustration(
-          message: "You haven't created any plan yet !",
-        ),
-      );
+      return Center(child: _PlanEmptyIllustration(message: t.noPlansYet));
     }
 
     return ListView.separated(
@@ -284,7 +280,9 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
         final plan = activePlans[index];
         return _QuranPlanCard(
           plan: plan,
-          buttonText: 'Read',
+          name: t.presetPlanName(plan.id, plan.name),
+          daysLabel: t.days(plan.days),
+          buttonText: t.read,
           onAction: () => _openPlanReading(plan),
           trailing: PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF7A8D49)),
@@ -296,27 +294,31 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'complete',
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.check_circle_outline,
                       color: Color(0xFF6B8042),
                       size: 20,
                     ),
-                    SizedBox(width: 8),
-                    Text('Mark Completed'),
+                    const SizedBox(width: 8),
+                    Flexible(child: Text(t.markCompleted)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                    SizedBox(width: 8),
-                    Text('Delete Plan'),
+                    const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(child: Text(t.deletePlan)),
                   ],
                 ),
               ),
@@ -327,12 +329,14 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     );
   }
 
-  Widget _buildSearchPlanTab() {
+  Widget _buildSearchPlanTab(QuranText t) {
     final query = _searchQuery.trim().toLowerCase();
     final presets = QuranPlanStore.presetSearchPlans.where((p) {
       if (query.isEmpty) return true;
       return p.name.toLowerCase().contains(query) ||
-          p.days.toString().contains(query);
+          t.presetPlanName(p.id, p.name).toLowerCase().contains(query) ||
+          p.days.toString().contains(query) ||
+          t.n(p.days).contains(query);
     }).toList();
 
     return ListView.separated(
@@ -343,19 +347,19 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
         final plan = presets[index];
         return _QuranPlanCard(
           plan: plan,
-          buttonText: 'Get Start',
+          name: t.presetPlanName(plan.id, plan.name),
+          daysLabel: t.days(plan.days),
+          buttonText: t.getStarted,
           onAction: () => _enrollPreset(plan),
         );
       },
     );
   }
 
-  Widget _buildCompletePlanTab(List<QuranPlan> completedPlans) {
+  Widget _buildCompletePlanTab(List<QuranPlan> completedPlans, QuranText t) {
     if (completedPlans.isEmpty) {
       return Center(
-        child: _PlanEmptyIllustration(
-          message: "You haven't completed any plan yet !",
-        ),
+        child: _PlanEmptyIllustration(message: t.noCompletedPlansYet),
       );
     }
 
@@ -367,7 +371,9 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
         final plan = completedPlans[index];
         return _QuranPlanCard(
           plan: plan,
-          statusBadge: 'Completed',
+          name: t.presetPlanName(plan.id, plan.name),
+          daysLabel: t.days(plan.days),
+          statusBadge: t.completed,
           trailing: IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.grey),
             onPressed: () => _deletePlan(plan),
@@ -381,6 +387,8 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
 class _QuranPlanCard extends StatelessWidget {
   const _QuranPlanCard({
     required this.plan,
+    required this.name,
+    required this.daysLabel,
     this.buttonText,
     this.onAction,
     this.statusBadge,
@@ -388,6 +396,7 @@ class _QuranPlanCard extends StatelessWidget {
   });
 
   final QuranPlan plan;
+  final String name, daysLabel;
   final String? buttonText;
   final VoidCallback? onAction;
   final String? statusBadge;
@@ -426,7 +435,7 @@ class _QuranPlanCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  plan.name,
+                  name,
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
@@ -437,7 +446,7 @@ class _QuranPlanCard extends StatelessWidget {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  '${plan.days} Days',
+                  daysLabel,
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: const Color(0xFF8B9875),
@@ -505,20 +514,26 @@ class _PlanEmptyIllustration extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Folded paper sheet with ? and radiating lines
+        // Sized from the screen width, keeping the artwork's proportions.
         SizedBox(
-          width: 140.w,
-          height: 130.h,
-          child: CustomPaint(painter: _EmptyDocumentPainter()),
+          width: MediaQuery.sizeOf(context).width * .38,
+          child: AspectRatio(
+            aspectRatio: 140 / 130,
+            child: CustomPaint(painter: _EmptyDocumentPainter()),
+          ),
         ),
         SizedBox(height: 16.h),
-        Text(
-          message,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: const Color(0xFF888888),
-            fontWeight: FontWeight.w400,
-            letterSpacing: 0.2,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: const Color(0xFF888888),
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
       ],
@@ -565,7 +580,7 @@ class _EmptyDocumentPainter extends CustomPainter {
     final docTop = size.height * 0.18;
     final docWidth = size.width * 0.44;
     final docHeight = size.height * 0.65;
-    final foldSize = 14.0;
+    final foldSize = size.width * .1;
 
     final docPath = Path()
       ..moveTo(docLeft, docTop)
@@ -608,7 +623,7 @@ class _EmptyDocumentPainter extends CustomPainter {
 
     // Circle badge with question mark ? on the left of paper
     final badgeCenter = Offset(size.width * 0.35, size.height * 0.36);
-    final badgeRadius = 18.0;
+    final badgeRadius = size.width * .13;
 
     final badgePaint = Paint()
       ..color = const Color(0xFFD4E5A8)
@@ -616,11 +631,11 @@ class _EmptyDocumentPainter extends CustomPainter {
     canvas.drawCircle(badgeCenter, badgeRadius, badgePaint);
 
     final textPainter = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: '?',
         style: TextStyle(
-          color: Color(0xFF6B8042),
-          fontSize: 22,
+          color: const Color(0xFF6B8042),
+          fontSize: size.width * .16,
           fontWeight: FontWeight.bold,
         ),
       ),

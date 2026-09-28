@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/surah_summary.dart';
+import '../quran_text.dart';
 
 class QuranSurahPickerSheet extends StatefulWidget {
   const QuranSurahPickerSheet({
@@ -71,11 +72,14 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = QuranText.of(context);
     final filtered = _surahs.where((s) {
       if (_query.isEmpty) return true;
       return s.name.toLowerCase().contains(_query) ||
           s.translation.toLowerCase().contains(_query) ||
-          s.number.toString().contains(_query);
+          t.surahName(s.number).contains(_query) ||
+          s.number.toString().contains(_query) ||
+          t.n(s.number).contains(_query);
     }).toList();
 
     return Container(
@@ -100,12 +104,16 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.title,
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF282442),
+                Flexible(
+                  child: Text(
+                    widget.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF282442),
+                    ),
                   ),
                 ),
                 IconButton(
@@ -121,7 +129,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search Surah...',
+                hintText: t.searchSurahHint,
                 prefixIcon: const Icon(Icons.search_rounded),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16.w,
@@ -155,7 +163,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                 : filtered.isEmpty
                 ? Center(
                     child: Text(
-                      'No Surahs found',
+                      t.noSurahsFound,
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 14.sp,
@@ -188,19 +196,22 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                                 : const Color(0xFFF0F5DF),
                             shape: BoxShape.circle,
                           ),
-                          child: Text(
-                            '${surah.number}',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFF5D7033),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12.sp,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              t.n(surah.number),
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : const Color(0xFF5D7033),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12.sp,
+                              ),
                             ),
                           ),
                         ),
                         title: Text(
-                          surah.name,
+                          t.surahName(surah.number, surah.name),
                           style: TextStyle(
                             fontWeight: isSelected
                                 ? FontWeight.w700
@@ -212,7 +223,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                           ),
                         ),
                         subtitle: Text(
-                          '${surah.revelationPlace} • ${surah.totalAyah} Ayahs',
+                          '${t.revelationPlace(surah.revelationPlace)} • ${t.ayahCount(surah.totalAyah)}',
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: Colors.grey.shade600,
