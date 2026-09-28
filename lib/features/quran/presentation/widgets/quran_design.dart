@@ -1,4 +1,5 @@
 import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
+import '../screens/quran_plan_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -163,12 +164,6 @@ class _QuranTabShellState extends State<QuranTabShell> {
   Widget build(BuildContext context) {
     final text = AppText.of(context);
     final sections = ['home', 'learn', 'topic', 'plan', 'dashboard'];
-    final titles = [
-      text.learn.isNotEmpty ? text.learn : 'Learn',
-      'Topic',
-      text.planner.isNotEmpty ? text.planner : 'Plan',
-      text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
-    ];
     return PopScope(
       canPop: _selected == 'home',
       onPopInvokedWithResult: (didPop, result) {
@@ -180,8 +175,16 @@ class _QuranTabShellState extends State<QuranTabShell> {
           index: sections.indexOf(_selected),
           children: [
             widget.child,
-            for (final title in titles)
-              ComingSoonScreen(title: title, onBack: () => _select('home')),
+            ComingSoonScreen(
+              title: text.learn.isNotEmpty ? text.learn : 'Learn',
+              onBack: () => _select('home'),
+            ),
+            ComingSoonScreen(title: 'Topic', onBack: () => _select('home')),
+            QuranPlanScreen(onBack: () => _select('home')),
+            ComingSoonScreen(
+              title: text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
+              onBack: () => _select('home'),
+            ),
           ],
         ),
         bottomNavigationBar: QuranBottomNav(
@@ -207,18 +210,18 @@ class QuranBottomNav extends StatelessWidget {
       (
         'learn',
         text.learn.isNotEmpty ? text.learn : 'Learn',
-        Icons.emoji_objects_outlined,
+        Icons.school_outlined,
       ),
       ('topic', 'Topic', Icons.topic_outlined),
       (
         'plan',
         text.planner.isNotEmpty ? text.planner : 'Plan',
-        Icons.fact_check_outlined,
+        Icons.assignment_turned_in_outlined,
       ),
       (
         'dashboard',
         text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
-        Icons.grid_view_rounded,
+        Icons.grid_view_outlined,
       ),
     ];
     return SafeArea(
