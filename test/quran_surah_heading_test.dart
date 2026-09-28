@@ -14,7 +14,7 @@ const surah = SurahSummary(
 );
 
 void main() {
-  testWidgets('header remains sequential and scrolls away with its artwork', (
+  testWidgets('screen background fills edges behind safe-area controls', (
     tester,
   ) async {
     addTearDown(tester.view.resetPhysicalSize);
@@ -32,7 +32,8 @@ void main() {
                   padding: const EdgeInsets.only(top: 44),
                   textScaler: TextScaler.linear(scale),
                 ),
-                child: SafeArea(
+                child: QuranSurahBackdrop(
+                  visible: true,
                   child: Column(
                     children: [
                       const SizedBox(height: 72, child: Text('Controls')),
@@ -73,7 +74,10 @@ void main() {
             .controller!;
         scroll.jumpTo(0);
         await tester.pump();
+        expect(tester.getRect(pattern).top, 0);
         expect(tester.getRect(pattern).left, 0);
+        expect(tester.widget<Image>(pattern).fit, BoxFit.cover);
+        expect(find.text('Controls').hitTestable(), findsOneWidget);
         expect(tester.getRect(pattern).width, width);
         expect(tester.getRect(find.text('Controls')).top, 44);
         expect(
@@ -97,7 +101,6 @@ void main() {
           greaterThanOrEqualTo(tester.getRect(bismillah).bottom + 24),
         );
         final before = [
-          pattern,
           title,
           metadata,
           bismillah,
@@ -106,7 +109,6 @@ void main() {
         scroll.jumpTo(200);
         await tester.pump();
         final after = [
-          pattern,
           title,
           metadata,
           bismillah,
@@ -115,6 +117,7 @@ void main() {
         for (var i = 0; i < before.length; i++) {
           expect(before[i] - after[i], closeTo(200, .01));
         }
+        expect(tester.getRect(pattern).top, 0);
         expect(tester.takeException(), isNull);
       }
     }

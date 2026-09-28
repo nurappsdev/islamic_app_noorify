@@ -410,7 +410,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     englishAyahs: const [],
                     bengaliAyahs: const [],
                   );
-            return SafeArea(
+            return QuranSurahBackdrop(
+              visible: opening && surah != null,
               child: QuranReadingLayout(
                 extension: _showTafsir
                     ? QuranTafsirContent(

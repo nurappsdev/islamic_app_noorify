@@ -83,6 +83,7 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                 },
                 child: _PageScrollBody(
                   key: ValueKey(widget.pageNumber),
+                  transparent: widget.header != null,
                   child: widget.header == null
                       ? widget.child
                       : Column(
@@ -93,7 +94,10 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
                               ),
-                              child: ClipRect(child: widget.child),
+                              child: ColoredBox(
+                                color: context.pageColor(Colors.white),
+                                child: ClipRect(child: widget.child),
+                              ),
                             ),
                           ],
                         ),
@@ -139,7 +143,12 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
 /// Each animated page owns its scroll position. Replacing translations keeps
 /// this state; turning a page starts at the top without moving the outgoing page.
 class _PageScrollBody extends StatefulWidget {
-  const _PageScrollBody({super.key, required this.child});
+  const _PageScrollBody({
+    super.key,
+    required this.child,
+    this.transparent = false,
+  });
+  final bool transparent;
   final Widget child;
   @override
   State<_PageScrollBody> createState() => _PageScrollBodyState();
@@ -155,7 +164,9 @@ class _PageScrollBodyState extends State<_PageScrollBody> {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-    color: context.pageColor(Colors.white),
+    color: widget.transparent
+        ? Colors.transparent
+        : context.pageColor(Colors.white),
     child: SingleChildScrollView(
       controller: _controller,
       clipBehavior: Clip.hardEdge,
