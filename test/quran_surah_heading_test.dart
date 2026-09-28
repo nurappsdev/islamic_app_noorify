@@ -14,7 +14,7 @@ const surah = SurahSummary(
 );
 
 void main() {
-  testWidgets('screen background fills edges behind safe-area controls', (
+  testWidgets('banner and ayahs scroll together without overlap', (
     tester,
   ) async {
     addTearDown(tester.view.resetPhysicalSize);
@@ -32,8 +32,7 @@ void main() {
                   padding: const EdgeInsets.only(top: 44),
                   textScaler: TextScaler.linear(scale),
                 ),
-                child: QuranSurahBackdrop(
-                  visible: true,
+                child: SafeArea(
                   child: Column(
                     children: [
                       const SizedBox(height: 72, child: Text('Controls')),
@@ -74,7 +73,7 @@ void main() {
             .controller!;
         scroll.jumpTo(0);
         await tester.pump();
-        expect(tester.getRect(pattern).top, 0);
+        expect(tester.getRect(pattern).top, tester.getRect(header).top);
         expect(tester.getRect(pattern).left, 0);
         expect(tester.widget<Image>(pattern).fit, BoxFit.cover);
         expect(find.text('Controls').hitTestable(), findsOneWidget);
@@ -101,6 +100,7 @@ void main() {
           greaterThanOrEqualTo(tester.getRect(bismillah).bottom + 24),
         );
         final before = [
+          pattern,
           title,
           metadata,
           bismillah,
@@ -109,6 +109,7 @@ void main() {
         scroll.jumpTo(200);
         await tester.pump();
         final after = [
+          pattern,
           title,
           metadata,
           bismillah,
@@ -117,7 +118,22 @@ void main() {
         for (var i = 0; i < before.length; i++) {
           expect(before[i] - after[i], closeTo(200, .01));
         }
-        expect(tester.getRect(pattern).top, 0);
+        expect(tester.getRect(pattern).top, tester.getRect(header).top);
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(pattern).bottom + 24),
+        );
+        final controlsTop = tester.getRect(find.text('Controls')).top;
+        await tester.drag(
+          find.byType(QuranPageViewport),
+          const Offset(0, -180),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(pattern).bottom + 24),
+        );
+        expect(tester.getRect(find.text('Controls')).top, controlsTop);
         expect(tester.takeException(), isNull);
       }
     }

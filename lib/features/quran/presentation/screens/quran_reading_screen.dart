@@ -31,6 +31,7 @@ import '../bloc/quran_reading_cubit.dart';
 import '../bloc/quran_translation/quran_translation_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
 import '../quran_route_args.dart';
+import '../quran_reading_navigation.dart';
 import '../widgets/quran_design.dart';
 import '../widgets/quran_player_widgets.dart';
 import '../widgets/quran_shimmer.dart';
@@ -84,9 +85,11 @@ class _ReaderBody extends StatefulWidget {
 }
 
 class _ReaderBodyState extends State<_ReaderBody> {
-  final _elapsed = Stopwatch()..start();
+  late final QuranReadingSession _session =
+      widget.args.readingSession ?? QuranReadingSession();
   final _seconds = ValueNotifier<int>(0);
   late final Timer _timer;
+  bool _crossingSurah = false;
   int _bookmarkRevision = 0;
   bool _showTafsir = false;
   bool _tafsirBangla = true;
@@ -97,14 +100,14 @@ class _ReaderBodyState extends State<_ReaderBody> {
     super.initState();
     _timer = Timer.periodic(
       const Duration(seconds: 1),
-      (_) => _seconds.value = _elapsed.elapsed.inSeconds,
+      (_) => _seconds.value = _session.elapsedSeconds,
     );
+    _seconds.value = _session.elapsedSeconds;
     context.read<SurahPlaybackBloc>().add(SetActiveAyah(widget.args.ayahNo));
   }
 
   @override
   void dispose() {
-    _elapsed.stop();
     _timer.cancel();
     _seconds.dispose();
     super.dispose();
@@ -153,8 +156,51 @@ class _ReaderBodyState extends State<_ReaderBody> {
       Navigator.pushReplacementNamed(
         context,
         RouteNames.quranSurahDetail,
-        arguments: result,
+        arguments: result.withReadingSession(_session),
       );
+    }
+  }
+
+  Future<void> _turn(bool forward) async {
+    if (_crossingSurah || !mounted) return;
+    final reader = context.read<QuranReadingCubit>();
+    final state = reader.state;
+    if (state.loading || state.ayahs.isEmpty) return;
+    if (forward && state.to < reader.lastAyah) {
+      await reader.next();
+      return;
+    }
+    if (!forward && state.from > reader.startAyah) {
+      await reader.previous();
+      return;
+    }
+    if (widget.args.paraNumber != null) return;
+
+    setState(() => _crossingSurah = true);
+    try {
+      final next = await adjacentSurahArgs(
+        service: reader.contentService,
+        current: widget.args,
+        session: _session,
+        forward: forward,
+      );
+      if (!mounted) return;
+      if (next == null) {
+        setState(() => _crossingSurah = false);
+        return;
+      }
+      Navigator.pushReplacementNamed(
+        context,
+        RouteNames.quranSurahDetail,
+        arguments: next,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open Surah. Try again.')),
+        );
+        setState(() => _crossingSurah = false);
+      }
     }
   }
 
@@ -410,8 +456,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     englishAyahs: const [],
                     bengaliAyahs: const [],
                   );
-            return QuranSurahBackdrop(
-              visible: opening && surah != null,
+            return SafeArea(
               child: QuranReadingLayout(
                 extension: _showTafsir
                     ? QuranTafsirContent(
@@ -526,6 +571,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         valueListenable: _seconds,
                         builder: (context, seconds, _) => Text(
                           '${appText.yourReadingTimeIs} ${seconds ~/ 60} min ${seconds % 60} sec',
+                          key: const ValueKey('quran-reading-timer'),
                           style: const TextStyle(fontSize: 14),
                         ),
                       ),
@@ -561,10 +607,18 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                     widget.args.surahNo == 1,
                               )
                             : null,
-                        busy: state.loading,
-                        onNext: state.to < reader.lastAyah ? reader.next : null,
-                        onPrevious: state.from > reader.startAyah
-                            ? reader.previous
+                        busy: state.loading || _crossingSurah,
+                        onNext:
+                            state.to < reader.lastAyah ||
+                                (widget.args.paraNumber == null &&
+                                    widget.args.surahNo < 114)
+                            ? () => _turn(true)
+                            : null,
+                        onPrevious:
+                            state.from > reader.startAyah ||
+                                (widget.args.paraNumber == null &&
+                                    widget.args.surahNo > 1)
+                            ? () => _turn(false)
                             : null,
                         footer: OutlinedButton(
                           key: const ValueKey('quran-toggle-tafsir'),

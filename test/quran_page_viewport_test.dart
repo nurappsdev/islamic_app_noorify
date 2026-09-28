@@ -80,6 +80,12 @@ void main() {
       await tester.drag(interior, const Offset(-200, 0));
       await tester.pumpAndSettle();
       expect(page, 3);
+      await tester.drag(interior, const Offset(-200, 0));
+      await tester.pumpAndSettle();
+      expect(page, 4);
+      await tester.drag(interior, const Offset(-200, 0));
+      await tester.pumpAndSettle();
+      expect(page, 4);
       expect(tester.takeException(), isNull);
     },
   );
