@@ -97,6 +97,9 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
       _storeLoadedOnce = true;
       return;
     }
+    // A reset (sign-in/out clears it) isn't a tracking change to refetch for;
+    // the fresh checklist that follows is.
+    if (AmolDailyStore.instance.value == null) return;
     if (!mounted || _isPullRefreshing) return;
     context.read<HomeDashboardBloc>().add(
       const LoadHomeDashboard(silent: true),
