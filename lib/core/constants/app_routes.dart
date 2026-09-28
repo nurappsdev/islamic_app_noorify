@@ -421,7 +421,9 @@ class AppRoutes {
               BlocProvider(
                 create: (_) => SurahPlaybackBloc(
                   downloader: downloader,
-                  startAyah: args.paraNumber == null ? 1 : args.ayahNo,
+                  startAyah: args.paraNumber == null
+                      ? 1
+                      : (args.paraStartAyah ?? args.ayahNo),
                   endAyah: args.endAyah,
                 ),
               ),

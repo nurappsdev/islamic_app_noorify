@@ -1,3 +1,10 @@
+import '../widgets/quran_surah_heading.dart';
+import '../widgets/quran_filter_sheet.dart';
+import '../widgets/quran_modal.dart';
+import '../widgets/quran_share.dart';
+import '../widgets/quran_surah_frame.dart';
+import '../widgets/quran_download_sheet.dart';
+import '../../domain/surah_summary.dart';
 import '../widgets/quran_reading_layout.dart';
 import '../widgets/quran_page_viewport.dart';
 import '../widgets/quran_reading_text.dart';
@@ -10,7 +17,6 @@ import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -44,7 +50,9 @@ class QuranReadingScreen extends StatelessWidget {
       BlocProvider(
         create: (_) => QuranReadingCubit(
           surahNo: args.surahNo,
-          startAyah: args.paraNumber == null ? 1 : args.ayahNo,
+          startAyah: args.paraNumber == null
+              ? 1
+              : (args.paraStartAyah ?? args.ayahNo),
           endAyah: args.endAyah,
           service: contentService,
         ),
@@ -78,6 +86,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
   late final Timer _timer;
   int _bookmarkRevision = 0;
   int? _recordedAyah;
+  Future<List<SurahSummary>>? _catalog;
+
   @override
   void initState() {
     super.initState();
@@ -112,47 +122,177 @@ class _ReaderBodyState extends State<_ReaderBody> {
 
   Future<void> _jump() async {
     final reader = context.read<QuranReadingCubit>();
-    final controller = TextEditingController(text: '${reader.state.from}');
-    final value = await showDialog<int>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Go to ayah'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            helperText: '${reader.startAyah} – ${reader.lastAyah}',
+    final result = await showQuranModal<SurahRouteArgs>(
+      context,
+      QuranFilterSheet(
+        service: reader.contentService,
+        initial: SurahRouteArgs(
+          surahNo: widget.args.surahNo,
+          surahName: reader.state.surah?.name ?? widget.args.surahName,
+          ayahNo: context.read<SurahPlaybackBloc>().state.currentAyahNo.clamp(
+            reader.startAyah,
+            reader.lastAyah,
           ),
+          paraNumber: widget.args.paraNumber,
+          paraStartAyah: reader.startAyah,
+          endAyah: widget.args.endAyah,
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              final n = int.tryParse(controller.text);
-              if (n != null && n >= reader.startAyah && n <= reader.lastAyah) {
-                Navigator.pop(context, n);
-              }
-            },
-            child: const Text('Go'),
-          ),
-        ],
       ),
     );
-    Future<void>.delayed(const Duration(milliseconds: 400), controller.dispose);
-    if (value != null && mounted) {
-      context.read<SurahPlaybackBloc>().add(SetActiveAyah(value));
-      await reader.load(from: value);
+    if (result == null || !mounted) return;
+    if (result.surahNo == widget.args.surahNo &&
+        result.paraNumber == widget.args.paraNumber &&
+        result.endAyah == widget.args.endAyah) {
+      context.read<SurahPlaybackBloc>().add(SetActiveAyah(result.ayahNo));
+      await reader.load(from: result.ayahNo);
+    } else {
+      Navigator.pushReplacementNamed(
+        context,
+        RouteNames.quranSurahDetail,
+        arguments: result,
+      );
     }
   }
+
+  Future<void> _menu(String action) async {
+    final reader = context.read<QuranReadingCubit>();
+    final prefs = context.read<QuranTranslationBloc>();
+    if (action == 'view') {
+      prefs.add(SetShowTranslation(!prefs.state.showTranslation));
+      return;
+    }
+    if (action == 'text') {
+      showQuranReaderSettingsSheet(context, bloc: prefs);
+      return;
+    }
+    if (action == 'download') {
+      showQuranDownload(context);
+      return;
+    }
+    if (reader.state.ayahs.isEmpty) return;
+    final number = action == 'bookmark'
+        ? 1
+        : context.read<SurahPlaybackBloc>().state.currentAyahNo.clamp(
+            reader.state.from,
+            reader.state.to,
+          );
+    try {
+      final ayah =
+          reader.state.ayahs.where((a) => a.ayahNumber == number).firstOrNull ??
+          await reader.contentService.loadAyah(
+            widget.args.surahNo,
+            number,
+            translation: reader.state.translation,
+          );
+      if (!mounted) return;
+      if (action == 'translate') {
+        await _showAyah(ayah);
+        return;
+      }
+      if (action == 'share') {
+        await shareQuranAyah(
+          context,
+          ayah,
+          translation: reader.state.translation,
+          surahName: reader.state.surah?.name ?? '',
+        );
+      }
+      if (action == 'bookmark') {
+        final store = await QuranLocalStore.create();
+        await store.toggleBookmark(
+          surahNo: widget.args.surahNo,
+          ayahNo: 1,
+          surahName: reader.state.surah?.name ?? '',
+          snippet: ayah.textArabic,
+        );
+        final saved = await store.isBookmarked(widget.args.surahNo, 1);
+        if (mounted) {
+          setState(() => _bookmarkRevision++);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                saved ? 'Surah bookmarked' : 'Surah bookmark removed',
+              ),
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to load ayah. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _tafsirPlayer(SurahDetail detail) => MultiBlocProvider(
+    providers: [
+      BlocProvider.value(value: context.read<ReciterBloc>()),
+      BlocProvider.value(value: context.read<SurahPlaybackBloc>()),
+      BlocProvider.value(value: context.read<SurahAudioDownloadBloc>()),
+    ],
+    child: QuranPlaybackAudioGate(
+      detail: detail,
+      child: QuranNowPlayingBar(detail: detail),
+    ),
+  );
+
+  // Widget _surahNavigation() => FutureBuilder<List<SurahSummary>>(
+  //   future: _catalog ??= context
+  //       .read<QuranReadingCubit>()
+  //       .contentService
+  //       .loadSurahs(),
+  //   builder: (context, snapshot) {
+  //     if (snapshot.hasError) {
+  //       return TextButton(
+  //         onPressed: () => setState(() => _catalog = null),
+  //         child: const Text('Retry Surah navigation'),
+  //       );
+  //     }
+  //     if (!snapshot.hasData) return const SizedBox.shrink();
+  //     final all = snapshot.requireData;
+  //     final index = all.indexWhere((s) => s.number == widget.args.surahNo);
+  //     if (index < 0) return const SizedBox.shrink();
+  //     final reader = context.read<QuranReadingCubit>();
+  //     return Column(
+  //       children: [
+  //         for (final target in [
+  //           if (reader.state.from == 1 && index > 0) index - 1,
+  //           if (reader.state.to == reader.lastAyah && index + 1 < all.length)
+  //             index + 1,
+  //         ])
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(vertical: 18),
+  //             child: QuranSurahComponent(
+  //               surah: all[target],
+  //               label: target < index ? 'Previous Surah' : 'Next Surah',
+  //               onTap: () => Navigator.pushReplacementNamed(
+  //                 context,
+  //                 RouteNames.quranSurahDetail,
+  //                 arguments: SurahRouteArgs(
+  //                   surahNo: all[target].number,
+  //                   surahName: all[target].name,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //       ],
+  //     );
+  //   },
+  // );
 
   Future<void> _showAyah(QuranAyah ayah) async {
     final state = context.read<QuranReadingCubit>().state;
     context.read<SurahPlaybackBloc>().add(SetActiveAyah(ayah.ayahNumber));
     final reciter = context.read<ReciterBloc>();
     final download = context.read<SurahAudioDownloadBloc>();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => MultiBlocProvider(
+    final preferences = context.read<QuranTranslationBloc>();
+    await showQuranModal<void>(
+      context,
+      MultiBlocProvider(
         providers: [
           BlocProvider.value(value: reciter),
           BlocProvider.value(value: download),
@@ -172,7 +312,22 @@ class _ReaderBodyState extends State<_ReaderBody> {
         child: QuranAyahDetails(
           surah: ayah.surahNumber,
           ayah: ayah.ayahNumber,
-          translation: state.translation,
+          translation:
+              preferences.state.ayahOverrides[ayah.ayahNumber] ==
+                  AppLanguage.english
+              ? 20
+              : preferences.state.ayahOverrides[ayah.ayahNumber] ==
+                    AppLanguage.bangla
+              ? 161
+              : state.translation,
+          service: context.read<QuranReadingCubit>().contentService,
+          surahName: state.surah?.name ?? '',
+          onTranslationSelected: (resource) => preferences.add(
+            SetAyahTranslationLang(
+              ayah.ayahNumber,
+              resource == 161 ? AppLanguage.bangla : AppLanguage.english,
+            ),
+          ),
           totalAyah: state.surah?.totalAyah ?? ayah.ayahNumber,
         ),
       ),
@@ -289,10 +444,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           ),
                           Expanded(
                             child: InkWell(
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                RouteNames.quranSurahs,
-                              ),
+                              onTap: _jump,
                               child: Text(
                                 'Surah:  ${surah?.name ?? widget.args.surahName}  ⌄',
                                 maxLines: 1,
@@ -302,12 +454,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Reader settings',
+                            tooltip: 'Filter Quran',
                             visualDensity: VisualDensity.compact,
-                            onPressed: () => showQuranReaderSettingsSheet(
-                              context,
-                              bloc: context.read<QuranTranslationBloc>(),
-                            ),
+                            onPressed: _jump,
                             icon: const Icon(
                               Icons.tune,
                               size: 20,
@@ -315,39 +464,40 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             ),
                           ),
                           PopupMenuButton<String>(
-                            icon: const Icon(
-                              Icons.more_vert,
-                              size: 20,
-                              color: quranInk,
-                            ),
-                            onSelected: (value) {
-                              if (value == 'translation') {
-                                context.read<QuranTranslationBloc>().add(
-                                  SetShowTranslation(!prefs.showTranslation),
-                                );
-                              }
-                              if (value == 'back') {
-                                Navigator.maybePop(context);
-                              }
-                              if (value == 'jump') _jump();
-                            },
+                            tooltip: 'Quran actions',
+                            icon: const Icon(Icons.more_vert, color: quranInk),
+                            onSelected: _menu,
                             itemBuilder: (_) => [
-                              PopupMenuItem(
-                                value: 'translation',
-                                child: Text(
-                                  prefs.showTranslation
-                                      ? 'Arabic reading view'
-                                      : 'Show translations',
+                              for (final item in [
+                                (
+                                  'view',
+                                  Icons.view_agenda_outlined,
+                                  'View in ayat',
                                 ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'jump',
-                                child: Text('Go to ayah'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'back',
-                                child: Text('Back'),
-                              ),
+                                (
+                                  'bookmark',
+                                  Icons.bookmark_border,
+                                  'Book Mark Surah',
+                                ),
+                                ('text', Icons.text_fields, 'Change text'),
+                                ('share', Icons.share_outlined, 'Share'),
+                                ('translate', Icons.translate, 'Translate'),
+                                (
+                                  'download',
+                                  Icons.download_outlined,
+                                  'Tajweed / Download Quran',
+                                ),
+                              ])
+                                PopupMenuItem(
+                                  value: item.$1,
+                                  child: Row(
+                                    children: [
+                                      Icon(item.$2, size: 19, color: quranInk),
+                                      const SizedBox(width: 14),
+                                      Flexible(child: Text(item.$3)),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -408,57 +558,23 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             context,
                             '${widget.args.surahNo}:${active.clamp(state.from, state.to)}',
                             prefs.surahLang == AppLanguage.bangla,
+                            ayahs: state.ayahs,
+                            surahName: state.surah?.name,
+                            player: detail == null
+                                ? null
+                                : _tafsirPlayer(detail),
                           ),
                           child: Text(appText.viewQuranTafsir),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (opening)
-                              Container(
-                                padding: const EdgeInsets.only(top: 116),
-                                decoration: const BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                      'assets/images/quran/starting_sura_pattern.png',
-                                    ),
-                                    fit: BoxFit.fill,
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      surah?.name ?? '',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.amiri(
-                                        fontSize: 27,
-                                        fontWeight: FontWeight.bold,
-                                        color: quranOlive,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${surah?.revelationPlace.toUpperCase()} • ${surah?.totalAyah} AYAT',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: quranOlive,
-                                      ),
-                                    ),
-                                    if (state.bismillahPre ||
-                                        widget.args.surahNo == 1)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 20,
-                                        ),
-                                        child: Image.asset(
-                                          'assets/images/bismillah.png',
-                                          height: 44,
-                                          color: quranOlive,
-                                        ),
-                                      ),
-                                    const SizedBox(height: 10),
-                                  ],
-                                ),
+                            if (opening && surah != null)
+                              QuranSurahHeading(
+                                surah: surah,
+                                showBismillah:
+                                    state.bismillahPre ||
+                                    widget.args.surahNo == 1,
                               ),
                             if (prefs.showTranslation)
                               for (final ayah in state.ayahs)
@@ -520,6 +636,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                   _showAyah(ayah);
                                 },
                               ),
+                            // if (widget.args.paraNumber == null)
+                            //   _surahNavigation(),
                           ],
                         ),
                       ),

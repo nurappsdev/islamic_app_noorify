@@ -27,15 +27,20 @@ class OfflineQuranBloc extends Bloc<OfflineQuranEvent, OfflineQuranState> {
     CheckOfflineQuran event,
     Emitter<OfflineQuranState> emit,
   ) async {
+    if (state.status == OfflineQuranStatus.preparing) return;
     emit(const OfflineQuranState(status: OfflineQuranStatus.checking));
-    final ready = await _database.isReady();
-    emit(
-      OfflineQuranState(
-        status: ready
-            ? OfflineQuranStatus.ready
-            : OfflineQuranStatus.needsSetup,
-      ),
-    );
+    try {
+      final ready = await _database.isReady();
+      emit(
+        OfflineQuranState(
+          status: ready
+              ? OfflineQuranStatus.ready
+              : OfflineQuranStatus.needsSetup,
+        ),
+      );
+    } catch (_) {
+      emit(const OfflineQuranState(status: OfflineQuranStatus.failed));
+    }
   }
 
   Future<void> _onPrepare(

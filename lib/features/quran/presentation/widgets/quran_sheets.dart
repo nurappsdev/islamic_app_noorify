@@ -1,3 +1,5 @@
+import '../screens/quran_tafsir_screen.dart';
+import '../../domain/quran_ayah.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,7 +13,6 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/a
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsir_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
@@ -101,83 +102,26 @@ class ReciterPickerSheet extends StatelessWidget {
   }
 }
 
-/// Opens a bottom sheet with the tafsir text for [verseKey], choosing the
-/// tafsir resource based on [isBangla].
-void openTafsirSheet(BuildContext context, String verseKey, bool isBangla) {
-  final resourceId = isBangla
-      ? banglaTafsirResourceId
-      : englishTafsirResourceId;
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    builder: (_) => BlocProvider(
-      create: (_) =>
-          TafsirBloc(tafsirResourceId: resourceId)..add(LoadTafsir(verseKey)),
-      child: const TafsirSheet(),
+/// Retains the existing entry point while presenting the new Tafsir reader.
+void openTafsirSheet(
+  BuildContext context,
+  String verseKey,
+  bool isBangla, {
+  List<QuranAyah>? ayahs,
+  Widget? player,
+  String? surahName,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => QuranTafsirScreen(
+        verseKey: verseKey,
+        isBangla: isBangla,
+        ayahs: ayahs,
+        player: player,
+        surahName: surahName,
+      ),
     ),
   );
-}
-
-class TafsirSheet extends StatelessWidget {
-  const TafsirSheet({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appText.tafsirTitle,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10.h),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 420.h),
-              child: BlocBuilder<TafsirBloc, TafsirState>(
-                builder: (context, state) {
-                  if (state.isLoading) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColor.primary,
-                        ),
-                      ),
-                    );
-                  }
-                  if (state.hasError) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: Center(
-                        child: Text(
-                          appText.quranLoadError,
-                          style: TextStyle(
-                            color: context.inkColor(Colors.grey.shade700),
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return SingleChildScrollView(
-                    child: Text(
-                      state.text,
-                      style: TextStyle(fontSize: 13.sp, height: 1.5),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// Shown when the user tries to play recitation that is not on the device.

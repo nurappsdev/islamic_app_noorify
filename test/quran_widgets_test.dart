@@ -1,3 +1,4 @@
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_reading_cubit.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,7 +64,32 @@ void main() {
       final audio = TestAudio();
       quranAudioHandler = audio;
       final downloader = _Downloader();
+      SurahRouteArgs? navigated;
       final adapter = Adapter((r) {
+        if (r.path.endsWith('/surahs')) {
+          return ok([
+            surah,
+            {...surah, 'number': 3, 'nameEnglish': 'Aal Imran'},
+          ]);
+        }
+        if (r.path.endsWith('/paras')) {
+          return ok([
+            {
+              'number': 3,
+              'nameBangla': 'পারা ৩',
+              'ayahCount': 126,
+              'start': {'surah': 2, 'ayah': 253},
+              'end': {'surah': 3, 'ayah': 92},
+              'surahs': [
+                {
+                  'number': 2,
+                  'nameEnglish': 'Al-Baqarah',
+                  'nameBangla': 'আল-বাকারা',
+                },
+              ],
+            },
+          ]);
+        }
         if (r.path.endsWith('/translations')) {
           return ok([
             {
@@ -117,6 +143,13 @@ void main() {
           child: ScreenUtilInit(
             designSize: const Size(375, 812),
             builder: (_, child) => MaterialApp(
+              onGenerateRoute: (settings) {
+                navigated = settings.arguments as SurahRouteArgs;
+                return MaterialPageRoute<void>(
+                  settings: settings,
+                  builder: (_) => const Scaffold(body: Text('Next reader')),
+                );
+              },
               home: QuranReadingScreen(
                 args: const SurahRouteArgs(
                   surahNo: 2,
@@ -154,6 +187,34 @@ void main() {
       preferences.add(const SetShowTranslation(false));
       preferences.add(const SetArabicFontScale(2.5));
       await tester.pump();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Quran actions'));
+      await tester.pumpAndSettle();
+      expect(find.text('Share'), findsOneWidget);
+      expect(find.text('Translate'), findsOneWidget);
+      await tester.tap(find.text('View in ayat'));
+      await tester.pumpAndSettle();
+      expect(preferences.state.showTranslation, isTrue);
+      await tester.tap(find.byTooltip('Filter Quran'));
+      await tester.pumpAndSettle();
+      expect(find.text('Filter Quran'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      // Reach the last real page and use the catalog-backed progression card.
+      final cubit = tester
+          .element(find.text('Page 42 ⌄'))
+          .read<QuranReadingCubit>();
+      cubit.load(from: 286);
+      await tester.pumpAndSettle();
+      expect(find.text('Next Surah'), findsOneWidget);
+      expect(find.text('Aal Imran'), findsOneWidget);
+      await tester.ensureVisible(find.text('Aal Imran'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Aal Imran'));
+      await tester.pumpAndSettle();
+      expect(navigated?.surahNo, 3);
+      expect(navigated?.ayahNo, 1);
+      expect(find.text('Next reader'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await audio.completed.close();
