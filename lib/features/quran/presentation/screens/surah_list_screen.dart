@@ -56,10 +56,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
       });
       if (poppedToHome) return;
     }
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      RouteNames.home,
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
   }
 
   @override
