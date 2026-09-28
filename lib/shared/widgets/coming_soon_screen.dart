@@ -9,9 +9,10 @@ import 'package:islami_app_noorify/features/home/presentation/screens/home_scree
 /// Generic placeholder page for a feature that's linked from the UI but not
 /// built yet (e.g. the home screen's Zakat/Age calculator shortcuts).
 class ComingSoonScreen extends StatelessWidget {
-  const ComingSoonScreen({super.key, required this.title});
+  const ComingSoonScreen({super.key, required this.title, this.onBack});
 
   final String title;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class ComingSoonScreen extends StatelessWidget {
           padding: EdgeInsets.only(left: 12.w),
           child: HomeCircleButton(
             icon: Icons.arrow_back_ios_new_rounded,
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: onBack ?? () => Navigator.of(context).pop(),
           ),
         ),
         title: Text(

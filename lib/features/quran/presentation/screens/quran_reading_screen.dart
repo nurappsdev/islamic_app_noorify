@@ -387,31 +387,32 @@ class _ReaderBodyState extends State<_ReaderBody> {
       ],
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
-        body: SafeArea(
-          child: BlocBuilder<QuranReadingCubit, QuranReadingState>(
-            builder: (context, state) {
-              final reader = context.read<QuranReadingCubit>();
-              final prefs = context.watch<QuranTranslationBloc>().state;
-              final active = context
-                  .watch<SurahPlaybackBloc>()
-                  .state
-                  .currentAyahNo;
-              final surah = state.surah;
-              final opening = state.from == 1;
-              final detail = surah == null
-                  ? null
-                  : SurahDetail(
-                      number: surah.number,
-                      name: surah.name,
-                      nameArabic: surah.nameArabic,
-                      translation: surah.translation,
-                      revelationPlace: surah.revelationPlace,
-                      totalAyah: surah.totalAyah,
-                      arabicAyahs: const [],
-                      englishAyahs: const [],
-                      bengaliAyahs: const [],
-                    );
-              return QuranReadingLayout(
+        body: BlocBuilder<QuranReadingCubit, QuranReadingState>(
+          builder: (context, state) {
+            final reader = context.read<QuranReadingCubit>();
+            final prefs = context.watch<QuranTranslationBloc>().state;
+            final active = context
+                .watch<SurahPlaybackBloc>()
+                .state
+                .currentAyahNo;
+            final surah = state.surah;
+            final opening = state.from == 1;
+            final detail = surah == null
+                ? null
+                : SurahDetail(
+                    number: surah.number,
+                    name: surah.name,
+                    nameArabic: surah.nameArabic,
+                    translation: surah.translation,
+                    revelationPlace: surah.revelationPlace,
+                    totalAyah: surah.totalAyah,
+                    arabicAyahs: const [],
+                    englishAyahs: const [],
+                    bengaliAyahs: const [],
+                  );
+            return QuranSurahBackdrop(
+              visible: opening && surah != null,
+              child: QuranReadingLayout(
                 extension: _showTafsir
                     ? QuranTafsirContent(
                         key: ValueKey(
@@ -552,6 +553,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     : QuranPageViewport(
                         pageNumber: state.pageNumber!,
                         showHeader: !opening,
+                        backgroundColor: opening ? Colors.transparent : null,
                         busy: state.loading,
                         onNext: state.to < reader.lastAyah ? reader.next : null,
                         onPrevious: state.from > reader.startAyah
@@ -660,9 +662,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           detail: detail,
                         ),
                       ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -126,7 +126,7 @@ void main() {
               routes: {
                 RouteNames.home: home,
                 RouteNames.quran: (_) =>
-                    const Scaffold(bottomNavigationBar: QuranBottomNav()),
+                    const QuranTabShell(child: Scaffold(body: TextField())),
               },
             ),
           ),
@@ -137,17 +137,35 @@ void main() {
       await tester.tap(find.byTooltip('Quran'));
       await tester.pumpAndSettle();
       expect(navigator.currentState!.canPop(), isTrue);
+      await tester.enterText(find.byType(TextField), 'Saved search');
+      final originalContent = tester.element(find.byType(TextField));
       final originalBar = tester.element(find.byType(QuranBottomNav));
+      final originalRoute = ModalRoute.of(originalBar);
+      final barPosition = tester.getRect(find.byType(QuranBottomNav));
       for (final section in ['home', 'bookmarks', 'history', 'more']) {
         final tab = find.byKey(ValueKey('quran-nav-$section'));
         await tester.tap(tab);
         await tester.pumpAndSettle();
         expect(find.byType(ComingSoonScreen), findsOneWidget);
-        navigator.currentState!.pop();
-        await tester.pumpAndSettle();
         expect(tester.element(find.byType(QuranBottomNav)), same(originalBar));
+        expect(ModalRoute.of(tester.element(tab)), same(originalRoute));
+        expect(tester.getRect(find.byType(QuranBottomNav)), barPosition);
+        expect(
+          tester.widget<QuranBottomNav>(find.byType(QuranBottomNav)).selected,
+          section,
+        );
         expect(tester.takeException(), isNull);
       }
+      await navigator.currentState!.maybePop();
+      await tester.pumpAndSettle();
+      expect(find.byType(ComingSoonScreen), findsNothing);
+      expect(tester.element(find.byType(TextField)), same(originalContent));
+      expect(find.text('Saved search'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('quran-nav-home')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('quran-nav-quran')));
+      await tester.pumpAndSettle();
+      expect(tester.element(find.byType(TextField)), same(originalContent));
       navigator.currentState!.pop();
       await tester.pumpAndSettle();
       expect(find.text('Open Quran'), findsOneWidget);

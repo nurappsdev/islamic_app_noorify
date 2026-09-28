@@ -17,7 +17,7 @@ All eight PNGs in `assets/images/quran_new_Design` were reviewed before implemen
 - Same-Surah filters retain the reader route; changed Surah or Para bounds replace it.
 - `paraStartAyah` separates the Para's lower bound from a selected/deep-linked ayah. Reading and audio respect the same bounds.
 - Adjacent Surah cards use catalog data rather than hardcoded names. Reader replacement avoids stacking a route for each Surah.
-- The Quran bottom tab stays selected and preserves its screen. The other bottom-bar shortcuts open the shared Coming Soon screen; Back restores the Quran screen. Existing feature routes remain available through their other entry points.
+- A persistent Quran tab shell keeps the same bottom bar mounted across Quran and all four Coming Soon tabs. Selection changes the body without pushing routes; Quran search and scroll state stay mounted. Back from a placeholder returns to Quran. Existing feature routes remain available through their other entry points.
 - Actual Quran-page swipes, clipped reading frames, auto-hiding controls and bounded ayah markers remain intact.
 - Copy/share preserves Arabic content verbatim, and includes the verse key and translation source. Native share destinations are supplied by the device.
 

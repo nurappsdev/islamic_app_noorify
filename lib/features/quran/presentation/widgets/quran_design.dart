@@ -142,36 +142,62 @@ class _NumberStar extends CustomPainter {
   bool shouldRepaint(_NumberStar oldDelegate) => false;
 }
 
-/// The active Quran tab retains its screen. Other bottom-bar destinations
-/// use the shared Coming Soon page without changing existing feature routes.
-class QuranBottomNav extends StatefulWidget {
-  const QuranBottomNav({super.key});
+/// Owns tab content and keeps the Quran subtree and navigation bar mounted.
+class QuranTabShell extends StatefulWidget {
+  const QuranTabShell({super.key, required this.child});
+  final Widget child;
+
   @override
-  State<QuranBottomNav> createState() => _QuranBottomNavState();
+  State<QuranTabShell> createState() => _QuranTabShellState();
 }
 
-class _QuranBottomNavState extends State<QuranBottomNav> {
-  bool _opening = false;
-  Future<void> _comingSoon(String title, String section) async {
-    if (_opening) return;
-    _opening = true;
-    try {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          settings: RouteSettings(name: '/quran/coming-soon/$section'),
-          builder: (_) => ComingSoonScreen(title: title),
-        ),
-      );
-    } finally {
-      _opening = false;
-    }
+class _QuranTabShellState extends State<QuranTabShell> {
+  String _selected = 'quran';
+
+  void _select(String section) {
+    FocusScope.of(context).unfocus();
+    if (_selected != section) setState(() => _selected = section);
   }
 
-  void _quran() {
-    if (_opening) return;
-    // This bar belongs to the Quran screen; retain its search and scroll state.
-    FocusScope.of(context).unfocus();
+  @override
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+    final sections = ['quran', 'home', 'bookmarks', 'history', 'more'];
+    final titles = [
+      text.home,
+      text.bookmarksTitle,
+      text.readingHistoryTitle,
+      'More',
+    ];
+    return PopScope(
+      canPop: _selected == 'quran',
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _select('quran');
+      },
+      child: Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: IndexedStack(
+          index: sections.indexOf(_selected),
+          children: [
+            widget.child,
+            for (final title in titles)
+              ComingSoonScreen(title: title, onBack: () => _select('quran')),
+          ],
+        ),
+        bottomNavigationBar: QuranBottomNav(
+          selected: _selected,
+          onSelected: _select,
+        ),
+      ),
+    );
   }
+}
+
+/// Tab selection changes content in the owning shell, without pushing routes.
+class QuranBottomNav extends StatelessWidget {
+  const QuranBottomNav({super.key, this.selected = 'quran', this.onSelected});
+  final String selected;
+  final ValueChanged<String>? onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -207,30 +233,28 @@ class _QuranBottomNavState extends State<QuranBottomNav> {
               children: [
                 for (final item in items)
                   Expanded(
-                    flex: item.$1 == 'quran' && showLabel ? 2 : 1,
+                    flex: item.$1 == selected && showLabel ? 2 : 1,
                     child: Semantics(
-                      selected: item.$1 == 'quran',
+                      selected: item.$1 == selected,
                       button: true,
                       child: Tooltip(
                         message: item.$2,
                         child: Material(
-                          color: item.$1 == 'quran'
+                          color: item.$1 == selected
                               ? const Color(0xff5d886b)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(28),
                           child: InkWell(
                             key: ValueKey('quran-nav-${item.$1}'),
                             borderRadius: BorderRadius.circular(28),
-                            onTap: item.$1 == 'quran'
-                                ? _quran
-                                : () => _comingSoon(item.$2, item.$1),
+                            onTap: () => onSelected?.call(item.$1),
                             child: SizedBox(
                               height: 56,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(item.$3, color: Colors.white, size: 24),
-                                  if (item.$1 == 'quran' && showLabel) ...[
+                                  if (item.$1 == selected && showLabel) ...[
                                     const SizedBox(width: 6),
                                     Flexible(
                                       child: Text(

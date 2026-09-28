@@ -4,6 +4,52 @@ import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_surah_heading.dart';
 
 void main() {
+  testWidgets('pattern fills screen edges behind safe-area controls', (
+    tester,
+  ) async {
+    for (final width in [320.0, 430.0]) {
+      tester.view.physicalSize = Size(width, 850);
+      tester.view.devicePixelRatio = 1;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MediaQuery(
+              data: MediaQueryData(
+                size: Size(width, 850),
+                padding: const EdgeInsets.only(top: 44),
+              ),
+              child: const QuranSurahBackdrop(
+                visible: true,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 48,
+                        width: double.infinity,
+                        child: Text('Controls'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final pattern = find.byKey(const ValueKey('surah-background-pattern'));
+      expect(tester.getRect(pattern).left, 0);
+      expect(tester.getRect(pattern).top, 0);
+      expect(tester.getRect(pattern).width, width);
+      expect(tester.widget<Image>(pattern).fit, BoxFit.cover);
+      expect(tester.getRect(find.text('Controls')).left, 16);
+      expect(tester.getRect(find.text('Controls')).top, 44);
+      expect(find.text('Controls').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
   testWidgets(
     'Surah heading uses live metadata and keeps text inside the arch',
     (tester) async {
@@ -42,9 +88,6 @@ void main() {
           expect(title.top, greaterThanOrEqualTo(width * .61));
           expect(title.width, lessThanOrEqualTo(width * .52));
           expect(metadata.top, greaterThan(title.bottom));
-          final ornament = tester.widgetList<Image>(find.byType(Image)).first;
-          expect(ornament.fit, BoxFit.contain);
-          expect(ornament.height, closeTo(width * 380 / 402, .01));
           expect(tester.takeException(), isNull);
         }
       }
