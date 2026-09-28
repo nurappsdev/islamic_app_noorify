@@ -482,6 +482,25 @@ class _ReaderBodyState extends State<_ReaderBody> {
                       ),
                       child: Row(
                         children: [
+                          IconButton(
+                            key: const ValueKey('quran-back-button'),
+                            tooltip: 'Back',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () async {
+                              final popped =
+                                  await Navigator.of(context).maybePop();
+                              if (!popped && context.mounted) {
+                                Navigator.of(context).pushReplacementNamed(
+                                  RouteNames.quranSurahs,
+                                );
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 16,
+                              color: quranInk,
+                            ),
+                          ),
                           TextButton(
                             onPressed: _jump,
                             style: TextButton.styleFrom(
@@ -508,6 +527,10 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ),
+                          ),
+                          _ReadingTimerPill(
+                            seconds: _seconds,
+                            label: appText.yourReadingTimeIs,
                           ),
                           IconButton(
                             tooltip: 'Filter Quran',
@@ -559,23 +582,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor(quranPale),
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(5),
-                        ),
-                      ),
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: _seconds,
-                        builder: (context, seconds, _) => Text(
-                          '${appText.yourReadingTimeIs} ${seconds ~/ 60} min ${seconds % 60} sec',
-                          key: const ValueKey('quran-reading-timer'),
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 6),
                     SizedBox(
                       height: 2,
                       child: state.loading && state.ayahs.isNotEmpty
@@ -723,4 +730,72 @@ class _ReaderBodyState extends State<_ReaderBody> {
       ),
     );
   }
+}
+
+/// A compact rounded counter of this reading session's time, shown in the
+/// reader's header next to the filter button.
+class _ReadingTimerPill extends StatelessWidget {
+  const _ReadingTimerPill({required this.seconds, required this.label});
+  final ValueNotifier<int> seconds;
+  final String label;
+
+  static String _format(int total) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final h = total ~/ 3600;
+    final m = (total % 3600) ~/ 60;
+    final s = total % 60;
+    return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<int>(
+    valueListenable: seconds,
+    builder: (context, value, _) => Tooltip(
+      message: '$label ${value ~/ 60} min ${value % 60} sec',
+      child: Container(
+        key: const ValueKey('quran-reading-timer'),
+        margin: const EdgeInsets.only(left: 4),
+        padding: const EdgeInsets.fromLTRB(6, 4, 10, 4),
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: quranBorder),
+          boxShadow: [
+            BoxShadow(
+              color: quranInk.withValues(alpha: .08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: quranInk.withValues(alpha: .12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.timer_outlined,
+                size: 13,
+                color: quranInk,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _format(value),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: quranInk,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
