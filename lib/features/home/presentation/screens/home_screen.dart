@@ -39,6 +39,8 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
+import '../widgets/home_progress_section.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -185,7 +187,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         ],
                       ),
                       // SizedBox(height: 14.h),
-                      // const HomeProgressSection(),
+                      const HomeProgressSection(),
                       SizedBox(height: 10.h),
                       const HomeFeatureGrid(),
                     ],

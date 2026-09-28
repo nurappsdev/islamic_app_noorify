@@ -203,43 +203,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         top: 19.h,
                         left: 20.w,
                         right: 20.w,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  hijriDateLabel(
-                                    _now(),
-                                    bangla: bangla,
-                                    maghrib: _times?.maghrib,
-                                  ),
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: topDateColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 28.w),
-
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  banglaDateLabel(_now(), english: !bangla),
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: topDateColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: _CardDateRow(
+                          start: hijriDateLabel(
+                            _now(),
+                            bangla: bangla,
+                            maghrib: _times?.maghrib,
+                          ),
+                          end: banglaDateLabel(_now(), english: !bangla),
+                          color: topDateColor,
                         ),
                       ),
 
