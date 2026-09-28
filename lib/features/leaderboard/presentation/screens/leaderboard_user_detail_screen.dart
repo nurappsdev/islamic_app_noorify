@@ -28,7 +28,7 @@ class LeaderboardUserDetailScreen extends StatefulWidget {
 
   final String userId;
 
-  /// `daily`, `weekly`, `monthly`, `yearly` or `all_time`.
+  /// `daily`, `weekly`, `monthly` or `yearly`.
   final String period;
 
   /// The period's key from the list's response; `null` lets the server use the

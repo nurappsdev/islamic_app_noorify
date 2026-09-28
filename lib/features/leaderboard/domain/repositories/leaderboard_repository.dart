@@ -14,9 +14,9 @@ abstract interface class LeaderboardRepository {
     int limit,
   });
 
-  /// Fetches one user's standing for [period] (`daily`, `weekly`, `monthly`,
-  /// `yearly` or `all_time`); [date] is that period's key from a
-  /// [LeaderboardBoard] (`2026-09`).
+  /// Fetches one user's standing for [period] (`daily`, `weekly`, `monthly`
+  /// or `yearly`); [date] is that period's key from a [LeaderboardBoard]
+  /// (`2026-09`).
   Future<Either<Failure, LeaderboardUserDetail>> getUserPosition({
     required String userId,
     required String period,

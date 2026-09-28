@@ -784,7 +784,6 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'leaderboardParticipants': 'of {n} participants',
   'leaderboardTotalQuranTime': 'Total Quran Reading time',
   'leaderboardMostReadingSura': 'Most Reading Sura',
-  'allTime': 'All Time',
   // Quran screens
   'commonCancel': 'Cancel',
   'commonApply': 'Apply',

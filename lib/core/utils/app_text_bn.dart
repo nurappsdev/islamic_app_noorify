@@ -783,7 +783,6 @@ const Map<String, String> appTextBn = <String, String>{
   'leaderboardParticipants': '{n} জন অংশগ্রহণকারীর মধ্যে',
   'leaderboardTotalQuranTime': 'মোট কুরআন পড়ার সময়',
   'leaderboardMostReadingSura': 'সবচেয়ে বেশি পঠিত সূরা',
-  'allTime': 'সব সময়',
   // Quran screens
   'commonCancel': 'বাতিল',
   'commonApply': 'প্রয়োগ করুন',

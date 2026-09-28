@@ -735,7 +735,6 @@ class AppText {
     required this.leaderboardParticipants,
     required this.leaderboardTotalQuranTime,
     required this.leaderboardMostReadingSura,
-    required this.allTime,
     required this.readAtLabel,
     required this.verificationCodeSent,
     required this.verificationResendFailed,
@@ -1598,7 +1597,6 @@ class AppText {
   final String leaderboardParticipants;
   final String leaderboardTotalQuranTime;
   final String leaderboardMostReadingSura;
-  final String allTime;
   final String readAtLabel;
   final String verificationCodeSent;
   final String verificationResendFailed;
@@ -4429,7 +4427,6 @@ class AppText {
         'leaderboardMostReadingSura',
         fallback?.leaderboardMostReadingSura ?? '',
       ),
-      allTime: _read(map, 'allTime', fallback?.allTime ?? ''),
       readAtLabel: _read(map, 'readAtLabel', fallback?.readAtLabel ?? ''),
       verificationCodeSent: _read(
         map,

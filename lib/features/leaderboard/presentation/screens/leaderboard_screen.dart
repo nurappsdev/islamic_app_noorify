@@ -22,7 +22,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  static const _periods = ['daily', 'weekly', 'monthly', 'yearly', 'all_time'];
+  static const _periods = ['daily', 'weekly', 'monthly', 'yearly'];
 
   String _period = 'monthly';
   String _searchQuery = '';
@@ -230,8 +230,6 @@ class _PeriodDropdown extends StatelessWidget {
         return appText.weekly;
       case 'yearly':
         return appText.yearly;
-      case 'all_time':
-        return appText.allTime;
       case 'monthly':
       default:
         return appText.monthly;
