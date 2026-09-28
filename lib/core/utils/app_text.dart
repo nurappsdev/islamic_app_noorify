@@ -727,6 +727,15 @@ class AppText {
     required this.amolReadConfirmMessage,
     required this.amolUntrackTitle,
     required this.amolUntrackMessage,
+    required this.leaderboardRankLabel,
+    required this.leaderboardNotRanked,
+    required this.leaderboardFirstPlace,
+    required this.leaderboardPointsBehindFirst,
+    required this.leaderboardPointsBehindFirstNamed,
+    required this.leaderboardParticipants,
+    required this.leaderboardTotalQuranTime,
+    required this.leaderboardMostReadingSura,
+    required this.allTime,
     required this.readAtLabel,
     required this.verificationCodeSent,
     required this.verificationResendFailed,
@@ -1581,6 +1590,15 @@ class AppText {
   final String amolReadConfirmMessage;
   final String amolUntrackTitle;
   final String amolUntrackMessage;
+  final String leaderboardRankLabel;
+  final String leaderboardNotRanked;
+  final String leaderboardFirstPlace;
+  final String leaderboardPointsBehindFirst;
+  final String leaderboardPointsBehindFirstNamed;
+  final String leaderboardParticipants;
+  final String leaderboardTotalQuranTime;
+  final String leaderboardMostReadingSura;
+  final String allTime;
   final String readAtLabel;
   final String verificationCodeSent;
   final String verificationResendFailed;
@@ -4371,6 +4389,47 @@ class AppText {
         'amolUntrackMessage',
         fallback?.amolUntrackMessage ?? '',
       ),
+      leaderboardRankLabel: _read(
+        map,
+        'leaderboardRankLabel',
+        fallback?.leaderboardRankLabel ?? '',
+      ),
+      leaderboardNotRanked: _read(
+        map,
+        'leaderboardNotRanked',
+        fallback?.leaderboardNotRanked ?? '',
+      ),
+      leaderboardFirstPlace: _read(
+        map,
+        'leaderboardFirstPlace',
+        fallback?.leaderboardFirstPlace ?? '',
+      ),
+      leaderboardPointsBehindFirst: _read(
+        map,
+        'leaderboardPointsBehindFirst',
+        fallback?.leaderboardPointsBehindFirst ?? '',
+      ),
+      leaderboardPointsBehindFirstNamed: _read(
+        map,
+        'leaderboardPointsBehindFirstNamed',
+        fallback?.leaderboardPointsBehindFirstNamed ?? '',
+      ),
+      leaderboardParticipants: _read(
+        map,
+        'leaderboardParticipants',
+        fallback?.leaderboardParticipants ?? '',
+      ),
+      leaderboardTotalQuranTime: _read(
+        map,
+        'leaderboardTotalQuranTime',
+        fallback?.leaderboardTotalQuranTime ?? '',
+      ),
+      leaderboardMostReadingSura: _read(
+        map,
+        'leaderboardMostReadingSura',
+        fallback?.leaderboardMostReadingSura ?? '',
+      ),
+      allTime: _read(map, 'allTime', fallback?.allTime ?? ''),
       readAtLabel: _read(map, 'readAtLabel', fallback?.readAtLabel ?? ''),
       verificationCodeSent: _read(
         map,

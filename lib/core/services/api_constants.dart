@@ -51,6 +51,11 @@ class ApiConstants {
 
   static const String leaderboardTopEndPoint = "/leaderboard/top";
 
+  /// One user's standing: `?period=daily|weekly|monthly|yearly|all_time` and
+  /// the period's `date` key (e.g. `2026-09`).
+  static String leaderboardUserEndPoint(String userId) =>
+      "/leaderboard/users/$userId";
+
   static const String quizCategoriesEndPoint = "/quizzes/categories";
   static const String quizDailyEndPoint = "/quizzes/daily";
   static const String quizDailyStatusEndPoint = "/quizzes/daily/status";
