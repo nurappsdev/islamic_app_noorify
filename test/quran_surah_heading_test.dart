@@ -2,32 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_surah_heading.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
+
+const surah = SurahSummary(
+  number: 2,
+  name: 'Al-Baqarah',
+  nameArabic: 'البقرة',
+  translation: '',
+  revelationPlace: 'medinan',
+  totalAyah: 286,
+);
 
 void main() {
-  testWidgets('pattern fills screen edges behind safe-area controls', (
+  testWidgets('header remains sequential and scrolls away with its artwork', (
     tester,
   ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     for (final width in [320.0, 430.0]) {
-      tester.view.physicalSize = Size(width, 850);
-      tester.view.devicePixelRatio = 1;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MediaQuery(
-              data: MediaQueryData(
-                size: Size(width, 850),
-                padding: const EdgeInsets.only(top: 44),
-              ),
-              child: const QuranSurahBackdrop(
-                visible: true,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+      for (final scale in [1.0, 2.0]) {
+        tester.view.physicalSize = Size(width, 850);
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: MediaQuery(
+                data: MediaQueryData(
+                  size: Size(width, 850),
+                  padding: const EdgeInsets.only(top: 44),
+                  textScaler: TextScaler.linear(scale),
+                ),
+                child: SafeArea(
                   child: Column(
                     children: [
-                      SizedBox(
-                        height: 48,
-                        width: double.infinity,
-                        child: Text('Controls'),
+                      const SizedBox(height: 72, child: Text('Controls')),
+                      Expanded(
+                        child: QuranPageViewport(
+                          pageNumber: 1,
+                          showHeader: false,
+                          footer: const SizedBox(),
+                          header: const QuranSurahHeading(
+                            surah: surah,
+                            showBismillah: true,
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('First ayah'),
+                              const SizedBox(height: 1500),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -35,62 +59,64 @@ void main() {
               ),
             ),
           ),
-        ),
-      );
-      final pattern = find.byKey(const ValueKey('surah-background-pattern'));
-      expect(tester.getRect(pattern).left, 0);
-      expect(tester.getRect(pattern).top, 0);
-      expect(tester.getRect(pattern).width, width);
-      expect(tester.widget<Image>(pattern).fit, BoxFit.cover);
-      expect(tester.getRect(find.text('Controls')).left, 16);
-      expect(tester.getRect(find.text('Controls')).top, 44);
-      expect(find.text('Controls').hitTestable(), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    }
-    tester.view.resetPhysicalSize();
-    tester.view.resetDevicePixelRatio();
-  });
-  testWidgets(
-    'Surah heading uses live metadata and keeps text inside the arch',
-    (tester) async {
-      for (final width in [272.0, 354.0]) {
-        for (final scale in [1.0, 2.0]) {
-          const surah = SurahSummary(
-            number: 3,
-            name: 'Aal Imran',
-            nameArabic: 'آل عمران',
-            translation: '',
-            revelationPlace: 'medinan',
-            totalAyah: 200,
-          );
-          await tester.pumpWidget(
-            MaterialApp(
-              home: Scaffold(
-                body: SingleChildScrollView(
-                  child: MediaQuery(
-                    data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-                    child: SizedBox(
-                      width: width,
-                      child: const QuranSurahHeading(
-                        surah: surah,
-                        showBismillah: true,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-          expect(find.text('Aal Imran'), findsOneWidget);
-          expect(find.text('MEDINAN • 200 AYAT'), findsOneWidget);
-          final title = tester.getRect(find.text('Aal Imran'));
-          final metadata = tester.getRect(find.text('MEDINAN • 200 AYAT'));
-          expect(title.top, greaterThanOrEqualTo(width * .61));
-          expect(title.width, lessThanOrEqualTo(width * .52));
-          expect(metadata.top, greaterThan(title.bottom));
-          expect(tester.takeException(), isNull);
+        );
+        final header = find.byType(QuranSurahHeading);
+        final pattern = find.byKey(const ValueKey('surah-background-pattern'));
+        final title = find.text('Al-Baqarah');
+        final metadata = find.text('MEDINAN • 286 AYAT');
+        final bismillah = find.byWidgetPredicate(
+          (w) => w is Image && w.semanticLabel == 'Bismillah',
+        );
+        final ayah = find.text('First ayah');
+        final scroll = tester
+            .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
+            .controller!;
+        scroll.jumpTo(0);
+        await tester.pump();
+        expect(tester.getRect(pattern).left, 0);
+        expect(tester.getRect(pattern).width, width);
+        expect(tester.getRect(find.text('Controls')).top, 44);
+        expect(
+          tester.getRect(title).top - tester.getRect(header).top,
+          closeTo(width * .57, .01),
+        );
+        expect(
+          tester.getRect(metadata).top - tester.getRect(title).bottom,
+          closeTo(8, .01),
+        );
+        expect(
+          tester.getRect(bismillah).top - tester.getRect(metadata).bottom,
+          closeTo(16, .01),
+        );
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(pattern).bottom + 24),
+        );
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(bismillah).bottom + 24),
+        );
+        final before = [
+          pattern,
+          title,
+          metadata,
+          bismillah,
+          ayah,
+        ].map((f) => tester.getTopLeft(f).dy).toList();
+        scroll.jumpTo(200);
+        await tester.pump();
+        final after = [
+          pattern,
+          title,
+          metadata,
+          bismillah,
+          ayah,
+        ].map((f) => tester.getTopLeft(f).dy).toList();
+        for (var i = 0; i < before.length; i++) {
+          expect(before[i] - after[i], closeTo(200, .01));
         }
+        expect(tester.takeException(), isNull);
       }
-    },
-  );
+    }
+  });
 }

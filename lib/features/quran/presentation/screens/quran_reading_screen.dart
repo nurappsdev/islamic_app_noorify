@@ -410,8 +410,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     englishAyahs: const [],
                     bengaliAyahs: const [],
                   );
-            return QuranSurahBackdrop(
-              visible: opening && surah != null,
+            return SafeArea(
               child: QuranReadingLayout(
                 extension: _showTafsir
                     ? QuranTafsirContent(
@@ -553,7 +552,14 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     : QuranPageViewport(
                         pageNumber: state.pageNumber!,
                         showHeader: !opening,
-                        backgroundColor: opening ? Colors.transparent : null,
+                        header: opening && surah != null
+                            ? QuranSurahHeading(
+                                surah: surah,
+                                showBismillah:
+                                    state.bismillahPre ||
+                                    widget.args.surahNo == 1,
+                              )
+                            : null,
                         busy: state.loading,
                         onNext: state.to < reader.lastAyah ? reader.next : null,
                         onPrevious: state.from > reader.startAyah
@@ -581,13 +587,6 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (opening && surah != null)
-                              QuranSurahHeading(
-                                surah: surah,
-                                showBismillah:
-                                    state.bismillahPre ||
-                                    widget.args.surahNo == 1,
-                              ),
                             if (prefs.showTranslation)
                               for (final ayah in state.ayahs)
                                 InkWell(

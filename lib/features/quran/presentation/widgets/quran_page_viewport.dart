@@ -13,10 +13,10 @@ class QuranPageViewport extends StatefulWidget {
     this.onPrevious,
     this.busy = false,
     this.showHeader = true,
-    this.backgroundColor,
+    this.header,
   });
   final int pageNumber;
-  final Color? backgroundColor;
+  final Widget? header;
   final Widget child, footer;
   final VoidCallback? onNext, onPrevious;
   final bool busy, showHeader;
@@ -55,7 +55,9 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
           // This padding is OUTSIDE the scroll view; scrolling can never
           // move text into the header/footer or beyond either side border.
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 64),
+            padding: widget.header == null
+                ? const EdgeInsets.fromLTRB(24, 28, 24, 64)
+                : const EdgeInsets.only(bottom: 64),
             child: ClipRect(
               key: const ValueKey('quran-frame-interior'),
               clipBehavior: Clip.hardEdge,
@@ -81,8 +83,20 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                 },
                 child: _PageScrollBody(
                   key: ValueKey(widget.pageNumber),
-                  backgroundColor: widget.backgroundColor,
-                  child: widget.child,
+                  child: widget.header == null
+                      ? widget.child
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            widget.header!,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                              ),
+                              child: ClipRect(child: widget.child),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -125,8 +139,7 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
 /// Each animated page owns its scroll position. Replacing translations keeps
 /// this state; turning a page starts at the top without moving the outgoing page.
 class _PageScrollBody extends StatefulWidget {
-  const _PageScrollBody({super.key, required this.child, this.backgroundColor});
-  final Color? backgroundColor;
+  const _PageScrollBody({super.key, required this.child});
   final Widget child;
   @override
   State<_PageScrollBody> createState() => _PageScrollBodyState();
@@ -142,7 +155,7 @@ class _PageScrollBodyState extends State<_PageScrollBody> {
 
   @override
   Widget build(BuildContext context) => ColoredBox(
-    color: widget.backgroundColor ?? context.pageColor(Colors.white),
+    color: context.pageColor(Colors.white),
     child: SingleChildScrollView(
       controller: _controller,
       clipBehavior: Clip.hardEdge,
