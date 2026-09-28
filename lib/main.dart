@@ -16,7 +16,13 @@ import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/dark_theme.dart';
 import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
+import 'features/alarm/data/datasources/alarm_local_data_source.dart';
+import 'features/alarm/data/datasources/alarm_remote_data_source.dart';
+import 'features/alarm/data/repositories/alarm_repository_impl.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
+import 'features/alarm/data/services/alarm_sync.dart';
+import 'features/alarm/domain/usecases/get_alarm_dashboard.dart';
+import 'features/alarm/domain/usecases/get_ringtones.dart';
 import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
@@ -58,10 +64,25 @@ Future<void> main() async {
       false;
 
   await AlarmScheduler.init();
+  await AlarmScheduler.logScheduledAlarms();
   // Guests own no alarms: clear any left armed by a previous session (e.g.
   // one that logged out before logout started disarming them).
   if (!AuthLocalDataSourceImpl().hasToken) {
-    await AlarmScheduler.cancelAllAlarms();
+    await AlarmScheduler.cancelAllAlarms(reason: 'signed-out launch');
+  } else {
+    // Signed in: make the OS schedule match the server's list, so an alarm
+    // the server no longer has stops ringing without the alarm screen being
+    // opened first. Offline or failing, it leaves the schedule as it is.
+    final alarmRepository = AlarmRepositoryImpl(
+      AlarmRemoteDataSourceImpl(),
+      AlarmLocalDataSourceImpl(),
+    );
+    unawaited(
+      syncDeviceAlarmsFromServer(
+        getAlarmDashboard: GetAlarmDashboard(alarmRepository),
+        getRingtones: GetRingtones(alarmRepository),
+      ),
+    );
   }
   // Alarms are re-armed from the server's list whenever the alarm screen
   // loads (see `AlarmListBloc`), not from the local cache here: the cache

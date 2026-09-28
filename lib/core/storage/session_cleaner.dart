@@ -26,7 +26,7 @@ class SessionCleaner {
 
   static Future<void> clearUserData() async {
     // Each step is independent: one failing must not leave the rest behind.
-    await _safe(AlarmScheduler.cancelAllAlarms);
+    await _safe(() => AlarmScheduler.cancelAllAlarms(reason: 'signed out'));
     await _safe(() async {
       // Token and the cached profile both live in the auth box.
       await HiveService.auth.clear();

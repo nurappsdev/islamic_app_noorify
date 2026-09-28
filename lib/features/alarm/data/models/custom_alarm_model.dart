@@ -31,7 +31,9 @@ class CustomAlarmModel extends AlarmEntry {
       vibrateAndRing: soundMode == 'vibrate_and_ring',
       vibrate: soundMode == 'vibrate',
       ring: soundMode == 'ring',
-      enabled: json['isEnabled'] as bool? ?? true,
+      // A time that can't be read must not become a 12:00 AM alarm: it stays
+      // off until the server sends a valid one.
+      enabled: parsed != null && (json['isEnabled'] as bool? ?? true),
       label: json['label'] as String? ?? '',
       ringtoneId: json['ringtoneId'] as String? ?? AlarmEntry.defaultRingtoneId,
       ringtoneName:

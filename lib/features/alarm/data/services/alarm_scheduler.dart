@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:just_audio/just_audio.dart';
@@ -14,9 +15,10 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:vibration/vibration.dart';
 
 import 'package:islami_app_noorify/core/storage/hive_service.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 
@@ -91,9 +93,30 @@ final alarmNotificationEvents =
 final FlutterLocalNotificationsPlugin _notifications =
     FlutterLocalNotificationsPlugin();
 
-int alarmManagerIdFor(String alarmId) => alarmId.hashCode & 0x7fffffff;
-int _snoozeManagerIdFor(String alarmId) =>
-    (alarmManagerIdFor(alarmId) + 1) & 0x7fffffff;
+/// FNV-1a over the id's UTF-16 code units. `String.hashCode` is not
+/// guaranteed to give the same value after an app or SDK update, and a changed
+/// value would leave the alarms armed under the old one impossible to cancel.
+int _stableHash(String value) {
+  var hash = 0x811c9dc5;
+  for (final unit in value.codeUnits) {
+    hash = ((hash ^ unit) * 0x01000193) & 0xffffffff;
+  }
+  return hash;
+}
+
+/// The OS-level id of [alarmId]'s regular daily alarm. Always even, so its
+/// snooze id (odd, see [_snoozeManagerIdFor]) can never be another alarm's.
+int alarmManagerIdFor(String alarmId) =>
+    (_stableHash(alarmId) & 0x3fffffff) << 1;
+
+int _snoozeManagerIdFor(String alarmId) => alarmManagerIdFor(alarmId) | 1;
+
+/// Ids earlier versions armed alarms under (`String.hashCode`). Still
+/// cancelled with the current ones, so an alarm armed by an older version
+/// can't outlive its deletion.
+int _legacyManagerIdFor(String alarmId) => alarmId.hashCode & 0x7fffffff;
+int _legacySnoozeManagerIdFor(String alarmId) =>
+    (_legacyManagerIdFor(alarmId) + 1) & 0x7fffffff;
 
 /// Schedules, cancels, and displays the alarms saved on the "All Alarm"
 /// screen so they fire — with the user's selected ringtone — at the exact
@@ -168,59 +191,137 @@ class AlarmScheduler {
     );
   }
 
-  static Future<NotificationAppLaunchDetails?> launchDetails() =>
-      _notifications.getNotificationAppLaunchDetails();
-
-  /// Called once at startup with the freshly-loaded local alarm list, so the
-  /// OS-level schedule always matches what's saved — even if the app was
-  /// reinstalled or the OS silently dropped a pending alarm.
-  static Future<void> rescheduleAll(List<AlarmEntry> alarms) async {
-    for (final alarm in alarms) {
-      if (alarm.enabled) {
-        await scheduleAlarm(alarm);
-      } else {
-        await cancelAlarm(alarm.id);
+  /// Logs what the OS has scheduled for this app, so an alarm the app doesn't
+  /// list stands out in the log. Call once after [init].
+  static Future<void> logScheduledAlarms() async {
+    final held = await persistedOsAlarmIds();
+    await AlarmLog.record(
+      'startup',
+      status: 'ok',
+      detail: 'OS holds ${held.length} alarm(s): ${held.toList()..sort()}',
+    );
+    if (kDebugMode) {
+      for (final line
+          in (await AlarmLog.history()).reversed.take(20).toList()..sort()) {
+        debugPrint('[Alarm][history] $line');
       }
     }
   }
 
-  /// Prayer alarms (the "Prayers Alarm" tab / Set All Alarm) live only on the
-  /// server, so they're armed straight from `GET /alarms` under a stable
-  /// `prayer_<type>` id — re-arming the same id replaces the previous one.
-  /// [ringtoneUrls] maps ringtone id -> audio URL so the ringing screen can
-  /// play the chosen adhan; without one it falls back to the bundled beep.
-  static Future<void> reschedulePrayerAlarms(
-    List<PrayerAlarm> prayers, {
-    Map<String, String> ringtoneUrls = const {},
-  }) async {
-    final userSet = await userPrayerAlarmTypes();
-    for (final prayer in prayers) {
-      final id = 'prayer_${prayer.prayerType}';
-      final time = parseClockTime12h(prayer.alarmTime);
-      // The server lists every prayer (often pre-enabled by default); only
-      // the ones the user picked in "Set All Alarm" may ring on this device.
-      if (!userSet.contains(prayer.prayerType) ||
-          !prayer.isEnabled ||
-          time == null) {
-        await cancelAlarm(id);
+  static Future<NotificationAppLaunchDetails?> launchDetails() =>
+      _notifications.getNotificationAppLaunchDetails();
+
+  static Future<void> _serial = Future<void>.value();
+
+  /// Makes this device's OS schedule match [plan] - the server's alarm list -
+  /// exactly: arms every alarm in it (re-arming an id replaces the previous
+  /// one), disarms the ones it excludes, and finally cancels every other alarm
+  /// the OS still holds for this app. That last sweep is what removes alarms
+  /// the server no longer lists (deleted on another device, armed by an older
+  /// version, left behind by a failed cancel) and that nothing else on the
+  /// device remembers.
+  ///
+  /// Only call this with a list that was fetched successfully: an empty plan
+  /// from a failed request would disarm everything. Calls run one at a time so
+  /// a late sweep can't cancel what a newer sync just armed.
+  static Future<void> sync(AlarmSyncPlan plan) {
+    final run = _serial.then((_) => _applyPlan(plan));
+    _serial = run.catchError((Object _) {});
+    return run;
+  }
+
+  static Future<void> _applyPlan(AlarmSyncPlan plan) async {
+    final desired = <int, String>{}; // OS id -> alarm id
+    for (final alarm in plan.armed) {
+      final osId = alarmManagerIdFor(alarm.id);
+      final clash = desired[osId];
+      if (clash != null && clash != alarm.id) {
+        // Two different ids hashing to one OS id would silently replace each
+        // other; arming neither twice is safer than losing one unnoticed.
+        await AlarmLog.record(
+          'skip',
+          id: alarm.id,
+          name: alarm.label,
+          status: 'id-collision',
+          detail: 'shares OS id $osId with $clash',
+        );
         continue;
       }
-      await scheduleAlarm(
-        AlarmEntry(
-          id: id,
-          hour: time.hour,
-          minute: time.minute,
-          vibrateAndRing: prayer.soundMode == 'vibrate_and_ring',
-          vibrate: prayer.soundMode == 'vibrate',
-          ring: prayer.soundMode == 'ring',
-          enabled: true,
-          label: prayer.title,
-          ringtoneId: prayer.ringtoneId,
-          ringtoneName: prayer.ringtoneName,
-          ringtoneUrl: ringtoneUrls[prayer.ringtoneId] ?? '',
-        ),
+      desired[osId] = alarm.id;
+      try {
+        await scheduleAlarm(alarm, source: AlarmSource.backend);
+      } catch (e) {
+        await AlarmLog.record(
+          'arm',
+          id: alarm.id,
+          name: alarm.label,
+          source: AlarmSource.backend,
+          status: 'failed',
+          detail: '$e',
+        );
+      }
+    }
+    for (final entry in plan.skipped.entries) {
+      await cancelAlarm(entry.key, reason: entry.value);
+    }
+
+    // Everything else the OS holds is an alarm this device no longer wants.
+    for (final osId in await persistedOsAlarmIds()) {
+      if (desired.containsKey(osId & ~1)) continue; // wanted, or its snooze
+      await _cancelOsAlarm(osId);
+      await AlarmLog.record(
+        'sweep',
+        status: 'cancelled',
+        detail: 'OS alarm $osId is not in the server list',
       );
     }
+    if (plan.duplicateTimes.isNotEmpty) {
+      await AlarmLog.record(
+        'warn',
+        status: 'duplicate-times',
+        detail: 'several alarms share ${plan.duplicateTimes.join(', ')}',
+      );
+    }
+    await AlarmLog.record(
+      'sync',
+      status: 'ok',
+      detail: 'armed ${desired.length}, disarmed ${plan.skipped.length}',
+    );
+  }
+
+  static const _nativeChannel = MethodChannel('islami_app_noorify/alarms');
+
+  /// The OS ids of every alarm still scheduled for this app.
+  ///
+  /// Android: the ids `android_alarm_manager_plus` has persisted, read
+  /// natively (it has no Dart API for this). iOS: the pending notifications.
+  static Future<Set<int>> persistedOsAlarmIds() async {
+    try {
+      if (Platform.isAndroid) {
+        final ids = await _nativeChannel.invokeListMethod<int>(
+          'persistedAlarmIds',
+        );
+        return {...?ids};
+      }
+      if (Platform.isIOS || Platform.isMacOS) {
+        final pending = await _notifications.pendingNotificationRequests();
+        return {for (final request in pending) request.id};
+      }
+    } catch (e) {
+      await AlarmLog.record(
+        'list',
+        status: 'failed',
+        detail: 'could not read the OS alarm list: $e',
+      );
+    }
+    return {};
+  }
+
+  static Future<void> _cancelOsAlarm(int osId) async {
+    try {
+      if (Platform.isAndroid) await AndroidAlarmManager.cancel(osId);
+      await _notifications.cancel(id: osId);
+    } catch (_) {}
   }
 
   static const _userPrayerTypesKey = 'user_prayer_alarm_types';
@@ -238,44 +339,83 @@ class AlarmScheduler {
     await prefs.setStringList(_userPrayerTypesKey, types);
   }
 
-  static Future<void> scheduleAlarm(AlarmEntry alarm) => _schedule(
+  static Future<void> scheduleAlarm(
+    AlarmEntry alarm, {
+    AlarmSource source = AlarmSource.backend,
+  }) => _schedule(
     AlarmRingPayload.fromEntity(alarm),
     _nextOccurrence(alarm.hour, alarm.minute),
     chain: true,
+    source: source,
   );
 
-  /// Disarms every alarm this device knows about — the cached custom alarms
-  /// and the user-picked prayer alarms — and forgets them. Used on logout and
-  /// for a signed-out (guest) session: OS-level alarms re-arm themselves daily
-  /// and survive reboots, so they'd otherwise keep ringing for whoever uses
-  /// the app next. Main isolate only (reads Hive).
-  static Future<void> cancelAllAlarms() async {
+  /// Disarms every alarm on this device and forgets them. Used on logout, when
+  /// the session expires, and for a signed-out (guest) session: OS-level
+  /// alarms re-arm themselves daily and survive reboots, so they'd otherwise
+  /// keep ringing for whoever uses the app next.
+  ///
+  /// It cancels what the app knows about (cached alarms, picked prayers) *and*
+  /// every alarm the OS still holds for the app - server alarms are armed under
+  /// the server's id and are cached nowhere, so the app's own records alone
+  /// would miss them. Main isolate only (reads Hive).
+  static Future<void> cancelAllAlarms({String reason = 'session ended'}) async {
     final ids = <String>{};
     try {
-      final box = HiveService.alarms;
-      ids.addAll(box.keys.map((k) => k.toString()));
+      ids.addAll(HiveService.alarms.keys.map((k) => k.toString()));
       for (final type in await userPrayerAlarmTypes()) {
-        ids.add('prayer_$type');
+        ids.add(AlarmSyncPlan.prayerAlarmId(type));
       }
-      for (final id in ids) {
-        try {
-          await cancelAlarm(id);
-        } catch (_) {}
-      }
-      await box.clear();
+    } catch (_) {}
+    for (final id in ids) {
+      await cancelAlarm(id, reason: reason);
+    }
+
+    final held = await persistedOsAlarmIds();
+    for (final osId in held) {
+      await _cancelOsAlarm(osId);
+    }
+    try {
+      await _notifications.cancelAll(); // ringing / pending notifications
+    } catch (_) {}
+    await _silenceVibration();
+    try {
+      await HiveService.alarms.clear();
       await saveUserPrayerAlarmTypes(const []);
     } catch (_) {}
+
+    await AlarmLog.record(
+      'cancel-all',
+      status: 'ok',
+      detail: '$reason; ${ids.length} known, ${held.length} held by the OS',
+    );
   }
 
-  static Future<void> cancelAlarm(String alarmId) async {
-    final id = alarmManagerIdFor(alarmId);
-    final snoozeId = _snoozeManagerIdFor(alarmId);
-    if (Platform.isAndroid) {
-      await AndroidAlarmManager.cancel(id);
-      await AndroidAlarmManager.cancel(snoozeId);
+  /// Disarms one alarm: its daily schedule and any pending snooze, under both
+  /// the current and the pre-update id scheme, plus their notifications.
+  static Future<void> cancelAlarm(
+    String alarmId, {
+    String reason = 'requested',
+  }) async {
+    var ok = true;
+    for (final id in {
+      alarmManagerIdFor(alarmId),
+      _snoozeManagerIdFor(alarmId),
+      _legacyManagerIdFor(alarmId),
+      _legacySnoozeManagerIdFor(alarmId),
+    }) {
+      try {
+        if (Platform.isAndroid) await AndroidAlarmManager.cancel(id);
+        await _notifications.cancel(id: id);
+      } catch (_) {
+        ok = false;
+      }
     }
-    await _notifications.cancel(id: id);
-    await _notifications.cancel(id: snoozeId);
+    await AlarmLog.record(
+      'disarm',
+      id: alarmId,
+      status: ok ? 'cancelled' : 'failed',
+      detail: reason,
+    );
   }
 
   /// Clears whichever ringing notification is currently showing for
@@ -308,6 +448,11 @@ class AlarmScheduler {
     } catch (_) {}
     try {
       await _notifications.cancel(id: _snoozeManagerIdFor(alarmId));
+    } catch (_) {}
+    // A notification an older version posted is under its old id.
+    try {
+      await _notifications.cancel(id: _legacyManagerIdFor(alarmId));
+      await _notifications.cancel(id: _legacySnoozeManagerIdFor(alarmId));
     } catch (_) {}
     await vibrationCancellation;
   }
@@ -346,18 +491,24 @@ class AlarmScheduler {
   static Future<void> snooze(
     AlarmRingPayload payload, [
     Duration delay = _snoozeDuration,
-  ]) => _schedule(payload, DateTime.now().add(delay), chain: false);
+  ]) => _schedule(
+    payload,
+    DateTime.now().add(delay),
+    chain: false,
+    source: AlarmSource.local,
+  );
 
   static Future<void> _schedule(
     AlarmRingPayload payload,
     DateTime at, {
     required bool chain,
+    required AlarmSource source,
   }) async {
     final id = chain
         ? alarmManagerIdFor(payload.alarmId)
         : _snoozeManagerIdFor(payload.alarmId);
     if (Platform.isAndroid) {
-      await AndroidAlarmManager.oneShotAt(
+      final ok = await AndroidAlarmManager.oneShotAt(
         at,
         id,
         chain ? alarmFiredCallback : alarmSnoozeFiredCallback,
@@ -366,6 +517,15 @@ class AlarmScheduler {
         wakeup: true,
         rescheduleOnReboot: chain,
         params: payload.toJson(),
+      );
+      await AlarmLog.record(
+        chain ? 'arm' : 'snooze',
+        id: payload.alarmId,
+        name: payload.label,
+        at: at,
+        source: source,
+        status: ok ? 'ok' : 'failed',
+        detail: 'os=$id',
       );
       return;
     }
@@ -380,6 +540,15 @@ class AlarmScheduler {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
         matchDateTimeComponents: chain ? DateTimeComponents.time : null,
         payload: payload.encode(),
+      );
+      await AlarmLog.record(
+        chain ? 'arm' : 'snooze',
+        id: payload.alarmId,
+        name: payload.label,
+        at: at,
+        source: source,
+        status: 'ok',
+        detail: 'os=$id',
       );
     }
   }
@@ -457,6 +626,17 @@ Future<void> _fire(
   DartPluginRegistrant.ensureInitialized();
 
   final payload = AlarmRingPayload.fromJson(params);
+  await AlarmLog.record(
+    'fire',
+    id: payload.alarmId,
+    name: payload.label,
+    at: DateTime.now(),
+    source: chain ? AlarmSource.backend : AlarmSource.local,
+    status: 'triggered',
+    detail:
+        'set for ${payload.hour.toString().padLeft(2, '0')}:'
+        '${payload.minute.toString().padLeft(2, '0')}, os=$id',
+  );
 
   // No Hive lookup here: this runs in a background isolate where Hive was
   // never opened, so reading the saved list always failed and the old
@@ -473,7 +653,16 @@ Future<void> _fire(
   // (same time, different id) waits behind the first and would start ringing
   // the moment the user stops that one — Stop appearing to do nothing. If
   // this time was just stopped/snoozed, this is that echo: skip it.
-  if (await _dismissedSince(payload, firedAt - _dismissEchoWindow)) return;
+  if (await _dismissedSince(payload, firedAt - _dismissEchoWindow)) {
+    await AlarmLog.record(
+      'skip',
+      id: payload.alarmId,
+      name: payload.label,
+      status: 'echo',
+      detail: 'same time was just stopped or snoozed',
+    );
+    return;
+  }
 
   final plugin = await _showAlarmNotification(payload, notificationId: id);
 
@@ -537,7 +726,23 @@ Future<void> _rearmDaily(int id, AlarmRingPayload payload) async {
       rescheduleOnReboot: true,
       params: payload.toJson(),
     );
-  } catch (_) {
+    await AlarmLog.record(
+      'rearm',
+      id: payload.alarmId,
+      name: payload.label,
+      at: next,
+      source: AlarmSource.backend,
+      status: 'ok',
+      detail: 'os=$id',
+    );
+  } catch (e) {
+    await AlarmLog.record(
+      'rearm',
+      id: payload.alarmId,
+      name: payload.label,
+      status: 'failed',
+      detail: '$e',
+    );
     // Best-effort: if local storage isn't reachable here, the chain breaks
     // for this alarm; the next `AlarmScheduler.rescheduleAll` (app startup)
     // repairs it from the saved alarm list.
