@@ -1,4 +1,5 @@
 import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
+import '../screens/quran_dashboard_screen.dart';
 import '../screens/quran_plan_screen.dart';
 import '../screens/quran_saved_screen.dart';
 import 'dart:math' as math;
@@ -182,10 +183,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
             ),
             QuranSavedScreen(onBack: () => _select('home')),
             QuranPlanScreen(onBack: () => _select('home')),
-            ComingSoonScreen(
-              title: text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
-              onBack: () => _select('home'),
-            ),
+            QuranDashboardScreen(onBack: () => _select('home')),
           ],
         ),
         bottomNavigationBar: QuranBottomNav(

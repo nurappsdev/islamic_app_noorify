@@ -103,6 +103,7 @@ import '../../features/quran/presentation/screens/quran_reading_screen.dart';
 import '../../features/quran/presentation/screens/para_detail_screen.dart';
 import '../../features/quran/presentation/screens/bookmarks_screen.dart';
 import '../../features/quran/presentation/screens/reading_history_screen.dart';
+import '../../features/quran/presentation/screens/quran_dashboard_screen.dart';
 import '../../features/quran/presentation/bloc/last_read/last_read_bloc.dart';
 import '../../features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
 import '../../features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
@@ -441,7 +442,8 @@ class AppRoutes {
           transitionsBuilder: (_, animation, _, child) => SlideTransition(
             position:
                 Tween<Offset>(
-                  begin: Offset(args.swipeForward! ? 1 : -1, 0),
+                  // Arabic-book order: the next Surah enters from the left.
+                  begin: Offset(args.swipeForward! ? -1 : 1, 0),
                   end: Offset.zero,
                 ).animate(
                   CurvedAnimation(
@@ -474,6 +476,8 @@ class AppRoutes {
           ),
           settings,
         );
+      case RouteNames.quranDashboard:
+        return _page(const QuranDashboardScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.prayerCompass:
