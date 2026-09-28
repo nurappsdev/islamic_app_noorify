@@ -2,6 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../domain/surah_summary.dart';
 import 'quran_design.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
 
 /// One scrolling header: ornament, live metadata, then Bismillah.
 /// Only the decorative image is positioned; text determines the header height.
@@ -65,7 +70,21 @@ class QuranSurahHeading extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${surah.revelationPlace.toUpperCase()} • ${surah.totalAyah} AYAT',
+                      context.localizedDigits(
+                        AppText.of(context).quranSurahHeadingInfo.fill({
+                          // English keeps the API's own spelling; Bangla uses the app's
+                          // translated place name.
+                          'place':
+                              (context.appLanguage == AppLanguage.bangla
+                                      ? revelationPlaceLabel(
+                                          AppText.of(context),
+                                          surah.revelationPlace,
+                                        )
+                                      : surah.revelationPlace)
+                                  .toUpperCase(),
+                          'n': surah.totalAyah,
+                        }),
+                      ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 13,
@@ -82,7 +101,7 @@ class QuranSurahHeading extends StatelessWidget {
                           height: 48,
                           fit: BoxFit.contain,
                           color: quranOlive,
-                          semanticLabel: 'Bismillah',
+                          semanticLabel: AppText.of(context).quranBismillah,
                         ),
                       ),
                   ],

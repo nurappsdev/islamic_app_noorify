@@ -10,6 +10,9 @@ import 'package:islami_app_noorify/features/legal/data/repositories/legal_reposi
 import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
 import 'package:islami_app_noorify/features/legal/domain/usecases/get_legal_document.dart';
 import 'package:islami_app_noorify/features/legal/presentation/cubit/legal_document_cubit.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 /// Shows the Terms of Service or Privacy Policy, loaded from the API and
 /// rendered as HTML.
@@ -18,10 +21,10 @@ class LegalDocumentScreen extends StatelessWidget {
 
   final LegalDocumentType type;
 
-  String get _fallbackTitle => switch (type) {
-    LegalDocumentType.aboutUs => 'About Us',
-    LegalDocumentType.termsOfService => 'Terms of Service',
-    LegalDocumentType.privacyPolicy => 'Privacy Policy',
+  String _fallbackTitle(AppText appText) => switch (type) {
+    LegalDocumentType.aboutUs => appText.aboutUs,
+    LegalDocumentType.termsOfService => appText.termsOfServices,
+    LegalDocumentType.privacyPolicy => appText.privacyPolicy,
   };
 
   @override
@@ -36,7 +39,7 @@ class LegalDocumentScreen extends StatelessWidget {
           final ink = context.inkColor(AppColor.authLogo);
           final title = state.document?.title.isNotEmpty == true
               ? state.document!.title
-              : _fallbackTitle;
+              : _fallbackTitle(AppText.of(context));
           return Scaffold(
             backgroundColor: context.pageColor(Colors.white),
             body: SafeArea(
@@ -67,14 +70,14 @@ class LegalDocumentScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  state.errorMessage ?? 'Something went wrong.',
+                  state.errorMessage ?? AppText.of(context).failureUnknown,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: ink, fontSize: 14.sp),
                 ),
                 SizedBox(height: 12.h),
                 TextButton(
                   onPressed: () => context.read<LegalDocumentCubit>().load(),
-                  child: const Text('Retry'),
+                  child: Text(AppText.of(context).tryAgain),
                 ),
               ],
             ),
@@ -82,11 +85,27 @@ class LegalDocumentScreen extends StatelessWidget {
         );
       case LegalDocumentStatus.success:
         final document = state.document!;
+        final appText = AppText.of(context);
+        // The API sends the dates as text (`2026-01-01`); written out in the
+        // selected language when it is a date, with localized digits if not.
+        String dateText(String raw) {
+          final date = DateTime.tryParse(raw);
+          return date == null
+              ? context.localizedDigits(raw)
+              : context.localizedDates.gregorian(date);
+        }
+
         final dates = [
           if (document.effectiveDate != null)
-            'Effective: ${document.effectiveDate}',
+            appText.legalEffectiveLabel.replaceAll(
+              '{date}',
+              dateText(document.effectiveDate!),
+            ),
           if (document.lastUpdated != null)
-            'Last updated: ${document.lastUpdated}',
+            appText.legalLastUpdatedLabel.replaceAll(
+              '{date}',
+              dateText(document.lastUpdated!),
+            ),
         ].join('  •  ');
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),

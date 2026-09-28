@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Green gradient header shared by the Zikr dashboard and the "New Zikr" screen:
 /// back button + centred title, the Bismillah calligraphy, and the (mock)
@@ -91,7 +92,9 @@ class ZikrGradientHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                ZikrCatalog.formatIndian(total ?? ZikrCatalog.mockTotalCount),
+                context.localizedDigits(
+                  ZikrCatalog.formatIndian(total ?? ZikrCatalog.mockTotalCount),
+                ),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,

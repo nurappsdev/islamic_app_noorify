@@ -17,6 +17,9 @@ import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart'
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
 
 /// The 3 fixed presets shown in the "Set Alarm Before Prayer" dropdown
 /// (a 4th, always-last "Custom" entry opens [_CustomOffsetDialog] instead).
@@ -33,11 +36,17 @@ String _keyOf(PrayerPeriod? period) => period?.name ?? _tahajjudKey;
 /// Sentinel returned by the dropdown when "Custom" is tapped.
 const _customOffsetSentinel = -1;
 
-String _offsetLabel(int minutes, AppText appText) => switch (minutes) {
+String _offsetLabel(
+  int minutes,
+  AppText appText,
+  LocalizedNumberFormatter numbers,
+) => switch (minutes) {
   40 => appText.offsetBefore40Min,
   30 => appText.offsetBefore30Min,
   20 => appText.offsetBefore20Min,
-  _ => '${appText.offsetCustom} ($minutes ${appText.offsetMinutesUnit})',
+  _ =>
+    '${appText.offsetCustom} '
+        '(${numbers.integer(minutes)} ${appText.offsetMinutesUnit})',
 };
 
 class SetAllAlarmScreen extends StatelessWidget {
@@ -204,7 +213,7 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
           PopupMenuItem<int>(
             value: minutes,
             child: Text(
-              _offsetLabel(minutes, appText),
+              _offsetLabel(minutes, appText, context.localizedNumbers),
               style: alarmItalicStyle(14.sp, context: context),
             ),
           ),
@@ -291,7 +300,11 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            _offsetLabel(state.offsetMinutes, appText),
+                            _offsetLabel(
+                              state.offsetMinutes,
+                              appText,
+                              context.localizedNumbers,
+                            ),
                             style: alarmItalicStyle(14.sp, context: context),
                           ),
                           const Icon(
@@ -399,13 +412,18 @@ class _AllAlarmRow extends StatelessWidget {
     final period = this.period;
     final name = period?.displayName(appText) ?? appText.naflTahajjud;
     final range =
-        timeWindow ??
+        (timeWindow == null
+            ? null
+            : context.localizedTimes.localize(timeWindow!)) ??
         (period == null
             ? null
             : times == null
-            ? '--:-- – --:--'
-            : '${formatPrayerTime(prayerStart(period, times!))} – '
-                  '${formatPrayerTime(prayerEnd(period, times!))}');
+            ? '${LocalizedTimeFormatter.placeholder} – '
+                  '${LocalizedTimeFormatter.placeholder}'
+            : context.localizedTimes.range(
+                prayerStart(period, times!),
+                prayerEnd(period, times!),
+              ));
     return Row(
       children: [
         GestureDetector(

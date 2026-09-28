@@ -9,12 +9,14 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/calendar/bangla_date.dart';
-import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:islami_app_noorify/core/localization/localized_date_formatter.dart';
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
 
 enum _CalTab { bangla, arabic, english }
 
-const _banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+const _banglaDigits = LocalizedNumberFormatter.banglaDigits;
 const _arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
 
 /// Western digits in [value] mapped through [digits] (Bangla/Arabic-Indic);
@@ -23,21 +25,6 @@ String _localizeDigits(int value, List<String>? digits) {
   if (digits == null) return '$value';
   return '$value'.split('').map((c) => digits[int.parse(c)]).join();
 }
-
-const _monthNamesEn = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 const _hijriMonthNamesAr = [
   'محرم',
@@ -54,23 +41,6 @@ const _hijriMonthNamesAr = [
   'ذو الحجة',
 ];
 
-/// Common Bangla transliteration of the Hijri month names, for the Hijri
-/// line shown under the Bangla tab.
-const _hijriMonthNamesBn = [
-  'মুহাররম',
-  'সফর',
-  'রবিউল আউয়াল',
-  'রবিউস সানি',
-  'জমাদিউল আউয়াল',
-  'জমাদিউস সানি',
-  'রজব',
-  'শাবান',
-  'রমজান',
-  'শাওয়াল',
-  'জিলকদ',
-  'জিলহজ',
-];
-
 const _hijriWeekdayShortAr = [
   'أحد',
   'اثنين',
@@ -79,29 +49,6 @@ const _hijriWeekdayShortAr = [
   'خميس',
   'جمعة',
   'سبت',
-];
-
-// Index 0 = Sunday .. 6 = Saturday, to match DateTime.weekday % 7. The 7-day
-// week is shared by every calendar system here, so one weekday index drives
-// all three name sets.
-const _weekdayFullEn = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-];
-
-const _weekdayFullBn = [
-  'রবিবার',
-  'সোমবার',
-  'মঙ্গলবার',
-  'বুধবার',
-  'বৃহস্পতিবার',
-  'শুক্রবার',
-  'শনিবার',
 ];
 
 const _weekdayFullAr = [
@@ -236,9 +183,12 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   };
 
   List<String> get _monthNames => switch (_tab) {
-    _CalTab.english => _monthNamesEn,
+    _CalTab.english => AppText.forLanguage(AppLanguage.english).monthNames,
     _CalTab.bangla => BanglaDate.monthNames,
-    _CalTab.arabic => _arabicInBangla ? _hijriMonthNamesBn : _hijriMonthNamesAr,
+    _CalTab.arabic =>
+      _arabicInBangla
+          ? LocalizedDateFormatter.hijriMonthNamesBn
+          : _hijriMonthNamesAr,
   };
 
   List<String> get _weekdayShort => switch (_tab) {
@@ -253,19 +203,21 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
     final wIdx = _todayEn.weekday % 7; // Sun=0..Sat=6, shared 7-day week.
     switch (_tab) {
       case _CalTab.english:
-        return '${_weekdayFullEn[wIdx]}, ${_todayEn.day} '
-            '${_monthNamesEn[_todayEn.month - 1]} ${_todayEn.year}';
+        // This tab is the English calendar whatever the app language is.
+        return LocalizedDateFormatter(
+          AppLanguage.english,
+        ).gregorian(_todayEn, withWeekday: true);
       case _CalTab.bangla:
         final d = _localizeDigits(_todayBn.day, _banglaDigits);
         final y = _localizeDigits(_todayBn.year, _banglaDigits);
-        return '${_weekdayFullBn[wIdx]}, $d '
+        return '${LocalizedDateFormatter(AppLanguage.bangla).weekdayName(_todayEn)}, $d '
             '${BanglaDate.monthNames[_todayBn.month - 1]} $y';
       case _CalTab.arabic:
         if (_arabicInBangla) {
           final d = _localizeDigits(_todayHDay, _banglaDigits);
           final y = _localizeDigits(_todayHYear, _banglaDigits);
-          return '${_weekdayFullBn[wIdx]}, $d '
-              '${_hijriMonthNamesBn[_todayHMonth - 1]} $y';
+          return '${LocalizedDateFormatter(AppLanguage.bangla).weekdayName(_todayEn)}, $d '
+              '${LocalizedDateFormatter.hijriMonthNamesBn[_todayHMonth - 1]} $y';
         }
         final d = _localizeDigits(_todayHDay, _arabicDigits);
         final y = _localizeDigits(_todayHYear, _arabicDigits);
@@ -279,7 +231,8 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   String _hijriInBangla() {
     final d = _localizeDigits(_todayHDay, _banglaDigits);
     final y = _localizeDigits(_todayHYear, _banglaDigits);
-    return 'হিজরি: $d ${_hijriMonthNamesBn[_todayHMonth - 1]} $y';
+    return '${AppText.forLanguage(AppLanguage.bangla).hijriSuffix}: $d '
+        '${LocalizedDateFormatter.hijriMonthNamesBn[_todayHMonth - 1]} $y';
   }
 
   List<_CalCell> _buildGenericCells({
@@ -405,7 +358,10 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
           shrinkWrap: true,
           itemCount: names.length,
           itemBuilder: (context, index) => ListTile(
-            title: Text(names[index], textDirection: _textDirection),
+            title: Text(
+              context.localizedDigits(names[index]),
+              textDirection: _textDirection,
+            ),
             trailing: index + 1 == current
                 ? const Icon(Icons.check, color: AppColor.primary)
                 : null,
@@ -455,7 +411,10 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
             ),
             itemCount: years.length,
             itemBuilder: (context, index) => ListTile(
-              title: Text('${years[index]}', textAlign: TextAlign.center),
+              title: Text(
+                _localizeDigits(years[index], _digits),
+                textAlign: TextAlign.center,
+              ),
               selected: years[index] == current,
               trailing: years[index] == current
                   ? const Icon(Icons.check, color: AppColor.primary)
@@ -549,12 +508,7 @@ class _ArabicFormatSwitch extends StatelessWidget {
     final height = 20.h;
     return Semantics(
       toggled: inBangla,
-      label: context.localized(
-        const LocalizedText(
-          en: 'Arabic calendar in Bangla',
-          bn: 'আরবি ক্যালেন্ডার বাংলায়',
-        ),
-      ),
+      label: AppText.of(context).calendarArabicInBangla,
       child: Container(
         key: const ValueKey('arabic-format-switch'),
         width: width,

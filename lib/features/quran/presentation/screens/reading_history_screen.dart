@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class ReadingHistoryScreen extends StatelessWidget {
   const ReadingHistoryScreen({super.key});
@@ -140,7 +141,9 @@ class ReadingHistoryScreen extends StatelessWidget {
                                             ),
                                             SizedBox(height: 3.h),
                                             Text(
-                                              '${appText.ayahNoLabel}: ${entry.ayahNo}',
+                                              context.localizedDigits(
+                                                '${appText.ayahNoLabel}: ${entry.ayahNo}',
+                                              ),
                                               style: TextStyle(
                                                 color: context.inkColor(
                                                   Colors.grey,

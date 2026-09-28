@@ -18,6 +18,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_sub_
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_progress_ring.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Route arguments for [HadithSubCategoryScreen].
 class HadithSubCategoryArgs {
@@ -305,7 +306,7 @@ class _SubCategoryCard extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.all(6.r),
                   child: Text(
-                    '${subCategory.chapterNumber}',
+                    context.localizedDigits('${subCategory.chapterNumber}'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15.sp,
@@ -332,7 +333,9 @@ class _SubCategoryCard extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '${formatHadithCount(subCategory.totalHadiths)} $hadithWord',
+                    context.localizedDigits(
+                      '${formatHadithCount(subCategory.totalHadiths)} $hadithWord',
+                    ),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: const Color(0xFF9BA85B),

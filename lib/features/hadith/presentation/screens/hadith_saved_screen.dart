@@ -12,6 +12,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_b
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_saved_reader_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// "Saved Hadith", reached from index 2 ("Saved") of the Hadith navigation bar.
 ///
@@ -430,7 +431,7 @@ class _FolderCard extends StatelessWidget {
                     ),
                     SizedBox(height: 5.h),
                     Text(
-                      '$count $hadithWord',
+                      context.localizedDigits('$count $hadithWord'),
                       style: TextStyle(
                         color: const Color(0xFFA1AD59),
                         fontSize: 12.sp,
@@ -505,7 +506,7 @@ class _SavedHadithCard extends StatelessWidget {
                   color: Color(0xFF9BAE6C),
                 ),
                 child: Text(
-                  '${bookmark.hadithNo}',
+                  context.localizedDigits('${bookmark.hadithNo}'),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 14.sp,

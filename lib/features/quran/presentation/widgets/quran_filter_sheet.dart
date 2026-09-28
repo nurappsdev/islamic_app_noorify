@@ -6,6 +6,9 @@ import '../../domain/surah_summary.dart';
 import '../quran_route_args.dart';
 import 'quran_design.dart';
 import 'quran_modal.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 class QuranFilterSheet extends StatefulWidget {
   const QuranFilterSheet({super.key, required this.initial, this.service});
@@ -98,7 +101,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error) return QuranRetry(onRetry: _load);
     if (_surahs.isEmpty || _paras.isEmpty) {
-      return const Center(child: Text('No Quran filters available'));
+      return Center(child: Text(AppText.of(context).quranNoFilters));
     }
     final matches = _surahs
         .where(
@@ -115,25 +118,30 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
       top: false,
       child: Column(
         children: [
-          const QuranSheetHeading('Filter Quran'),
+          QuranSheetHeading(AppText.of(context).quranFilterTitle),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
-                const Text('Surah', style: TextStyle(fontSize: 19)),
+                Text(
+                  AppText.of(context).tabSurah,
+                  style: const TextStyle(fontSize: 19),
+                ),
                 Wrap(
                   spacing: 5,
                   children: [
                     for (final item in [
-                      ('', 'All Types'),
-                      ('mec', 'Makki'),
-                      ('med', 'Madani'),
+                      ('', AppText.of(context).quranAllTypes),
+                      ('mec', AppText.of(context).meccan),
+                      ('med', AppText.of(context).medinian),
                     ])
                       ChoiceChip(
                         label: Text(
                           item.$1.isEmpty
                               ? item.$2
-                              : '${item.$2} (${_surahs.where((s) => s.revelationPlace.toLowerCase().startsWith(item.$1)).length})',
+                              : context.localizedDigits(
+                                  '${item.$2} (${_surahs.where((s) => s.revelationPlace.toLowerCase().startsWith(item.$1)).length})',
+                                ),
                         ),
                         selected: _type == item.$1,
                         selectedColor: quranBorder,
@@ -148,16 +156,16 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Juz / Para Carousel',
-                        style: TextStyle(fontSize: 19),
+                        AppText.of(context).quranJuzParaCarousel,
+                        style: const TextStyle(fontSize: 19),
                       ),
                     ),
                     if (_para != null)
                       TextButton(
                         onPressed: () => setState(() => _para = null),
-                        child: const Text('All'),
+                        child: Text(AppText.of(context).allLabel),
                       ),
                   ],
                 ),
@@ -170,19 +178,19 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'Search and Select Surah',
-                  style: TextStyle(fontSize: 19),
+                Text(
+                  AppText.of(context).quranSearchAndSelectSurah,
+                  style: const TextStyle(fontSize: 19),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _search,
                   onChanged: (q) => setState(() => _query = q),
                   decoration: InputDecoration(
-                    hintText: 'Search Surah',
+                    hintText: AppText.of(context).searchSurah,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
-                      tooltip: 'Clear search',
+                      tooltip: AppText.of(context).clearLabel,
                       onPressed: () {
                         _search.clear();
                         setState(() => _query = '');
@@ -207,14 +215,21 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
-                      'Selected: ${_surah!.number}. ${_surah!.name}',
+                      context.localizedDigits(
+                        AppText.of(context).quranSelectedSurah.fill({
+                          'n': _surah!.number,
+                          'name': _surah!.name,
+                        }),
+                      ),
                       style: const TextStyle(color: quranInk),
                     ),
                   ),
                 SizedBox(
                   height: 76,
                   child: matches.isEmpty
-                      ? const Center(child: Text('No Surahs found'))
+                      ? Center(
+                          child: Text(AppText.of(context).quranNoSurahsFound),
+                        )
                       : ListView.builder(
                           itemCount: matches.length,
                           itemBuilder: (_, i) {
@@ -224,9 +239,20 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                               selected: _surah?.number == s.number,
                               selectedTileColor: quranPale,
                               selectedColor: quranInk,
-                              title: Text('${s.number}. ${s.name}'),
+                              title: Text(
+                                context.localizedDigits(
+                                  '${s.number}. ${s.name}',
+                                ),
+                              ),
                               subtitle: Text(
-                                '${s.translation} · ${s.totalAyah} ayahs',
+                                context.localizedDigits(
+                                  AppText.of(
+                                    context,
+                                  ).quranSurahTranslationAyahs.fill({
+                                    'translation': s.translation,
+                                    'n': s.totalAyah,
+                                  }),
+                                ),
                               ),
                               trailing: _surah?.number == s.number
                                   ? const Icon(
@@ -240,7 +266,10 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                         ),
                 ),
                 const SizedBox(height: 12),
-                const Text('Select Ayat', style: TextStyle(fontSize: 19)),
+                Text(
+                  AppText.of(context).quranSelectAyat,
+                  style: const TextStyle(fontSize: 19),
+                ),
                 QuranAyahWheel(
                   key: ValueKey('${_surah?.number}:${_para?.number}'),
                   first: _first,
@@ -263,7 +292,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                       side: const BorderSide(color: Colors.red),
                       minimumSize: const Size(0, 54),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(AppText.of(context).commonCancel),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -286,7 +315,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet> {
                       backgroundColor: quranOlive,
                       minimumSize: const Size(0, 54),
                     ),
-                    child: const Text('Apply'),
+                    child: Text(AppText.of(context).commonApply),
                   ),
                 ),
               ],
@@ -347,7 +376,7 @@ class _ParaCarouselState extends State<_ParaCarousel> {
                 radius: 27,
                 backgroundColor: quranPale,
                 child: Text(
-                  '${p.number}',
+                  context.localizedDigits('${p.number}'),
                   style: const TextStyle(color: quranOlive, fontSize: 20),
                 ),
               ),
@@ -372,7 +401,9 @@ class _ParaCarouselState extends State<_ParaCarousel> {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    '${p.startSurahNo}:${p.startAyah} – ${p.endSurahNo}:${p.endAyah}',
+                    context.localizedDigits(
+                      '${p.startSurahNo}:${p.startAyah} – ${p.endSurahNo}:${p.endAyah}',
+                    ),
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -424,54 +455,60 @@ class _QuranAyahWheelState extends State<QuranAyahWheel> {
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 70,
-    child: RotatedBox(
-      quarterTurns: -1,
-      child: ListWheelScrollView.useDelegate(
-        controller: _controller,
-        itemExtent: 52,
-        physics: const FixedExtentScrollPhysics(),
-        diameterRatio: 12,
-        perspective: .001,
-        onSelectedItemChanged: (index) {
-          final value = widget.first + index;
-          if (value == _selected) return;
-          setState(() => _selected = value);
-          HapticFeedback.selectionClick();
-          widget.onChanged(value);
-        },
-        childDelegate: ListWheelChildBuilderDelegate(
-          childCount: widget.last - widget.first + 1,
-          builder: (_, i) {
-            final n = widget.first + i;
-            return RotatedBox(
-              quarterTurns: 1,
-              child: Semantics(
-                selected: n == _selected,
-                label: 'Ayah $n',
-                child: GestureDetector(
-                  onTap: () => _controller.animateToItem(
-                    i,
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: n == _selected ? quranBorder : null,
-                      border: Border.all(color: quranBorder),
-                      borderRadius: BorderRadius.circular(12),
+  Widget build(BuildContext context) {
+    // Read here, not in the wheel's item builder: that runs during layout,
+    // where a widget can't subscribe to the language.
+    final ayahLabel = AppText.of(context).quranAyahNumber;
+    final numbers = context.localizedNumbers;
+    return SizedBox(
+      height: 70,
+      child: RotatedBox(
+        quarterTurns: -1,
+        child: ListWheelScrollView.useDelegate(
+          controller: _controller,
+          itemExtent: 52,
+          physics: const FixedExtentScrollPhysics(),
+          diameterRatio: 12,
+          perspective: .001,
+          onSelectedItemChanged: (index) {
+            final value = widget.first + index;
+            if (value == _selected) return;
+            setState(() => _selected = value);
+            HapticFeedback.selectionClick();
+            widget.onChanged(value);
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: widget.last - widget.first + 1,
+            builder: (_, i) {
+              final n = widget.first + i;
+              return RotatedBox(
+                quarterTurns: 1,
+                child: Semantics(
+                  selected: n == _selected,
+                  label: ayahLabel.fill({'n': numbers.digits('$n')}),
+                  child: GestureDetector(
+                    onTap: () => _controller.animateToItem(
+                      i,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
                     ),
-                    child: Text('$n'),
+                    child: Container(
+                      alignment: Alignment.center,
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: n == _selected ? quranBorder : null,
+                        border: Border.all(color: quranBorder),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(numbers.digits('$n')),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

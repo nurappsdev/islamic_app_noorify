@@ -20,6 +20,7 @@ import 'package:islami_app_noorify/features/profile/domain/entities/family_membe
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -105,7 +106,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: EdgeInsets.symmetric(vertical: 24.h),
                     child: Center(
                       child: Text(
-                        'No data here',
+                        AppText.of(context).noDataHere,
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: context.inkColor(const Color(0xFF6B7551)),
@@ -225,7 +226,9 @@ class _ProfileHeroCard extends StatelessWidget {
                     border: Border.all(color: Colors.white, width: 1.2),
                   ),
                   child: Text(
-                    '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
+                    context.localizedDigits(
+                      '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
+                    ),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: context.inkColor(const Color(0xFF7F8F52)),
@@ -402,7 +405,7 @@ class _MoreBadgesCircle extends StatelessWidget {
         ),
       ),
       child: Text(
-        '+$count',
+        context.localizedDigits('+$count'),
         style: TextStyle(
           color: Colors.white.withValues(alpha: .8),
           fontSize: 12.sp,
@@ -521,7 +524,7 @@ class _PositionPointsPill extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Text(
-            '${appText.position} : $position',
+            context.localizedDigits('${appText.position} : $position'),
             style: TextStyle(
               color: Colors.white.withValues(alpha: .9),
               fontSize: 14.sp,
@@ -531,7 +534,7 @@ class _PositionPointsPill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${appText.pointsWord} : ',
+                context.localizedDigits('${appText.pointsWord} : '),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: .9),
                   fontSize: 14.sp,
@@ -544,7 +547,7 @@ class _PositionPointsPill extends StatelessWidget {
               ),
               SizedBox(width: 5.w),
               Text(
-                '$points',
+                context.localizedDigits('$points'),
                 style: TextStyle(
                   color: const Color(0xFFDCE7AC),
                   fontSize: 22.sp,
@@ -576,7 +579,7 @@ class _FamilyMemberCard extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '#${member.globalRank}',
+            context.localizedDigits('#${member.globalRank}'),
             style: TextStyle(
               fontSize: 13.sp,
               color: context.inkColor(Color(0xFF6B7551)),
@@ -603,7 +606,7 @@ class _FamilyMemberCard extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${member.memberTotalPoints}',
+            context.localizedDigits('${member.memberTotalPoints}'),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],

@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
 import 'package:islami_app_noorify/features/dua/presentation/dua_route_args.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Full "All dua" list for a Dua group (design `devImg/img_5.png`), reached
 /// from the "All dua" section's "See All" on [DuaGroupScreen].
@@ -32,7 +33,9 @@ class DuaAllDuaScreen extends StatelessWidget {
             DuaPageHeader(title: appText.duaAllDuaTitle),
             SizedBox(height: 16.h),
             Text(
-              '${appText.duaTotalDuaLabel} ( ${duas.length} )',
+              context.localizedDigits(
+                '${appText.duaTotalDuaLabel} ( ${duas.length} )',
+              ),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF5D6B44)),

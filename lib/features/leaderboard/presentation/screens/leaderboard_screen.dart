@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_botto
 import 'package:islami_app_noorify/features/leaderboard/data/services/leaderboard_service.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -376,7 +377,7 @@ class _PodiumSlot extends StatelessWidget {
                     border: Border.all(color: ringColor, width: 2),
                   ),
                   child: Text(
-                    '${entry.rank}',
+                    context.localizedDigits('${entry.rank}'),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
@@ -420,7 +421,7 @@ class _PodiumSlot extends StatelessWidget {
                   ),
                   SizedBox(width: 3.w),
                   Text(
-                    '${entry.points}',
+                    context.localizedDigits('${entry.points}'),
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
@@ -514,7 +515,7 @@ class _LeaderboardRow extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '#${entry.rank}',
+            context.localizedDigits('#${entry.rank}'),
             style: TextStyle(
               fontSize: 13.sp,
               color: context.inkColor(const Color(0xFF6B7551)),
@@ -547,7 +548,7 @@ class _LeaderboardRow extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${entry.points}',
+            context.localizedDigits('${entry.points}'),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],
@@ -589,7 +590,7 @@ class _YourRankCard extends StatelessWidget {
                 radius: 18.r,
                 backgroundColor: context.surfaceColor(Colors.white),
                 child: Text(
-                  '${position.rank}',
+                  context.localizedDigits('${position.rank}'),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColor.primary,
@@ -609,7 +610,9 @@ class _YourRankCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${position.points} ${appText.pointsLabel}',
+                context.localizedDigits(
+                  '${position.points} ${appText.pointsLabel}',
+                ),
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
               ),
             ],
@@ -627,7 +630,7 @@ class _YourRankCard extends StatelessWidget {
           if (gap != null && nextRank != null) ...[
             SizedBox(height: 6.h),
             Text(
-              '$gap ${appText.ptsToRank} #$nextRank',
+              context.localizedDigits('$gap ${appText.ptsToRank} #$nextRank'),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: context.inkColor(const Color(0xFF6B7551)),

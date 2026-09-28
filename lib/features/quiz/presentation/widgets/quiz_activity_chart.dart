@@ -142,7 +142,7 @@ class _Bar extends StatelessWidget {
         if (dayLabel != null) ...[
           SizedBox(height: 3.h),
           Text(
-            dayLabel!,
+            context.localizedDigits(dayLabel!),
             style: TextStyle(fontSize: 9.sp, color: muted),
           ),
         ],

@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+
 import 'language_state.dart';
 
 /// The app language the user picked, kept in SharedPreferences so it survives a
@@ -13,6 +15,15 @@ class LanguagePreference {
 
   static const key = 'app_language';
   static const defaultLanguage = AppLanguage.bangla;
+
+  /// The language selected right now. [LanguageBloc] keeps it up to date, for
+  /// code that has no `BuildContext` - such as the text of a failure - to write
+  /// its message in the right language.
+  static AppLanguage current = defaultLanguage;
+
+  /// A number formatter for [current].
+  static LocalizedNumberFormatter get numbers =>
+      LocalizedNumberFormatter(current);
 
   static const _english = 'en';
   static const _bangla = 'bn';

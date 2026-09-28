@@ -61,9 +61,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            SnackBar(
-              content: Text(state.message ?? 'Your password has been updated.'),
-            ),
+            SnackBar(content: Text(AppText.readOf(context).passwordUpdated)),
           );
         Navigator.of(
           context,
@@ -74,7 +72,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ..showSnackBar(
             SnackBar(
               content: Text(
-                state.errorMessage ?? 'Could not reset password. Try again.',
+                state.errorMessage ??
+                    AppText.readOf(context).resetPasswordFailed,
               ),
             ),
           );
@@ -222,7 +221,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Tuhfatul Muslim',
+                          AppText.of(context).tuhfatulMuslim,
                           style: TextStyle(
                             color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,

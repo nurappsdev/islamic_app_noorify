@@ -154,8 +154,10 @@ class _QuizListTile extends StatelessWidget {
                     ),
                     SizedBox(height: 7.h),
                     Text(
-                      '${context.localized(category.totalQuestions.text)} '
-                      '${appText.questionsWord}',
+                      context.localizedDigits(
+                        '${context.localized(category.totalQuestions.text)} '
+                        '${appText.questionsWord}',
+                      ),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: AppColor.primary,

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:islami_app_noorify/core/utils/app_text_bn.dart';
 import 'package:islami_app_noorify/core/utils/app_text_en.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_context.dart';
 
 class AppText {
   const AppText({
@@ -622,6 +623,159 @@ class AppText {
     required this.no,
     required this.prayerNowLabel,
     required this.loginRequiredMessage,
+    required this.quranAllTypes,
+    required this.quranSurahNumberTitle,
+    required this.hadithTimerRead,
+    required this.hadithTimerReading,
+    required this.hadithTimerPaused,
+    required this.calendarArabicInBangla,
+    required this.quranBookmarkSurah,
+    required this.quranOfflineTitle,
+    required this.hadithCompetitor,
+    required this.failurePasswordRule,
+    required this.failureResetSessionExpired,
+    required this.failureGoogleUnavailable,
+    required this.failureAudioServer,
+    required this.failureNoAudioSurah,
+    required this.failureNoAudioAyah,
+    required this.failureAudioDownload,
+    required this.failureQuranContent,
+    required this.failureDownloadInterrupted,
+    required this.failureSurahListLoad,
+    required this.failureNotAvailableOffline,
+    required this.failureContentLoad,
+    required this.failureTranslationBuiltIn,
+    required this.failureNoTranslationSurah,
+    required this.failureEbookNoPdf,
+    required this.failureDownloadFailed,
+    required this.quranSurahBookmarked,
+    required this.quranSurahBookmarkRemoved,
+    required this.quranViewInAyat,
+    required this.quranChangeText,
+    required this.quranTranslationUnavailable,
+    required this.quranReadyOffline,
+    required this.quranDownloading,
+    required this.commonDone,
+    required this.quranRetryDownload,
+    required this.quranDownloadQuran,
+    required this.quranShareTranslation,
+    required this.quranNoTafsir,
+    required this.hadithTimeMinutes,
+    required this.hadithPointValue,
+    required this.quranRangeEnd,
+    required this.commonCancel,
+    required this.commonApply,
+    required this.quranParaTitle,
+    required this.quranNoSurahs,
+    required this.quranParaRange,
+    required this.quranSurahAyahRange,
+    required this.quranAyahLoadFailed,
+    required this.quranPageLabel,
+    required this.quranSurahChip,
+    required this.quranFilterTitle,
+    required this.quranActions,
+    required this.quranPageLoadFailedRetry,
+    required this.quranNoAyahs,
+    required this.quranVerseInfo,
+    required this.quranTafsirVerse,
+    required this.quranCloseTafsir,
+    required this.quranSurahPage,
+    required this.quranTajweedDownload,
+    required this.quranSearchSurahOrPara,
+    required this.quranNoResults,
+    required this.quranBrowseHint,
+    required this.quranTranslateHeading,
+    required this.quranSelectTranslateLanguage,
+    required this.quranRetryLanguages,
+    required this.quranNoTranslations,
+    required this.quranCopy,
+    required this.quranShare,
+    required this.quranPlayAyah,
+    required this.quranBookmarkAyah,
+    required this.quranSajdah,
+    required this.quranTajweedTitle,
+    required this.quranTajweedUnavailable,
+    required this.quranDownloadInterrupted,
+    required this.quranKeepScreenOpen,
+    required this.quranNoFilters,
+    required this.quranJuzParaCarousel,
+    required this.quranSearchAndSelectSurah,
+    required this.quranSelectedSurah,
+    required this.quranNoSurahsFound,
+    required this.quranSurahTranslationAyahs,
+    required this.quranSelectAyat,
+    required this.quranAyahNumber,
+    required this.quranAyahCopied,
+    required this.quranShareFailed,
+    required this.quranSurahAyahCount,
+    required this.quranSurahHeadingInfo,
+    required this.quranBismillah,
+    required this.quranAyahTitle,
+    required this.quranAudioAyahTitle,
+    required this.duaSavedEdit,
+    required this.duaSavedDelete,
+    required this.duaSavedTitle,
+    required this.duaEditBookmarkTitle,
+    required this.duaFolderName,
+    required this.duaFolderNameHint,
+    required this.duaSaveChanges,
+    required this.duaDeleteBookmarkTitle,
+    required this.duaDeleteBookmarkMessage,
+    required this.duaYesDelete,
+    required this.duaSavedCount,
+    required this.duaTotalSaved,
+    required this.amolReadConfirmMessage,
+    required this.readAtLabel,
+    required this.verificationCodeSent,
+    required this.verificationResendFailed,
+    required this.verificationFailed,
+    required this.resendCodeInSeconds,
+    required this.didntGetCodeResend,
+    required this.passwordUpdated,
+    required this.resetPasswordFailed,
+    required this.signInFailed,
+    required this.registrationFailed,
+    required this.currentPasswordHint,
+    required this.noDataHere,
+    required this.legalEffectiveLabel,
+    required this.legalLastUpdatedLabel,
+    required this.validatorRequired,
+    required this.validatorEmailEmpty,
+    required this.validatorEmailInvalid,
+    required this.validatorPasswordEmpty,
+    required this.validatorPasswordRule,
+    required this.validatorPasswordMin,
+    required this.validatorPasswordMax,
+    required this.validatorNameEmpty,
+    required this.validatorNameShort,
+    required this.validatorConfirmPasswordEmpty,
+    required this.validatorPasswordMismatch,
+    required this.validatorCurrentPasswordEmpty,
+    required this.validatorNewPasswordEmpty,
+    required this.validatorPasswordNoSpaces,
+    required this.validatorPasswordUppercase,
+    required this.validatorPasswordLowercase,
+    required this.validatorPasswordNumber,
+    required this.validatorPasswordSpecial,
+    required this.validatorPasswordSameAsOld,
+    required this.validatorConfirmNewPasswordEmpty,
+    required this.validatorOtpCode,
+    required this.validatorTermsRequired,
+    required this.passwordRequirementsHint,
+    required this.amLabel,
+    required this.pmLabel,
+    required this.hijriSuffix,
+    required this.failureNetwork,
+    required this.failureTimeout,
+    required this.failureSecureConnection,
+    required this.failureCancelled,
+    required this.failureStorage,
+    required this.failureUnknown,
+    required this.failureUnexpectedResponse,
+    required this.failureRequestFailed,
+    required this.failureNoSignedInUser,
+    required this.failureNoPasswordSignIn,
+    required this.failureMissingGoogleToken,
     required this.settingsTitle,
     required this.aboutUs,
     required this.ourProducts,
@@ -1321,6 +1475,159 @@ class AppText {
   final String no;
   final String prayerNowLabel;
   final String loginRequiredMessage;
+  final String quranAllTypes;
+  final String quranSurahNumberTitle;
+  final String hadithTimerRead;
+  final String hadithTimerReading;
+  final String hadithTimerPaused;
+  final String calendarArabicInBangla;
+  final String quranBookmarkSurah;
+  final String quranOfflineTitle;
+  final String hadithCompetitor;
+  final String failurePasswordRule;
+  final String failureResetSessionExpired;
+  final String failureGoogleUnavailable;
+  final String failureAudioServer;
+  final String failureNoAudioSurah;
+  final String failureNoAudioAyah;
+  final String failureAudioDownload;
+  final String failureQuranContent;
+  final String failureDownloadInterrupted;
+  final String failureSurahListLoad;
+  final String failureNotAvailableOffline;
+  final String failureContentLoad;
+  final String failureTranslationBuiltIn;
+  final String failureNoTranslationSurah;
+  final String failureEbookNoPdf;
+  final String failureDownloadFailed;
+  final String quranSurahBookmarked;
+  final String quranSurahBookmarkRemoved;
+  final String quranViewInAyat;
+  final String quranChangeText;
+  final String quranTranslationUnavailable;
+  final String quranReadyOffline;
+  final String quranDownloading;
+  final String commonDone;
+  final String quranRetryDownload;
+  final String quranDownloadQuran;
+  final String quranShareTranslation;
+  final String quranNoTafsir;
+  final String hadithTimeMinutes;
+  final String hadithPointValue;
+  final String quranRangeEnd;
+  final String commonCancel;
+  final String commonApply;
+  final String quranParaTitle;
+  final String quranNoSurahs;
+  final String quranParaRange;
+  final String quranSurahAyahRange;
+  final String quranAyahLoadFailed;
+  final String quranPageLabel;
+  final String quranSurahChip;
+  final String quranFilterTitle;
+  final String quranActions;
+  final String quranPageLoadFailedRetry;
+  final String quranNoAyahs;
+  final String quranVerseInfo;
+  final String quranTafsirVerse;
+  final String quranCloseTafsir;
+  final String quranSurahPage;
+  final String quranTajweedDownload;
+  final String quranSearchSurahOrPara;
+  final String quranNoResults;
+  final String quranBrowseHint;
+  final String quranTranslateHeading;
+  final String quranSelectTranslateLanguage;
+  final String quranRetryLanguages;
+  final String quranNoTranslations;
+  final String quranCopy;
+  final String quranShare;
+  final String quranPlayAyah;
+  final String quranBookmarkAyah;
+  final String quranSajdah;
+  final String quranTajweedTitle;
+  final String quranTajweedUnavailable;
+  final String quranDownloadInterrupted;
+  final String quranKeepScreenOpen;
+  final String quranNoFilters;
+  final String quranJuzParaCarousel;
+  final String quranSearchAndSelectSurah;
+  final String quranSelectedSurah;
+  final String quranNoSurahsFound;
+  final String quranSurahTranslationAyahs;
+  final String quranSelectAyat;
+  final String quranAyahNumber;
+  final String quranAyahCopied;
+  final String quranShareFailed;
+  final String quranSurahAyahCount;
+  final String quranSurahHeadingInfo;
+  final String quranBismillah;
+  final String quranAyahTitle;
+  final String quranAudioAyahTitle;
+  final String duaSavedEdit;
+  final String duaSavedDelete;
+  final String duaSavedTitle;
+  final String duaEditBookmarkTitle;
+  final String duaFolderName;
+  final String duaFolderNameHint;
+  final String duaSaveChanges;
+  final String duaDeleteBookmarkTitle;
+  final String duaDeleteBookmarkMessage;
+  final String duaYesDelete;
+  final String duaSavedCount;
+  final String duaTotalSaved;
+  final String amolReadConfirmMessage;
+  final String readAtLabel;
+  final String verificationCodeSent;
+  final String verificationResendFailed;
+  final String verificationFailed;
+  final String resendCodeInSeconds;
+  final String didntGetCodeResend;
+  final String passwordUpdated;
+  final String resetPasswordFailed;
+  final String signInFailed;
+  final String registrationFailed;
+  final String currentPasswordHint;
+  final String noDataHere;
+  final String legalEffectiveLabel;
+  final String legalLastUpdatedLabel;
+  final String validatorRequired;
+  final String validatorEmailEmpty;
+  final String validatorEmailInvalid;
+  final String validatorPasswordEmpty;
+  final String validatorPasswordRule;
+  final String validatorPasswordMin;
+  final String validatorPasswordMax;
+  final String validatorNameEmpty;
+  final String validatorNameShort;
+  final String validatorConfirmPasswordEmpty;
+  final String validatorPasswordMismatch;
+  final String validatorCurrentPasswordEmpty;
+  final String validatorNewPasswordEmpty;
+  final String validatorPasswordNoSpaces;
+  final String validatorPasswordUppercase;
+  final String validatorPasswordLowercase;
+  final String validatorPasswordNumber;
+  final String validatorPasswordSpecial;
+  final String validatorPasswordSameAsOld;
+  final String validatorConfirmNewPasswordEmpty;
+  final String validatorOtpCode;
+  final String validatorTermsRequired;
+  final String passwordRequirementsHint;
+  final String amLabel;
+  final String pmLabel;
+  final String hijriSuffix;
+  final String failureNetwork;
+  final String failureTimeout;
+  final String failureSecureConnection;
+  final String failureCancelled;
+  final String failureStorage;
+  final String failureUnknown;
+  final String failureUnexpectedResponse;
+  final String failureRequestFailed;
+  final String failureNoSignedInUser;
+  final String failureNoPasswordSignIn;
+  final String failureMissingGoogleToken;
 
   // Settings feature
   final String settingsTitle;
@@ -3616,6 +3923,671 @@ class AppText {
         'loginRequiredMessage',
         fallback?.loginRequiredMessage ?? '',
       ),
+      quranAllTypes: _read(map, 'quranAllTypes', fallback?.quranAllTypes ?? ''),
+      quranSurahNumberTitle: _read(
+        map,
+        'quranSurahNumberTitle',
+        fallback?.quranSurahNumberTitle ?? '',
+      ),
+      hadithTimerRead: _read(
+        map,
+        'hadithTimerRead',
+        fallback?.hadithTimerRead ?? '',
+      ),
+      hadithTimerReading: _read(
+        map,
+        'hadithTimerReading',
+        fallback?.hadithTimerReading ?? '',
+      ),
+      hadithTimerPaused: _read(
+        map,
+        'hadithTimerPaused',
+        fallback?.hadithTimerPaused ?? '',
+      ),
+      calendarArabicInBangla: _read(
+        map,
+        'calendarArabicInBangla',
+        fallback?.calendarArabicInBangla ?? '',
+      ),
+      quranBookmarkSurah: _read(
+        map,
+        'quranBookmarkSurah',
+        fallback?.quranBookmarkSurah ?? '',
+      ),
+      quranOfflineTitle: _read(
+        map,
+        'quranOfflineTitle',
+        fallback?.quranOfflineTitle ?? '',
+      ),
+      hadithCompetitor: _read(
+        map,
+        'hadithCompetitor',
+        fallback?.hadithCompetitor ?? '',
+      ),
+      failurePasswordRule: _read(
+        map,
+        'failurePasswordRule',
+        fallback?.failurePasswordRule ?? '',
+      ),
+      failureResetSessionExpired: _read(
+        map,
+        'failureResetSessionExpired',
+        fallback?.failureResetSessionExpired ?? '',
+      ),
+      failureGoogleUnavailable: _read(
+        map,
+        'failureGoogleUnavailable',
+        fallback?.failureGoogleUnavailable ?? '',
+      ),
+      failureAudioServer: _read(
+        map,
+        'failureAudioServer',
+        fallback?.failureAudioServer ?? '',
+      ),
+      failureNoAudioSurah: _read(
+        map,
+        'failureNoAudioSurah',
+        fallback?.failureNoAudioSurah ?? '',
+      ),
+      failureNoAudioAyah: _read(
+        map,
+        'failureNoAudioAyah',
+        fallback?.failureNoAudioAyah ?? '',
+      ),
+      failureAudioDownload: _read(
+        map,
+        'failureAudioDownload',
+        fallback?.failureAudioDownload ?? '',
+      ),
+      failureQuranContent: _read(
+        map,
+        'failureQuranContent',
+        fallback?.failureQuranContent ?? '',
+      ),
+      failureDownloadInterrupted: _read(
+        map,
+        'failureDownloadInterrupted',
+        fallback?.failureDownloadInterrupted ?? '',
+      ),
+      failureSurahListLoad: _read(
+        map,
+        'failureSurahListLoad',
+        fallback?.failureSurahListLoad ?? '',
+      ),
+      failureNotAvailableOffline: _read(
+        map,
+        'failureNotAvailableOffline',
+        fallback?.failureNotAvailableOffline ?? '',
+      ),
+      failureContentLoad: _read(
+        map,
+        'failureContentLoad',
+        fallback?.failureContentLoad ?? '',
+      ),
+      failureTranslationBuiltIn: _read(
+        map,
+        'failureTranslationBuiltIn',
+        fallback?.failureTranslationBuiltIn ?? '',
+      ),
+      failureNoTranslationSurah: _read(
+        map,
+        'failureNoTranslationSurah',
+        fallback?.failureNoTranslationSurah ?? '',
+      ),
+      failureEbookNoPdf: _read(
+        map,
+        'failureEbookNoPdf',
+        fallback?.failureEbookNoPdf ?? '',
+      ),
+      failureDownloadFailed: _read(
+        map,
+        'failureDownloadFailed',
+        fallback?.failureDownloadFailed ?? '',
+      ),
+      quranSurahBookmarked: _read(
+        map,
+        'quranSurahBookmarked',
+        fallback?.quranSurahBookmarked ?? '',
+      ),
+      quranSurahBookmarkRemoved: _read(
+        map,
+        'quranSurahBookmarkRemoved',
+        fallback?.quranSurahBookmarkRemoved ?? '',
+      ),
+      quranViewInAyat: _read(
+        map,
+        'quranViewInAyat',
+        fallback?.quranViewInAyat ?? '',
+      ),
+      quranChangeText: _read(
+        map,
+        'quranChangeText',
+        fallback?.quranChangeText ?? '',
+      ),
+      quranTranslationUnavailable: _read(
+        map,
+        'quranTranslationUnavailable',
+        fallback?.quranTranslationUnavailable ?? '',
+      ),
+      quranReadyOffline: _read(
+        map,
+        'quranReadyOffline',
+        fallback?.quranReadyOffline ?? '',
+      ),
+      quranDownloading: _read(
+        map,
+        'quranDownloading',
+        fallback?.quranDownloading ?? '',
+      ),
+      commonDone: _read(map, 'commonDone', fallback?.commonDone ?? ''),
+      quranRetryDownload: _read(
+        map,
+        'quranRetryDownload',
+        fallback?.quranRetryDownload ?? '',
+      ),
+      quranDownloadQuran: _read(
+        map,
+        'quranDownloadQuran',
+        fallback?.quranDownloadQuran ?? '',
+      ),
+      quranShareTranslation: _read(
+        map,
+        'quranShareTranslation',
+        fallback?.quranShareTranslation ?? '',
+      ),
+      quranNoTafsir: _read(map, 'quranNoTafsir', fallback?.quranNoTafsir ?? ''),
+      hadithTimeMinutes: _read(
+        map,
+        'hadithTimeMinutes',
+        fallback?.hadithTimeMinutes ?? '',
+      ),
+      hadithPointValue: _read(
+        map,
+        'hadithPointValue',
+        fallback?.hadithPointValue ?? '',
+      ),
+      quranRangeEnd: _read(map, 'quranRangeEnd', fallback?.quranRangeEnd ?? ''),
+      commonCancel: _read(map, 'commonCancel', fallback?.commonCancel ?? ''),
+      commonApply: _read(map, 'commonApply', fallback?.commonApply ?? ''),
+      quranParaTitle: _read(
+        map,
+        'quranParaTitle',
+        fallback?.quranParaTitle ?? '',
+      ),
+      quranNoSurahs: _read(map, 'quranNoSurahs', fallback?.quranNoSurahs ?? ''),
+      quranParaRange: _read(
+        map,
+        'quranParaRange',
+        fallback?.quranParaRange ?? '',
+      ),
+      quranSurahAyahRange: _read(
+        map,
+        'quranSurahAyahRange',
+        fallback?.quranSurahAyahRange ?? '',
+      ),
+      quranAyahLoadFailed: _read(
+        map,
+        'quranAyahLoadFailed',
+        fallback?.quranAyahLoadFailed ?? '',
+      ),
+      quranPageLabel: _read(
+        map,
+        'quranPageLabel',
+        fallback?.quranPageLabel ?? '',
+      ),
+      quranSurahChip: _read(
+        map,
+        'quranSurahChip',
+        fallback?.quranSurahChip ?? '',
+      ),
+      quranFilterTitle: _read(
+        map,
+        'quranFilterTitle',
+        fallback?.quranFilterTitle ?? '',
+      ),
+      quranActions: _read(map, 'quranActions', fallback?.quranActions ?? ''),
+      quranPageLoadFailedRetry: _read(
+        map,
+        'quranPageLoadFailedRetry',
+        fallback?.quranPageLoadFailedRetry ?? '',
+      ),
+      quranNoAyahs: _read(map, 'quranNoAyahs', fallback?.quranNoAyahs ?? ''),
+      quranVerseInfo: _read(
+        map,
+        'quranVerseInfo',
+        fallback?.quranVerseInfo ?? '',
+      ),
+      quranTafsirVerse: _read(
+        map,
+        'quranTafsirVerse',
+        fallback?.quranTafsirVerse ?? '',
+      ),
+      quranCloseTafsir: _read(
+        map,
+        'quranCloseTafsir',
+        fallback?.quranCloseTafsir ?? '',
+      ),
+      quranSurahPage: _read(
+        map,
+        'quranSurahPage',
+        fallback?.quranSurahPage ?? '',
+      ),
+      quranTajweedDownload: _read(
+        map,
+        'quranTajweedDownload',
+        fallback?.quranTajweedDownload ?? '',
+      ),
+      quranSearchSurahOrPara: _read(
+        map,
+        'quranSearchSurahOrPara',
+        fallback?.quranSearchSurahOrPara ?? '',
+      ),
+      quranNoResults: _read(
+        map,
+        'quranNoResults',
+        fallback?.quranNoResults ?? '',
+      ),
+      quranBrowseHint: _read(
+        map,
+        'quranBrowseHint',
+        fallback?.quranBrowseHint ?? '',
+      ),
+      quranTranslateHeading: _read(
+        map,
+        'quranTranslateHeading',
+        fallback?.quranTranslateHeading ?? '',
+      ),
+      quranSelectTranslateLanguage: _read(
+        map,
+        'quranSelectTranslateLanguage',
+        fallback?.quranSelectTranslateLanguage ?? '',
+      ),
+      quranRetryLanguages: _read(
+        map,
+        'quranRetryLanguages',
+        fallback?.quranRetryLanguages ?? '',
+      ),
+      quranNoTranslations: _read(
+        map,
+        'quranNoTranslations',
+        fallback?.quranNoTranslations ?? '',
+      ),
+      quranCopy: _read(map, 'quranCopy', fallback?.quranCopy ?? ''),
+      quranShare: _read(map, 'quranShare', fallback?.quranShare ?? ''),
+      quranPlayAyah: _read(map, 'quranPlayAyah', fallback?.quranPlayAyah ?? ''),
+      quranBookmarkAyah: _read(
+        map,
+        'quranBookmarkAyah',
+        fallback?.quranBookmarkAyah ?? '',
+      ),
+      quranSajdah: _read(map, 'quranSajdah', fallback?.quranSajdah ?? ''),
+      quranTajweedTitle: _read(
+        map,
+        'quranTajweedTitle',
+        fallback?.quranTajweedTitle ?? '',
+      ),
+      quranTajweedUnavailable: _read(
+        map,
+        'quranTajweedUnavailable',
+        fallback?.quranTajweedUnavailable ?? '',
+      ),
+      quranDownloadInterrupted: _read(
+        map,
+        'quranDownloadInterrupted',
+        fallback?.quranDownloadInterrupted ?? '',
+      ),
+      quranKeepScreenOpen: _read(
+        map,
+        'quranKeepScreenOpen',
+        fallback?.quranKeepScreenOpen ?? '',
+      ),
+      quranNoFilters: _read(
+        map,
+        'quranNoFilters',
+        fallback?.quranNoFilters ?? '',
+      ),
+      quranJuzParaCarousel: _read(
+        map,
+        'quranJuzParaCarousel',
+        fallback?.quranJuzParaCarousel ?? '',
+      ),
+      quranSearchAndSelectSurah: _read(
+        map,
+        'quranSearchAndSelectSurah',
+        fallback?.quranSearchAndSelectSurah ?? '',
+      ),
+      quranSelectedSurah: _read(
+        map,
+        'quranSelectedSurah',
+        fallback?.quranSelectedSurah ?? '',
+      ),
+      quranNoSurahsFound: _read(
+        map,
+        'quranNoSurahsFound',
+        fallback?.quranNoSurahsFound ?? '',
+      ),
+      quranSurahTranslationAyahs: _read(
+        map,
+        'quranSurahTranslationAyahs',
+        fallback?.quranSurahTranslationAyahs ?? '',
+      ),
+      quranSelectAyat: _read(
+        map,
+        'quranSelectAyat',
+        fallback?.quranSelectAyat ?? '',
+      ),
+      quranAyahNumber: _read(
+        map,
+        'quranAyahNumber',
+        fallback?.quranAyahNumber ?? '',
+      ),
+      quranAyahCopied: _read(
+        map,
+        'quranAyahCopied',
+        fallback?.quranAyahCopied ?? '',
+      ),
+      quranShareFailed: _read(
+        map,
+        'quranShareFailed',
+        fallback?.quranShareFailed ?? '',
+      ),
+      quranSurahAyahCount: _read(
+        map,
+        'quranSurahAyahCount',
+        fallback?.quranSurahAyahCount ?? '',
+      ),
+      quranSurahHeadingInfo: _read(
+        map,
+        'quranSurahHeadingInfo',
+        fallback?.quranSurahHeadingInfo ?? '',
+      ),
+      quranBismillah: _read(
+        map,
+        'quranBismillah',
+        fallback?.quranBismillah ?? '',
+      ),
+      quranAyahTitle: _read(
+        map,
+        'quranAyahTitle',
+        fallback?.quranAyahTitle ?? '',
+      ),
+      quranAudioAyahTitle: _read(
+        map,
+        'quranAudioAyahTitle',
+        fallback?.quranAudioAyahTitle ?? '',
+      ),
+      duaSavedEdit: _read(map, 'duaSavedEdit', fallback?.duaSavedEdit ?? ''),
+      duaSavedDelete: _read(
+        map,
+        'duaSavedDelete',
+        fallback?.duaSavedDelete ?? '',
+      ),
+      duaSavedTitle: _read(map, 'duaSavedTitle', fallback?.duaSavedTitle ?? ''),
+      duaEditBookmarkTitle: _read(
+        map,
+        'duaEditBookmarkTitle',
+        fallback?.duaEditBookmarkTitle ?? '',
+      ),
+      duaFolderName: _read(map, 'duaFolderName', fallback?.duaFolderName ?? ''),
+      duaFolderNameHint: _read(
+        map,
+        'duaFolderNameHint',
+        fallback?.duaFolderNameHint ?? '',
+      ),
+      duaSaveChanges: _read(
+        map,
+        'duaSaveChanges',
+        fallback?.duaSaveChanges ?? '',
+      ),
+      duaDeleteBookmarkTitle: _read(
+        map,
+        'duaDeleteBookmarkTitle',
+        fallback?.duaDeleteBookmarkTitle ?? '',
+      ),
+      duaDeleteBookmarkMessage: _read(
+        map,
+        'duaDeleteBookmarkMessage',
+        fallback?.duaDeleteBookmarkMessage ?? '',
+      ),
+      duaYesDelete: _read(map, 'duaYesDelete', fallback?.duaYesDelete ?? ''),
+      duaSavedCount: _read(map, 'duaSavedCount', fallback?.duaSavedCount ?? ''),
+      duaTotalSaved: _read(map, 'duaTotalSaved', fallback?.duaTotalSaved ?? ''),
+      amolReadConfirmMessage: _read(
+        map,
+        'amolReadConfirmMessage',
+        fallback?.amolReadConfirmMessage ?? '',
+      ),
+      readAtLabel: _read(map, 'readAtLabel', fallback?.readAtLabel ?? ''),
+      verificationCodeSent: _read(
+        map,
+        'verificationCodeSent',
+        fallback?.verificationCodeSent ?? '',
+      ),
+      verificationResendFailed: _read(
+        map,
+        'verificationResendFailed',
+        fallback?.verificationResendFailed ?? '',
+      ),
+      verificationFailed: _read(
+        map,
+        'verificationFailed',
+        fallback?.verificationFailed ?? '',
+      ),
+      resendCodeInSeconds: _read(
+        map,
+        'resendCodeInSeconds',
+        fallback?.resendCodeInSeconds ?? '',
+      ),
+      didntGetCodeResend: _read(
+        map,
+        'didntGetCodeResend',
+        fallback?.didntGetCodeResend ?? '',
+      ),
+      passwordUpdated: _read(
+        map,
+        'passwordUpdated',
+        fallback?.passwordUpdated ?? '',
+      ),
+      resetPasswordFailed: _read(
+        map,
+        'resetPasswordFailed',
+        fallback?.resetPasswordFailed ?? '',
+      ),
+      signInFailed: _read(map, 'signInFailed', fallback?.signInFailed ?? ''),
+      registrationFailed: _read(
+        map,
+        'registrationFailed',
+        fallback?.registrationFailed ?? '',
+      ),
+      currentPasswordHint: _read(
+        map,
+        'currentPasswordHint',
+        fallback?.currentPasswordHint ?? '',
+      ),
+      noDataHere: _read(map, 'noDataHere', fallback?.noDataHere ?? ''),
+      legalEffectiveLabel: _read(
+        map,
+        'legalEffectiveLabel',
+        fallback?.legalEffectiveLabel ?? '',
+      ),
+      legalLastUpdatedLabel: _read(
+        map,
+        'legalLastUpdatedLabel',
+        fallback?.legalLastUpdatedLabel ?? '',
+      ),
+      validatorRequired: _read(
+        map,
+        'validatorRequired',
+        fallback?.validatorRequired ?? '',
+      ),
+      validatorEmailEmpty: _read(
+        map,
+        'validatorEmailEmpty',
+        fallback?.validatorEmailEmpty ?? '',
+      ),
+      validatorEmailInvalid: _read(
+        map,
+        'validatorEmailInvalid',
+        fallback?.validatorEmailInvalid ?? '',
+      ),
+      validatorPasswordEmpty: _read(
+        map,
+        'validatorPasswordEmpty',
+        fallback?.validatorPasswordEmpty ?? '',
+      ),
+      validatorPasswordRule: _read(
+        map,
+        'validatorPasswordRule',
+        fallback?.validatorPasswordRule ?? '',
+      ),
+      validatorPasswordMin: _read(
+        map,
+        'validatorPasswordMin',
+        fallback?.validatorPasswordMin ?? '',
+      ),
+      validatorPasswordMax: _read(
+        map,
+        'validatorPasswordMax',
+        fallback?.validatorPasswordMax ?? '',
+      ),
+      validatorNameEmpty: _read(
+        map,
+        'validatorNameEmpty',
+        fallback?.validatorNameEmpty ?? '',
+      ),
+      validatorNameShort: _read(
+        map,
+        'validatorNameShort',
+        fallback?.validatorNameShort ?? '',
+      ),
+      validatorConfirmPasswordEmpty: _read(
+        map,
+        'validatorConfirmPasswordEmpty',
+        fallback?.validatorConfirmPasswordEmpty ?? '',
+      ),
+      validatorPasswordMismatch: _read(
+        map,
+        'validatorPasswordMismatch',
+        fallback?.validatorPasswordMismatch ?? '',
+      ),
+      validatorCurrentPasswordEmpty: _read(
+        map,
+        'validatorCurrentPasswordEmpty',
+        fallback?.validatorCurrentPasswordEmpty ?? '',
+      ),
+      validatorNewPasswordEmpty: _read(
+        map,
+        'validatorNewPasswordEmpty',
+        fallback?.validatorNewPasswordEmpty ?? '',
+      ),
+      validatorPasswordNoSpaces: _read(
+        map,
+        'validatorPasswordNoSpaces',
+        fallback?.validatorPasswordNoSpaces ?? '',
+      ),
+      validatorPasswordUppercase: _read(
+        map,
+        'validatorPasswordUppercase',
+        fallback?.validatorPasswordUppercase ?? '',
+      ),
+      validatorPasswordLowercase: _read(
+        map,
+        'validatorPasswordLowercase',
+        fallback?.validatorPasswordLowercase ?? '',
+      ),
+      validatorPasswordNumber: _read(
+        map,
+        'validatorPasswordNumber',
+        fallback?.validatorPasswordNumber ?? '',
+      ),
+      validatorPasswordSpecial: _read(
+        map,
+        'validatorPasswordSpecial',
+        fallback?.validatorPasswordSpecial ?? '',
+      ),
+      validatorPasswordSameAsOld: _read(
+        map,
+        'validatorPasswordSameAsOld',
+        fallback?.validatorPasswordSameAsOld ?? '',
+      ),
+      validatorConfirmNewPasswordEmpty: _read(
+        map,
+        'validatorConfirmNewPasswordEmpty',
+        fallback?.validatorConfirmNewPasswordEmpty ?? '',
+      ),
+      validatorOtpCode: _read(
+        map,
+        'validatorOtpCode',
+        fallback?.validatorOtpCode ?? '',
+      ),
+      validatorTermsRequired: _read(
+        map,
+        'validatorTermsRequired',
+        fallback?.validatorTermsRequired ?? '',
+      ),
+      passwordRequirementsHint: _read(
+        map,
+        'passwordRequirementsHint',
+        fallback?.passwordRequirementsHint ?? '',
+      ),
+      amLabel: _read(map, 'amLabel', fallback?.amLabel ?? ''),
+      pmLabel: _read(map, 'pmLabel', fallback?.pmLabel ?? ''),
+      hijriSuffix: _read(map, 'hijriSuffix', fallback?.hijriSuffix ?? ''),
+      failureNetwork: _read(
+        map,
+        'failureNetwork',
+        fallback?.failureNetwork ?? '',
+      ),
+      failureTimeout: _read(
+        map,
+        'failureTimeout',
+        fallback?.failureTimeout ?? '',
+      ),
+      failureSecureConnection: _read(
+        map,
+        'failureSecureConnection',
+        fallback?.failureSecureConnection ?? '',
+      ),
+      failureCancelled: _read(
+        map,
+        'failureCancelled',
+        fallback?.failureCancelled ?? '',
+      ),
+      failureStorage: _read(
+        map,
+        'failureStorage',
+        fallback?.failureStorage ?? '',
+      ),
+      failureUnknown: _read(
+        map,
+        'failureUnknown',
+        fallback?.failureUnknown ?? '',
+      ),
+      failureUnexpectedResponse: _read(
+        map,
+        'failureUnexpectedResponse',
+        fallback?.failureUnexpectedResponse ?? '',
+      ),
+      failureRequestFailed: _read(
+        map,
+        'failureRequestFailed',
+        fallback?.failureRequestFailed ?? '',
+      ),
+      failureNoSignedInUser: _read(
+        map,
+        'failureNoSignedInUser',
+        fallback?.failureNoSignedInUser ?? '',
+      ),
+      failureNoPasswordSignIn: _read(
+        map,
+        'failureNoPasswordSignIn',
+        fallback?.failureNoPasswordSignIn ?? '',
+      ),
+      failureMissingGoogleToken: _read(
+        map,
+        'failureMissingGoogleToken',
+        fallback?.failureMissingGoogleToken ?? '',
+      ),
       settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
       ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),
@@ -3781,10 +4753,7 @@ class AppText {
     );
   }
 
-  static AppText of(BuildContext context) {
-    final language = context.watch<LanguageBloc>().state.language;
-    return forLanguage(language);
-  }
+  static AppText of(BuildContext context) => forLanguage(languageOf(context));
 
   /// Like [of], but does not subscribe to [LanguageBloc] changes. Use this
   /// outside of `build` (e.g. in gesture callbacks) where listening would

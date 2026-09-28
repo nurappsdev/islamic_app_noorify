@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebook_download/ebook_download_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_reader_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// One e-book: cover, title, author, language, publisher and reference, with a
 /// button that downloads the PDF onto the device, then reads it in the app.
@@ -245,7 +246,9 @@ class _DownloadButton extends StatelessWidget {
             Text(
               percent == null
                   ? '${appText.hadithBookDownloading} …'
-                  : '${appText.hadithBookDownloading}  $percent%',
+                  : context.localizedDigits(
+                      '${appText.hadithBookDownloading}  $percent%',
+                    ),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,

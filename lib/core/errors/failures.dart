@@ -1,12 +1,20 @@
+import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
+
 /// Base type for everything that can go wrong in the domain layer.
 ///
 /// Repositories return `Either<Failure, T>` so the presentation layer can react
 /// to a typed problem instead of catching raw exceptions.
 abstract class Failure {
-  const Failure(this.message, {this.statusCode});
+  const Failure(String message, {this.statusCode}) : rawMessage = message;
 
-  /// Human readable, safe to surface directly in the UI.
-  final String message;
+  /// The text as the failure was created: English for a failure the app made
+  /// itself, the server's own words for an API error.
+  final String rawMessage;
+
+  /// Human readable, safe to surface directly in the UI. A failure the app made
+  /// itself (no connection, timeout, ...) reads in the selected language; the
+  /// server's error text is shown as the server wrote it.
+  String get message => localizeFailureMessage(rawMessage);
 
   /// HTTP status code when the failure originated from a server response.
   final int? statusCode;

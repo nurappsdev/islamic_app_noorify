@@ -14,6 +14,7 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_transl
 import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
 /// user pick one. Pass the ancestor's [ReciterBloc] explicitly since a
@@ -234,7 +235,9 @@ class _SurahAudioSheet extends StatelessWidget {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
+                    context.localizedDigits(
+                      '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
+                    ),
                     style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
                   ),
                 ] else ...[
@@ -379,7 +382,7 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                   if (!state.editionsLoading &&
                       !state.editionsError &&
                       state.editions.isEmpty)
-                    const Text('No translations available'),
+                    Text(AppText.of(context).quranNoTranslations),
                   for (final edition in state.editions)
                     _EditionRow(edition: edition, state: state),
                 ],
@@ -487,7 +490,7 @@ class _EditionRow extends StatelessWidget {
     if (isDownloading) {
       final pct = dl.fraction == null ? 0 : (dl.fraction! * 100).round();
       trailing = Text(
-        '${appText.quranEditionDownloading} $pct%',
+        context.localizedDigits('${appText.quranEditionDownloading} $pct%'),
         style: TextStyle(fontSize: 11.sp, color: AppColor.primary),
       );
     } else if (!downloaded) {
@@ -649,7 +652,9 @@ class _AyahRepeatSheet extends StatelessWidget {
                     ),
                     SizedBox(width: 24.w),
                     Text(
-                      count <= 1 ? appText.repeatOff : '$count×',
+                      count <= 1
+                          ? appText.repeatOff
+                          : context.localizedDigits('$count×'),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w700,

@@ -13,6 +13,8 @@ import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'quran_design.dart';
 import 'quran_sheets.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class QuranAyahDetails extends StatefulWidget {
   const QuranAyahDetails({
@@ -100,9 +102,15 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const QuranSheetHeading('Translate'),
+                  QuranSheetHeading(AppText.of(context).quranTranslateHeading),
                   Text(
-                    '${a.verseKey} · Para ${a.paraNumber} · Page ${a.pageNumber}',
+                    context.localizedDigits(
+                      AppText.of(context).quranVerseInfo.fill({
+                        'key': a.verseKey,
+                        'para': a.paraNumber,
+                        'page': a.pageNumber,
+                      }),
+                    ),
                     style: const TextStyle(color: quranInk),
                   ),
                   const SizedBox(height: 16),
@@ -120,8 +128,8 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                       spacing: 12,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Text(
-                          'Select translate language',
+                        Text(
+                          AppText.of(context).quranSelectTranslateLanguage,
                           style: TextStyle(color: quranInk),
                         ),
                         if (catalog.hasError)
@@ -129,7 +137,9 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                             onPressed: () => setState(
                               () => _editions = _api.loadTranslations(),
                             ),
-                            child: const Text('Retry languages'),
+                            child: Text(
+                              AppText.of(context).quranRetryLanguages,
+                            ),
                           ),
                         if (catalog.connectionState == ConnectionState.waiting)
                           const SizedBox(
@@ -154,14 +164,14 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                                 : null,
                           ),
                         if (catalog.hasData && catalog.requireData.isEmpty)
-                          const Text('No translations available'),
+                          Text(AppText.of(context).quranNoTranslations),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
                   Text(
                     a.translations[_translation]?.text ??
-                        'Translation unavailable for this ayah',
+                        AppText.of(context).quranTranslationUnavailable,
                     style: const TextStyle(fontSize: 16, height: 1.6),
                   ),
                   const SizedBox(height: 20),
@@ -177,7 +187,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                           copy: true,
                         ),
                         icon: const Icon(Icons.copy_outlined),
-                        label: const Text('Copy'),
+                        label: Text(AppText.of(context).quranCopy),
                       ),
                       TextButton.icon(
                         onPressed: () => shareQuranAyah(
@@ -187,7 +197,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                           surahName: widget.surahName,
                         ),
                         icon: const Icon(Icons.share_outlined),
-                        label: const Text('Share'),
+                        label: Text(AppText.of(context).quranShare),
                       ),
                       TextButton.icon(
                         onPressed: widget.onTafsir != null
@@ -198,7 +208,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                                 _translation == 161,
                               ),
                         icon: const Icon(Icons.menu_book_outlined),
-                        label: const Text('Tafsir'),
+                        label: Text(AppText.of(context).tafsirTitle),
                       ),
                     ],
                   ),
@@ -206,7 +216,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                     children: [
                       BlocBuilder<AyahAudioBloc, AyahAudioState>(
                         builder: (context, state) => IconButton(
-                          tooltip: 'Play ayah',
+                          tooltip: AppText.of(context).quranPlayAyah,
                           onPressed: () => context.read<AyahAudioBloc>().add(
                             PlayAyahAudio(
                               verseKey: a.verseKey,
@@ -236,12 +246,16 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                             ),
                           ),
                           icon: const Icon(Icons.repeat),
-                          label: Text('${state.repeatCountFor(a.verseKey)}'),
+                          label: Text(
+                            context.localizedDigits(
+                              '${state.repeatCountFor(a.verseKey)}',
+                            ),
+                          ),
                         ),
                       ),
                       BlocBuilder<AyahBookmarkBloc, AyahBookmarkState>(
                         builder: (context, state) => IconButton(
-                          tooltip: 'Bookmark ayah',
+                          tooltip: AppText.of(context).quranBookmarkAyah,
                           onPressed: () => context.read<AyahBookmarkBloc>().add(
                             const ToggleAyahBookmark(),
                           ),
@@ -254,7 +268,14 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                       ),
                     ],
                   ),
-                  if (a.sajdahNumber != null) Text('Sajdah ${a.sajdahNumber}'),
+                  if (a.sajdahNumber != null)
+                    Text(
+                      context.localizedDigits(
+                        AppText.of(
+                          context,
+                        ).quranSajdah.fill({'n': a.sajdahNumber}),
+                      ),
+                    ),
                 ],
               ),
             );

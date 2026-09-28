@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reci
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class SurahAyahCard extends StatelessWidget {
   const SurahAyahCard({
@@ -83,7 +84,7 @@ class SurahAyahCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(7.r),
                   ),
                   child: Text(
-                    '$ayahNo',
+                    context.localizedDigits('$ayahNo'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 11.sp,
@@ -165,7 +166,7 @@ class SurahAyahCard extends StatelessWidget {
                             return n <= 1
                                 ? const SizedBox.shrink()
                                 : Text(
-                                    '$n',
+                                    context.localizedDigits('$n'),
                                     style: TextStyle(
                                       color: AppColor.primary,
                                       fontSize: 10.sp,

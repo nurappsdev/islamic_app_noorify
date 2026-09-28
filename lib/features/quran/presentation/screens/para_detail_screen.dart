@@ -6,6 +6,8 @@ import '../../domain/juz_summary.dart';
 import '../quran_route_args.dart';
 import '../widgets/quran_design.dart';
 import '../widgets/quran_shimmer.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class ParaDetailScreen extends StatefulWidget {
   const ParaDetailScreen({super.key, required this.number});
@@ -22,7 +24,11 @@ class _ParaDetailScreenState extends State<ParaDetailScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: context.pageColor(Colors.white),
     appBar: AppBar(
-      title: Text('Para ${widget.number}'),
+      title: Text(
+        context.localizedDigits(
+          AppText.of(context).quranParaTitle.fill({'n': widget.number}),
+        ),
+      ),
       foregroundColor: quranInk,
       backgroundColor: context.pageColor(quranPale),
     ),
@@ -40,7 +46,7 @@ class _ParaDetailScreenState extends State<ParaDetailScreen> {
         if (!snapshot.hasData) return const SurahListShimmer();
         final para = snapshot.requireData;
         if (para.surahs.isEmpty) {
-          return const Center(child: Text('No surahs available'));
+          return Center(child: Text(AppText.of(context).quranNoSurahs));
         }
         return ListView(
           padding: const EdgeInsets.all(19),
@@ -51,15 +57,32 @@ class _ParaDetailScreenState extends State<ParaDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${para.versesCount} ayahs · ${para.startSurahNo}:${para.startAyah} – ${para.endSurahNo}:${para.endAyah}',
+              context.localizedDigits(
+                AppText.of(context).quranParaRange.fill({
+                  'count': para.versesCount,
+                  'a': para.startSurahNo,
+                  'b': para.startAyah,
+                  'c': para.endSurahNo,
+                  'd': para.endAyah,
+                }),
+              ),
             ),
             const SizedBox(height: 24),
             for (final surah in para.surahs)
               QuranListRow(
                 number: surah.number,
                 title: surah.name,
-                subtitle:
-                    '${surah.nameBangla}\nAyah ${surah.number == para.startSurahNo ? para.startAyah : 1} – ${surah.number == para.endSurahNo ? para.endAyah : 'end'}',
+                subtitle: context.localizedDigits(
+                  AppText.of(context).quranSurahAyahRange.fill({
+                    'name': surah.nameBangla,
+                    'from': surah.number == para.startSurahNo
+                        ? para.startAyah
+                        : 1,
+                    'to': surah.number == para.endSurahNo
+                        ? para.endAyah
+                        : AppText.of(context).quranRangeEnd,
+                  }),
+                ),
                 onTap: () => Navigator.pushNamed(
                   context,
                   RouteNames.quranSurahDetail,

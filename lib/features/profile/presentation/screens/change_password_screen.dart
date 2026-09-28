@@ -8,6 +8,8 @@ import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_butto
 import 'package:islami_app_noorify/features/profile/data/datasources/change_password_remote_data_source.dart';
 import 'package:islami_app_noorify/features/profile/data/repositories/change_password_repository_impl.dart';
 import 'package:islami_app_noorify/features/profile/domain/usecases/change_password.dart';
+import 'package:islami_app_noorify/core/localization/localized_validator.dart';
+import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
 
 /// Old password + new password + confirmation, sent to
 /// `POST /settings/change-password`.
@@ -46,42 +48,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   // --- Validation -------------------------------------------------------------
 
-  String? _validateOld(String? value) {
-    if (value == null || value.isEmpty) return 'Enter your current password.';
-    return null;
-  }
+  String? _validateOld(String? value) =>
+      LocalizedValidator.readOf(context).currentPassword(value);
 
-  String? _validateNew(String? value) {
-    final v = value ?? '';
-    if (v.isEmpty) return 'Enter a new password.';
-    if (v.contains(RegExp(r'\s'))) return 'Password cannot contain spaces.';
-    if (v.length < _minLength) {
-      return 'Use at least $_minLength characters.';
-    }
-    if (v.length > _maxLength) {
-      return 'Use at most $_maxLength characters.';
-    }
-    if (!v.contains(RegExp(r'[A-Z]'))) {
-      return 'Add at least one uppercase letter.';
-    }
-    if (!v.contains(RegExp(r'[a-z]'))) {
-      return 'Add at least one lowercase letter.';
-    }
-    if (!v.contains(RegExp(r'[0-9]'))) return 'Add at least one number.';
-    if (!v.contains(RegExp(r'[^A-Za-z0-9]'))) {
-      return 'Add at least one special character.';
-    }
-    if (v == _oldController.text) {
-      return 'New password must be different from the current one.';
-    }
-    return null;
-  }
+  String? _validateNew(String? value) =>
+      LocalizedValidator.readOf(context).newPassword(
+        value,
+        currentPassword: _oldController.text,
+        minLength: _minLength,
+        maxLength: _maxLength,
+      );
 
-  String? _validateConfirm(String? value) {
-    if (value == null || value.isEmpty) return 'Confirm your new password.';
-    if (value != _newController.text) return 'Passwords do not match.';
-    return null;
-  }
+  String? _validateConfirm(String? value) => LocalizedValidator.readOf(
+    context,
+  ).confirmNewPassword(value, _newController.text);
 
   // --- Submit -----------------------------------------------------------------
 
@@ -184,58 +164,62 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.fromLTRB(16.w, 24.h, 16.w, 24.h),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _field(
-                        controller: _oldController,
-                        hint: 'Current Password',
-                        obscure: _obscureOld,
-                        onToggle: () =>
-                            setState(() => _obscureOld = !_obscureOld),
-                        validator: _validateOld,
-                        action: TextInputAction.next,
-                      ),
-                      SizedBox(height: 14.h),
-                      _field(
-                        controller: _newController,
-                        hint: appText.newPassword,
-                        obscure: _obscureNew,
-                        onToggle: () =>
-                            setState(() => _obscureNew = !_obscureNew),
-                        validator: _validateNew,
-                        action: TextInputAction.next,
-                      ),
-                      SizedBox(height: 14.h),
-                      _field(
-                        controller: _confirmController,
-                        hint: appText.confirmPassword,
-                        obscure: _obscureConfirm,
-                        onToggle: () =>
-                            setState(() => _obscureConfirm = !_obscureConfirm),
-                        validator: _validateConfirm,
-                        action: TextInputAction.done,
-                        onSubmitted: (_) => _submit(),
-                      ),
-                      SizedBox(height: 10.h),
-                      Text(
-                        'Use $_minLength+ characters with uppercase, lowercase, '
-                        'a number and a special character.',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: context.inkColor(const Color(0xFF6B7551)),
+                child: LocalizedFormScope(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _field(
+                          controller: _oldController,
+                          hint: AppText.of(context).currentPasswordHint,
+                          obscure: _obscureOld,
+                          onToggle: () =>
+                              setState(() => _obscureOld = !_obscureOld),
+                          validator: _validateOld,
+                          action: TextInputAction.next,
                         ),
-                      ),
-                      SizedBox(height: 32.h),
-                      AuthButton(
-                        label: appText.confirm,
-                        height: 50.h,
-                        isLoading: _loading,
-                        onPressed: _loading ? null : _submit,
-                      ),
-                    ],
+                        SizedBox(height: 14.h),
+                        _field(
+                          controller: _newController,
+                          hint: appText.newPassword,
+                          obscure: _obscureNew,
+                          onToggle: () =>
+                              setState(() => _obscureNew = !_obscureNew),
+                          validator: _validateNew,
+                          action: TextInputAction.next,
+                        ),
+                        SizedBox(height: 14.h),
+                        _field(
+                          controller: _confirmController,
+                          hint: appText.confirmPassword,
+                          obscure: _obscureConfirm,
+                          onToggle: () => setState(
+                            () => _obscureConfirm = !_obscureConfirm,
+                          ),
+                          validator: _validateConfirm,
+                          action: TextInputAction.done,
+                          onSubmitted: (_) => _submit(),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          LocalizedValidator.readOf(
+                            context,
+                          ).passwordRequirementsHint(_minLength),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: context.inkColor(const Color(0xFF6B7551)),
+                          ),
+                        ),
+                        SizedBox(height: 32.h),
+                        AuthButton(
+                          label: appText.confirm,
+                          height: 50.h,
+                          isLoading: _loading,
+                          onPressed: _loading ? null : _submit,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -11,6 +11,7 @@ import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
 import 'quran_sheets.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class QuranPlaybackAudioGate extends StatefulWidget {
   const QuranPlaybackAudioGate({
@@ -132,7 +133,7 @@ class QuranNowPlayingBar extends StatelessWidget {
                           borderRadius: BorderRadius.circular(7.r),
                         ),
                         child: Text(
-                          '$ayahNo',
+                          context.localizedDigits('$ayahNo'),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11.sp,
@@ -229,7 +230,9 @@ class QuranNowPlayingBar extends StatelessWidget {
                                     return const SizedBox.shrink();
                                   }
                                   return Text(
-                                    '${state.repeatCount}',
+                                    context.localizedDigits(
+                                      '${state.repeatCount}',
+                                    ),
                                     style: TextStyle(
                                       color: AppColor.primary,
                                       fontSize: 10.sp,

@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Zikr dashboard — the home of the Zikr flow, reached from "Let's Get Start"
 /// on [ZikrIntroScreen].
@@ -140,7 +141,7 @@ class _LastZikrPill extends StatelessWidget {
         child: Row(
           children: [
             Text(
-              '${appText.zikrLastZikr}   ',
+              context.localizedDigits('${appText.zikrLastZikr}   '),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 13.sp,
@@ -155,8 +156,10 @@ class _LastZikrPill extends StatelessWidget {
             ),
             SizedBox(width: 6.w),
             Text(
-              '${ZikrCatalog.mockLastZikrDone}/'
-              '${ZikrCatalog.mockLastZikr.target}',
+              context.localizedDigits(
+                '${ZikrCatalog.mockLastZikrDone}/'
+                '${ZikrCatalog.mockLastZikr.target}',
+              ),
               style: TextStyle(
                 color: context.inkColor(Colors.white.withValues(alpha: .9)),
                 fontSize: 12.sp,

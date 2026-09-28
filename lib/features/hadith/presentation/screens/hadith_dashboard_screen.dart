@@ -20,6 +20,10 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_dash
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_read_record_row.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
 
 /// How many reading-history entries the dashboard previews.
 const _recentPreviewCount = 3;
@@ -434,7 +438,12 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     final total = minutes.round();
     final hours = total ~/ 60;
     final rest = total % 60;
-    return hours == 0 ? '$rest min' : '$hours hr $rest min';
+    final text = AppText.forLanguage(LanguagePreference.current);
+    final numbers = LanguagePreference.numbers;
+    return hours == 0
+        ? '${numbers.integer(rest)} ${text.minLabel}'
+        : '${numbers.integer(hours)} ${text.hrLabel} '
+              '${numbers.integer(rest)} ${text.minLabel}';
   }
 }
 
@@ -693,7 +702,9 @@ class _PeriodDropdown extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              picked == null ? labelFor(period) : _monthNames[picked.month - 1],
+              picked == null
+                  ? labelFor(period)
+                  : AppText.of(context).monthNames[picked.month - 1],
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
@@ -804,7 +815,7 @@ class _PeriodMenuState extends State<_PeriodMenu> {
                   Padding(
                     padding: EdgeInsets.only(bottom: 8.h),
                     child: Text(
-                      '${now.year}',
+                      context.localizedDigits('${now.year}'),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
@@ -821,7 +832,10 @@ class _PeriodMenuState extends State<_PeriodMenu> {
                           width: 58.w,
                           height: 32.h,
                           child: _MonthChip(
-                            name: _monthNames[m - 1].substring(0, 3),
+                            name: abbreviateLocalizedMonth(
+                              AppText.of(context).monthNames[m - 1],
+                              context.appLanguage,
+                            ),
                             // Months that haven't started have no data.
                             enabled: m <= now.month,
                             selected:
@@ -889,21 +903,6 @@ class _MenuRow extends StatelessWidget {
     );
   }
 }
-
-const _monthNames = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
 
 /// One month in the filter menu. Greyed out and inert when [enabled] is false.
 class _MonthChip extends StatelessWidget {
@@ -1379,7 +1378,7 @@ class _ReadingChartPainter extends CustomPainter {
     if (series.labels[selected].isEmpty) return null;
     final value = points[selected];
     if (value == null) return null;
-    return '$who - ${_number(value)} ${value == 1 ? 'point' : 'points'}';
+    return '$who - ${_number(value)} ${AppText.forLanguage(LanguagePreference.current).point}';
   }
 
   /// The index whose tooltip is open: [selectedIndex] if still valid, else the
@@ -1391,8 +1390,9 @@ class _ReadingChartPainter extends CustomPainter {
   }
 
   /// `45` for whole numbers, `45.5` otherwise.
-  static String _number(double v) =>
-      v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
+  static String _number(double v) => LanguagePreference.numbers.digits(
+    v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1),
+  );
 
   /// A filled area under a line through [points]: straight segments, or a
   /// smooth curve when [smooth].
@@ -1651,8 +1651,9 @@ class _WeeklyBarPainter extends CustomPainter {
     return slot <= 0 ? 0 : ((dx - _leftPad) / slot).floor().clamp(0, count - 1);
   }
 
-  static String _number(double v) =>
-      v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
+  static String _number(double v) => LanguagePreference.numbers.digits(
+    v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1),
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1763,7 +1764,9 @@ class _WeeklyBarPainter extends CustomPainter {
       ),
       if (series.rival != null)
         (
-          series.rivalName.isEmpty ? 'Competitor' : series.rivalName,
+          series.rivalName.isEmpty
+              ? AppText.forLanguage(LanguagePreference.current).hadithCompetitor
+              : series.rivalName,
           series.rival![i],
           series.rivalPoints?[i],
         ),
@@ -1773,9 +1776,17 @@ class _WeeklyBarPainter extends CustomPainter {
       final (name, minutes, points) = readers[r];
       painters.addAll([
         _tp(name, 13, FontWeight.w500),
-        _tp('Time : ${_number(minutes)} min', 13, FontWeight.w400),
         _tp(
-          'Point : ${points == null ? '-' : _number(points)}',
+          AppText.forLanguage(
+            LanguagePreference.current,
+          ).hadithTimeMinutes.fill({'n': _number(minutes)}),
+          13,
+          FontWeight.w400,
+        ),
+        _tp(
+          AppText.forLanguage(LanguagePreference.current).hadithPointValue.fill(
+            {'n': points == null ? '-' : _number(points)},
+          ),
           13,
           FontWeight.w400,
         ),

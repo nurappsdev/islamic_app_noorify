@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_context.dart';
 
 /// Bilingual content as the API sends it: `{ "bn": "...", "en": "..." }`.
 ///
@@ -44,25 +45,29 @@ class LocalizedText {
   }
 }
 
-const _banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-
 /// Writes the ASCII digits of [text] in the script of [language].
-String localizeDigits(String text, AppLanguage language) {
-  if (language != AppLanguage.bangla) return text;
-  return text.replaceAllMapped(
-    RegExp('[0-9]'),
-    (match) => _banglaDigits[int.parse(match[0]!)],
-  );
-}
+String localizeDigits(String text, AppLanguage language) =>
+    LocalizedNumberFormatter(language).digits(text);
 
 extension LocalizedTextContext on BuildContext {
   /// [value] in the app's current language; rebuilds when it changes.
-  String localized(LocalizedText? value) {
-    final language = watch<LanguageBloc>().state.language;
-    return value?.resolve(language) ?? '';
-  }
+  String localized(LocalizedText? value) =>
+      value?.resolve(languageOf(this)) ?? '';
 
   /// [text] with its digits in the app's current language's script.
-  String localizedDigits(String text) =>
-      localizeDigits(text, watch<LanguageBloc>().state.language);
+  String localizedDigits(String text) => localizeDigits(text, languageOf(this));
+}
+
+/// Fills the `{name}` placeholders of a localized template:
+/// `'Page {n}'.fill({'n': 5})` -> `'Page 5'`. Translations keep their own word
+/// order around the placeholders, so a number or name is never glued into a
+/// sentence in code.
+extension TemplateFill on String {
+  String fill(Map<String, Object?> values) {
+    var text = this;
+    values.forEach((key, value) {
+      text = text.replaceAll('{$key}', '$value');
+    });
+    return text;
+  }
 }

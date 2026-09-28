@@ -20,6 +20,8 @@ import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_refer
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
 
 /// Route arguments for [HadithBookReaderScreen]: the book, and optionally the
 /// hadith to open at.
@@ -251,7 +253,7 @@ class _ReaderHeader extends StatelessWidget {
                 ),
                 if (counter != null)
                   Text(
-                    counter!,
+                    context.localizedDigits(counter!),
                     style: TextStyle(
                       color: const Color(0xFF9BA85B),
                       fontSize: 11.sp,
@@ -373,7 +375,9 @@ class _HadithIndexDrawer extends StatelessWidget {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    '${entries.length} ${appText.categoryHadith}',
+                    context.localizedDigits(
+                      '${entries.length} ${appText.categoryHadith}',
+                    ),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: const Color(0xFF9BA85B),
@@ -424,7 +428,7 @@ class _HadithIndexDrawer extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Text(
-                              '${entry.hadithNo}',
+                              context.localizedDigits('${entry.hadithNo}'),
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 11.sp,
@@ -598,7 +602,9 @@ class _DownloadPrompt extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '${book.hadithCount} ${appText.categoryHadith}',
+            context.localizedDigits(
+              '${book.hadithCount} ${appText.categoryHadith}',
+            ),
             style: TextStyle(
               fontSize: 12.sp,
               color: const Color(0xFF9BA85B),
@@ -653,7 +659,9 @@ class _DownloadingView extends StatelessWidget {
           Text(
             percent == null
                 ? '${appText.hadithBookDownloading} …'
-                : '${appText.hadithBookDownloading}  $percent%',
+                : context.localizedDigits(
+                    '${appText.hadithBookDownloading}  $percent%',
+                  ),
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
@@ -673,7 +681,7 @@ class _DownloadingView extends StatelessWidget {
           if (state.total > 0) ...[
             SizedBox(height: 10.h),
             Text(
-              '${state.done} / ${state.total}',
+              context.localizedDigits('${state.done} / ${state.total}'),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: context.inkColor(Color(0xFF7A8368)),
@@ -706,7 +714,9 @@ class _FailedView extends StatelessWidget {
           ),
           SizedBox(height: 14.h),
           Text(
-            message ?? 'Download failed.',
+            message == null
+                ? appText.failureDownloadFailed
+                : localizeFailureMessage(message!),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,
@@ -989,7 +999,7 @@ class _HadithCardState extends State<_HadithCard> {
                             shape: BoxShape.circle,
                           ),
                           child: Text(
-                            '${entry.hadithNo}',
+                            context.localizedDigits('${entry.hadithNo}'),
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.sp,

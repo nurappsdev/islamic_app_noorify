@@ -15,6 +15,8 @@ import '../bloc/offline_quran/offline_quran_bloc.dart';
 import '../quran_route_args.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_design.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -106,7 +108,7 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                       ),
                     ),
                     IconButton(
-                      tooltip: 'Filter Quran',
+                      tooltip: AppText.of(context).quranFilterTitle,
                       icon: const Icon(Icons.tune, color: quranInk),
                       onPressed: () async {
                         final selected = await showQuranModal<SurahRouteArgs>(
@@ -144,9 +146,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                           value: 'history',
                           child: Text(text.readingHistoryTitle),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'offline',
-                          child: Text('Tajweed / Download Quran'),
+                          child: Text(AppText.of(context).quranTajweedDownload),
                         ),
                       ],
                     ),
@@ -197,7 +199,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                                   RouteNames.quranReadingHistory,
                                 ),
                                 child: Text(
-                                  '${text.viewReadingHistory} →',
+                                  context.localizedDigits(
+                                    '${text.viewReadingHistory} →',
+                                  ),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -246,7 +250,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                                   ),
                                   if (entry != null)
                                     Text(
-                                      '${text.ayahNoLabel}: ${entry.ayahNo}',
+                                      context.localizedDigits(
+                                        '${text.ayahNoLabel}: ${entry.ayahNo}',
+                                      ),
                                       style: const TextStyle(
                                         color: Color(0xffe5ecd6),
                                         fontSize: 14,
@@ -315,7 +321,7 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                 TextField(
                   onChanged: (value) => setState(() => _search = value.trim()),
                   decoration: InputDecoration(
-                    hintText: 'Search Surah Or Para',
+                    hintText: AppText.of(context).quranSearchSurahOrPara,
                     hintStyle: const TextStyle(
                       fontSize: 13,
                       color: Color(0xff9aa2b5),
@@ -358,7 +364,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                                 )
                                 .toList();
                             if (list.isEmpty) {
-                              return const Center(child: Text('No results'));
+                              return Center(
+                                child: Text(AppText.of(context).quranNoResults),
+                              );
                             }
                             return ListView.builder(
                               itemCount: list.length,
@@ -368,12 +376,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                                   number: s.number,
                                   title: s.name,
                                   arabic: s.nameArabic,
-                                  subtitle:
-                                      '${s.revelationPlace == 'meccan'
-                                          ? 'Meccan'
-                                          : s.revelationPlace == 'medinan'
-                                          ? 'Medinian'
-                                          : s.revelationPlace}  ·  ${s.totalAyah} ${text.ayahWord}',
+                                  subtitle: context.localizedDigits(
+                                    '${revelationPlaceLabel(text, s.revelationPlace)}  ·  ${s.totalAyah} ${text.ayahWord}',
+                                  ),
                                   onTap: () => Navigator.pushNamed(
                                     context,
                                     RouteNames.quranSurahDetail,
@@ -407,7 +412,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                                 )
                                 .toList();
                             if (list.isEmpty) {
-                              return const Center(child: Text('No results'));
+                              return Center(
+                                child: Text(AppText.of(context).quranNoResults),
+                              );
                             }
                             return ListView.builder(
                               itemCount: list.length,
@@ -428,11 +435,11 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                             );
                           },
                         )
-                      : const Center(
+                      : Center(
                           child: Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(24),
                             child: Text(
-                              'Browse by Surah or Para. Page numbers are shown while reading; page browsing is coming soon.',
+                              AppText.of(context).quranBrowseHint,
                               textAlign: TextAlign.center,
                             ),
                           ),

@@ -13,6 +13,8 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
 import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
+import 'package:islami_app_noorify/core/localization/localized_validator.dart';
+import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -243,166 +245,166 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               onBack: () => Navigator.maybePop(context),
             ),
             Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
-                  children: [
-                    Center(
-                      child: _ProfileAvatar(
-                        imageFile: _selectedImage,
-                        onTapGallery: _openGalleryPicker,
+              child: LocalizedFormScope(
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
+                    children: [
+                      Center(
+                        child: _ProfileAvatar(
+                          imageFile: _selectedImage,
+                          onTapGallery: _openGalleryPicker,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 28.h),
-                    Text(
-                      appText.enterYourName,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: context.inkColor(AppColor.authLogo),
+                      SizedBox(height: 28.h),
+                      Text(
+                        appText.enterYourName,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(AppColor.authLogo),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    TextFormField(
-                      controller: _nameController,
-                      textInputAction: TextInputAction.next,
-                      style: TextStyle(fontSize: 13.sp),
-                      decoration: _fieldDecoration(
-                        hint: appText.enterYourName,
-                        prefixIcon: Icons.person_outline,
+                      SizedBox(height: 8.h),
+                      TextFormField(
+                        controller: _nameController,
+                        textInputAction: TextInputAction.next,
+                        style: TextStyle(fontSize: 13.sp),
+                        decoration: _fieldDecoration(
+                          hint: appText.enterYourName,
+                          prefixIcon: Icons.person_outline,
+                        ),
+                        validator: (value) =>
+                            LocalizedValidator.readOf(context).name(value),
                       ),
-                      validator: (value) =>
-                          (value == null || value.trim().isEmpty)
-                          ? appText.enterYourName
-                          : null,
-                    ),
-                    SizedBox(height: 18.h),
-                    Text(
-                      appText.emailAddress,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: context.inkColor(AppColor.authLogo),
+                      SizedBox(height: 18.h),
+                      Text(
+                        appText.emailAddress,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(AppColor.authLogo),
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    TextFormField(
-                      controller: _emailController,
-                      enabled: false,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: AppColor.authHint,
-                      ),
-                      decoration: _fieldDecoration(
-                        hint: appText.emailAddress,
-                        prefixIcon: Icons.email_outlined,
+                      SizedBox(height: 8.h),
+                      TextFormField(
+                        controller: _emailController,
                         enabled: false,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            Icons.copy_rounded,
-                            color: AppColor.authIcon,
-                            size: 16.sp,
-                          ),
-                          tooltip: appText.emailCopied,
-                          onPressed: _copyEmail,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColor.authHint,
                         ),
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
-                    Text(
-                      appText.gender,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: context.inkColor(AppColor.authLogo),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedGender,
-                      isExpanded: true,
-                      borderRadius: BorderRadius.circular(16.r),
-                      dropdownColor: context.surfaceColor(Colors.white),
-                      style: TextStyle(
-                        color: context.inkColor(AppColor.authLogo),
-                        fontSize: 13.sp,
-                      ),
-                      icon: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: AppColor.authIcon,
-                        size: 20.sp,
-                      ),
-                      decoration: _fieldDecoration(
-                        hint: appText.gender,
-                        prefixIcon: Icons.wc_outlined,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'male',
-                          child: Text(appText.male),
-                        ),
-                        DropdownMenuItem(
-                          value: 'female',
-                          child: Text(appText.female),
-                        ),
-                      ],
-                      onChanged: (value) =>
-                          setState(() => _selectedGender = value),
-                    ),
-                    SizedBox(height: 18.h),
-                    Text(
-                      appText.phoneNo,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: context.inkColor(AppColor.authLogo),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      style: TextStyle(fontSize: 13.sp),
-                      decoration: _fieldDecoration(
-                        hint: appText.phoneNo,
-                        prefixIcon: Icons.phone_outlined,
-                      ),
-                    ),
-                    SizedBox(height: 32.h),
-                    SizedBox(
-                      height: 50.h,
-                      child: FilledButton(
-                        onPressed: (_profile == null || _isSaving)
-                            ? null
-                            : _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26.r),
+                        decoration: _fieldDecoration(
+                          hint: appText.emailAddress,
+                          prefixIcon: Icons.email_outlined,
+                          enabled: false,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              Icons.copy_rounded,
+                              color: AppColor.authIcon,
+                              size: 16.sp,
+                            ),
+                            tooltip: appText.emailCopied,
+                            onPressed: _copyEmail,
                           ),
                         ),
-                        child: _isSaving
-                            ? SizedBox(
-                                width: 20.w,
-                                height: 20.w,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                appText.saveAction,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 18.h),
+                      Text(
+                        appText.gender,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(AppColor.authLogo),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedGender,
+                        isExpanded: true,
+                        borderRadius: BorderRadius.circular(16.r),
+                        dropdownColor: context.surfaceColor(Colors.white),
+                        style: TextStyle(
+                          color: context.inkColor(AppColor.authLogo),
+                          fontSize: 13.sp,
+                        ),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColor.authIcon,
+                          size: 20.sp,
+                        ),
+                        decoration: _fieldDecoration(
+                          hint: appText.gender,
+                          prefixIcon: Icons.wc_outlined,
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'male',
+                            child: Text(appText.male),
+                          ),
+                          DropdownMenuItem(
+                            value: 'female',
+                            child: Text(appText.female),
+                          ),
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _selectedGender = value),
+                      ),
+                      SizedBox(height: 18.h),
+                      Text(
+                        appText.phoneNo,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(AppColor.authLogo),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.done,
+                        style: TextStyle(fontSize: 13.sp),
+                        decoration: _fieldDecoration(
+                          hint: appText.phoneNo,
+                          prefixIcon: Icons.phone_outlined,
+                        ),
+                      ),
+                      SizedBox(height: 32.h),
+                      SizedBox(
+                        height: 50.h,
+                        child: FilledButton(
+                          onPressed: (_profile == null || _isSaving)
+                              ? null
+                              : _save,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26.r),
+                            ),
+                          ),
+                          child: _isSaving
+                              ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  appText.saveAction,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

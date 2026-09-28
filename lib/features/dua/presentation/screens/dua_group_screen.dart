@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
 import 'package:islami_app_noorify/features/dua/presentation/dua_route_args.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_item_tile.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Dua group detail (design `devImg/img_4.png`), reached by tapping
 /// "Explore" on a [DuaFeatured] card (the dashboard row or
@@ -176,7 +177,7 @@ class _GroupHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                '${featured.totalDua}',
+                context.localizedDigits('${featured.totalDua}'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,
@@ -214,7 +215,7 @@ class _LastReadPill extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            '${appText.duaLastRead} :  ',
+            context.localizedDigits('${appText.duaLastRead} :  '),
             style: TextStyle(
               color: Colors.white,
               fontSize: 13.sp,
@@ -222,7 +223,7 @@ class _LastReadPill extends StatelessWidget {
             ),
           ),
           Text(
-            'Dua ( $index )',
+            context.localizedDigits('Dua ( $index )'),
             style: TextStyle(color: Colors.white, fontSize: 14.sp),
           ),
           SizedBox(width: 8.w),

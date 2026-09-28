@@ -18,8 +18,9 @@ import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
 
 enum _AlarmTab { all, prayers }
 
@@ -103,7 +104,7 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
           children: [
             AlarmBackHeader(
               title: appText.alarm,
-              subtitle: _countdownLabel(state, appText),
+              subtitle: _countdownLabel(state, appText, context.localizedTimes),
             ),
             SizedBox(height: 16.h),
             _AlarmTabs(
@@ -125,7 +126,11 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
 
   /// "Alarm will ring in X hr Y min" for the soonest alarm that is on -
   /// custom or prayer.
-  String _countdownLabel(AlarmListState state, AppText appText) {
+  String _countdownLabel(
+    AlarmListState state,
+    AppText appText,
+    LocalizedTimeFormatter times,
+  ) {
     final now = DateTime.now();
     Duration? soonest;
     void consider(int hour, int minute) {
@@ -144,9 +149,8 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
     }
     final diff = soonest;
     if (diff == null) return appText.noAlarmSet;
-    final hours = diff.inHours;
-    final minutes = diff.inMinutes % 60;
-    return '${appText.alarmWillRingIn} $hours ${appText.hrLabel} $minutes ${appText.minLabel}';
+    return '${appText.alarmWillRingIn} '
+        '${times.duration(hours: diff.inHours, minutes: diff.inMinutes % 60)}';
   }
 }
 
@@ -376,7 +380,7 @@ class _AlarmListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatPrayerTime(
+                  context.localizedTimes.clock(
                     PrayerClockTime(hour: alarm.hour, minute: alarm.minute),
                   ),
                   style: TextStyle(
@@ -620,7 +624,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    prayerAlarm.timeWindow,
+                    context.localizedTimes.localize(prayerAlarm.timeWindow),
                     style: TextStyle(
                       fontSize: 9.sp,
                       color: context.inkColor(Colors.black54),
@@ -647,7 +651,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                   ),
                   SizedBox(width: 5.w),
                   Text(
-                    prayerAlarm.alarmTime,
+                    context.localizedTimes.localize(prayerAlarm.alarmTime),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: context.inkColor(_olive),

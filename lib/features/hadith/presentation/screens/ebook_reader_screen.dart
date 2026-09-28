@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Reads a downloaded e-book PDF inside the app, one page at a time.
 ///
@@ -92,7 +93,7 @@ class _EbookReaderScreenState extends State<EbookReaderScreen> {
                   : ValueListenableBuilder<int>(
                       valueListenable: controller.pageListenable,
                       builder: (_, page, _) => Text(
-                        '$page / $_totalPages',
+                        context.localizedDigits('$page / $_totalPages'),
                         style: TextStyle(
                           color: const Color(0xFF9BA85B),
                           fontSize: 11.sp,

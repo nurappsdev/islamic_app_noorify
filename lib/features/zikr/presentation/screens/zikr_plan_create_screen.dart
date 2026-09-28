@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// "Create plan" screen (designs `devImg/img_23.png` and `devImg/img_24.png`),
 /// reached from the "Create Plan" button on [ZikrPlannerScreen].
@@ -387,7 +388,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
       children: [
         Text(
-          '$_planName  ( $_planDays ${appText.zikrPlanDays} )',
+          context.localizedDigits(
+            '$_planName  ( $_planDays ${appText.zikrPlanDays} )',
+          ),
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w700,
@@ -532,7 +535,7 @@ class _PlanEntryRow extends StatelessWidget {
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  '${entry.value}',
+                  context.localizedDigits('${entry.value}'),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: const Color(0xFF9AA579),

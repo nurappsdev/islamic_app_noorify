@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class SurahHeroCard extends StatelessWidget {
   const SurahHeroCard({
@@ -55,8 +56,10 @@ class SurahHeroCard extends StatelessWidget {
           Container(height: 1, color: context.surfaceColor(Colors.white24)),
           SizedBox(height: 10.h),
           Text(
-            '${revelationPlaceLabel(appText, detail.revelationPlace).toUpperCase()} • '
-            '${detail.totalAyah} ${appText.ayahWord.toUpperCase()}',
+            context.localizedDigits(
+              '${revelationPlaceLabel(appText, detail.revelationPlace).toUpperCase()} • '
+              '${detail.totalAyah} ${appText.ayahWord.toUpperCase()}',
+            ),
             style: TextStyle(
               color: Colors.white70,
               fontSize: 11.sp,
@@ -116,8 +119,10 @@ class SurahHeroCard extends StatelessWidget {
                     ),
                     SizedBox(width: 6.w),
                     Text(
-                      '${appText.pointsLabel} : '
-                      '${detail.totalAyah.toString().padLeft(2, '0')}',
+                      context.localizedDigits(
+                        '${appText.pointsLabel} : '
+                        '${detail.totalAyah.toString().padLeft(2, '0')}',
+                      ),
                       style: TextStyle(color: Colors.white, fontSize: 12.sp),
                     ),
                   ],

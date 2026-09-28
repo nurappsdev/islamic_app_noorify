@@ -17,8 +17,10 @@ class LanguageBloc extends Bloc<LanguageEvent, LanguageState> {
     Future<void> Function(AppLanguage language)? persist,
   }) : _persist = persist ?? LanguagePreference.save,
        super(LanguageState(language: initialLanguage)) {
+    LanguagePreference.current = initialLanguage;
     on<UpdateLanguage>((event, emit) async {
       if (state.language == event.language) return;
+      LanguagePreference.current = event.language;
       // Switch the screen first; saving is slower and must not delay it.
       emit(state.copyWith(language: event.language));
       try {

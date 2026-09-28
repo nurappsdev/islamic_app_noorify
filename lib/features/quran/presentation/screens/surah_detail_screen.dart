@@ -20,6 +20,7 @@ import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_tra
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   const SurahDetailScreen({
@@ -249,8 +250,10 @@ class _SurahBodyState extends State<_SurahBody> {
           SizedBox(height: 10.h),
           Center(
             child: Text(
-              '${appText.yourReadingTimeIs} '
-              '${formatReadingTime(appText, detail.arabicAyahs)}',
+              context.localizedDigits(
+                '${appText.yourReadingTimeIs} '
+                '${formatReadingTime(appText, detail.arabicAyahs)}',
+              ),
               style: TextStyle(color: AppColor.primary, fontSize: 12.sp),
             ),
           ),

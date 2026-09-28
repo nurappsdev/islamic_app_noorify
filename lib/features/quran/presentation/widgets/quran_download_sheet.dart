@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/offline_quran/offline_quran_bloc.dart';
 import 'quran_design.dart';
 import 'quran_modal.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 Future<void> showQuranDownload(
   BuildContext context, {
@@ -38,23 +40,23 @@ class QuranDownloadSheet extends StatelessWidget {
             final ready = state.status == OfflineQuranStatus.ready;
             return Column(
               children: [
-                const QuranSheetHeading('Tajweed Quran'),
+                QuranSheetHeading(AppText.of(context).quranTajweedTitle),
                 // TODO(backend): provide a versioned Tajweed document/content URL,
                 // file size and checksum before offering a Tajweed-specific download.
-                const Text(
-                  'A Tajweed edition is not available from the current Quran API. You can download the standard Quran for offline reading below.',
+                Text(
+                  AppText.of(context).quranTajweedUnavailable,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: quranInk, height: 1.5),
+                  style: const TextStyle(color: quranInk, height: 1.5),
                 ),
                 const SizedBox(height: 28),
                 Image.asset('assets/images/quran/Quran.png', height: 180),
                 const SizedBox(height: 24),
                 Text(
                   ready
-                      ? 'Quran ready for offline reading'
+                      ? AppText.of(context).quranReadyOffline
                       : downloading
-                      ? 'Downloading Quran'
-                      : 'Offline Quran',
+                      ? AppText.of(context).quranDownloading
+                      : AppText.of(context).quranOfflineTitle,
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 21, color: quranInk),
                 ),
@@ -84,16 +86,18 @@ class QuranDownloadSheet extends StatelessWidget {
                         child: Text(
                           state.progress == null
                               ? '…'
-                              : '${(state.progress! * 100).round()}%',
+                              : context.localizedDigits(
+                                  '${(state.progress! * 100).round()}%',
+                                ),
                           style: const TextStyle(color: quranInk),
                         ),
                       ),
                     ],
                   ),
                 if (state.status == OfflineQuranStatus.failed)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 14),
-                    child: Text('Download interrupted. Retry to continue.'),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Text(AppText.of(context).quranDownloadInterrupted),
                   ),
                 if (!downloading && state.status != OfflineQuranStatus.checking)
                   FilledButton(
@@ -105,17 +109,17 @@ class QuranDownloadSheet extends StatelessWidget {
                     style: FilledButton.styleFrom(backgroundColor: quranOlive),
                     child: Text(
                       ready
-                          ? 'Done'
+                          ? AppText.of(context).commonDone
                           : state.status == OfflineQuranStatus.failed
-                          ? 'Retry download'
-                          : 'Download Quran',
+                          ? AppText.of(context).quranRetryDownload
+                          : AppText.of(context).quranDownloadQuran,
                     ),
                   ),
                 if (downloading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
                     child: Text(
-                      'Keep this screen open until the download completes.',
+                      AppText.of(context).quranKeepScreenOpen,
                       textAlign: TextAlign.center,
                     ),
                   ),

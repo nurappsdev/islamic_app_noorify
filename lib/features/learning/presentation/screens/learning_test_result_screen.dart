@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class LearningTestResultScreen extends StatelessWidget {
   const LearningTestResultScreen({super.key});
@@ -40,7 +41,9 @@ class LearningTestResultScreen extends StatelessWidget {
                     child: _Metric(
                       icon: Icons.access_time_rounded,
                       label: appText.timeSpent,
-                      value: '6 : 17 min',
+                      value: context.localizedDigits(
+                        '6 : 17 ${appText.minLabel}',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -231,7 +234,7 @@ class _AnswerResult extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                count,
+                context.localizedDigits(count),
                 style: TextStyle(
                   color: context.inkColor(color),
                   fontSize: 14.sp,

@@ -331,7 +331,7 @@ class _AnsweredQuestion extends StatelessWidget {
             ),
           if (checkedBy == null)
             Text(
-              appText.notAnswered,
+              context.localizedDigits(appText.notAnswered),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: context.inkColor(_incorrectColor),

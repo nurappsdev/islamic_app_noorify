@@ -16,6 +16,7 @@ import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Fallback bearing (degrees clockwise from true north) shown before the
 /// dashboard API's `kiblahAngle` has loaded.
@@ -76,8 +77,6 @@ class HomeProgressSection extends StatelessWidget {
     if (dashboardState.isLoading) {
       return HomeProgressSectionShimmer(gridItemCount: _items.length);
     }
-
-
 
     // The API's `kiblahAngle` arrives pre-formatted (e.g. "Kiblah 277.6°
     // West"), not a bare number, so it's shown as-is and only its numeric
@@ -259,7 +258,7 @@ class _ProgressCard extends StatelessWidget {
             _ProgressBar(value: item.progress),
             SizedBox(height: 6.h),
             Text(
-              item.count,
+              context.localizedDigits(item.count),
               style: homeSansStyle(context: context, fontSize: 12.sp),
             ),
           ],

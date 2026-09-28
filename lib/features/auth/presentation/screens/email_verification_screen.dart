@@ -15,6 +15,7 @@ import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
@@ -182,15 +183,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   void _onOtpState(BuildContext context, OtpVerificationState state) {
     switch (state.resendStatus) {
       case OtpResendStatus.sent:
-        _showSnack(
-          context,
-          state.resendMessage ?? 'A new code has been sent to your email.',
-        );
+        // The app's own text, not the server's English one, so it follows the
+        // selected language.
+        _showSnack(context, AppText.readOf(context).verificationCodeSent);
         _startResendCooldown();
       case OtpResendStatus.failure:
         _showSnack(
           context,
-          state.resendErrorMessage ?? 'Could not resend the code. Try again.',
+          state.resendErrorMessage ??
+              AppText.readOf(context).verificationResendFailed,
         );
       case OtpResendStatus.idle:
       case OtpResendStatus.sending:
@@ -204,7 +205,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       case OtpVerificationStatus.failure:
         _showSnack(
           context,
-          state.errorMessage ?? 'Verification failed. Please try again.',
+          state.errorMessage ?? AppText.readOf(context).verificationFailed,
         );
         _otpBloc.add(const OtpVerificationReset());
       case OtpVerificationStatus.initial:
@@ -271,8 +272,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           ),
           child: Text(
             onCooldown
-                ? 'Resend code in ${_resendSecondsLeft}s'
-                : "Didn't get the code? Resend",
+                ? AppText.of(context).resendCodeInSeconds.replaceAll(
+                    '{s}',
+                    context.localizedDigits('$_resendSecondsLeft'),
+                  )
+                : AppText.of(context).didntGetCodeResend,
             style: TextStyle(
               fontSize: 12.sp,
               color: context.inkColor(
@@ -442,7 +446,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Tuhfatul Muslim',
+                          AppText.of(context).tuhfatulMuslim,
                           style: TextStyle(
                             color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,

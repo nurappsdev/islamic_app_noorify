@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_am
 import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 
@@ -174,11 +175,13 @@ class _AmolDashboardView extends StatelessWidget {
     // exactly which days the response covers) over a locally-guessed
     // label; only fall back to local formatting before the first response
     // lands.
-    final rangeLabel =
-        graph?.range?.formattedRange ??
-        (period == _AmolPeriod.daily
-            ? formatAmolDate(state.date, appText)
-            : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}');
+    // The server's own range text has its digits localized too.
+    final rangeLabel = context.localizedDigits(
+      graph?.range?.formattedRange ??
+          (period == _AmolPeriod.daily
+              ? formatAmolDate(state.date, appText)
+              : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}'),
+    );
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -1147,7 +1150,9 @@ class _MyPointsBar extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                '${AppText.of(context).myPoints} : $myPoints',
+                context.localizedDigits(
+                  '${AppText.of(context).myPoints} : $myPoints',
+                ),
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: context.inkColor(Colors.black),
@@ -1168,7 +1173,7 @@ class _MyPointsBar extends StatelessWidget {
               ),
               SizedBox(width: 5.w),
               Text(
-                '$totalPoints',
+                context.localizedDigits('$totalPoints'),
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: context.inkColor(Colors.black87),

@@ -35,6 +35,8 @@ import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_l
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 import 'package:islami_app_noorify/core/auth/auth_feature.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -323,7 +325,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
           content: number == null || number == 0
               ? null
               : Text(
-                  '${appText.categoryHadith} $number',
+                  context.localizedDigits('${appText.categoryHadith} $number'),
                   style: TextStyle(
                     fontSize: 13.sp,
                     color: dialogContext.inkColor(const Color(0xFF5D6B44)),
@@ -481,7 +483,9 @@ class _HadithDetailViewState extends State<_HadithDetailView>
         content: hadithNumbers.isEmpty
             ? null
             : Text(
-                '${appText.categoryHadith}: ${hadithNumbers.join(', ')}',
+                context.localizedDigits(
+                  '${appText.categoryHadith}: ${hadithNumbers.join(', ')}',
+                ),
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: dialogContext.inkColor(const Color(0xFF5D6B44)),
@@ -1277,7 +1281,7 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
-                    '${hadith.hadithNumber}',
+                    context.localizedDigits('${hadith.hadithNumber}'),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12.sp,
@@ -1605,9 +1609,9 @@ class _TimerCircle extends StatelessWidget {
   String get _label {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
-    return minutes > 0
-        ? '$minutes:${secs.toString().padLeft(2, '0')}'
-        : '$secs';
+    return LanguagePreference.numbers.digits(
+      minutes > 0 ? '$minutes:${secs.toString().padLeft(2, '0')}' : '$secs',
+    );
   }
 
   @override
@@ -1617,7 +1621,11 @@ class _TimerCircle extends StatelessWidget {
     if (seconds <= 0 && !active && !completed) return const SizedBox.shrink();
     final color = completed || active ? _active : _idle;
     return Tooltip(
-      message: completed ? 'Read' : (active ? 'Reading…' : 'Paused'),
+      message: completed
+          ? AppText.of(context).hadithTimerRead
+          : (active
+                ? AppText.of(context).hadithTimerReading
+                : AppText.of(context).hadithTimerPaused),
       child: SizedBox(
         width: 30.r,
         height: 30.r,

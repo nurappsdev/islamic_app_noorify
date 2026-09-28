@@ -25,6 +25,7 @@ import 'package:islami_app_noorify/features/home/data/services/prayer_time_servi
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/core/auth/auth_feature.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
@@ -363,9 +364,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        content: const Text(
-          'Are you sure you have read this and want to track it?',
-        ),
+        content: Text(appText.amolReadConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -456,7 +455,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
                         ),
                         SizedBox(height: 18.h),
                         Text(
-                          formatAmolDate(_today, appText),
+                          context.localizedDigits(
+                            formatAmolDate(_today, appText),
+                          ),
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
@@ -978,7 +979,9 @@ class _AmolItemRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
-                '+${_formatPoints(isChecked ? item.points : item.maxPoints)}',
+                context.localizedDigits(
+                  '+${_formatPoints(isChecked ? item.points : item.maxPoints)}',
+                ),
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
@@ -1112,7 +1115,7 @@ class _LoadFailedNotice extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            message ?? 'Something went wrong. Please try again.',
+            message ?? AppText.of(context).failureUnknown,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,

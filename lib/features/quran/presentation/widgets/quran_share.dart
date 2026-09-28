@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/quran_ayah.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
 
 String quranShareText(
   QuranAyah ayah, {
@@ -9,11 +12,14 @@ String quranShareText(
   String surahName = '',
 }) {
   final translated = ayah.translations[translation];
+  // The text goes to other apps, so it is written in the selected language.
+  final text = AppText.forLanguage(LanguagePreference.current);
   return [
     ayah.textArabic,
     if (translated != null) translated.text,
-    'Quran ${ayah.verseKey}${surahName.isEmpty ? '' : ' — $surahName'}',
-    if (translated != null) 'Translation: ${translated.name}',
+    '${text.quranAyahTitle.fill({'key': ayah.verseKey})}${surahName.isEmpty ? '' : ' — $surahName'}',
+    if (translated != null)
+      text.quranShareTranslation.fill({'name': translated.name}),
   ].join('\n\n');
 }
 
@@ -33,9 +39,9 @@ Future<void> shareQuranAyah(
     if (copy) {
       await Clipboard.setData(ClipboardData(text: text));
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Ayah copied')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppText.readOf(context).quranAyahCopied)),
+        );
       }
     } else {
       final box = context.findRenderObject();
@@ -52,9 +58,7 @@ Future<void> shareQuranAyah(
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to share this ayah. Please try again.'),
-        ),
+        SnackBar(content: Text(AppText.readOf(context).quranShareFailed)),
       );
     }
   }

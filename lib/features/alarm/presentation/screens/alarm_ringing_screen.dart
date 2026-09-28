@@ -13,8 +13,8 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 const _olive = Color(0xFF8D9B70);
 
@@ -304,7 +304,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  formatPrayerTime(
+                  context.localizedTimes.clock(
                     PrayerClockTime(hour: payload.hour, minute: payload.minute),
                   ),
                   style: TextStyle(

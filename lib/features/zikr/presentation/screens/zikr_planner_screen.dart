@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Zikr planner (design `devImg/img_20.png`), reached from index 1 ("Planner")
 /// of [ZikrBottomNav].
@@ -204,7 +205,9 @@ class _PlanList extends StatelessWidget {
                     ),
                     SizedBox(height: 3.h),
                     Text(
-                      '${plan.totalValue} ( ${plan.days} $daysLabel )',
+                      context.localizedDigits(
+                        '${plan.totalValue} ( ${plan.days} $daysLabel )',
+                      ),
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: const Color(0xFF9AA579),
