@@ -96,6 +96,8 @@ flutter:
   assets:
     - assets/images/
     - assets/images/quran/
+    - assets/images/quran_new_Design/second_surah_component_left.png
+    - assets/images/quran_new_Design/second_surah_ui_component_right.png
     - assets/audio/
     - assets/hadith/
     - assets/language/

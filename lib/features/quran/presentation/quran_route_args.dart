@@ -8,10 +8,11 @@ class SurahRouteArgs {
     this.ayahNo = 1,
     this.endAyah,
     this.paraNumber,
+    this.paraStartAyah,
   });
 
   final int surahNo;
   final int ayahNo;
-  final int? endAyah, paraNumber;
+  final int? endAyah, paraNumber, paraStartAyah;
   final String surahName;
 }

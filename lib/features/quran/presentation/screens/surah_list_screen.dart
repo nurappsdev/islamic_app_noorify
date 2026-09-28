@@ -1,3 +1,6 @@
+import '../widgets/quran_download_sheet.dart';
+import '../widgets/quran_filter_sheet.dart';
+import '../widgets/quran_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -100,12 +103,32 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                       color: quranInk,
                     ),
                   ),
+                  IconButton(
+                    tooltip: 'Filter Quran',
+                    icon: const Icon(Icons.tune, color: quranInk),
+                    onPressed: () async {
+                      final selected = await showQuranModal<SurahRouteArgs>(
+                        context,
+                        const QuranFilterSheet(
+                          initial: SurahRouteArgs(surahNo: 1, surahName: ''),
+                        ),
+                      );
+                      if (selected != null && context.mounted) {
+                        Navigator.pushNamed(
+                          context,
+                          RouteNames.quranSurahDetail,
+                          arguments: selected,
+                        );
+                      }
+                    },
+                  ),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: quranInk),
                     onSelected: (value) {
                       if (value == 'offline') {
-                        context.read<OfflineQuranBloc>().add(
-                          const PrepareOfflineQuran(),
+                        showQuranDownload(
+                          context,
+                          bloc: context.read<OfflineQuranBloc>(),
                         );
                       } else {
                         Navigator.pushNamed(
@@ -121,7 +144,7 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                       ),
                       const PopupMenuItem(
                         value: 'offline',
-                        child: Text('Download Quran for offline reading'),
+                        child: Text('Tajweed / Download Quran'),
                       ),
                     ],
                   ),

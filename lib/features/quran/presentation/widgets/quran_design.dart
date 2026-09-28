@@ -145,6 +145,19 @@ class _NumberStar extends CustomPainter {
 /// Quran-specific styling keeps the rest of the application's navigation intact.
 class QuranBottomNav extends StatelessWidget {
   const QuranBottomNav({super.key});
+  void _openRoot(BuildContext context, String destination) {
+    var found = false;
+    final navigator = Navigator.of(context);
+    navigator.popUntil((route) {
+      found =
+          route.settings.name == destination ||
+          (destination == RouteNames.quran &&
+              route.settings.name == RouteNames.quranSurahs);
+      return found || route.isFirst;
+    });
+    if (!found) navigator.pushReplacementNamed(destination);
+  }
+
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
@@ -162,13 +175,10 @@ class QuranBottomNav extends StatelessWidget {
             [
                   TextButton.icon(
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xff5d886b),
+                      backgroundColor: Colors.transparent,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => Navigator.pushReplacementNamed(
-                      context,
-                      RouteNames.home,
-                    ),
+                    onPressed: () => _openRoot(context, RouteNames.home),
                     icon: const Icon(Icons.home_rounded),
                     label: Text(
                       AppText.of(context).home,
@@ -176,8 +186,12 @@ class QuranBottomNav extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const IconButton(
-                    onPressed: null,
+                  IconButton(
+                    onPressed: () => _openRoot(context, RouteNames.quran),
+                    isSelected: true,
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xff5d886b),
+                    ),
                     tooltip: 'Quran',
                     icon: Icon(Icons.menu_book_outlined, color: Colors.white),
                   ),
@@ -203,10 +217,7 @@ class QuranBottomNav extends StatelessWidget {
                   ),
                   IconButton(
                     tooltip: 'Home',
-                    onPressed: () => Navigator.pushReplacementNamed(
-                      context,
-                      RouteNames.home,
-                    ),
+                    onPressed: () => _openRoot(context, RouteNames.home),
                     icon: const Icon(
                       Icons.grid_view_rounded,
                       color: Colors.white,

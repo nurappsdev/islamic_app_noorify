@@ -1,3 +1,8 @@
+import 'quran_reading_text.dart';
+import '../../domain/arabic_font.dart';
+import 'quran_share.dart';
+import 'quran_modal.dart';
+import '../../domain/translation_edition.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/services/quran_content_service.dart';
@@ -16,19 +21,34 @@ class QuranAyahDetails extends StatefulWidget {
     required this.ayah,
     required this.translation,
     required this.totalAyah,
+    this.service,
+    this.surahName = '',
+    this.onTranslationSelected,
   });
   final int surah, ayah, translation, totalAyah;
+  final QuranContentService? service;
+  final String surahName;
+  final ValueChanged<int>? onTranslationSelected;
   @override
   State<QuranAyahDetails> createState() => _QuranAyahDetailsState();
 }
 
 class _QuranAyahDetailsState extends State<QuranAyahDetails> {
+  late final _api = widget.service ?? QuranContentService.shared;
+  late int _translation = widget.translation;
+  late Future<List<TranslationEdition>> _editions = _api.loadTranslations();
   late Future<QuranAyah> _future = _load();
-  Future<QuranAyah> _load() => QuranContentService.shared.loadAyah(
-    widget.surah,
-    widget.ayah,
-    translation: widget.translation,
-  );
+  void _select(int resource) {
+    if (_translation == resource) return;
+    setState(() {
+      _translation = resource;
+      _future = _load();
+    });
+    widget.onTranslationSelected?.call(resource);
+  }
+
+  Future<QuranAyah> _load() =>
+      _api.loadAyah(widget.surah, widget.ayah, translation: _translation);
   Future<void> _download(BuildContext context, String verseKey) async {
     final reciter =
         context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
@@ -57,7 +77,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
         _download(context, state.needsDownloadForVerseKey!),
     child: SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: FutureBuilder<QuranAyah>(
           future: _future,
           builder: (context, snapshot) {
@@ -78,9 +98,105 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const QuranSheetHeading('Translate'),
                   Text(
                     '${a.verseKey} · Para ${a.paraNumber} · Page ${a.pageNumber}',
                     style: const TextStyle(color: quranInk),
+                  ),
+                  const SizedBox(height: 16),
+                  QuranReadingText(
+                    ayahs: [a],
+                    active: 0,
+                    scale: 1.2,
+                    font: arabicFontById('noorehuda'),
+                    onTap: (_) {},
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<TranslationEdition>>(
+                    future: _editions,
+                    builder: (context, catalog) => Wrap(
+                      spacing: 12,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text(
+                          'Select translate language',
+                          style: TextStyle(color: quranInk),
+                        ),
+                        if (catalog.hasError)
+                          TextButton(
+                            onPressed: () => setState(
+                              () => _editions = _api.loadTranslations(),
+                            ),
+                            child: const Text('Retry languages'),
+                          ),
+                        if (catalog.connectionState == ConnectionState.waiting)
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        for (final language in [
+                          (161, 'Bangla'),
+                          (20, 'English'),
+                        ])
+                          ChoiceChip(
+                            label: Text(language.$2),
+                            selected: _translation == language.$1,
+                            selectedColor: quranBorder,
+                            onSelected:
+                                catalog.data?.any(
+                                      (e) => e.resourceId == language.$1,
+                                    ) ==
+                                    true
+                                ? (_) => _select(language.$1)
+                                : null,
+                          ),
+                        if (catalog.hasData && catalog.requireData.isEmpty)
+                          const Text('No translations available'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    a.translations[_translation]?.text ??
+                        'Translation unavailable for this ayah',
+                    style: const TextStyle(fontSize: 16, height: 1.6),
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => shareQuranAyah(
+                          context,
+                          a,
+                          translation: _translation,
+                          surahName: widget.surahName,
+                          copy: true,
+                        ),
+                        icon: const Icon(Icons.copy_outlined),
+                        label: const Text('Copy'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => shareQuranAyah(
+                          context,
+                          a,
+                          translation: _translation,
+                          surahName: widget.surahName,
+                        ),
+                        icon: const Icon(Icons.share_outlined),
+                        label: const Text('Share'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => openTafsirSheet(
+                          context,
+                          a.verseKey,
+                          _translation == 161,
+                        ),
+                        icon: const Icon(Icons.menu_book_outlined),
+                        label: const Text('Tafsir'),
+                      ),
+                    ],
                   ),
                   Row(
                     children: [
@@ -133,22 +249,6 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    a.textArabic,
-                    textDirection: TextDirection.rtl,
-                    style: const TextStyle(
-                      fontFamily: 'Noorehuda',
-                      fontSize: 28,
-                      height: 1.8,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    a.translations[widget.translation]?.text ??
-                        'Translation unavailable for this ayah',
-                    style: const TextStyle(fontSize: 16, height: 1.6),
                   ),
                   if (a.sajdahNumber != null) Text('Sajdah ${a.sajdahNumber}'),
                 ],

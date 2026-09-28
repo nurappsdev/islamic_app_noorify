@@ -40,6 +40,7 @@ class QuranReadingCubit extends Cubit<QuranReadingState> {
   final int surahNo, startAyah;
   final int? endAyah;
   final QuranContentService _api;
+  QuranContentService get contentService => _api;
   static const rangeSize = 16;
   int _generation = 0;
   int? _requestedAyah;
