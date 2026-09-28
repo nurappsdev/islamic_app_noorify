@@ -5,8 +5,8 @@ import 'package:dartz/dartz.dart';
 
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
@@ -65,11 +65,12 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
       (_) => state.prayerAlarms,
       (dashboard) => dashboard.prayerAlarms,
     );
-    // Arms this device's OS alarms for the prayer alarms too, so they
-    // actually ring at their time (they have no local copy otherwise).
+    // Arms this device's OS alarms from the server's list - custom and prayer
+    // alarms alike - and disarms everything the server doesn't list.
     dashboardResult.fold(
       (_) {},
-      (dashboard) => unawaited(_schedulePrayerAlarms(dashboard.prayerAlarms)),
+      (dashboard) =>
+          unawaited(syncDeviceAlarms(dashboard, getRingtones: _getRingtones)),
     );
     final serverCountdown = dashboardResult.fold(
       (_) => state.serverCountdown,
@@ -92,16 +93,6 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
         ),
       ),
       (alarms) {
-        // Keeps this device's OS-level schedule in sync with whatever the
-        // server says is saved — including alarms created elsewhere (another
-        // device, a direct API call) that this device has never scheduled.
-        if (serverAlarms != null) {
-          unawaited(_cancelStaleLocalAlarms({for (final a in alarms) a.id}));
-          // Only the server's list may arm alarms. The local-cache fallback
-          // (dashboard failed: offline, or signed out) is display-only, or a
-          // guest would re-arm a previous account's cached alarms.
-          unawaited(AlarmScheduler.rescheduleAll(alarms));
-        }
         emit(
           state.copyWith(
             status: AlarmListStatus.success,
@@ -113,37 +104,6 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
         );
       },
     );
-  }
-
-  /// The on-device cache keys alarms by an id made up at save time, while
-  /// the server hands back its own — so the same alarm would otherwise be
-  /// armed twice (once per id) and ring twice. The server's ids win; any
-  /// cached id it doesn't know about is disarmed.
-  Future<void> _cancelStaleLocalAlarms(Set<String> serverIds) async {
-    final local = await _getAlarms();
-    for (final alarm in local.getOrElse(() => const [])) {
-      if (!serverIds.contains(alarm.id)) {
-        await AlarmScheduler.cancelAlarm(alarm.id);
-      }
-    }
-  }
-
-  Future<void> _schedulePrayerAlarms(List<PrayerAlarm> prayers) async {
-    try {
-      final catalog = await _getRingtones?.call();
-      final ringtoneUrls = <String, String>{
-        ...?catalog?.fold(
-          (_) => null,
-          (list) => {for (final r in list) r.id: r.audioUrl},
-        ),
-      };
-      await AlarmScheduler.reschedulePrayerAlarms(
-        prayers,
-        ringtoneUrls: ringtoneUrls,
-      );
-    } catch (_) {
-      // Best-effort: the next successful load re-arms them.
-    }
   }
 
   Future<void> _onSaveAlarm(
@@ -185,7 +145,7 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
         unawaited(
           event.enabled
               ? AlarmScheduler.scheduleAlarm(alarm)
-              : AlarmScheduler.cancelAlarm(event.id),
+              : AlarmScheduler.cancelAlarm(event.id, reason: 'switched off'),
         );
       },
     );
@@ -205,7 +165,9 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     final result = await _deleteAlarm(event.id);
     result.fold(
       (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
-      (_) => unawaited(AlarmScheduler.cancelAlarm(event.id)),
+      (_) => unawaited(
+        AlarmScheduler.cancelAlarm(event.id, reason: 'deleted by the user'),
+      ),
     );
   }
 }

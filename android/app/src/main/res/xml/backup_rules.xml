@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older Auto Backup. Alarm bookkeeping belongs to the install
+     that armed it: restoring it after a reinstall would bring back a list of
+     alarms (and a reboot-reschedule list) that nothing on the new install
+     armed or can cancel. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="dev.fluttercommunity.plus.android_alarm_manager_plugin.xml"/>
+    <exclude domain="root" path="app_flutter/alarms_box.hive"/>
+    <exclude domain="root" path="app_flutter/alarms_box.lock"/>
+</full-backup-content>
