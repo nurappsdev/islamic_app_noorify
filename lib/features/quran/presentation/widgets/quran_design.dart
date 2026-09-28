@@ -1,5 +1,6 @@
 import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
 import '../screens/quran_plan_screen.dart';
+import '../screens/quran_saved_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -163,7 +164,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
-    final sections = ['home', 'learn', 'topic', 'plan', 'dashboard'];
+    final sections = ['home', 'learn', 'saved', 'plan', 'dashboard'];
     return PopScope(
       canPop: _selected == 'home',
       onPopInvokedWithResult: (didPop, result) {
@@ -179,7 +180,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
               title: text.learn.isNotEmpty ? text.learn : 'Learn',
               onBack: () => _select('home'),
             ),
-            ComingSoonScreen(title: 'Topic', onBack: () => _select('home')),
+            QuranSavedScreen(onBack: () => _select('home')),
             QuranPlanScreen(onBack: () => _select('home')),
             ComingSoonScreen(
               title: text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
@@ -212,7 +213,11 @@ class QuranBottomNav extends StatelessWidget {
         text.learn.isNotEmpty ? text.learn : 'Learn',
         Icons.school_outlined,
       ),
-      ('topic', 'Topic', Icons.topic_outlined),
+      (
+        'saved',
+        text.saved.isNotEmpty ? text.saved : 'Saved',
+        Icons.bookmark_border_rounded,
+      ),
       (
         'plan',
         text.planner.isNotEmpty ? text.planner : 'Plan',
