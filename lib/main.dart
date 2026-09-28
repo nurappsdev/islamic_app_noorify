@@ -52,11 +52,12 @@ Future<void> main() async {
     ),
   );
 
+  final preferences = await SharedPreferences.getInstance();
   final savedDarkTheme =
-      (await SharedPreferences.getInstance()).getBool(
-        AppPreferencesBloc.darkThemeKey,
-      ) ??
-      false;
+      preferences.getBool(AppPreferencesBloc.darkThemeKey) ?? false;
+  // Read before the first frame, so the app opens in the saved language - or
+  // Bangla when none was ever saved - instead of switching after it renders.
+  final savedLanguage = LanguagePreference.read(preferences);
 
   await AlarmScheduler.init();
   await AlarmScheduler.logScheduledAlarms();
@@ -91,7 +92,9 @@ Future<void> main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageBloc()),
+        BlocProvider(
+          create: (_) => LanguageBloc(initialLanguage: savedLanguage),
+        ),
         BlocProvider(
           create: (_) => AppPreferencesBloc(darkThemeEnabled: savedDarkTheme),
         ),

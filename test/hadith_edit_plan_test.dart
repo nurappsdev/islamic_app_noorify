@@ -260,7 +260,7 @@ void main() {
         ScreenUtilInit(
           designSize: const Size(375, 812),
           builder: (context, child) => BlocProvider(
-            create: (_) => LanguageBloc(),
+            create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
             child: MaterialApp(
               home: Builder(
                 builder: (context) => Scaffold(

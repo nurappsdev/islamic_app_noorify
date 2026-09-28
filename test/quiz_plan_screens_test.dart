@@ -177,7 +177,7 @@ Future<void> _pump(
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  final language = LanguageBloc();
+  final language = LanguageBloc(initialLanguage: AppLanguage.english);
   if (bangla) language.add(const UpdateLanguage(AppLanguage.bangla));
   await tester.pumpWidget(
     ScreenUtilInit(

@@ -30,16 +30,16 @@ void main() {
   });
 
   group('LanguageBloc', () {
-    test('starts in english and updates language', () async {
-      final bloc = LanguageBloc();
+    test('starts in bangla and updates language', () async {
+      final bloc = LanguageBloc(persist: (_) async {});
       addTearDown(bloc.close);
 
-      expect(bloc.state.language, AppLanguage.english);
+      expect(bloc.state.language, AppLanguage.bangla);
 
-      bloc.add(const UpdateLanguage(AppLanguage.bangla));
+      bloc.add(const UpdateLanguage(AppLanguage.english));
       await Future<void>.delayed(Duration.zero);
 
-      expect(bloc.state.language, AppLanguage.bangla);
+      expect(bloc.state.language, AppLanguage.english);
     });
   });
 

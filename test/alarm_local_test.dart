@@ -270,7 +270,10 @@ void main() {
 
       tearDown(() => bloc.close());
 
-      Future<void> settle() => Future<void>.delayed(Duration.zero);
+      // Long enough for the bloc's Hive writes to finish, even on a busy
+      // machine.
+      Future<void> settle() =>
+          Future<void>.delayed(const Duration(milliseconds: 30));
 
       test('loads the saved alarms and the prayer alarms', () async {
         await repository.addAlarm(_alarm('a'));

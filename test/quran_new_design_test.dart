@@ -112,7 +112,7 @@ void main() {
       );
       await tester.pumpWidget(
         BlocProvider(
-          create: (_) => LanguageBloc(),
+          create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
           child: ScreenUtilInit(
             designSize: const Size(375, 812),
             builder: (_, child) => MaterialApp(
