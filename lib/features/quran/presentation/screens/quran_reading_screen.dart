@@ -487,12 +487,13 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             tooltip: 'Back',
                             visualDensity: VisualDensity.compact,
                             onPressed: () async {
-                              final popped =
-                                  await Navigator.of(context).maybePop();
+                              final popped = await Navigator.of(
+                                context,
+                              ).maybePop();
                               if (!popped && context.mounted) {
-                                Navigator.of(context).pushReplacementNamed(
-                                  RouteNames.quranSurahs,
-                                );
+                                Navigator.of(
+                                  context,
+                                ).pushReplacementNamed(RouteNames.quranSurahs);
                               }
                             },
                             icon: const Icon(

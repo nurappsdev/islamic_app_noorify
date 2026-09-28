@@ -41,7 +41,11 @@ class QuranSheetHeading extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 18),
         child: Text(
           title,
-          style: const TextStyle(fontSize: 20, color: quranInk),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: quranInk,
+          ),
         ),
       ),
     ],
