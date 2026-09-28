@@ -1,3 +1,9 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_tafsir_content.dart';
+import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_reading_cubit.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
 import 'package:flutter/material.dart';
@@ -64,7 +70,6 @@ void main() {
       final audio = TestAudio();
       quranAudioHandler = audio;
       final downloader = _Downloader();
-      SurahRouteArgs? navigated;
       final adapter = Adapter((r) {
         if (r.path.endsWith('/surahs')) {
           return ok([
@@ -143,13 +148,6 @@ void main() {
           child: ScreenUtilInit(
             designSize: const Size(375, 812),
             builder: (_, child) => MaterialApp(
-              onGenerateRoute: (settings) {
-                navigated = settings.arguments as SurahRouteArgs;
-                return MaterialPageRoute<void>(
-                  settings: settings,
-                  builder: (_) => const Scaffold(body: Text('Next reader')),
-                );
-              },
               home: QuranReadingScreen(
                 args: const SurahRouteArgs(
                   surahNo: 2,
@@ -157,6 +155,21 @@ void main() {
                   ayahNo: 255,
                 ),
                 contentService: service(adapter),
+                tafsirService: QuranComReaderService(
+                  client: MockClient(
+                    (r) async => http.Response(
+                      jsonEncode({
+                        'tafsir': {
+                          'text': List.filled(
+                            20,
+                            'Tafsir for ${r.url.path}',
+                          ).join(' '),
+                        },
+                      }),
+                      200,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -175,6 +188,39 @@ void main() {
       expect(find.textContaining('আল্লাহ মু’মিনদের অভিভাবক।'), findsOneWidget);
       expect(find.text('Page 42 ⌄'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      final viewport = find.byType(QuranPageViewport);
+      final pageElement = tester.element(viewport);
+      final pageHeight = tester.getSize(viewport).height;
+      final arabicScroll = tester.widget<SingleChildScrollView>(
+        find.descendant(
+          of: viewport,
+          matching: find.byType(SingleChildScrollView),
+        ),
+      );
+      arabicScroll.controller!.jumpTo(80);
+      await tester.pump();
+      final oldOffset = arabicScroll.controller!.offset;
+      final originalRoute = ModalRoute.of(tester.element(viewport));
+      await tester.tap(find.byKey(const ValueKey('quran-toggle-tafsir')));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuranTafsirContent), findsOneWidget);
+      expect(tester.element(viewport), same(pageElement));
+      expect(ModalRoute.of(tester.element(viewport)), same(originalRoute));
+      expect(tester.getSize(viewport).height, pageHeight);
+      expect(arabicScroll.controller!.offset, oldOffset);
+      final outer = tester.widget<SingleChildScrollView>(
+        find.byKey(const ValueKey('quran-reader-scroll')),
+      );
+      expect(outer.controller!.position.maxScrollExtent, greaterThan(0));
+      outer.controller!.jumpTo(outer.controller!.position.maxScrollExtent);
+      await tester.pump();
+      await tester.ensureVisible(find.byTooltip('Close tafsir'));
+      await tester.tap(find.byTooltip('Close tafsir'));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuranTafsirContent), findsNothing);
+      expect(tester.element(viewport), same(pageElement));
+      expect(arabicScroll.controller!.offset, oldOffset);
+      expect(outer.controller!.offset, 0);
       final preferences = tester
           .element(find.text('Page 42 ⌄'))
           .read<QuranTranslationBloc>();
@@ -200,21 +246,12 @@ void main() {
       expect(find.text('Filter Quran'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
-      // Reach the last real page and use the catalog-backed progression card.
+      // Filtering must return to the same reader and preserve its position.
       final cubit = tester
           .element(find.text('Page 42 ⌄'))
           .read<QuranReadingCubit>();
-      cubit.load(from: 286);
-      await tester.pumpAndSettle();
-      expect(find.text('Next Surah'), findsOneWidget);
-      expect(find.text('Aal Imran'), findsOneWidget);
-      await tester.ensureVisible(find.text('Aal Imran'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Aal Imran'));
-      await tester.pumpAndSettle();
-      expect(navigated?.surahNo, 3);
-      expect(navigated?.ayahNo, 1);
-      expect(find.text('Next reader'), findsOneWidget);
+      expect(cubit.state.pageNumber, 42);
+      expect(cubit.state.error, isFalse);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await audio.completed.close();

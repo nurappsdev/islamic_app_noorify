@@ -1,3 +1,5 @@
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_design.dart';
@@ -98,45 +100,60 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
-  testWidgets('Quran bottom navigation reuses the existing home route', (
-    tester,
-  ) async {
-    final navigator = GlobalKey<NavigatorState>();
-    Widget home(BuildContext context) => Scaffold(
-      body: TextButton(
-        onPressed: () => Navigator.pushNamed(context, RouteNames.quran),
-        child: const Text('Open Quran'),
-      ),
-    );
-    await tester.pumpWidget(
-      BlocProvider(
-        create: (_) => LanguageBloc(),
-        child: MaterialApp(
-          navigatorKey: navigator,
-          onGenerateInitialRoutes: (_) => [
-            MaterialPageRoute<void>(
-              settings: const RouteSettings(name: RouteNames.home),
-              builder: home,
-            ),
-          ],
-          routes: {
-            RouteNames.home: home,
-            RouteNames.quran: (_) =>
-                const Scaffold(bottomNavigationBar: QuranBottomNav()),
-          },
+  testWidgets(
+    'Quran bar opens Coming Soon for other sections and preserves its route',
+    (tester) async {
+      final navigator = GlobalKey<NavigatorState>();
+      Widget home(BuildContext context) => Scaffold(
+        body: TextButton(
+          onPressed: () => Navigator.pushNamed(context, RouteNames.quran),
+          child: const Text('Open Quran'),
         ),
-      ),
-    );
-    await tester.tap(find.text('Open Quran'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Quran'));
-    await tester.pumpAndSettle();
-    expect(navigator.currentState!.canPop(), isTrue);
-    await tester.tap(find.byTooltip('Home'));
-    await tester.pumpAndSettle();
-    expect(find.text('Open Quran'), findsOneWidget);
-    expect(navigator.currentState!.canPop(), isFalse);
-  });
+      );
+      await tester.pumpWidget(
+        BlocProvider(
+          create: (_) => LanguageBloc(),
+          child: ScreenUtilInit(
+            designSize: const Size(375, 812),
+            builder: (_, child) => MaterialApp(
+              navigatorKey: navigator,
+              onGenerateInitialRoutes: (_) => [
+                MaterialPageRoute<void>(
+                  settings: const RouteSettings(name: RouteNames.home),
+                  builder: home,
+                ),
+              ],
+              routes: {
+                RouteNames.home: home,
+                RouteNames.quran: (_) =>
+                    const Scaffold(bottomNavigationBar: QuranBottomNav()),
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open Quran'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Quran'));
+      await tester.pumpAndSettle();
+      expect(navigator.currentState!.canPop(), isTrue);
+      final originalBar = tester.element(find.byType(QuranBottomNav));
+      for (final section in ['home', 'bookmarks', 'history', 'more']) {
+        final tab = find.byKey(ValueKey('quran-nav-$section'));
+        await tester.tap(tab);
+        await tester.pumpAndSettle();
+        expect(find.byType(ComingSoonScreen), findsOneWidget);
+        navigator.currentState!.pop();
+        await tester.pumpAndSettle();
+        expect(tester.element(find.byType(QuranBottomNav)), same(originalBar));
+        expect(tester.takeException(), isNull);
+      }
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Open Quran'), findsOneWidget);
+      expect(navigator.currentState!.canPop(), isFalse);
+    },
+  );
   testWidgets(
     'download uses existing progress and reports Tajweed availability honestly',
     (tester) async {

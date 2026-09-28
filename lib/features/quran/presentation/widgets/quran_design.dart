@@ -1,7 +1,7 @@
+import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 
@@ -142,94 +142,122 @@ class _NumberStar extends CustomPainter {
   bool shouldRepaint(_NumberStar oldDelegate) => false;
 }
 
-/// Quran-specific styling keeps the rest of the application's navigation intact.
-class QuranBottomNav extends StatelessWidget {
+/// The active Quran tab retains its screen. Other bottom-bar destinations
+/// use the shared Coming Soon page without changing existing feature routes.
+class QuranBottomNav extends StatefulWidget {
   const QuranBottomNav({super.key});
-  void _openRoot(BuildContext context, String destination) {
-    var found = false;
-    final navigator = Navigator.of(context);
-    navigator.popUntil((route) {
-      found =
-          route.settings.name == destination ||
-          (destination == RouteNames.quran &&
-              route.settings.name == RouteNames.quranSurahs);
-      return found || route.isFirst;
-    });
-    if (!found) navigator.pushReplacementNamed(destination);
+  @override
+  State<QuranBottomNav> createState() => _QuranBottomNavState();
+}
+
+class _QuranBottomNavState extends State<QuranBottomNav> {
+  bool _opening = false;
+  Future<void> _comingSoon(String title, String section) async {
+    if (_opening) return;
+    _opening = true;
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          settings: RouteSettings(name: '/quran/coming-soon/$section'),
+          builder: (_) => ComingSoonScreen(title: title),
+        ),
+      );
+    } finally {
+      _opening = false;
+    }
+  }
+
+  void _quran() {
+    if (_opening) return;
+    // This bar belongs to the Quran screen; retain its search and scroll state.
+    FocusScope.of(context).unfocus();
   }
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: Container(
-      height: 72,
-      margin: const EdgeInsets.fromLTRB(19, 12, 19, 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: quranOlive,
-        borderRadius: BorderRadius.circular(38),
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+    final items = [
+      ('home', text.home, Icons.home_outlined),
+      ('quran', 'Quran', Icons.menu_book_rounded),
+      ('bookmarks', text.bookmarksTitle, Icons.bookmarks_outlined),
+      ('history', text.readingHistoryTitle, Icons.history_rounded),
+      ('more', 'More', Icons.grid_view_rounded),
+    ];
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 72,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: quranOlive,
+          borderRadius: BorderRadius.circular(36),
+          boxShadow: [
+            BoxShadow(
+              color: quranInk.withValues(alpha: .16),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: LayoutBuilder(
+          builder: (context, bounds) {
+            final showLabel = bounds.maxWidth >= 300;
+            return Row(
+              children: [
+                for (final item in items)
+                  Expanded(
+                    flex: item.$1 == 'quran' && showLabel ? 2 : 1,
+                    child: Semantics(
+                      selected: item.$1 == 'quran',
+                      button: true,
+                      child: Tooltip(
+                        message: item.$2,
+                        child: Material(
+                          color: item.$1 == 'quran'
+                              ? const Color(0xff5d886b)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(28),
+                          child: InkWell(
+                            key: ValueKey('quran-nav-${item.$1}'),
+                            borderRadius: BorderRadius.circular(28),
+                            onTap: item.$1 == 'quran'
+                                ? _quran
+                                : () => _comingSoon(item.$2, item.$1),
+                            child: SizedBox(
+                              height: 56,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(item.$3, color: Colors.white, size: 24),
+                                  if (item.$1 == 'quran' && showLabel) ...[
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        item.$2,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children:
-            [
-                  TextButton.icon(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _openRoot(context, RouteNames.home),
-                    icon: const Icon(Icons.home_rounded),
-                    label: Text(
-                      AppText.of(context).home,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => _openRoot(context, RouteNames.quran),
-                    isSelected: true,
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xff5d886b),
-                    ),
-                    tooltip: 'Quran',
-                    icon: Icon(Icons.menu_book_outlined, color: Colors.white),
-                  ),
-                  IconButton(
-                    tooltip: 'Bookmarks',
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteNames.quranBookmarks),
-                    icon: const Icon(
-                      Icons.bookmarks_outlined,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Reading history',
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      RouteNames.quranReadingHistory,
-                    ),
-                    icon: const Icon(
-                      Icons.assignment_outlined,
-                      color: Colors.white,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Home',
-                    onPressed: () => _openRoot(context, RouteNames.home),
-                    icon: const Icon(
-                      Icons.grid_view_rounded,
-                      color: Colors.white,
-                    ),
-                  ),
-                ].indexed
-                .map(
-                  (entry) =>
-                      Expanded(flex: entry.$1 == 0 ? 2 : 1, child: entry.$2),
-                )
-                .toList(),
-      ),
-    ),
-  );
+    );
+  }
 }

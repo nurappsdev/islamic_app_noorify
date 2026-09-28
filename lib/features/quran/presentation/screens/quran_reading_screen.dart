@@ -1,10 +1,10 @@
+import '../widgets/quran_tafsir_content.dart';
+import '../../data/services/quran_reader_service.dart';
 import '../widgets/quran_surah_heading.dart';
 import '../widgets/quran_filter_sheet.dart';
 import '../widgets/quran_modal.dart';
 import '../widgets/quran_share.dart';
-import '../widgets/quran_surah_frame.dart';
 import '../widgets/quran_download_sheet.dart';
-import '../../domain/surah_summary.dart';
 import '../widgets/quran_reading_layout.dart';
 import '../widgets/quran_page_viewport.dart';
 import '../widgets/quran_reading_text.dart';
@@ -41,8 +41,10 @@ class QuranReadingScreen extends StatelessWidget {
     super.key,
     required this.args,
     this.contentService,
+    this.tafsirService,
   });
   final QuranContentService? contentService;
+  final QuranReaderService? tafsirService;
   final SurahRouteArgs args;
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -69,13 +71,14 @@ class QuranReadingScreen extends StatelessWidget {
         },
       ),
     ],
-    child: _ReaderBody(args: args),
+    child: _ReaderBody(args: args, tafsirService: tafsirService),
   );
 }
 
 class _ReaderBody extends StatefulWidget {
-  const _ReaderBody({required this.args});
+  const _ReaderBody({required this.args, this.tafsirService});
   final SurahRouteArgs args;
+  final QuranReaderService? tafsirService;
   @override
   State<_ReaderBody> createState() => _ReaderBodyState();
 }
@@ -85,8 +88,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
   final _seconds = ValueNotifier<int>(0);
   late final Timer _timer;
   int _bookmarkRevision = 0;
+  bool _showTafsir = false;
+  bool _tafsirBangla = true;
   int? _recordedAyah;
-  Future<List<SurahSummary>>? _catalog;
 
   @override
   void initState() {
@@ -228,18 +232,6 @@ class _ReaderBodyState extends State<_ReaderBody> {
     }
   }
 
-  Widget _tafsirPlayer(SurahDetail detail) => MultiBlocProvider(
-    providers: [
-      BlocProvider.value(value: context.read<ReciterBloc>()),
-      BlocProvider.value(value: context.read<SurahPlaybackBloc>()),
-      BlocProvider.value(value: context.read<SurahAudioDownloadBloc>()),
-    ],
-    child: QuranPlaybackAudioGate(
-      detail: detail,
-      child: QuranNowPlayingBar(detail: detail),
-    ),
-  );
-
   // Widget _surahNavigation() => FutureBuilder<List<SurahSummary>>(
   //   future: _catalog ??= context
   //       .read<QuranReadingCubit>()
@@ -328,6 +320,13 @@ class _ReaderBodyState extends State<_ReaderBody> {
               resource == 161 ? AppLanguage.bangla : AppLanguage.english,
             ),
           ),
+          onTafsir: (bangla) {
+            Navigator.of(context).pop();
+            setState(() {
+              _showTafsir = true;
+              _tafsirBangla = bangla;
+            });
+          },
           totalAyah: state.surah?.totalAyah ?? ayah.ayahNumber,
         ),
       ),
@@ -413,6 +412,17 @@ class _ReaderBodyState extends State<_ReaderBody> {
                       bengaliAyahs: const [],
                     );
               return QuranReadingLayout(
+                extension: _showTafsir
+                    ? QuranTafsirContent(
+                        key: ValueKey(
+                          'tafsir-${state.pageNumber}-$_tafsirBangla',
+                        ),
+                        ayahs: state.ayahs,
+                        isBangla: _tafsirBangla,
+                        readerService: widget.tafsirService,
+                        onClose: () => setState(() => _showTafsir = false),
+                      )
+                    : null,
                 top: Column(
                   children: [
                     Container(
@@ -548,23 +558,23 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             ? reader.previous
                             : null,
                         footer: OutlinedButton(
+                          key: const ValueKey('quran-toggle-tafsir'),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: context.surfaceColor(Colors.white),
                             foregroundColor: quranInk,
                             side: const BorderSide(color: quranBorder),
                             elevation: 2,
                           ),
-                          onPressed: () => openTafsirSheet(
-                            context,
-                            '${widget.args.surahNo}:${active.clamp(state.from, state.to)}',
-                            prefs.surahLang == AppLanguage.bangla,
-                            ayahs: state.ayahs,
-                            surahName: state.surah?.name,
-                            player: detail == null
-                                ? null
-                                : _tafsirPlayer(detail),
+                          onPressed: () => setState(() {
+                            _showTafsir = !_showTafsir;
+                            _tafsirBangla =
+                                prefs.surahLang == AppLanguage.bangla;
+                          }),
+                          child: Text(
+                            _showTafsir
+                                ? 'Close tafsir'
+                                : appText.viewQuranTafsir,
                           ),
-                          child: Text(appText.viewQuranTafsir),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,

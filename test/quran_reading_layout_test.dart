@@ -4,6 +4,53 @@ import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_rea
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
 
 void main() {
+  testWidgets('scrolling past the Quran reaches inline Tafsir', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 60),
+            bottom: const SizedBox(height: 60),
+            page: QuranPageViewport(
+              pageNumber: 1,
+              footer: const SizedBox(),
+              child: const SizedBox(height: 1200, child: Text('Arabic')),
+            ),
+            extension: const SizedBox(
+              height: 1000,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text('Inline Tafsir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final page = find.byType(QuranPageViewport);
+    final inner = tester
+        .widget<SingleChildScrollView>(
+          find.descendant(
+            of: page,
+            matching: find.byType(SingleChildScrollView),
+          ),
+        )
+        .controller!;
+    final outer = tester
+        .widget<SingleChildScrollView>(
+          find.byKey(const ValueKey('quran-reader-scroll')),
+        )
+        .controller!;
+    inner.jumpTo(inner.position.maxScrollExtent);
+    await tester.pump();
+    await tester.drag(page, const Offset(0, -220));
+    await tester.pumpAndSettle();
+    expect(outer.offset, greaterThan(0));
+    expect(find.text('Inline Tafsir').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('idle controls collapse, preserve player, and reveal on swipe', (
     tester,
   ) async {

@@ -24,11 +24,13 @@ class QuranAyahDetails extends StatefulWidget {
     this.service,
     this.surahName = '',
     this.onTranslationSelected,
+    this.onTafsir,
   });
   final int surah, ayah, translation, totalAyah;
   final QuranContentService? service;
   final String surahName;
   final ValueChanged<int>? onTranslationSelected;
+  final ValueChanged<bool>? onTafsir;
   @override
   State<QuranAyahDetails> createState() => _QuranAyahDetailsState();
 }
@@ -188,11 +190,13 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                         label: const Text('Share'),
                       ),
                       TextButton.icon(
-                        onPressed: () => openTafsirSheet(
-                          context,
-                          a.verseKey,
-                          _translation == 161,
-                        ),
+                        onPressed: widget.onTafsir != null
+                            ? () => widget.onTafsir!(_translation == 161)
+                            : () => openTafsirSheet(
+                                context,
+                                a.verseKey,
+                                _translation == 161,
+                              ),
                         icon: const Icon(Icons.menu_book_outlined),
                         label: const Text('Tafsir'),
                       ),
