@@ -168,7 +168,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    times?.hijriDate ?? hijriDateLabel(now),
+                    hijriDateLabel(now, maghrib: times?.maghrib),
                     style: _italicStyle(10.sp),
                   ),
                 ),

@@ -284,7 +284,11 @@ class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
         );
         return '$date    ${_prayerRangeLabel(now, appText, bangla)}';
       case _RotationKind.hijri:
-        final date = hijriDateLabel(now, bangla: bangla);
+        final date = hijriDateLabel(
+          now,
+          bangla: bangla,
+          maghrib: _times?.maghrib,
+        );
         return '$date    ${_prayerRangeLabel(now, appText, bangla)}';
       case _RotationKind.bangla:
         final date = banglaDateLabel(now, english: !bangla);
