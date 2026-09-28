@@ -23,8 +23,7 @@ void main() {
                   child: AmalTrackerTile(
                     title: truncateWords(title, 15),
                     userName: 'Rajib Ahmed',
-                    monthLabel: 'Sep 2026',
-                    subtitle: 'Point : 0/40',
+                    subtitle: 'Point : 72.25/1120',
                     progressLabel: '0 %',
                     progress: 0,
                   ),
@@ -37,7 +36,9 @@ void main() {
       await tester.pump();
 
       expect(find.text('Rajib Ahmed'), findsOneWidget);
-      expect(find.text('Sep 2026'), findsOneWidget);
+      // The points replace the old month/year line.
+      expect(find.text('Point : 72.25/1120'), findsOneWidget);
+      expect(find.text('Sep 2026'), findsNothing);
       expect(AmalTrackerTile.radius, lessThan(28.r));
       expect(AmalTrackerTile.verticalPadding, lessThan(12.h));
       expect(tester.takeException(), isNull);

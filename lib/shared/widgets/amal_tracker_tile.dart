@@ -14,7 +14,6 @@ class AmalTrackerTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.userName,
-    this.monthLabel,
     required this.progressLabel,
     required this.progress,
     this.leadingText,
@@ -23,7 +22,6 @@ class AmalTrackerTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? userName;
-  final String? monthLabel;
   final String progressLabel;
   final double progress;
 
@@ -89,13 +87,22 @@ class AmalTrackerTile extends StatelessWidget {
                     style: text(10.sp, weight: FontWeight.w600),
                   ),
                 ],
-                SizedBox(height: 2.h),
-                Text(
-                  (monthLabel ?? '').isEmpty ? subtitle : monthLabel!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text(9.sp, height: 1.3),
-                ),
+                if (subtitle.isNotEmpty) ...[
+                  SizedBox(height: 3.h),
+                  // The points, e.g. `Point : 72.25/1120`: the figure this card
+                  // is about, so it is set larger and bolder than the name.
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: palette.textStrong,
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
