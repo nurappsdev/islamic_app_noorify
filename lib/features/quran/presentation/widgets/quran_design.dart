@@ -152,7 +152,7 @@ class QuranTabShell extends StatefulWidget {
 }
 
 class _QuranTabShellState extends State<QuranTabShell> {
-  String _selected = 'quran';
+  String _selected = 'home';
 
   void _select(String section) {
     FocusScope.of(context).unfocus();
@@ -162,17 +162,17 @@ class _QuranTabShellState extends State<QuranTabShell> {
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
-    final sections = ['quran', 'home', 'bookmarks', 'history', 'more'];
+    final sections = ['home', 'learn', 'topic', 'plan', 'dashboard'];
     final titles = [
-      text.home,
-      text.bookmarksTitle,
-      text.readingHistoryTitle,
-      'More',
+      text.learn.isNotEmpty ? text.learn : 'Learn',
+      'Topic',
+      text.planner.isNotEmpty ? text.planner : 'Plan',
+      text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
     ];
     return PopScope(
-      canPop: _selected == 'quran',
+      canPop: _selected == 'home',
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _select('quran');
+        if (!didPop) _select('home');
       },
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
@@ -181,7 +181,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
           children: [
             widget.child,
             for (final title in titles)
-              ComingSoonScreen(title: title, onBack: () => _select('quran')),
+              ComingSoonScreen(title: title, onBack: () => _select('home')),
           ],
         ),
         bottomNavigationBar: QuranBottomNav(
@@ -195,7 +195,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
 
 /// Tab selection changes content in the owning shell, without pushing routes.
 class QuranBottomNav extends StatelessWidget {
-  const QuranBottomNav({super.key, this.selected = 'quran', this.onSelected});
+  const QuranBottomNav({super.key, this.selected = 'home', this.onSelected});
   final String selected;
   final ValueChanged<String>? onSelected;
 
@@ -204,10 +204,22 @@ class QuranBottomNav extends StatelessWidget {
     final text = AppText.of(context);
     final items = [
       ('home', text.home, Icons.home_outlined),
-      ('quran', 'Quran', Icons.menu_book_rounded),
-      ('bookmarks', text.bookmarksTitle, Icons.bookmarks_outlined),
-      ('history', text.readingHistoryTitle, Icons.history_rounded),
-      ('more', 'More', Icons.grid_view_rounded),
+      (
+        'learn',
+        text.learn.isNotEmpty ? text.learn : 'Learn',
+        Icons.emoji_objects_outlined,
+      ),
+      ('topic', 'Topic', Icons.topic_outlined),
+      (
+        'plan',
+        text.planner.isNotEmpty ? text.planner : 'Plan',
+        Icons.fact_check_outlined,
+      ),
+      (
+        'dashboard',
+        text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
+        Icons.grid_view_rounded,
+      ),
     ];
     return SafeArea(
       top: false,

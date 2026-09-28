@@ -134,7 +134,7 @@ void main() {
       );
       await tester.tap(find.text('Open Quran'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Quran'));
+      await tester.tap(find.byTooltip('Home'));
       await tester.pumpAndSettle();
       expect(navigator.currentState!.canPop(), isTrue);
       await tester.enterText(find.byType(TextField), 'Saved search');
@@ -142,7 +142,7 @@ void main() {
       final originalBar = tester.element(find.byType(QuranBottomNav));
       final originalRoute = ModalRoute.of(originalBar);
       final barPosition = tester.getRect(find.byType(QuranBottomNav));
-      for (final section in ['home', 'bookmarks', 'history', 'more']) {
+      for (final section in ['learn', 'topic', 'plan', 'dashboard']) {
         final tab = find.byKey(ValueKey('quran-nav-$section'));
         await tester.tap(tab);
         await tester.pumpAndSettle();
@@ -161,9 +161,9 @@ void main() {
       expect(find.byType(ComingSoonScreen), findsNothing);
       expect(tester.element(find.byType(TextField)), same(originalContent));
       expect(find.text('Saved search'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('quran-nav-home')));
+      await tester.tap(find.byKey(const ValueKey('quran-nav-learn')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('quran-nav-quran')));
+      await tester.tap(find.byKey(const ValueKey('quran-nav-home')));
       await tester.pumpAndSettle();
       expect(tester.element(find.byType(TextField)), same(originalContent));
       navigator.currentState!.pop();
