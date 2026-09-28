@@ -16,8 +16,9 @@ import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.da
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
-part 'prayer_time_card_widgets.dart';
 part 'prayer_time_card_painters.dart';
+part 'prayer_time_card_widgets.dart';
+
 
 class PrayerTimeCard extends StatefulWidget {
   const PrayerTimeCard({super.key, this.prayerTimeService, this.now});
