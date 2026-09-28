@@ -46,7 +46,7 @@ class DuaBottomNav extends StatelessWidget {
             ),
             _DuaNavItem(
               icon: Icons.bookmark_border_rounded,
-              label: 'Saved',
+              label: appText.saved,
               selected: selectedIndex == 1,
               onTap: () => Navigator.of(context).pushNamed(RouteNames.duaSaved),
             ),

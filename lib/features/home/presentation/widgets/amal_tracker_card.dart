@@ -5,10 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
+import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
+import 'package:islami_app_noorify/shared/services/app_globals.dart';
 import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
 
 class AmalTrackerCard extends StatefulWidget {
@@ -72,97 +75,97 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   ];
 
   /// Builds the carousel items from `GET /home/dashboard`'s
-  /// `topHighlightCards`, keeping the app's own localized labels and only
-  /// pulling the dynamic bits (points, percentage, names, rank) from the API.
+  /// `topHighlightCards`, selecting the language-specific strings returned by
+  /// the API and retaining the app's labels as compatibility fallbacks.
   static List<_AmalTrackerItem> _apiItems(
-    AppText appText,
+    BuildContext context,
     List<HighlightCard> cards,
+    String loggedInUserName,
   ) => [
     for (final card in cards)
-      if (card.hasData) _mapHighlightCard(appText, card),
+      if (card.hasData) _mapHighlightCard(context, card, loggedInUserName),
   ];
 
   static _AmalTrackerItem _mapHighlightCard(
-    AppText appText,
+    BuildContext context,
     HighlightCard card,
+    String loggedInUserName,
   ) {
-    final fraction = _fractionOf(card.pointsText);
+    final title = truncateWords(
+      _localized(context, card.localizedTitle, card.title),
+      15,
+    );
+    final pointsText = _localized(
+      context,
+      card.localizedPointsText,
+      card.pointsText,
+    );
+    final subtitle = _localized(context, card.localizedSubtitle, card.subtitle);
     final progress = (card.percentage / 100).clamp(0, 1).toDouble();
-    final progressLabel = _formatPercentage(card.percentage);
+    final localizedPercentage = context.localized(card.localizedPercentage);
+    final progressLabel = localizedPercentage.isEmpty
+        ? _formatPercentage(card.percentage)
+        : '$localizedPercentage %';
+    final userName = card.type == 'todays_amol'
+        ? loggedInUserName
+        : resolveAmolTrackUserName(
+            profileName: card.userName,
+            dashboardName: loggedInUserName,
+          );
 
-    switch (card.type) {
-      case 'todays_amol':
-      case 'todays_highest':
-      case 'todays_second_highest':
-      case 'yesterdays_highest':
-        return _AmalTrackerItem(
-          title: card.title,
-          subtitle: '${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
-      case 'monthly_first':
-        return _AmalTrackerItem(
-          title: _leaderName(card),
-          subtitle: '${appText.firstInTheMonth}\n${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
-      case 'monthly_second':
-        return _AmalTrackerItem(
-          title: _leaderName(card),
-          subtitle: '${appText.secondInTheMonth}\n${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
-      case 'last_month_winner':
-        return _AmalTrackerItem(
-          title: _leaderName(card),
-          subtitle: '${appText.lastMonthWinner}\n${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-        );
-      case 'my_monthly_position':
-        return _AmalTrackerItem(
-          title: card.title,
-          subtitle: '${appText.point} : $fraction',
-          progressLabel: progressLabel,
-          progress: progress,
-          leadingText: card.rank?.toString(),
-        );
-      default:
-        // Unknown card type from a newer backend: fall back to whatever the
-        // API itself sent instead of dropping the card.
-        return _AmalTrackerItem(
-          title: card.title,
-          subtitle: fraction.isEmpty ? (card.subtitle ?? '') : fraction,
-          progressLabel: progressLabel,
-          progress: progress,
-        );
-    }
+    return _AmalTrackerItem(
+      title: title,
+      subtitle: _pointsLine(pointsText, subtitle),
+      progressLabel: progressLabel,
+      progress: progress,
+      userName: userName,
+      // Only the user's own position shows its rank in the leading tile.
+      leadingText: card.type == 'my_monthly_position'
+          ? _localized(context, card.localizedRank, card.rank?.toString())
+          : null,
+    );
   }
 
-  /// The leader's real name, or - when nobody holds the spot yet, or the API
-  /// only has its generic "Guest User" placeholder - the API's own label for
-  /// the card (e.g. "Winner of August 2026") rather than a made-up name.
-  static String _leaderName(HighlightCard card) {
-    final name = card.userName?.trim() ?? '';
-    if (name.isNotEmpty && name.toLowerCase() != 'guest user') return name;
-    final label = card.subtitle?.trim() ?? '';
-    return label.isNotEmpty ? label : card.title;
+  /// The card's points as the API words them in the app's language, e.g.
+  /// `Point : 72.25/1120` (points earned / points possible). Monthly cards put
+  /// a heading above the points in [subtitle], so when [pointsText] is missing
+  /// the points are its last line.
+  static String _pointsLine(String pointsText, String subtitle) {
+    if (pointsText.isNotEmpty) return pointsText;
+    final lines = subtitle
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty);
+    return lines.isEmpty ? '' : lines.last;
   }
 
-  /// `"Point : 0/40"` -> `"0/40"`.
-  static String _fractionOf(String? pointsText) {
-    if (pointsText == null) return '';
-    final index = pointsText.indexOf(':');
-    return (index == -1 ? pointsText : pointsText.substring(index + 1)).trim();
+  static String _localized(
+    BuildContext context,
+    LocalizedText value,
+    String? fallback,
+  ) {
+    final text = context.localized(value);
+    return text.isEmpty ? (fallback ?? '') : text;
   }
 
   static String _formatPercentage(num percentage) {
     final isWhole = percentage % 1 == 0;
     return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
   }
+
+  /// The offline/not-yet-loaded placeholders: the same card layout with the
+  /// user's own name, and just the points line of each subtitle.
+  static List<_AmalTrackerItem> _withDisplayInfo(
+    List<_AmalTrackerItem> items,
+    String userName,
+  ) => [
+    for (final item in items)
+      item.copyWith(
+        title: truncateWords(item.title, 15),
+        subtitle: item.subtitle.split('\n').last.trim(),
+        userName: userName,
+      ),
+  ];
 
   static const _slideDuration = Duration(seconds: 3);
   static const _transitionDuration = Duration(milliseconds: 650);
@@ -261,63 +264,80 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     final dashboardState = context.watch<HomeDashboardBloc>().state;
     if (dashboardState.isLoading) return const AmalTrackerCardShimmer();
 
-    final items = dashboardState.hasData
-        ? _apiItems(appText, dashboardState.dashboard!.topHighlightCards)
-        : _items(appText);
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.topCenter,
-      children: [
-        SizedBox(
-          height: AmalTrackerTile.height,
-          child: Listener(
-            onPointerDown: _onPointerDown,
-            onPointerUp: _onPointerEnd,
-            onPointerCancel: _onPointerEnd,
-            child: PageView.builder(
-              // Lets the controller restore the page if the slider is rebuilt
-              // from scratch (e.g. the shimmer shows during a refresh).
-              key: const PageStorageKey<String>('amal-tracker-slider'),
-              controller: _pageController,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: (index) {
-                _currentPage = index;
-                // A manual swipe shouldn't get cut short by an auto-advance
-                // landing right after it, so give this slide a fresh 3s dwell.
-                _scheduleAutoSlide();
-              },
-              itemBuilder: (context, pageIndex) {
-                final index = pageIndex % items.length;
-                return AnimatedBuilder(
-                  animation: _pageController,
-                  builder: (context, child) {
-                    var page = _currentPage.toDouble();
-                    if (_pageController.hasClients &&
-                        _pageController.position.haveDimensions) {
-                      page = _pageController.page ?? page;
-                    }
-                    final delta = (page - pageIndex).abs().clamp(0.0, 1.0);
-                    final scale = 1 - (delta * 0.08);
-                    final opacity = 1 - (delta * 0.35);
-                    return Opacity(
-                      opacity: opacity,
-                      child: Transform.scale(scale: scale, child: child),
+    final dashboard = dashboardState.dashboard;
+    final dashboardName = context.localized(
+      dashboard?.userSummary.localizedFullName,
+    );
+    final fallbackDashboardName = dashboardName.isEmpty
+        ? dashboard?.userSummary.fullName
+        : dashboardName;
+
+    return ValueListenableBuilder<String?>(
+      valueListenable: profileNameNotifier,
+      builder: (context, profileName, _) {
+        final loggedInUserName = resolveAmolTrackUserName(
+          profileName: profileName,
+          dashboardName: fallbackDashboardName,
+        );
+        final items = dashboardState.hasData
+            ? _apiItems(context, dashboard!.topHighlightCards, loggedInUserName)
+            : _withDisplayInfo(_items(appText), loggedInUserName);
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
+          children: [
+            SizedBox(
+              height: AmalTrackerTile.height,
+              child: Listener(
+                onPointerDown: _onPointerDown,
+                onPointerUp: _onPointerEnd,
+                onPointerCancel: _onPointerEnd,
+                child: PageView.builder(
+                  // Lets the controller restore the page if the slider is rebuilt
+                  // from scratch (e.g. the shimmer shows during a refresh).
+                  key: const PageStorageKey<String>('amal-tracker-slider'),
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (index) {
+                    _currentPage = index;
+                    // A manual swipe shouldn't get cut short by an auto-advance
+                    // landing right after it, so give this slide a fresh 3s dwell.
+                    _scheduleAutoSlide();
+                  },
+                  itemBuilder: (context, pageIndex) {
+                    final index = pageIndex % items.length;
+                    return AnimatedBuilder(
+                      animation: _pageController,
+                      builder: (context, child) {
+                        var page = _currentPage.toDouble();
+                        if (_pageController.hasClients &&
+                            _pageController.position.haveDimensions) {
+                          page = _pageController.page ?? page;
+                        }
+                        final delta = (page - pageIndex).abs().clamp(0.0, 1.0);
+                        final scale = 1 - (delta * 0.08);
+                        final opacity = 1 - (delta * 0.35);
+                        return Opacity(
+                          opacity: opacity,
+                          child: Transform.scale(scale: scale, child: child),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2.w),
+                        child: _AmalSlide(
+                          item: items[index],
+                          isTodaysTrack: index == 0,
+                        ),
+                      ),
                     );
                   },
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2.w),
-                    child: _AmalSlide(
-                      item: items[index],
-                      isTodaysTrack: index == 0,
-                    ),
-                  ),
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -333,6 +353,7 @@ class _AmalSlide extends StatelessWidget {
     final card = AmalTrackerTile(
       title: item.title,
       subtitle: item.subtitle,
+      userName: item.userName,
       progressLabel: item.progressLabel,
       progress: item.progress,
       leadingText: item.leadingText,
@@ -363,6 +384,7 @@ class _AmalTrackerItem {
     required this.progressLabel,
     required this.progress,
     this.leadingText,
+    this.userName,
   });
 
   final String title;
@@ -370,4 +392,20 @@ class _AmalTrackerItem {
   final String progressLabel;
   final double progress;
   final String? leadingText;
+  final String? userName;
+
+  _AmalTrackerItem copyWith({
+    String? title,
+    String? subtitle,
+    String? userName,
+  }) {
+    return _AmalTrackerItem(
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      progressLabel: progressLabel,
+      progress: progress,
+      leadingText: leadingText,
+      userName: userName ?? this.userName,
+    );
+  }
 }

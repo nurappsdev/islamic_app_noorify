@@ -37,6 +37,7 @@ import '../widgets/quran_design.dart';
 import '../widgets/quran_player_widgets.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_sheets.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class QuranReadingScreen extends StatelessWidget {
   const QuranReadingScreen({
@@ -314,7 +315,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                saved ? 'Surah bookmarked' : 'Surah bookmark removed',
+                saved
+                    ? AppText.readOf(context).quranSurahBookmarked
+                    : AppText.readOf(context).quranSurahBookmarkRemoved,
               ),
             ),
           );
@@ -323,9 +326,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to load ayah. Please try again.'),
-          ),
+          SnackBar(content: Text(AppText.of(context).quranAyahLoadFailed)),
         );
       }
     }
@@ -599,7 +600,12 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             child: InkWell(
                               onTap: _jump,
                               child: Text(
-                                'Surah:  ${surah?.name ?? widget.args.surahName}  ⌄',
+                                context.localizedDigits(
+                                  AppText.of(context).quranSurahChip.fill({
+                                    'name':
+                                        surah?.name ?? widget.args.surahName,
+                                  }),
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(fontSize: 14),
@@ -644,15 +650,27 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 (
                                   'bookmark',
                                   Icons.bookmark_border,
-                                  'Book Mark Surah',
+                                  AppText.of(context).quranBookmarkSurah,
                                 ),
-                                ('text', Icons.text_fields, 'Change text'),
-                                ('share', Icons.share_outlined, 'Share'),
-                                ('translate', Icons.translate, 'Translate'),
+                                (
+                                  'text',
+                                  Icons.text_fields,
+                                  AppText.of(context).quranChangeText,
+                                ),
+                                (
+                                  'share',
+                                  Icons.share_outlined,
+                                  AppText.of(context).quranShare,
+                                ),
+                                (
+                                  'translate',
+                                  Icons.translate,
+                                  AppText.of(context).quranTranslateHeading,
+                                ),
                                 (
                                   'download',
                                   Icons.download_outlined,
-                                  'Tajweed / Download Quran',
+                                  AppText.of(context).quranTajweedDownload,
                                 ),
                               ])
                                 PopupMenuItem(
@@ -681,7 +699,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
                       TextButton.icon(
                         onPressed: () => reader.load(),
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Could not load page. Retry'),
+                        label: Text(
+                          AppText.of(context).quranPageLoadFailedRetry,
+                        ),
                       ),
                   ],
                 ),
@@ -690,7 +710,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     : state.error && state.ayahs.isEmpty
                     ? QuranRetry(onRetry: () => reader.load())
                     : state.ayahs.isEmpty
-                    ? const Center(child: Text('No ayahs available'))
+                    ? Center(child: Text(AppText.of(context).quranNoAyahs))
                     : QuranPageViewport(
                         pageNumber: state.pageNumber!,
                         showHeader: !opening,
@@ -732,7 +752,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           }),
                           child: Text(
                             _showTafsir
-                                ? 'Close tafsir'
+                                ? AppText.of(context).quranCloseTafsir
                                 : appText.viewQuranTafsir,
                           ),
                         ),
@@ -787,7 +807,15 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                             ),
                                           ),
                                         Text(
-                                          '${ayah.verseKey} · Para ${ayah.paraNumber} · Page ${ayah.pageNumber}',
+                                          context.localizedDigits(
+                                            AppText.of(
+                                              context,
+                                            ).quranVerseInfo.fill({
+                                              'key': ayah.verseKey,
+                                              'para': ayah.paraNumber,
+                                              'page': ayah.pageNumber,
+                                            }),
+                                          ),
                                           style: const TextStyle(
                                             fontSize: 11,
                                             color: quranInk,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
+import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
@@ -13,8 +14,19 @@ export 'amol_daily_event.dart';
 export 'amol_daily_state.dart';
 
 class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
-  AmolDailyBloc(this._getAmolDaily, this._logAmolItem, this._deleteAmolItem)
-    : super(const AmolDailyState.initial()) {
+  /// [initialDashboard] - today's checklist already fetched elsewhere (the
+  /// Home cards' shared store) - is shown straight away; a [LoadAmolDaily] with
+  /// `silent: true` then refreshes it in the background.
+  AmolDailyBloc(
+    this._getAmolDaily,
+    this._logAmolItem,
+    this._deleteAmolItem, {
+    AmolDailyDashboard? initialDashboard,
+  }) : super(
+         initialDashboard == null
+             ? const AmolDailyState.initial()
+             : AmolDailyState.success(initialDashboard),
+       ) {
     on<LoadAmolDaily>(_onLoad);
     on<LogAmolDailyItem>(_onLogItem);
     on<UncheckAmolDailyItem>(_onUncheckItem);
@@ -39,15 +51,21 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     // unchecked an item this session it stays that way regardless of what
     // this `GET` reports.
     final completionOverrides = state.completionOverrides;
-    emit(AmolDailyState.loading(completionOverrides: completionOverrides));
+    final refreshInPlace = event.silent && state.hasData;
+    if (!refreshInPlace) {
+      emit(AmolDailyState.loading(completionOverrides: completionOverrides));
+    }
     final result = await _getAmolDaily(date: event.date);
     result.fold(
-      (failure) => emit(
-        AmolDailyState.failure(
-          failure,
-          completionOverrides: completionOverrides,
-        ),
-      ),
+      // A silent refresh that fails keeps the checklist that is showing.
+      (failure) => refreshInPlace
+          ? null
+          : emit(
+              AmolDailyState.failure(
+                failure,
+                completionOverrides: completionOverrides,
+              ),
+            ),
       (dashboard) => emit(
         AmolDailyState.success(
           dashboard,

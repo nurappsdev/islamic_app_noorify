@@ -1,17 +1,13 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
 
 import 'alarm_list_event.dart';
@@ -20,20 +16,27 @@ import 'alarm_list_state.dart';
 export 'alarm_list_event.dart';
 export 'alarm_list_state.dart';
 
+/// The alarm screens' state. Every alarm lives on the device: each change is
+/// saved locally first, then the OS alarm schedule is brought in line with it
+/// (see [syncLocalAlarms]). Nothing here talks to the server.
 class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   AlarmListBloc({
     required GetAlarms getAlarms,
-    required GetAlarmDashboard getAlarmDashboard,
+    required GetPrayerAlarms getPrayerAlarms,
     required AddAlarm addAlarm,
     required SetAlarmEnabled setAlarmEnabled,
     required DeleteAlarm deleteAlarm,
-    GetRingtones? getRingtones,
-  }) : _getRingtones = getRingtones,
-       _getAlarms = getAlarms,
-       _getAlarmDashboard = getAlarmDashboard,
+    Future<void> Function()? syncAlarms,
+    Future<void> Function(String id, String reason)? cancelAlarm,
+  }) : _getAlarms = getAlarms,
+       _getPrayerAlarms = getPrayerAlarms,
        _addAlarm = addAlarm,
        _setAlarmEnabled = setAlarmEnabled,
        _deleteAlarm = deleteAlarm,
+       _syncAlarms = syncAlarms ?? syncLocalAlarms,
+       _cancelAlarm =
+           cancelAlarm ??
+           ((id, reason) => AlarmScheduler.cancelAlarm(id, reason: reason)),
        super(const AlarmListState()) {
     on<LoadAlarms>(_onLoadAlarms);
     on<SaveAlarm>(_onSaveAlarm);
@@ -42,108 +45,34 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   }
 
   final GetAlarms _getAlarms;
-  final GetAlarmDashboard _getAlarmDashboard;
+  final GetPrayerAlarms _getPrayerAlarms;
   final AddAlarm _addAlarm;
   final SetAlarmEnabled _setAlarmEnabled;
   final DeleteAlarm _deleteAlarm;
-  final GetRingtones? _getRingtones;
+  final Future<void> Function() _syncAlarms;
+  final Future<void> Function(String id, String reason) _cancelAlarm;
 
-  /// Loads the `GET /alarms` dashboard, which backs the header countdown,
-  /// the "Prayers Alarm" tab, and — via its `customAlarms` — the "All Alarm"
-  /// tab too: the server is the source of truth there, since every save
-  /// already goes through `POST /alarms/custom` first (see [_onSaveAlarm]).
-  /// The local Hive cache is only consulted as a fallback when the
-  /// dashboard call itself fails (e.g. offline), so the screen still shows
-  /// whatever was last saved on this device.
+  /// Loads the saved custom alarms and the prayer alarms from the device.
   Future<void> _onLoadAlarms(
     LoadAlarms event,
     Emitter<AlarmListState> emit,
   ) async {
     emit(state.copyWith(status: AlarmListStatus.loading));
-    final dashboardResult = await _getAlarmDashboard();
-    final prayerAlarms = dashboardResult.fold(
-      (_) => state.prayerAlarms,
-      (dashboard) => dashboard.prayerAlarms,
-    );
-    // Arms this device's OS alarms for the prayer alarms too, so they
-    // actually ring at their time (they have no local copy otherwise).
-    dashboardResult.fold(
-      (_) {},
-      (dashboard) => unawaited(_schedulePrayerAlarms(dashboard.prayerAlarms)),
-    );
-    final serverCountdown = dashboardResult.fold(
-      (_) => state.serverCountdown,
-      (dashboard) => dashboard.nextAlarmCountdown,
-    );
-    final serverAlarms = dashboardResult.fold(
-      (_) => null,
-      (dashboard) => dashboard.customAlarms,
-    );
-    final result = serverAlarms != null
-        ? Right<Failure, List<AlarmEntry>>(serverAlarms)
-        : await _getAlarms();
-    result.fold(
+    final alarms = await _getAlarms();
+    final prayerAlarms = await _getPrayerAlarms();
+    alarms.fold(
       (failure) => emit(
+        state.copyWith(status: AlarmListStatus.failure, failure: failure),
+      ),
+      (list) => emit(
         state.copyWith(
-          status: AlarmListStatus.failure,
-          failure: failure,
-          prayerAlarms: prayerAlarms,
-          serverCountdown: serverCountdown,
+          status: AlarmListStatus.success,
+          alarms: list,
+          prayerAlarms: prayerAlarms.getOrElse(() => state.prayerAlarms),
+          clearFailure: true,
         ),
       ),
-      (alarms) {
-        // Keeps this device's OS-level schedule in sync with whatever the
-        // server says is saved — including alarms created elsewhere (another
-        // device, a direct API call) that this device has never scheduled.
-        if (serverAlarms != null) {
-          unawaited(_cancelStaleLocalAlarms({for (final a in alarms) a.id}));
-          // Only the server's list may arm alarms. The local-cache fallback
-          // (dashboard failed: offline, or signed out) is display-only, or a
-          // guest would re-arm a previous account's cached alarms.
-          unawaited(AlarmScheduler.rescheduleAll(alarms));
-        }
-        emit(
-          state.copyWith(
-            status: AlarmListStatus.success,
-            alarms: alarms,
-            prayerAlarms: prayerAlarms,
-            serverCountdown: serverCountdown,
-            clearFailure: true,
-          ),
-        );
-      },
     );
-  }
-
-  /// The on-device cache keys alarms by an id made up at save time, while
-  /// the server hands back its own — so the same alarm would otherwise be
-  /// armed twice (once per id) and ring twice. The server's ids win; any
-  /// cached id it doesn't know about is disarmed.
-  Future<void> _cancelStaleLocalAlarms(Set<String> serverIds) async {
-    final local = await _getAlarms();
-    for (final alarm in local.getOrElse(() => const [])) {
-      if (!serverIds.contains(alarm.id)) {
-        await AlarmScheduler.cancelAlarm(alarm.id);
-      }
-    }
-  }
-
-  Future<void> _schedulePrayerAlarms(List<PrayerAlarm> prayers) async {
-    try {
-      final catalog = await _getRingtones?.call();
-      final ringtoneUrls = <String, String>{
-        ...?catalog?.fold(
-          (_) => null,
-          (list) => {for (final r in list) r.id: r.audioUrl},
-        ),
-      };
-      await AlarmScheduler.reschedulePrayerAlarms(
-        prayers,
-        ringtoneUrls: ringtoneUrls,
-      );
-    } catch (_) {
-      // Best-effort: the next successful load re-arms them.
-    }
   }
 
   Future<void> _onSaveAlarm(
@@ -151,19 +80,19 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     Emitter<AlarmListState> emit,
   ) async {
     final result = await _addAlarm(event.alarm);
-    result.fold((failure) => emit(state.copyWith(failure: failure)), (saved) {
-      emit(
-        state.copyWith(alarms: [...state.alarms, saved], clearFailure: true),
-      );
-      // Not armed here: `saved` carries a client-made id, and arming it as
-      // well as the server's own id would make one alarm ring twice.
-      // Reloading arms it once, under the server id.
-      add(const LoadAlarms());
-    });
+    await result.fold(
+      (failure) async => emit(state.copyWith(failure: failure)),
+      (saved) async {
+        emit(
+          state.copyWith(alarms: [...state.alarms, saved], clearFailure: true),
+        );
+        unawaited(_syncAlarms());
+      },
+    );
   }
 
-  /// Flips the toggle immediately (optimistic), then persists it — reverting
-  /// if the write fails so the switch never shows a state that wasn't saved.
+  /// Flips the toggle immediately (optimistic), then saves it - reverting if
+  /// the save fails so the switch never shows a state that wasn't saved.
   Future<void> _onToggleAlarmEnabled(
     ToggleAlarmEnabled event,
     Emitter<AlarmListState> emit,
@@ -181,19 +110,14 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     result.fold(
       (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
       (_) {
-        final alarm = updated.firstWhere((a) => a.id == event.id);
-        unawaited(
-          event.enabled
-              ? AlarmScheduler.scheduleAlarm(alarm)
-              : AlarmScheduler.cancelAlarm(event.id),
-        );
+        if (!event.enabled) unawaited(_cancelAlarm(event.id, 'switched off'));
+        unawaited(_syncAlarms());
       },
     );
   }
 
-  /// Removes the alarm immediately (optimistic), then persists the delete —
-  /// restoring it if the write fails so the list never drops an alarm that
-  /// wasn't actually deleted server-side.
+  /// Removes the alarm immediately (optimistic), then deletes it - restoring
+  /// it if that fails so the list never drops an alarm that wasn't deleted.
   Future<void> _onRemoveAlarm(
     RemoveAlarm event,
     Emitter<AlarmListState> emit,
@@ -205,7 +129,11 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     final result = await _deleteAlarm(event.id);
     result.fold(
       (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
-      (_) => unawaited(AlarmScheduler.cancelAlarm(event.id)),
+      (_) {
+        // Cancel right away; the sync then double-checks nothing of it is left.
+        unawaited(_cancelAlarm(event.id, 'deleted by the user'));
+        unawaited(_syncAlarms());
+      },
     );
   }
 }

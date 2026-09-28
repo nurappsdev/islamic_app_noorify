@@ -15,6 +15,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_edit
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_plan_pickers.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Route arguments for [HadithEditPlanScreen] — the plan's current values,
 /// so the form opens pre-filled.
@@ -491,8 +492,10 @@ class _EditCategoryCard extends StatelessWidget {
                 if (category != null) ...[
                   SizedBox(height: 7.h),
                   Text(
-                    '${formatHadithCount(category.totalHadiths)} '
-                    '${appText.categoryHadith}',
+                    context.localizedDigits(
+                      '${formatHadithCount(category.totalHadiths)} '
+                      '${appText.categoryHadith}',
+                    ),
                     style: TextStyle(
                       color: const Color(0xFFA1AD59),
                       fontSize: 12.sp,

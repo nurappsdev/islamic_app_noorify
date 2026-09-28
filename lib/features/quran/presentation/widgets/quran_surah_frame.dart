@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/surah_summary.dart';
 import 'quran_design.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 /// Reuses the two supplied transparent ornaments around live content.
 class QuranSurahFrame extends StatelessWidget {
@@ -74,7 +76,12 @@ class QuranSurahComponent extends StatelessWidget {
               style: const TextStyle(fontFamily: 'Noorehuda', fontSize: 25),
             ),
             Text(
-              '${surah.number} · ${surah.totalAyah} ayahs',
+              context.localizedDigits(
+                AppText.of(context).quranSurahAyahCount.fill({
+                  'n': surah.number,
+                  'total': surah.totalAyah,
+                }),
+              ),
               style: const TextStyle(color: quranInk),
             ),
           ],

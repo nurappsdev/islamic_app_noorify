@@ -14,6 +14,8 @@ import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failu
 import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// The user's quiz plans (`GET /quizzes/plans`), reached from index 2 of the
 /// Quiz navigation bar. Expects a [PlannerBloc] above it.
@@ -51,7 +53,10 @@ class _PlannerScreenState extends State<PlannerScreen> with RouteAware {
   }
 
   Future<void> _createPlan() async {
-    if (!await ensureLogin(context) || !mounted) return;
+    if (!await requireLogin(context, feature: AuthFeatures.quizPlanner) ||
+        !mounted) {
+      return;
+    }
     // Untyped: the app's routes are built as `MaterialPageRoute<void>`, so a
     // typed push would fail its cast. The screen pops with the created plan.
     final created = await Navigator.of(
@@ -98,6 +103,7 @@ class _PlannerScreenState extends State<PlannerScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final language = context.watch<LanguageBloc>().state.language;
     final bloc = context.read<PlannerBloc>();
     return BlocConsumer<PlannerBloc, PlannerState>(
       listenWhen: (previous, current) => previous.notice != current.notice,
@@ -105,7 +111,11 @@ class _PlannerScreenState extends State<PlannerScreen> with RouteAware {
       builder: (context, state) {
         final Widget body;
         if (!isUserSignedIn) {
-          body = _LoginPrompt(message: appText.loginRequiredMessage);
+          body = _LoginPrompt(
+            message: AuthFeatures.of(
+              AuthFeatures.quizPlanner,
+            ).messageFor(language),
+          );
         } else {
           switch (state.status) {
             case PlannerStatus.initial:
@@ -265,7 +275,10 @@ class _LoginPrompt extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             SizedBox(height: 12.h),
             FilledButton(
-              onPressed: () => showLoginRequiredDialog(context),
+              onPressed: () => showLoginRequiredDialog(
+                context,
+                feature: AuthFeatures.quizPlanner,
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFA1AD59),
               ),

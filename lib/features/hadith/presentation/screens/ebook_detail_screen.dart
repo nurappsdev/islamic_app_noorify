@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebook_download/ebook_download_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_reader_screen.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// One e-book: cover, title, author, language, publisher and reference, with a
 /// button that downloads the PDF onto the device, then reads it in the app.
@@ -40,7 +41,7 @@ class _EbookDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final details = <(String, String)>[
-      (appText.languageTitle, ebook.language),
+      (appText.languageTitle, _localizedLanguage(appText, ebook.language)),
       (appText.hadithRefPublisher, ebook.publisher),
       (appText.hadithBookReference, ebook.reference),
     ].where((row) => row.$2.trim().isNotEmpty).toList();
@@ -111,6 +112,20 @@ class _EbookDetailView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The backend sends the book's language as a single English word
+/// (`"English"`); show it in the app's language. Anything else (a language the
+/// app has no name for) is shown as the backend sent it.
+String _localizedLanguage(AppText appText, String language) {
+  switch (language.trim().toLowerCase()) {
+    case 'english' || 'en':
+      return appText.english;
+    case 'bangla' || 'bengali' || 'bn':
+      return appText.bangla;
+    default:
+      return language;
   }
 }
 
@@ -245,7 +260,9 @@ class _DownloadButton extends StatelessWidget {
             Text(
               percent == null
                   ? '${appText.hadithBookDownloading} …'
-                  : '${appText.hadithBookDownloading}  $percent%',
+                  : context.localizedDigits(
+                      '${appText.hadithBookDownloading}  $percent%',
+                    ),
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,

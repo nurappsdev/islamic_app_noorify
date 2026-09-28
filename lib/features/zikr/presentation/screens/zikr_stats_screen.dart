@@ -5,6 +5,8 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 /// Zikr stats dashboard (designs `devImg/img_25.png` and `devImg/img_26.png`),
 /// reached from index 2 ("Dashboard") of [ZikrBottomNav].
@@ -22,7 +24,8 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   int _period = 0; // 0 = Daily, 1 = Weekly
 
   static const _weekly = <double>[490, 690, 880, 240, 250, 760, 180];
-  static const _weekDays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  // Saturday first, as an index counted from Sunday.
+  static const _weekDayIndexes = [6, 0, 1, 2, 3, 4, 5];
 
   static const _history = <(String, String)>[
     ('Subhan Allah', '450'),
@@ -80,7 +83,10 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                     values: isDaily ? const [0, 900, 0] : _weekly,
                     labels: isDaily
                         ? ['', appText.zikrTodaysValueGraph, '']
-                        : _weekDays,
+                        : [
+                            for (final i in _weekDayIndexes)
+                              context.localizedDates.weekdayShort(i),
+                          ],
                     bubbleAll: !isDaily,
                     competitorInitials: appText.competitorInitials,
                     daily: isDaily,
@@ -104,7 +110,7 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                     Expanded(
                       child: _StatCard(
                         label: appText.zikrMostDoing,
-                        value: 'Subhan-Allah  34,784',
+                        value: context.localizedDigits('Subhan-Allah  34,784'),
                         italicValue: true,
                       ),
                     ),
@@ -132,7 +138,10 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                 ),
                 SizedBox(height: 12.h),
                 for (final entry in _history) ...[
-                  _HistoryRow(name: entry.$1, count: entry.$2),
+                  _HistoryRow(
+                    name: entry.$1,
+                    count: context.localizedDigits(entry.$2),
+                  ),
                   Divider(
                     height: 22.h,
                     color: context.lineColor(Color(0xFFEDEFE0)),
@@ -443,7 +452,7 @@ class _HistoryRow extends StatelessWidget {
         ),
         const Spacer(),
         Text(
-          count,
+          context.localizedDigits(count),
           style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
         ),
       ],

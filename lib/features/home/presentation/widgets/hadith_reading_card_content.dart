@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -16,6 +18,8 @@ class HadithReadingCardContent extends StatelessWidget {
     this.percentage = 0,
     this.counter = '0/7',
     this.readingTimeLabel = '',
+    this.title = 'Hadith Reading',
+    this.percentageLabel,
     this.onOpenDashboard,
   });
 
@@ -27,6 +31,8 @@ class HadithReadingCardContent extends StatelessWidget {
 
   /// Total reading time, e.g. `2 Hr 7 Min`. The footer is hidden when empty.
   final String readingTimeLabel;
+  final String title;
+  final String? percentageLabel;
   final VoidCallback? onOpenDashboard;
 
   @override
@@ -37,6 +43,7 @@ class HadithReadingCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenDashboard ??
                 () => Navigator.of(context).push(
@@ -46,13 +53,14 @@ class HadithReadingCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Hadith Reading', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           const Spacer(),
           Image.asset('assets/hadithImg.png', height: 118.h),
           const Spacer(),
           if (readingTimeLabel.isNotEmpty)
             Text(
-              'Total Hadith Reading Time $readingTimeLabel',
+              '${AppText.of(context).totalReadingTime} '
+              '${context.localizedDigits(readingTimeLabel)}',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15.sp, color: _footerGreen),
             ),

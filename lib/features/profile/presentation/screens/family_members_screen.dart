@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/profile/data/services/family_service.dart';
 import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({super.key});
@@ -60,7 +61,7 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
                     padding: EdgeInsets.symmetric(vertical: 24.h),
                     child: Center(
                       child: Text(
-                        'No data here',
+                        AppText.of(context).noDataHere,
                         style: TextStyle(
                           fontSize: 14.sp,
                           color: context.inkColor(const Color(0xFF6B7551)),
@@ -199,7 +200,7 @@ class _FamilyMemberCard extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '#${member.globalRank}',
+            context.localizedDigits('#${member.globalRank}'),
             style: TextStyle(
               fontSize: 13.sp,
               color: context.inkColor(Color(0xFF6B7551)),
@@ -226,7 +227,7 @@ class _FamilyMemberCard extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${member.memberTotalPoints}',
+            context.localizedDigits('${member.memberTotalPoints}'),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],

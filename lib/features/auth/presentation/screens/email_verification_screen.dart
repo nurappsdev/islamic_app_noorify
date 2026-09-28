@@ -15,6 +15,7 @@ import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
@@ -104,6 +105,46 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   String get _enteredOtp => _otpControllers.map((c) => c.text).join();
 
+  void _submitOtpWhenComplete() {
+    if (_enteredOtp.length == _otpLength && !_otpBloc.state.isLoading) {
+      _submitOtp();
+    }
+  }
+
+  void _handleOtpChanged(int index, String value) {
+    if (value.length > 1) {
+      // A full code is commonly pasted into a single field. Distribute it
+      // across the fields before checking whether it is ready to submit.
+      final isFullCode = value.length >= _otpLength;
+      final startIndex = isFullCode ? 0 : index;
+      final digits = isFullCode ? value.substring(0, _otpLength) : value;
+      final availableSlots = _otpLength - startIndex;
+
+      for (
+        var offset = 0;
+        offset < digits.length && offset < availableSlots;
+        offset++
+      ) {
+        _otpControllers[startIndex + offset].value = TextEditingValue(
+          text: digits[offset],
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      }
+
+      setState(() {});
+      _submitOtpWhenComplete();
+      return;
+    }
+
+    setState(() {});
+    if (value.isNotEmpty && index < _otpLength - 1) {
+      _otpFocusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _otpFocusNodes[index - 1].requestFocus();
+    }
+    _submitOtpWhenComplete();
+  }
+
   void _submitOtp() {
     FocusScope.of(context).unfocus();
     _otpBloc.add(
@@ -142,15 +183,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   void _onOtpState(BuildContext context, OtpVerificationState state) {
     switch (state.resendStatus) {
       case OtpResendStatus.sent:
-        _showSnack(
-          context,
-          state.resendMessage ?? 'A new code has been sent to your email.',
-        );
+        // The app's own text, not the server's English one, so it follows the
+        // selected language.
+        _showSnack(context, AppText.readOf(context).verificationCodeSent);
         _startResendCooldown();
       case OtpResendStatus.failure:
         _showSnack(
           context,
-          state.resendErrorMessage ?? 'Could not resend the code. Try again.',
+          state.resendErrorMessage ??
+              AppText.readOf(context).verificationResendFailed,
         );
       case OtpResendStatus.idle:
       case OtpResendStatus.sending:
@@ -164,7 +205,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       case OtpVerificationStatus.failure:
         _showSnack(
           context,
-          state.errorMessage ?? 'Verification failed. Please try again.',
+          state.errorMessage ?? AppText.readOf(context).verificationFailed,
         );
         _otpBloc.add(const OtpVerificationReset());
       case OtpVerificationStatus.initial:
@@ -231,8 +272,11 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           ),
           child: Text(
             onCooldown
-                ? 'Resend code in ${_resendSecondsLeft}s'
-                : "Didn't get the code? Resend",
+                ? AppText.of(context).resendCodeInSeconds.replaceAll(
+                    '{s}',
+                    context.localizedDigits('$_resendSecondsLeft'),
+                  )
+                : AppText.of(context).didntGetCodeResend,
             style: TextStyle(
               fontSize: 12.sp,
               color: context.inkColor(
@@ -284,10 +328,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ? TextInputAction.done
                 : TextInputAction.next,
             textAlign: TextAlign.center,
-            maxLength: 1,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
             ],
             style: TextStyle(
               color: context.inkColor(AppColor.otpDigit),
@@ -323,14 +365,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ),
               ),
             ),
-            onChanged: (value) {
-              setState(() {});
-              if (value.isNotEmpty && index < _otpLength - 1) {
-                _otpFocusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                _otpFocusNodes[index - 1].requestFocus();
-              }
-            },
+            onChanged: (value) => _handleOtpChanged(index, value),
           ),
         );
       }),
@@ -411,7 +446,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Tuhfatul Muslim',
+                          AppText.of(context).tuhfatulMuslim,
                           style: TextStyle(
                             color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,

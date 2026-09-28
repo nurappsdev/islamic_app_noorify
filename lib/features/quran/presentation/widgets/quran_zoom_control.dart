@@ -6,6 +6,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Which text a [QuranZoomControl] resizes.
 enum QuranZoomTarget { arabic, translation }
@@ -51,7 +52,7 @@ class QuranZoomControl extends StatelessWidget {
           ),
         ),
         Text(
-          '${(value * 100).toInt()}%',
+          context.localizedDigits('${(value * 100).toInt()}%'),
           style: TextStyle(
             fontSize: 11.sp,
             color: context.inkColor(Color(0xFF6B7458)),

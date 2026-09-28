@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class BookmarksScreen extends StatelessWidget {
   const BookmarksScreen({super.key});
@@ -126,8 +127,10 @@ class BookmarksScreen extends StatelessWidget {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              '${bookmark.surahName} • '
-                                              '${appText.ayahNoLabel} ${bookmark.ayahNo}',
+                                              context.localizedDigits(
+                                                '${bookmark.surahName} • '
+                                                '${appText.ayahNoLabel} ${bookmark.ayahNo}',
+                                              ),
                                               style: TextStyle(
                                                 fontSize: 14.sp,
                                                 fontWeight: FontWeight.w600,

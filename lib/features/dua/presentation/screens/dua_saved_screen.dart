@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bottom_nav.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class DuaSavedScreen extends StatefulWidget {
   const DuaSavedScreen({super.key});
@@ -27,11 +29,14 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       context: context,
       position: RelativeRect.fromLTRB(190.w, 120.h + index * 78.h, 12.w, 0),
       items: [
-        PopupMenuItem(value: 'edit', child: Text('Edit')),
+        PopupMenuItem(
+          value: 'edit',
+          child: Text(AppText.readOf(context).duaSavedEdit),
+        ),
         PopupMenuItem(
           value: 'delete',
           child: Text(
-            'Delete',
+            AppText.readOf(context).duaSavedDelete,
             style: TextStyle(color: context.inkColor(Colors.red)),
           ),
         ),
@@ -89,7 +94,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                     controller: _search,
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
-                      hintText: 'Search Here . . .',
+                      hintText: AppText.of(context).searchHere,
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 14.w,
@@ -158,7 +163,7 @@ class _Header extends StatelessWidget {
           ),
         ),
         Text(
-          'Saved Hadith',
+          AppText.of(context).duaSavedTitle,
           style: TextStyle(
             fontSize: 17.sp,
             color: context.inkColor(Color(0xFF7D8E54)),
@@ -197,7 +202,15 @@ class _FolderCard extends StatelessWidget {
             Text(name, style: TextStyle(fontSize: 14.sp)),
             SizedBox(height: 5.h),
             Text(
-              name == 'New folder' ? 'Total Saved : 07' : '$count Dua',
+              name == 'New folder'
+                  ? AppText.of(context).duaTotalSaved.replaceAll(
+                      '{n}',
+                      context.localizedDigits('07'),
+                    )
+                  : AppText.of(context).duaSavedCount.replaceAll(
+                      '{n}',
+                      context.localizedDigits('$count'),
+                    ),
               style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA5B657)),
             ),
           ],
@@ -234,26 +247,26 @@ class _EditSheetState extends State<_EditSheet> {
 
   @override
   Widget build(BuildContext context) => _SheetShell(
-    title: 'Edit Book Mark',
+    title: AppText.of(context).duaEditBookmarkTitle,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Folder name',
+          AppText.of(context).duaFolderName,
           style: TextStyle(color: context.inkColor(Color(0xFF879260))),
         ),
         SizedBox(height: 8.h),
         TextField(
           controller: _controller,
-          decoration: const InputDecoration(
-            hintText: 'Write Folder Name Here.',
+          decoration: InputDecoration(
+            hintText: AppText.of(context).duaFolderNameHint,
           ),
         ),
         SizedBox(height: 200.h),
         _Buttons(
           cancel: () => Navigator.pop(context),
           confirm: () => Navigator.pop(context, _controller.text),
-          confirmText: 'Save Changes',
+          confirmText: AppText.of(context).duaSaveChanges,
         ),
       ],
     ),
@@ -264,7 +277,7 @@ class _DeleteSheet extends StatelessWidget {
   const _DeleteSheet();
   @override
   Widget build(BuildContext context) => _SheetShell(
-    title: 'Delete Book Mark',
+    title: AppText.of(context).duaDeleteBookmarkTitle,
     child: Column(
       children: [
         Icon(
@@ -273,16 +286,16 @@ class _DeleteSheet extends StatelessWidget {
           size: 45.sp,
         ),
         SizedBox(height: 20.h),
-        const Text(
-          'Are you sure want to delete this\nbookmark right now?',
+        Text(
+          AppText.of(context).duaDeleteBookmarkMessage,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF8B956D)),
+          style: const TextStyle(color: Color(0xFF8B956D)),
         ),
         SizedBox(height: 130.h),
         _Buttons(
           cancel: () => Navigator.pop(context, false),
           confirm: () => Navigator.pop(context, true),
-          confirmText: 'Yes, Delete',
+          confirmText: AppText.of(context).duaYesDelete,
           danger: true,
         ),
       ],
@@ -332,7 +345,10 @@ class _Buttons extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: [
       Expanded(
-        child: OutlinedButton(onPressed: cancel, child: const Text('Cancel')),
+        child: OutlinedButton(
+          onPressed: cancel,
+          child: Text(AppText.of(context).duaCancel),
+        ),
       ),
       SizedBox(width: 8.w),
       Expanded(

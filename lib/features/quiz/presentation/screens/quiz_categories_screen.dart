@@ -95,7 +95,9 @@ class _QuizCategoriesScreenState extends State<QuizCategoriesScreen>
                   ],
                 ),
               ),
-              const QuizCategoryPreview(count: QuizCategoriesScreen._previewCount),
+              const QuizCategoryPreview(
+                count: QuizCategoriesScreen._previewCount,
+              ),
             ],
           ),
         ),
@@ -258,43 +260,43 @@ class _QuizHero extends StatelessWidget {
                         ),
                       ],
                     )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        appText.completeTodaysChallenge,
-                        style: TextStyle(
-                          color: context.inkColor(AppColor.primary),
-                          fontSize: 20.sp,
-                          height: 1.22,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(height: 18.h),
-                      FilledButton(
-                        onPressed: () async {
-                          await openDailyQuiz(context);
-                          if (context.mounted) {
-                            context
-                                .read<DailyQuizStatusCubit?>()
-                                ?.load(silent: true);
-                          }
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 18.w,
-                            vertical: 11.h,
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          appText.completeTodaysChallenge,
+                          style: TextStyle(
+                            color: context.inkColor(AppColor.primary),
+                            fontSize: 20.sp,
+                            height: 1.22,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        child: Text(
-                          appText.letsGetStart,
-                          style: TextStyle(fontSize: 11.sp),
+                        SizedBox(height: 18.h),
+                        FilledButton(
+                          onPressed: () async {
+                            await openDailyQuiz(context);
+                            if (context.mounted) {
+                              context.read<DailyQuizStatusCubit?>()?.load(
+                                silent: true,
+                              );
+                            }
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 11.h,
+                            ),
+                          ),
+                          child: Text(
+                            appText.letsGetStart,
+                            style: TextStyle(fontSize: 11.sp),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
             ),
           ),
         ],
@@ -302,4 +304,3 @@ class _QuizHero extends StatelessWidget {
     );
   }
 }
-

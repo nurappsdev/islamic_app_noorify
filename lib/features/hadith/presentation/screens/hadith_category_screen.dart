@@ -19,6 +19,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_s
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_progress_ring.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Route arguments for [HadithCategoryScreen].
 class HadithCategoryArgs {
@@ -304,7 +305,7 @@ class _CategoryCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Text(
-                '$index',
+                context.localizedDigits('$index'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 15.sp,
@@ -337,7 +338,9 @@ class _CategoryCard extends StatelessWidget {
                   ],
                   SizedBox(height: 4.h),
                   Text(
-                    '${formatHadithCount(category.totalHadiths)} $hadithWord',
+                    context.localizedDigits(
+                      '${formatHadithCount(category.totalHadiths)} $hadithWord',
+                    ),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: const Color(0xFF9BA85B),

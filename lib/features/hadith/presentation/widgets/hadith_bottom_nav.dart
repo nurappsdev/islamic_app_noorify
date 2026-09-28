@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 
 /// Navigation bar dedicated to the Hadith flow.
 ///
@@ -54,7 +55,12 @@ class HadithBottomNav extends StatelessWidget {
               onPressed: selectedIndex == 1
                   ? null
                   : () async {
-                      if (!await ensureLogin(context)) return;
+                      if (!await requireLogin(
+                        context,
+                        feature: AuthFeatures.hadithPlanner,
+                      )) {
+                        return;
+                      }
                       if (!context.mounted) return;
                       Navigator.of(
                         context,
@@ -78,7 +84,12 @@ class HadithBottomNav extends StatelessWidget {
               onPressed: selectedIndex == 3
                   ? null
                   : () async {
-                      if (!await ensureLogin(context)) return;
+                      if (!await requireLogin(
+                        context,
+                        feature: AuthFeatures.hadithDashboard,
+                      )) {
+                        return;
+                      }
                       if (!context.mounted) return;
                       Navigator.of(
                         context,

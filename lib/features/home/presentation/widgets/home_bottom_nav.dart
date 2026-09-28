@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 
 /// Navigation bar shown on the app's main Home screen.
 class HomeBottomNav extends StatelessWidget {
@@ -53,8 +54,11 @@ class HomeBottomNav extends StatelessWidget {
                 icon: Icons.leaderboard_rounded,
                 label: appText.leaderboard,
                 selected: selectedIndex == 2,
-                onPressed: () =>
-                    _goTo(context, RouteNames.leaderboard, requiresLogin: true),
+                onPressed: () => _goTo(
+                  context,
+                  RouteNames.leaderboard,
+                  loginFeature: AuthFeatures.leaderboard,
+                ),
               ),
               // _NavItem(
               //   icon: Icons.bookmark_border_rounded,
@@ -72,10 +76,13 @@ class HomeBottomNav extends StatelessWidget {
 Future<void> _goTo(
   BuildContext context,
   String routeName, {
-  bool requiresLogin = false,
+  String? loginFeature,
 }) async {
   if (ModalRoute.of(context)?.settings.name == routeName) return;
-  if (requiresLogin && !await ensureLogin(context)) return;
+  if (loginFeature != null &&
+      !await requireLogin(context, feature: loginFeature)) {
+    return;
+  }
   if (!context.mounted) return;
   Navigator.of(context).pushReplacementNamed(routeName);
 }

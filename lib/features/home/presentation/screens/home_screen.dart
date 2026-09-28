@@ -11,6 +11,8 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amo
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/theme/app_palette.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:islami_app_noorify/features/home/data/repositories/home_repository_impl.dart';
@@ -29,13 +31,16 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/quiz_card_
 import 'package:islami_app_noorify/features/home/presentation/widgets/quran_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/sunnah_witr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+
+import '../widgets/home_progress_section.dart';
+import 'package:islami_app_noorify/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -69,6 +74,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   // update as soon as the user is back.
   bool _storeLoadedOnce = false;
 
+  /// Prevents the store's refresh notification from scheduling a second Home
+  /// dashboard request while a pull-to-refresh request is already in flight.
+  bool _isPullRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +97,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
       _storeLoadedOnce = true;
       return;
     }
-    if (!mounted) return;
+    // A reset (sign-in/out clears it) isn't a tracking change to refetch for;
+    // the fresh checklist that follows is.
+    if (AmolDailyStore.instance.value == null) return;
+    if (!mounted || _isPullRefreshing) return;
     context.read<HomeDashboardBloc>().add(
       const LoadHomeDashboard(silent: true),
     );
@@ -96,19 +108,25 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 
   Future<void> _onRefresh() async {
     final dashboardBloc = context.read<HomeDashboardBloc>();
+    _isPullRefreshing = true;
     // Subscribe before dispatching so the loading -> done transition can't
     // be missed.
     final dashboardDone = dashboardBloc.stream.firstWhere(
       (state) => state.status != HomeDashboardStatus.loading,
     );
     dashboardBloc.add(const LoadHomeDashboard());
-    unawaited(AmolDailyStore.instance.load());
 
     try {
-      await Future.wait([dashboardDone, ProfileService.instance.refresh()]);
+      await Future.wait([
+        dashboardDone,
+        ProfileService.instance.refresh(),
+        AmolDailyStore.instance.load(),
+      ]);
     } catch (_) {
       // A bloc/stream teardown mid-refresh (e.g. navigating away) shouldn't
       // surface as an error from the pull-to-refresh gesture.
+    } finally {
+      _isPullRefreshing = false;
     }
     if (!mounted) return;
     setState(() => _refreshTick++);
@@ -117,6 +135,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final language = context.watch<LanguageBloc>().state.language;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Light status-bar icons on the dark background.
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -139,16 +158,21 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 
                       SizedBox(height: 16.h),
                       KeyedSubtree(
-                        key: ValueKey('prayer-time-card-$_refreshTick'),
+                        key: ValueKey(
+                          'prayer-time-card-${language.name}-$_refreshTick',
+                        ),
                         child: const PrayerTimeCard(),
                       ),
                       SizedBox(height: 24.h),
                       KeyedSubtree(
-                        key: ValueKey('prohibited-prayer-times-$_refreshTick'),
+                        key: ValueKey(
+                          'prohibited-prayer-times-${language.name}-$_refreshTick',
+                        ),
                         child: const ProhibitedPrayerTimesCard(),
                       ),
                       SizedBox(height: 16.h),
                       HomeFeatureCardSlider(
+                        key: ValueKey('home-feature-slider-${language.name}'),
                         height: 350.h,
                         children: [
                           KeyedSubtree(
@@ -167,7 +191,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                         ],
                       ),
                       // SizedBox(height: 14.h),
-                      // const HomeProgressSection(),
+                      const HomeProgressSection(),
                       SizedBox(height: 10.h),
                       const HomeFeatureGrid(),
                     ],
@@ -187,11 +211,37 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
 }
 
 /// Opens the Amol tracker with [section] popped to the front.
-void _openTracker(BuildContext context, AmalSection section) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => AmolTrackingScreen(selectedSection: section),
-    ),
+void _openTracker(
+  BuildContext context,
+  AmalSection section, {
+  String? itemKey,
+}) => openAmolTracker(context, section: section, itemKey: itemKey);
+
+String _pillarText(
+  BuildContext context,
+  PillarCard? pillar,
+  LocalizedText Function(PillarCard pillar) localizedValue,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final value = context.localized(localizedValue(pillar));
+  return value.isEmpty ? fallback : value;
+}
+
+String _pillarCounter(
+  BuildContext context,
+  PillarCard? pillar,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final points = context.localized(pillar.localizedPoints);
+  final maxPoints = context.localized(pillar.localizedMaxPoints);
+  if (points.isNotEmpty && maxPoints.isNotEmpty) return '$points/$maxPoints';
+
+  String format(num value) =>
+      value == value.roundToDouble() ? value.toInt().toString() : '$value';
+  return context.localizedDigits(
+    '${format(pillar.points)}/${format(pillar.maxPoints)}',
   );
 }
 
@@ -284,7 +334,8 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     final prayers = [
       for (final (i, prayer) in PrayerBarData.defaults.indexed)
         PrayerBarData(
-          name: prayer.name,
+          name: PrayerPeriod.values[i].displayName(AppText.of(context)),
+          trackingName: prayer.trackingName,
           points: prayer.points,
           completed: completedKeys.contains(_itemKeys[i]),
           // Red once its time has started (or passed) without being tracked;
@@ -299,18 +350,33 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     return HomeGradientShape(
       child: AmalTrackerCardContent(
         percentage: fardh?.percentage ?? 0,
-        completedLabel: fardh?.formattedSubtext,
+        percentageLabel: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Fardh Prayer'),
+        ),
+        completedLabel: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedFormattedSubtext,
+          fardh?.formattedSubtext ?? '',
+        ),
         prayers: prayers,
         onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
-        onPrayerTap: (prayer) => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => AmolTrackingScreen(
-              selectedSection: AmalSection.fardhPrayer,
-              selectedPrayer: prayer.name,
-            ),
-          ),
+        onPrayerTap: (prayer) => _openTracker(
+          context,
+          AmalSection.fardhPrayer,
+          itemKey: _itemKeys[prayers.indexOf(prayer)],
         ),
       ),
+      onTap: () => _openTracker(context, AmalSection.fardhPrayer),
     );
   }
 }
@@ -329,16 +395,31 @@ class _HadithReadingCard extends StatelessWidget {
       if (p.pillarKey == 'hadith') hadith = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: HadithReadingCardContent(
         percentage: hadith?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Hadith'),
+        ),
         onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
-        counter: hadith == null
-            ? '0/7'
-            : '${fmt(hadith.points)}/${fmt(hadith.maxPoints)}',
-        readingTimeLabel: hadith?.formattedSubtext ?? '',
+        counter: _pillarCounter(context, hadith, '0/7'),
+        readingTimeLabel: _pillarText(
+          context,
+          hadith,
+          (pillar) => pillar.localizedFormattedSubtext,
+          hadith?.formattedSubtext ?? '',
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.hadith),
     );
   }
 }
@@ -357,17 +438,34 @@ class _QuranCard extends StatelessWidget {
       if (p.pillarKey == 'quran') quran = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     final max = quran?.maxPoints ?? 0;
     return HomeGradientShape(
       child: QuranCardContent(
         onOpenQuran: () => _openTracker(context, AmalSection.quran),
-        counter: quran == null ? '0/11' : '${fmt(quran.points)}/${fmt(max)}',
+        percentageLabel: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Quran'),
+        ),
+        counter: _pillarCounter(context, quran, '0/11'),
         progress: quran == null || max <= 0
             ? 0
             : (quran.points / max).toDouble(),
-        readingTimeLabel: quran?.formattedSubtext ?? '',
+        readingTimeLabel: _pillarText(
+          context,
+          quran,
+          (pillar) => pillar.localizedFormattedSubtext,
+          quran?.formattedSubtext ?? '',
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.quran),
     );
   }
 }
@@ -402,16 +500,46 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 
   /// The items and each one's tracked state come from the shared daily
   /// checklist (`nafl_and_more` pillar).
-  List<NaflItemData> get _items => [
+  List<NaflItemData> _items(BuildContext context, PillarCard? pillar) => [
     for (final item
         in AmolDailyStore.instance.pillar('nafl_and_more')?.items ??
             const <AmolItem>[])
       NaflItemData(
-        name: item.title,
+        name: _localizedNaflItemName(context, pillar, item),
         points: item.maxPoints,
         completed: item.isCompleted,
+        itemKey: item.itemKey,
       ),
   ];
+
+  String _localizedNaflItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final chartKey = switch (item.itemKey) {
+      'sadaqah' => 'sadaqah',
+      'roza_kaffarah' || 'nafl_fasting' => 'fasting',
+      'good_advice' => 'advice',
+      'physical_exercise' => 'exercise',
+      _ => null,
+    };
+    final apiLabel = chartKey == null
+        ? ''
+        : context.localized(pillar?.localizedChartLabels[chartKey]);
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    final appText = AppText.of(context);
+    return switch (item.itemKey) {
+      'sadaqah' => appText.moreSadaqah,
+      'roza_kaffarah' => appText.moreRozaKaffarah,
+      'nafl_fasting' => appText.moreNaflFasting,
+      'physical_exercise' => appText.morePhysicalExercise,
+      'good_advice' => appText.moreGivenGoodAdvice,
+      'skill_development' => appText.moreSkillDevelopment,
+      _ => item.title,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -422,16 +550,31 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
       if (p.pillarKey == 'nafl_and_more') nafl = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: NaflMoreCardContent(
         percentage: nafl?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Nafl & more'),
+        ),
         onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
-        counter: nafl == null
-            ? '0/7'
-            : '${fmt(nafl.points)}/${fmt(nafl.maxPoints)}',
-        items: _items,
+        counter: _pillarCounter(context, nafl, '0/7'),
+        items: _items(context, nafl),
+        onItemTap: (item) => _openTracker(
+          context,
+          AmalSection.naflAndMore,
+          itemKey: item.itemKey,
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.naflAndMore),
     );
   }
 }
@@ -478,26 +621,52 @@ class _ZikrCardState extends State<_ZikrCard> {
     // numbered placeholders and the Home dashboard's numbers.
     final tracked = AmolDailyStore.instance.pillar('zikr');
     final items = tracked == null || tracked.items.isEmpty
-        ? ZikrItemData.placeholders
+        ? [
+            for (var index = 1; index <= 5; index++)
+              ZikrItemData(
+                name:
+                    '${AppText.of(context).zikrTitle} '
+                    '${context.localizedDigits('$index')}',
+              ),
+          ]
         : [
             for (final item in tracked.items)
-              ZikrItemData(name: item.title, completed: item.isCompleted),
+              ZikrItemData(
+                name: item.title,
+                completed: item.isCompleted,
+                itemKey: item.itemKey,
+              ),
           ];
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    void openZikr() => tracked == null
+        ? Navigator.of(context).pushNamed(RouteNames.zikr)
+        : _openTracker(context, AmalSection.zikr);
+
     return HomeGradientShape(
       child: ZikrCardContent(
         percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
-        counter: zikr == null
-            ? '0/7'
-            : '${fmt(zikr.points)}/${fmt(zikr.maxPoints)}',
+        percentageLabel: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Zikr'),
+        ),
+        counter: _pillarCounter(context, zikr, '0/7'),
         items: items,
         // With a tracker pillar, the arrow opens the tracker on it (where
         // Zikr is ticked); otherwise the Zikr feature.
-        onOpenZikr: () => tracked == null
-            ? Navigator.of(context).pushNamed(RouteNames.zikr)
-            : _openTracker(context, AmalSection.zikr),
+        onOpenZikr: openZikr,
+        onItemTap: (item) => tracked == null
+            ? openZikr()
+            : _openTracker(context, AmalSection.zikr, itemKey: item.itemKey),
       ),
+      onTap: openZikr,
     );
   }
 }
@@ -542,15 +711,28 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
 
   /// Per-prayer points and tracked state from the shared daily checklist
   /// (`sunnah_witr` pillar); empty until it loads.
-  List<SunnahPrayerData> get _prayers {
+  List<SunnahPrayerData> _prayers(BuildContext context, PillarCard? pillar) {
     final items = AmolDailyStore.instance.pillar('sunnah_witr')?.items;
     if (items == null) return const [];
     final byKey = {for (final item in items) item.itemKey: item};
+    const chartKeyByItemKey = {
+      'fajr_sunnah': 'fajrSunnah',
+      'dhuhr_sunnah': 'dhuhrSunnah',
+      'asr_sunnah': 'asrSunnah',
+      'maghrib_sunnah': 'maghribSunnah',
+      'isha_sunnah': 'ishaSunnah',
+      'witr': 'witr',
+    };
     return [
       for (final entry in _pillItems.entries)
         if (byKey[entry.value.first] != null)
           SunnahPrayerData(
             prayerName: entry.key,
+            label: context.localized(
+              pillar?.localizedChartLabels[chartKeyByItemKey[entry
+                  .value
+                  .first]],
+            ),
             points: [
               for (final key in entry.value) byKey[key]?.maxPoints ?? 0,
             ].fold<num>(0, (sum, v) => sum + v),
@@ -568,15 +750,31 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
       if (p.pillarKey == 'sunnah_witr') sunnah = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
     return HomeGradientShape(
       child: SunnahWitrCardContent(
         percentage: sunnah?.percentage ?? 0,
-        counter: sunnah == null
-            ? '0/6'
-            : '${fmt(sunnah.points)}/${fmt(sunnah.maxPoints)}',
-        prayers: _prayers,
+        percentageLabel: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Sunnah and Witr'),
+        ),
+        counter: _pillarCounter(context, sunnah, '0/6'),
+        prayers: _prayers(context, sunnah),
+        onOpenTracker: () => _openTracker(context, AmalSection.sunnahWitr),
+        onPrayerTap: (name) => _openTracker(
+          context,
+          AmalSection.sunnahWitr,
+          itemKey: _pillItems[name]?.first,
+        ),
       ),
+      onTap: () => _openTracker(context, AmalSection.sunnahWitr),
     );
   }
 }
@@ -595,28 +793,47 @@ class _QuizCard extends StatelessWidget {
       if (p.pillarKey == 'quiz') quiz = p;
     }
 
-    String fmt(num v) => v == v.roundToDouble() ? v.toInt().toString() : '$v';
+    final title = _pillarText(
+      context,
+      quiz,
+      (pillar) => pillar.localizedTitle,
+      AppText.of(context).categoryLabel('Quiz'),
+    );
     return HomeGradientShape(
       child: QuizCardContent(
         percentage: quiz?.percentage ?? 0,
-        counter: quiz == null
-            ? '0/7'
-            : '${fmt(quiz.points)}/${fmt(quiz.maxPoints)}',
+        percentageLabel: _pillarText(
+          context,
+          quiz,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: title,
+        counter: _pillarCounter(context, quiz, '0/7'),
+        // The first glass tile is the backend's quiz: its title and points,
+        // selected once it has been played.
+        firstQuiz: quizTileFromPillar(quiz, title: title),
+        onOpenTracker: () => _openTracker(context, AmalSection.quiz),
       ),
+      onTap: () => _openTracker(context, AmalSection.quiz),
     );
   }
 }
 
 /// Rounded panel with a top-to-bottom white -> light green gradient.
 class HomeGradientShape extends StatelessWidget {
-  const HomeGradientShape({super.key, this.child});
+  const HomeGradientShape({super.key, this.child, this.onTap});
 
   final Widget? child;
+
+  /// Makes the whole card tappable. A button or item inside the card that
+  /// handles its own tap still wins on its own area.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(24.r);
-    return Container(
+    final card = Container(
       width: double.infinity,
       height: 380.h,
       decoration: BoxDecoration(
@@ -642,7 +859,7 @@ class HomeGradientShape extends StatelessWidget {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 60.h,
+              bottom: 40.h,
               child: Image.asset(
                 'assets/newShape.png',
                 fit: BoxFit.cover,
@@ -653,6 +870,14 @@ class HomeGradientShape extends StatelessWidget {
           ],
         ),
       ),
+    );
+    if (onTap == null) return card;
+    // No ripple or highlight: the card looks exactly as before; only its tap
+    // area grows to cover all of it.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
     );
   }
 }

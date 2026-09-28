@@ -13,8 +13,8 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 const _olive = Color(0xFF8D9B70);
 
@@ -123,7 +123,12 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     // fallback-beep repeat (see `AlarmScheduler.muteInsistentNotification`)
     // so the two don't sound at once. The notification stays up and
     // cancellable either way.
-    unawaited(AlarmScheduler.muteInsistentNotification(payload));
+    try {
+      await AlarmScheduler.muteInsistentNotification(payload);
+    } catch (_) {
+      // The local ringer must still work if the notification cannot update.
+    }
+    if (_dismissed) return;
     if (payload.shouldVibrate) {
       _vibrateTimer = Timer.periodic(
         const Duration(milliseconds: 900),
@@ -142,6 +147,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
         ),
       );
     }
+    if (_dismissed) return;
     await _player.setVolume(1);
     final playedChosen =
         payload.ringtoneUrl.isNotEmpty &&
@@ -149,6 +155,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     if (!playedChosen) {
       await _tryLoad(() => _player.setAsset(_fallbackRingtoneAsset));
     }
+    if (_dismissed) return;
     _watchdogTimer = Timer.periodic(
       const Duration(seconds: 2),
       (_) => _ensureStillPlaying(),
@@ -181,12 +188,19 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     await _tryLoad(() => _player.setAsset(_fallbackRingtoneAsset));
   }
 
-  Future<void> _dismiss() async {
+  /// Stops resources owned by this isolate synchronously. Cross-isolate
+  /// persistence and notification cleanup happen afterward in [_stop] or
+  /// [_snooze]; they must never keep the haptic timer alive.
+  void _dismiss() {
     if (_dismissed) return;
     _dismissed = true;
     _vibrateTimer?.cancel();
     _watchdogTimer?.cancel();
     _autoStopTimer?.cancel();
+    // The background alarm isolate uses the native vibration plugin with a
+    // repeating pattern. Cancelling it here makes Stop immediate even while
+    // SharedPreferences/NotificationManager calls below are still pending.
+    unawaited(AlarmScheduler.stopVibration());
     // Never let the audio player hold the buttons hostage: `stop()` can wait
     // on a still-loading network source, which used to leave this screen
     // stuck with Stop/Snooze apparently doing nothing. Leave straight away;
@@ -217,29 +231,35 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
   Future<void> _stop() async {
     if (_handled) return;
     _handled = true;
-    await AlarmScheduler.markDismissed(widget.payload);
+    final payload = widget.payload;
+    _dismiss();
     try {
-      await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+      await AlarmScheduler.markDismissed(payload);
     } catch (_) {
-      // Still leave and stop the sound even if the notification can't be
-      // cleared.
+      // The direct native-vibration cancellation in [_dismiss] still makes
+      // the current alarm quiet if cross-isolate persistence is unavailable.
     }
-    await _dismiss();
+    try {
+      await AlarmScheduler.dismissNotification(payload.alarmId);
+    } catch (_) {}
   }
 
   Future<void> _snooze() async {
     if (_handled) return;
     _handled = true;
+    final payload = widget.payload;
+    _dismiss();
     // Schedule the re-ring first, and guard each step so a failure in one
     // can't stop the alarm from being silenced.
-    await AlarmScheduler.markDismissed(widget.payload);
     try {
-      await AlarmScheduler.snooze(widget.payload);
+      await AlarmScheduler.markDismissed(payload);
     } catch (_) {}
     try {
-      await AlarmScheduler.dismissNotification(widget.payload.alarmId);
+      await AlarmScheduler.snooze(payload);
     } catch (_) {}
-    await _dismiss();
+    try {
+      await AlarmScheduler.dismissNotification(payload.alarmId);
+    } catch (_) {}
   }
 
   @override
@@ -249,6 +269,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
     _watchdogTimer?.cancel();
     _autoStopTimer?.cancel();
     _eventSub?.cancel();
+    unawaited(AlarmScheduler.stopVibration());
     _player.dispose();
     super.dispose();
   }
@@ -283,7 +304,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                 ),
                 SizedBox(height: 10.h),
                 Text(
-                  formatPrayerTime(
+                  context.localizedTimes.clock(
                     PrayerClockTime(hour: payload.hour, minute: payload.minute),
                   ),
                   style: TextStyle(

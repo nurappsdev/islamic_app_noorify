@@ -8,9 +8,13 @@ class HomeDashboard {
     required this.userSummary,
     required this.topHighlightCards,
     required this.pillarCards,
+    this.dashboardDate,
   });
 
   final UserSummary userSummary;
   final List<HighlightCard> topHighlightCards;
   final List<PillarCard> pillarCards;
+
+  /// The dashboard day supplied by the server (`yyyy-MM-dd`).
+  final DateTime? dashboardDate;
 }

@@ -5,6 +5,8 @@ import '../../domain/quran_ayah.dart';
 import '../bloc/tafsir/tafsir_bloc.dart';
 import 'quran_design.dart';
 import 'quran_surah_frame.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 /// Embedded Tafsir content. Scrolling is owned by its host reader; no routes
 /// or additional audio players are created when this section opens.
@@ -34,18 +36,18 @@ class _QuranTafsirContentState extends State<QuranTafsirContent> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Padding(
-                padding: EdgeInsets.only(left: 16),
+                padding: const EdgeInsets.only(left: 16),
                 child: Text(
-                  'Tafsir',
-                  style: TextStyle(fontSize: 20, color: quranInk),
+                  AppText.of(context).tafsirTitle,
+                  style: const TextStyle(fontSize: 20, color: quranInk),
                 ),
               ),
             ),
             if (widget.onClose != null)
               IconButton(
-                tooltip: 'Close tafsir',
+                tooltip: AppText.of(context).quranCloseTafsir,
                 onPressed: widget.onClose,
                 icon: const Icon(Icons.close),
               ),
@@ -56,13 +58,13 @@ class _QuranTafsirContentState extends State<QuranTafsirContent> {
           spacing: 10,
           children: [
             ChoiceChip(
-              label: const Text('Bangla'),
+              label: Text(AppText.of(context).bangla),
               selected: _bangla,
               selectedColor: quranBorder,
               onSelected: (_) => setState(() => _bangla = true),
             ),
             ChoiceChip(
-              label: const Text('English'),
+              label: Text(AppText.of(context).english),
               selected: !_bangla,
               selectedColor: quranBorder,
               onSelected: (_) => setState(() => _bangla = false),
@@ -70,9 +72,9 @@ class _QuranTafsirContentState extends State<QuranTafsirContent> {
           ],
         ),
         if (widget.ayahs.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('No ayahs available'),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(AppText.of(context).quranNoAyahs),
           ),
         if (widget.ayahs.isNotEmpty)
           QuranTextFrame(
@@ -93,7 +95,11 @@ class _QuranTafsirContentState extends State<QuranTafsirContent> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Quran ${ayah.verseKey}',
+                            context.localizedDigits(
+                              AppText.of(
+                                context,
+                              ).quranAyahTitle.fill({'key': ayah.verseKey}),
+                            ),
                             style: const TextStyle(color: quranInk),
                           ),
                           const SizedBox(height: 8),
@@ -113,7 +119,7 @@ class _QuranTafsirContentState extends State<QuranTafsirContent> {
                               }
                               return SelectableText(
                                 state.text.isEmpty
-                                    ? 'No Tafsir available for this ayah'
+                                    ? AppText.of(context).quranNoTafsir
                                     : state.text,
                                 style: const TextStyle(
                                   fontSize: 17,

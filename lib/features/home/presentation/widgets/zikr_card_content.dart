@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -11,7 +12,14 @@ const _lineGreen = Color(0xFFA1AD59);
 
 /// One zikr on the stairs. Plain data so it can come straight from the API.
 class ZikrItemData {
-  const ZikrItemData({required this.name, this.completed = false});
+  const ZikrItemData({
+    required this.name,
+    this.completed = false,
+    this.itemKey,
+  });
+
+  /// The tracker's `itemKey` for this zikr, when it comes from the tracker.
+  final String? itemKey;
 
   final String name;
 
@@ -36,8 +44,11 @@ class ZikrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.title = 'Zikr',
+    this.percentageLabel,
     this.items = ZikrItemData.placeholders,
     this.onOpenZikr,
+    this.onItemTap,
   });
 
   /// 0-100.
@@ -45,10 +56,15 @@ class ZikrCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
   /// One pill per item, climbing left to right.
   final List<ZikrItemData> items;
   final VoidCallback? onOpenZikr;
+
+  /// A tap on one zikr's pill.
+  final ValueChanged<ZikrItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +74,17 @@ class ZikrCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenZikr ??
                 () => Navigator.of(context).pushNamed(RouteNames.zikr),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Zikr', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 4.h),
-          Expanded(child: _ZikrStairs(items: items)),
+          Expanded(
+            child: _ZikrStairs(items: items, onItemTap: onItemTap),
+          ),
         ],
       ),
     );
@@ -76,9 +95,10 @@ class ZikrCardContent extends StatelessWidget {
 /// set against dashed guide lines. Positions are fractions of the area so it
 /// scales with the card.
 class _ZikrStairs extends StatelessWidget {
-  const _ZikrStairs({required this.items});
+  const _ZikrStairs({required this.items, this.onItemTap});
 
   final List<ZikrItemData> items;
+  final ValueChanged<ZikrItemData>? onItemTap;
 
   // Left edge (of width) per pill for the designed five; other counts are
   // spread evenly over the same range.
@@ -135,7 +155,11 @@ class _ZikrStairs extends StatelessWidget {
                 top: centersY[i] - pillH / 2,
                 width: pillW,
                 height: pillH,
-                child: _ZikrPill(item: items[i]),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onItemTap == null ? null : () => onItemTap!(items[i]),
+                  child: _ZikrPill(item: items[i]),
+                ),
               ),
           ],
         );
@@ -199,7 +223,7 @@ class _ZikrPill extends StatelessWidget {
                   ],
                 ),
                 child: Text(
-                  '+1',
+                  '+${context.localizedDigits('1')}',
                   style: TextStyle(fontSize: h * 0.38, color: _textGreen),
                 ),
               ),

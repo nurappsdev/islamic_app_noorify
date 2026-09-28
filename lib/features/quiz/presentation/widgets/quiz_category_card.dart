@@ -77,8 +77,10 @@ class QuizCategoryCard extends StatelessWidget {
           ],
           SizedBox(height: 14.h),
           Text(
-            '${context.localized(category.totalQuestions.text)} '
-            '${appText.questionsWord}',
+            context.localizedDigits(
+              '${context.localized(category.totalQuestions.text)} '
+              '${appText.questionsWord}',
+            ),
             style: TextStyle(
               fontSize: 12.sp,
               color: context.inkColor(Color(0xFF56614F)),

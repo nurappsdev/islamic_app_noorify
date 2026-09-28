@@ -51,6 +51,11 @@ class ApiConstants {
 
   static const String leaderboardTopEndPoint = "/leaderboard/top";
 
+  /// One user's standing: `?period=daily|weekly|monthly|yearly` and
+  /// the period's `date` key (e.g. `2026-09`).
+  static String leaderboardUserEndPoint(String userId) =>
+      "/leaderboard/users/$userId";
+
   static const String quizCategoriesEndPoint = "/quizzes/categories";
   static const String quizDailyEndPoint = "/quizzes/daily";
   static const String quizDailyStatusEndPoint = "/quizzes/daily/status";
@@ -131,16 +136,9 @@ class ApiConstants {
   static String asmaUlHusnaDetailEndPoint(String id) =>
       "$asmaUlHusnaEndPoint/$id";
 
-  static const String alarmsDashboardEndPoint = "/alarms";
-  static const String alarmsCustomEndPoint = "/alarms/custom";
+  /// The only alarm endpoint the app uses: the ringtone catalog an admin
+  /// maintains (`GET`). Alarms themselves are saved on the device.
   static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
-  static const String alarmsPrayersBatchEndPoint = "/alarms/prayers/batch";
-
-  static String alarmCustomItemEndPoint(String id) =>
-      "$alarmsCustomEndPoint/$id";
-
-  static String alarmRingtoneItemEndPoint(String id) =>
-      "$alarmsRingtonesEndPoint/$id";
 
   static const String updateMoreInformationEndPoint =
       "/employee/update-employee-profile";

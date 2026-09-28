@@ -30,7 +30,8 @@ class ZikrCounterArgs {
   int get totalTarget => items.fold(0, (sum, item) => sum + item.target);
 
   static const ZikrCounterArgs fallback = ZikrCounterArgs(
-    title: 'Zikr',
+    // Empty: the screen shows the app's own "Zikr" title.
+    title: '',
     items: [ZikrCatalog.subhanAllah],
   );
 }

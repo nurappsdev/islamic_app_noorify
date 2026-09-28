@@ -16,6 +16,8 @@ import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_
 import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
 import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:islami_app_noorify/core/localization/localized_validator.dart';
+import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -46,8 +48,6 @@ class _SignInView extends StatefulWidget {
 class _SignInViewState extends State<_SignInView> {
   static const _logoImagePath = 'assets/appLogo.png';
   static const _errorColor = Color(0xFFD93025);
-  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
@@ -108,25 +108,11 @@ class _SignInViewState extends State<_SignInView> {
     );
   }
 
-  String? _validateEmail(String? value) {
-    final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'Enter an email address';
-    if (!_emailPattern.hasMatch(email)) return 'Enter a valid email address';
-    return null;
-  }
+  String? _validateEmail(String? value) =>
+      LocalizedValidator.readOf(context).email(value);
 
-  String? _validatePassword(String? value) {
-    final password = value ?? '';
-    if (password.isEmpty) return 'Enter a password';
-    if (password.length < 8 ||
-        !password.contains(RegExp(r'[A-Z]')) ||
-        !password.contains(RegExp(r'[0-9]')) ||
-        !password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_\-]'))) {
-      return 'Use at least 8 characters with an uppercase letter, '
-          'a number and a special character';
-    }
-    return null;
-  }
+  String? _validatePassword(String? value) =>
+      LocalizedValidator.readOf(context).password(value);
 
   void _signIn() {
     FocusScope.of(context).unfocus();
@@ -153,7 +139,7 @@ class _SignInViewState extends State<_SignInView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              state.errorMessage ?? 'Sign in failed. Please try again.',
+              state.errorMessage ?? AppText.readOf(context).signInFailed,
             ),
           ),
         );
@@ -212,7 +198,7 @@ class _SignInViewState extends State<_SignInView> {
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Text(
-                            'Tuhfatul Muslim',
+                            AppText.of(context).tuhfatulMuslim,
                             style: TextStyle(
                               color: context.inkColor(AppColor.authLogo),
                               fontSize: 28.sp,
@@ -236,55 +222,57 @@ class _SignInViewState extends State<_SignInView> {
                   // ),
                   // ),
                   SizedBox(height: 38.h),
-                  Form(
-                    key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _emailController,
-                          validator: _validateEmail,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const [
-                            AutofillHints.email,
-                            AutofillHints.telephoneNumber,
-                          ],
-                          decoration: _fieldDecoration(
-                            hint: appText.emailOrPhoneHint,
-                            prefixIcon: Icons.mark_email_unread_outlined,
+                  LocalizedFormScope(
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextFormField(
+                            controller: _emailController,
+                            validator: _validateEmail,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autofillHints: const [
+                              AutofillHints.email,
+                              AutofillHints.telephoneNumber,
+                            ],
+                            decoration: _fieldDecoration(
+                              hint: appText.emailOrPhoneHint,
+                              prefixIcon: Icons.mark_email_unread_outlined,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 8.h),
-                        TextFormField(
-                          controller: _passwordController,
-                          validator: _validatePassword,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          autofillHints: const [AutofillHints.password],
-                          onFieldSubmitted: (_) {
-                            if (_isLoading) return;
-                            _signIn();
-                          },
-                          decoration: _fieldDecoration(
-                            hint: appText.passwordHint,
-                            prefixIcon: Icons.key_outlined,
-                            suffixIcon: IconButton(
-                              tooltip: appText.togglePassword,
-                              onPressed: () =>
-                                  _auth.add(const ToggleObscurePassword()),
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: AppColor.authIcon,
-                                size: 18.sp,
+                          SizedBox(height: 8.h),
+                          TextFormField(
+                            controller: _passwordController,
+                            validator: _validatePassword,
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            autofillHints: const [AutofillHints.password],
+                            onFieldSubmitted: (_) {
+                              if (_isLoading) return;
+                              _signIn();
+                            },
+                            decoration: _fieldDecoration(
+                              hint: appText.passwordHint,
+                              prefixIcon: Icons.key_outlined,
+                              suffixIcon: IconButton(
+                                tooltip: appText.togglePassword,
+                                onPressed: () =>
+                                    _auth.add(const ToggleObscurePassword()),
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: AppColor.authIcon,
+                                  size: 18.sp,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(height: 4.h),

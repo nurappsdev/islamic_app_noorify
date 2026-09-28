@@ -5,24 +5,22 @@ import 'package:just_audio/just_audio.dart';
 
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_remote_data_source.dart';
 import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarm_dashboard.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
+import 'package:islami_app_noorify/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
 
 enum _AlarmTab { all, prayers }
 
@@ -37,18 +35,14 @@ class AllAlarmScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repository = AlarmRepositoryImpl(
-      AlarmRemoteDataSourceImpl(),
-      AlarmLocalDataSourceImpl(),
-    );
+    final repository = AlarmRepositoryImpl();
     return BlocProvider(
       create: (_) => AlarmListBloc(
         getAlarms: GetAlarms(repository),
-        getAlarmDashboard: GetAlarmDashboard(repository),
+        getPrayerAlarms: GetPrayerAlarms(repository),
         addAlarm: AddAlarm(repository),
         setAlarmEnabled: SetAlarmEnabled(repository),
         deleteAlarm: DeleteAlarm(repository),
-        getRingtones: GetRingtones(repository),
       )..add(const LoadAlarms()),
       child: const _AllAlarmView(),
     );
@@ -110,9 +104,7 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
           children: [
             AlarmBackHeader(
               title: appText.alarm,
-              subtitle:
-                  state.serverCountdown ??
-                  _countdownLabel(state.alarms, appText),
+              subtitle: _countdownLabel(state, appText, context.localizedTimes),
             ),
             SizedBox(height: 16.h),
             _AlarmTabs(
@@ -132,25 +124,33 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
     );
   }
 
-  String _countdownLabel(List<AlarmEntry> alarms, AppText appText) {
+  /// "Alarm will ring in X hr Y min" for the soonest alarm that is on -
+  /// custom or prayer.
+  String _countdownLabel(
+    AlarmListState state,
+    AppText appText,
+    LocalizedTimeFormatter times,
+  ) {
     final now = DateTime.now();
     Duration? soonest;
-    for (final alarm in alarms.where((a) => a.enabled)) {
-      var target = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        alarm.hour,
-        alarm.minute,
-      );
+    void consider(int hour, int minute) {
+      var target = DateTime(now.year, now.month, now.day, hour, minute);
       if (!target.isAfter(now)) target = target.add(const Duration(days: 1));
       final diff = target.difference(now);
-      if (soonest == null || diff < soonest) soonest = diff;
+      if (soonest == null || diff < soonest!) soonest = diff;
     }
-    if (soonest == null) return appText.noAlarmSet;
-    final hours = soonest.inHours;
-    final minutes = soonest.inMinutes % 60;
-    return '${appText.alarmWillRingIn} $hours ${appText.hrLabel} $minutes ${appText.minLabel}';
+
+    for (final alarm in state.alarms.where((a) => a.enabled)) {
+      consider(alarm.hour, alarm.minute);
+    }
+    for (final alarm in state.prayerAlarms.where((a) => a.isEnabled)) {
+      final parsed = _parseClockTime(alarm.alarmTime);
+      if (parsed != null) consider(parsed.$1, parsed.$2);
+    }
+    final diff = soonest;
+    if (diff == null) return appText.noAlarmSet;
+    return '${appText.alarmWillRingIn} '
+        '${times.duration(hours: diff.inHours, minutes: diff.inMinutes % 60)}';
   }
 }
 
@@ -380,7 +380,7 @@ class _AlarmListItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatPrayerTime(
+                  context.localizedTimes.clock(
                     PrayerClockTime(hour: alarm.hour, minute: alarm.minute),
                   ),
                   style: TextStyle(
@@ -540,7 +540,7 @@ class _PrayerAlarmTab extends StatelessWidget {
   return (hour24, minute);
 }
 
-/// Maps a server `prayerType` string to the app's [PrayerPeriod] enum, where
+/// Maps a `prayerType` string to the app's [PrayerPeriod] enum, where
 /// one exists — `tahajjud` has no matching prayer-times entry, so it maps to
 /// `null` (the per-alarm screen then just shows no subtitle for it).
 PrayerPeriod? _periodFor(String prayerType) => switch (prayerType) {
@@ -582,6 +582,7 @@ class _PrayerAlarmRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final period = _periodFor(prayerAlarm.prayerType);
+    final title = period?.displayName(appText) ?? appText.naflTahajjud;
     final parsed = _parseClockTime(prayerAlarm.alarmTime);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
@@ -612,7 +613,7 @@ class _PrayerAlarmRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  prayerAlarm.title,
+                  title,
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
@@ -623,7 +624,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    prayerAlarm.timeWindow,
+                    context.localizedTimes.localize(prayerAlarm.timeWindow),
                     style: TextStyle(
                       fontSize: 9.sp,
                       color: context.inkColor(Colors.black54),
@@ -650,7 +651,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                   ),
                   SizedBox(width: 5.w),
                   Text(
-                    prayerAlarm.alarmTime,
+                    context.localizedTimes.localize(prayerAlarm.alarmTime),
                     style: TextStyle(
                       fontSize: 11.sp,
                       color: context.inkColor(_olive),
@@ -661,7 +662,7 @@ class _PrayerAlarmRow extends StatelessWidget {
             )
           else
             IconButton(
-              tooltip: '${appText.setAlarmFor} ${prayerAlarm.title}',
+              tooltip: '${appText.setAlarmFor} $title',
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => SetAlarmScreen(

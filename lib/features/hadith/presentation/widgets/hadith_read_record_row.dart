@@ -5,28 +5,27 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
 
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-/// `17 Aug  At 5 : 35 PM` — the reading-history time style of the design.
-String formatHadithReadTime(DateTime time) {
+/// `17 Aug  At 5 : 35 PM` — the reading-history time style of the design; in
+/// Bangla `১৭ আগস্ট  সময় ৫ : ৩৫ অপরাহ্ণ`.
+String formatHadithReadTime(
+  DateTime time, {
+  AppLanguage language = AppLanguage.english,
+}) {
+  final text = AppText.forLanguage(language);
+  final numbers = LocalizedNumberFormatter(language);
   final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
   final minute = time.minute.toString().padLeft(2, '0');
-  final meridiem = time.hour < 12 ? 'AM' : 'PM';
-  return '${time.day} ${_months[time.month - 1]}  At $hour : $minute $meridiem';
+  final meridiem = time.hour < 12 ? text.amLabel : text.pmLabel;
+  final month = abbreviateLocalizedMonth(
+    text.monthNames[time.month - 1],
+    language,
+  );
+  return '${numbers.integer(time.day)} $month  ${text.readAtLabel} '
+      '${numbers.integer(hour)} : ${numbers.digits(minute)} $meridiem';
 }
 
 /// One line of the reading history: the sub-category of the hadith read, in the
@@ -73,7 +72,10 @@ class HadithReadRecordRow extends StatelessWidget {
         if (readAt != null) ...[
           SizedBox(width: 10.w),
           Text(
-            formatHadithReadTime(readAt),
+            formatHadithReadTime(
+              readAt,
+              language: isBangla ? AppLanguage.bangla : AppLanguage.english,
+            ),
             style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
           ),
         ],

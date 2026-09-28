@@ -9,13 +9,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
+import 'core/network/auth_refresh_interceptor.dart';
+import 'core/storage/session_cleaner.dart';
 import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/dark_theme.dart';
 import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
-import 'features/auth/data/datasources/auth_local_data_source.dart';
+import 'features/alarm/data/services/alarm_migration.dart';
+import 'features/alarm/data/services/alarm_sync.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
@@ -29,6 +32,15 @@ Future<void> main() async {
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await HiveService.init();
+  // The access token can't be renewed: wipe the dead session and send the user
+  // back to sign in.
+  AuthRefreshInterceptor.onSessionExpired = () async {
+    await SessionCleaner.clearUserData();
+    appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      RouteNames.signIn,
+      (_) => false,
+    );
+  };
   await AppText.load();
   quranAudioHandler = await AudioService.init(
     builder: QuranAudioHandler.new,
@@ -40,21 +52,20 @@ Future<void> main() async {
     ),
   );
 
+  final preferences = await SharedPreferences.getInstance();
   final savedDarkTheme =
-      (await SharedPreferences.getInstance()).getBool(
-        AppPreferencesBloc.darkThemeKey,
-      ) ??
-      false;
+      preferences.getBool(AppPreferencesBloc.darkThemeKey) ?? false;
+  // Read before the first frame, so the app opens in the saved language - or
+  // Bangla when none was ever saved - instead of switching after it renders.
+  final savedLanguage = LanguagePreference.read(preferences);
 
   await AlarmScheduler.init();
-  // Guests own no alarms: clear any left armed by a previous session (e.g.
-  // one that logged out before logout started disarming them).
-  if (!AuthLocalDataSourceImpl().hasToken) {
-    await AlarmScheduler.cancelAllAlarms();
-  }
-  // Alarms are re-armed from the server's list whenever the alarm screen
-  // loads (see `AlarmListBloc`), not from the local cache here: the cache
-  // holds client-made ids, so re-arming it too made every alarm ring twice.
+  await AlarmScheduler.logScheduledAlarms();
+  await migrateToOnDeviceAlarms();
+  // Alarms live only on the device (Hive). Re-arm from them at every start, so
+  // the OS schedule matches what is saved and today's prayer times: it also
+  // removes any alarm the app no longer has.
+  unawaited(syncLocalAlarms());
   // Tapping the alarm notification — or its Stop/Snooze buttons — opens the
   // ringing screen, which is where stopping/snoozing reliably silences the
   // alarm. A Stop/Snooze press carries its action so the screen applies it
@@ -81,7 +92,9 @@ Future<void> main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageBloc()),
+        BlocProvider(
+          create: (_) => LanguageBloc(initialLanguage: savedLanguage),
+        ),
         BlocProvider(
           create: (_) => AppPreferencesBloc(darkThemeEnabled: savedDarkTheme),
         ),

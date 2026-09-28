@@ -43,7 +43,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       BlocProvider(
-        create: (_) => LanguageBloc(),
+        create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
         child: MaterialApp(
           home: MediaQuery(
             data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
@@ -135,7 +135,7 @@ void main() {
       await tester.pumpWidget(
         MultiBlocProvider(
           providers: [
-            BlocProvider(create: (_) => LanguageBloc()),
+            BlocProvider(create: (_) => LanguageBloc(initialLanguage: AppLanguage.english)),
             BlocProvider(create: (_) => ReciterBloc()),
             BlocProvider(
               create: (_) =>

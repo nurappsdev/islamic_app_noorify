@@ -4,12 +4,51 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
 const _textGreen = Color(0xFF9DAA62);
 const _pointGreen = Color(0xFF8FA05A);
+
+/// What one glass tile of the Quiz card shows.
+class QuizTileData {
+  const QuizTileData({
+    required this.title,
+    this.points = 1,
+    this.completed = false,
+  });
+
+  final String title;
+
+  /// The points on the badge: what the quiz is worth until it has been played,
+  /// then what the user earned.
+  final num points;
+
+  /// Played: the tile is shown selected (solid green badge).
+  final bool completed;
+}
+
+/// The first quiz tile from the backend's `quiz` pillar, or `null` when the
+/// dashboard has none (not loaded, signed out): the tile then keeps its
+/// default. [title] is the pillar's title in the selected language.
+///
+/// A pillar with points already earned means the quiz has been played, so the
+/// tile shows those points and is selected. Before that it keeps the default
+/// badge (the quiz's worth) and stays unselected.
+QuizTileData? quizTileFromPillar(PillarCard? pillar, {required String title}) {
+  if (pillar == null) return null;
+  final played = pillar.points > 0;
+  return QuizTileData(
+    title: title,
+    points: played ? pillar.points : 1,
+    completed: played,
+  );
+}
 
 /// Content layer for the Quiz card. Draws no background of its own - place it
 /// inside [HomeGradientShape]. Shares its header and title/counter block with
@@ -19,7 +58,9 @@ class QuizCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
-    this.labels = const ['Quiz 1', 'Quiz 2'],
+    this.title = 'Quiz',
+    this.percentageLabel,
+    this.firstQuiz,
     this.onOpenTracker,
   });
 
@@ -28,19 +69,27 @@ class QuizCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
-  /// One overlapping glass tile per label, left to right.
-  final List<String> labels;
+  /// The first of the two overlapping glass tiles, from the backend. When
+  /// `null` it shows its default label. The second tile is always the default.
+  final QuizTileData? firstQuiz;
   final VoidCallback? onOpenTracker;
 
   @override
   Widget build(BuildContext context) {
+    final tiles = [
+      firstQuiz ?? _defaultTile(context, 1),
+      _defaultTile(context, 2),
+    ];
     return Padding(
       padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 18.h),
       child: Column(
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenTracker ??
                 () => Navigator.of(context).push(
@@ -52,7 +101,7 @@ class QuizCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Quiz', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
           Expanded(
             child: LayoutBuilder(
@@ -64,7 +113,7 @@ class QuizCardContent extends StatelessWidget {
                 // (so neighbouring corners overlap a little).
                 final extent = math.min(w * 0.41, h);
                 final side = extent / QuizGlassCard.extentFactor;
-                final count = labels.length;
+                final count = tiles.length;
                 final span = w * 0.33 * (count - 1);
                 final firstCentre = (w - span) / 2;
                 return Stack(
@@ -76,8 +125,9 @@ class QuizCardContent extends StatelessWidget {
                         left: firstCentre + i * w * 0.33 - extent / 2,
                         top: (h - extent) / 2,
                         child: QuizGlassCard(
-                          title: labels[i],
-                          points: 1,
+                          title: tiles[i].title,
+                          points: tiles[i].points,
+                          completed: tiles[i].completed,
                           side: side,
                         ),
                       ),
@@ -91,6 +141,12 @@ class QuizCardContent extends StatelessWidget {
     );
   }
 }
+
+QuizTileData _defaultTile(BuildContext context, int index) => QuizTileData(
+  title:
+      '${AppText.of(context).categoryQuiz} '
+      '${context.localizedDigits('$index')}',
+);
 
 /// A floating frosted-glass card in the shape of a rounded diamond (a rounded
 /// square turned 45 degrees), with an upright points badge and [title].
@@ -112,7 +168,7 @@ class QuizGlassCard extends StatelessWidget {
   static const extentFactor = 1.182;
 
   final String title;
-  final int points;
+  final num points;
 
   /// Completed cards show a solid green badge instead of the white one.
   final bool completed;
@@ -153,7 +209,7 @@ class QuizGlassCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Text(
-                  '+$points',
+                  '+${context.localizedNumbers.decimal(points)}',
                   style: TextStyle(
                     fontSize: badge * 0.36,
                     color: completed ? Colors.white : _pointGreen,

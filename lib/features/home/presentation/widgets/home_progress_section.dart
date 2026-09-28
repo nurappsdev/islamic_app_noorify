@@ -16,6 +16,7 @@ import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
 import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Fallback bearing (degrees clockwise from true north) shown before the
 /// dashboard API's `kiblahAngle` has loaded.
@@ -77,23 +78,6 @@ class HomeProgressSection extends StatelessWidget {
       return HomeProgressSectionShimmer(gridItemCount: _items.length);
     }
 
-    final pillars = dashboardState.hasData
-        ? dashboardState.dashboard!.pillarCards
-        : null;
-
-    final gridPillars = pillars
-        ?.where((p) => p.pillarKey != _naflAndMorePillarKey)
-        .toList();
-    PillarCard? naflPillar;
-    if (pillars != null) {
-      for (final p in pillars) {
-        if (p.pillarKey == _naflAndMorePillarKey) {
-          naflPillar = p;
-          break;
-        }
-      }
-    }
-
     // The API's `kiblahAngle` arrives pre-formatted (e.g. "Kiblah 277.6°
     // West"), not a bare number, so it's shown as-is and only its numeric
     // bearing is pulled out for the dial.
@@ -107,47 +91,6 @@ class HomeProgressSection extends StatelessWidget {
 
     return Column(
       children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: gridPillars?.length ?? _items.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisExtent: 90.h,
-            crossAxisSpacing: 11.w,
-            mainAxisSpacing: 8.h,
-          ),
-          itemBuilder: (context, index) => gridPillars != null
-              ? _PillarProgressCard(pillar: gridPillars[index])
-              : _ProgressCard(item: _items[index]),
-        ),
-        SizedBox(height: 8.h),
-        InkWell(
-          borderRadius: BorderRadius.circular(16.r),
-          onTap: () => _openAmolTracking(context, 'Nafl & more'),
-          child: HomeCard(
-            padding: EdgeInsets.symmetric(vertical: 13.h),
-            child: Column(
-              children: [
-                Text(
-                  appText.categoryNaflAndMore,
-                  style: homeSerifStyle(context: context, fontSize: 12.sp),
-                ),
-                SizedBox(height: 6.h),
-                _ProgressBar(
-                  value: naflPillar == null
-                      ? .58
-                      : (naflPillar.percentage / 100).clamp(0, 1).toDouble(),
-                ),
-                SizedBox(height: 7.h),
-                Text(
-                  naflPillar?.formattedSubtext ?? '0/3',
-                  style: homeSansStyle(context: context, fontSize: 12.sp),
-                ),
-              ],
-            ),
-          ),
-        ),
         SizedBox(height: 8.h),
         _CompassCard(qiblahAngle: qiblahAngle, qiblahLabel: qiblahLabel),
         SizedBox(height: 8.h),
@@ -315,7 +258,7 @@ class _ProgressCard extends StatelessWidget {
             _ProgressBar(value: item.progress),
             SizedBox(height: 6.h),
             Text(
-              item.count,
+              context.localizedDigits(item.count),
               style: homeSansStyle(context: context, fontSize: 12.sp),
             ),
           ],

@@ -8,6 +8,8 @@ import '../../domain/arabic_font.dart';
 import '../widgets/quran_design.dart';
 import '../widgets/quran_reading_text.dart';
 import '../widgets/quran_surah_frame.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
 
 class QuranTafsirScreen extends StatefulWidget {
   const QuranTafsirScreen({
@@ -48,10 +50,14 @@ class _QuranTafsirScreenState extends State<QuranTafsirScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: context.pageColor(Colors.white),
     appBar: AppBar(
-      title: Text('Tafsir · ${widget.verseKey}'),
+      title: Text(
+        context.localizedDigits(
+          AppText.of(context).quranTafsirVerse.fill({'key': widget.verseKey}),
+        ),
+      ),
       actions: [
         IconButton(
-          tooltip: 'Close tafsir',
+          tooltip: AppText.of(context).quranCloseTafsir,
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.close),
         ),
@@ -69,13 +75,18 @@ class _QuranTafsirScreenState extends State<QuranTafsirScreen> {
           }
           final ayahs = snapshot.requireData;
           if (ayahs.isEmpty) {
-            return const Center(child: Text('No ayahs available'));
+            return Center(child: Text(AppText.of(context).quranNoAyahs));
           }
           return ListView(
             padding: const EdgeInsets.all(8),
             children: [
               Text(
-                'Surah: ${widget.surahName ?? ayahs.first.surahNumber} · Page ${ayahs.first.pageNumber}',
+                context.localizedDigits(
+                  AppText.of(context).quranSurahPage.fill({
+                    'name': widget.surahName ?? ayahs.first.surahNumber,
+                    'page': ayahs.first.pageNumber,
+                  }),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -96,7 +107,7 @@ class _QuranTafsirScreenState extends State<QuranTafsirScreen> {
                     color: Colors.red,
                     size: 16,
                   ),
-                  label: const Text('Close tafsir'),
+                  label: Text(AppText.of(context).quranCloseTafsir),
                 ),
               ),
               if (widget.player != null) widget.player!,

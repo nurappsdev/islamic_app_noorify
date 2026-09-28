@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/features/home/domain/calendar/date_labels.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/bloc/prayer_times_bloc.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
@@ -96,13 +97,15 @@ class _PrayerSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final clock = context.localizedTimes;
+    final dates = context.localizedDates;
     final summaryPeriod = active ?? PrayerPeriod.dhuhr;
     final summaryStart = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerStart(summaryPeriod, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clock.clock(prayerStart(summaryPeriod, times!));
     final summaryEnd = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerEnd(summaryPeriod, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clock.clock(prayerEnd(summaryPeriod, times!));
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -168,7 +171,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    times?.hijriDate ?? hijriDateLabel(now),
+                    dates.hijri(now, maghrib: times?.maghrib),
                     style: _italicStyle(10.sp),
                   ),
                 ),
@@ -178,7 +181,10 @@ class _PrayerSummaryHeader extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: Text(banglaDateLabel(now), style: _italicStyle(10.sp)),
+                  child: Text(
+                    dates.banglaCalendar(now),
+                    style: _italicStyle(10.sp),
+                  ),
                 ),
               ),
             ],
@@ -207,11 +213,13 @@ class _PrayerSummaryHeader extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                times?.readableDate ?? _fallbackDate(now),
+                // English keeps the short month (`28 Sep 2026`); Bangla writes
+                // the month out in full.
+                dates.gregorian(now, shortMonth: true),
                 style: TextStyle(color: Colors.white70, fontSize: 10.sp),
               ),
               Text(
-                _formatCurrentTime(now),
+                clock.clockOf(now),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 21.sp,
@@ -246,7 +254,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                     style: TextStyle(fontSize: 11.sp),
                   ),
                   Text(
-                    '$summaryStart – $summaryEnd',
+                    context.localizedDigits('$summaryStart – $summaryEnd'),
                     style: TextStyle(fontSize: 10.sp),
                   ),
                 ],
@@ -264,18 +272,14 @@ class _PrayerSummaryHeader extends StatelessWidget {
               Expanded(
                 child: _EdgeLabel(
                   title: '${appText.sunrise}, ${appText.trishal}',
-                  value: times == null
-                      ? '--:--'
-                      : formatPrayerTime(times!.sunrise),
+                  value: clock.clockOrPlaceholder(times?.sunrise),
                 ),
               ),
               SizedBox(width: 20.w),
               Expanded(
                 child: _EdgeLabel(
                   title: '${appText.sunset}, ${appText.trishal}',
-                  value: times == null
-                      ? '--:--'
-                      : formatPrayerTime(times!.sunset),
+                  value: clock.clockOrPlaceholder(times?.sunset),
                 ),
               ),
             ],
@@ -291,13 +295,6 @@ class _PrayerSummaryHeader extends StatelessWidget {
     fontFamily: 'Times New Roman',
     fontStyle: FontStyle.italic,
   );
-
-  static String _fallbackDate(DateTime date) =>
-      '${date.day.toString().padLeft(2, '0')}-'
-      '${date.month.toString().padLeft(2, '0')}-${date.year}';
-
-  static String _formatCurrentTime(DateTime date) =>
-      formatPrayerTime(PrayerClockTime(hour: date.hour, minute: date.minute));
 }
 
 class _EdgeLabel extends StatelessWidget {
@@ -362,12 +359,13 @@ class _PrayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final clock = context.localizedTimes;
     final start = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerStart(period, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clock.clock(prayerStart(period, times!));
     final end = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerEnd(period, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clock.clock(prayerEnd(period, times!));
     final titleColor = active
         ? Colors.white
         : context.inkColor(const Color(0xFF2F3A22));
@@ -518,7 +516,7 @@ class _PrayerRow extends StatelessWidget {
                               ),
                               SizedBox(width: 5.w),
                               Text(
-                                '$start – $end',
+                                context.localizedDigits('$start – $end'),
                                 style: TextStyle(
                                   fontSize: 13.sp,
                                   fontWeight: FontWeight.w700,

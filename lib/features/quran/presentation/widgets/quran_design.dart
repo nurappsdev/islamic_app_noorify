@@ -8,6 +8,7 @@ import '../quran_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 const quranOlive = Color(0xffa1ae57);
 const quranInk = Color(0xff889569);

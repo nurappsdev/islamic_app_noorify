@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -20,7 +21,11 @@ class NaflItemData {
     required this.name,
     required this.points,
     this.completed = false,
+    this.itemKey,
   });
+
+  /// The tracker's `itemKey` for this deed, when it comes from the tracker.
+  final String? itemKey;
 
   final String name;
   final num points;
@@ -40,8 +45,11 @@ class NaflMoreCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/7',
+    this.title = 'Nafl and more',
+    this.percentageLabel,
     this.items = const [],
     this.onOpenDashboard,
+    this.onItemTap,
   });
 
   /// 0-100.
@@ -49,8 +57,13 @@ class NaflMoreCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/7`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
   final List<NaflItemData> items;
   final VoidCallback? onOpenDashboard;
+
+  /// A tap on one deed's pill.
+  final ValueChanged<NaflItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +73,7 @@ class NaflMoreCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenDashboard ??
                 () => Navigator.of(context).push(
@@ -69,9 +83,11 @@ class NaflMoreCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Nafl and more', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
-          Expanded(child: _NaflRing(items: items)),
+          Expanded(
+            child: _NaflRing(items: items, onItemTap: onItemTap),
+          ),
         ],
       ),
     );
@@ -79,9 +95,10 @@ class NaflMoreCardContent extends StatelessWidget {
 }
 
 class _NaflRing extends StatelessWidget {
-  const _NaflRing({required this.items});
+  const _NaflRing({required this.items, this.onItemTap});
 
   final List<NaflItemData> items;
+  final ValueChanged<NaflItemData>? onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +140,13 @@ class _NaflRing extends StatelessWidget {
                   top: centerY(row) - pillH / 2,
                   width: pillW,
                   height: pillH,
-                  child: _NaflPill(item: items[i], circleFirst: circleFirst),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onItemTap == null
+                        ? null
+                        : () => onItemTap!(items[i]),
+                    child: _NaflPill(item: items[i], circleFirst: circleFirst),
+                  ),
                 );
               }(),
           ],
@@ -157,7 +180,7 @@ class _NaflPill extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Text(
-            _points(item.points),
+            context.localizedDigits(_points(item.points)),
             style: TextStyle(fontSize: h * 0.34, color: _textGreen),
           ),
         );

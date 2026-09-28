@@ -10,6 +10,9 @@ import 'package:islami_app_noorify/features/home/presentation/widgets/home_botto
 import 'package:islami_app_noorify/features/leaderboard/data/services/leaderboard_service.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:islami_app_noorify/features/leaderboard/presentation/screens/leaderboard_user_detail_screen.dart';
+import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -49,6 +52,24 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         _isLoading = false;
         _board = board;
       }),
+    );
+  }
+
+  /// Opens [entry]'s standing for the period picked above. `date` is the
+  /// period key the server reported for the board on screen (`2026-09`); it is
+  /// left out while a different period's board is still being replaced.
+  void _openDetail(LeaderboardEntry entry, LeaderboardBoard board) {
+    if (entry.userId.isEmpty) return;
+    final key = board.period.type == _period ? board.period.key : '';
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => LeaderboardUserDetailScreen(
+          userId: entry.userId,
+          period: _period,
+          date: key.isEmpty ? null : key,
+          isCurrentUser: entry.isCurrentUser,
+        ),
+      ),
     );
   }
 
@@ -127,12 +148,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         ),
       ),
       SizedBox(height: 18.h),
-      if (podium.isNotEmpty) _LeaderboardPodium(entries: podium),
+      if (podium.isNotEmpty)
+        _LeaderboardPodium(
+          entries: podium,
+          onTap: (entry) => _openDetail(entry, board),
+        ),
       SizedBox(height: 22.h),
       _SearchField(onChanged: (value) => setState(() => _searchQuery = value)),
       SizedBox(height: 16.h),
       for (final entry in rest) ...[
-        _LeaderboardRow(entry: entry),
+        _LeaderboardRow(entry: entry, onTap: () => _openDetail(entry, board)),
         SizedBox(height: 10.h),
       ],
       if (showYourRank) ...[
@@ -260,9 +285,10 @@ class _PeriodDropdown extends StatelessWidget {
 }
 
 class _LeaderboardPodium extends StatelessWidget {
-  const _LeaderboardPodium({required this.entries});
+  const _LeaderboardPodium({required this.entries, required this.onTap});
 
   final List<LeaderboardEntry> entries;
+  final ValueChanged<LeaderboardEntry> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +304,7 @@ class _LeaderboardPodium extends StatelessWidget {
           Expanded(
             child: _PodiumSlot(
               entry: second,
+              onTap: () => onTap(second),
               dimension: 64.r,
               ringColor: const Color(0xFFB9C6DA),
             ),
@@ -286,6 +313,7 @@ class _LeaderboardPodium extends StatelessWidget {
           Expanded(
             child: _PodiumSlot(
               entry: first,
+              onTap: () => onTap(first),
               dimension: 88.r,
               ringColor: const Color(0xFFF2994A),
               isWinner: true,
@@ -295,6 +323,7 @@ class _LeaderboardPodium extends StatelessWidget {
           Expanded(
             child: _PodiumSlot(
               entry: third,
+              onTap: () => onTap(third),
               dimension: 64.r,
               ringColor: const Color(0xFFCE9A7B),
             ),
@@ -307,12 +336,14 @@ class _LeaderboardPodium extends StatelessWidget {
 class _PodiumSlot extends StatelessWidget {
   const _PodiumSlot({
     required this.entry,
+    required this.onTap,
     required this.dimension,
     required this.ringColor,
     this.isWinner = false,
   });
 
   final LeaderboardEntry entry;
+  final VoidCallback onTap;
   final double dimension;
   final Color ringColor;
   final bool isWinner;
@@ -320,118 +351,122 @@ class _PodiumSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badgeSize = 22.r;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: dimension + badgeSize,
-          height: dimension + badgeSize,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: dimension,
-                height: dimension,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: ringColor, width: 3),
-                ),
-                child: ClipOval(
-                  child: _LeaderboardAvatar(
-                    url: entry.avatarUrl,
-                    fallbackName: entry.name,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: dimension + badgeSize,
+            height: dimension + badgeSize,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: dimension,
+                  height: dimension,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: ringColor, width: 3),
+                  ),
+                  child: ClipOval(
+                    child: LeaderboardAvatar(
+                      url: entry.avatarUrl,
+                      fallbackName: entry.name,
+                    ),
                   ),
                 ),
-              ),
-              if (isWinner)
+                if (isWinner)
+                  Positioned(
+                    top: -badgeSize / 2,
+                    child: Container(
+                      width: badgeSize,
+                      height: badgeSize,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ringColor,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 13.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 Positioned(
-                  top: -badgeSize / 2,
+                  bottom: -badgeSize / 2,
                   child: Container(
                     width: badgeSize,
                     height: badgeSize,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: ringColor,
-                      border: Border.all(color: Colors.white, width: 2),
+                      color: context.surfaceColor(Colors.white),
+                      border: Border.all(color: ringColor, width: 2),
                     ),
-                    child: Icon(
-                      Icons.star_rounded,
-                      size: 13.sp,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              Positioned(
-                bottom: -badgeSize / 2,
-                child: Container(
-                  width: badgeSize,
-                  height: badgeSize,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: context.surfaceColor(Colors.white),
-                    border: Border.all(color: ringColor, width: 2),
-                  ),
-                  child: Text(
-                    '${entry.rank}',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      color: context.inkColor(const Color(0xFF3A3A3A)),
+                    child: Text(
+                      context.localizedDigits('${entry.rank}'),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                        color: context.inkColor(const Color(0xFF3A3A3A)),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 12.h),
-        Container(
-          constraints: BoxConstraints(maxWidth: dimension + 26.w),
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-          decoration: BoxDecoration(
-            color: context.surfaceColor(AppColor.lightTint),
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                entry.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
-                  color: context.inkColor(const Color(0xFF3A3A3A)),
+          SizedBox(height: 12.h),
+          Container(
+            constraints: BoxConstraints(maxWidth: dimension + 26.w),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(AppColor.lightTint),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  entry.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(const Color(0xFF3A3A3A)),
+                  ),
                 ),
-              ),
-              SizedBox(height: 3.h),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.monetization_on,
-                    size: 12.sp,
-                    color: const Color(0xFFFFC83D),
-                  ),
-                  SizedBox(width: 3.w),
-                  Text(
-                    '${entry.points}',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
+                SizedBox(height: 3.h),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.monetization_on,
+                      size: 12.sp,
+                      color: const Color(0xFFFFC83D),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    SizedBox(width: 3.w),
+                    Text(
+                      context.localizedDigits('${entry.points}'),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -496,61 +531,66 @@ class _SearchField extends StatelessWidget {
 }
 
 class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow({required this.entry});
+  const _LeaderboardRow({required this.entry, required this.onTap});
 
   final LeaderboardEntry entry;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 60.h,
-      padding: EdgeInsets.symmetric(horizontal: 12.w),
-      decoration: BoxDecoration(
-        color: entry.isCurrentUser
-            ? context.surfaceColor(AppColor.lightTint)
-            : context.surfaceColor(const Color(0xFFF3F5E4)),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          Text(
-            '#${entry.rank}',
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: context.inkColor(const Color(0xFF6B7551)),
-            ),
-          ),
-          SizedBox(width: 10.w),
-          SizedBox(
-            width: 30.r,
-            height: 30.r,
-            child: ClipOval(
-              child: _LeaderboardAvatar(
-                url: entry.avatarUrl,
-                fallbackName: entry.name,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 60.h,
+        padding: EdgeInsets.symmetric(horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: entry.isCurrentUser
+              ? context.surfaceColor(AppColor.lightTint)
+              : context.surfaceColor(const Color(0xFFF3F5E4)),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Row(
+          children: [
+            Text(
+              context.localizedDigits('#${entry.rank}'),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(const Color(0xFF6B7551)),
               ),
             ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Text(
-              entry.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13.sp),
+            SizedBox(width: 10.w),
+            SizedBox(
+              width: 30.r,
+              height: 30.r,
+              child: ClipOval(
+                child: LeaderboardAvatar(
+                  url: entry.avatarUrl,
+                  fallbackName: entry.name,
+                ),
+              ),
             ),
-          ),
-          Icon(
-            Icons.monetization_on,
-            color: const Color(0xFFFFC83D),
-            size: 14.sp,
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            '${entry.points}',
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-          ),
-        ],
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                entry.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13.sp),
+              ),
+            ),
+            Icon(
+              Icons.monetization_on,
+              color: const Color(0xFFFFC83D),
+              size: 14.sp,
+            ),
+            SizedBox(width: 4.w),
+            Text(
+              context.localizedDigits('${entry.points}'),
+              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -589,7 +629,7 @@ class _YourRankCard extends StatelessWidget {
                 radius: 18.r,
                 backgroundColor: context.surfaceColor(Colors.white),
                 child: Text(
-                  '${position.rank}',
+                  context.localizedDigits('${position.rank}'),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColor.primary,
@@ -609,7 +649,9 @@ class _YourRankCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${position.points} ${appText.pointsLabel}',
+                context.localizedDigits(
+                  '${position.points} ${appText.pointsLabel}',
+                ),
                 style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
               ),
             ],
@@ -627,7 +669,7 @@ class _YourRankCard extends StatelessWidget {
           if (gap != null && nextRank != null) ...[
             SizedBox(height: 6.h),
             Text(
-              '$gap ${appText.ptsToRank} #$nextRank',
+              context.localizedDigits('$gap ${appText.ptsToRank} #$nextRank'),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: context.inkColor(const Color(0xFF6B7551)),
@@ -635,43 +677,6 @@ class _YourRankCard extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Network avatar with an initial-letter fallback, used for podium slots and
-/// list rows alike. Unlike [ProfileAvatarCircle], this renders any entry's
-/// [url] rather than the signed-in user's own photo notifiers.
-class _LeaderboardAvatar extends StatelessWidget {
-  const _LeaderboardAvatar({required this.url, required this.fallbackName});
-
-  final String? url;
-  final String fallbackName;
-
-  @override
-  Widget build(BuildContext context) {
-    final trimmed = (url ?? '').trim();
-    if (trimmed.isEmpty) return _initialCircle(context);
-    return Image.network(
-      trimmed,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => _initialCircle(context),
-    );
-  }
-
-  Widget _initialCircle(BuildContext context) {
-    final trimmedName = fallbackName.trim();
-    final initial = trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : '?';
-    return Container(
-      color: context.surfaceColor(const Color(0xFFCFCFEA)),
-      alignment: Alignment.center,
-      child: Text(
-        initial,
-        style: TextStyle(
-          color: context.inkColor(const Color(0xFF5B5B8C)),
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

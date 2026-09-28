@@ -4,6 +4,7 @@ import 'package:islami_app_noorify/core/errors/exceptions.dart';
 import 'package:islami_app_noorify/core/errors/failures.dart';
 import 'package:islami_app_noorify/features/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
 import 'package:islami_app_noorify/features/leaderboard/domain/repositories/leaderboard_repository.dart';
 
 class LeaderboardRepositoryImpl implements LeaderboardRepository {
@@ -15,9 +16,21 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
   Future<Either<Failure, LeaderboardBoard>> getTop({
     required String period,
     int limit = 10,
-  }) async {
+  }) => _guard(() => _remote.getTop(period: period, limit: limit));
+
+  @override
+  Future<Either<Failure, LeaderboardUserDetail>> getUserPosition({
+    required String userId,
+    required String period,
+    String? date,
+  }) => _guard(
+    () => _remote.getUserPosition(userId: userId, period: period, date: date),
+  );
+
+  /// Runs [action], mapping any data-layer exception to a typed [Failure].
+  Future<Either<Failure, T>> _guard<T>(Future<T> Function() action) async {
     try {
-      return Right(await _remote.getTop(period: period, limit: limit));
+      return Right(await action());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message, statusCode: e.statusCode));
     } on NetworkException catch (e) {

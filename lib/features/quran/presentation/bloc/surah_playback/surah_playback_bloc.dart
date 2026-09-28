@@ -10,6 +10,10 @@ import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reci
 
 import 'surah_playback_event.dart';
 import 'surah_playback_state.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
+import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
 
 export 'surah_playback_event.dart';
 export 'surah_playback_state.dart';
@@ -23,6 +27,11 @@ class _AdvanceAyah extends SurahPlaybackEvent {
 /// each file finishes. If the surah's audio is not on the device the bloc
 /// reports [SurahPlaybackState.needsDownload] instead of streaming.
 class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
+  // The audio notification has no BuildContext: it is written in the language
+  // the app is showing right now.
+  AppText get _text => AppText.forLanguage(LanguagePreference.current);
+  LocalizedNumberFormatter get _numbers => LanguagePreference.numbers;
+
   SurahPlaybackBloc({
     QuranAudioDownloader? downloader,
     QuranAudioHandler? audio,
@@ -177,8 +186,14 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         localPath,
         item: MediaItem(
           id: '$_surahNo:$ayahNo',
-          title: ayahNo == 0 ? 'Bismillah' : 'Ayah $ayahNo',
-          album: 'Surah $_surahNo',
+          title: ayahNo == 0
+              ? _text.quranBismillah
+              : _text.quranAudioAyahTitle.fill({
+                  'key': _numbers.digits('$ayahNo'),
+                }),
+          album: _text.quranSurahNumberTitle.fill({
+            'n': _numbers.digits('$_surahNo'),
+          }),
         ),
       );
       emit(state.copyWith(isBuffering: false));

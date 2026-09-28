@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// The pastel-green "Duas for help" card shown on the dashboard's Featured
 /// Dua row and on the full Featured Dua list (design `img_1.png` /
@@ -96,7 +97,9 @@ class DuaFeaturedCard extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                '${appText.duaTotalDuaLabel} : ${featured.totalDua}',
+                context.localizedDigits(
+                  '${appText.duaTotalDuaLabel} : ${featured.totalDua}',
+                ),
                 style: TextStyle(
                   fontSize: 11.sp,
                   color: context.inkColor(Color(0xFF5D6B44)),

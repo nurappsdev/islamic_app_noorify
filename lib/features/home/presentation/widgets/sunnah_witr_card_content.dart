@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
@@ -17,11 +19,13 @@ class SunnahPrayerData {
   const SunnahPrayerData({
     required this.prayerName,
     required this.points,
+    this.label,
     this.sunnahCompleted = false,
   });
 
   /// Matches the pill labels: `Fajr`, `Duhr`, `Asr`, `Magrib`, `Esa`.
   final String prayerName;
+  final String? label;
   final num points;
 
   /// Tracked today; the pill is drawn dark green.
@@ -36,8 +40,11 @@ class SunnahWitrCardContent extends StatelessWidget {
     super.key,
     this.percentage = 0,
     this.counter = '0/6',
+    this.title = 'Sunnah and Witr',
+    this.percentageLabel,
     this.prayers = const [],
     this.onOpenTracker,
+    this.onPrayerTap,
   });
 
   /// 0-100.
@@ -45,12 +52,17 @@ class SunnahWitrCardContent extends StatelessWidget {
 
   /// Points earned / max points, e.g. `0/6`.
   final String counter;
+  final String title;
+  final String? percentageLabel;
 
   /// Per-prayer points and tracked state, matched to the pills by
   /// [SunnahPrayerData.prayerName]. Prayers missing here show the design's
   /// default points, not tracked.
   final List<SunnahPrayerData> prayers;
   final VoidCallback? onOpenTracker;
+
+  /// A tap on one prayer's pill, with the pill's name (`Fajr`, `Duhr`, ...).
+  final ValueChanged<String>? onPrayerTap;
 
   // Clockwise from the upper right, as in the design.
   static const _pills = [
@@ -76,6 +88,7 @@ class SunnahWitrCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: percentage,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenTracker ??
                 () => Navigator.of(context).push(
@@ -87,7 +100,7 @@ class SunnahWitrCardContent extends StatelessWidget {
                 ),
           ),
           SizedBox(height: 26.h),
-          PrayerSummaryWidget(title: 'Sunnah and Witr', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           SizedBox(height: 8.h),
           Expanded(
             child: LayoutBuilder(
@@ -114,11 +127,23 @@ class SunnahWitrCardContent extends StatelessWidget {
                         top: h * a.centerY - pillH / 2,
                         width: w * a.width,
                         height: pillH,
-                        child: _SunnahPill(
-                          name: name,
-                          points: _dataFor(name)?.points ?? defaultPoints,
-                          circleFirst: circleFirst,
-                          active: _dataFor(name)?.sunnahCompleted ?? false,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onPrayerTap == null
+                              ? null
+                              : () => onPrayerTap!(name),
+                          child: _SunnahPill(
+                            name:
+                                _dataFor(name)?.label?.trim().isNotEmpty == true
+                                ? _dataFor(name)!.label!.trim()
+                                : _localizedPrayerName(
+                                    AppText.of(context),
+                                    name,
+                                  ),
+                            points: _dataFor(name)?.points ?? defaultPoints,
+                            circleFirst: circleFirst,
+                            active: _dataFor(name)?.sunnahCompleted ?? false,
+                          ),
                         ),
                       ),
                   ],
@@ -159,7 +184,7 @@ class _SunnahPill extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Text(
-            '+${points == points.roundToDouble() ? points.toInt() : points}',
+            '+${context.localizedDigits('${points == points.roundToDouble() ? points.toInt() : points}')}',
             style: TextStyle(fontSize: h * 0.36, color: _textGreen),
           ),
         );
@@ -199,6 +224,15 @@ class _SunnahPill extends StatelessWidget {
     );
   }
 }
+
+String _localizedPrayerName(AppText appText, String key) => switch (key) {
+  'Fajr' => appText.prayerFajr,
+  'Duhr' => appText.prayerDhuhr,
+  'Asr' => appText.prayerAsr,
+  'Magrib' => appText.prayerMaghribAndIftar,
+  'Esa' => appText.prayerIsha,
+  _ => key,
+};
 
 /// Five dark arcs with small gaps, drawn behind the pills.
 class _SegmentRingPainter extends CustomPainter {

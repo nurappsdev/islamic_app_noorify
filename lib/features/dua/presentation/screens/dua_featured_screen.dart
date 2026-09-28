@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_featured_card.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Browse-all featured Dua list (design `devImg/img_3.png`), reached from the
 /// "Featured Dua" section's "See All" on [DuaDashboardScreen].
@@ -28,7 +29,9 @@ class DuaFeaturedScreen extends StatelessWidget {
             DuaPageHeader(title: appText.duaFeaturedTitle),
             SizedBox(height: 16.h),
             Text(
-              '${appText.duaTotalFeaturedLabel} ( ${featured.length} )',
+              context.localizedDigits(
+                '${appText.duaTotalFeaturedLabel} ( ${featured.length} )',
+              ),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF5D6B44)),

@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Browse-all categories for the Dua flow (design `devImg/img_2.png`),
 /// reached from the "Duas Category" section's "See All" on
@@ -29,7 +30,9 @@ class DuaAllCategoryScreen extends StatelessWidget {
             DuaPageHeader(title: appText.duaAllCategoryTitle),
             SizedBox(height: 16.h),
             Text(
-              '${appText.duaTotalCategoryLabel} ( ${categories.length} )',
+              context.localizedDigits(
+                '${appText.duaTotalCategoryLabel} ( ${categories.length} )',
+              ),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF5D6B44)),

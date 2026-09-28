@@ -5,6 +5,7 @@ import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_board_model.dart';
+import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_user_detail_model.dart';
 
 /// Talks to the leaderboard REST endpoint. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.
@@ -13,6 +14,15 @@ abstract interface class LeaderboardRemoteDataSource {
   Future<LeaderboardBoardModel> getTop({
     required String period,
     required int limit,
+  });
+
+  /// `GET /leaderboard/users/:userId?period=...&date=...`. [date] is the
+  /// period's `key` from a leaderboard response (`2026-09`); omitted, the
+  /// server uses the current period.
+  Future<LeaderboardUserDetailModel> getUserPosition({
+    required String userId,
+    required String period,
+    String? date,
   });
 }
 
@@ -28,12 +38,35 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
   Future<LeaderboardBoardModel> getTop({
     required String period,
     required int limit,
-  }) async {
+  }) async => LeaderboardBoardModel.fromJson(
+    await _getData(ApiConstants.leaderboardTopEndPoint, {
+      'period': period,
+      'limit': limit,
+    }),
+  );
+
+  @override
+  Future<LeaderboardUserDetailModel> getUserPosition({
+    required String userId,
+    required String period,
+    String? date,
+  }) async => LeaderboardUserDetailModel.fromJson(
+    await _getData(ApiConstants.leaderboardUserEndPoint(userId), {
+      'period': period,
+      if (date != null && date.isNotEmpty) 'date': date,
+    }),
+  );
+
+  /// GETs [path] and returns the envelope's `data` object.
+  Future<Map<String, dynamic>> _getData(
+    String path,
+    Map<String, dynamic> query,
+  ) async {
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
-        ApiConstants.leaderboardTopEndPoint,
-        queryParameters: {'period': period, 'limit': limit},
+        path,
+        queryParameters: query,
         options: Options(headers: _authHeaders()),
       );
     } on DioException catch (e) {
@@ -57,7 +90,7 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
     if (data is! Map<String, dynamic>) {
       throw ParsingException('Leaderboard response is missing "data".');
     }
-    return LeaderboardBoardModel.fromJson(data);
+    return data;
   }
 
   Map<String, String>? _authHeaders() {

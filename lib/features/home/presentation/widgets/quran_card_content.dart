@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:islami_app_noorify/core/constants/route_names.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
@@ -19,6 +20,8 @@ class QuranCardContent extends StatelessWidget {
     this.counter = '0/11',
     this.progress = 0,
     this.readingTimeLabel = '',
+    this.title = 'Quran',
+    this.percentageLabel,
     this.onOpenQuran,
   });
 
@@ -30,6 +33,8 @@ class QuranCardContent extends StatelessWidget {
 
   /// Time read today, e.g. `1 hr 37 min`. Empty shows nothing under the title.
   final String readingTimeLabel;
+  final String title;
+  final String? percentageLabel;
   final VoidCallback? onOpenQuran;
 
   @override
@@ -40,14 +45,19 @@ class QuranCardContent extends StatelessWidget {
         children: [
           ProgressHeaderWidget(
             percentage: progress.clamp(0.0, 1.0) * 100,
+            percentageLabel: percentageLabel,
             onTap:
                 onOpenQuran ??
                 () => Navigator.of(context).pushNamed(RouteNames.quran),
           ),
           SizedBox(height: 18.h),
-          PrayerSummaryWidget(title: 'Quran', counter: counter),
+          PrayerSummaryWidget(title: title, counter: counter),
           const Spacer(),
-          _QuranRing(progress: progress, readingTimeLabel: readingTimeLabel),
+          _QuranRing(
+            progress: progress,
+            readingTimeLabel: readingTimeLabel,
+            title: title,
+          ),
         ],
       ),
     );
@@ -55,10 +65,15 @@ class QuranCardContent extends StatelessWidget {
 }
 
 class _QuranRing extends StatelessWidget {
-  const _QuranRing({required this.progress, required this.readingTimeLabel});
+  const _QuranRing({
+    required this.progress,
+    required this.readingTimeLabel,
+    required this.title,
+  });
 
   final double progress;
   final String readingTimeLabel;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -88,14 +103,14 @@ class _QuranRing extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Quran Reading',
+                    title,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.sp, color: _darkGreen),
                   ),
                   if (readingTimeLabel.isNotEmpty) ...[
                     SizedBox(height: 12.h),
                     Text(
-                      readingTimeLabel,
+                      context.localizedDigits(readingTimeLabel),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 15.sp, color: _darkGreen),
                     ),

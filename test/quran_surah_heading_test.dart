@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_surah_heading.dart';
 import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 const surah = SurahSummary(
   number: 2,
@@ -11,6 +13,14 @@ const surah = SurahSummary(
   translation: '',
   revelationPlace: 'medinan',
   totalAyah: 286,
+);
+
+/// The app's language, provided at its root, defaults to Bangla; these tests
+/// assert English text.
+Widget _english(Widget child) => BlocProvider(
+  create: (_) =>
+      LanguageBloc(initialLanguage: AppLanguage.english, persist: (_) async {}),
+  child: child,
 );
 
 void main() {
@@ -24,36 +34,38 @@ void main() {
         tester.view.physicalSize = Size(width, 850);
         tester.view.devicePixelRatio = 1;
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: MediaQuery(
-                data: MediaQueryData(
-                  size: Size(width, 850),
-                  padding: const EdgeInsets.only(top: 44),
-                  textScaler: TextScaler.linear(scale),
-                ),
-                child: SafeArea(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 72, child: Text('Controls')),
-                      Expanded(
-                        child: QuranPageViewport(
-                          pageNumber: 1,
-                          showHeader: false,
-                          footer: const SizedBox(),
-                          header: const QuranSurahHeading(
-                            surah: surah,
-                            showBismillah: true,
-                          ),
-                          child: Column(
-                            children: [
-                              const Text('First ayah'),
-                              const SizedBox(height: 1500),
-                            ],
+          _english(
+            MaterialApp(
+              home: Scaffold(
+                body: MediaQuery(
+                  data: MediaQueryData(
+                    size: Size(width, 850),
+                    padding: const EdgeInsets.only(top: 44),
+                    textScaler: TextScaler.linear(scale),
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 72, child: Text('Controls')),
+                        Expanded(
+                          child: QuranPageViewport(
+                            pageNumber: 1,
+                            showHeader: false,
+                            footer: const SizedBox(),
+                            header: const QuranSurahHeading(
+                              surah: surah,
+                              showBismillah: true,
+                            ),
+                            child: Column(
+                              children: [
+                                const Text('First ayah'),
+                                const SizedBox(height: 1500),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

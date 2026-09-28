@@ -19,7 +19,7 @@ void main() {
   Widget appUnderTest({String? initialRoute}) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageBloc()),
+        BlocProvider(create: (_) => LanguageBloc(initialLanguage: AppLanguage.english)),
         BlocProvider(create: (_) => AppPreferencesBloc()),
       ],
       child: MyApp(initialRoute: initialRoute),
@@ -192,7 +192,7 @@ void main() {
         designSize: const Size(375, 812),
         builder: (context, child) {
           return BlocProvider(
-            create: (_) => LanguageBloc(),
+            create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
             child: const MaterialApp(
               home: Scaffold(
                 body: SafeArea(

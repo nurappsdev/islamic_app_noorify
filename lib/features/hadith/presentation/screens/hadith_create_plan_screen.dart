@@ -16,6 +16,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_crea
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_plan_pickers.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Create-plan form for the Hadith planner.
 ///
@@ -477,7 +478,9 @@ class _AddedView extends StatelessWidget {
                       ),
                       SizedBox(height: 7.h),
                       Text(
-                        '${formatHadithCount(hadithCount)} ${appText.categoryHadith}',
+                        context.localizedDigits(
+                          '${formatHadithCount(hadithCount)} ${appText.categoryHadith}',
+                        ),
                         style: TextStyle(
                           color: const Color(0xFFA1AD59),
                           fontSize: 12.sp,

@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show FloatingHeaderSnapConfiguration;
 import 'package:flutter/services.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/juz_summary.dart';
 import '../../domain/surah_summary.dart';
@@ -107,7 +110,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error) return QuranRetry(onRetry: _load);
     if (_surahs.isEmpty || _paras.isEmpty) {
-      return const Center(child: Text('No Quran filters available'));
+      return Center(child: Text(AppText.of(context).quranNoFilters));
     }
     final background = context.surfaceColor(Colors.white);
     final matches = _surahs
@@ -122,7 +125,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
       top: false,
       child: Column(
         children: [
-          const QuranSheetHeading('Filter Quran'),
+          QuranSheetHeading(AppText.of(context).quranFilterTitle),
           Expanded(
             child: CustomScrollView(
               slivers: [
@@ -809,54 +812,60 @@ class _QuranAyahWheelState extends State<QuranAyahWheel> {
   }
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 70,
-    child: RotatedBox(
-      quarterTurns: -1,
-      child: ListWheelScrollView.useDelegate(
-        controller: _controller,
-        itemExtent: 52,
-        physics: const FixedExtentScrollPhysics(),
-        diameterRatio: 12,
-        perspective: .001,
-        onSelectedItemChanged: (index) {
-          final value = widget.first + index;
-          if (value == _selected) return;
-          setState(() => _selected = value);
-          HapticFeedback.selectionClick();
-          widget.onChanged(value);
-        },
-        childDelegate: ListWheelChildBuilderDelegate(
-          childCount: widget.last - widget.first + 1,
-          builder: (_, i) {
-            final n = widget.first + i;
-            return RotatedBox(
-              quarterTurns: 1,
-              child: Semantics(
-                selected: n == _selected,
-                label: 'Ayah $n',
-                child: GestureDetector(
-                  onTap: () => _controller.animateToItem(
-                    i,
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: n == _selected ? quranBorder : null,
-                      border: Border.all(color: quranBorder),
-                      borderRadius: BorderRadius.circular(12),
+  Widget build(BuildContext context) {
+    // Read here, not in the wheel's item builder: that runs during layout,
+    // where a widget can't subscribe to the language.
+    final ayahLabel = AppText.of(context).quranAyahNumber;
+    final numbers = context.localizedNumbers;
+    return SizedBox(
+      height: 70,
+      child: RotatedBox(
+        quarterTurns: -1,
+        child: ListWheelScrollView.useDelegate(
+          controller: _controller,
+          itemExtent: 52,
+          physics: const FixedExtentScrollPhysics(),
+          diameterRatio: 12,
+          perspective: .001,
+          onSelectedItemChanged: (index) {
+            final value = widget.first + index;
+            if (value == _selected) return;
+            setState(() => _selected = value);
+            HapticFeedback.selectionClick();
+            widget.onChanged(value);
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: widget.last - widget.first + 1,
+            builder: (_, i) {
+              final n = widget.first + i;
+              return RotatedBox(
+                quarterTurns: 1,
+                child: Semantics(
+                  selected: n == _selected,
+                  label: ayahLabel.fill({'n': numbers.digits('$n')}),
+                  child: GestureDetector(
+                    onTap: () => _controller.animateToItem(
+                      i,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
                     ),
-                    child: Text('$n'),
+                    child: Container(
+                      alignment: Alignment.center,
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: n == _selected ? quranBorder : null,
+                        border: Border.all(color: quranBorder),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(numbers.digits('$n')),
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

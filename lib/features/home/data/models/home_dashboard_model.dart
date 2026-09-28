@@ -11,6 +11,7 @@ class HomeDashboardModel extends HomeDashboard {
     required super.userSummary,
     required super.topHighlightCards,
     required super.pillarCards,
+    super.dashboardDate,
   });
 
   factory HomeDashboardModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,7 @@ class HomeDashboardModel extends HomeDashboard {
                 )
                 .toList()
           : const [],
+      dashboardDate: DateTime.tryParse(json['date']?.toString() ?? ''),
     );
   }
 }

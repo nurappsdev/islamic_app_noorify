@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.
 import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
 import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Reads a hadith saved from the online library, from the copy kept with its
 /// bookmark (so it also works offline). Opened from the Saved screen.
@@ -83,7 +84,9 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      '${appText.categoryHadith} ${widget.bookmark.hadithNo}',
+                      context.localizedDigits(
+                        '${appText.categoryHadith} ${widget.bookmark.hadithNo}',
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

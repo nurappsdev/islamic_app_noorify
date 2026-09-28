@@ -8,6 +8,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Browse-all list for the Zikr flow, reached from the grid icon in
 /// [ZikrBottomNav]. Tapping a zikr opens [ZikrCounterScreen].
@@ -135,7 +136,7 @@ class _ZikrTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Text(
-                '${item.target}x',
+                context.localizedDigits('${item.target}x'),
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,

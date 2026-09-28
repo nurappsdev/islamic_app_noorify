@@ -24,6 +24,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_b
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Hadith library landing screen.
 ///
@@ -219,7 +220,7 @@ class _HadithHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                _headerTotal(context),
+                context.localizedDigits(_headerTotal(context)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,
@@ -370,7 +371,7 @@ class _LastReadPill extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '${appText.hadithLastRead} :  ',
+            context.localizedDigits('${appText.hadithLastRead} :  '),
             style: TextStyle(
               color: Colors.white,
               fontSize: 13.sp,
@@ -566,7 +567,9 @@ class _CollectionCard extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+                  context.localizedDigits(
+                    '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+                  ),
                   maxLines: 1,
                 ),
               ),

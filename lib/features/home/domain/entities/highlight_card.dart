@@ -1,3 +1,5 @@
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
+
 /// One card from the Home dashboard's `topHighlightCards` carousel
 /// (today's amol, today's/yesterday's leaders, monthly rankings, ...).
 class HighlightCard {
@@ -12,6 +14,11 @@ class HighlightCard {
     this.subtitle,
     this.rank,
     this.hasData = true,
+    this.localizedTitle = LocalizedText.empty,
+    this.localizedSubtitle = LocalizedText.empty,
+    this.localizedPointsText = LocalizedText.empty,
+    this.localizedPercentage = LocalizedText.empty,
+    this.localizedRank = LocalizedText.empty,
   });
 
   final String id;
@@ -34,4 +41,10 @@ class HighlightCard {
   /// `false` when the API has nothing to show for this card yet (e.g. no
   /// winner last month); the carousel skips such cards.
   final bool hasData;
+
+  final LocalizedText localizedTitle;
+  final LocalizedText localizedSubtitle;
+  final LocalizedText localizedPointsText;
+  final LocalizedText localizedPercentage;
+  final LocalizedText localizedRank;
 }

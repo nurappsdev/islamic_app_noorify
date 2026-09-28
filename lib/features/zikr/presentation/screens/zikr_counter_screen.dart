@@ -9,6 +9,7 @@ import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
@@ -115,7 +116,12 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       body: ListView(
         padding: EdgeInsets.only(bottom: 30.h),
         children: [
-          ZikrGradientHeader(title: widget.args.title, total: _total),
+          ZikrGradientHeader(
+            title: widget.args.title.isEmpty
+                ? AppText.of(context).zikrTitle
+                : widget.args.title,
+            total: _total,
+          ),
           Transform.translate(
             offset: Offset(0, -18.h),
             child: SizedBox(
@@ -264,7 +270,7 @@ class _CurrentZikrCard extends StatelessWidget {
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF6E8B3D)),
                 ),
                 Text(
-                  '$done/${item.target}',
+                  context.localizedDigits('$done/${item.target}'),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
@@ -444,7 +450,7 @@ class _ProgressBar extends StatelessWidget {
                       color: context.surfaceColor(Color(0xFFCFE0AE)),
                     ),
                     child: Text(
-                      '$percent %',
+                      context.localizedDigits('$percent %'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,

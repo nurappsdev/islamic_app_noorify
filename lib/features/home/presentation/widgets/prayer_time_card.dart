@@ -16,8 +16,8 @@ import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.da
 import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
 import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
-part 'prayer_time_card_widgets.dart';
 part 'prayer_time_card_painters.dart';
+part 'prayer_time_card_widgets.dart';
 
 class PrayerTimeCard extends StatefulWidget {
   const PrayerTimeCard({super.key, this.prayerTimeService, this.now});
@@ -203,42 +203,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         top: 19.h,
                         left: 20.w,
                         right: 20.w,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  bangla
-                                      ? hijriDateLabel(_now(), bangla: true)
-                                      : (_times?.hijriDate ??
-                                            hijriDateLabel(_now())),
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: topDateColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 28.w),
-
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  banglaDateLabel(_now(), english: !bangla),
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: topDateColor,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: _CardDateRow(
+                          start: hijriDateLabel(
+                            _now(),
+                            bangla: bangla,
+                            maghrib: _times?.maghrib,
+                          ),
+                          end: banglaDateLabel(_now(), english: !bangla),
+                          color: topDateColor,
                         ),
                       ),
 

@@ -11,6 +11,7 @@ import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_li
 import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Full "Hadith Library" collection list.
 ///
@@ -146,7 +147,9 @@ class _LibraryCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
           Text(
-            '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+            context.localizedDigits(
+              '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+            ),
             style: TextStyle(
               fontSize: 12.sp,
               color: context.inkColor(Color(0xFF5D6B44)),

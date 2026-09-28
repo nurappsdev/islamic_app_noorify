@@ -1,15 +1,15 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
 import 'package:islami_app_noorify/shared/services/app_globals.dart';
 
 /// Wipes everything that belongs to the signed-in user, so the next login
 /// (the same account or another) starts from a clean slate and only loads its
 /// own data. Device-level preferences (theme, language, font sizes, intro
-/// screens) and shared content caches (Asma-ul-Husna, downloaded books) are
-/// kept — they aren't tied to an account.
+/// screens), alarms (saved on the device) and shared content caches
+/// (Asma-ul-Husna, downloaded books) are kept — they aren't tied to an
+/// account.
 class SessionCleaner {
   const SessionCleaner._();
 
@@ -26,7 +26,6 @@ class SessionCleaner {
 
   static Future<void> clearUserData() async {
     // Each step is independent: one failing must not leave the rest behind.
-    await _safe(AlarmScheduler.cancelAllAlarms);
     await _safe(() async {
       // Token and the cached profile both live in the auth box.
       await HiveService.auth.clear();

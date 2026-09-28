@@ -13,6 +13,7 @@ import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bookmar
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
 import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_zoom_control.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// Single-dua reader (design `devImg/img_6.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].
@@ -257,8 +258,10 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                   if (_detail.repeatCount != null) ...[
                     SizedBox(height: 10.h),
                     Text(
-                      '${appText.duaRecitePrefix} ${_detail.repeatCount} '
-                      '${appText.duaReciteSuffix}',
+                      context.localizedDigits(
+                        '${appText.duaRecitePrefix} ${_detail.repeatCount} '
+                        '${appText.duaReciteSuffix}',
+                      ),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: context.inkColor(Color(0xFF3B4430)),
@@ -406,7 +409,7 @@ class _ReaderControlBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
-                  '$count',
+                  context.localizedDigits('$count'),
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,

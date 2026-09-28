@@ -266,47 +266,47 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
                       }
                     },
                   ),
-                Expanded(child: body),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 9.h),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56.h,
-                    child: FilledButton(
-                      onPressed: state.isSubmitting ? null : _create,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFA1AD59),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28.r),
+                  Expanded(child: body),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(18.w, 0, 18.w, 9.h),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56.h,
+                      child: FilledButton(
+                        onPressed: state.isSubmitting ? null : _create,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFA1AD59),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28.r),
+                          ),
                         ),
+                        child: state.isSubmitting
+                            ? SizedBox(
+                                width: 20.r,
+                                height: 20.r,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                appText.create,
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
                       ),
-                      child: state.isSubmitting
-                          ? SizedBox(
-                              width: 20.r,
-                              height: 20.r,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              appText.create,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
+        );
+      },
+    );
   }
 }
 

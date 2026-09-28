@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class AyahCard extends StatelessWidget {
   const AyahCard({
@@ -49,7 +50,7 @@ class AyahCard extends StatelessWidget {
                   radius: 13.r,
                   backgroundColor: context.surfaceColor(Color(0xFFDFE9B9)),
                   child: Text(
-                    '$ayahNo',
+                    context.localizedDigits('$ayahNo'),
                     style: TextStyle(color: AppColor.primary, fontSize: 11.sp),
                   ),
                 ),

@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:islami_app_noorify/core/localization/localization_context.dart';
 
 class SetAlarmScreen extends StatelessWidget {
   const SetAlarmScreen({
@@ -43,7 +44,6 @@ const _olive = Color(0xFF8D9B70);
 const _fadedNear = Color(0xFFBFC79B);
 const _fadedFar = Color(0xFFE3E6D3);
 const _hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const _periods = ['AM', 'PM'];
 
 class _SetAlarmView extends StatefulWidget {
   const _SetAlarmView({required this.period, this.onSetAlarm});
@@ -272,6 +272,8 @@ class _TimeWheel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final itemExtent = _itemExtent.h;
+    final numbers = context.localizedNumbers;
+    final appText = AppText.of(context);
     return SizedBox(
       height: itemExtent * 5.6,
       child: Stack(
@@ -312,7 +314,8 @@ class _TimeWheel extends StatelessWidget {
                   itemExtent: itemExtent,
                   itemCount: _hours.length,
                   selectedIndex: hourIndex,
-                  label: (i) => _hours[i].toString().padLeft(2, '0'),
+                  label: (i) =>
+                      numbers.digits(_hours[i].toString().padLeft(2, '0')),
                   onChanged: onHourChanged,
                 ),
               ),
@@ -334,19 +337,20 @@ class _TimeWheel extends StatelessWidget {
                   itemExtent: itemExtent,
                   itemCount: 60,
                   selectedIndex: minuteIndex,
-                  label: (i) => i.toString().padLeft(2, '0'),
+                  label: (i) => numbers.digits(i.toString().padLeft(2, '0')),
                   onChanged: onMinuteChanged,
                 ),
               ),
               SizedBox(width: 10.w),
               SizedBox(
-                width: 50.w,
+                // পূর্বাহ্ণ / অপরাহ্ণ need more room than AM / PM.
+                width: numbers.isBangla ? 84.w : 50.w,
                 child: _Wheel(
                   controller: periodController,
                   itemExtent: itemExtent,
-                  itemCount: _periods.length,
+                  itemCount: 2,
                   selectedIndex: periodIndex,
-                  label: (i) => _periods[i],
+                  label: (i) => i == 0 ? appText.amLabel : appText.pmLabel,
                   onChanged: onPeriodChanged,
                 ),
               ),
@@ -389,17 +393,23 @@ class _Wheel extends StatelessWidget {
           final distance = (index - selectedIndex).abs();
           final isSelected = distance == 0;
           return Center(
-            child: Text(
-              label(index),
-              style: TextStyle(
-                fontSize: isSelected ? 26.sp : (distance == 1 ? 18.sp : 14.sp),
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                color: context.inkColor(
-                  isSelected
-                      ? _olive
-                      : distance == 1
-                      ? _fadedNear
-                      : _fadedFar,
+            // A longer label (Bangla পূর্বাহ্ণ) shrinks instead of overflowing.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label(index),
+                style: TextStyle(
+                  fontSize: isSelected
+                      ? 26.sp
+                      : (distance == 1 ? 18.sp : 14.sp),
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  color: context.inkColor(
+                    isSelected
+                        ? _olive
+                        : distance == 1
+                        ? _fadedNear
+                        : _fadedFar,
+                  ),
                 ),
               ),
             ),

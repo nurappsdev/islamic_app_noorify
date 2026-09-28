@@ -7,6 +7,7 @@ import 'package:islami_app_noorify/core/utils/app_color.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
 import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 /// The zikr set being built (design `devImg/img_16.png`).
 ///
@@ -172,7 +173,7 @@ class _ZikrRow extends StatelessWidget {
             ),
           ),
           Text(
-            '(${item.target})',
+            context.localizedDigits('(${item.target})'),
             style: TextStyle(
               fontSize: 15.sp,
               color: context.inkColor(Color(0xFF6B7358)),

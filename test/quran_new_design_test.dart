@@ -81,6 +81,14 @@ Future<void> preview(WidgetTester tester, String name) async {
   });
 }
 
+/// The app's language, provided at its root, defaults to Bangla; these tests
+/// assert English text.
+Widget _english(Widget child) => BlocProvider(
+  create: (_) =>
+      LanguageBloc(initialLanguage: AppLanguage.english, persist: (_) async {}),
+  child: child,
+);
+
 void main() {
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -115,7 +123,9 @@ void main() {
     );
     await tester.pumpWidget(
       BlocProvider(
-        create: (_) => LanguageBloc(),
+        // The app defaults to Bangla; this test reads English labels.
+        create: (_) =>
+            LanguageBloc()..add(const UpdateLanguage(AppLanguage.english)),
         child: ScreenUtilInit(
           designSize: const Size(375, 812),
           builder: (_, child) => MaterialApp(
@@ -191,15 +201,17 @@ void main() {
       final bloc = OfflineQuranBloc(database: db, downloader: source);
       addTearDown(bloc.close);
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(fontFamily: 'Roboto'),
-          builder: (_, child) =>
-              RepaintBoundary(key: previewKey, child: child!),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () => showQuranDownload(context, bloc: bloc),
-                child: const Text('Open download'),
+        _english(
+          MaterialApp(
+            theme: ThemeData(fontFamily: 'Roboto'),
+            builder: (_, child) =>
+                RepaintBoundary(key: previewKey, child: child!),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showQuranDownload(context, bloc: bloc),
+                  child: const Text('Open download'),
+                ),
               ),
             ),
           ),
@@ -242,27 +254,29 @@ void main() {
       );
       SurahRouteArgs? result;
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(fontFamily: 'Roboto'),
-          builder: (context, child) =>
-              RepaintBoundary(key: previewKey, child: child!),
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => TextButton(
-                onPressed: () async {
-                  result = await showQuranModal<SurahRouteArgs>(
-                    context,
-                    QuranFilterSheet(
-                      service: api,
-                      initial: const SurahRouteArgs(
-                        surahNo: 2,
-                        surahName: 'Al-Baqarah',
-                        ayahNo: 5,
+        _english(
+          MaterialApp(
+            theme: ThemeData(fontFamily: 'Roboto'),
+            builder: (context, child) =>
+                RepaintBoundary(key: previewKey, child: child!),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () async {
+                    result = await showQuranModal<SurahRouteArgs>(
+                      context,
+                      QuranFilterSheet(
+                        service: api,
+                        initial: const SurahRouteArgs(
+                          surahNo: 2,
+                          surahName: 'Al-Baqarah',
+                          ayahNo: 5,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: const Text('Filter'),
+                    );
+                  },
+                  child: const Text('Filter'),
+                ),
               ),
             ),
           ),
@@ -329,13 +343,15 @@ void main() {
       ),
     );
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: QuranAyahWheel(
-            first: 1,
-            last: 30,
-            initial: 1,
-            onChanged: changed.add,
+      _english(
+        MaterialApp(
+          home: Scaffold(
+            body: QuranAyahWheel(
+              first: 1,
+              last: 30,
+              initial: 1,
+              onChanged: changed.add,
+            ),
           ),
         ),
       ),
@@ -385,26 +401,28 @@ void main() {
         );
       });
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => Column(
-                children: [
-                  TextButton(
-                    onPressed: () => shareQuranAyah(
-                      context,
-                      verse,
-                      translation: 161,
-                      copy: true,
+        _english(
+          MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => Column(
+                  children: [
+                    TextButton(
+                      onPressed: () => shareQuranAyah(
+                        context,
+                        verse,
+                        translation: 161,
+                        copy: true,
+                      ),
+                      child: const Text('Copy'),
                     ),
-                    child: const Text('Copy'),
-                  ),
-                  TextButton(
-                    onPressed: () =>
-                        shareQuranAyah(context, verse, translation: 161),
-                    child: const Text('Share'),
-                  ),
-                ],
+                    TextButton(
+                      onPressed: () =>
+                          shareQuranAyah(context, verse, translation: 161),
+                      child: const Text('Share'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -435,6 +453,9 @@ void main() {
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
+          BlocProvider(
+            create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
+          ),
           BlocProvider(create: (_) => AyahAudioBloc(audio: audio)),
           BlocProvider(
             create: (_) => AyahBookmarkBloc(
@@ -487,12 +508,14 @@ void main() {
         );
       });
       await tester.pumpWidget(
-        MaterialApp(
-          home: QuranTafsirScreen(
-            verseKey: '2:255',
-            isBangla: true,
-            ayahs: [QuranAyah.fromJson(ayah(255))],
-            readerService: QuranComReaderService(client: client),
+        _english(
+          MaterialApp(
+            home: QuranTafsirScreen(
+              verseKey: '2:255',
+              isBangla: true,
+              ayahs: [QuranAyah.fromJson(ayah(255))],
+              readerService: QuranComReaderService(client: client),
+            ),
           ),
         ),
       );
