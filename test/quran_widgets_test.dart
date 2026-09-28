@@ -240,6 +240,9 @@ void main() {
       expect(find.text('Translate'), findsOneWidget);
       await tester.tap(find.text('View in ayat'));
       await tester.pumpAndSettle();
+      expect(find.text('Show under each ayah'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('quran-ayat-view-english')));
+      await tester.pumpAndSettle();
       expect(preferences.state.showTranslation, isTrue);
       await tester.tap(find.byTooltip('Filter Quran'));
       await tester.pumpAndSettle();

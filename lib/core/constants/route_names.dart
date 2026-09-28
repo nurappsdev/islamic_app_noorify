@@ -80,6 +80,7 @@ class RouteNames {
   static const quranJuzReader = '/quran/juz';
   static const quranBookmarks = '/quran/bookmarks';
   static const quranReadingHistory = '/quran/history';
+  static const quranDashboard = '/quran/dashboard';
   static const prayerTimes = '/prayer-times';
   static const chat = '/chat';
   static const islamicCalendar = '/islamic-calendar';

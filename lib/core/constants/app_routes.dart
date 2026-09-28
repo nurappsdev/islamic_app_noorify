@@ -103,6 +103,7 @@ import '../../features/quran/presentation/screens/quran_reading_screen.dart';
 import '../../features/quran/presentation/screens/para_detail_screen.dart';
 import '../../features/quran/presentation/screens/bookmarks_screen.dart';
 import '../../features/quran/presentation/screens/reading_history_screen.dart';
+import '../../features/quran/presentation/screens/quran_dashboard_screen.dart';
 import '../../features/quran/presentation/bloc/last_read/last_read_bloc.dart';
 import '../../features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
 import '../../features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
@@ -412,28 +413,46 @@ class AppRoutes {
             ? rawArgs
             : SurahRouteArgs(surahNo: rawArgs as int? ?? 1, surahName: '');
         final downloader = QuranAudioDownloader();
-        return _page(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider(
-                create: (_) => ReciterBloc()..add(const LoadReciters()),
+        final reader = MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => ReciterBloc()..add(const LoadReciters()),
+            ),
+            BlocProvider(
+              create: (_) => SurahPlaybackBloc(
+                downloader: downloader,
+                startAyah: args.paraNumber == null
+                    ? 1
+                    : (args.paraStartAyah ?? args.ayahNo),
+                endAyah: args.endAyah,
               ),
-              BlocProvider(
-                create: (_) => SurahPlaybackBloc(
-                  downloader: downloader,
-                  startAyah: args.paraNumber == null
-                      ? 1
-                      : (args.paraStartAyah ?? args.ayahNo),
-                  endAyah: args.endAyah,
+            ),
+            BlocProvider(
+              create: (_) => SurahAudioDownloadBloc(downloader: downloader),
+            ),
+          ],
+          child: QuranReadingScreen(args: args),
+        );
+        if (args.swipeForward == null) return _page(reader, settings);
+        return PageRouteBuilder<void>(
+          settings: settings,
+          transitionDuration: const Duration(milliseconds: 320),
+          reverseTransitionDuration: const Duration(milliseconds: 320),
+          pageBuilder: (_, _, _) => reader,
+          transitionsBuilder: (_, animation, _, child) => SlideTransition(
+            position:
+                Tween<Offset>(
+                  // Arabic-book order: the next Surah enters from the left.
+                  begin: Offset(args.swipeForward! ? -1 : 1, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOutCubic,
+                  ),
                 ),
-              ),
-              BlocProvider(
-                create: (_) => SurahAudioDownloadBloc(downloader: downloader),
-              ),
-            ],
-            child: QuranReadingScreen(args: args),
+            child: child,
           ),
-          settings,
         );
       case RouteNames.quranJuzReader:
         return _page(
@@ -457,6 +476,8 @@ class AppRoutes {
           ),
           settings,
         );
+      case RouteNames.quranDashboard:
+        return _page(const QuranDashboardScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.prayerCompass:

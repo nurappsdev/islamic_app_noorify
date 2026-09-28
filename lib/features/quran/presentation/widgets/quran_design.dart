@@ -1,6 +1,10 @@
 import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
+import '../screens/quran_dashboard_screen.dart';
+import '../screens/quran_plan_screen.dart';
+import '../screens/quran_saved_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../quran_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_text.dart';
@@ -43,73 +47,82 @@ class QuranListRow extends StatelessWidget {
   final String? arabic;
   final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    child: Container(
-      constraints: const BoxConstraints(minHeight: 76),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: quranBorder)),
-      ),
-      child: Row(
-        children: [
-          CustomPaint(
-            painter: _NumberStar(),
-            child: SizedBox(
-              width: 35,
-              height: 35,
-              child: Center(
+  Widget build(BuildContext context) {
+    // The badge grows with the user's text size, so the number always fits.
+    final badge = MediaQuery.textScalerOf(context).scale(35);
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: quranBorder)),
+        ),
+        child: Row(
+          children: [
+            CustomPaint(
+              painter: _NumberStar(),
+              child: SizedBox.square(
+                dimension: badge,
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      QuranText.of(context).n(number),
+                      style: const TextStyle(
+                        color: Color(0xff608568),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.amiri(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: context.inkColor(const Color(0xff302647)),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xff9090ac),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (arabic != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
                 child: Text(
-                  context.localizedDigits('$number'),
+                  arabic!,
+                  textDirection: TextDirection.rtl,
                   style: const TextStyle(
-                    color: Color(0xff608568),
-                    fontSize: 14,
+                    fontFamily: 'Noorehuda',
+                    fontSize: 20,
+                    color: quranInk,
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 17),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.amiri(
-                    fontSize: 18,
-                    fontStyle: FontStyle.italic,
-                    color: context.inkColor(const Color(0xff302647)),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xff9090ac),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (arabic != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text(
-                arabic!,
-                textDirection: TextDirection.rtl,
-                style: const TextStyle(
-                  fontFamily: 'Noorehuda',
-                  fontSize: 20,
-                  color: quranInk,
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _NumberStar extends CustomPainter {
@@ -153,7 +166,7 @@ class QuranTabShell extends StatefulWidget {
 }
 
 class _QuranTabShellState extends State<QuranTabShell> {
-  String _selected = 'quran';
+  String _selected = 'home';
 
   void _select(String section) {
     FocusScope.of(context).unfocus();
@@ -163,17 +176,11 @@ class _QuranTabShellState extends State<QuranTabShell> {
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
-    final sections = ['quran', 'home', 'bookmarks', 'history', 'more'];
-    final titles = [
-      text.home,
-      text.bookmarksTitle,
-      text.readingHistoryTitle,
-      'More',
-    ];
+    final sections = ['home', 'learn', 'saved', 'plan', 'dashboard'];
     return PopScope(
-      canPop: _selected == 'quran',
+      canPop: _selected == 'home',
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _select('quran');
+        if (!didPop) _select('home');
       },
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
@@ -181,8 +188,13 @@ class _QuranTabShellState extends State<QuranTabShell> {
           index: sections.indexOf(_selected),
           children: [
             widget.child,
-            for (final title in titles)
-              ComingSoonScreen(title: title, onBack: () => _select('quran')),
+            ComingSoonScreen(
+              title: text.learn.isNotEmpty ? text.learn : 'Learn',
+              onBack: () => _select('home'),
+            ),
+            QuranSavedScreen(onBack: () => _select('home')),
+            QuranPlanScreen(onBack: () => _select('home')),
+            QuranDashboardScreen(onBack: () => _select('home')),
           ],
         ),
         bottomNavigationBar: QuranBottomNav(
@@ -196,7 +208,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
 
 /// Tab selection changes content in the owning shell, without pushing routes.
 class QuranBottomNav extends StatelessWidget {
-  const QuranBottomNav({super.key, this.selected = 'quran', this.onSelected});
+  const QuranBottomNav({super.key, this.selected = 'home', this.onSelected});
   final String selected;
   final ValueChanged<String>? onSelected;
 
@@ -205,15 +217,30 @@ class QuranBottomNav extends StatelessWidget {
     final text = AppText.of(context);
     final items = [
       ('home', text.home, Icons.home_outlined),
-      ('quran', 'Quran', Icons.menu_book_rounded),
-      ('bookmarks', text.bookmarksTitle, Icons.bookmarks_outlined),
-      ('history', text.readingHistoryTitle, Icons.history_rounded),
-      ('more', 'More', Icons.grid_view_rounded),
+      (
+        'learn',
+        text.learn.isNotEmpty ? text.learn : 'Learn',
+        Icons.school_outlined,
+      ),
+      (
+        'saved',
+        text.saved.isNotEmpty ? text.saved : 'Saved',
+        Icons.bookmark_border_rounded,
+      ),
+      (
+        'plan',
+        text.planner.isNotEmpty ? text.planner : 'Plan',
+        Icons.assignment_turned_in_outlined,
+      ),
+      (
+        'dashboard',
+        text.dashboard.isNotEmpty ? text.dashboard : 'Dashboard',
+        Icons.grid_view_outlined,
+      ),
     ];
     return SafeArea(
       top: false,
       child: Container(
-        height: 72,
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -249,8 +276,8 @@ class QuranBottomNav extends StatelessWidget {
                             key: ValueKey('quran-nav-${item.$1}'),
                             borderRadius: BorderRadius.circular(28),
                             onTap: () => onSelected?.call(item.$1),
-                            child: SizedBox(
-                              height: 56,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

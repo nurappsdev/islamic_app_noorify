@@ -24,7 +24,7 @@ Widget _english(Widget child) => BlocProvider(
 );
 
 void main() {
-  testWidgets('header remains sequential and scrolls away with its artwork', (
+  testWidgets('banner and ayahs scroll together without overlap', (
     tester,
   ) async {
     addTearDown(tester.view.resetPhysicalSize);
@@ -85,7 +85,10 @@ void main() {
             .controller!;
         scroll.jumpTo(0);
         await tester.pump();
+        expect(tester.getRect(pattern).top, tester.getRect(header).top);
         expect(tester.getRect(pattern).left, 0);
+        expect(tester.widget<Image>(pattern).fit, BoxFit.cover);
+        expect(find.text('Controls').hitTestable(), findsOneWidget);
         expect(tester.getRect(pattern).width, width);
         expect(tester.getRect(find.text('Controls')).top, 44);
         expect(
@@ -127,6 +130,22 @@ void main() {
         for (var i = 0; i < before.length; i++) {
           expect(before[i] - after[i], closeTo(200, .01));
         }
+        expect(tester.getRect(pattern).top, tester.getRect(header).top);
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(pattern).bottom + 24),
+        );
+        final controlsTop = tester.getRect(find.text('Controls')).top;
+        await tester.drag(
+          find.byType(QuranPageViewport),
+          const Offset(0, -180),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.getRect(ayah).top,
+          greaterThanOrEqualTo(tester.getRect(pattern).bottom + 24),
+        );
+        expect(tester.getRect(find.text('Controls')).top, controlsTop);
         expect(tester.takeException(), isNull);
       }
     }

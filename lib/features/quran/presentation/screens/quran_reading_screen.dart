@@ -14,6 +14,7 @@ import '../bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
+import '../bloc/tafsir/tafsir_bloc.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,6 +32,7 @@ import '../bloc/quran_reading_cubit.dart';
 import '../bloc/quran_translation/quran_translation_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
 import '../quran_route_args.dart';
+import '../quran_reading_navigation.dart';
 import '../widgets/quran_design.dart';
 import '../widgets/quran_player_widgets.dart';
 import '../widgets/quran_shimmer.dart';
@@ -85,27 +87,73 @@ class _ReaderBody extends StatefulWidget {
 }
 
 class _ReaderBodyState extends State<_ReaderBody> {
-  final _elapsed = Stopwatch()..start();
+  late final QuranReadingSession _session =
+      widget.args.readingSession ?? QuranReadingSession();
   final _seconds = ValueNotifier<int>(0);
   late final Timer _timer;
+  bool _crossingSurah = false;
   int _bookmarkRevision = 0;
   bool _showTafsir = false;
   bool _tafsirBangla = true;
   int? _recordedAyah;
+  // What "View in ayat" shows under each ayah; null follows the surah's
+  // translation language.
+  _AyatView? _ayatView;
+  // Arabic zoom while a pinch is in progress (and until the bloc saves it).
+  double? _pinchBase, _pinchScale;
+
+  void _pinchUpdate(double factor) {
+    _pinchBase ??= context.read<QuranTranslationBloc>().state.arabicFontScale;
+    // 5% steps keep the text from reflowing on every pixel of movement.
+    final scale = ((_pinchBase! * factor * 20).round() / 20).clamp(
+      kMinArabicFontScale,
+      kMaxArabicFontScale,
+    );
+    if (scale != _pinchScale) setState(() => _pinchScale = scale);
+  }
+
+  void _pinchEnd() {
+    _pinchBase = null;
+    final scale = _pinchScale;
+    if (scale == null) return;
+    final prefs = context.read<QuranTranslationBloc>();
+    if (scale == prefs.state.arabicFontScale) {
+      setState(() => _pinchScale = null);
+    } else {
+      // Cleared by the listener once the bloc holds the new scale.
+      prefs.add(SetArabicFontScale(scale));
+    }
+  }
+
+  _AyatView _ayatViewFor(QuranTranslationState prefs) =>
+      _ayatView ??
+      (prefs.surahLang == AppLanguage.bangla
+          ? _AyatView.bangla
+          : _AyatView.english);
+
+  void _selectAyatView(_AyatView view) {
+    setState(() => _ayatView = view);
+    if (view == _AyatView.tafsir) return;
+    context.read<QuranTranslationBloc>().add(
+      SetSurahTranslationLang(
+        view == _AyatView.bangla ? AppLanguage.bangla : AppLanguage.english,
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(
       const Duration(seconds: 1),
-      (_) => _seconds.value = _elapsed.elapsed.inSeconds,
+      (_) => _seconds.value = _session.elapsedSeconds,
     );
+    _seconds.value = _session.elapsedSeconds;
     context.read<SurahPlaybackBloc>().add(SetActiveAyah(widget.args.ayahNo));
   }
 
   @override
   void dispose() {
-    _elapsed.stop();
     _timer.cancel();
     _seconds.dispose();
     super.dispose();
@@ -154,16 +202,67 @@ class _ReaderBodyState extends State<_ReaderBody> {
       Navigator.pushReplacementNamed(
         context,
         RouteNames.quranSurahDetail,
-        arguments: result,
+        arguments: result.withReadingSession(_session),
       );
+    }
+  }
+
+  Future<void> _turn(bool forward) async {
+    if (_crossingSurah || !mounted) return;
+    final reader = context.read<QuranReadingCubit>();
+    final state = reader.state;
+    if (state.loading || state.ayahs.isEmpty) return;
+    if (forward && state.to < reader.lastAyah) {
+      await reader.next();
+      return;
+    }
+    if (!forward && state.from > reader.startAyah) {
+      await reader.previous();
+      return;
+    }
+    if (widget.args.paraNumber != null) return;
+
+    setState(() => _crossingSurah = true);
+    try {
+      final next = await adjacentSurahArgs(
+        service: reader.contentService,
+        current: widget.args,
+        session: _session,
+        forward: forward,
+      );
+      if (!mounted) return;
+      if (next == null) {
+        setState(() => _crossingSurah = false);
+        return;
+      }
+      Navigator.pushReplacementNamed(
+        context,
+        RouteNames.quranSurahDetail,
+        arguments: next,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open Surah. Try again.')),
+        );
+        setState(() => _crossingSurah = false);
+      }
     }
   }
 
   Future<void> _menu(String action) async {
     final reader = context.read<QuranReadingCubit>();
     final prefs = context.read<QuranTranslationBloc>();
-    if (action == 'view') {
-      prefs.add(SetShowTranslation(!prefs.state.showTranslation));
+    if (action.startsWith('view:')) {
+      final choice = action.substring('view:'.length);
+      if (choice == 'off') {
+        prefs.add(const SetShowTranslation(false));
+        return;
+      }
+      _selectAyatView(_AyatView.values.byName(choice));
+      if (!prefs.state.showTranslation) {
+        prefs.add(const SetShowTranslation(true));
+      }
       return;
     }
     if (action == 'text') {
@@ -354,6 +453,14 @@ class _ReaderBodyState extends State<_ReaderBody> {
             );
           },
         ),
+        BlocListener<QuranTranslationBloc, QuranTranslationState>(
+          listenWhen: (p, c) => p.arabicFontScale != c.arabicFontScale,
+          listener: (context, state) {
+            if (_pinchScale != null && _pinchBase == null) {
+              setState(() => _pinchScale = null);
+            }
+          },
+        ),
         BlocListener<SurahPlaybackBloc, SurahPlaybackState>(
           listenWhen: (p, c) => p.currentAyahNo != c.currentAyahNo,
           listener: (context, state) {
@@ -398,6 +505,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 .currentAyahNo;
             final surah = state.surah;
             final opening = state.from == 1;
+            final arabicScale = _pinchScale ?? prefs.arabicFontScale;
+            final ayatView = _ayatViewFor(prefs);
             final detail = surah == null
                 ? null
                 : SurahDetail(
@@ -437,25 +546,53 @@ class _ReaderBodyState extends State<_ReaderBody> {
                       ),
                       child: Row(
                         children: [
-                          TextButton(
-                            onPressed: _jump,
-                            style: TextButton.styleFrom(
-                              foregroundColor: context.inkColor(Colors.black87),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                              ),
+                          IconButton(
+                            key: const ValueKey('quran-back-button'),
+                            tooltip: 'Back',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 32,
+                              height: 40,
                             ),
-                            child: Text(
-                              context.localizedDigits(
-                                AppText.of(context).quranPageLabel.fill({
-                                  'n': state.ayahs.isEmpty
-                                      ? '–'
-                                      : state.ayahs.first.pageNumber,
-                                }),
+                            onPressed: () async {
+                              final popped = await Navigator.of(
+                                context,
+                              ).maybePop();
+                              if (!popped && context.mounted) {
+                                Navigator.of(
+                                  context,
+                                ).pushReplacementNamed(RouteNames.quranSurahs);
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 16,
+                              color: quranInk,
+                            ),
+                          ),
+                          // Shrinks (with an ellipsis) rather than pushing
+                          // the actions off narrow screens.
+                          Flexible(
+                            child: TextButton(
+                              onPressed: _jump,
+                              style: TextButton.styleFrom(
+                                foregroundColor: context.inkColor(
+                                  Colors.black87,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                minimumSize: const Size(0, 36),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              style: const TextStyle(
-                                fontFamily: 'serif',
-                                fontSize: 14,
+                              child: Text(
+                                'Page ${state.ayahs.isEmpty ? '–' : state.ayahs.first.pageNumber} ⌄',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: 'serif',
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ),
@@ -475,9 +612,19 @@ class _ReaderBodyState extends State<_ReaderBody> {
                               ),
                             ),
                           ),
+                          _ReadingTimerPill(
+                            seconds: _seconds,
+                            label: appText.yourReadingTimeIs,
+                            // Narrow phones drop the icon to fit the row.
+                            compact: MediaQuery.sizeOf(context).width < 360,
+                          ),
                           IconButton(
-                            tooltip: AppText.of(context).quranFilterTitle,
-                            visualDensity: VisualDensity.compact,
+                            tooltip: 'Filter Quran',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 34,
+                              height: 40,
+                            ),
                             onPressed: _jump,
                             icon: const Icon(
                               Icons.tune,
@@ -486,16 +633,20 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             ),
                           ),
                           PopupMenuButton<String>(
-                            tooltip: AppText.of(context).quranActions,
+                            tooltip: 'Quran actions',
+                            padding: EdgeInsets.zero,
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size(32, 40),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                             icon: const Icon(Icons.more_vert, color: quranInk),
                             onSelected: _menu,
                             itemBuilder: (_) => [
+                              _AyatViewMenuEntry(
+                                value: ayatView,
+                                active: prefs.showTranslation,
+                              ),
                               for (final item in [
-                                (
-                                  'view',
-                                  Icons.view_agenda_outlined,
-                                  AppText.of(context).quranViewInAyat,
-                                ),
                                 (
                                   'bookmark',
                                   Icons.bookmark_border,
@@ -537,25 +688,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor(quranPale),
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(5),
-                        ),
-                      ),
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: _seconds,
-                        builder: (context, seconds, _) => Text(
-                          context.localizedDigits(
-                            '${appText.yourReadingTimeIs} ${seconds ~/ 60} ${appText.minLabel} '
-                            '${seconds % 60} ${appText.secLabel}',
-                          ),
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 6),
                     SizedBox(
                       height: 2,
                       child: state.loading && state.ayahs.isNotEmpty
@@ -589,10 +722,20 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                     widget.args.surahNo == 1,
                               )
                             : null,
-                        busy: state.loading,
-                        onNext: state.to < reader.lastAyah ? reader.next : null,
-                        onPrevious: state.from > reader.startAyah
-                            ? reader.previous
+                        busy: state.loading || _crossingSurah,
+                        onPinchUpdate: _pinchUpdate,
+                        onPinchEnd: _pinchEnd,
+                        onNext:
+                            state.to < reader.lastAyah ||
+                                (widget.args.paraNumber == null &&
+                                    widget.args.surahNo < 114)
+                            ? () => _turn(true)
+                            : null,
+                        onPrevious:
+                            state.from > reader.startAyah ||
+                                (widget.args.paraNumber == null &&
+                                    widget.args.surahNo > 1)
+                            ? () => _turn(false)
                             : null,
                         footer: OutlinedButton(
                           key: const ValueKey('quran-toggle-tafsir'),
@@ -632,27 +775,37 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                           QuranReadingText(
                                             ayahs: [ayah],
                                             active: active,
-                                            scale: prefs.arabicFontScale * 1.25,
+                                            scale: arabicScale * 1.25,
                                             font: arabicFontById(
                                               prefs.arabicFontFamily,
                                             ),
                                             onTap: _showAyah,
                                           ),
                                         const SizedBox(height: 12),
-                                        Text(
-                                          ayah
-                                                  .translations[state
-                                                      .translation]
-                                                  ?.text ??
-                                              AppText.of(
-                                                context,
-                                              ).quranTranslationUnavailable,
-                                          style: TextStyle(
-                                            fontSize:
-                                                15 * prefs.translationFontScale,
-                                            height: 1.6,
+                                        if (ayatView == _AyatView.tafsir)
+                                          _AyahTafsir(
+                                            ayah: ayah,
+                                            bangla:
+                                                prefs.surahLang ==
+                                                AppLanguage.bangla,
+                                            readerService: widget.tafsirService,
+                                            fontScale:
+                                                prefs.translationFontScale,
+                                          )
+                                        else
+                                          Text(
+                                            ayah
+                                                    .translations[state
+                                                        .translation]
+                                                    ?.text ??
+                                                'Translation unavailable for this ayah',
+                                            style: TextStyle(
+                                              fontSize:
+                                                  15 *
+                                                  prefs.translationFontScale,
+                                              height: 1.6,
+                                            ),
                                           ),
-                                        ),
                                         Text(
                                           context.localizedDigits(
                                             AppText.of(
@@ -677,7 +830,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                               QuranReadingText(
                                 ayahs: state.ayahs,
                                 active: active,
-                                scale: prefs.arabicFontScale,
+                                scale: arabicScale,
                                 font: arabicFontById(prefs.arabicFontFamily),
                                 onTap: (ayah) {
                                   context.read<SurahPlaybackBloc>().add(
@@ -707,4 +860,278 @@ class _ReaderBodyState extends State<_ReaderBody> {
       ),
     );
   }
+}
+
+/// A compact rounded counter of this reading session's time, shown in the
+/// reader's header next to the filter button.
+class _ReadingTimerPill extends StatelessWidget {
+  const _ReadingTimerPill({
+    required this.seconds,
+    required this.label,
+    this.compact = false,
+  });
+  final ValueNotifier<int> seconds;
+  final String label;
+
+  /// Shows only the time, without the timer icon.
+  final bool compact;
+
+  static String _format(int total) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final h = total ~/ 3600;
+    final m = (total % 3600) ~/ 60;
+    final s = total % 60;
+    return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+  }
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<int>(
+    valueListenable: seconds,
+    builder: (context, value, _) => Tooltip(
+      message: '$label ${value ~/ 60} min ${value % 60} sec',
+      child: Container(
+        key: const ValueKey('quran-reading-timer'),
+        margin: const EdgeInsets.only(left: 4),
+        padding: EdgeInsets.fromLTRB(compact ? 8 : 6, 4, compact ? 8 : 10, 4),
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: quranBorder),
+          boxShadow: [
+            BoxShadow(
+              color: quranInk.withValues(alpha: .08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!compact) ...[
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: quranInk.withValues(alpha: .12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.timer_outlined,
+                  size: 13,
+                  color: quranInk,
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              _format(value),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: quranInk,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// What "View in ayat" shows under each ayah.
+enum _AyatView {
+  english('English translation'),
+  bangla('Bangla translation'),
+  tafsir('Tafsir');
+
+  const _AyatView(this.label);
+  final String label;
+}
+
+/// "View in ayat" in the actions menu: tapping it drops down a choice of what
+/// to show under each ayah. Picking one closes the menu with `view:<name>`;
+/// "Back to page view" closes it with `view:off`.
+class _AyatViewMenuEntry extends PopupMenuEntry<String> {
+  const _AyatViewMenuEntry({required this.value, required this.active});
+  final _AyatView value;
+
+  /// Whether the reader is currently in "View in ayat".
+  final bool active;
+
+  @override
+  double get height => kMinInteractiveDimension;
+
+  @override
+  bool represents(String? value) => false;
+
+  @override
+  State<_AyatViewMenuEntry> createState() => _AyatViewMenuEntryState();
+}
+
+class _AyatViewMenuEntryState extends State<_AyatViewMenuEntry> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      InkWell(
+        key: const ValueKey('quran-ayat-view-menu'),
+        onTap: () => setState(() => _open = !_open),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          child: Row(
+            children: [
+              const Icon(Icons.view_agenda_outlined, size: 19, color: quranInk),
+              const SizedBox(width: 14),
+              const Expanded(child: Text('View in ayat')),
+              if (widget.active)
+                const Padding(
+                  padding: EdgeInsets.only(left: 6),
+                  child: Icon(Icons.check_circle, size: 16, color: quranOlive),
+                ),
+              AnimatedRotation(
+                turns: _open ? .5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.expand_more, color: quranInk),
+              ),
+            ],
+          ),
+        ),
+      ),
+      AnimatedSize(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        alignment: Alignment.topCenter,
+        child: !_open
+            ? const SizedBox(width: double.infinity)
+            : Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                // Its own Material so the radio tiles' ink shows on it.
+                child: Material(
+                  color: context.surfaceColor(quranPale),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: quranBorder),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
+                        child: Text(
+                          'Show under each ayah',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: quranInk,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      RadioGroup<_AyatView>(
+                        groupValue: widget.active ? widget.value : null,
+                        onChanged: (view) {
+                          if (view != null) {
+                            Navigator.pop(context, 'view:${view.name}');
+                          }
+                        },
+                        child: Column(
+                          children: [
+                            for (final view in _AyatView.values)
+                              RadioListTile<_AyatView>(
+                                key: ValueKey('quran-ayat-view-${view.name}'),
+                                value: view,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                activeColor: quranOlive,
+                                title: Text(view.label),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (widget.active)
+                        TextButton.icon(
+                          onPressed: () => Navigator.pop(context, 'view:off'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: quranInk,
+                          ),
+                          icon: const Icon(Icons.menu_book_outlined, size: 18),
+                          label: const Text('Back to page view'),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+      ),
+    ],
+  );
+}
+
+/// One ayah's tafsir, loaded on its own when it is shown.
+class _AyahTafsir extends StatelessWidget {
+  const _AyahTafsir({
+    required this.ayah,
+    required this.bangla,
+    required this.fontScale,
+    this.readerService,
+  });
+  final QuranAyah ayah;
+  final bool bangla;
+  final double fontScale;
+  final QuranReaderService? readerService;
+
+  @override
+  Widget build(BuildContext context) => BlocProvider(
+    key: ValueKey('tafsir-${ayah.verseKey}:$bangla'),
+    create: (_) => TafsirBloc(
+      readerService: readerService,
+      tafsirResourceId: bangla
+          ? banglaTafsirResourceId
+          : englishTafsirResourceId,
+    )..add(LoadTafsir(ayah.verseKey)),
+    child: BlocBuilder<TafsirBloc, TafsirState>(
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: LinearProgressIndicator(minHeight: 2, color: quranOlive),
+          );
+        }
+        if (state.hasError) {
+          return Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () =>
+                  context.read<TafsirBloc>().add(LoadTafsir(ayah.verseKey)),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Could not load tafsir. Retry'),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tafsir',
+              style: TextStyle(
+                fontSize: 12,
+                color: quranInk,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              state.text.isEmpty
+                  ? 'No Tafsir available for this ayah'
+                  : state.text,
+              style: TextStyle(fontSize: 15 * fontScale, height: 1.6),
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }

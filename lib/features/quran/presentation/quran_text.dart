@@ -1,0 +1,355 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+
+/// English and Bangla text for the Quran module, following the app language.
+///
+/// Numbers go through [n] so Bangla shows Bengali digits, and Surah names
+/// through [surahName] so stored English names (bookmarks, playlists, plans)
+/// still read in Bangla.
+class QuranText {
+  const QuranText._(this.isBangla);
+
+  /// Watches the app language; use in `build`. English when no
+  /// [LanguageBloc] is above [context] (e.g. a widget shown on its own).
+  factory QuranText.of(BuildContext context) => _from(context, listen: true);
+
+  /// Reads the app language once; use in callbacks.
+  factory QuranText.read(BuildContext context) => _from(context, listen: false);
+
+  static QuranText _from(BuildContext context, {required bool listen}) {
+    try {
+      final bloc = listen
+          ? context.watch<LanguageBloc>()
+          : context.read<LanguageBloc>();
+      return QuranText._(bloc.state.language == AppLanguage.bangla);
+    } on ProviderNotFoundException {
+      return english;
+    }
+  }
+
+  static const english = QuranText._(false);
+  static const bangla = QuranText._(true);
+
+  final bool isBangla;
+
+  String _t(String en, String bn) => isBangla ? bn : en;
+
+  // ---- Numbers & names ---------------------------------------------------
+
+  static const _bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+  /// [value] with Bengali digits in Bangla.
+  String n(Object value) {
+    final text = '$value';
+    if (!isBangla) return text;
+    return text.replaceAllMapped(
+      RegExp('[0-9]'),
+      (m) => _bnDigits[int.parse(m[0]!)],
+    );
+  }
+
+  /// The Surah's name in the current language, falling back to [english].
+  String surahName(int number, [String english = '']) {
+    if (isBangla && number >= 1 && number <= _bnSurahNames.length) {
+      return _bnSurahNames[number - 1];
+    }
+    return english;
+  }
+
+  /// "Meccan" / "Medinan" (Makki / Madani) from any spelling the data uses.
+  String revelationPlace(String raw) {
+    final place = raw.toLowerCase();
+    if (place.startsWith('mec') || place.startsWith('mak')) {
+      return _t('Meccan', 'মাক্কী');
+    }
+    if (place.startsWith('med') || place.startsWith('mad')) {
+      return _t('Medinan', 'মাদানী');
+    }
+    return raw;
+  }
+
+  /// Hours and minutes, e.g. "2 hr 5 min" / "২ ঘণ্টা ৫ মিনিট".
+  String duration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final hr = _t('hr', 'ঘণ্টা');
+    final min = _t('min', 'মিনিট');
+    return h > 0 ? '${n(h)} $hr ${n(m)} $min' : '${n(m)} $min';
+  }
+
+  // ---- Common ------------------------------------------------------------
+
+  String get quran => _t('Quran', 'কুরআন');
+  String get surah => _t('Surah', 'সূরা');
+  String get para => _t('Para', 'পারা');
+  String get page => _t('Page', 'পৃষ্ঠা');
+  String get noResults => _t('No results', 'কিছু পাওয়া যায়নি');
+  String get bismillah => _t('Bismillah', 'বিসমিল্লাহ');
+  String surahTitle(String name) => '$surah $name';
+  String paraTitle(int number) => '$para ${n(number)}';
+  String pageTitle(int number) => '$page ${n(number)}';
+  String ayahCount(int count) => '${n(count)} ${_t('Ayahs', 'আয়াত')}';
+  String ayahLabel(int number) => '${_t('Ayah', 'আয়াত')} ${n(number)}';
+  String ayahRange(int from, int to) =>
+      '${_t('Ayat', 'আয়াত')} ${n(from)}-${n(to)}';
+
+  String get searchSurahHint => _t('Search Surah...', 'সূরা খুঁজুন...');
+  String get noSurahsFound => _t('No Surahs found', 'কোনো সূরা পাওয়া যায়নি');
+
+  // ---- Home --------------------------------------------------------------
+
+  String get tajweedDownload =>
+      _t('Tajweed / Download Quran', 'তাজবীদ / কুরআন ডাউনলোড');
+  String get searchSurahOrPara =>
+      _t('Search Surah Or Para', 'সূরা বা পারা খুঁজুন');
+  String get searchPage =>
+      _t('Search page, Surah or Para', 'পৃষ্ঠা, সূরা বা পারা খুঁজুন');
+
+  // ---- Saved -------------------------------------------------------------
+
+  String get saved => _t('Saved', 'সংরক্ষিত');
+  String get playList => _t('Play List', 'প্লে লিস্ট');
+  String get noPlaylists => _t('No playlists available', 'কোনো প্লে লিস্ট নেই');
+  String get noBookmarks =>
+      _t('No saved bookmarks yet', 'এখনো কোনো বুকমার্ক নেই');
+  String get noSurahs => _t('No Surahs', 'কোনো সূরা নেই');
+  String get noSurahsInPlaylist =>
+      _t('No Surahs in this playlist', 'এই প্লে লিস্টে কোনো সূরা নেই');
+  String get playAll => _t('Play All', 'সব চালান');
+
+  /// "Sura (Al-Fatiha, Al-Baqarah, ...)" for a playlist's first Surahs.
+  String playlistSummary(List<String> names, int total) {
+    if (names.isEmpty) return noSurahs;
+    return '$surah (${names.join(', ')}${total > names.length ? ', ...' : ''})';
+  }
+
+  // ---- Player ------------------------------------------------------------
+
+  String get previousSurah => _t('Previous Surah', 'আগের সূরা');
+  String get nextSurah => _t('Next Surah', 'পরের সূরা');
+  String get play => _t('Play', 'চালান');
+  String get pause => _t('Pause', 'থামান');
+  String get finished => _t('Finished', 'শেষ হয়েছে');
+  String ayahOf(int ayah, int last) => _t(
+    'Ayah ${n(ayah)} of ${n(last)}',
+    '${n(last)}-এর মধ্যে আয়াত ${n(ayah)}',
+  );
+
+  // ---- Planner -----------------------------------------------------------
+
+  String get myPlan => _t('My Plan', 'আমার পরিকল্পনা');
+  String get searchPlan => _t('Search Plan', 'পরিকল্পনা খুঁজুন');
+  String get completePlan => _t('Complete Plan', 'সম্পন্ন পরিকল্পনা');
+  String get searchPlanHint => _t('Search plan...', 'পরিকল্পনা খুঁজুন...');
+  String get createPlan => _t('Create Plan', 'পরিকল্পনা তৈরি করুন');
+  String get createPlanTitle => _t('Create plan', 'পরিকল্পনা তৈরি');
+  String get create => _t('Create', 'তৈরি করুন');
+  String get read => _t('Read', 'পড়ুন');
+  String get getStarted => _t('Get Start', 'শুরু করুন');
+  String get completed => _t('Completed', 'সম্পন্ন');
+  String get markCompleted => _t('Mark Completed', 'সম্পন্ন চিহ্নিত করুন');
+  String get deletePlan => _t('Delete Plan', 'পরিকল্পনা মুছুন');
+  String get noPlansYet => _t(
+    "You haven't created any plan yet !",
+    'আপনি এখনো কোনো পরিকল্পনা তৈরি করেননি!',
+  );
+  String get noCompletedPlansYet => _t(
+    "You haven't completed any plan yet !",
+    'আপনি এখনো কোনো পরিকল্পনা সম্পন্ন করেননি!',
+  );
+  String planCreated(String name) => _t(
+    'Plan "$name" created successfully!',
+    '"$name" পরিকল্পনা তৈরি হয়েছে!',
+  );
+  String planStarted(String name) =>
+      _t('Started "$name"!', '"$name" শুরু হয়েছে!');
+  String days(int count) => '${n(count)} ${_t('Days', 'দিন')}';
+  String get planName => _t('Plan name', 'পরিকল্পনার নাম');
+  String get completionDays => _t('Completion days', 'সম্পন্ন করার দিন');
+  String get writeHere => _t('Write Here . . .', 'এখানে লিখুন . . .');
+  String get selectStartSurah =>
+      _t('Select Start Sura', 'শুরুর সূরা বাছাই করুন');
+  String get selectEndSurah => _t('Select End Sura', 'শেষের সূরা বাছাই করুন');
+  String get enterPlanName =>
+      _t('Please enter a plan name', 'পরিকল্পনার নাম লিখুন');
+  String get enterValidDays =>
+      _t('Please enter valid completion days', 'সঠিক দিনের সংখ্যা লিখুন');
+  String example(String value) => '${_t('Eg', 'যেমন')} : $value';
+
+  /// Names of the built-in plans, by id; [fallback] for the user's own.
+  String presetPlanName(String id, String fallback) => !isBangla
+      ? fallback
+      : switch (id) {
+          'preset_1_month' => 'এক মাসে কুরআন',
+          'preset_2_month' => 'দুই মাসে কুরআন',
+          'preset_3_month' => 'তিন মাসে কুরআন',
+          'preset_juz_amma' => 'আম্মা পারা (৩০তম পারা)',
+          'preset_baqarah' => 'সূরা আল-বাকারা',
+          _ => fallback,
+        };
+
+  // ---- Dashboard ---------------------------------------------------------
+
+  String get totalReadingTime =>
+      _t('Total Quran Reading time', 'মোট কুরআন পাঠের সময়');
+  String get mostReadSurah => _t('Most Reading Sura', 'সর্বাধিক পঠিত সূরা');
+  String get todaysValue => _t('Todays Value In Graph', 'আজকের পাঠ');
+
+  /// Saturday-first short weekday names, as the weekly chart shows them.
+  List<String> get weekdaysFromSaturday => isBangla
+      ? const ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র']
+      : const ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+
+  String monthName(int month) => (isBangla ? _bnMonths : _enMonths)[month - 1];
+  String monthShort(int month) =>
+      isBangla ? _bnMonths[month - 1] : _enMonths[month - 1].substring(0, 3);
+
+  static const _enMonths = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  static const _bnMonths = [
+    'জানুয়ারি',
+    'ফেব্রুয়ারি',
+    'মার্চ',
+    'এপ্রিল',
+    'মে',
+    'জুন',
+    'জুলাই',
+    'আগস্ট',
+    'সেপ্টেম্বর',
+    'অক্টোবর',
+    'নভেম্বর',
+    'ডিসেম্বর',
+  ];
+}
+
+/// Bangla Surah names 1–114, as the Quran API spells them.
+const _bnSurahNames = [
+  'আল-ফাতিহা',
+  'আল-বাকারা',
+  'আলে ইমরান',
+  'আন-নিসা',
+  'আল-মায়িদা',
+  'আল-আনআম',
+  'আল-আরাফ',
+  'আল-আনফাল',
+  'আত-তাওবা',
+  'ইউনুস',
+  'হুদ',
+  'ইউসুফ',
+  'আর-রাদ',
+  'ইবরাহিম',
+  'আল-হিজর',
+  'আন-নাহল',
+  'আল-ইসরা',
+  'আল-কাহফ',
+  'মারইয়াম',
+  'ত্বা-হা',
+  'আল-আম্বিয়া',
+  'আল-হাজ্জ',
+  'আল-মুমিনুন',
+  'আন-নূর',
+  'আল-ফুরকান',
+  'আশ-শুআরা',
+  'আন-নামল',
+  'আল-কাসাস',
+  'আল-আনকাবুত',
+  'আর-রূম',
+  'লুকমান',
+  'আস-সাজদা',
+  'আল-আহযাব',
+  'সাবা',
+  'ফাতির',
+  'ইয়াসিন',
+  'আস-সাফফাত',
+  'সোয়াদ',
+  'আয-যুমার',
+  'গাফির',
+  'ফুসসিলাত',
+  'আশ-শূরা',
+  'আয-যুখরুফ',
+  'আদ-দুখান',
+  'আল-জাসিয়া',
+  'আল-আহকাফ',
+  'মুহাম্মাদ',
+  'আল-ফাতহ',
+  'আল-হুজুরাত',
+  'কাফ',
+  'আয-যারিয়াত',
+  'আত-তূর',
+  'আন-নাজম',
+  'আল-কামার',
+  'আর-রহমান',
+  'আল-ওয়াকিআ',
+  'আল-হাদিদ',
+  'আল-মুজাদালা',
+  'আল-হাশর',
+  'আল-মুমতাহিনা',
+  'আস-সাফ',
+  'আল-জুমুআ',
+  'আল-মুনাফিকুন',
+  'আত-তাগাবুন',
+  'আত-তালাক',
+  'আত-তাহরিম',
+  'আল-মুলক',
+  'আল-কলম',
+  'আল-হাক্কাহ',
+  'আল-মাআরিজ',
+  'নূহ',
+  'আল-জিন',
+  'আল-মুযযাম্মিল',
+  'আল-মুদ্দাসসির',
+  'আল-কিয়ামাহ',
+  'আল-ইনসান',
+  'আল-মুরসালাত',
+  'আন-নাবা',
+  'আন-নাযিআত',
+  'আবাসা',
+  'আত-তাকভির',
+  'আল-ইনফিতার',
+  'আল-মুতাফফিফিন',
+  'আল-ইনশিকাক',
+  'আল-বুরুজ',
+  'আত-তারিক',
+  'আল-আলা',
+  'আল-গাশিয়াহ',
+  'আল-ফাজর',
+  'আল-বালাদ',
+  'আশ-শামস',
+  'আল-লাইল',
+  'আদ-দুহা',
+  'আশ-শারহ',
+  'আত-তীন',
+  'আল-আলাক',
+  'আল-কদর',
+  'আল-বাইয়্যিনাহ',
+  'আয-যিলযাল',
+  'আল-আদিয়াত',
+  'আল-কারিআহ',
+  'আত-তাকাসুর',
+  'আল-আসর',
+  'আল-হুমাযাহ',
+  'আল-ফীল',
+  'কুরাইশ',
+  'আল-মাউন',
+  'আল-কাউসার',
+  'আল-কাফিরুন',
+  'আন-নাসর',
+  'আল-মাসাদ',
+  'আল-ইখলাস',
+  'আল-ফালাক',
+  'আন-নাস',
+];

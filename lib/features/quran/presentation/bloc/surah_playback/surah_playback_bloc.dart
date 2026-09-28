@@ -39,7 +39,7 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     this.endAyah,
   }) : _downloader = downloader ?? QuranAudioDownloader(),
        _audio = audio ?? quranAudioHandler,
-       super(const SurahPlaybackState()) {
+       super(SurahPlaybackState(currentAyahNo: startAyah)) {
     _completedSub = _audio.onCompleted.listen((_) => add(const _AdvanceAyah()));
     on<PlaySurah>(_onPlay);
     on<PauseSurah>(_onPause);
@@ -146,7 +146,9 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         final startAt = startAyah == 1 && _hasBismillah ? 0 : startAyah;
         await _playAyah(startAt, emit);
       } else {
-        emit(state.copyWith(isPlaying: false, remainingRepeats: 1));
+        emit(
+          state.copyWith(isPlaying: false, remainingRepeats: 1, finished: true),
+        );
       }
       return;
     }
@@ -160,6 +162,7 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         isPlaying: true,
         isBuffering: true,
         needsDownload: false,
+        finished: false,
       ),
     );
     try {

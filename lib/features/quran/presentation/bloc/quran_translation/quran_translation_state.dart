@@ -24,7 +24,7 @@ class QuranTranslationState {
     this.surahLang = AppLanguage.english,
     this.ayahOverrides = const {},
     this.loaded = false,
-    this.arabicFontScale = 1.0,
+    this.arabicFontScale = kDefaultArabicFontScale,
     this.arabicFontFamily = kDefaultArabicFontId,
     this.translationFontScale = 1.0,
     this.showArabic = true,

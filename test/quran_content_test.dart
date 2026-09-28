@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:islami_app_noorify/core/network/dio_client.dart';
 import 'package:islami_app_noorify/features/quran/data/services/quran_content_service.dart';
 import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_reading_cubit.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_reading_navigation.dart';
+import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
 import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
 
 class Adapter implements HttpClientAdapter {
@@ -91,6 +93,84 @@ QuranContentService service(Adapter adapter) {
 }
 
 void main() {
+  test(
+    'adjacent Surah navigation is sequential and carries the timer',
+    () async {
+      final adapter = Adapter((request) {
+        final number = int.parse(request.path.split('/').last);
+        return ok({
+          ...surah,
+          'number': number,
+          'nameEnglish': 'Surah $number',
+          'ayahCount': number == 1
+              ? 7
+              : number == 2
+              ? 286
+              : 200,
+        });
+      });
+      final api = service(adapter);
+      final session = QuranReadingSession();
+      const second = SurahRouteArgs(surahNo: 2, surahName: 'Al-Baqarah');
+
+      final next = await adjacentSurahArgs(
+        service: api,
+        current: second,
+        session: session,
+        forward: true,
+      );
+      expect([next!.surahNo, next.ayahNo], [3, 1]);
+      expect(next.readingSession, same(session));
+      expect(next.swipeForward, isTrue);
+      final previous = await adjacentSurahArgs(
+        service: api,
+        current: second,
+        session: session,
+        forward: false,
+      );
+      expect([previous!.surahNo, previous.ayahNo], [1, 7]);
+      expect(previous.readingSession, same(session));
+      expect(previous.swipeForward, isFalse);
+      expect(adapter.requests.map((request) => request.path), [
+        '/quran/surahs/3',
+        '/quran/surahs/1',
+      ]);
+
+      expect(
+        await adjacentSurahArgs(
+          service: api,
+          current: const SurahRouteArgs(surahNo: 1, surahName: ''),
+          session: session,
+          forward: false,
+        ),
+        isNull,
+      );
+      expect(
+        await adjacentSurahArgs(
+          service: api,
+          current: const SurahRouteArgs(surahNo: 114, surahName: ''),
+          session: session,
+          forward: true,
+        ),
+        isNull,
+      );
+      expect(
+        await adjacentSurahArgs(
+          service: api,
+          current: const SurahRouteArgs(
+            surahNo: 2,
+            surahName: '',
+            paraNumber: 1,
+          ),
+          session: session,
+          forward: true,
+        ),
+        isNull,
+      );
+      expect(adapter.requests.length, 2);
+      expect(second.withReadingSession(session).readingSession, same(session));
+    },
+  );
   test(
     'catalog and para use internal envelopes and preserve exact boundaries',
     () async {

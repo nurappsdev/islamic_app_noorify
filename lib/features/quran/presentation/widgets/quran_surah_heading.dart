@@ -8,8 +8,8 @@ import 'package:islami_app_noorify/features/quran/presentation/quran_format_help
 import 'package:islami_app_noorify/core/localization/localization_context.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
 
-/// One scrolling header: ornament, live metadata, then Bismillah.
-/// Only the decorative image is positioned; text determines the header height.
+/// A single scrolling header owns the ornament, metadata, and Bismillah.
+/// Its measured height keeps every ayah below both the artwork and text.
 class QuranSurahHeading extends StatelessWidget {
   const QuranSurahHeading({
     super.key,
@@ -33,8 +33,8 @@ class QuranSurahHeading extends StatelessWidget {
               child: Image.asset(
                 'assets/images/quran/starting_sura_pattern.png',
                 key: const ValueKey('surah-background-pattern'),
-                height: patternHeight,
                 width: width,
+                height: patternHeight,
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
                 excludeFromSemantics: true,
