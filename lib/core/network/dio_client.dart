@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
+import 'package:islami_app_noorify/core/network/auth_refresh_interceptor.dart';
 import 'package:islami_app_noorify/core/services/api_constants.dart';
 
 /// Single configured [Dio] instance used by every remote data source.
@@ -35,6 +36,7 @@ class DioClient {
     if (kDebugMode) {
       dio.interceptors.add(_ColorLogInterceptor());
     }
+    dio.interceptors.add(AuthRefreshInterceptor(dio: dio));
 
     return dio;
   }

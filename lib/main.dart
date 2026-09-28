@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
+import 'core/network/auth_refresh_interceptor.dart';
+import 'core/storage/session_cleaner.dart';
 import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/dark_theme.dart';
@@ -29,6 +31,15 @@ Future<void> main() async {
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await HiveService.init();
+  // The access token can't be renewed: wipe the dead session and send the user
+  // back to sign in.
+  AuthRefreshInterceptor.onSessionExpired = () async {
+    await SessionCleaner.clearUserData();
+    appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      RouteNames.signIn,
+      (_) => false,
+    );
+  };
   await AppText.load();
   quranAudioHandler = await AudioService.init(
     builder: QuranAudioHandler.new,
