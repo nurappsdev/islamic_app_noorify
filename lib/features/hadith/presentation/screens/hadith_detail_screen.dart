@@ -34,6 +34,7 @@ import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_c
 import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -286,40 +287,15 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _showAutoCompleteDialog(hadithId);
   }
 
-  /// Guests only: the reading timer stops for good and the user is asked
-  /// whether to track the hadith. Yes opens Sign In, No stays on the screen.
+  /// Guests only: the reading timer stops for good and the user is invited to
+  /// sign in so the reading can be tracked. "Sign in" opens Sign In, "Not now"
+  /// stays on the screen.
   Future<void> _showGuestTrackDialog() async {
     _autoDialogShowing = true;
     _guestPromptShown = true;
     _tracker.pause(); // stays paused: the guest's timer is done
-    final appText = AppText.readOf(context);
-    final navigator = Navigator.of(context);
-    final yes = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: dialogContext.surfaceColor(Colors.white),
-        title: Text(
-          appText.hadithGuestTrackQuestion,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(appText.no),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF008000),
-            ),
-            child: Text(appText.yes),
-          ),
-        ],
-      ),
-    );
+    await showLoginRequiredDialog(context, feature: AuthFeatures.hadith);
     _autoDialogShowing = false;
-    if (yes == true && mounted) navigator.pushNamed(RouteNames.signIn);
   }
 
   Future<void> _showAutoCompleteDialog(String hadithId) async {
@@ -1719,8 +1695,10 @@ class _HadithCompleteCheckbox extends StatelessWidget {
           onTap: completed || completing
               ? null
               : () async {
-                  if (!isUserSignedIn) {
-                    Navigator.of(context).pushNamed(RouteNames.signIn);
+                  if (!await requireLogin(
+                    context,
+                    feature: AuthFeatures.hadith,
+                  )) {
                     return;
                   }
                   tracker.complete(hadithId);

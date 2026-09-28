@@ -24,6 +24,7 @@ import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/a
 import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
 import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
 import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
@@ -274,6 +275,15 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     }
   }
 
+  /// The sign-in prompt to show for a tick in [pillarKey]: prayers, Quran and
+  /// Hadith name themselves; everything else is the general Amol tracker.
+  String _loginFeatureFor(String pillarKey) => switch (pillarKey) {
+    'fardh_prayer' || 'sunnah_witr' => AuthFeatures.salah,
+    'quran' => AuthFeatures.quran,
+    'hadith' => AuthFeatures.hadith,
+    _ => AuthFeatures.amol,
+  };
+
   Future<void> _onItemTap(String pillarKey, AmolItem item) async {
     if (_bloc.state.loggingItemKey != null) return;
     // Quiz is never ticked here: its check comes from the server once a quiz
@@ -287,7 +297,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen> {
     }
     // Viewing is public, but logging / unchecking (POST / DELETE) needs the
     // login token.
-    if (!await ensureLogin(context)) return;
+    if (!await requireLogin(context, feature: _loginFeatureFor(pillarKey))) {
+      return;
+    }
     if (!mounted) return;
 
     if (_bloc.state.isItemChecked(item.itemKey, item.isCompleted)) {

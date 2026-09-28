@@ -4,10 +4,14 @@ import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
 import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
 import 'package:islami_app_noorify/features/quiz/presentation/quiz_route_args.dart';
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 
 /// Opens today's quiz. Playing needs an account, so a guest is asked to log in.
 Future<void> openDailyQuiz(BuildContext context) async {
-  if (!await ensureLogin(context) || !context.mounted) return;
+  if (!await requireLogin(context, feature: AuthFeatures.quiz) ||
+      !context.mounted) {
+    return;
+  }
   await Navigator.of(
     context,
   ).pushNamed(RouteNames.quizQuestion, arguments: const QuizLaunchArgs.daily());
@@ -18,7 +22,10 @@ Future<void> openCategoryQuiz(
   BuildContext context,
   QuizCategory category,
 ) async {
-  if (!await ensureLogin(context) || !context.mounted) return;
+  if (!await requireLogin(context, feature: AuthFeatures.quiz) ||
+      !context.mounted) {
+    return;
+  }
   await Navigator.of(context).pushNamed(
     RouteNames.quizQuestion,
     arguments: QuizLaunchArgs.category(category),

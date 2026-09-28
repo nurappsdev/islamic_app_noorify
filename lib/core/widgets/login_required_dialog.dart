@@ -1,31 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:islami_app_noorify/core/auth/auth_feature.dart';
 import 'package:islami_app_noorify/core/constants/route_names.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
 import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
 /// Whether a login token is stored (the user is signed in, not a guest).
 bool get isUserSignedIn => AuthLocalDataSourceImpl().hasToken;
 
 /// Gate for features whose API needs an access token. Returns `true` when the
-/// user is signed in. For a guest it shows the login dialog (No stays on the
-/// screen, Login opens Sign In) and returns `false`.
-Future<bool> ensureLogin(BuildContext context) async {
+/// user is signed in. For a guest it shows a sign-in prompt written for
+/// [feature] (see [AuthFeatures]) - "Not now" stays where they are, "Sign in"
+/// opens Sign In - and returns `false`.
+///
+/// ```dart
+/// if (!await requireLogin(context, feature: AuthFeatures.quiz)) return;
+/// ```
+Future<bool> requireLogin(
+  BuildContext context, {
+  String feature = AuthFeatures.general,
+}) async {
   if (isUserSignedIn) return true;
-  await showLoginRequiredDialog(context);
+  await showLoginRequiredDialog(context, feature: feature);
   return false;
 }
 
-Future<void> showLoginRequiredDialog(BuildContext context) async {
-  final appText = AppText.readOf(context);
+/// Shows the sign-in prompt for [feature] and, when the user picks "Sign in",
+/// opens Sign In. Returns whether they picked it.
+Future<bool> showLoginRequiredDialog(
+  BuildContext context, {
+  String feature = AuthFeatures.general,
+}) async {
+  final language = context.read<LanguageBloc>().state.language;
+  final config = AuthFeatures.of(feature);
+  final notNow = AuthPromptTexts.notNow.resolve(language);
   final navigator = Navigator.of(context);
   final login = await showGeneralDialog<bool>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: appText.no,
+    barrierLabel: notNow,
     barrierColor: Colors.black.withValues(alpha: .55),
     transitionDuration: const Duration(milliseconds: 280),
     pageBuilder: (_, _, _) => const SizedBox.shrink(),
@@ -40,24 +57,29 @@ Future<void> showLoginRequiredDialog(BuildContext context) async {
         child: ScaleTransition(
           scale: Tween<double>(begin: .85, end: 1).animate(curved),
           child: _LoginRequiredCard(
-            message: appText.loginRequiredMessage,
-            noLabel: appText.no,
-            loginLabel: appText.login,
+            title: config.featureName.resolve(language),
+            message: config.messageFor(language),
+            noLabel: notNow,
+            loginLabel: AuthPromptTexts.signIn.resolve(language),
           ),
         ),
       );
     },
   );
-  if (login == true) navigator.pushNamed(RouteNames.signIn);
+  if (login != true) return false;
+  navigator.pushNamed(RouteNames.signIn);
+  return true;
 }
 
 class _LoginRequiredCard extends StatelessWidget {
   const _LoginRequiredCard({
+    required this.title,
     required this.message,
     required this.noLabel,
     required this.loginLabel,
   });
 
+  final String title;
   final String message;
   final String noLabel;
   final String loginLabel;
@@ -91,13 +113,25 @@ class _LoginRequiredCard extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (title.isNotEmpty) ...[
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColor.authLogo,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                    ],
                     Text(
                       message,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 17.sp,
-                        height: 1.4,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16.sp,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
                         color: ink,
                       ),
                     ),
