@@ -773,6 +773,8 @@ const Map<String, String> appTextBn = <String, String>{
   'duaSavedCount': '{n}টি দোয়া',
   'duaTotalSaved': 'মোট সংরক্ষিত : {n}',
   'amolReadConfirmMessage': 'আপনি কি এটি পড়েছেন এবং ট্র্যাক করতে চান?',
+  'amolUntrackTitle': 'আমল ট্র্যাক বাতিল করবেন?',
+  'amolUntrackMessage': 'আপনি কি নিশ্চিত যে "{name}" ট্র্যাক বাতিল করতে চান?',
   // Quran screens
   'commonCancel': 'বাতিল',
   'commonApply': 'প্রয়োগ করুন',

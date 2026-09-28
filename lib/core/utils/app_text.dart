@@ -725,6 +725,8 @@ class AppText {
     required this.duaSavedCount,
     required this.duaTotalSaved,
     required this.amolReadConfirmMessage,
+    required this.amolUntrackTitle,
+    required this.amolUntrackMessage,
     required this.readAtLabel,
     required this.verificationCodeSent,
     required this.verificationResendFailed,
@@ -1577,6 +1579,8 @@ class AppText {
   final String duaSavedCount;
   final String duaTotalSaved;
   final String amolReadConfirmMessage;
+  final String amolUntrackTitle;
+  final String amolUntrackMessage;
   final String readAtLabel;
   final String verificationCodeSent;
   final String verificationResendFailed;
@@ -4356,6 +4360,16 @@ class AppText {
         map,
         'amolReadConfirmMessage',
         fallback?.amolReadConfirmMessage ?? '',
+      ),
+      amolUntrackTitle: _read(
+        map,
+        'amolUntrackTitle',
+        fallback?.amolUntrackTitle ?? '',
+      ),
+      amolUntrackMessage: _read(
+        map,
+        'amolUntrackMessage',
+        fallback?.amolUntrackMessage ?? '',
       ),
       readAtLabel: _read(map, 'readAtLabel', fallback?.readAtLabel ?? ''),
       verificationCodeSent: _read(

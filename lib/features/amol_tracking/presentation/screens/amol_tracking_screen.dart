@@ -457,6 +457,10 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     if (!mounted) return;
 
     if (_bloc.state.isItemChecked(item.itemKey, item.isCompleted)) {
+      // Tracked -> untracked is destructive, so confirm first. Cancelling
+      // leaves the checkbox and the server untouched.
+      final confirmed = await _confirmUntrack(item);
+      if (!mounted || !confirmed) return;
       _didChangeTracking = true;
       _bloc.add(
         UncheckAmolDailyItem(
@@ -510,6 +514,29 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         itemKey: item.itemKey,
       ),
     );
+  }
+
+  Future<bool> _confirmUntrack(AmolItem item) async {
+    final appText = AppText.readOf(context);
+    final name = _localizedItemName(appText, item);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(appText.amolUntrackTitle),
+        content: Text(appText.amolUntrackMessage.replaceAll('{name}', name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(appText.no),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
   }
 
   Future<bool> _confirmReadTracking() async {

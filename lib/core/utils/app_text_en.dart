@@ -774,6 +774,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'duaTotalSaved': 'Total Saved : {n}',
   'amolReadConfirmMessage':
       'Are you sure you have read this and want to track it?',
+  'amolUntrackTitle': 'Untrack Amol?',
+  'amolUntrackMessage': 'Are you sure you want to untrack "{name}"?',
   // Quran screens
   'commonCancel': 'Cancel',
   'commonApply': 'Apply',
