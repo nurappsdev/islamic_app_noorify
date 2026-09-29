@@ -42,7 +42,13 @@ class QuranOfflineDatabase {
   static final QuranOfflineDatabase _instance = QuranOfflineDatabase._();
 
   static const _fileName = 'quran_offline.db';
-  static const _version = 4;
+  static const _version = 5;
+
+  /// Version of the cached reading content (surah list, surah metadata,
+  /// ayahs and their translations). Bump it when the server's Quran content
+  /// changes in a way old copies must not survive: the next launch drops the
+  /// cached reading content and it is fetched again on demand.
+  static const contentVersion = 1;
   static const _expectedAyahCount = 6236;
   static const surahCount = 114;
 
@@ -58,7 +64,7 @@ class QuranOfflineDatabase {
 
     final path = await _localPath();
     await Directory(p.dirname(path)).create(recursive: true);
-    return _db = await openDatabase(
+    final db = await openDatabase(
       path,
       version: _version,
       onCreate: (db, version) => _createSchema(db),
@@ -74,18 +80,121 @@ class QuranOfflineDatabase {
         }
         // v2 -> v3: additive — downloadable translation editions.
         await _createTranslationTables(db);
+        // v4 -> v5: additive — per-surah completeness, content version and
+        // cache age for the reading cache.
         await _createInternalCache(db);
       },
     );
+    await _checkContentVersion(db);
+    return _db = db;
+  }
+
+  /// Drops cached reading content written for another [contentVersion]. The
+  /// full offline download (its own tables) is left alone.
+  Future<void> _checkContentVersion(Database db) async {
+    final rows = await db.query(
+      'internal_quran_state',
+      where: 'key = ?',
+      whereArgs: ['content_version'],
+    );
+    final stored = rows.isEmpty ? null : rows.first['value'] as String?;
+    if (stored == '$contentVersion') return;
+    await db.transaction((txn) async {
+      // A database from before versioning holds content of version 1.
+      if (stored != null || contentVersion != 1) {
+        await txn.delete('internal_quran_ayahs');
+        await txn.delete('internal_quran_surahs');
+        await txn.delete(
+          'internal_quran_meta',
+          where: "cache_key NOT LIKE 'offline-complete%'",
+        );
+      }
+      await txn.insert('internal_quran_state', {
+        'key': 'content_version',
+        'value': '$contentVersion',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    });
   }
 
   Future<void> _createInternalCache(Database db) async {
     await db.execute(
-      'CREATE TABLE IF NOT EXISTS internal_quran_meta (cache_key TEXT PRIMARY KEY, body TEXT NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS internal_quran_meta (cache_key TEXT PRIMARY KEY, body TEXT NOT NULL, cached_at INTEGER NOT NULL DEFAULT 0)',
     );
+    // Tables from before v5 lack the age column.
+    final columns = await db.rawQuery('PRAGMA table_info(internal_quran_meta)');
+    if (!columns.any((c) => c['name'] == 'cached_at')) {
+      await db.execute(
+        'ALTER TABLE internal_quran_meta ADD COLUMN cached_at INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    // One row per ayah; translations of every edition fetched are merged in.
     await db.execute(
       'CREATE TABLE IF NOT EXISTS internal_quran_ayahs (surah INTEGER NOT NULL, ayah INTEGER NOT NULL, body TEXT NOT NULL, PRIMARY KEY (surah, ayah))',
     );
+    // A surah whose every ayah is cached with a given translation edition.
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS internal_quran_surahs (surah INTEGER NOT NULL, translation INTEGER NOT NULL, cached_at INTEGER NOT NULL, PRIMARY KEY (surah, translation))',
+    );
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS internal_quran_state (key TEXT PRIMARY KEY, value TEXT)',
+    );
+  }
+
+  /// When [surah] was fully cached with [translation], or null if it is not.
+  Future<DateTime?> surahCachedAt(int surah, int translation) async {
+    final db = await open();
+    final rows = await db.query(
+      'internal_quran_surahs',
+      columns: ['cached_at'],
+      where: 'surah = ? AND translation = ?',
+      whereArgs: [surah, translation],
+    );
+    if (rows.isEmpty) return null;
+    return DateTime.fromMillisecondsSinceEpoch(rows.first['cached_at'] as int);
+  }
+
+  /// Records [surah] as fully cached with [translation], provided every one
+  /// of its [totalAyah] ayahs is stored with that translation. Counts in SQL
+  /// rather than loading the surah.
+  Future<bool> markSurahCached(
+    int surah,
+    int translation,
+    int totalAyah,
+  ) async {
+    final db = await open();
+    final stored = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM internal_quran_ayahs '
+        'WHERE surah = ? AND ayah BETWEEN 1 AND ? '
+        'AND (body LIKE ? OR body LIKE ?)',
+        [
+          surah,
+          totalAyah,
+          '%"resourceId":$translation,%',
+          '%"resourceId":$translation}%',
+        ],
+      ),
+    );
+    if (stored != totalAyah) return false;
+    await db.insert('internal_quran_surahs', {
+      'surah': surah,
+      'translation': translation,
+      'cached_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    return true;
+  }
+
+  /// When the metadata response at [path] was cached, or null if it is not.
+  Future<DateTime?> internalCachedAt(String path) async {
+    final db = await open();
+    final rows = await db.query(
+      'internal_quran_meta',
+      columns: ['cached_at'],
+      where: 'cache_key = ?',
+      whereArgs: [path],
+    );
+    if (rows.isEmpty) return null;
+    return DateTime.fromMillisecondsSinceEpoch(rows.first['cached_at'] as int);
   }
 
   Future<void> cacheInternalResponse(
@@ -98,6 +207,7 @@ class QuranOfflineDatabase {
       await db.insert('internal_quran_meta', {
         'cache_key': path,
         'body': jsonEncode(response),
+        'cached_at': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       return;
     }
@@ -108,6 +218,7 @@ class QuranOfflineDatabase {
       await txn.insert('internal_quran_meta', {
         'cache_key': 'reader/$number',
         'body': jsonEncode(surah),
+        'cached_at': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       for (final raw in data['ayahs'] as List) {
         final ayah = Map<String, dynamic>.from(raw as Map);

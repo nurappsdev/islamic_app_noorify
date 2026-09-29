@@ -37,6 +37,7 @@ class _ParaDetailScreenState extends State<ParaDetailScreen> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return QuranRetry(
+            offline: snapshot.error is QuranOfflineException,
             onRetry: () => setState(
               () =>
                   _future = QuranContentService.shared.loadPara(widget.number),

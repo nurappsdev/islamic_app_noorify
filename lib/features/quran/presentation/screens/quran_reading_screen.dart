@@ -742,7 +742,10 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 page: state.loading && state.ayahs.isEmpty
                     ? const FullSurahShimmer()
                     : state.error && state.ayahs.isEmpty
-                    ? QuranRetry(onRetry: () => reader.load())
+                    ? QuranRetry(
+                        offline: state.offline,
+                        onRetry: () => reader.load(),
+                      )
                     : state.ayahs.isEmpty
                     ? Center(child: Text(AppText.of(context).quranNoAyahs))
                     : QuranPageViewport(

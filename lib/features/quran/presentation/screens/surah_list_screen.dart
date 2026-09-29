@@ -319,7 +319,10 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
       if (state.isLoading) return const SurahListShimmer();
       if (state.hasError) {
         return _fill(
-          QuranRetry(onRetry: () => _surahs.add(const LoadSurahs())),
+          QuranRetry(
+            offline: state.offline,
+            onRetry: () => _surahs.add(const LoadSurahs()),
+          ),
         );
       }
       final list = state.surahs
@@ -355,7 +358,10 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
       if (state.isLoading) return const SurahListShimmer();
       if (state.hasError) {
         return _fill(
-          QuranRetry(onRetry: () => _paras.add(const LoadJuzList())),
+          QuranRetry(
+            offline: state.offline,
+            onRetry: () => _paras.add(const LoadJuzList()),
+          ),
         );
       }
       final list = state.juzs

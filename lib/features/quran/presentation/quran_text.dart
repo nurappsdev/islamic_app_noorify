@@ -161,10 +161,8 @@ class QuranText {
       _t('Playlist created successfully', 'প্লেলিস্ট সফলভাবে তৈরি হয়েছে');
   String get playlistUpdatedSuccessfully =>
       _t('Playlist updated successfully', 'প্লেলিস্ট সফলভাবে আপডেট হয়েছে');
-  String get playlistDeletedSuccessfully => _t(
-    'Playlist deleted successfully',
-    'প্লেলিস্ট সফলভাবে মুছে ফেলা হয়েছে',
-  );
+  String get playlistDeletedSuccessfully =>
+      _t('Playlist deleted successfully', 'প্লেলিস্ট সফলভাবে মুছে ফেলা হয়েছে');
   String get allAyahs => _t('All', 'সব');
   String get readAyahs => _t('Read', 'পড়া হয়েছে');
   String get unreadAyahs => _t('Unread', 'অপঠিত');
@@ -345,6 +343,13 @@ class QuranText {
         };
 
   // ---- Dashboard ---------------------------------------------------------
+
+  String get offlineNotDownloaded => _t(
+    "You're offline, and this hasn't been downloaded yet. Connect to the "
+        'internet once to load it; after that it opens offline too.',
+    'আপনি অফলাইনে আছেন, আর এটি এখনো ডাউনলোড হয়নি। একবার ইন্টারনেটে যুক্ত '
+        'হয়ে খুলুন; এরপর অফলাইনেও খুলবে।',
+  );
 
   String get totalReadingTime =>
       _t('Total Quran Reading time', 'মোট কুরআন পাঠের সময়');

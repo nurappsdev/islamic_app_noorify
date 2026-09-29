@@ -1,3 +1,5 @@
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_content_service.dart'
+    show QuranOfflineException;
 import 'package:bloc/bloc.dart';
 
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_api_service.dart';
@@ -19,12 +21,18 @@ class SurahListBloc extends Bloc<SurahListEvent, SurahListState> {
   final QuranApiService _apiService;
 
   Future<void> _onLoad(LoadSurahs event, Emitter<SurahListState> emit) async {
-    emit(state.copyWith(isLoading: true, hasError: false));
+    emit(state.copyWith(isLoading: true, hasError: false, offline: false));
     try {
       final surahs = await _apiService.loadSurahList();
       emit(state.copyWith(isLoading: false, surahs: surahs));
-    } catch (_) {
-      emit(state.copyWith(isLoading: false, hasError: true));
+    } catch (e) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          hasError: true,
+          offline: e is QuranOfflineException,
+        ),
+      );
     }
   }
 }

@@ -15,14 +15,26 @@ const quranBorder = Color(0xffd7e5a6);
 const quranPale = Color(0xfff3f6e7);
 
 class QuranRetry extends StatelessWidget {
-  const QuranRetry({super.key, required this.onRetry});
+  const QuranRetry({super.key, required this.onRetry, this.offline = false});
   final VoidCallback onRetry;
+
+  /// The content is not on the device and the server is unreachable.
+  final bool offline;
   @override
   Widget build(BuildContext context) => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(AppText.of(context).quranLoadError, textAlign: TextAlign.center),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            offline
+                ? QuranText.of(context).offlineNotDownloaded
+                : AppText.of(context).quranLoadError,
+            key: offline ? const ValueKey('quran-offline-message') : null,
+            textAlign: TextAlign.center,
+          ),
+        ),
         TextButton(
           onPressed: onRetry,
           child: Text(AppText.of(context).tryAgain),
@@ -202,7 +214,10 @@ class _QuranTabShellState extends State<QuranTabShell> {
               title: text.learn.isNotEmpty ? text.learn : 'Learn',
               onBack: () => _select('home'),
             ),
-            QuranSavedScreen(onBack: () => _select('home')),
+            QuranSavedScreen(
+              onBack: () => _select('home'),
+              active: _selected == 'saved',
+            ),
             QuranPlanScreen(onBack: () => _select('home')),
             QuranDashboardScreen(
               onBack: () => _select('home'),

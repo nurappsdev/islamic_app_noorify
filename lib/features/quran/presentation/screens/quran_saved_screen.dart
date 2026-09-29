@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 import '../../data/repositories/quran_playlist_repository_impl.dart';
 import '../../data/services/quran_local_store.dart';
@@ -15,25 +17,34 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import 'create_quran_playlist_screen.dart';
 import 'quran_playlist_detail_screen.dart';
+import '../widgets/dashboard/quran_dashboard_header.dart';
 
 class QuranSavedScreen extends StatefulWidget {
-  const QuranSavedScreen({super.key, this.onBack, this.playlistRepository});
+  const QuranSavedScreen({
+    super.key,
+    this.onBack,
+    this.playlistRepository,
+    this.active = true,
+  });
 
   final VoidCallback? onBack;
   final QuranPlaylistRepository? playlistRepository;
+
+  /// Whether this tab is the one showing; bookmarks are re-read when it
+  /// becomes so, since they are added from the reader.
+  final bool active;
 
   @override
   State<QuranSavedScreen> createState() => _QuranSavedScreenState();
 }
 
-class _QuranSavedScreenState extends State<QuranSavedScreen> {
+class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
   int _tab = 1; // 0 = Saved, 1 = Play List
   List<Bookmark> _bookmarks = [];
   bool _loadingBookmarks = true;
 
   late final QuranPlaylistBloc _playlistBloc = QuranPlaylistBloc(
-    repository:
-        widget.playlistRepository ?? QuranPlaylistRepositoryImpl.shared,
+    repository: widget.playlistRepository ?? QuranPlaylistRepositoryImpl.shared,
   );
 
   final ScrollController _playlistScrollController = ScrollController();
@@ -54,7 +65,27 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void didUpdateWidget(QuranSavedScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) _loadBookmarks();
+  }
+
+  // Back from the reader, where bookmarks may have changed.
+  @override
+  void didPopNext() {
+    if (widget.active) _loadBookmarks();
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     _playlistScrollController.dispose();
     _playlistBloc.close();
     super.dispose();
@@ -90,9 +121,8 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
     final t = QuranText.read(context);
     final created = await Navigator.of(context).push<QuranPlaylist>(
       MaterialPageRoute(
-        builder: (_) => CreateQuranPlaylistScreen(
-          repository: widget.playlistRepository,
-        ),
+        builder: (_) =>
+            CreateQuranPlaylistScreen(repository: widget.playlistRepository),
       ),
     );
     if (created != null && mounted) {
@@ -122,7 +152,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF282442),
+              color: dialogCtx.inkColor(_ink),
             ),
           ),
           content: Text(
@@ -203,63 +233,25 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
         },
         child: Scaffold(
           backgroundColor: context.pageColor(Colors.white),
+          floatingActionButton: _tab == 1 ? _createPlaylistButton(t) : null,
           body: SafeArea(
             child: Column(
               children: [
-                SizedBox(height: 8.h),
-                // Top Tabs: "Saved" and "Play List" + Create button if tab == 1
-                Container(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: borderColor, width: 1),
-                    ),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  child: Row(
-                    children: [
-                      Flexible(child: _buildTab(index: 0, title: t.saved)),
-                      SizedBox(width: 12.w),
-                      Flexible(child: _buildTab(index: 1, title: t.playList)),
-                      const Spacer(),
-                      if (_tab == 1)
-                        InkWell(
-                          onTap: _openCreatePlaylist,
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 6.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDEE99D),
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.add_rounded,
-                                  size: 18.sp,
-                                  color: const Color(0xFF5D7133),
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  t.create,
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF5D7133),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                  child: QuranDashboardHeader(
+                    title: t.saved,
+                    onBack: widget.onBack,
                   ),
                 ),
-
-                // Tab Content
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                  child: _SegmentedTabs(
+                    selected: _tab,
+                    labels: [AppText.of(context).bookmarksTitle, t.playList],
+                    onSelected: (index) => setState(() => _tab = index),
+                  ),
+                ),
                 Expanded(
                   child: _tab == 1
                       ? _buildPlaylistTab(borderColor, t)
@@ -273,32 +265,32 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
     );
   }
 
-  Widget _buildTab({required int index, required String title}) {
-    final isSelected = _tab == index;
-    return InkWell(
-      onTap: () => setState(() => _tab = index),
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFD4E5A8) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected
-                ? const Color(0xFF232D1C)
-                : const Color(0xFF4A553E),
-          ),
-        ),
-      ),
-    );
-  }
+  /// "Create Playlist", styled like the Planner's "Create Plan". The empty
+  /// state carries its own button, so this shows once playlists exist.
+  Widget? _createPlaylistButton(QuranText t) =>
+      BlocBuilder<QuranPlaylistBloc, QuranPlaylistState>(
+        builder: (context, state) {
+          if (state.playlists.isEmpty) return const SizedBox.shrink();
+          return FilledButton.icon(
+            key: const ValueKey('quran-create-playlist'),
+            onPressed: _openCreatePlaylist,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF9EAA52),
+              foregroundColor: Colors.white,
+              elevation: 3,
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 13.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28.r),
+              ),
+            ),
+            icon: Icon(Icons.playlist_add_rounded, size: 20.sp),
+            label: Text(
+              t.createPlaylist,
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            ),
+          );
+        },
+      );
 
   Widget _buildPlaylistTab(Color borderColor, QuranText t) {
     return BlocBuilder<QuranPlaylistBloc, QuranPlaylistState>(
@@ -306,107 +298,33 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
         if (state.status == QuranPlaylistLoadStatus.loading &&
             state.playlists.isEmpty) {
           return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF9EAA52),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFF9EAA52)),
           );
         }
 
         if (state.status == QuranPlaylistLoadStatus.failure &&
             state.playlists.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.r),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline_rounded,
-                    size: 48.sp,
-                    color: Colors.red.shade400,
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    state.failure != null
-                        ? localizeFailureMessage(state.failure!.message)
-                        : t.somethingWentWrong,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  FilledButton.icon(
-                    onPressed: () {
-                      _playlistBloc.add(
-                        const LoadQuranPlaylists(forceRefresh: true),
-                      );
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF7A8D49),
-                    ),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: Text(t.retry),
-                  ),
-                ],
-              ),
-            ),
+          return _EmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: t.somethingWentWrong,
+            message: state.failure != null
+                ? localizeFailureMessage(state.failure!.message)
+                : null,
+            action: t.retry,
+            actionIcon: Icons.refresh_rounded,
+            onAction: () =>
+                _playlistBloc.add(const LoadQuranPlaylists(forceRefresh: true)),
           );
         }
 
         if (state.playlists.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.queue_music_rounded,
-                    size: 54.sp,
-                    color: const Color(0xFFB5C96E),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    t.noPlaylists,
-                    style: TextStyle(
-                      color: const Color(0xFF332A66),
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Text(
-                    t.emptyPlaylistSub,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13.sp,
-                    ),
-                  ),
-                  SizedBox(height: 20.h),
-                  FilledButton.icon(
-                    onPressed: _openCreatePlaylist,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF7A8D49),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 10.h,
-                      ),
-                    ),
-                    icon: const Icon(Icons.add_rounded, size: 20),
-                    label: Text(
-                      t.createPlaylist,
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          return _EmptyState(
+            icon: Icons.queue_music_rounded,
+            title: t.noPlaylists,
+            message: t.emptyPlaylistSub,
+            action: t.createPlaylist,
+            actionIcon: Icons.playlist_add_rounded,
+            onAction: _openCreatePlaylist,
           );
         }
 
@@ -417,10 +335,10 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
           },
           child: ListView.separated(
             controller: _playlistScrollController,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            // Room at the bottom for the floating "Create Playlist" button.
+            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 96.h),
             itemCount: state.playlists.length + (state.isPaginating ? 1 : 0),
-            separatorBuilder: (_, _) =>
-                Divider(color: borderColor.withValues(alpha: 0.5), height: 1),
+            separatorBuilder: (_, _) => SizedBox(height: 10.h),
             itemBuilder: (context, index) {
               if (index >= state.playlists.length) {
                 return Padding(
@@ -435,136 +353,78 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
               }
 
               final pl = state.playlists[index];
-              return InkWell(
+              final progress = pl.totalAyahs > 0
+                  ? (pl.percentage / 100).clamp(0.0, 1.0)
+                  : 0.0;
+              return _SavedCard(
+                key: ValueKey('quran-playlist-${pl.id}'),
+                icon: Icons.queue_music_rounded,
+                title: pl.title,
+                subtitle: pl.items.isNotEmpty
+                    ? t.playlistSummary([
+                        for (final item in pl.items.take(2)) item.surahName,
+                      ], pl.items.length)
+                    : t.noSurahsInPlaylist,
                 onTap: () => _openPlaylist(pl),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  child: Row(
-                    children: [
-                      // Left music icon
-                      Icon(
-                        Icons.queue_music_rounded,
-                        color: const Color(0xFF8FA856),
-                        size: 28.sp,
-                      ),
-                      SizedBox(width: 16.w),
-
-                      // Title and Subtitle
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              pl.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF332A66),
+                footer: pl.totalAyahs > 0
+                    ? Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4.r),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 5.h,
+                                color: const Color(0xFF9EAA52),
+                                backgroundColor: context.lineColor(
+                                  const Color(0xFFE9F0D2),
+                                ),
                               ),
                             ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              pl.items.isNotEmpty
-                                  ? t.playlistSummary([
-                                      for (final item in pl.items.take(2))
-                                        item.surahName,
-                                    ], pl.items.length)
-                                  : t.noSurahsInPlaylist,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: const Color(0xFF9090AC),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Progress badge if has ayahs
-                      if (pl.totalAyahs > 0 && pl.percentage > 0)
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: 8.w),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F2CC),
-                            borderRadius: BorderRadius.circular(10.r),
-                            border: Border.all(
-                              color: const Color(0xFFD2E3A8),
-                            ),
-                          ),
-                          child: Text(
-                            '${t.n(pl.percentage.toInt())}%',
+                          SizedBox(width: 10.w),
+                          Text(
+                            '${t.n(pl.percentage.round())}%',
                             style: TextStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF5D7133),
-                            ),
-                          ),
-                        ),
-
-                      // Options popup menu
-                      PopupMenuButton<String>(
-                        onSelected: (val) {
-                          if (val == 'delete') {
-                            _confirmDeletePlaylist(pl);
-                          }
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        itemBuilder: (ctx) => [
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 18,
-                                  color: Color(0xFFC15B4B),
-                                ),
-                                SizedBox(width: 8.w),
-                                Text(
-                                  t.delete,
-                                  style: const TextStyle(
-                                    color: Color(0xFFC15B4B),
-                                  ),
-                                ),
-                              ],
+                              color: context.inkColor(const Color(0xFF5D7133)),
                             ),
                           ),
                         ],
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4.w),
-                          child: Icon(
-                            Icons.more_vert_rounded,
-                            size: 20.sp,
-                            color: const Color(0xFF9090AC),
+                      )
+                    : null,
+                trailing: PopupMenuButton<String>(
+                  tooltip: t.delete,
+                  onSelected: (val) {
+                    if (val == 'delete') _confirmDeletePlaylist(pl);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  itemBuilder: (ctx) => [
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: Color(0xFFC15B4B),
                           ),
-                        ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            t.delete,
+                            style: const TextStyle(color: Color(0xFFC15B4B)),
+                          ),
+                        ],
                       ),
-
-                      // Trailing circular music note button
-                      Container(
-                        width: 36.r,
-                        height: 36.r,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFDEE99D),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.music_note_rounded,
-                          color: const Color(0xFF5D7133),
-                          size: 18.sp,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    size: 20.sp,
+                    color: context.inkColor(_muted),
                   ),
                 ),
               );
@@ -583,77 +443,285 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> {
     }
 
     if (_bookmarks.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.bookmark_border_rounded,
-              size: 54.sp,
-              color: const Color(0xFFB5C96E),
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              t.noBookmarks,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 14.sp),
-            ),
-          ],
-        ),
+      return _EmptyState(
+        icon: Icons.bookmark_border_rounded,
+        title: t.noBookmarks,
       );
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      itemCount: _bookmarks.length,
-      separatorBuilder: (_, _) =>
-          Divider(color: borderColor.withValues(alpha: 0.5), height: 1),
-      itemBuilder: (context, index) {
-        final b = _bookmarks[index];
-        return InkWell(
-          onTap: () => _openBookmark(b),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 14.h),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.bookmark_rounded,
-                  color: const Color(0xFF8FA856),
-                  size: 26.sp,
-                ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.surahName(b.surahNo, b.surahName),
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF332A66),
-                        ),
+    return RefreshIndicator(
+      color: const Color(0xFF7A8D49),
+      onRefresh: _loadBookmarks,
+      child: ListView.separated(
+        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+        itemCount: _bookmarks.length,
+        separatorBuilder: (_, _) => SizedBox(height: 10.h),
+        itemBuilder: (context, index) {
+          final b = _bookmarks[index];
+          return _SavedCard(
+            icon: Icons.bookmark_rounded,
+            title: t.surahName(b.surahNo, b.surahName),
+            subtitle:
+                '${t.surah} ${t.n(b.surahNo)} • ${t.ayah} ${t.n(b.ayahNo)}',
+            onTap: () => _openBookmark(b),
+            trailing: Padding(
+              padding: EdgeInsets.only(right: 4.w),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: context.inkColor(const Color(0xFF8FA856)),
+                size: 22.sp,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+const _ink = Color(0xFF2D3A1F);
+const _muted = Color(0xFF7C8A63);
+const _tint = Color(0xFFEEF3DC);
+
+/// Two equal segments in a soft pill, the selected one filled; labels never
+/// share their width with other controls, so they are not cut short.
+class _SegmentedTabs extends StatelessWidget {
+  const _SegmentedTabs({
+    required this.selected,
+    required this.labels,
+    required this.onSelected,
+  });
+
+  final int selected;
+  final List<String> labels;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(4.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(_tint),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Row(
+        children: [
+          for (final (index, label) in labels.indexed)
+            Expanded(
+              child: GestureDetector(
+                key: ValueKey('quran-saved-tab-$index'),
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onSelected(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: index == selected
+                        ? context.surfaceColor(const Color(0xFFD4E5A8))
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: index == selected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: context.inkColor(
+                        index == selected ? _ink : _muted,
                       ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        '${t.surah} ${t.n(b.surahNo)} • ${t.ayah} ${t.n(b.ayahNo)}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: const Color(0xFF9090AC),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: const Color(0xFF8FA856),
-                  size: 22.sp,
-                ),
-              ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A saved item: icon tile, title and subtitle, an optional footer (such as
+/// progress) and a trailing control.
+class _SavedCard extends StatelessWidget {
+  const _SavedCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.footer,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title, subtitle;
+  final VoidCallback onTap;
+  final Widget? footer, trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(16.r);
+    return Material(
+      color: context.surfaceColor(Colors.white),
+      borderRadius: radius,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(12.w, 12.h, 4.w, 12.h),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(
+              color: context.lineColor(const Color(0xFFE3ECC4)),
             ),
           ),
-        );
-      },
+          child: Row(
+            children: [
+              Container(
+                width: 44.r,
+                height: 44.r,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(_tint),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(
+                  icon,
+                  color: context.inkColor(const Color(0xFF7A8D49)),
+                  size: 22.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        color: context.inkColor(_ink),
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: context.inkColor(_muted),
+                      ),
+                    ),
+                    if (footer != null) ...[SizedBox(height: 8.h), footer!],
+                  ],
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Centered icon, title, optional message and optional action.
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    this.message,
+    this.action,
+    this.actionIcon,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? message, action;
+  final IconData? actionIcon;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 24.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 84.r,
+              height: 84.r,
+              decoration: BoxDecoration(
+                color: context.surfaceColor(_tint),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 40.sp,
+                color: context.inkColor(const Color(0xFF9EAA52)),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.inkColor(_ink),
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (message != null) ...[
+              SizedBox(height: 6.h),
+              Text(
+                message!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.inkColor(_muted),
+                  fontSize: 13.sp,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            if (action != null) ...[
+              SizedBox(height: 20.h),
+              FilledButton.icon(
+                onPressed: onAction,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF9EAA52),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28.r),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 12.h,
+                  ),
+                ),
+                icon: Icon(actionIcon, size: 20.sp),
+                label: Text(
+                  action!,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

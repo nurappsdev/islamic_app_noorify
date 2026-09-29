@@ -9,6 +9,7 @@ class QuranReadingState {
     this.ayahs = const [],
     this.loading = true,
     this.error = false,
+    this.offline = false,
     this.translation = 161,
     this.from = 1,
     this.to = 1,
@@ -21,6 +22,9 @@ class QuranReadingState {
   final SurahSummary? surah;
   final List<QuranAyah> ayahs;
   final bool loading, error, bismillahPre;
+
+  /// The error was being offline with the page not stored on the device.
+  final bool offline;
   final int translation, from, to;
   final QuranPagination? pagination;
   final List<int> pages;
@@ -150,7 +154,7 @@ class QuranReadingCubit extends Cubit<QuranReadingState> {
           pages: batch.pages,
         ),
       );
-    } catch (_) {
+    } catch (e) {
       if (isClosed || generation != _generation) return;
       emit(
         QuranReadingState(
@@ -158,6 +162,7 @@ class QuranReadingCubit extends Cubit<QuranReadingState> {
           ayahs: state.ayahs,
           loading: false,
           error: true,
+          offline: e is QuranOfflineException,
           translation: resource,
           from: state.from,
           to: state.to,
