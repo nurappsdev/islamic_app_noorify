@@ -150,7 +150,7 @@ class QuranText {
   String get getStarted => _t('Get Start', 'শুরু করুন');
   String get completed => _t('Completed', 'সম্পন্ন');
   String get markCompleted => _t('Mark Completed', 'সম্পন্ন চিহ্নিত করুন');
-  String get deletePlan => _t('Delete Plan', 'পরিকল্পনা মুছুন');
+  String get deletePlan => _t('Delete Plan', 'প্ল্যান মুছে ফেলুন');
   String get noPlansYet => _t(
     "You haven't created any plan yet !",
     'আপনি এখনো কোনো পরিকল্পনা তৈরি করেননি!',
@@ -197,8 +197,7 @@ class QuranText {
   String get overdue => _t('Overdue', 'সময়সীমা অতিক্রম হয়েছে');
   String get completedPlans => _t('Completed Plans', 'সম্পন্ন প্ল্যান');
   String get activePlans => _t('Active Plans', 'চলমান প্ল্যান');
-  String get noActivePlans =>
-      _t('No Active Plans', 'কোনো চলমান প্ল্যান নেই');
+  String get noActivePlans => _t('No Active Plans', 'কোনো চলমান প্ল্যান নেই');
   String get noCompletedPlans =>
       _t('No Completed Plans', 'কোনো সম্পন্ন প্ল্যান নেই');
   String get planCreatedSuccessfully =>
@@ -216,8 +215,57 @@ class QuranText {
   String get failedToUpdatePlan =>
       _t('Failed to update Quran plan.', 'কুরআন প্ল্যান আপডেট করা যায়নি।');
   String get todayRemaining => _t("Today's Remaining", 'আজকের বাকি');
+  String get todayRemainingAyahs =>
+      _t("Today's Remaining Ayahs", 'আজকের বাকি আয়াত');
   String get markInProgress =>
       _t('Mark In Progress', 'চলমান হিসেবে চিহ্নিত করুন');
+  String get quranPlanDetails =>
+      _t('Quran Plan Details', 'কুরআন প্ল্যানের বিস্তারিত');
+  String get description => _t('Description', 'বিবরণ');
+  String get overallProgress => _t('Overall Progress', 'সামগ্রিক অগ্রগতি');
+  String get currentDay => _t('Current Day', 'বর্তমান দিন');
+  String get selectedSurahs => _t('Selected Surahs', 'নির্বাচিত সূরা');
+  String get selectedParas => _t('Selected Paras', 'নির্বাচিত পারা');
+  String get nextAyah => _t('Next Ayah', 'পরবর্তী আয়াত');
+  String get unread => _t('Unread', 'অপঠিত');
+  String get all => _t('All', 'সবগুলো');
+  String get completePlanAction => _t('Complete Plan', 'প্ল্যান সম্পন্ন করুন');
+  String get completeQuranPlan =>
+      _t('Complete Quran Plan', 'কুরআন প্ল্যান সম্পন্ন করুন');
+  String get deleteQuranPlan =>
+      _t('Delete Quran Plan', 'কুরআন প্ল্যান মুছে ফেলুন');
+  String get deletePlanConfirmTitle =>
+      _t('Delete Quran Plan?', 'কুরআন প্ল্যান মুছে ফেলবেন?');
+  String get deletePlanConfirmMessage => _t(
+    'Are you sure you want to delete this plan?\nYour plan will no longer appear in your active plans.',
+    'আপনি কি নিশ্চিত যে এই প্ল্যানটি মুছে ফেলতে চান?\nপ্ল্যানটি আপনার চলমান প্ল্যানে আর দেখা যাবে না।',
+  );
+  String get planDeletedSuccessfully =>
+      _t('Plan deleted successfully.', 'প্ল্যান সফলভাবে মুছে ফেলা হয়েছে।');
+  String get planCompletedSuccessfully =>
+      _t('Plan completed successfully.', 'প্ল্যান সফলভাবে সম্পন্ন হয়েছে।');
+  String unreadAyahsWarning(int count) => isBangla
+      ? 'এই প্ল্যানটি সম্পন্ন করার আগে আপনাকে আরও ${n(count)}টি আয়াত পড়তে হবে।'
+      : 'You still have ${n(count)} Ayahs left to read before completing this plan.';
+  String get planNotFound => _t('Plan not found.', 'প্ল্যান পাওয়া যায়নি।');
+  String get failedToLoadPlanDetails =>
+      _t('Failed to load plan details.', 'প্ল্যানের বিস্তারিত লোড করা যায়নি।');
+  String get failedToLoadPlanAyahs =>
+      _t('Failed to load plan Ayahs.', 'প্ল্যানের আয়াত লোড করা যায়নি।');
+  String get failedToCompletePlan =>
+      _t('Failed to complete plan.', 'প্ল্যান সম্পন্ন করা যায়নি।');
+  String get failedToDeletePlan =>
+      _t('Failed to delete plan.', 'প্ল্যান মুছে ফেলা যায়নি।');
+  String get editPlan => _t('Edit Plan', 'প্ল্যান সম্পাদনা করুন');
+  String get editQuranPlan =>
+      _t('Edit Quran Plan', 'কুরআন প্ল্যান সম্পাদনা করুন');
+  String get planStatus => _t('Plan Status', 'প্ল্যানের অবস্থা');
+  String get viewAllAyahs => _t('View All Ayahs', 'সকল আয়াত দেখুন');
+  String get planAyahs => _t('Plan Ayahs', 'প্ল্যানের আয়াত');
+  String get cancel => _t('Cancel', 'বাতিল');
+  String get delete => _t('Delete', 'মুছে ফেলুন');
+  String get save => _t('Save', 'সংরক্ষণ করুন');
+  String get ayah => _t('Ayah', 'আয়াত');
 
   /// Names of the built-in plans, by id; [fallback] for the user's own.
   String presetPlanName(String id, String fallback) => !isBangla

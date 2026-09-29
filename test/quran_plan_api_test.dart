@@ -12,7 +12,6 @@ import 'package:islami_app_noorify/features/quran/data/repositories/quran_plan_r
 import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_text.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
 
 class _StubAdapter implements HttpClientAdapter {
   _StubAdapter(this.body, {this.status = 200});
@@ -149,11 +148,126 @@ final _sampleGetResponse = {
       },
     },
   ],
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 1,
-    "totalPage": 1,
+  "meta": {"page": 1, "limit": 10, "total": 1, "totalPage": 1},
+};
+
+final _sampleDetailsResponse = {
+  "statusCode": 200,
+  "success": true,
+  "message": "Quran plan retrieved successfully!",
+  "data": {
+    "_id": "6abb44ca7df616c9b3d09699",
+    "userId": "6ab5f452f04a5bbedaad3f1c",
+    "name": "Test plan 1",
+    "description": "Daily reading plan",
+    "surahNumbers": [2],
+    "paraNumbers": [1],
+    "wholeQuran": false,
+    "targetDays": 2,
+    "startDate": "2026-09-29",
+    "status": "in_progress",
+    "completedAt": null,
+    "isActive": true,
+    "createdAt": "2026-09-29T04:55:38.014Z",
+    "updatedAt": "2026-09-29T04:55:38.014Z",
+    "counts": {
+      "totalAyahs": 286,
+      "completedAyahs": 51,
+      "remainingAyahs": 235,
+      "percentage": 18,
+      "isCompleted": false,
+      "totalSurahs": 1,
+      "totalParas": 0,
+    },
+    "schedule": {
+      "startDate": "2026-09-29",
+      "endDate": "2026-09-30",
+      "targetDays": 2,
+      "dayNumber": 1,
+      "daysLeft": 1,
+      "ayahsPerDay": 143,
+      "expectedAyahs": 143,
+      "isOnTrack": false,
+      "aheadBy": -92,
+      "todayRemainingAyahs": 92,
+      "requiredAyahsPerDay": 118,
+      "isOverdue": false,
+    },
+    "surahs": [
+      {
+        "surahNumber": 2,
+        "nameArabic": "البقرة",
+        "nameEnglish": "Al-Baqarah",
+        "nameBangla": "আল-বাকারা",
+        "totalAyahs": 286,
+        "readAyahs": 51,
+        "remainingAyahs": 235,
+        "percentage": 18,
+        "isCompleted": false,
+      },
+    ],
+    "paras": [
+      {
+        "paraNumber": 1,
+        "nameBangla": "আলিফ লাম মীম",
+        "nameEnglish": "Alif Lam Meem",
+        "nameArabic": "الم",
+        "totalAyahs": 148,
+        "readAyahs": 51,
+        "remainingAyahs": 97,
+        "percentage": 34,
+        "isCompleted": false,
+      },
+    ],
+    "nextAyah": {
+      "surahNumber": 2,
+      "ayahNumber": 52,
+      "ayahKey": "2:52",
+      "paraNumber": 1,
+      "surahNameEnglish": "Al-Baqarah",
+      "surahNameBangla": "আল-বাকারা",
+      "surahNameArabic": "البقرة",
+    },
+  },
+};
+
+final _sampleAyahsResponse = {
+  "statusCode": 200,
+  "success": true,
+  "message": "Plan ayahs retrieved successfully!",
+  "data": [
+    {
+      "surahNumber": 1,
+      "ayahNumber": 1,
+      "ayahKey": "1:1",
+      "paraNumber": 1,
+      "surahNameEnglish": "Al-Fatihah",
+      "surahNameBangla": "আল-ফাতিহা",
+      "surahNameArabic": "الفاتحة",
+      "isRead": true,
+    },
+    {
+      "surahNumber": 1,
+      "ayahNumber": 2,
+      "ayahKey": "1:2",
+      "paraNumber": 1,
+      "surahNameEnglish": "Al-Fatihah",
+      "surahNameBangla": "আল-ফাতিহা",
+      "surahNameArabic": "الفাতحة",
+      "isRead": false,
+    },
+  ],
+  "meta": {"page": 1, "limit": 10, "total": 6236, "totalPage": 624},
+};
+
+final _sampleDeleteResponse = {
+  "statusCode": 200,
+  "success": true,
+  "message": "Quran plan deleted successfully!",
+  "data": {
+    "_id": "6abb44ca7df616c9b3d09699",
+    "name": "Test plan 1",
+    "isActive": false,
   },
 };
 
@@ -246,21 +360,16 @@ void main() {
 
       expect(
         () => env.source.createPlan(
-          const CreateQuranPlanRequest(
-            name: 'Duplicate Plan',
-            targetDays: 30,
-          ),
+          const CreateQuranPlanRequest(name: 'Duplicate Plan', targetDays: 30),
         ),
         throwsA(
-          isA<ServerException>().having(
-            (e) => e.statusCode,
-            'statusCode',
-            409,
-          ).having(
-            (e) => e.message,
-            'message',
-            'You already have a plan with this name',
-          ),
+          isA<ServerException>()
+              .having((e) => e.statusCode, 'statusCode', 409)
+              .having(
+                (e) => e.message,
+                'message',
+                'You already have a plan with this name',
+              ),
         ),
       );
     });
@@ -276,6 +385,130 @@ void main() {
       expect(env.http.last.path, '/quran/plans/plan_123');
       expect(env.http.last.data, {'status': 'completed'});
       expect(updated.id, isNotEmpty);
+    });
+
+    test(
+      'getPlanDetails sends GET and parses surahs, paras, nextAyah',
+      () async {
+        final env = _setup(body: _sampleDetailsResponse);
+        final plan = await env.source.getPlanDetails(
+          '6abb44ca7df616c9b3d09699',
+        );
+
+        expect(env.http.last.method, 'GET');
+        expect(env.http.last.path, '/quran/plans/6abb44ca7df616c9b3d09699');
+        expect(plan.id, '6abb44ca7df616c9b3d09699');
+        expect(plan.name, 'Test plan 1');
+        expect(plan.description, 'Daily reading plan');
+        expect(plan.counts.totalAyahs, 286);
+        expect(plan.counts.completedAyahs, 51);
+        expect(plan.counts.percentage, 18);
+
+        // Surahs
+        expect(plan.surahs.length, 1);
+        final surah = plan.surahs.first;
+        expect(surah.surahNumber, 2);
+        expect(surah.nameArabic, 'البقرة');
+        expect(surah.nameEnglish, 'Al-Baqarah');
+        expect(surah.nameBangla, 'আল-বাকারা');
+        expect(surah.readAyahs, 51);
+        expect(surah.totalAyahs, 286);
+        expect(surah.remainingAyahs, 235);
+        expect(surah.percentage, 18);
+        expect(surah.isCompleted, isFalse);
+
+        // Paras
+        expect(plan.paras.length, 1);
+        final para = plan.paras.first;
+        expect(para.paraNumber, 1);
+        expect(para.nameBangla, 'আলিফ লাম মীম');
+        expect(para.totalAyahs, 148);
+        expect(para.readAyahs, 51);
+
+        // Next Ayah
+        expect(plan.nextAyah, isNotNull);
+        final next = plan.nextAyah!;
+        expect(next.surahNumber, 2);
+        expect(next.ayahNumber, 52);
+        expect(next.ayahKey, '2:52');
+        expect(next.paraNumber, 1);
+        expect(next.surahNameEnglish, 'Al-Baqarah');
+      },
+    );
+
+    test(
+      'completePlan sends PATCH to /quran/plans/{planId}/complete',
+      () async {
+        final env = _setup(body: _sampleDetailsResponse);
+        final plan = await env.source.completePlan('6abb44ca7df616c9b3d09699');
+
+        expect(env.http.last.method, 'PATCH');
+        expect(
+          env.http.last.path,
+          '/quran/plans/6abb44ca7df616c9b3d09699/complete',
+        );
+        expect(plan.id, '6abb44ca7df616c9b3d09699');
+      },
+    );
+
+    test('completePlan throws ServerException 400 on unread ayahs', () async {
+      final env = _setup(
+        body: {
+          'statusCode': 400,
+          'success': false,
+          'message':
+              'Read every ayah in the plan first: 6156 of 6236 still unread',
+        },
+        status: 400,
+      );
+
+      expect(
+        () => env.source.completePlan('plan_xyz'),
+        throwsA(
+          isA<ServerException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              .having(
+                (e) => e.message,
+                'message',
+                'Read every ayah in the plan first: 6156 of 6236 still unread',
+              ),
+        ),
+      );
+    });
+
+    test('getPlanAyahs sends filter and pagination query params', () async {
+      final env = _setup(body: _sampleAyahsResponse);
+      final result = await env.source.getPlanAyahs(
+        'plan_123',
+        filter: 'unread',
+        page: 2,
+        limit: 15,
+      );
+
+      expect(env.http.last.method, 'GET');
+      expect(env.http.last.path, '/quran/plans/plan_123/ayahs');
+      expect(env.http.last.queryParameters, {
+        'filter': 'unread',
+        'page': 2,
+        'limit': 15,
+      });
+
+      expect(result.ayahs.length, 2);
+      expect(result.ayahs.first.ayahKey, '1:1');
+      expect(result.ayahs.first.isRead, isTrue);
+      expect(result.ayahs[1].ayahKey, '1:2');
+      expect(result.ayahs[1].isRead, isFalse);
+      expect(result.meta.page, 1);
+      expect(result.meta.total, 6236);
+      expect(result.meta.totalPage, 624);
+    });
+
+    test('deletePlan sends DELETE to /quran/plans/{planId}', () async {
+      final env = _setup(body: _sampleDeleteResponse);
+      await env.source.deletePlan('6abb44ca7df616c9b3d09699');
+
+      expect(env.http.last.method, 'DELETE');
+      expect(env.http.last.path, '/quran/plans/6abb44ca7df616c9b3d09699');
     });
   });
 
@@ -302,6 +535,45 @@ void main() {
       expect(r3.isRight(), isTrue);
       expect(env.http.requests.length, 2);
     });
+
+    test(
+      'caches getPlanDetails and invalidates on update and delete',
+      () async {
+        final env = _setup(body: _sampleDetailsResponse);
+        final repo = QuranPlanRepositoryImpl(
+          env.source,
+          isSignedIn: () => true,
+          cacheFor: const Duration(minutes: 5),
+        );
+
+        final r1 = await repo.getPlanDetails('plan_xyz');
+        expect(r1.isRight(), isTrue);
+        expect(env.http.requests.length, 1);
+
+        // Second call uses cache
+        final r2 = await repo.getPlanDetails('plan_xyz');
+        expect(r2.isRight(), isTrue);
+        expect(env.http.requests.length, 1);
+
+        // Updating plan clears details and list cache
+        env.http.body = _sampleCreateResponse;
+        await repo.updatePlan(
+          'plan_xyz',
+          const UpdateQuranPlanRequest(name: 'Updated Name'),
+        );
+        expect(env.http.requests.length, 2);
+
+        // Next details call will refetch
+        env.http.body = _sampleDetailsResponse;
+        await repo.getPlanDetails('plan_xyz');
+        expect(env.http.requests.length, 3);
+
+        // Delete also invalidates cache
+        env.http.body = _sampleDeleteResponse;
+        await repo.deletePlan('plan_xyz');
+        expect(env.http.requests.length, 4);
+      },
+    );
 
     test('invalidates cache on plan creation', () async {
       final env = _setup(body: _sampleGetResponse);
@@ -345,33 +617,61 @@ void main() {
       );
 
       expect(result.isLeft(), isTrue);
-      result.fold(
-        (failure) {
-          expect(failure, isA<ServerFailure>());
-          expect((failure as ServerFailure).statusCode, 409);
-          expect(failure.rawMessage, 'You already have a plan with this name');
-          expect(failure.message, 'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।');
-        },
-        (_) => fail('Should not succeed'),
-      );
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect((failure as ServerFailure).statusCode, 409);
+        expect(failure.rawMessage, 'You already have a plan with this name');
+        expect(
+          failure.message,
+          'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।',
+        );
+      }, (_) => fail('Should not succeed'));
     });
   });
 
-  group('Localization & Duplicate plan error', () {
-    test('localizeFailureMessage maps 409 duplicate plan message in English', () {
+  group('Localization & Error Handling', () {
+    test(
+      'localizeFailureMessage maps 409 duplicate plan message in English',
+      () {
+        LanguagePreference.current = AppLanguage.english;
+        final localized = localizeFailureMessage(
+          'You already have a plan with this name',
+        );
+        expect(localized, 'You already have a Quran plan with this name.');
+      },
+    );
+
+    test(
+      'localizeFailureMessage maps 409 duplicate plan message in Bangla',
+      () {
+        LanguagePreference.current = AppLanguage.bangla;
+        final localized = localizeFailureMessage(
+          'You already have a plan with this name',
+        );
+        expect(localized, 'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।');
+      },
+    );
+
+    test('localizeFailureMessage formats 400 unread ayahs error in English', () {
       LanguagePreference.current = AppLanguage.english;
       final localized = localizeFailureMessage(
-        'You already have a plan with this name',
+        'Read every ayah in the plan first: 6156 of 6236 still unread',
       );
-      expect(localized, 'You already have a Quran plan with this name.');
+      expect(
+        localized,
+        'You still have 6,156 Ayahs left to read before completing this plan.',
+      );
     });
 
-    test('localizeFailureMessage maps 409 duplicate plan message in Bangla', () {
+    test('localizeFailureMessage formats 400 unread ayahs error in Bangla', () {
       LanguagePreference.current = AppLanguage.bangla;
       final localized = localizeFailureMessage(
-        'You already have a plan with this name',
+        'Read every ayah in the plan first: 6156 of 6236 still unread',
       );
-      expect(localized, 'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।');
+      expect(
+        localized,
+        'এই প্ল্যানটি সম্পন্ন করার আগে আপনাকে আরও ৬,১৫৬টি আয়াত পড়তে হবে।',
+      );
     });
 
     test('QuranText provides English and Bangla plan strings', () {
@@ -389,6 +689,21 @@ void main() {
 
       expect(QuranText.english.overdue, 'Overdue');
       expect(QuranText.bangla.overdue, 'সময়সীমা অতিক্রম হয়েছে');
+
+      expect(QuranText.english.quranPlanDetails, 'Quran Plan Details');
+      expect(QuranText.bangla.quranPlanDetails, 'কুরআন প্ল্যানের বিস্তারিত');
+
+      expect(QuranText.english.nextAyah, 'Next Ayah');
+      expect(QuranText.bangla.nextAyah, 'পরবর্তী আয়াত');
+
+      expect(QuranText.english.selectedSurahs, 'Selected Surahs');
+      expect(QuranText.bangla.selectedSurahs, 'নির্বাচিত সূরা');
+
+      expect(QuranText.english.selectedParas, 'Selected Paras');
+      expect(QuranText.bangla.selectedParas, 'নির্বাচিত পারা');
+
+      expect(QuranText.english.planAyahs, 'Plan Ayahs');
+      expect(QuranText.bangla.planAyahs, 'প্ল্যানের আয়াত');
     });
   });
 }

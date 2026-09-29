@@ -23,6 +23,21 @@ class QuranPlanState {
     this.isUpdating = false,
     this.updatedPlan,
     this.updateFailure,
+    this.selectedPlanDetails,
+    this.isLoadingDetails = false,
+    this.detailsFailure,
+    this.isCompleting = false,
+    this.completedSuccess = false,
+    this.completeFailure,
+    this.isDeleting = false,
+    this.deleteSuccess = false,
+    this.deleteFailure,
+    this.planAyahs = const [],
+    this.planAyahsMeta = const QuranPlanMeta(),
+    this.isLoadingAyahs = false,
+    this.isLoadingMoreAyahs = false,
+    this.ayahsFilter = 'all',
+    this.ayahsFailure,
   });
 
   final QuranPlanLoadStatus activeStatus;
@@ -45,6 +60,29 @@ class QuranPlanState {
   final bool isUpdating;
   final QuranPlan? updatedPlan;
   final Failure? updateFailure;
+
+  // Plan Details
+  final QuranPlan? selectedPlanDetails;
+  final bool isLoadingDetails;
+  final Failure? detailsFailure;
+
+  // Complete Plan
+  final bool isCompleting;
+  final bool completedSuccess;
+  final Failure? completeFailure;
+
+  // Delete Plan
+  final bool isDeleting;
+  final bool deleteSuccess;
+  final Failure? deleteFailure;
+
+  // Plan Ayahs
+  final List<QuranPlanAyah> planAyahs;
+  final QuranPlanMeta planAyahsMeta;
+  final bool isLoadingAyahs;
+  final bool isLoadingMoreAyahs;
+  final String ayahsFilter;
+  final Failure? ayahsFailure;
 
   bool get isLoadingActive =>
       activeStatus == QuranPlanLoadStatus.loading && activePlans.isEmpty;
@@ -76,6 +114,26 @@ class QuranPlanState {
     bool clearUpdatedPlan = false,
     Failure? updateFailure,
     bool clearUpdateFailure = false,
+    QuranPlan? selectedPlanDetails,
+    bool clearSelectedPlanDetails = false,
+    bool? isLoadingDetails,
+    Failure? detailsFailure,
+    bool clearDetailsFailure = false,
+    bool? isCompleting,
+    bool? completedSuccess,
+    Failure? completeFailure,
+    bool clearCompleteFailure = false,
+    bool? isDeleting,
+    bool? deleteSuccess,
+    Failure? deleteFailure,
+    bool clearDeleteFailure = false,
+    List<QuranPlanAyah>? planAyahs,
+    QuranPlanMeta? planAyahsMeta,
+    bool? isLoadingAyahs,
+    bool? isLoadingMoreAyahs,
+    String? ayahsFilter,
+    Failure? ayahsFailure,
+    bool clearAyahsFailure = false,
   }) => QuranPlanState(
     activeStatus: activeStatus ?? this.activeStatus,
     completedStatus: completedStatus ?? this.completedStatus,
@@ -88,18 +146,46 @@ class QuranPlanState {
     isLoadingMoreActive: isLoadingMoreActive ?? this.isLoadingMoreActive,
     isLoadingMoreCompleted:
         isLoadingMoreCompleted ?? this.isLoadingMoreCompleted,
-    activeFailure:
-        clearActiveFailure ? null : (activeFailure ?? this.activeFailure),
+    activeFailure: clearActiveFailure
+        ? null
+        : (activeFailure ?? this.activeFailure),
     completedFailure: clearCompletedFailure
         ? null
         : (completedFailure ?? this.completedFailure),
     isCreating: isCreating ?? this.isCreating,
     createdPlan: clearCreatedPlan ? null : (createdPlan ?? this.createdPlan),
-    createFailure:
-        clearCreateFailure ? null : (createFailure ?? this.createFailure),
+    createFailure: clearCreateFailure
+        ? null
+        : (createFailure ?? this.createFailure),
     isUpdating: isUpdating ?? this.isUpdating,
     updatedPlan: clearUpdatedPlan ? null : (updatedPlan ?? this.updatedPlan),
-    updateFailure:
-        clearUpdateFailure ? null : (updateFailure ?? this.updateFailure),
+    updateFailure: clearUpdateFailure
+        ? null
+        : (updateFailure ?? this.updateFailure),
+    selectedPlanDetails: clearSelectedPlanDetails
+        ? null
+        : (selectedPlanDetails ?? this.selectedPlanDetails),
+    isLoadingDetails: isLoadingDetails ?? this.isLoadingDetails,
+    detailsFailure: clearDetailsFailure
+        ? null
+        : (detailsFailure ?? this.detailsFailure),
+    isCompleting: isCompleting ?? this.isCompleting,
+    completedSuccess: completedSuccess ?? this.completedSuccess,
+    completeFailure: clearCompleteFailure
+        ? null
+        : (completeFailure ?? this.completeFailure),
+    isDeleting: isDeleting ?? this.isDeleting,
+    deleteSuccess: deleteSuccess ?? this.deleteSuccess,
+    deleteFailure: clearDeleteFailure
+        ? null
+        : (deleteFailure ?? this.deleteFailure),
+    planAyahs: planAyahs ?? this.planAyahs,
+    planAyahsMeta: planAyahsMeta ?? this.planAyahsMeta,
+    isLoadingAyahs: isLoadingAyahs ?? this.isLoadingAyahs,
+    isLoadingMoreAyahs: isLoadingMoreAyahs ?? this.isLoadingMoreAyahs,
+    ayahsFilter: ayahsFilter ?? this.ayahsFilter,
+    ayahsFailure: clearAyahsFailure
+        ? null
+        : (ayahsFailure ?? this.ayahsFailure),
   );
 }

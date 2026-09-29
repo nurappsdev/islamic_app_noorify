@@ -128,6 +128,10 @@ class ApiConstants {
   static const String quranLastReadEndPoint = "/quran/reading/last-read";
   static const String quranPlansEndPoint = "/quran/plans";
   static String quranPlanEndPoint(String id) => "$quranPlansEndPoint/$id";
+  static String quranPlanCompleteEndPoint(String id) =>
+      "${quranPlanEndPoint(id)}/complete";
+  static String quranPlanAyahsEndPoint(String id) =>
+      "${quranPlanEndPoint(id)}/ayahs";
   static const String hadithPlansEndPoint = "/hadiths/plans";
 
   /// One plan: `PATCH` renames / edits it, `DELETE` removes it.

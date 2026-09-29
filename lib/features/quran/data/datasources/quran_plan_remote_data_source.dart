@@ -18,17 +18,32 @@ abstract interface class QuranPlanRemoteDataSource {
     int limit = 10,
   });
 
+  /// `GET /quran/plans/{planId}`: retrieves details of a specific plan.
+  Future<QuranPlan> getPlanDetails(String planId);
+
   /// `PATCH /quran/plans/{planId}`: updates a Quran plan.
-  Future<QuranPlan> updatePlan(
-    String planId,
-    UpdateQuranPlanRequest request,
-  );
+  Future<QuranPlan> updatePlan(String planId, UpdateQuranPlanRequest request);
+
+  /// `PATCH /quran/plans/{planId}/complete`: marks a plan completed if all ayahs are read.
+  Future<QuranPlan> completePlan(String planId);
+
+  /// `GET /quran/plans/{planId}/ayahs?filter={filter}&page={page}&limit={limit}`:
+  /// retrieves paginated list of ayahs in the plan.
+  Future<PaginatedQuranPlanAyahs> getPlanAyahs(
+    String planId, {
+    String filter = 'all',
+    int page = 1,
+    int limit = 10,
+  });
+
+  /// `DELETE /quran/plans/{planId}`: deletes/deactivates a Quran plan.
+  Future<void> deletePlan(String planId);
 }
 
 class QuranPlanRemoteDataSourceImpl implements QuranPlanRemoteDataSource {
   QuranPlanRemoteDataSourceImpl({Dio? dio, AuthLocalDataSource? local})
-      : _dioOverride = dio,
-        _localOverride = local;
+    : _dioOverride = dio,
+      _localOverride = local;
 
   final Dio? _dioOverride;
   final AuthLocalDataSource? _localOverride;
@@ -57,16 +72,27 @@ class QuranPlanRemoteDataSourceImpl implements QuranPlanRemoteDataSource {
     int page = 1,
     int limit = 10,
   }) async {
-    final json = await _getEnvelope(
-      ApiConstants.quranPlansEndPoint,
-      {
-        if (status != null && status.isNotEmpty) 'status': status,
-        'page': page,
-        'limit': limit,
-      },
-      'Quran plans',
-    );
+    final json = await _getEnvelope(ApiConstants.quranPlansEndPoint, {
+      if (status != null && status.isNotEmpty) 'status': status,
+      'page': page,
+      'limit': limit,
+    }, 'Quran plans');
     return QuranPlansResponse.fromJson(json);
+  }
+
+  @override
+  Future<QuranPlan> getPlanDetails(String planId) async {
+    final data = await _sendAuthed(
+      'GET',
+      ApiConstants.quranPlanEndPoint(planId),
+      what: 'Get Quran plan details',
+    );
+    if (data is! Map<String, dynamic>) {
+      throw ParsingException(
+        'Get Quran plan details response is missing "data".',
+      );
+    }
+    return QuranPlan.fromJson(data);
   }
 
   @override
@@ -84,6 +110,43 @@ class QuranPlanRemoteDataSourceImpl implements QuranPlanRemoteDataSource {
       throw ParsingException('Update Quran plan response is missing "data".');
     }
     return QuranPlan.fromJson(data);
+  }
+
+  @override
+  Future<QuranPlan> completePlan(String planId) async {
+    final data = await _sendAuthed(
+      'PATCH',
+      ApiConstants.quranPlanCompleteEndPoint(planId),
+      what: 'Complete Quran plan',
+    );
+    if (data is! Map<String, dynamic>) {
+      throw ParsingException('Complete Quran plan response is missing "data".');
+    }
+    return QuranPlan.fromJson(data);
+  }
+
+  @override
+  Future<PaginatedQuranPlanAyahs> getPlanAyahs(
+    String planId, {
+    String filter = 'all',
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final json = await _getEnvelope(
+      ApiConstants.quranPlanAyahsEndPoint(planId),
+      {'filter': filter, 'page': page, 'limit': limit},
+      'Quran plan ayahs',
+    );
+    return PaginatedQuranPlanAyahs.fromJson(json);
+  }
+
+  @override
+  Future<void> deletePlan(String planId) async {
+    await _sendAuthed(
+      'DELETE',
+      ApiConstants.quranPlanEndPoint(planId),
+      what: 'Delete Quran plan',
+    );
   }
 
   Future<dynamic> _sendAuthed(
@@ -170,8 +233,9 @@ class QuranPlanRemoteDataSourceImpl implements QuranPlanRemoteDataSource {
       case DioExceptionType.badResponse:
       case DioExceptionType.unknown:
         final data = e.response?.data;
-        final json =
-            data is Map<String, dynamic> ? data : const <String, dynamic>{};
+        final json = data is Map<String, dynamic>
+            ? data
+            : const <String, dynamic>{};
         return ServerException(
           _extractError(json) ??
               'Request failed (${e.response?.statusCode ?? 'network error'}).',

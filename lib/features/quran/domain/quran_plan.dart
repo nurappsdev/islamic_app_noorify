@@ -1,4 +1,3 @@
-
 /// A user's Quran reading plan.
 ///
 /// Follows the server schema (`/quran/plans`), keeping [counts] and
@@ -10,6 +9,7 @@ class QuranPlan {
     required this.id,
     this.userId = '',
     required this.name,
+    this.description,
     this.surahNumbers = const [],
     this.paraNumbers = const [],
     this.wholeQuran = true,
@@ -23,18 +23,22 @@ class QuranPlan {
     DateTime? updatedAt,
     QuranPlanCounts? counts,
     QuranPlanSchedule? schedule,
+    this.surahs = const [],
+    this.paras = const [],
+    this.nextAyah,
     this.startSurah = 1,
     this.startSurahName = 'Al-Fatiha',
     this.endSurah = 114,
     this.endSurahName = 'An-Nas',
-  })  : _targetDays = targetDays ?? days ?? 30,
-        _counts = counts ?? const QuranPlanCounts(),
-        _schedule = schedule ?? const QuranPlanSchedule(),
-        updatedAt = updatedAt ?? createdAt;
+  }) : _targetDays = targetDays ?? days ?? 30,
+       _counts = counts ?? const QuranPlanCounts(),
+       _schedule = schedule ?? const QuranPlanSchedule(),
+       updatedAt = updatedAt ?? createdAt;
 
   final String id;
   final String userId;
   final String name;
+  final String? description;
   final List<int> surahNumbers;
   final List<int> paraNumbers;
   final bool wholeQuran;
@@ -50,6 +54,9 @@ class QuranPlan {
   QuranPlanCounts get counts => _counts ?? const QuranPlanCounts();
   final QuranPlanSchedule? _schedule;
   QuranPlanSchedule get schedule => _schedule ?? const QuranPlanSchedule();
+  final List<QuranPlanSurah> surahs;
+  final List<QuranPlanPara> paras;
+  final QuranPlanNextAyah? nextAyah;
 
   // Compatibility aliases
   int get days => targetDays;
@@ -64,6 +71,7 @@ class QuranPlan {
     String? id,
     String? userId,
     String? name,
+    String? description,
     List<int>? surahNumbers,
     List<int>? paraNumbers,
     bool? wholeQuran,
@@ -77,6 +85,9 @@ class QuranPlan {
     DateTime? updatedAt,
     QuranPlanCounts? counts,
     QuranPlanSchedule? schedule,
+    List<QuranPlanSurah>? surahs,
+    List<QuranPlanPara>? paras,
+    QuranPlanNextAyah? nextAyah,
     int? startSurah,
     String? startSurahName,
     int? endSurah,
@@ -85,12 +96,14 @@ class QuranPlan {
     id: id ?? this.id,
     userId: userId ?? this.userId,
     name: name ?? this.name,
+    description: description ?? this.description,
     surahNumbers: surahNumbers ?? this.surahNumbers,
     paraNumbers: paraNumbers ?? this.paraNumbers,
     wholeQuran: wholeQuran ?? this.wholeQuran,
     targetDays: targetDays ?? this.targetDays,
     startDate: startDate ?? this.startDate,
-    status: status ??
+    status:
+        status ??
         (isCompleted != null
             ? (isCompleted ? 'completed' : 'in_progress')
             : this.status),
@@ -100,6 +113,9 @@ class QuranPlan {
     updatedAt: updatedAt ?? this.updatedAt,
     counts: counts ?? this.counts,
     schedule: schedule ?? this.schedule,
+    surahs: surahs ?? this.surahs,
+    paras: paras ?? this.paras,
+    nextAyah: nextAyah ?? this.nextAyah,
     startSurah: startSurah ?? this.startSurah,
     startSurahName: startSurahName ?? this.startSurahName,
     endSurah: endSurah ?? this.endSurah,
@@ -111,6 +127,7 @@ class QuranPlan {
     'id': id,
     'userId': userId,
     'name': name,
+    if (description != null) 'description': description,
     'surahNumbers': surahNumbers,
     'paraNumbers': paraNumbers,
     'wholeQuran': wholeQuran,
@@ -124,6 +141,9 @@ class QuranPlan {
     'updatedAt': updatedAt.toIso8601String(),
     'counts': counts.toJson(),
     'schedule': schedule.toJson(),
+    'surahs': surahs.map((s) => s.toJson()).toList(),
+    'paras': paras.map((p) => p.toJson()).toList(),
+    if (nextAyah != null) 'nextAyah': nextAyah!.toJson(),
     'startSurah': startSurah,
     'startSurahName': startSurahName,
     'endSurah': endSurah,
@@ -131,11 +151,13 @@ class QuranPlan {
   };
 
   factory QuranPlan.fromJson(Map<String, dynamic> json) {
-    final surahs = (json['surahNumbers'] as List?)
+    final surahs =
+        (json['surahNumbers'] as List?)
             ?.map((e) => (e as num).toInt())
             .toList() ??
         const <int>[];
-    final paras = (json['paraNumbers'] as List?)
+    final paras =
+        (json['paraNumbers'] as List?)
             ?.map((e) => (e as num).toInt())
             .toList() ??
         const <int>[];
@@ -143,38 +165,66 @@ class QuranPlan {
     final countsJson = json['counts'];
     final scheduleJson = json['schedule'];
 
-    final startS = (json['startSurah'] as num?)?.toInt() ??
+    final surahList =
+        (json['surahs'] as List?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(QuranPlanSurah.fromJson)
+            .toList() ??
+        const <QuranPlanSurah>[];
+    final paraList =
+        (json['paras'] as List?)
+            ?.whereType<Map<String, dynamic>>()
+            .map(QuranPlanPara.fromJson)
+            .toList() ??
+        const <QuranPlanPara>[];
+    final nextAyahJson = json['nextAyah'];
+
+    final startS =
+        (json['startSurah'] as num?)?.toInt() ??
         (surahs.isNotEmpty ? surahs.first : 1);
-    final endS = (json['endSurah'] as num?)?.toInt() ??
+    final endS =
+        (json['endSurah'] as num?)?.toInt() ??
         (surahs.isNotEmpty ? surahs.last : 114);
 
     return QuranPlan(
       id: json['_id'] as String? ?? json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
       name: json['name'] as String? ?? '',
+      description: json['description'] as String?,
       surahNumbers: surahs,
       paraNumbers: paras,
       wholeQuran: json['wholeQuran'] as bool? ?? true,
-      targetDays: (json['targetDays'] as num?)?.toInt() ??
+      targetDays:
+          (json['targetDays'] as num?)?.toInt() ??
           (json['days'] as num?)?.toInt() ??
           30,
       startDate: json['startDate'] as String? ?? '',
-      status: json['status'] as String? ??
-          ((json['isCompleted'] as bool? ?? false) ? 'completed' : 'in_progress'),
+      status:
+          json['status'] as String? ??
+          ((json['isCompleted'] as bool? ?? false)
+              ? 'completed'
+              : 'in_progress'),
       completedAt: json['completedAt'] != null
           ? DateTime.tryParse(json['completedAt'] as String)
           : null,
       isActive: json['isActive'] as bool? ?? true,
       createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
       updatedAt:
-          DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
+          DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
       counts: countsJson is Map<String, dynamic>
           ? QuranPlanCounts.fromJson(countsJson)
           : const QuranPlanCounts(),
       schedule: scheduleJson is Map<String, dynamic>
           ? QuranPlanSchedule.fromJson(scheduleJson)
           : const QuranPlanSchedule(),
+      surahs: surahList,
+      paras: paraList,
+      nextAyah: nextAyahJson is Map<String, dynamic>
+          ? QuranPlanNextAyah.fromJson(nextAyahJson)
+          : null,
       startSurah: startS,
       startSurahName: json['startSurahName'] as String? ?? 'Al-Fatiha',
       endSurah: endS,
@@ -203,15 +253,16 @@ class QuranPlanCounts {
   final int totalSurahs;
   final int totalParas;
 
-  factory QuranPlanCounts.fromJson(Map<String, dynamic> json) => QuranPlanCounts(
-    totalAyahs: (json['totalAyahs'] as num?)?.toInt() ?? 6236,
-    completedAyahs: (json['completedAyahs'] as num?)?.toInt() ?? 0,
-    remainingAyahs: (json['remainingAyahs'] as num?)?.toInt() ?? 0,
-    percentage: (json['percentage'] as num?)?.toInt() ?? 0,
-    isCompleted: json['isCompleted'] as bool? ?? false,
-    totalSurahs: (json['totalSurahs'] as num?)?.toInt() ?? 114,
-    totalParas: (json['totalParas'] as num?)?.toInt() ?? 30,
-  );
+  factory QuranPlanCounts.fromJson(Map<String, dynamic> json) =>
+      QuranPlanCounts(
+        totalAyahs: (json['totalAyahs'] as num?)?.toInt() ?? 6236,
+        completedAyahs: (json['completedAyahs'] as num?)?.toInt() ?? 0,
+        remainingAyahs: (json['remainingAyahs'] as num?)?.toInt() ?? 0,
+        percentage: (json['percentage'] as num?)?.toInt() ?? 0,
+        isCompleted: json['isCompleted'] as bool? ?? false,
+        totalSurahs: (json['totalSurahs'] as num?)?.toInt() ?? 114,
+        totalParas: (json['totalParas'] as num?)?.toInt() ?? 30,
+      );
 
   Map<String, dynamic> toJson() => {
     'totalAyahs': totalAyahs,
@@ -254,23 +305,22 @@ class QuranPlanSchedule {
   final int requiredAyahsPerDay;
   final bool isOverdue;
 
-  factory QuranPlanSchedule.fromJson(Map<String, dynamic> json) =>
-      QuranPlanSchedule(
-        startDate: json['startDate'] as String? ?? '',
-        endDate: json['endDate'] as String? ?? '',
-        targetDays: (json['targetDays'] as num?)?.toInt() ?? 30,
-        dayNumber: (json['dayNumber'] as num?)?.toInt() ?? 1,
-        daysLeft: (json['daysLeft'] as num?)?.toInt() ?? 0,
-        ayahsPerDay: (json['ayahsPerDay'] as num?)?.toInt() ?? 0,
-        expectedAyahs: (json['expectedAyahs'] as num?)?.toInt() ?? 0,
-        isOnTrack: json['isOnTrack'] as bool? ?? false,
-        aheadBy: (json['aheadBy'] as num?)?.toInt() ?? 0,
-        todayRemainingAyahs:
-            (json['todayRemainingAyahs'] as num?)?.toInt() ?? 0,
-        requiredAyahsPerDay:
-            (json['requiredAyahsPerDay'] as num?)?.toInt() ?? 0,
-        isOverdue: json['isOverdue'] as bool? ?? false,
-      );
+  factory QuranPlanSchedule.fromJson(
+    Map<String, dynamic> json,
+  ) => QuranPlanSchedule(
+    startDate: json['startDate'] as String? ?? '',
+    endDate: json['endDate'] as String? ?? '',
+    targetDays: (json['targetDays'] as num?)?.toInt() ?? 30,
+    dayNumber: (json['dayNumber'] as num?)?.toInt() ?? 1,
+    daysLeft: (json['daysLeft'] as num?)?.toInt() ?? 0,
+    ayahsPerDay: (json['ayahsPerDay'] as num?)?.toInt() ?? 0,
+    expectedAyahs: (json['expectedAyahs'] as num?)?.toInt() ?? 0,
+    isOnTrack: json['isOnTrack'] as bool? ?? false,
+    aheadBy: (json['aheadBy'] as num?)?.toInt() ?? 0,
+    todayRemainingAyahs: (json['todayRemainingAyahs'] as num?)?.toInt() ?? 0,
+    requiredAyahsPerDay: (json['requiredAyahsPerDay'] as num?)?.toInt() ?? 0,
+    isOverdue: json['isOverdue'] as bool? ?? false,
+  );
 
   Map<String, dynamic> toJson() => {
     'startDate': startDate,
@@ -374,7 +424,9 @@ class UpdateQuranPlanRequest {
   const UpdateQuranPlanRequest({
     this.status,
     this.name,
+    this.description,
     this.targetDays,
+    this.startDate,
     this.wholeQuran,
     this.surahNumbers,
     this.paraNumbers,
@@ -383,7 +435,9 @@ class UpdateQuranPlanRequest {
 
   final String? status;
   final String? name;
+  final String? description;
   final int? targetDays;
+  final String? startDate;
   final bool? wholeQuran;
   final List<int>? surahNumbers;
   final List<int>? paraNumbers;
@@ -392,10 +446,230 @@ class UpdateQuranPlanRequest {
   Map<String, dynamic> toJson() => {
     if (status != null) 'status': status,
     if (name != null) 'name': name,
+    if (description != null) 'description': description,
     if (targetDays != null) 'targetDays': targetDays,
+    if (startDate != null) 'startDate': startDate,
     if (wholeQuran != null) 'wholeQuran': wholeQuran,
     if (surahNumbers != null) 'surahNumbers': surahNumbers,
     if (paraNumbers != null) 'paraNumbers': paraNumbers,
     if (isActive != null) 'isActive': isActive,
   };
+}
+
+/// Progress of a single Surah within a Quran plan.
+class QuranPlanSurah {
+  const QuranPlanSurah({
+    required this.surahNumber,
+    this.nameArabic = '',
+    this.nameEnglish = '',
+    this.nameBangla = '',
+    this.totalAyahs = 0,
+    this.readAyahs = 0,
+    this.remainingAyahs = 0,
+    this.percentage = 0,
+    this.isCompleted = false,
+  });
+
+  final int surahNumber;
+  final String nameArabic;
+  final String nameEnglish;
+  final String nameBangla;
+  final int totalAyahs;
+  final int readAyahs;
+  final int remainingAyahs;
+  final int percentage;
+  final bool isCompleted;
+
+  factory QuranPlanSurah.fromJson(Map<String, dynamic> json) => QuranPlanSurah(
+    surahNumber: (json['surahNumber'] as num?)?.toInt() ?? 0,
+    nameArabic: json['nameArabic'] as String? ?? '',
+    nameEnglish: json['nameEnglish'] as String? ?? '',
+    nameBangla: json['nameBangla'] as String? ?? '',
+    totalAyahs: (json['totalAyahs'] as num?)?.toInt() ?? 0,
+    readAyahs: (json['readAyahs'] as num?)?.toInt() ?? 0,
+    remainingAyahs: (json['remainingAyahs'] as num?)?.toInt() ?? 0,
+    percentage: (json['percentage'] as num?)?.toInt() ?? 0,
+    isCompleted: json['isCompleted'] as bool? ?? false,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'surahNumber': surahNumber,
+    'nameArabic': nameArabic,
+    'nameEnglish': nameEnglish,
+    'nameBangla': nameBangla,
+    'totalAyahs': totalAyahs,
+    'readAyahs': readAyahs,
+    'remainingAyahs': remainingAyahs,
+    'percentage': percentage,
+    'isCompleted': isCompleted,
+  };
+}
+
+/// Progress of a single Para within a Quran plan.
+class QuranPlanPara {
+  const QuranPlanPara({
+    required this.paraNumber,
+    this.nameBangla = '',
+    this.nameEnglish = '',
+    this.nameArabic = '',
+    this.totalAyahs = 0,
+    this.readAyahs = 0,
+    this.remainingAyahs = 0,
+    this.percentage = 0,
+    this.isCompleted = false,
+    this.start,
+    this.end,
+  });
+
+  final int paraNumber;
+  final String nameBangla;
+  final String nameEnglish;
+  final String nameArabic;
+  final int totalAyahs;
+  final int readAyahs;
+  final int remainingAyahs;
+  final int percentage;
+  final bool isCompleted;
+  final Map<String, dynamic>? start;
+  final Map<String, dynamic>? end;
+
+  factory QuranPlanPara.fromJson(Map<String, dynamic> json) => QuranPlanPara(
+    paraNumber: (json['paraNumber'] as num?)?.toInt() ?? 0,
+    nameBangla: json['nameBangla'] as String? ?? '',
+    nameEnglish: json['nameEnglish'] as String? ?? '',
+    nameArabic: json['nameArabic'] as String? ?? '',
+    totalAyahs: (json['totalAyahs'] as num?)?.toInt() ?? 0,
+    readAyahs: (json['readAyahs'] as num?)?.toInt() ?? 0,
+    remainingAyahs: (json['remainingAyahs'] as num?)?.toInt() ?? 0,
+    percentage: (json['percentage'] as num?)?.toInt() ?? 0,
+    isCompleted: json['isCompleted'] as bool? ?? false,
+    start: json['start'] as Map<String, dynamic>?,
+    end: json['end'] as Map<String, dynamic>?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'paraNumber': paraNumber,
+    'nameBangla': nameBangla,
+    if (nameEnglish.isNotEmpty) 'nameEnglish': nameEnglish,
+    if (nameArabic.isNotEmpty) 'nameArabic': nameArabic,
+    'totalAyahs': totalAyahs,
+    'readAyahs': readAyahs,
+    'remainingAyahs': remainingAyahs,
+    'percentage': percentage,
+    'isCompleted': isCompleted,
+    if (start != null) 'start': start,
+    if (end != null) 'end': end,
+  };
+}
+
+/// The next unread Ayah for continuing reading.
+class QuranPlanNextAyah {
+  const QuranPlanNextAyah({
+    required this.surahNumber,
+    required this.ayahNumber,
+    required this.ayahKey,
+    this.paraNumber = 1,
+    this.surahNameEnglish = '',
+    this.surahNameBangla = '',
+    this.surahNameArabic = '',
+  });
+
+  final int surahNumber;
+  final int ayahNumber;
+  final String ayahKey;
+  final int paraNumber;
+  final String surahNameEnglish;
+  final String surahNameBangla;
+  final String surahNameArabic;
+
+  factory QuranPlanNextAyah.fromJson(Map<String, dynamic> json) =>
+      QuranPlanNextAyah(
+        surahNumber: (json['surahNumber'] as num?)?.toInt() ?? 0,
+        ayahNumber: (json['ayahNumber'] as num?)?.toInt() ?? 0,
+        ayahKey: json['ayahKey'] as String? ?? '',
+        paraNumber: (json['paraNumber'] as num?)?.toInt() ?? 1,
+        surahNameEnglish: json['surahNameEnglish'] as String? ?? '',
+        surahNameBangla: json['surahNameBangla'] as String? ?? '',
+        surahNameArabic: json['surahNameArabic'] as String? ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {
+    'surahNumber': surahNumber,
+    'ayahNumber': ayahNumber,
+    'ayahKey': ayahKey,
+    'paraNumber': paraNumber,
+    'surahNameEnglish': surahNameEnglish,
+    'surahNameBangla': surahNameBangla,
+    'surahNameArabic': surahNameArabic,
+  };
+}
+
+/// A single Ayah item from `GET /quran/plans/{planId}/ayahs`.
+class QuranPlanAyah {
+  const QuranPlanAyah({
+    required this.surahNumber,
+    required this.ayahNumber,
+    required this.ayahKey,
+    this.paraNumber = 1,
+    this.surahNameEnglish = '',
+    this.surahNameBangla = '',
+    this.surahNameArabic = '',
+    this.isRead = false,
+  });
+
+  final int surahNumber;
+  final int ayahNumber;
+  final String ayahKey;
+  final int paraNumber;
+  final String surahNameEnglish;
+  final String surahNameBangla;
+  final String surahNameArabic;
+  final bool isRead;
+
+  factory QuranPlanAyah.fromJson(Map<String, dynamic> json) => QuranPlanAyah(
+    surahNumber: (json['surahNumber'] as num?)?.toInt() ?? 0,
+    ayahNumber: (json['ayahNumber'] as num?)?.toInt() ?? 0,
+    ayahKey: json['ayahKey'] as String? ?? '',
+    paraNumber: (json['paraNumber'] as num?)?.toInt() ?? 1,
+    surahNameEnglish: json['surahNameEnglish'] as String? ?? '',
+    surahNameBangla: json['surahNameBangla'] as String? ?? '',
+    surahNameArabic: json['surahNameArabic'] as String? ?? '',
+    isRead: json['isRead'] as bool? ?? false,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'surahNumber': surahNumber,
+    'ayahNumber': ayahNumber,
+    'ayahKey': ayahKey,
+    'paraNumber': paraNumber,
+    'surahNameEnglish': surahNameEnglish,
+    'surahNameBangla': surahNameBangla,
+    'surahNameArabic': surahNameArabic,
+    'isRead': isRead,
+  };
+}
+
+/// Paginated result of `GET /quran/plans/{planId}/ayahs`.
+class PaginatedQuranPlanAyahs {
+  const PaginatedQuranPlanAyahs({
+    required this.ayahs,
+    this.meta = const QuranPlanMeta(),
+  });
+
+  final List<QuranPlanAyah> ayahs;
+  final QuranPlanMeta meta;
+
+  factory PaginatedQuranPlanAyahs.fromJson(Map<String, dynamic> json) {
+    final list = json['data'] is List ? (json['data'] as List) : const [];
+    final metaJson = json['meta'] is Map<String, dynamic>
+        ? json['meta'] as Map<String, dynamic>
+        : const <String, dynamic>{};
+    return PaginatedQuranPlanAyahs(
+      ayahs: list
+          .whereType<Map<String, dynamic>>()
+          .map(QuranPlanAyah.fromJson)
+          .toList(),
+      meta: QuranPlanMeta.fromJson(metaJson),
+    );
+  }
 }

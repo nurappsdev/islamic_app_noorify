@@ -12,14 +12,10 @@ import '../bloc/quran_plan/quran_plan_bloc.dart';
 import '../quran_route_args.dart';
 import '../quran_text.dart';
 import 'create_quran_plan_screen.dart';
+import 'quran_plan_details_screen.dart';
 
 class QuranPlanScreen extends StatefulWidget {
-  const QuranPlanScreen({
-    super.key,
-    this.onBack,
-    this.repository,
-    this.bloc,
-  });
+  const QuranPlanScreen({super.key, this.onBack, this.repository, this.bloc});
 
   final VoidCallback? onBack;
   final QuranPlanRepository? repository;
@@ -30,7 +26,8 @@ class QuranPlanScreen extends StatefulWidget {
 }
 
 class _QuranPlanScreenState extends State<QuranPlanScreen> {
-  late final QuranPlanBloc _bloc = widget.bloc ??
+  late final QuranPlanBloc _bloc =
+      widget.bloc ??
       QuranPlanBloc(
         repository: widget.repository ?? QuranPlanRepositoryImpl.shared,
       );
@@ -133,15 +130,91 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     );
   }
 
-  void _markCompleted(QuranPlan plan) {
-    _bloc.add(UpdateQuranPlanStatus(planId: plan.id, status: 'completed'));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(QuranText.read(context).planUpdatedSuccessfully),
-        backgroundColor: const Color(0xFF6B8042),
-        duration: const Duration(seconds: 2),
+  void _openPlanDetails(QuranPlan plan) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (_) => QuranPlanDetailsScreen(
+              planId: plan.id,
+              initialPlan: plan,
+              repository: widget.repository,
+            ),
+          ),
+        )
+        .then((_) {
+          if (mounted) {
+            _bloc.add(const LoadQuranPlans(forceRefresh: true));
+          }
+        });
+  }
+
+  Future<void> _openEditPlan(QuranPlan plan) async {
+    final updated = await Navigator.of(context).push<QuranPlan>(
+      MaterialPageRoute(
+        builder: (_) => CreateQuranPlanScreen(
+          repository: widget.repository,
+          initialPlan: plan,
+        ),
       ),
     );
+    if (updated != null && mounted) {
+      _bloc.add(const LoadQuranPlans(forceRefresh: true));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(QuranText.read(context).planUpdatedSuccessfully),
+          backgroundColor: const Color(0xFF6B8042),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmDelete(QuranPlan plan) async {
+    final t = QuranText.read(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: dialogCtx.surfaceColor(Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          t.deletePlanConfirmTitle,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF282442),
+          ),
+        ),
+        content: Text(
+          t.deletePlanConfirmMessage,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: dialogCtx.inkColor(const Color(0xFF5D6B44)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC15B4B),
+            ),
+            child: Text(t.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      _bloc.add(DeleteQuranPlan(planId: plan.id));
+    }
+  }
+
+  void _markCompleted(QuranPlan plan) {
+    _bloc.add(CompleteQuranPlan(planId: plan.id));
   }
 
   void _markInProgress(QuranPlan plan) {
@@ -172,122 +245,166 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
 
     return BlocProvider.value(
       value: _bloc,
-      child: Scaffold(
-        backgroundColor: context.pageColor(Colors.white),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  SizedBox(height: 8.h),
-                  // Top Segmented Tabs: "My Plan", "Search Plan", "Complete Plan"
-                  Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: borderColor, width: 1),
+      child: BlocListener<QuranPlanBloc, QuranPlanState>(
+        listener: (context, state) {
+          if (state.completedSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(t.planCompletedSuccessfully),
+                backgroundColor: const Color(0xFF6B8042),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          if (state.completeFailure != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  localizeFailureMessage(state.completeFailure!.message),
+                ),
+                backgroundColor: Colors.red.shade700,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+          if (state.deleteSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(t.planDeletedSuccessfully),
+                backgroundColor: const Color(0xFF6B8042),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+          if (state.deleteFailure != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  localizeFailureMessage(state.deleteFailure!.message),
+                ),
+                backgroundColor: Colors.red.shade700,
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: context.pageColor(Colors.white),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(height: 8.h),
+                    // Top Segmented Tabs: "My Plan", "Search Plan", "Complete Plan"
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: borderColor, width: 1),
+                        ),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Row(
+                        children: [
+                          for (final (i, title) in [
+                            t.myPlan,
+                            t.searchPlan,
+                            t.completePlan,
+                          ].indexed) ...[
+                            if (i > 0) SizedBox(width: 8.w),
+                            Flexible(
+                              child: _buildTopTab(index: i, title: title),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        for (final (i, title) in [
-                          t.myPlan,
-                          t.searchPlan,
-                          t.completePlan,
-                        ].indexed) ...[
-                          if (i > 0) SizedBox(width: 8.w),
-                          Flexible(
-                            child: _buildTopTab(index: i, title: title),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
 
-                  // Search Bar when in Search Plan tab
-                  if (_tab == 1) ...[
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 4.h),
-                      child: TextField(
-                        onChanged: (val) => setState(() => _searchQuery = val),
-                        decoration: InputDecoration(
-                          hintText: t.searchPlanHint,
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            color: Color(0xFF7A8D49),
-                          ),
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 10.h,
-                          ),
-                          filled: true,
-                          fillColor: const Color(0xFFF6F8EF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24.r),
-                            borderSide: const BorderSide(color: borderColor),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24.r),
-                            borderSide: const BorderSide(color: borderColor),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24.r),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF9EAA52),
+                    // Search Bar when in Search Plan tab
+                    if (_tab == 1) ...[
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 4.h),
+                        child: TextField(
+                          onChanged: (val) =>
+                              setState(() => _searchQuery = val),
+                          decoration: InputDecoration(
+                            hintText: t.searchPlanHint,
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: Color(0xFF7A8D49),
+                            ),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 10.h,
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF6F8EF),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: const BorderSide(color: borderColor),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: const BorderSide(color: borderColor),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF9EAA52),
+                              ),
                             ),
                           ),
                         ),
                       ),
+                    ],
+
+                    // Tab Content Body
+                    Expanded(
+                      child: BlocBuilder<QuranPlanBloc, QuranPlanState>(
+                        builder: (context, state) {
+                          return switch (_tab) {
+                            0 => _buildMyPlanTab(state, t),
+                            1 => _buildSearchPlanTab(t),
+                            2 => _buildCompletePlanTab(state, t),
+                            _ => const SizedBox.shrink(),
+                          };
+                        },
+                      ),
                     ),
                   ],
-
-                  // Tab Content Body
-                  Expanded(
-                    child: BlocBuilder<QuranPlanBloc, QuranPlanState>(
-                      builder: (context, state) {
-                        return switch (_tab) {
-                          0 => _buildMyPlanTab(state, t),
-                          1 => _buildSearchPlanTab(t),
-                          2 => _buildCompletePlanTab(state, t),
-                          _ => const SizedBox.shrink(),
-                        };
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              // Floating "Create Plan" button on "My Plan" and "Search Plan" tabs
-              if (_tab != 2)
-                Positioned(
-                  right: 20.w,
-                  bottom: 24.h,
-                  child: FilledButton.icon(
-                    onPressed: _openCreatePlan,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF9EAA52),
-                      foregroundColor: Colors.white,
-                      elevation: 3,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20.w,
-                        vertical: 13.h,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28.r),
-                      ),
-                    ),
-                    icon: Icon(Icons.edit_note_rounded, size: 20.sp),
-                    label: Text(
-                      t.createPlan,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
-            ],
+
+                // Floating "Create Plan" button on "My Plan" and "Search Plan" tabs
+                if (_tab != 2)
+                  Positioned(
+                    right: 20.w,
+                    bottom: 24.h,
+                    child: FilledButton.icon(
+                      onPressed: _openCreatePlan,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF9EAA52),
+                        foregroundColor: Colors.white,
+                        elevation: 3,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 13.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28.r),
+                        ),
+                      ),
+                      icon: Icon(Icons.edit_note_rounded, size: 20.sp),
+                      label: Text(
+                        t.createPlan,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -406,8 +523,11 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           return _ActiveQuranPlanCard(
             plan: plan,
             t: t,
+            onOpenDetails: () => _openPlanDetails(plan),
             onRead: () => _openPlanReading(plan),
             onMarkCompleted: () => _markCompleted(plan),
+            onEdit: () => _openEditPlan(plan),
+            onDelete: () => _confirmDelete(plan),
           );
         },
       ),
@@ -505,7 +625,8 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
         controller: _completedScroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 90.h),
-        itemCount: state.completedPlans.length +
+        itemCount:
+            state.completedPlans.length +
             (state.isLoadingMoreCompleted ? 1 : 0),
         separatorBuilder: (_, _) => SizedBox(height: 12.h),
         itemBuilder: (context, index) {
@@ -524,7 +645,9 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           return _CompletedQuranPlanCard(
             plan: plan,
             t: t,
+            onOpenDetails: () => _openPlanDetails(plan),
             onMarkInProgress: () => _markInProgress(plan),
+            onDelete: () => _confirmDelete(plan),
           );
         },
       ),
@@ -539,12 +662,18 @@ class _ActiveQuranPlanCard extends StatelessWidget {
     required this.t,
     required this.onRead,
     required this.onMarkCompleted,
+    this.onOpenDetails,
+    this.onEdit,
+    this.onDelete,
   });
 
   final QuranPlan plan;
   final QuranText t;
   final VoidCallback onRead;
   final VoidCallback onMarkCompleted;
+  final VoidCallback? onOpenDetails;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -589,235 +718,300 @@ class _ActiveQuranPlanCard extends StatelessWidget {
     final daySub =
         '${t.day} ${t.n(schedule.dayNumber)} / ${t.n(schedule.targetDays)} · ${t.n(schedule.daysLeft)} ${t.daysLeft}';
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: context.pageColor(Colors.white),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: cardBorderColor, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top row: Book icon, Name, Day subtitle, and Menu
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 52.r,
-                height: 52.r,
-                padding: EdgeInsets.all(6.r),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDDEBBE),
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child:
-                    Image.asset('assets/images/Quran.png', fit: BoxFit.contain),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      t.presetPlanName(plan.id, plan.name),
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF282442),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 3.h),
-                    Text(
-                      daySub,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF8B9875),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(
-                  Icons.more_vert_rounded,
-                  color: Color(0xFF7A8D49),
-                ),
-                onSelected: (val) {
-                  if (val == 'complete') {
-                    onMarkCompleted();
-                  }
-                },
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'complete',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle_outline,
-                          color: Color(0xFF6B8042),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(child: Text(t.markCompleted)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: 10.h),
-
-          // Schedule status badge & Progress percentage
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(statusIcon, size: 14.sp, color: statusFg),
-                    SizedBox(width: 4.w),
-                    Text(
-                      statusText,
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: statusFg,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${t.progress}: ${t.n(counts.percentage)}%',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF5D7133),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 8.h),
-
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: LinearProgressIndicator(
-              value: (counts.percentage.clamp(0, 100) / 100.0),
-              minHeight: 6.h,
-              backgroundColor: const Color(0xFFE9EED9),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF9EAA52),
-              ),
-            ),
-          ),
-
-          SizedBox(height: 12.h),
-
-          // Stats grid (Ayahs completed, remaining, daily target, today remaining)
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F9F0),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: const Color(0xFFE4ECD2)),
-            ),
-            child: Row(
+    return InkWell(
+      onTap: onOpenDetails,
+      borderRadius: BorderRadius.circular(20.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: context.pageColor(Colors.white),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: cardBorderColor, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Book icon, Name, Day subtitle, and Menu
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: _StatColumn(
-                    title: t.ayahsCompleted,
-                    value: t.n(counts.completedAyahs),
+                Container(
+                  width: 52.r,
+                  height: 52.r,
+                  padding: EdgeInsets.all(6.r),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDDEBBE),
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Image.asset(
+                    'assets/images/Quran.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 24.h,
-                  color: const Color(0xFFD4E5A8),
-                ),
+                SizedBox(width: 12.w),
                 Expanded(
-                  child: _StatColumn(
-                    title: t.ayahsRemaining,
-                    value: t.n(counts.remainingAyahs),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        t.presetPlanName(plan.id, plan.name),
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF282442),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        daySub,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF8B9875),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 24.h,
-                  color: const Color(0xFFD4E5A8),
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Color(0xFF7A8D49),
+                  ),
+                  onSelected: (val) {
+                    if (val == 'details') {
+                      onOpenDetails?.call();
+                    } else if (val == 'complete') {
+                      onMarkCompleted();
+                    } else if (val == 'edit') {
+                      onEdit?.call();
+                    } else if (val == 'delete') {
+                      onDelete?.call();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'details',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            color: Color(0xFF6B8042),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(t.quranPlanDetails)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'complete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            color: Color(0xFF6B8042),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(t.markCompleted)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.edit_note_rounded,
+                            color: Color(0xFF6B8042),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(t.editPlan)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Color(0xFFC15B4B),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              t.deletePlan,
+                              style: const TextStyle(color: Color(0xFFC15B4B)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: _StatColumn(
-                    title: t.dailyTarget,
-                    value: t.n(schedule.ayahsPerDay),
+              ],
+            ),
+
+            SizedBox(height: 10.h),
+
+            // Schedule status badge & Progress percentage
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(statusIcon, size: 14.sp, color: statusFg),
+                      SizedBox(width: 4.w),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: statusFg,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 24.h,
-                  color: const Color(0xFFD4E5A8),
-                ),
-                Expanded(
-                  child: _StatColumn(
-                    title: t.todayRemaining,
-                    value: t.n(schedule.todayRemainingAyahs),
+                Text(
+                  '${t.progress}: ${t.n(counts.percentage)}%',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF5D7133),
                   ),
                 ),
               ],
             ),
-          ),
 
-          SizedBox(height: 12.h),
+            SizedBox(height: 8.h),
 
-          // Read button
-          Align(
-            alignment: Alignment.centerRight,
-            child: InkWell(
-              onTap: onRead,
-              borderRadius: BorderRadius.circular(16.r),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4E5A8),
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.menu_book_rounded,
-                      size: 16.sp,
-                      color: const Color(0xFF26321F),
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      t.read,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF26321F),
-                      ),
-                    ),
-                  ],
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6.r),
+              child: LinearProgressIndicator(
+                value: (counts.percentage.clamp(0, 100) / 100.0),
+                minHeight: 6.h,
+                backgroundColor: const Color(0xFFE9EED9),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFF9EAA52),
                 ),
               ),
             ),
-          ),
-        ],
+
+            SizedBox(height: 12.h),
+
+            // Stats grid (Ayahs completed, remaining, daily target, today remaining)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F9F0),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE4ECD2)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _StatColumn(
+                      title: t.ayahsCompleted,
+                      value: t.n(counts.completedAyahs),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 24.h,
+                    color: const Color(0xFFD4E5A8),
+                  ),
+                  Expanded(
+                    child: _StatColumn(
+                      title: t.ayahsRemaining,
+                      value: t.n(counts.remainingAyahs),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 24.h,
+                    color: const Color(0xFFD4E5A8),
+                  ),
+                  Expanded(
+                    child: _StatColumn(
+                      title: t.dailyTarget,
+                      value: t.n(schedule.ayahsPerDay),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 24.h,
+                    color: const Color(0xFFD4E5A8),
+                  ),
+                  Expanded(
+                    child: _StatColumn(
+                      title: t.todayRemaining,
+                      value: t.n(schedule.todayRemainingAyahs),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+
+            // Read button
+            Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: onRead,
+                borderRadius: BorderRadius.circular(16.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4E5A8),
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.menu_book_rounded,
+                        size: 16.sp,
+                        color: const Color(0xFF26321F),
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        t.read,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF26321F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -848,10 +1042,7 @@ class _StatColumn extends StatelessWidget {
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: const Color(0xFF8B9875),
-          ),
+          style: TextStyle(fontSize: 10.sp, color: const Color(0xFF8B9875)),
         ),
       ],
     );
@@ -864,102 +1055,153 @@ class _CompletedQuranPlanCard extends StatelessWidget {
     required this.plan,
     required this.t,
     required this.onMarkInProgress,
+    this.onOpenDetails,
+    this.onDelete,
   });
 
   final QuranPlan plan;
   final QuranText t;
   final VoidCallback onMarkInProgress;
+  final VoidCallback? onOpenDetails;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     const cardBorderColor = Color(0xFFD2E3A8);
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: context.pageColor(Colors.white),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: cardBorderColor, width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 52.r,
-            height: 52.r,
-            padding: EdgeInsets.all(6.r),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDEBBE),
-              borderRadius: BorderRadius.circular(16.r),
+    return InkWell(
+      onTap: onOpenDetails,
+      borderRadius: BorderRadius.circular(20.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          color: context.pageColor(Colors.white),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: cardBorderColor, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52.r,
+              height: 52.r,
+              padding: EdgeInsets.all(6.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDDEBBE),
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              child: Image.asset(
+                'assets/images/Quran.png',
+                fit: BoxFit.contain,
+              ),
             ),
-            child: Image.asset('assets/images/Quran.png', fit: BoxFit.contain),
-          ),
-          SizedBox(width: 14.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  t.presetPlanName(plan.id, plan.name),
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF282442),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    t.presetPlanName(plan.id, plan.name),
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF282442),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  SizedBox(height: 4.h),
+                  Text(
+                    '${t.days(plan.days)} · ${t.n(plan.counts.totalAyahs)} ${t.ayahsCompleted}',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: const Color(0xFF8B9875),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5EED0),
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+              child: Text(
+                t.completed,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF6B8042),
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${t.days(plan.days)} · ${t.n(plan.counts.totalAyahs)} ${t.ayahsCompleted}',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF8B9875),
+              ),
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: Color(0xFF7A8D49),
+              ),
+              onSelected: (val) {
+                if (val == 'details') {
+                  onOpenDetails?.call();
+                } else if (val == 'reopen') {
+                  onMarkInProgress();
+                } else if (val == 'delete') {
+                  onDelete?.call();
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'details',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        color: Color(0xFF6B8042),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text(t.quranPlanDetails)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'reopen',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.refresh_rounded,
+                        color: Color(0xFF6B8042),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(child: Text(t.markInProgress)),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.delete_outline_rounded,
+                        color: Color(0xFFC15B4B),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          t.deletePlan,
+                          style: const TextStyle(color: Color(0xFFC15B4B)),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5EED0),
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            child: Text(
-              t.completed,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6B8042),
-              ),
-            ),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF7A8D49)),
-            onSelected: (val) {
-              if (val == 'reopen') {
-                onMarkInProgress();
-              }
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'reopen',
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.refresh_rounded,
-                      color: Color(0xFF6B8042),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(child: Text(t.markInProgress)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

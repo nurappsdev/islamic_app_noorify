@@ -59,12 +59,29 @@ String localizeFailureMessage(String raw) {
     'failed to load quran plans': text.failureQuranPlanLoad,
     'failed to create quran plan': text.failureQuranPlanCreate,
     'failed to update quran plan': text.failureQuranPlanUpdate,
+    'failed to load plan details': text.failureQuranPlanDetailsLoad,
+    'failed to load plan ayahs': text.failureQuranPlanAyahsLoad,
+    'failed to complete plan': text.failureQuranPlanComplete,
+    'failed to delete plan': text.failureQuranPlanDelete,
+    'plan not found': text.failureQuranPlanNotFound,
   };
   final match = known[key];
   if (match != null) return match;
 
   final numbers = LanguagePreference.numbers;
   final patterns = <(RegExp, String Function(RegExpMatch))>[
+    (
+      RegExp(
+        r'read every ayah in the plan first:\s*(\d+)\s+of\s+(\d+)\s+still unread',
+      ),
+      (m) {
+        final n = int.tryParse(m[1]!);
+        final formatted = n != null ? _commaSeparate(n.toString()) : m[1]!;
+        return text.failureQuranPlanUnreadAyahs.fill({
+          'count': numbers.digits(formatted),
+        });
+      },
+    ),
     (
       RegExp(r'^request failed \((?:network error)\)$'),
       (_) => text.failureNetwork,
@@ -112,4 +129,16 @@ String _normalize(String raw) {
   }
   // Keep the sentence break inside a two-sentence message.
   return key;
+}
+
+String _commaSeparate(String digits) {
+  final buffer = StringBuffer();
+  final len = digits.length;
+  for (int i = 0; i < len; i++) {
+    if (i > 0 && (len - i) % 3 == 0) {
+      buffer.write(',');
+    }
+    buffer.write(digits[i]);
+  }
+  return buffer.toString();
 }

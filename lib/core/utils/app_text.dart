@@ -652,6 +652,12 @@ class AppText {
     required this.failureQuranPlanLoad,
     required this.failureQuranPlanCreate,
     required this.failureQuranPlanUpdate,
+    required this.failureQuranPlanDetailsLoad,
+    required this.failureQuranPlanAyahsLoad,
+    required this.failureQuranPlanComplete,
+    required this.failureQuranPlanDelete,
+    required this.failureQuranPlanNotFound,
+    required this.failureQuranPlanUnreadAyahs,
     required this.quranSurahBookmarked,
     required this.quranSurahBookmarkRemoved,
     required this.quranViewInAyat,
@@ -1518,6 +1524,12 @@ class AppText {
   final String failureQuranPlanLoad;
   final String failureQuranPlanCreate;
   final String failureQuranPlanUpdate;
+  final String failureQuranPlanDetailsLoad;
+  final String failureQuranPlanAyahsLoad;
+  final String failureQuranPlanComplete;
+  final String failureQuranPlanDelete;
+  final String failureQuranPlanNotFound;
+  final String failureQuranPlanUnreadAyahs;
   final String quranSurahBookmarked;
   final String quranSurahBookmarkRemoved;
   final String quranViewInAyat;
@@ -4091,6 +4103,36 @@ class AppText {
         map,
         'failureQuranPlanUpdate',
         fallback?.failureQuranPlanUpdate ?? '',
+      ),
+      failureQuranPlanDetailsLoad: _read(
+        map,
+        'failureQuranPlanDetailsLoad',
+        fallback?.failureQuranPlanDetailsLoad ?? '',
+      ),
+      failureQuranPlanAyahsLoad: _read(
+        map,
+        'failureQuranPlanAyahsLoad',
+        fallback?.failureQuranPlanAyahsLoad ?? '',
+      ),
+      failureQuranPlanComplete: _read(
+        map,
+        'failureQuranPlanComplete',
+        fallback?.failureQuranPlanComplete ?? '',
+      ),
+      failureQuranPlanDelete: _read(
+        map,
+        'failureQuranPlanDelete',
+        fallback?.failureQuranPlanDelete ?? '',
+      ),
+      failureQuranPlanNotFound: _read(
+        map,
+        'failureQuranPlanNotFound',
+        fallback?.failureQuranPlanNotFound ?? '',
+      ),
+      failureQuranPlanUnreadAyahs: _read(
+        map,
+        'failureQuranPlanUnreadAyahs',
+        fallback?.failureQuranPlanUnreadAyahs ?? '',
       ),
       quranSurahBookmarked: _read(
         map,

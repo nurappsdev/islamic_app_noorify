@@ -5,11 +5,7 @@ import 'package:islami_app_noorify/core/theme/theme_colors.dart';
 
 /// Static indicator dot with label for "My Position".
 class QuranLegendDot extends StatelessWidget {
-  const QuranLegendDot({
-    super.key,
-    required this.color,
-    required this.label,
-  });
+  const QuranLegendDot({super.key, required this.color, required this.label});
 
   final Color color;
   final String label;

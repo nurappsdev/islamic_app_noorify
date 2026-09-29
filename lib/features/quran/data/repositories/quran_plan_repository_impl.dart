@@ -16,8 +16,8 @@ class QuranPlanRepositoryImpl implements QuranPlanRepository {
     bool Function()? isSignedIn,
     this.cacheFor = const Duration(minutes: 2),
     DateTime Function()? now,
-  })  : _isSignedIn = isSignedIn ?? (() => AuthLocalDataSourceImpl().hasToken),
-        _now = now ?? DateTime.now {
+  }) : _isSignedIn = isSignedIn ?? (() => AuthLocalDataSourceImpl().hasToken),
+       _now = now ?? DateTime.now {
     _readingTrackedSub = QuranReadingRepositoryImpl.shared.onReadingTracked
         .listen((_) => _onReadingTracked());
   }
@@ -34,6 +34,11 @@ class QuranPlanRepositoryImpl implements QuranPlanRepository {
   StreamSubscription<void>? _readingTrackedSub;
   final _cache = <String, ({DateTime at, QuranPlansResponse value})>{};
   final _inFlight = <String, Future<QuranPlansResponse>>{};
+  final _detailsCache = <String, ({DateTime at, QuranPlan value})>{};
+  final _detailsInFlight = <String, Future<QuranPlan>>{};
+  final _ayahsCache =
+      <String, ({DateTime at, PaginatedQuranPlanAyahs value})>{};
+  final _ayahsInFlight = <String, Future<PaginatedQuranPlanAyahs>>{};
   final _planChanged = StreamController<void>.broadcast();
   int _generation = 0;
 
@@ -59,6 +64,10 @@ class QuranPlanRepositoryImpl implements QuranPlanRepository {
     _generation++;
     _cache.clear();
     _inFlight.clear();
+    _detailsCache.clear();
+    _detailsInFlight.clear();
+    _ayahsCache.clear();
+    _ayahsInFlight.clear();
   }
 
   @override
@@ -92,8 +101,8 @@ class QuranPlanRepositoryImpl implements QuranPlanRepository {
     final request = _inFlight[key] ??= _remote
         .getPlans(status: status, page: page, limit: limit)
         .whenComplete(() {
-      if (generation == _generation) _inFlight.remove(key);
-    });
+          if (generation == _generation) _inFlight.remove(key);
+        });
 
     final result = await _guard(() async => await request);
     if (generation == _generation) {
@@ -105,11 +114,92 @@ class QuranPlanRepositoryImpl implements QuranPlanRepository {
   }
 
   @override
+  Future<Either<Failure, QuranPlan>> getPlanDetails(
+    String planId, {
+    bool forceRefresh = false,
+  }) async {
+    final key = planId;
+    if (!forceRefresh) {
+      final hit = _detailsCache[key];
+      if (hit != null && _now().difference(hit.at) < cacheFor) {
+        return Right(hit.value);
+      }
+    }
+
+    final generation = _generation;
+    final request = _detailsInFlight[key] ??= _remote
+        .getPlanDetails(planId)
+        .whenComplete(() {
+          if (generation == _generation) _detailsInFlight.remove(key);
+        });
+
+    final result = await _guard(() async => await request);
+    if (generation == _generation) {
+      result.fold((_) {}, (plan) {
+        _detailsCache[key] = (at: _now(), value: plan);
+      });
+    }
+    return result;
+  }
+
+  @override
   Future<Either<Failure, QuranPlan>> updatePlan(
     String planId,
     UpdateQuranPlanRequest request,
   ) async {
     final result = await _guard(() => _remote.updatePlan(planId, request));
+    if (result.isRight()) {
+      invalidateCache();
+      _planChanged.add(null);
+    }
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, QuranPlan>> completePlan(String planId) async {
+    final result = await _guard(() => _remote.completePlan(planId));
+    if (result.isRight()) {
+      invalidateCache();
+      _planChanged.add(null);
+    }
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, PaginatedQuranPlanAyahs>> getPlanAyahs(
+    String planId, {
+    String filter = 'all',
+    int page = 1,
+    int limit = 10,
+    bool forceRefresh = false,
+  }) async {
+    final key = '$planId:$filter:$page:$limit';
+    if (!forceRefresh) {
+      final hit = _ayahsCache[key];
+      if (hit != null && _now().difference(hit.at) < cacheFor) {
+        return Right(hit.value);
+      }
+    }
+
+    final generation = _generation;
+    final request = _ayahsInFlight[key] ??= _remote
+        .getPlanAyahs(planId, filter: filter, page: page, limit: limit)
+        .whenComplete(() {
+          if (generation == _generation) _ayahsInFlight.remove(key);
+        });
+
+    final result = await _guard(() async => await request);
+    if (generation == _generation) {
+      result.fold((_) {}, (response) {
+        _ayahsCache[key] = (at: _now(), value: response);
+      });
+    }
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePlan(String planId) async {
+    final result = await _guard(() => _remote.deletePlan(planId));
     if (result.isRight()) {
       invalidateCache();
       _planChanged.add(null);

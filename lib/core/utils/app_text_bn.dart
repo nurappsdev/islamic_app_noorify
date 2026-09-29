@@ -894,4 +894,11 @@ const Map<String, String> appTextBn = <String, String>{
   'failureQuranPlanLoad': 'কুরআন প্ল্যান লোড করা যায়নি।',
   'failureQuranPlanCreate': 'কুরআন প্ল্যান তৈরি করা যায়নি।',
   'failureQuranPlanUpdate': 'কুরআন প্ল্যান আপডেট করা যায়নি।',
+  'failureQuranPlanDetailsLoad': 'প্ল্যানের বিস্তারিত লোড করা যায়নি।',
+  'failureQuranPlanAyahsLoad': 'প্ল্যানের আয়াত লোড করা যায়নি।',
+  'failureQuranPlanComplete': 'প্ল্যান সম্পন্ন করা যায়নি।',
+  'failureQuranPlanDelete': 'প্ল্যান মুছে ফেলা যায়নি।',
+  'failureQuranPlanNotFound': 'প্ল্যান পাওয়া যায়নি।',
+  'failureQuranPlanUnreadAyahs':
+      'এই প্ল্যানটি সম্পন্ন করার আগে আপনাকে আরও {count}টি আয়াত পড়তে হবে।',
 };

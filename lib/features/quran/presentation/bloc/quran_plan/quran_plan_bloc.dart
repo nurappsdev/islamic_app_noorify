@@ -14,15 +14,30 @@ export 'quran_plan_state.dart';
 
 class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
   QuranPlanBloc({QuranPlanRepository? repository})
-      : _repository = repository ?? QuranPlanRepositoryImpl.shared,
-        super(const QuranPlanState()) {
+    : _repository = repository ?? QuranPlanRepositoryImpl.shared,
+      super(const QuranPlanState()) {
     on<LoadQuranPlans>(_onLoadPlans);
     on<LoadMoreQuranPlans>(_onLoadMorePlans);
     on<CreateQuranPlanSubmitted>(_onCreatePlan);
     on<UpdateQuranPlanStatus>(_onUpdatePlanStatus);
+    on<LoadQuranPlanDetails>(_onLoadPlanDetails);
+    on<UpdateQuranPlanSubmitted>(_onUpdatePlanSubmitted);
+    on<CompleteQuranPlan>(_onCompletePlan);
+    on<DeleteQuranPlan>(_onDeletePlan);
+    on<LoadPlanAyahs>(_onLoadPlanAyahs);
+    on<LoadMorePlanAyahs>(_onLoadMorePlanAyahs);
+    on<ChangePlanAyahsFilter>(_onChangePlanAyahsFilter);
 
     _planChangedSub = _repository.onPlanChanged.listen((_) {
       add(const LoadQuranPlans(forceRefresh: true));
+      if (state.selectedPlanDetails != null) {
+        add(
+          LoadQuranPlanDetails(
+            planId: state.selectedPlanDetails!.id,
+            forceRefresh: true,
+          ),
+        );
+      }
     });
   }
 
@@ -50,10 +65,12 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     bool forceRefresh = false,
   }) async {
     final generation = ++_activeGeneration;
-    emit(state.copyWith(
-      activeStatus: QuranPlanLoadStatus.loading,
-      clearActiveFailure: true,
-    ));
+    emit(
+      state.copyWith(
+        activeStatus: QuranPlanLoadStatus.loading,
+        clearActiveFailure: true,
+      ),
+    );
 
     final result = await _repository.getPlans(
       status: 'in_progress',
@@ -65,16 +82,20 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     if (generation != _activeGeneration || emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        activeStatus: QuranPlanLoadStatus.failure,
-        activeFailure: failure,
-      )),
-      (response) => emit(state.copyWith(
-        activeStatus: QuranPlanLoadStatus.success,
-        activePlans: response.plans,
-        activePage: response.meta.page,
-        hasMoreActive: response.meta.hasMore,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          activeStatus: QuranPlanLoadStatus.failure,
+          activeFailure: failure,
+        ),
+      ),
+      (response) => emit(
+        state.copyWith(
+          activeStatus: QuranPlanLoadStatus.success,
+          activePlans: response.plans,
+          activePage: response.meta.page,
+          hasMoreActive: response.meta.hasMore,
+        ),
+      ),
     );
   }
 
@@ -83,10 +104,12 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     bool forceRefresh = false,
   }) async {
     final generation = ++_completedGeneration;
-    emit(state.copyWith(
-      completedStatus: QuranPlanLoadStatus.loading,
-      clearCompletedFailure: true,
-    ));
+    emit(
+      state.copyWith(
+        completedStatus: QuranPlanLoadStatus.loading,
+        clearCompletedFailure: true,
+      ),
+    );
 
     final result = await _repository.getPlans(
       status: 'completed',
@@ -98,16 +121,20 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     if (generation != _completedGeneration || emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        completedStatus: QuranPlanLoadStatus.failure,
-        completedFailure: failure,
-      )),
-      (response) => emit(state.copyWith(
-        completedStatus: QuranPlanLoadStatus.success,
-        completedPlans: response.plans,
-        completedPage: response.meta.page,
-        hasMoreCompleted: response.meta.hasMore,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          completedStatus: QuranPlanLoadStatus.failure,
+          completedFailure: failure,
+        ),
+      ),
+      (response) => emit(
+        state.copyWith(
+          completedStatus: QuranPlanLoadStatus.success,
+          completedPlans: response.plans,
+          completedPage: response.meta.page,
+          hasMoreCompleted: response.meta.hasMore,
+        ),
+      ),
     );
   }
 
@@ -127,12 +154,14 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
       if (emit.isDone) return;
       result.fold(
         (_) => emit(state.copyWith(isLoadingMoreActive: false)),
-        (response) => emit(state.copyWith(
-          isLoadingMoreActive: false,
-          activePlans: [...state.activePlans, ...response.plans],
-          activePage: response.meta.page,
-          hasMoreActive: response.meta.hasMore,
-        )),
+        (response) => emit(
+          state.copyWith(
+            isLoadingMoreActive: false,
+            activePlans: [...state.activePlans, ...response.plans],
+            activePage: response.meta.page,
+            hasMoreActive: response.meta.hasMore,
+          ),
+        ),
       );
     } else if (event.status == 'completed') {
       if (!state.hasMoreCompleted || state.isLoadingMoreCompleted) return;
@@ -146,12 +175,14 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
       if (emit.isDone) return;
       result.fold(
         (_) => emit(state.copyWith(isLoadingMoreCompleted: false)),
-        (response) => emit(state.copyWith(
-          isLoadingMoreCompleted: false,
-          completedPlans: [...state.completedPlans, ...response.plans],
-          completedPage: response.meta.page,
-          hasMoreCompleted: response.meta.hasMore,
-        )),
+        (response) => emit(
+          state.copyWith(
+            isLoadingMoreCompleted: false,
+            completedPlans: [...state.completedPlans, ...response.plans],
+            completedPage: response.meta.page,
+            hasMoreCompleted: response.meta.hasMore,
+          ),
+        ),
       );
     }
   }
@@ -160,25 +191,22 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     CreateQuranPlanSubmitted event,
     Emitter<QuranPlanState> emit,
   ) async {
-    emit(state.copyWith(
-      isCreating: true,
-      clearCreateFailure: true,
-      clearCreatedPlan: true,
-    ));
+    emit(
+      state.copyWith(
+        isCreating: true,
+        clearCreateFailure: true,
+        clearCreatedPlan: true,
+      ),
+    );
 
     final result = await _repository.createPlan(event.request);
     if (emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isCreating: false,
-        createFailure: failure,
-      )),
+      (failure) =>
+          emit(state.copyWith(isCreating: false, createFailure: failure)),
       (plan) {
-        emit(state.copyWith(
-          isCreating: false,
-          createdPlan: plan,
-        ));
+        emit(state.copyWith(isCreating: false, createdPlan: plan));
         add(const LoadQuranPlans(status: 'in_progress', forceRefresh: true));
       },
     );
@@ -188,11 +216,13 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     UpdateQuranPlanStatus event,
     Emitter<QuranPlanState> emit,
   ) async {
-    emit(state.copyWith(
-      isUpdating: true,
-      clearUpdateFailure: true,
-      clearUpdatedPlan: true,
-    ));
+    emit(
+      state.copyWith(
+        isUpdating: true,
+        clearUpdateFailure: true,
+        clearUpdatedPlan: true,
+      ),
+    );
 
     final result = await _repository.updatePlan(
       event.planId,
@@ -201,17 +231,212 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
     if (emit.isDone) return;
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isUpdating: false,
-        updateFailure: failure,
-      )),
+      (failure) =>
+          emit(state.copyWith(isUpdating: false, updateFailure: failure)),
       (plan) {
-        emit(state.copyWith(
-          isUpdating: false,
-          updatedPlan: plan,
-        ));
+        emit(state.copyWith(isUpdating: false, updatedPlan: plan));
         add(const LoadQuranPlans(forceRefresh: true));
       },
+    );
+  }
+
+  Future<void> _onLoadPlanDetails(
+    LoadQuranPlanDetails event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    emit(state.copyWith(isLoadingDetails: true, clearDetailsFailure: true));
+
+    final result = await _repository.getPlanDetails(
+      event.planId,
+      forceRefresh: event.forceRefresh,
+    );
+    if (emit.isDone) return;
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(isLoadingDetails: false, detailsFailure: failure),
+      ),
+      (plan) => emit(
+        state.copyWith(isLoadingDetails: false, selectedPlanDetails: plan),
+      ),
+    );
+  }
+
+  Future<void> _onUpdatePlanSubmitted(
+    UpdateQuranPlanSubmitted event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isUpdating: true,
+        clearUpdateFailure: true,
+        clearUpdatedPlan: true,
+      ),
+    );
+
+    final result = await _repository.updatePlan(event.planId, event.request);
+    if (emit.isDone) return;
+
+    result.fold(
+      (failure) =>
+          emit(state.copyWith(isUpdating: false, updateFailure: failure)),
+      (plan) {
+        emit(
+          state.copyWith(
+            isUpdating: false,
+            updatedPlan: plan,
+            selectedPlanDetails: plan,
+          ),
+        );
+        add(const LoadQuranPlans(forceRefresh: true));
+      },
+    );
+  }
+
+  Future<void> _onCompletePlan(
+    CompleteQuranPlan event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isCompleting: true,
+        completedSuccess: false,
+        clearCompleteFailure: true,
+      ),
+    );
+
+    final result = await _repository.completePlan(event.planId);
+    if (emit.isDone) return;
+
+    result.fold(
+      (failure) =>
+          emit(state.copyWith(isCompleting: false, completeFailure: failure)),
+      (plan) {
+        emit(
+          state.copyWith(
+            isCompleting: false,
+            completedSuccess: true,
+            selectedPlanDetails: plan,
+          ),
+        );
+        add(const LoadQuranPlans(forceRefresh: true));
+      },
+    );
+  }
+
+  Future<void> _onDeletePlan(
+    DeleteQuranPlan event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isDeleting: true,
+        deleteSuccess: false,
+        clearDeleteFailure: true,
+      ),
+    );
+
+    final result = await _repository.deletePlan(event.planId);
+    if (emit.isDone) return;
+
+    result.fold(
+      (failure) =>
+          emit(state.copyWith(isDeleting: false, deleteFailure: failure)),
+      (_) {
+        final updatedActive = state.activePlans
+            .where((p) => p.id != event.planId)
+            .toList();
+        final updatedCompleted = state.completedPlans
+            .where((p) => p.id != event.planId)
+            .toList();
+        emit(
+          state.copyWith(
+            isDeleting: false,
+            deleteSuccess: true,
+            activePlans: updatedActive,
+            completedPlans: updatedCompleted,
+            clearSelectedPlanDetails:
+                state.selectedPlanDetails?.id == event.planId,
+          ),
+        );
+        add(const LoadQuranPlans(forceRefresh: true));
+      },
+    );
+  }
+
+  Future<void> _onLoadPlanAyahs(
+    LoadPlanAyahs event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        isLoadingAyahs: true,
+        ayahsFilter: event.filter,
+        clearAyahsFailure: true,
+      ),
+    );
+
+    final result = await _repository.getPlanAyahs(
+      event.planId,
+      filter: event.filter,
+      page: 1,
+      limit: 10,
+      forceRefresh: event.forceRefresh,
+    );
+    if (emit.isDone) return;
+
+    result.fold(
+      (failure) =>
+          emit(state.copyWith(isLoadingAyahs: false, ayahsFailure: failure)),
+      (response) => emit(
+        state.copyWith(
+          isLoadingAyahs: false,
+          planAyahs: response.ayahs,
+          planAyahsMeta: response.meta,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onLoadMorePlanAyahs(
+    LoadMorePlanAyahs event,
+    Emitter<QuranPlanState> emit,
+  ) async {
+    if (!state.planAyahsMeta.hasMore || state.isLoadingMoreAyahs) return;
+    emit(state.copyWith(isLoadingMoreAyahs: true));
+
+    final nextPage = state.planAyahsMeta.page + 1;
+    final result = await _repository.getPlanAyahs(
+      event.planId,
+      filter: state.ayahsFilter,
+      page: nextPage,
+      limit: 10,
+    );
+    if (emit.isDone) return;
+
+    result.fold(
+      (_) => emit(state.copyWith(isLoadingMoreAyahs: false)),
+      (response) => emit(
+        state.copyWith(
+          isLoadingMoreAyahs: false,
+          planAyahs: [...state.planAyahs, ...response.ayahs],
+          planAyahsMeta: response.meta,
+        ),
+      ),
+    );
+  }
+
+  void _onChangePlanAyahsFilter(
+    ChangePlanAyahsFilter event,
+    Emitter<QuranPlanState> emit,
+  ) {
+    if (state.ayahsFilter == event.filter && state.planAyahs.isNotEmpty) return;
+    add(
+      LoadPlanAyahs(
+        planId: event.planId,
+        filter: event.filter,
+        forceRefresh: true,
+      ),
     );
   }
 

@@ -891,4 +891,11 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'failureQuranPlanLoad': 'Failed to load Quran plans.',
   'failureQuranPlanCreate': 'Failed to create Quran plan.',
   'failureQuranPlanUpdate': 'Failed to update Quran plan.',
+  'failureQuranPlanDetailsLoad': 'Failed to load plan details.',
+  'failureQuranPlanAyahsLoad': 'Failed to load plan Ayahs.',
+  'failureQuranPlanComplete': 'Failed to complete plan.',
+  'failureQuranPlanDelete': 'Failed to delete plan.',
+  'failureQuranPlanNotFound': 'Plan not found.',
+  'failureQuranPlanUnreadAyahs':
+      'You still have {count} Ayahs left to read before completing this plan.',
 };
