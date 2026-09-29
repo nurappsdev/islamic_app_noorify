@@ -246,9 +246,18 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     return BlocProvider.value(
       value: _bloc,
       child: BlocListener<QuranPlanBloc, QuranPlanState>(
+        listenWhen: (previous, current) =>
+            (!previous.deleteSuccess && current.deleteSuccess) ||
+            (!previous.completedSuccess && current.completedSuccess) ||
+            (previous.deleteFailure != current.deleteFailure &&
+                current.deleteFailure != null) ||
+            (previous.completeFailure != current.completeFailure &&
+                current.completeFailure != null),
         listener: (context, state) {
+          final messenger = ScaffoldMessenger.of(context);
           if (state.completedSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.hideCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(t.planCompletedSuccessfully),
                 backgroundColor: const Color(0xFF6B8042),
@@ -257,7 +266,8 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
             );
           }
           if (state.completeFailure != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.hideCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(
                   localizeFailureMessage(state.completeFailure!.message),
@@ -268,7 +278,8 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
             );
           }
           if (state.deleteSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.hideCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(t.planDeletedSuccessfully),
                 backgroundColor: const Color(0xFF6B8042),
@@ -277,7 +288,8 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
             );
           }
           if (state.deleteFailure != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            messenger.hideCurrentSnackBar();
+            messenger.showSnackBar(
               SnackBar(
                 content: Text(
                   localizeFailureMessage(state.deleteFailure!.message),

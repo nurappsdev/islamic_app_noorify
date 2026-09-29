@@ -121,10 +121,12 @@ class QuranPlanState {
     bool clearDetailsFailure = false,
     bool? isCompleting,
     bool? completedSuccess,
+    bool clearCompletedSuccess = false,
     Failure? completeFailure,
     bool clearCompleteFailure = false,
     bool? isDeleting,
     bool? deleteSuccess,
+    bool clearDeleteSuccess = false,
     Failure? deleteFailure,
     bool clearDeleteFailure = false,
     List<QuranPlanAyah>? planAyahs,
@@ -170,12 +172,16 @@ class QuranPlanState {
         ? null
         : (detailsFailure ?? this.detailsFailure),
     isCompleting: isCompleting ?? this.isCompleting,
-    completedSuccess: completedSuccess ?? this.completedSuccess,
+    completedSuccess: clearCompletedSuccess
+        ? false
+        : (completedSuccess ?? this.completedSuccess),
     completeFailure: clearCompleteFailure
         ? null
         : (completeFailure ?? this.completeFailure),
     isDeleting: isDeleting ?? this.isDeleting,
-    deleteSuccess: deleteSuccess ?? this.deleteSuccess,
+    deleteSuccess: clearDeleteSuccess
+        ? false
+        : (deleteSuccess ?? this.deleteSuccess),
     deleteFailure: clearDeleteFailure
         ? null
         : (deleteFailure ?? this.deleteFailure),

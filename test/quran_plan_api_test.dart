@@ -10,6 +10,7 @@ import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_dat
 import 'package:islami_app_noorify/features/quran/data/datasources/quran_plan_remote_data_source.dart';
 import 'package:islami_app_noorify/features/quran/data/repositories/quran_plan_repository_impl.dart';
 import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
+import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_plan/quran_plan_bloc.dart';
 import 'package:islami_app_noorify/features/quran/presentation/quran_text.dart';
 import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
 
@@ -705,5 +706,34 @@ void main() {
       expect(QuranText.english.planAyahs, 'Plan Ayahs');
       expect(QuranText.bangla.planAyahs, 'প্ল্যানের আয়াত');
     });
+  });
+
+  group('QuranPlanBloc action flags', () {
+    test(
+      'deleteSuccess is emitted and then cleared on subsequent plan reloads',
+      () async {
+        final env = _setup(body: _sampleDeleteResponse);
+        final repo = QuranPlanRepositoryImpl(
+          env.source,
+          isSignedIn: () => true,
+        );
+        final bloc = QuranPlanBloc(repository: repo);
+
+        final states = <bool>[];
+        final sub = bloc.stream.listen((s) {
+          states.add(s.deleteSuccess);
+        });
+
+        bloc.add(const DeleteQuranPlan(planId: '6abb44ca7df616c9b3d09699'));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        // deleteSuccess transitions to true on success, then is cleared on subsequent plan reloads
+        expect(states.contains(true), isTrue);
+        expect(bloc.state.deleteSuccess, isFalse);
+
+        await sub.cancel();
+        await bloc.close();
+      },
+    );
   });
 }

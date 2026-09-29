@@ -69,6 +69,8 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
       state.copyWith(
         activeStatus: QuranPlanLoadStatus.loading,
         clearActiveFailure: true,
+        clearDeleteSuccess: true,
+        clearCompletedSuccess: true,
       ),
     );
 
@@ -108,6 +110,8 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
       state.copyWith(
         completedStatus: QuranPlanLoadStatus.loading,
         clearCompletedFailure: true,
+        clearDeleteSuccess: true,
+        clearCompletedSuccess: true,
       ),
     );
 
@@ -319,7 +323,6 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
             selectedPlanDetails: plan,
           ),
         );
-        add(const LoadQuranPlans(forceRefresh: true));
       },
     );
   }
@@ -359,7 +362,6 @@ class QuranPlanBloc extends Bloc<QuranPlanEvent, QuranPlanState> {
                 state.selectedPlanDetails?.id == event.planId,
           ),
         );
-        add(const LoadQuranPlans(forceRefresh: true));
       },
     );
   }
