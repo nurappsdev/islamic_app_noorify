@@ -28,7 +28,9 @@ import '../../domain/arabic_font.dart';
 import '../../domain/quran_ayah.dart';
 import '../../domain/surah_detail.dart';
 import '../../domain/translation_edition.dart';
+import '../../data/repositories/quran_reading_repository_impl.dart';
 import '../bloc/quran_reading_cubit.dart';
+import '../controllers/quran_reading_tracker.dart';
 import '../bloc/quran_translation/quran_translation_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
 import '../quran_route_args.dart';
@@ -45,9 +47,13 @@ class QuranReadingScreen extends StatelessWidget {
     required this.args,
     this.contentService,
     this.tafsirService,
+    this.readingTracker,
   });
   final QuranContentService? contentService;
   final QuranReaderService? tafsirService;
+
+  /// Reports what is read; by default one on the app-wide repository.
+  final QuranReadingTracker? readingTracker;
   final SurahRouteArgs args;
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -74,14 +80,23 @@ class QuranReadingScreen extends StatelessWidget {
         },
       ),
     ],
-    child: _ReaderBody(args: args, tafsirService: tafsirService),
+    child: _ReaderBody(
+      args: args,
+      tafsirService: tafsirService,
+      readingTracker: readingTracker,
+    ),
   );
 }
 
 class _ReaderBody extends StatefulWidget {
-  const _ReaderBody({required this.args, this.tafsirService});
+  const _ReaderBody({
+    required this.args,
+    this.tafsirService,
+    this.readingTracker,
+  });
   final SurahRouteArgs args;
   final QuranReaderService? tafsirService;
+  final QuranReadingTracker? readingTracker;
   @override
   State<_ReaderBody> createState() => _ReaderBodyState();
 }
@@ -91,6 +106,14 @@ class _ReaderBodyState extends State<_ReaderBody> {
       widget.args.readingSession ?? QuranReadingSession();
   final _seconds = ValueNotifier<int>(0);
   late final Timer _timer;
+  // Reports what is read (POST /quran/reading/track); foreground time only.
+  late final QuranReadingTracker _tracker =
+      widget.readingTracker ??
+      QuranReadingTracker(QuranReadingRepositoryImpl.shared);
+  late final AppLifecycleListener _lifecycle = AppLifecycleListener(
+    onHide: _tracker.pause,
+    onShow: _tracker.resume,
+  );
   bool _crossingSurah = false;
   int _bookmarkRevision = 0;
   bool _showTafsir = false;
@@ -149,11 +172,15 @@ class _ReaderBodyState extends State<_ReaderBody> {
       (_) => _seconds.value = _session.elapsedSeconds,
     );
     _seconds.value = _session.elapsedSeconds;
+    _lifecycle; // Starts listening.
     context.read<SurahPlaybackBloc>().add(SetActiveAyah(widget.args.ayahNo));
   }
 
   @override
   void dispose() {
+    _lifecycle.dispose();
+    // Leaving the reader (or crossing into another Surah) ends the session.
+    _tracker.dispose();
     _timer.cancel();
     _seconds.dispose();
     super.dispose();
@@ -481,6 +508,13 @@ class _ReaderBodyState extends State<_ReaderBody> {
         BlocListener<QuranReadingCubit, QuranReadingState>(
           listenWhen: (p, c) => !c.loading && !c.error,
           listener: (context, state) {
+            if (state.ayahs.isNotEmpty) {
+              _tracker.show(
+                state.ayahs.first.surahNumber,
+                state.ayahs.first.ayahNumber,
+                state.ayahs.last.ayahNumber,
+              );
+            }
             final playback = context.read<SurahPlaybackBloc>();
             if (playback.state.currentAyahNo < state.from ||
                 playback.state.currentAyahNo > state.to) {

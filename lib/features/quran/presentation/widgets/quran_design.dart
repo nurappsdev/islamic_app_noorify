@@ -194,7 +194,10 @@ class _QuranTabShellState extends State<QuranTabShell> {
             ),
             QuranSavedScreen(onBack: () => _select('home')),
             QuranPlanScreen(onBack: () => _select('home')),
-            QuranDashboardScreen(onBack: () => _select('home')),
+            QuranDashboardScreen(
+              onBack: () => _select('home'),
+              active: _selected == 'dashboard',
+            ),
           ],
         ),
         bottomNavigationBar: QuranBottomNav(

@@ -106,12 +106,14 @@ class QuranMostReadingSurahCard extends StatelessWidget {
   const QuranMostReadingSurahCard({
     super.key,
     required this.surahName,
-    required this.time,
+    this.time,
     this.label = 'Most Reading Sura',
   });
 
   final String surahName;
-  final String time;
+
+  /// Reading time on the Surah; hidden when unknown.
+  final String? time;
   final String label;
 
   @override
@@ -145,14 +147,15 @@ class QuranMostReadingSurahCard extends StatelessWidget {
                   color: context.inkColor(const Color(0xFF1E211A)),
                 ),
               ),
-              Text(
-                time,
-                style: TextStyle(
-                  fontSize: 16.5.sp,
-                  fontWeight: FontWeight.w400,
-                  color: context.inkColor(const Color(0xFF1E211A)),
+              if (time != null)
+                Text(
+                  time!,
+                  style: TextStyle(
+                    fontSize: 16.5.sp,
+                    fontWeight: FontWeight.w400,
+                    color: context.inkColor(const Color(0xFF1E211A)),
+                  ),
                 ),
-              ),
             ],
           ),
         ],

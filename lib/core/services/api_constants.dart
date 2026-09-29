@@ -117,6 +117,15 @@ class ApiConstants {
       "/hadiths/reading/history/compare";
   static const String hadithReadingRecentEndPoint = "/hadiths/reading/recent";
   static const String hadithReadingReadEndPoint = "/hadiths/reading/read";
+
+  /// Quran reading (all need the login token).
+  static const String quranReadingTrackEndPoint = "/quran/reading/track";
+  static const String quranReadingDashboardEndPoint =
+      "/quran/reading/dashboard";
+  static const String quranReadingHistoryEndPoint = "/quran/reading/history";
+  static const String quranReadingCompareEndPoint =
+      "/quran/reading/history/compare";
+  static const String quranLastReadEndPoint = "/quran/reading/last-read";
   static const String hadithPlansEndPoint = "/hadiths/plans";
 
   /// One plan: `PATCH` renames / edits it, `DELETE` removes it.

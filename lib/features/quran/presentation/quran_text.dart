@@ -197,6 +197,38 @@ class QuranText {
   String get mostReadSurah => _t('Most Reading Sura', 'সর্বাধিক পঠিত সূরা');
   String get todaysValue => _t('Todays Value In Graph', 'আজকের পাঠ');
 
+  /// [value] as a whole number when it is one, else to one decimal.
+  String decimal(double value) => n(
+    value == value.roundToDouble() ? value.toInt() : value.toStringAsFixed(1),
+  );
+
+  String minutes(double value) => '${decimal(value)} ${_t('min', 'মিনিট')}';
+  String percent(int value) => '${n(value)}%';
+  String get todaysReading => _t("Today's reading", 'আজকের পাঠ');
+  String readOfGoal(double read, double goal) =>
+      '${decimal(read)} / ${minutes(goal)}';
+  String minutesLeft(double value) =>
+      _t('${minutes(value)} left', 'আর ${minutes(value)} বাকি');
+  String get dailyGoalMet => _t('Daily goal met', 'আজকের লক্ষ্য পূরণ হয়েছে');
+  String pointsOf(double points, double max) =>
+      '${_t('Points', 'পয়েন্ট')} ${decimal(points)}/${decimal(max)}';
+  String get streak => _t('Streak', 'ধারাবাহিকতা');
+  String get averagePerDay => _t('Avg / day', 'গড় / দিন');
+  String get goalDays => _t('Goal met', 'লক্ষ্য পূরণ');
+  String get quranCompletion => _t('Quran completion', 'কুরআন সম্পন্ন');
+  String ofTotal(int done, int total) => '${n(done)}/${n(total)}';
+  String get plansInProgress => _t('Plans in progress', 'চলমান পরিকল্পনা');
+  String get plansCompleted => _t('Plans completed', 'সম্পন্ন পরিকল্পনা');
+  String get continueReading => _t('Continue reading', 'পড়া চালিয়ে যান');
+  String get signInToTrack => _t(
+    'Sign in to track your Quran reading',
+    'কুরআন পাঠের হিসাব রাখতে সাইন ইন করুন',
+  );
+
+  /// The short weekday name of [date].
+  String weekdayShort(DateTime date) =>
+      weekdaysFromSaturday[(date.weekday + 1) % 7];
+
   /// Saturday-first short weekday names, as the weekly chart shows them.
   List<String> get weekdaysFromSaturday => isBangla
       ? const ['শনি', 'রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র']

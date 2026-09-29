@@ -195,11 +195,16 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                             ayahLine: entry == null
                                 ? null
                                 : '${text.ayahNoLabel}: ${t.n(entry.ayahNo)}',
-                            onTap: () => _openReader(
-                              entry?.surahNo ?? 1,
-                              entry?.surahName ?? '',
-                              entry?.ayahNo ?? 1,
-                            ),
+                            // Continues where the user left off (the ayah
+                            // after the last one read, when known).
+                            onTap: () {
+                              final target = state.target;
+                              _openReader(
+                                target?.surahNo ?? 1,
+                                target?.surahName ?? '',
+                                target?.ayahNo ?? 1,
+                              );
+                            },
                             onHistory: () => Navigator.pushNamed(
                               context,
                               RouteNames.quranReadingHistory,
