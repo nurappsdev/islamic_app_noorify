@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 /// Which quiz the question screen should fetch and play.
 class QuizLaunchArgs {

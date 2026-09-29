@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 /// A centred message for the quiz screens' error and empty states, with a
 /// Try Again button when [onRetry] is given.

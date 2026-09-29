@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
 
 /// Contract for reading the signed-in user's family members.
 abstract interface class FamilyRepository {

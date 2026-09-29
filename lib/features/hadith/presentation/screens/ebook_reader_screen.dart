@@ -3,11 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Reads a downloaded e-book PDF inside the app, one page at a time.
 ///

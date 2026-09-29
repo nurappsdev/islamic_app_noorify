@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
 
 int _int(Object? value) => readNum(value)?.toInt() ?? 0;
 int? _intOrNull(Object? value) => readNum(value)?.toInt();

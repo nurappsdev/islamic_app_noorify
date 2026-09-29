@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_database.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_database.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_downloader.dart';
 
 import 'offline_quran_event.dart';
 import 'offline_quran_state.dart';

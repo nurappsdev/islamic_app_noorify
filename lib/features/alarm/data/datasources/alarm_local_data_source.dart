@@ -1,8 +1,8 @@
 import 'package:hive/hive.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/alarm/data/models/alarm_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/models/alarm_model.dart';
 
 /// Hive-backed local persistence for saved alarms — one box entry per alarm,
 /// keyed by its id. Throws [CacheException]; never returns error states.

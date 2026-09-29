@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 class QuizOptionModel extends QuizOption {
   const QuizOptionModel({required super.key, required super.text});

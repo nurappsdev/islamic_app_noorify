@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_dashboard_model.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_dashboard_model.dart';
 
 /// The article API names ids `_id`; `id` is accepted too.
 String? _readObjectId(Map<String, dynamic> json) =>

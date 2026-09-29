@@ -2,10 +2,10 @@ import '../widgets/quran_download_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import '../bloc/surah_list/surah_list_bloc.dart';
 import '../bloc/juz_list/juz_list_bloc.dart';
 import '../bloc/last_read/last_read_bloc.dart';
@@ -15,8 +15,8 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_design.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_format_helpers.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});

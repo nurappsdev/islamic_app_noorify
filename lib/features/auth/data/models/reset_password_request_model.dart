@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/auth/domain/entities/reset_password_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/reset_password_params.dart';
 
 /// Request body for `POST {baseUrl}{resetPasswordEndPoint}`.
 ///

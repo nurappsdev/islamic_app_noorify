@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_scallop_badge.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_scallop_badge.dart';
 
 class AsmaNameCard extends StatelessWidget {
   const AsmaNameCard({

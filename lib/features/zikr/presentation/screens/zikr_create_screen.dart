@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 
 /// "New Zikr" screen (design `devImg/img_13.png`), reached from the `+` button
 /// on [ZikrDashboardScreen] and from "Add More" on [ZikrSetScreen].

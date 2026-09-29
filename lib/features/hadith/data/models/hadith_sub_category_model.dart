@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_category_page.dart';
 
 class HadithSubCategoryModel extends HadithSubCategory {
   const HadithSubCategoryModel({

@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
-import 'package:islami_app_noorify/features/learning/presentation/bloc/articles_bloc.dart';
-import 'package:islami_app_noorify/features/learning/presentation/learning_failure_message.dart';
-import 'package:islami_app_noorify/features/learning/presentation/widgets/learning_widgets.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/bloc/articles_bloc.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/learning_failure_message.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/widgets/learning_widgets.dart';
 
 /// One category's articles, or all of them, with search and infinite
 /// scroll. Expects an [ArticlesBloc] above it.

@@ -5,22 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/logout/logout_bloc.dart';
-import 'package:islami_app_noorify/features/profile/data/services/family_service.dart';
-import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bloc.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/badge_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

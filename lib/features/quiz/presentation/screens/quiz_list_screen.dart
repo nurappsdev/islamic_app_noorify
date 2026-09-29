@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_categories_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_navigation.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_category_card.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_categories_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_navigation.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_category_card.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// Every quiz category; tapping one starts a practice quiz drawn from it.
 /// Expects a [QuizCategoriesBloc] above it.

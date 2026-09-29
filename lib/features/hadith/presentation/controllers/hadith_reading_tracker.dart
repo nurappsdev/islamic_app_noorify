@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/usecases/track_hadith_reading.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/track_hadith_reading.dart';
 
 /// Tunables of the reading tracker.
 abstract final class HadithReadingConfig {

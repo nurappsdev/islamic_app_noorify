@@ -3,13 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
 
 /// Full-screen explanation for one name (design `img_29.png`), opened from
 /// its card's "Click to see details" button. Fetches

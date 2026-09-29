@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/badge_entity.dart';
 
 /// The signed-in user's profile, as returned by `GET /user/me`.
 class ProfileEntity {

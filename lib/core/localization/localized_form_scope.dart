@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Wraps a form so the error messages it is already showing switch language
 /// along with the app.

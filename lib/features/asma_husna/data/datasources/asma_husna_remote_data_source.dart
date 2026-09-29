@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_detail_model.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/models/asma_name_detail_model.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/models/asma_name_model.dart';
 
 /// Talks to the Asma-ul-Husna REST endpoint. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.

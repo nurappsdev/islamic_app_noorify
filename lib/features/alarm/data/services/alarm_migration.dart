@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_log.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
 
 const _migratedKey = 'alarms_on_device_v1';
 

@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/legal/data/datasources/legal_remote_data_source.dart';
-import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
-import 'package:islami_app_noorify/features/legal/domain/repositories/legal_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/legal/data/datasources/legal_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/repositories/legal_repository.dart';
 
 class LegalRepositoryImpl implements LegalRepository {
   LegalRepositoryImpl(this._remote);

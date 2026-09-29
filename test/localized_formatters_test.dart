@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/localization/localized_date_formatter.dart';
-import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
-import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_time_formatter.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _en = AppLanguage.english;
 const _bn = AppLanguage.bangla;

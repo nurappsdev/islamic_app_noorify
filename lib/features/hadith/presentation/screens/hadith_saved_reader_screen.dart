@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_content_settings.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_settings.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_detail_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Reads a hadith saved from the online library, from the copy kept with its
 /// bookmark (so it also works offline). Opened from the Saved screen.

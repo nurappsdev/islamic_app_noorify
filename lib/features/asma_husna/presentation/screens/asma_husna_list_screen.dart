@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_local_data_source.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_husna_bloc.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/screens/asma_name_detail_screen.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
-import 'package:islami_app_noorify/features/asma_husna/presentation/widgets/asma_name_card.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/datasources/asma_husna_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/datasources/asma_husna_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/repositories/asma_husna_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/bloc/asma_husna_bloc.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/screens/asma_name_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_name_card.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
 
 /// Full "99 Names" list (design `img_27.png`): a search field over the
 /// scrollable list of [AsmaNameCard]s, each streaming its own audio preview.

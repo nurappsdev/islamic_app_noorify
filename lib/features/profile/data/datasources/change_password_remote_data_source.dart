@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 
 /// Talks to `POST /settings/change-password`. Throws [ServerException] /
 /// [NetworkException]; never returns error states.

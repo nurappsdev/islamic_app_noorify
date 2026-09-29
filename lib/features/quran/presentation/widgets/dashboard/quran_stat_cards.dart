@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// Card container with a dashed border matching the design specification.
 class QuranDashedCard extends StatelessWidget {

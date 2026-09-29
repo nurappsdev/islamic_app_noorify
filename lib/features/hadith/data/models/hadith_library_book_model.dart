@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
 
 class HadithLibraryBookModel extends HadithLibraryBook {
   const HadithLibraryBookModel({

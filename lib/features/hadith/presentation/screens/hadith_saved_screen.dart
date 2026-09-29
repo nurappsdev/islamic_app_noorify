@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_book_reader_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_saved_reader_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_book_catalog.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_book_reader_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_saved_reader_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// "Saved Hadith", reached from index 2 ("Saved") of the Hadith navigation bar.
 ///

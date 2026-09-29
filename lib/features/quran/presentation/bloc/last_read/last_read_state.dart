@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
 
 class LastReadState {
   const LastReadState({this.isLoading = true, this.entry});

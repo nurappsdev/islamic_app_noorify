@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_point_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_range_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_analytics_summary_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_analytics_point_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_analytics_range_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_analytics_summary_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
 
 /// Data-layer representation of [AmolAnalyticsGraph], parsed from the `data`
 /// payload of `GET /amol/analytics/graph`, e.g.:

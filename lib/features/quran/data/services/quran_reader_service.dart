@@ -3,9 +3,9 @@ import 'quran_content_service.dart';
 
 import 'package:http/http.dart' as http;
 
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/reciter.dart';
-import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/juz_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reciter.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/verse_item.dart';
 
 /// Legacy facade: internal content plus Quran.com audio and tafsir only.
 abstract interface class QuranReaderService {

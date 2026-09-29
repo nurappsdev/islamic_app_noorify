@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// The reading progress of one category or sub-category: a ring filled to the
 /// backend's `percentage`, with the number inside. Matched by [id] in the

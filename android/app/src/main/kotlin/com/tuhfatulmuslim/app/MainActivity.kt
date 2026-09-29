@@ -1,4 +1,4 @@
-package com.islami_app_noorify.islami_app_noorify
+package com.tuhfatulmuslim.app
 
 import android.content.Context
 import android.hardware.GeomagneticField

@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:islami_app_noorify/features/asma_husna/domain/usecases/get_asma_names.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/usecases/get_asma_names.dart';
 
 import 'asma_husna_event.dart';
 import 'asma_husna_state.dart';

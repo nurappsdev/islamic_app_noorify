@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_ayah.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_reading_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_ayah.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_reading_text.dart';
 
 void main() {
   testWidgets(

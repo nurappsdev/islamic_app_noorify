@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
 
 /// A Learning category (`GET /articles/categories`). Shared with the quiz
 /// categories on the server.

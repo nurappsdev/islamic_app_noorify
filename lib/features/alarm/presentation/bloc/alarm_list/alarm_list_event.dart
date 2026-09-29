@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
 
 abstract class AlarmListEvent {
   const AlarmListEvent();

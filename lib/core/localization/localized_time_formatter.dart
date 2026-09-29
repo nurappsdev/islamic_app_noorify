@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Clock times in the selected language: digits in that language's script and
 /// its own AM/PM (Bangla: পূর্বাহ্ণ / অপরাহ্ণ).

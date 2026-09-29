@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// One deed-pillar's daily progress (Fardh Prayer, Quran, Zikr, ...) from
 /// the Home dashboard's `pillarCards`.

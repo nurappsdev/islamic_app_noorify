@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/daily_quiz_status.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/domain/repositories/quiz_repository.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_daily_quiz_status.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_categories.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_categories_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/screens/quiz_categories_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/repositories/quiz_repository.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_categories.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_categories_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/cubit/daily_quiz_status_cubit.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/screens/quiz_categories_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class _FakeQuizRepository implements QuizRepository {
   _FakeQuizRepository({this.status});

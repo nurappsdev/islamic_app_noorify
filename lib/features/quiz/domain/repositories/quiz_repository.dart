@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/daily_quiz_status.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 /// Contract for the quiz API. Every call returns [Right] with the result or
 /// [Left] with a typed [Failure].

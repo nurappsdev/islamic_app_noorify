@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_failure_message.dart';
 
 /// What was being done when a quiz plan request failed.
 enum QuizPlanAction { load, create, update, abandon, start, questions, submit }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
 
 /// Opens the Amol tracker from a Home card, focused on [section] and - when
 /// given - on the exact item [itemKey] (`fajr`, `fajr_sunnah`, `sadaqah`, ...)

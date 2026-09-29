@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/juz_summary.dart';
 
 class JuzListState {
   const JuzListState({

@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
-import 'package:islami_app_noorify/features/learning/domain/repositories/learning_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/repositories/learning_repository.dart';
 
 class GetArticle {
   const GetArticle(this._repository);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../domain/quran_plan.dart';
 import '../../data/services/quran_plan_store.dart';
 import '../quran_route_args.dart';

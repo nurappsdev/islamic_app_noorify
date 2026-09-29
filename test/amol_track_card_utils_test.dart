@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card_utils.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 void main() {
   group('truncateWords', () {

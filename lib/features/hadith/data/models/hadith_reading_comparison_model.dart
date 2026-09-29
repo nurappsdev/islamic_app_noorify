@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_reading_history_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_comparison.dart';
 
 class HadithCompetitorModel extends HadithCompetitor {
   const HadithCompetitorModel({

@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_setting.dart';
-import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_setting.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 /// Works out the prayer alarms from the saved settings and a day's prayer
 /// times. Pure: nothing is read or written here.

@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/learning/data/datasources/learning_remote_data_source.dart';
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
-import 'package:islami_app_noorify/features/learning/domain/repositories/learning_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/learning/data/datasources/learning_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/repositories/learning_repository.dart';
 
 class LearningRepositoryImpl implements LearningRepository {
   LearningRepositoryImpl(this._remote);

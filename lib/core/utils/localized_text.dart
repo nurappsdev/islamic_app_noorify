@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 
 /// Bilingual content as the API sends it: `{ "bn": "...", "en": "..." }`.
 ///

@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_comparison.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
 
 /// The user's reading compared with another reader's between two dates
 /// (inclusive).

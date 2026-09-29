@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
-import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card_utils.dart';
+import 'package:tuhfatul_muslim/shared/widgets/amal_tracker_tile.dart';
 
 void main() {
   testWidgets('keeps the Amol track hierarchy usable at narrow and wide widths', (

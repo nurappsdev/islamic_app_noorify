@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_fifty_fifty.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_fifty_fifty.dart';
 
 void main() {
   group('pickFiftyFiftyRemovals', () {

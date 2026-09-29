@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_downloader.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_book_downloader.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book_reference.dart';
 
 import 'hadith_book_event.dart';
 import 'hadith_book_state.dart';

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_entry.dart';
 
 class LeaderboardBadgeModel extends LeaderboardBadge {
   const LeaderboardBadgeModel({

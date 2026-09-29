@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/auth/domain/repositories/account_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/repositories/account_repository.dart';
 
 /// Requests a fresh verification OTP e-mail.
 class ResendOtp {

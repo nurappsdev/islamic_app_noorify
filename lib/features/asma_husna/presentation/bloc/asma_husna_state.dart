@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
 
 enum AsmaHusnaStatus { initial, loading, success, failure }
 

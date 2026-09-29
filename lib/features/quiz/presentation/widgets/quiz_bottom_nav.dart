@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/screens/quiz_shell.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/screens/quiz_shell.dart';
 
 /// Navigation bar dedicated to the Quiz & Learn flow.
 ///

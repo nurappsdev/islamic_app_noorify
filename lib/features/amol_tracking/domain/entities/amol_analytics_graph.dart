@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_point.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_range.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_summary.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_point.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_range.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_summary.dart';
 
 /// The full payload of
 /// `GET /amol/analytics/graph?timeframe=daily|weekly|monthly&startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&offset=N`.

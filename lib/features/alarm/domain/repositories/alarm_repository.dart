@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_batch.dart';
 
 /// The user's alarms. Everything here lives on the device: nothing is sent to
 /// or read from the server.

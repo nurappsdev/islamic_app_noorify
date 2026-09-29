@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 
 enum AmolDailyStatus { initial, loading, success, failure }
 

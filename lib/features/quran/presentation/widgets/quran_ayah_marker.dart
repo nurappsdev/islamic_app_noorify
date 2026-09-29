@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// Draw the ornament inside explicit bounds: Quran-font bracket glyphs can
 /// paint outside their advance width and overlap adjacent Arabic words.

@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/pillar_card.dart';
 
 class PillarCardModel extends PillarCard {
   const PillarCardModel({

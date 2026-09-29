@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 abstract class QuranTranslationEvent {
   const QuranTranslationEvent();

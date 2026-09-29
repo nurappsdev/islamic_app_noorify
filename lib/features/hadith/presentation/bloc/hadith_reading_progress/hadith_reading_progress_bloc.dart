@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_progress.dart';
 
 import 'hadith_reading_progress_event.dart';
 import 'hadith_reading_progress_state.dart';

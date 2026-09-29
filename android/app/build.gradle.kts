@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.islami_app_noorify.islami_app_noorify"
+    namespace = "com.tuhfatulmuslim.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -17,7 +17,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.islami_app_noorify.islami_app_noorify"
+        applicationId = "com.tuhfatulmuslim.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/prayer_times_screen.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/prayer_times_screen.dart';
 
 void main() {
   testWidgets('shows dynamic prayer schedule in the reference layout', (

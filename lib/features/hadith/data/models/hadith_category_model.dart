@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category.dart';
 
 class HadithCategoryModel extends HadithCategory {
   const HadithCategoryModel({

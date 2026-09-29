@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/repositories/quiz_plan_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/repositories/quiz_plan_repository.dart';
 
 class GetQuizPlan {
   const GetQuizPlan(this._repository);

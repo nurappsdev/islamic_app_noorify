@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_categories.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_library_books.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_category/hadith_category_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_categories.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_library_books.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_category/hadith_category_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// A hadith book's title in the app language, falling back to the other one.
 String hadithBookTitle(HadithLibraryBook book, {required bool bangla}) {

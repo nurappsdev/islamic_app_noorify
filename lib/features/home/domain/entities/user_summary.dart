@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// The greeting/streak/badge summary shown at the top of the Home dashboard.
 class UserSummary {

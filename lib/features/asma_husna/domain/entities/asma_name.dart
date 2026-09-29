@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
 
 /// One of the 99 Names of Allah, as returned by `GET /asma-ul-husna` — now
 /// including its full explanation ([meaningEnglish]/[explanationParagraphs])

@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
-import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/widgets/quiz_plan_widgets.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_attempt_card.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 
 const _correctColor = Color(0xFF20C664);
 const _incorrectColor = Color(0xFFC90009);

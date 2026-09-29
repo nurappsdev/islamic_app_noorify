@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'package:islami_app_noorify/features/qiblah_compass/data/services/magnetic_declination_service.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/data/services/magnetic_declination_service.dart';
 
 enum QiblahAccess {
   checking,

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
 
 /// Request body for `POST {baseUrl}{signUpEndPoint}`.
 class RegisterRequestModel {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/quran/data/quran_intro_store.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/quran_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/quran/data/quran_intro_store.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/quran_screen.dart';
 
 /// Where the Quran card on the Home screen leads.
 ///

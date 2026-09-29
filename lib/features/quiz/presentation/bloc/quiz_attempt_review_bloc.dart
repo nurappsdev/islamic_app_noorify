@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
 
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_attempt_review.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_attempt_review.dart';
 
 enum QuizAttemptReviewStatus { loading, success, failure }
 

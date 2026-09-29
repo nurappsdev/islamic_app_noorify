@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/auth/data/models/auth_user_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/auth_user_model.dart';
 
 /// Parsed `data` payload of a successful login response.
 ///

@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_content_service.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_reading_cubit.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_reading_navigation.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_content_service.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_reading_cubit.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_reading_navigation.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_route_args.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
 
 class Adapter implements HttpClientAdapter {
   Adapter(this.respond);

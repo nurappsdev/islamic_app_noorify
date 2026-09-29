@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart' show BoxEvent;
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 
 /// Today's tracker checklist (`GET /amol/tracker/daily`), shared so the Home
 /// cards read one copy instead of each fetching their own.

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 

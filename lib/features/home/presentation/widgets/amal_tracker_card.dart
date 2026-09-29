@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/home/presentation/utils/amol_track_card_utils.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/shared/widgets/amal_tracker_tile.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/highlight_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card_utils.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_shimmer.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/widgets/amal_tracker_tile.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});

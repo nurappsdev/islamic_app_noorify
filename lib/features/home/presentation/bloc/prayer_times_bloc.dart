@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 
 import 'prayer_times_event.dart';
 import 'prayer_times_state.dart';

@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 enum QuizLoadStatus { initial, loading, success, empty, failure }
 

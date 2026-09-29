@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 const leaderboardMyColor = Color(0xFF5D896D);
 const leaderboardCompetitorColor = Color(0xFFA9B96A);

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 
 class AmolItemModel extends AmolItem {
   const AmolItemModel({

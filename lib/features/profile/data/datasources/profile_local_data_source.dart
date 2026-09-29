@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/profile/data/models/profile_model.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/profile/data/models/profile_model.dart';
 
 /// Local (Hive-backed) cache for the signed-in user's profile.
 ///

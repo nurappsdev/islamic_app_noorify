@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// What the sign-in prompt says for one feature.
 ///

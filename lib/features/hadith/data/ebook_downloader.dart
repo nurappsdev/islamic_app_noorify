@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
 
 /// Saves e-book PDFs on the device (in the app's documents folder) so they can
 /// be opened offline. Uses its own [Dio] rather than the API client: the file

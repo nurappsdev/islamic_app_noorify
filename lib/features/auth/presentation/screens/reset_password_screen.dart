@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
-import 'package:islami_app_noorify/features/auth/domain/usecases/reset_password.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/reset_password.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key, this.resetToken});

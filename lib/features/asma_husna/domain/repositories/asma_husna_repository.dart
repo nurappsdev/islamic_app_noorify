@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
 
 /// Contract for reading the 99 Names of Allah. Cache-first: implementations
 /// hit `GET /asma-ul-husna` only once and serve every later call from local

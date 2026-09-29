@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
-import 'package:islami_app_noorify/features/profile/data/datasources/change_password_remote_data_source.dart';
-import 'package:islami_app_noorify/features/profile/data/repositories/change_password_repository_impl.dart';
-import 'package:islami_app_noorify/features/profile/domain/usecases/change_password.dart';
-import 'package:islami_app_noorify/core/localization/localized_validator.dart';
-import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/profile/data/datasources/change_password_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/profile/data/repositories/change_password_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/usecases/change_password.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
 
 /// Old password + new password + confirmation, sent to
 /// `POST /settings/change-password`.

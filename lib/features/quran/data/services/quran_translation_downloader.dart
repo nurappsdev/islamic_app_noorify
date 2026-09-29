@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
 
 import 'quran_offline_database.dart';
 import 'quran_reader_service.dart';

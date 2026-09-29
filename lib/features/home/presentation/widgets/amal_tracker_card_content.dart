@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 
 const _softGreen = Color(0xFFDCE7B8);
 const _paleGreen = Color(0xFFEAF1D6);

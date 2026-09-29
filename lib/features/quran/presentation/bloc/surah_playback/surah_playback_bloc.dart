@@ -3,17 +3,17 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart'
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter_bloc.dart'
     show defaultRecitationId;
 
 import 'surah_playback_event.dart';
 import 'surah_playback_state.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
 
 export 'surah_playback_event.dart';
 export 'surah_playback_state.dart';

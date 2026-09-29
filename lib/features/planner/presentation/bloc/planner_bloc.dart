@@ -1,12 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/abandon_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/get_quiz_plans.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/update_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failure_message.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/abandon_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/get_quiz_plans.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/update_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/quiz_plan_failure_message.dart';
 
 import 'planner_event.dart';
 import 'planner_state.dart';

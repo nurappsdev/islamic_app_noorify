@@ -2,23 +2,23 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/prayer_alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_setting.dart';
-import 'package:islami_app_noorify/features/alarm/domain/prayer_alarm_builder.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_prayer_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/datasources/alarm_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/datasources/prayer_alarm_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/repositories/alarm_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_batch.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_setting.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/prayer_alarm_builder.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/add_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 const _times = DailyPrayerTimes(
   dateKey: '2026-09-28',

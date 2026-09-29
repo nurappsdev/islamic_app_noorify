@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
 
 class RingtoneModel extends Ringtone {
   const RingtoneModel({

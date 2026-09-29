@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
 
 /// Data-layer representation of [AsmaName], parsed from one entry of the
 /// `data` list of `GET /asma-ul-husna`, e.g.:

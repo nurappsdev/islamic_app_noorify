@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_attempts.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_attempts.dart';
 
 import 'quiz_event.dart';
 import 'quiz_state.dart';

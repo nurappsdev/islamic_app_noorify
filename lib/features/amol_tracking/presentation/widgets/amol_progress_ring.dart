@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 
 class AmolProgressRing extends StatelessWidget {
   const AmolProgressRing({

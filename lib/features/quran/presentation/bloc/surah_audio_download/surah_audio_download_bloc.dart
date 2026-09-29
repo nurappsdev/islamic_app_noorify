@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
 
 import 'surah_audio_download_event.dart';
 import 'surah_audio_download_state.dart';

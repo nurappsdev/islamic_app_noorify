@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/badge_entity.dart';
 
 /// Data-layer representation of [BadgeEntity]. Used both for entries in
 /// `badges` (which carry `_id` / `unlockedAt` / `isUnlocked`) and for

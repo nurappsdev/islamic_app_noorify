@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// Top bar header for the Quran Dashboard with back button and title.
 class QuranDashboardHeader extends StatelessWidget {

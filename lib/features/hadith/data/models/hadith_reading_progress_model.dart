@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_progress.dart';
 
 double _percentage(Object? value) =>
     ((value as num?)?.toDouble() ?? 0).clamp(0, 100).toDouble();

@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/repositories/profile_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/repositories/profile_repository.dart';
 
 /// Fetches the signed-in user's profile from `GET /user/me`.
 class GetProfile {

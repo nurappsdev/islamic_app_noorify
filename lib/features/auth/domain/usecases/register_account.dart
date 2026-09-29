@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
-import 'package:islami_app_noorify/features/auth/domain/repositories/account_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/repositories/account_repository.dart';
 
-export 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
+export 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
 
 /// Registers a new user account through the [AccountRepository].
 class RegisterAccount {

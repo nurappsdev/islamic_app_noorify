@@ -2,16 +2,16 @@ import '../../data/services/quran_audio_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import '../../domain/surah_detail.dart';
 import '../bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
 import 'quran_sheets.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class QuranPlaybackAudioGate extends StatefulWidget {
   const QuranPlaybackAudioGate({

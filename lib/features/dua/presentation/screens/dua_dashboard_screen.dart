@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bottom_nav.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_category_tile.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_featured_card.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
 
 /// Dua dashboard (design `devImg/img_1.png`) — reached from "Let's Get Start"
 /// on [DuaIntroScreen].

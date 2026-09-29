@@ -4,19 +4,19 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/quiz/data/datasources/quiz_remote_data_source.dart';
-import 'package:islami_app_noorify/features/quiz/data/repositories/quiz_repository_impl.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_category_quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_daily_quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/submit_quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_question_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_route_args.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/datasources/quiz_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/repositories/quiz_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_category_quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_daily_quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/submit_quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_question_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_route_args.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Answers each request by path, and remembers the requests.
 class _StubAdapter implements HttpClientAdapter {

@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_board_model.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_entry_model.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_board_model.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_entry_model.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
 
 LeaderboardBadge? _badgeFrom(Object? raw) => raw is Map
     ? LeaderboardBadgeModel.fromJson(Map<String, dynamic>.from(raw))

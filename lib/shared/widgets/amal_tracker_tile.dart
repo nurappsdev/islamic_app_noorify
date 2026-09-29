@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 /// The Amal tracker card design: logo (or rank) tile, title + subtitle, and a
 /// progress ring. Shared by the Home slider and the Amol tracking screens so

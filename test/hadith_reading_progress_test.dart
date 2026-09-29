@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_progress_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_progress.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_reading_progress_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
 
 class _FakeRepository implements HadithLibraryRepository {
   Either<Failure, HadithReadingProgress> result = const Right(

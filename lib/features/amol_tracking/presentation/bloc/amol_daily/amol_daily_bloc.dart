@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
 
 import 'amol_daily_event.dart';
 import 'amol_daily_state.dart';

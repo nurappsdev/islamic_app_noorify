@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_category_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category_page.dart';
 
 class HadithCategoryPageModel extends HadithCategoryPage {
   const HadithCategoryPageModel({

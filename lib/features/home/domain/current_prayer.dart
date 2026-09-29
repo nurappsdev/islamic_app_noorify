@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 enum PrayerPeriod { fajr, dhuhr, asr, maghrib, isha }
 

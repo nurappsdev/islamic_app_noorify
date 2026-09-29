@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// One card from the Home dashboard's `topHighlightCards` carousel
 /// (today's amol, today's/yesterday's leaders, monthly rankings, ...).

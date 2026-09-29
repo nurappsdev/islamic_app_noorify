@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 
 /// Which alarms this device should have armed, worked out from the alarms
 /// saved on the device. Pure, so the rules are testable on their own;

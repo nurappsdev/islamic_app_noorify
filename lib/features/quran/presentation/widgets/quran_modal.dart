@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'quran_design.dart';
 
 Future<T?> showQuranModal<T>(

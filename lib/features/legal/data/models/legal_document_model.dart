@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
 
 class LegalDocumentModel extends LegalDocument {
   const LegalDocumentModel({

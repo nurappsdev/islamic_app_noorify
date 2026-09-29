@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_reader_service.dart';
 
 import 'reciter_event.dart';
 import 'reciter_state.dart';

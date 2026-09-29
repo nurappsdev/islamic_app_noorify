@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_read_record.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
 
 /// One page of the hadiths the user has read, most recent first.
 class GetHadithReadRecords {

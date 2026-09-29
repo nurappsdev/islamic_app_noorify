@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
-import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failure_message.dart';
-import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_navigation.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/bloc/quiz_plan_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/quiz_plan_failure_message.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/widgets/quiz_plan_widgets.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_navigation.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// One quiz plan (`GET /quizzes/plans/{id}`): its schedule, progress and
 /// quizzes, and Start / Continue as its status allows. Expects a

@@ -3,16 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/features/legal/data/datasources/legal_remote_data_source.dart';
-import 'package:islami_app_noorify/features/legal/data/repositories/legal_repository_impl.dart';
-import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
-import 'package:islami_app_noorify/features/legal/domain/usecases/get_legal_document.dart';
-import 'package:islami_app_noorify/features/legal/presentation/cubit/legal_document_cubit.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/features/legal/data/datasources/legal_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/legal/data/repositories/legal_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/usecases/get_legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/presentation/cubit/legal_document_cubit.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 
 /// Shows the Terms of Service or Privacy Policy, loaded from the API and
 /// rendered as HTML.

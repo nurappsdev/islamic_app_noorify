@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/profile/data/datasources/family_remote_data_source.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/repositories/family_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/profile/data/datasources/family_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/repositories/family_repository.dart';
 
 class FamilyRepositoryImpl implements FamilyRepository {
   FamilyRepositoryImpl(this._remote);

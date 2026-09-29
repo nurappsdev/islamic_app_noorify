@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/usecases/update_hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/update_hadith_plan.dart';
 
 import 'hadith_edit_plan_event.dart';
 import 'hadith_edit_plan_state.dart';

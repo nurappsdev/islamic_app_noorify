@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
-import 'package:islami_app_noorify/core/network/auth_refresh_interceptor.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 
 /// Single configured [Dio] instance used by every remote data source.
 ///

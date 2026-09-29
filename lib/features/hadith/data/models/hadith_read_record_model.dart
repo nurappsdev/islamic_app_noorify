@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_read_record.dart';
 
 Map<String, dynamic> _map(Object? value) =>
     value is Map<String, dynamic> ? value : const <String, dynamic>{};

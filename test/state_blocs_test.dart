@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart'
+import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart'
     as sign_up;
 
 void main() {

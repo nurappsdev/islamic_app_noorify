@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_entry.dart';
 
 /// The leader of the period, as sent alongside every user's position.
 class LeaderboardFirstPlace {

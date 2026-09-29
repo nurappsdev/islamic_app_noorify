@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/home_dashboard.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/user_summary.dart';
-import 'package:islami_app_noorify/features/home/domain/repositories/home_repository.dart';
-import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
-import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/home_dashboard.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/user_summary.dart';
+import 'package:tuhfatul_muslim/features/home/domain/repositories/home_repository.dart';
+import 'package:tuhfatul_muslim/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
 
 void main() {
   test('coalesces overlapping dashboard loads into one API request', () async {

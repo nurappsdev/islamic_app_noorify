@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/services/leaderboard_service.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
-import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
-import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_compare_chart.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/services/leaderboard_service.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/presentation/widgets/leaderboard_compare_chart.dart';
 
 /// One user's standing (design `devImg/img_61.png`), opened by tapping a user
 /// on [LeaderboardScreen]. Loads `GET /leaderboard/users/:userId` for the

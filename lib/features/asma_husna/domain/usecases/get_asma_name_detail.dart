@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/entities/asma_name_detail.dart';
-import 'package:islami_app_noorify/features/asma_husna/domain/repositories/asma_husna_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/repositories/asma_husna_repository.dart';
 
 /// Fetches the full explanation for one name (`GET /asma-ul-husna/{id}`).
 class GetAsmaNameDetail {

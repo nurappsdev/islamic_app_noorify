@@ -1,21 +1,21 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/ebook_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_category_page_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_last_read_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_plan_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_read_record_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_comparison_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_history_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_library_book_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_reading_progress_model.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_sub_category_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/ebook_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_category_page_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_detail_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_last_read_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_plan_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_read_record_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_reading_comparison_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_reading_history_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_library_book_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_reading_progress_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_sub_category_model.dart';
 
 /// Talks to `GET /hadiths/books/lists` and `GET /ebooks` (public — no token
 /// needed). Throws

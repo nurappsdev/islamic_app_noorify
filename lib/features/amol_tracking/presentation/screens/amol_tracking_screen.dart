@@ -7,27 +7,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/state/amol_daily_store.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/core/auth/auth_feature.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more

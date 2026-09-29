@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
 
 enum ResetPasswordStatus { initial, loading, success, failure }
 

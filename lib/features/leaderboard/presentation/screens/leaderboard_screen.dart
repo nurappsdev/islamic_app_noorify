@@ -3,17 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/services/leaderboard_service.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
-import 'package:islami_app_noorify/features/leaderboard/presentation/screens/leaderboard_user_detail_screen.dart';
-import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
-import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_shimmer.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/services/leaderboard_service.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_entry.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/presentation/screens/leaderboard_user_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/presentation/widgets/leaderboard_shimmer.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});

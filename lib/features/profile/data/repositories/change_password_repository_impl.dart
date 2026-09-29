@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/profile/data/datasources/change_password_remote_data_source.dart';
-import 'package:islami_app_noorify/features/profile/domain/repositories/change_password_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/profile/data/datasources/change_password_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/repositories/change_password_repository.dart';
 
 class ChangePasswordRepositoryImpl implements ChangePasswordRepository {
   ChangePasswordRepositoryImpl(this._remote);

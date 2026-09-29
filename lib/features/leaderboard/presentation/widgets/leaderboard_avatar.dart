@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// Network avatar with an initial-letter fallback, used for podium slots and
 /// list rows alike. Unlike [ProfileAvatarCircle], this renders any entry's

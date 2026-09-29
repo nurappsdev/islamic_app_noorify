@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/domain/usecases/get_asma_name_detail.dart';
 
 import 'asma_name_detail_event.dart';
 import 'asma_name_detail_state.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 
 /// The bordered icon-and-label tile for a [DuaCategory], shown on both the
 /// dashboard's category preview grid and the full "All Category" grid

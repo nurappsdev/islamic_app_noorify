@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/data/repositories/account_repository_impl.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:islami_app_noorify/features/auth/domain/usecases/login_user.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/login/login_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
-import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/core/localization/localized_validator.dart';
-import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});

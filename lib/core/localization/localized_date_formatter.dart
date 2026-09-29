@@ -1,10 +1,10 @@
 import 'package:hijri/hijri_calendar.dart';
 
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/domain/calendar/bangla_date.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/calendar/bangla_date.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Dates in the selected language: the Gregorian, Hijri and Bengali calendars,
 /// with month and weekday names, digits and suffixes all in that language.

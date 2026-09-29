@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/hadith/data/ebook_downloader.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/ebook_downloader.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
 
 import 'ebook_download_event.dart';
 import 'ebook_download_state.dart';

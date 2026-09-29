@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/utils/app_text.dart';
 import '../utils/post_splash_route.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 class RamadanSplashScreen extends StatefulWidget {
   const RamadanSplashScreen({super.key});

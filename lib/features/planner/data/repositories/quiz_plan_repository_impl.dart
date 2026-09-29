@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/data/datasources/quiz_plan_remote_data_source.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/repositories/quiz_plan_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/data/datasources/quiz_plan_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/repositories/quiz_plan_repository.dart';
 
 class QuizPlanRepositoryImpl implements QuizPlanRepository {
   QuizPlanRepositoryImpl(this._remote);

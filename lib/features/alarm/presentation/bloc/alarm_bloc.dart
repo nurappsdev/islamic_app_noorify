@@ -1,5 +1,5 @@
 import 'package:bloc/bloc.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 import 'alarm_event.dart';
 import 'alarm_state.dart';

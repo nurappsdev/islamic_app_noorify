@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_categories.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_categories.dart';
 
 import 'quiz_categories_event.dart';
 import 'quiz_categories_state.dart';

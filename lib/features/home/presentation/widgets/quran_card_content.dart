@@ -3,10 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
 const _darkGreen = Color(0xFFA1AD59);
 const _ringTrack = Color(0xFFDAE5B8);

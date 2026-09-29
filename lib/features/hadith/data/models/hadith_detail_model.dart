@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail_page.dart';
 
 class HadithDetailModel extends HadithDetail {
   const HadithDetailModel({

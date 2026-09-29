@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Limits [text] by words, never by character count.
 ///

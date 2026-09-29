@@ -3,14 +3,14 @@ import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/get_planned_questions.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/submit_planned_quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_fifty_fifty.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/get_planned_questions.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/submit_planned_quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_fifty_fifty.dart';
 
 enum PlannedQuizLoadStatus { loading, success, empty, failure }
 

@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:islami_app_noorify/core/network/auth_refresh_interceptor.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 
 /// Fake server: `/user/family` accepts only `Bearer new-access`; the refresh
 /// endpoint swaps the `old-refresh` cookie for `new-access`.

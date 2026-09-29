@@ -1,27 +1,27 @@
 // Standalone native entry point for checking the Quran module against devImg.
 // Uses real APIs and the same audio engine without unrelated app bootstrapping.
 import 'package:audio_service/audio_service.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/surah_list_screen.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/quran_reading_screen.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/para_detail_screen.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/bookmarks_screen.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/reading_history_screen.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/last_read/last_read_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/offline_quran/offline_quran_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/bookmarks/bookmarks_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/surah_list_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/quran_reading_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/para_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/bookmarks_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/reading_history_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_route_args.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

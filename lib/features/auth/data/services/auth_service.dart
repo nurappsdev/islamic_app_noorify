@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/shared/services/fcm_token_service.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/services/fcm_token_service.dart';
 
 class AuthService {
   AuthService._();

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_summary.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_summary.dart';
 
 /// Data-layer representation of [AmolAnalyticsSummary], parsed from
 /// `GET /amol/analytics/graph`'s `summary` object, e.g.

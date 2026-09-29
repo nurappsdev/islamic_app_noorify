@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 /// A localized, user-facing message for [failure]. Server and exception text
 /// is never shown as-is: the failure's kind and status pick the message.

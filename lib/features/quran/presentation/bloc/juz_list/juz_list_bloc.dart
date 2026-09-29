@@ -1,10 +1,10 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_api_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_first_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_api_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_first_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_reader_service.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/juz_summary.dart';
 
 import 'juz_list_event.dart';
 import 'juz_list_state.dart';

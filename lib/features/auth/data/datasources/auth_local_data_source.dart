@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
 
 /// Local (Hive-backed) persistence for the auth session.
 abstract interface class AuthLocalDataSource {

@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
 
 import 'ayah_audio_event.dart';
 import 'ayah_audio_state.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
 
 export 'ayah_audio_event.dart';
 export 'ayah_audio_state.dart';

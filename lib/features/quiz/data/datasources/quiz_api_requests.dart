@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
 
 /// The request handling every quiz data source shares: the signed-in user's
 /// token, the API's `{success, message, data}` envelope, and turning failures

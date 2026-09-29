@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_create_folder_sheet.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_create_folder_sheet.dart';
 
 /// "Book Mark" bottom sheet (design `devImg/img_7.png`): pick (or create) the
 /// folder a dua is saved into, then Save. Pops with `true` when a save

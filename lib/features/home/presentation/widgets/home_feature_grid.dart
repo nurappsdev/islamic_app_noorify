@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/shared/widgets/coming_soon_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/shared/widgets/coming_soon_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
   const HomeFeatureGrid({super.key});

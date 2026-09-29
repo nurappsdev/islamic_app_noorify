@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_surah_heading.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/surah_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_surah_heading.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_page_viewport.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const surah = SurahSummary(
   number: 2,

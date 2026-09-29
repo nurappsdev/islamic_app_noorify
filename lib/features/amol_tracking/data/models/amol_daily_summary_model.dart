@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_summary.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_summary.dart';
 
 class AmolDailySummaryModel extends AmolDailySummary {
   const AmolDailySummaryModel({

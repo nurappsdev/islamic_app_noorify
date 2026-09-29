@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Writes numbers in the script of the selected language: Bangla digits
 /// (০-৯) in Bangla, ordinary digits otherwise.
