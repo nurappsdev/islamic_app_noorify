@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
+import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 
 /// Wipes everything that belongs to the signed-in user, so the next login
@@ -45,6 +46,7 @@ class SessionCleaner {
     profilePhotoUrlNotifier.value = null;
     profilePhotoBase64Notifier.value = null;
     skipAuthGateNotifier.value = false;
+    NotificationBadgeService.instance.reset();
   }
 
   static Future<void> _safe(Future<void> Function() step) async {

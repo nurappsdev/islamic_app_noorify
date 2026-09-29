@@ -26,6 +26,8 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
 
+const _maxBadgeCount = 99;
+
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
 
@@ -108,41 +110,59 @@ class HomeHeader extends StatelessWidget {
             icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
           ),
         ),
-        // Notification bell hidden until notifications are wired up.
-        // Stack(
-        //   clipBehavior: Clip.none,
-        //   children: [
-        //     SizedBox.square(
-        //       dimension: 36.r,
-        //       child: IconButton(
-        //         tooltip: appText.notifications,
-        //         onPressed: () {},
-        //         padding: EdgeInsets.zero,
-        //         style: IconButton.styleFrom(
-        //           backgroundColor: context.surfaceColor(palette.tint),
-        //           foregroundColor: AppColor.primary,
-        //         ),
-        //         icon: Icon(Icons.notifications_none, size: 20.sp),
-        //       ),
-        //     ),
-        //     Positioned(
-        //       top: 6.h,
-        //       right: 8.w,
-        //       child: Container(
-        //         width: 9.r,
-        //         height: 9.r,
-        //         decoration: BoxDecoration(
-        //           color: const Color(0xFFFF6969),
-        //           shape: BoxShape.circle,
-        //           border: Border.all(
-        //             color: context.lineColor(palette.background),
-        //             width: 1.2,
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ],
-        // ),
+        ValueListenableBuilder<int>(
+          valueListenable: unreadNotificationCountNotifier,
+          builder: (context, unreadCount, _) {
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                SizedBox.square(
+                  dimension: 36.r,
+                  child: IconButton(
+                    tooltip: appText.notifications,
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed(RouteNames.notifications),
+                    padding: EdgeInsets.zero,
+                    style: IconButton.styleFrom(
+                      backgroundColor: context.surfaceColor(palette.tint),
+                      foregroundColor: AppColor.primary,
+                    ),
+                    icon: Icon(Icons.notifications_none, size: 20.sp),
+                  ),
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    top: 2.h,
+                    right: 2.w,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      constraints: BoxConstraints(minWidth: 16.r, minHeight: 16.r),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF6969),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: context.lineColor(palette.background),
+                          width: 1.2,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        unreadCount > _maxBadgeCount
+                            ? '$_maxBadgeCount+'
+                            : '$unreadCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8.sp,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }

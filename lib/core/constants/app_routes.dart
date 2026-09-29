@@ -24,6 +24,12 @@ import '../../features/hadith/presentation/screens/hadith_sub_category_screen.da
 import '../../features/hadith/presentation/screens/hadith_library_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/leaderboard/presentation/screens/leaderboard_screen.dart';
+import '../../features/notifications/data/datasources/notification_remote_data_source.dart';
+import '../../features/notifications/data/repositories/notification_repository_impl.dart';
+import '../../features/notifications/domain/usecases/get_notifications.dart';
+import '../../features/notifications/domain/usecases/mark_notification_read.dart';
+import '../../features/notifications/presentation/bloc/notification_bloc.dart';
+import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
 import '../../features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
@@ -242,6 +248,22 @@ class AppRoutes {
         return _instantPage(const HomeScreen(), settings);
       case RouteNames.leaderboard:
         return _instantPage(const LeaderboardScreen(), settings);
+      case RouteNames.notifications:
+        return _page(
+          BlocProvider(
+            create: (_) {
+              final repository = NotificationRepositoryImpl(
+                NotificationRemoteDataSourceImpl(),
+              );
+              return NotificationBloc(
+                GetNotifications(repository),
+                MarkNotificationRead(repository),
+              )..add(const FetchNotifications());
+            },
+            child: const NotificationListScreen(),
+          ),
+          settings,
+        );
       case RouteNames.profile:
         return _page(const ProfileScreen(), settings);
       case RouteNames.editProfile:

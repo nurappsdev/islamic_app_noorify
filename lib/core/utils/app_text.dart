@@ -273,6 +273,9 @@ class AppText {
     required this.prayerReminderSuffix,
     required this.timer,
     required this.notifications,
+    required this.noNotificationsAvailable,
+    required this.notificationUnread,
+    required this.notificationRead,
     required this.featureDua,
     required this.featureDijpr,
     required this.zikrIntroTitle,
@@ -1143,6 +1146,9 @@ class AppText {
   final String prayerReminderSuffix;
   final String timer;
   final String notifications;
+  final String noNotificationsAvailable;
+  final String notificationUnread;
+  final String notificationRead;
   final String featureDua;
   final String featureDijpr;
   final String zikrIntroTitle;
@@ -2693,6 +2699,21 @@ class AppText {
       ),
       timer: _read(map, 'timer', fallback?.timer ?? ''),
       notifications: _read(map, 'notifications', fallback?.notifications ?? ''),
+      noNotificationsAvailable: _read(
+        map,
+        'noNotificationsAvailable',
+        fallback?.noNotificationsAvailable ?? '',
+      ),
+      notificationUnread: _read(
+        map,
+        'notificationUnread',
+        fallback?.notificationUnread ?? '',
+      ),
+      notificationRead: _read(
+        map,
+        'notificationRead',
+        fallback?.notificationRead ?? '',
+      ),
       featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
       featureDijpr: _read(map, 'featureDijpr', fallback?.featureDijpr ?? ''),
       zikrIntroTitle: _read(

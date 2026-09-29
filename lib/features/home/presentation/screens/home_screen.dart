@@ -36,6 +36,7 @@ import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_time_c
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/sunnah_witr_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
+import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
@@ -83,6 +84,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
     super.initState();
     _storeLoadedOnce = AmolDailyStore.instance.value != null;
     AmolDailyStore.instance.addListener(_onAmolStoreChanged);
+    unawaited(NotificationBadgeService.instance.refresh());
   }
 
   @override
@@ -121,6 +123,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
         dashboardDone,
         ProfileService.instance.refresh(),
         AmolDailyStore.instance.load(),
+        NotificationBadgeService.instance.refresh(),
       ]);
     } catch (_) {
       // A bloc/stream teardown mid-refresh (e.g. navigating away) shouldn't
