@@ -1,3 +1,5 @@
+import 'quran_arabic_text.dart';
+
 /// Content identifiers are independent of the recitation/audio provider.
 class QuranAyah {
   const QuranAyah({
@@ -24,7 +26,7 @@ class QuranAyah {
     paraNumber: (json['paraNumber'] as num).toInt(),
     pageNumber: (json['pageNumber'] as num).toInt(),
     sajdahNumber: (json['sajdahNumber'] as num?)?.toInt(),
-    textArabic: json['textArabic'] as String,
+    textArabic: cleanQuranArabic(json['textArabic'] as String),
     translations: {
       for (final raw in (json['translations'] as List? ?? []))
         (raw['resourceId'] as num).toInt(): AyahTranslation.fromJson(

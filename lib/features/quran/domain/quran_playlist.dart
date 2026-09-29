@@ -6,6 +6,8 @@
 /// so existing player widgets and screens remain fully compatible.
 library;
 
+import 'quran_arabic_text.dart';
+
 class QuranPlaylistItem {
   const QuranPlaylistItem({
     this.id = '',
@@ -40,7 +42,8 @@ class QuranPlaylistItem {
        fromAyah = fromAyah ?? startAyah ?? 1,
        toAyah = toAyah ?? endAyah ?? (totalAyahs ?? totalAyah ?? 1),
        totalAyahs = totalAyahs ?? totalAyah ?? 0,
-       remainingAyahs = remainingAyahs ??
+       remainingAyahs =
+           remainingAyahs ??
            (((totalAyahs ?? totalAyah ?? 0) - readAyahs) < 0
                ? 0
                : ((totalAyahs ?? totalAyah ?? 0) - readAyahs));
@@ -66,10 +69,9 @@ class QuranPlaylistItem {
 
   // Compatibility getters for existing UI and audio player
   int get surahNo => surahNumber;
-  String get surahName =>
-      surahNameEnglish.isNotEmpty
-          ? surahNameEnglish
-          : (title.isNotEmpty ? title : 'Surah $surahNumber');
+  String get surahName => surahNameEnglish.isNotEmpty
+      ? surahNameEnglish
+      : (title.isNotEmpty ? title : 'Surah $surahNumber');
   String get arabicName => surahNameArabic;
   int get startAyah => fromAyah;
   int get endAyah => toAyah;
@@ -181,12 +183,9 @@ class QuranPlaylistItem {
         (tAyahs - rAyahs).clamp(0, 999999);
 
     final pctRaw = json['percentage'];
-    final pct =
-        (pctRaw is num)
-            ? pctRaw.toDouble()
-            : (tAyahs > 0
-                ? ((rAyahs / tAyahs) * 100).clamp(0.0, 100.0)
-                : 0.0);
+    final pct = (pctRaw is num)
+        ? pctRaw.toDouble()
+        : (tAyahs > 0 ? ((rAyahs / tAyahs) * 100).clamp(0.0, 100.0) : 0.0);
 
     return QuranPlaylistItem(
       id: json['_id'] as String? ?? json['id'] as String? ?? '',
@@ -360,22 +359,19 @@ class QuranPlaylist {
   // Compatibility alias for existing screens
   String get title => name;
 
-  int get totalAyahs =>
-      counts.totalAyahs > 0
-          ? counts.totalAyahs
-          : items.fold<int>(0, (sum, item) => sum + item.totalAyah);
+  int get totalAyahs => counts.totalAyahs > 0
+      ? counts.totalAyahs
+      : items.fold<int>(0, (sum, item) => sum + item.totalAyah);
 
   int get completedAyahs => counts.completedAyahs;
-  int get remainingAyahs =>
-      counts.remainingAyahs > 0
-          ? counts.remainingAyahs
-          : (totalAyahs - completedAyahs).clamp(0, 999999);
-  double get percentage =>
-      counts.percentage > 0
-          ? counts.percentage
-          : (totalAyahs > 0
-              ? ((completedAyahs / totalAyahs) * 100).clamp(0.0, 100.0)
-              : 0.0);
+  int get remainingAyahs => counts.remainingAyahs > 0
+      ? counts.remainingAyahs
+      : (totalAyahs - completedAyahs).clamp(0, 999999);
+  double get percentage => counts.percentage > 0
+      ? counts.percentage
+      : (totalAyahs > 0
+            ? ((completedAyahs / totalAyahs) * 100).clamp(0.0, 100.0)
+            : 0.0);
   bool get isCompleted => counts.isCompleted || (percentage >= 100.0);
 
   String get surahSummaryText {
@@ -438,13 +434,12 @@ class QuranPlaylist {
 
   factory QuranPlaylist.fromJson(Map<String, dynamic> json) {
     final itemsJson = json['items'];
-    final itemsList =
-        (itemsJson is List)
-            ? itemsJson
-                .whereType<Map<String, dynamic>>()
-                .map(QuranPlaylistItem.fromJson)
-                .toList()
-            : const <QuranPlaylistItem>[];
+    final itemsList = (itemsJson is List)
+        ? itemsJson
+              .whereType<Map<String, dynamic>>()
+              .map(QuranPlaylistItem.fromJson)
+              .toList()
+        : const <QuranPlaylistItem>[];
 
     final countsJson = json['counts'];
     final nextAyahJson = json['nextAyah'];
@@ -461,26 +456,21 @@ class QuranPlaylist {
       description: json['description'] as String?,
       reciterId: json['reciterId'] as String?,
       items: itemsList,
-      counts:
-          countsJson is Map<String, dynamic>
-              ? QuranPlaylistCounts.fromJson(countsJson)
-              : const QuranPlaylistCounts(),
-      nextAyah:
-          nextAyahJson is Map<String, dynamic>
-              ? QuranPlaylistNextAyah.fromJson(nextAyahJson)
-              : null,
-      resumeFrom:
-          resumeFromJson is Map<String, dynamic>
-              ? QuranPlaylistResumeFrom.fromJson(resumeFromJson)
-              : null,
-      lastPosition:
-          lastPositionJson is Map<String, dynamic>
-              ? QuranPlaylistResumeFrom.fromJson(lastPositionJson)
-              : null,
-      lastPlayedAt:
-          json['lastPlayedAt'] != null
-              ? DateTime.tryParse(json['lastPlayedAt'] as String)
-              : null,
+      counts: countsJson is Map<String, dynamic>
+          ? QuranPlaylistCounts.fromJson(countsJson)
+          : const QuranPlaylistCounts(),
+      nextAyah: nextAyahJson is Map<String, dynamic>
+          ? QuranPlaylistNextAyah.fromJson(nextAyahJson)
+          : null,
+      resumeFrom: resumeFromJson is Map<String, dynamic>
+          ? QuranPlaylistResumeFrom.fromJson(resumeFromJson)
+          : null,
+      lastPosition: lastPositionJson is Map<String, dynamic>
+          ? QuranPlaylistResumeFrom.fromJson(lastPositionJson)
+          : null,
+      lastPlayedAt: json['lastPlayedAt'] != null
+          ? DateTime.tryParse(json['lastPlayedAt'] as String)
+          : null,
       isActive: json['isActive'] as bool? ?? true,
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
@@ -536,16 +526,14 @@ class QuranPlaylistsResponse {
 
   factory QuranPlaylistsResponse.fromJson(Map<String, dynamic> json) {
     final list = json['data'] is List ? (json['data'] as List) : const [];
-    final metaJson =
-        json['meta'] is Map<String, dynamic>
-            ? json['meta'] as Map<String, dynamic>
-            : const <String, dynamic>{};
+    final metaJson = json['meta'] is Map<String, dynamic>
+        ? json['meta'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     return QuranPlaylistsResponse(
-      playlists:
-          list
-              .whereType<Map<String, dynamic>>()
-              .map(QuranPlaylist.fromJson)
-              .toList(),
+      playlists: list
+          .whereType<Map<String, dynamic>>()
+          .map(QuranPlaylist.fromJson)
+          .toList(),
       meta: QuranPlaylistMeta.fromJson(metaJson),
     );
   }
@@ -644,7 +632,7 @@ class QuranPlaylistAyahText {
 
   factory QuranPlaylistAyahText.fromJson(Map<String, dynamic> json) =>
       QuranPlaylistAyahText(
-        arabic: json['arabic'] as String? ?? '',
+        arabic: cleanQuranArabic(json['arabic'] as String? ?? ''),
         english: json['english'] as String? ?? '',
         bangla: json['bangla'] as String? ?? '',
       );
@@ -684,14 +672,12 @@ class QuranPlaylistAyah {
       ayahKey: json['ayahKey'] as String? ?? '',
       paraNumber: (json['paraNumber'] as num?)?.toInt() ?? 1,
       isRead: json['isRead'] as bool? ?? false,
-      readAt:
-          json['readAt'] != null
-              ? DateTime.tryParse(json['readAt'] as String)
-              : null,
-      text:
-          textJson is Map<String, dynamic>
-              ? QuranPlaylistAyahText.fromJson(textJson)
-              : null,
+      readAt: json['readAt'] != null
+          ? DateTime.tryParse(json['readAt'] as String)
+          : null,
+      text: textJson is Map<String, dynamic>
+          ? QuranPlaylistAyahText.fromJson(textJson)
+          : null,
     );
   }
 
@@ -718,16 +704,14 @@ class PaginatedQuranPlaylistAyahs {
 
   factory PaginatedQuranPlaylistAyahs.fromJson(Map<String, dynamic> json) {
     final list = json['data'] is List ? (json['data'] as List) : const [];
-    final metaJson =
-        json['meta'] is Map<String, dynamic>
-            ? json['meta'] as Map<String, dynamic>
-            : const <String, dynamic>{};
+    final metaJson = json['meta'] is Map<String, dynamic>
+        ? json['meta'] as Map<String, dynamic>
+        : const <String, dynamic>{};
     return PaginatedQuranPlaylistAyahs(
-      ayahs:
-          list
-              .whereType<Map<String, dynamic>>()
-              .map(QuranPlaylistAyah.fromJson)
-              .toList(),
+      ayahs: list
+          .whereType<Map<String, dynamic>>()
+          .map(QuranPlaylistAyah.fromJson)
+          .toList(),
       meta: QuranPlaylistMeta.fromJson(metaJson),
     );
   }
