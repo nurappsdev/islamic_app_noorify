@@ -898,4 +898,13 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'failureQuranPlanNotFound': 'Plan not found.',
   'failureQuranPlanUnreadAyahs':
       'You still have {count} Ayahs left to read before completing this plan.',
+  'failureQuranPlaylistDuplicateName':
+      'You already have a Quran playlist with this name.',
+  'failureQuranPlaylistLoad': 'Failed to load Quran playlists.',
+  'failureQuranPlaylistCreate': 'Failed to create Quran playlist.',
+  'failureQuranPlaylistUpdate': 'Failed to update Quran playlist.',
+  'failureQuranPlaylistDetailsLoad': 'Failed to load playlist details.',
+  'failureQuranPlaylistAyahsLoad': 'Failed to load playlist Ayahs.',
+  'failureQuranPlaylistDelete': 'Failed to delete playlist.',
+  'failureQuranPlaylistNotFound': 'Playlist not found.',
 };

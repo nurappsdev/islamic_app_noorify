@@ -20,9 +20,16 @@ class QuranText {
 
   static QuranText _from(BuildContext context, {required bool listen}) {
     try {
-      final bloc = listen
-          ? context.watch<LanguageBloc>()
-          : context.read<LanguageBloc>();
+      LanguageBloc bloc;
+      try {
+        bloc = listen
+            ? context.watch<LanguageBloc>()
+            : context.read<LanguageBloc>();
+      } on AssertionError {
+        // Outside a build (a tap handler, a dialog builder) watching isn't
+        // allowed; the current language still is.
+        bloc = context.read<LanguageBloc>();
+      }
       return QuranText._(bloc.state.language == AppLanguage.bangla);
     } on ProviderNotFoundException {
       return english;
@@ -111,13 +118,71 @@ class QuranText {
 
   String get saved => _t('Saved', 'সংরক্ষিত');
   String get playList => _t('Play List', 'প্লে লিস্ট');
+  String get quranPlaylist => _t('Quran Playlist', 'কুরআন প্লেলিস্ট');
+  String get createPlaylist => _t('Create Playlist', 'প্লেলিস্ট তৈরি করুন');
+  String get editPlaylist => _t('Edit Playlist', 'প্লেলিস্ট সম্পাদনা করুন');
+  String get playlistDetails => _t('Playlist Details', 'প্লেলিস্টের বিস্তারিত');
+  String get playlistName => _t('Playlist Name', 'প্লেলিস্টের নাম');
+  String get playlistDescription => _t('Description', 'বিবরণ');
+  String get playlistNameHint =>
+      _t('e.g. Daily Recitation', 'যেমন: দৈনন্দিন তিলাওয়াত');
+  String get playlistDescriptionHint =>
+      _t('Optional description', 'ঐচ্ছিক বিবরণ');
+  String get enterPlaylistName =>
+      _t('Please enter a playlist name', 'দয়া করে একটি প্লেলিস্টের নাম লিখুন');
+  String get selectAtLeastOneItem => _t(
+    'Please add at least one Surah or Para',
+    'অন্তত একটি সূরা বা পারা যোগ করুন',
+  );
+  String get addItem => _t('Add Item', 'আইটেম যোগ করুন');
+  String get addSurah => _t('Add Surah', 'সূরা যোগ করুন');
+  String get addPara => _t('Add Para', 'পারা যোগ করুন');
+  String get addAyahsRange => _t('Add Ayah Range', 'নির্দিষ্ট আয়াত যোগ করুন');
   String get noPlaylists => _t('No playlists available', 'কোনো প্লে লিস্ট নেই');
   String get noBookmarks =>
       _t('No saved bookmarks yet', 'এখনো কোনো বুকমার্ক নেই');
   String get noSurahs => _t('No Surahs', 'কোনো সূরা নেই');
   String get noSurahsInPlaylist =>
       _t('No Surahs in this playlist', 'এই প্লে লিস্টে কোনো সূরা নেই');
+  String get noItemsInPlaylist =>
+      _t('No items in this playlist yet', 'এখনো কোনো আইটেম যোগ করা হয়নি');
+  String get emptyPlaylistSub => _t(
+    'Create a playlist to start organizing your Quran reading.',
+    'আপনার কুরআন পড়া সাজাতে একটি প্লেলিস্ট তৈরি করুন।',
+  );
   String get playAll => _t('Play All', 'সব চালান');
+  String get deletePlaylistConfirmTitle =>
+      _t('Delete Playlist?', 'প্লেলিস্ট মুছে ফেলবেন?');
+  String get deletePlaylistConfirmMessage => _t(
+    'Are you sure you want to delete this playlist?',
+    'আপনি কি নিশ্চিত যে এই প্লেলিস্টটি মুছে ফেলতে চান?',
+  );
+  String get playlistCreatedSuccessfully =>
+      _t('Playlist created successfully', 'প্লেলিস্ট সফলভাবে তৈরি হয়েছে');
+  String get playlistUpdatedSuccessfully =>
+      _t('Playlist updated successfully', 'প্লেলিস্ট সফলভাবে আপডেট হয়েছে');
+  String get playlistDeletedSuccessfully => _t(
+    'Playlist deleted successfully',
+    'প্লেলিস্ট সফলভাবে মুছে ফেলা হয়েছে',
+  );
+  String get allAyahs => _t('All', 'সব');
+  String get readAyahs => _t('Read', 'পড়া হয়েছে');
+  String get unreadAyahs => _t('Unread', 'অপঠিত');
+  String get juz => _t('Juz', 'পারা');
+  String get surahs => _t('Surahs', 'সূরাসমূহ');
+  String get paras => _t('Paras', 'পারাসমূহ');
+  String get add => _t('Add', 'যোগ করুন');
+  String get update => _t('Update', 'আপডেট করুন');
+  String get fromAyah => _t('From Ayah', 'শুরুর আয়াত');
+  String get toAyah => _t('To Ayah', 'শেষ আয়াত');
+  String get ayahRangeLabel => _t('Ayah Range', 'আয়াতের সীমা');
+  String get remaining => _t('Remaining', 'বাকি');
+  String get totalAyahs => _t('Total Ayahs', 'মোট আয়াত');
+  String get retry => _t('Retry', 'আবার চেষ্টা করুন');
+  String get somethingWentWrong => _t(
+    'Something went wrong. Please try again.',
+    'কিছু সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+  );
 
   /// "Sura (Al-Fatiha, Al-Baqarah, ...)" for a playlist's first Surahs.
   String playlistSummary(List<String> names, int total) {

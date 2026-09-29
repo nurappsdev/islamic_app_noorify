@@ -658,6 +658,14 @@ class AppText {
     required this.failureQuranPlanDelete,
     required this.failureQuranPlanNotFound,
     required this.failureQuranPlanUnreadAyahs,
+    required this.failureQuranPlaylistDuplicateName,
+    required this.failureQuranPlaylistLoad,
+    required this.failureQuranPlaylistCreate,
+    required this.failureQuranPlaylistUpdate,
+    required this.failureQuranPlaylistDetailsLoad,
+    required this.failureQuranPlaylistAyahsLoad,
+    required this.failureQuranPlaylistDelete,
+    required this.failureQuranPlaylistNotFound,
     required this.quranSurahBookmarked,
     required this.quranSurahBookmarkRemoved,
     required this.quranViewInAyat,
@@ -1530,6 +1538,14 @@ class AppText {
   final String failureQuranPlanDelete;
   final String failureQuranPlanNotFound;
   final String failureQuranPlanUnreadAyahs;
+  final String failureQuranPlaylistDuplicateName;
+  final String failureQuranPlaylistLoad;
+  final String failureQuranPlaylistCreate;
+  final String failureQuranPlaylistUpdate;
+  final String failureQuranPlaylistDetailsLoad;
+  final String failureQuranPlaylistAyahsLoad;
+  final String failureQuranPlaylistDelete;
+  final String failureQuranPlaylistNotFound;
   final String quranSurahBookmarked;
   final String quranSurahBookmarkRemoved;
   final String quranViewInAyat;
@@ -4133,6 +4149,46 @@ class AppText {
         map,
         'failureQuranPlanUnreadAyahs',
         fallback?.failureQuranPlanUnreadAyahs ?? '',
+      ),
+      failureQuranPlaylistDuplicateName: _read(
+        map,
+        'failureQuranPlaylistDuplicateName',
+        fallback?.failureQuranPlaylistDuplicateName ?? '',
+      ),
+      failureQuranPlaylistLoad: _read(
+        map,
+        'failureQuranPlaylistLoad',
+        fallback?.failureQuranPlaylistLoad ?? '',
+      ),
+      failureQuranPlaylistCreate: _read(
+        map,
+        'failureQuranPlaylistCreate',
+        fallback?.failureQuranPlaylistCreate ?? '',
+      ),
+      failureQuranPlaylistUpdate: _read(
+        map,
+        'failureQuranPlaylistUpdate',
+        fallback?.failureQuranPlaylistUpdate ?? '',
+      ),
+      failureQuranPlaylistDetailsLoad: _read(
+        map,
+        'failureQuranPlaylistDetailsLoad',
+        fallback?.failureQuranPlaylistDetailsLoad ?? '',
+      ),
+      failureQuranPlaylistAyahsLoad: _read(
+        map,
+        'failureQuranPlaylistAyahsLoad',
+        fallback?.failureQuranPlaylistAyahsLoad ?? '',
+      ),
+      failureQuranPlaylistDelete: _read(
+        map,
+        'failureQuranPlaylistDelete',
+        fallback?.failureQuranPlaylistDelete ?? '',
+      ),
+      failureQuranPlaylistNotFound: _read(
+        map,
+        'failureQuranPlaylistNotFound',
+        fallback?.failureQuranPlaylistNotFound ?? '',
       ),
       quranSurahBookmarked: _read(
         map,

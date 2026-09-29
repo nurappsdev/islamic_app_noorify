@@ -901,4 +901,13 @@ const Map<String, String> appTextBn = <String, String>{
   'failureQuranPlanNotFound': 'প্ল্যান পাওয়া যায়নি।',
   'failureQuranPlanUnreadAyahs':
       'এই প্ল্যানটি সম্পন্ন করার আগে আপনাকে আরও {count}টি আয়াত পড়তে হবে।',
+  'failureQuranPlaylistDuplicateName':
+      'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্লেলিস্ট রয়েছে।',
+  'failureQuranPlaylistLoad': 'কুরআন প্লেলিস্ট লোড করা যায়নি।',
+  'failureQuranPlaylistCreate': 'কুরআন প্লেলিস্ট তৈরি করা যায়নি।',
+  'failureQuranPlaylistUpdate': 'কুরআন প্লেলিস্ট আপডেট করা যায়নি।',
+  'failureQuranPlaylistDetailsLoad': 'প্লেলিস্টের বিস্তারিত লোড করা যায়নি।',
+  'failureQuranPlaylistAyahsLoad': 'প্লেলিস্টের আয়াত লোড করা যায়নি।',
+  'failureQuranPlaylistDelete': 'প্লেলিস্ট মুছে ফেলা যায়নি।',
+  'failureQuranPlaylistNotFound': 'প্লেলিস্ট পাওয়া যায়নি।',
 };

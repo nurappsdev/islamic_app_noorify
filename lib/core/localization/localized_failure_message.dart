@@ -64,6 +64,17 @@ String localizeFailureMessage(String raw) {
     'failed to complete plan': text.failureQuranPlanComplete,
     'failed to delete plan': text.failureQuranPlanDelete,
     'plan not found': text.failureQuranPlanNotFound,
+    'you already have a playlist with this name':
+        text.failureQuranPlaylistDuplicateName,
+    'you already have a quran playlist with this name':
+        text.failureQuranPlaylistDuplicateName,
+    'failed to load quran playlists': text.failureQuranPlaylistLoad,
+    'failed to create quran playlist': text.failureQuranPlaylistCreate,
+    'failed to update quran playlist': text.failureQuranPlaylistUpdate,
+    'failed to load playlist details': text.failureQuranPlaylistDetailsLoad,
+    'failed to load playlist ayahs': text.failureQuranPlaylistAyahsLoad,
+    'failed to delete playlist': text.failureQuranPlaylistDelete,
+    'playlist not found': text.failureQuranPlaylistNotFound,
   };
   final match = known[key];
   if (match != null) return match;
