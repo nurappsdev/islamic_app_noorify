@@ -3,10 +3,98 @@ import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../domain/arabic_font.dart';
 import '../../domain/quran_ayah.dart';
 import 'quran_design.dart';
+
+/// How long an ayah must be pressed before its details open, so a plain tap
+/// while reading or scrolling does not.
+const kAyahHoldDuration = Duration(milliseconds: 800);
+
+/// A hold on one ayah: [onPress] as the finger lands, [onRelease] when it
+/// lifts or the press turns into a scroll, [onHold] once the hold completes.
+LongPressGestureRecognizer _holdRecognizer({
+  required VoidCallback onHold,
+  required VoidCallback onPress,
+  required VoidCallback onRelease,
+}) => LongPressGestureRecognizer(duration: kAyahHoldDuration)
+  ..onLongPressDown = ((_) => onPress())
+  ..onLongPressCancel = onRelease
+  ..onLongPressEnd = ((_) => onRelease())
+  ..onLongPress = () {
+    HapticFeedback.mediumImpact();
+    onHold();
+  };
+
+/// The tint a held ayah fills with over [kAyahHoldDuration]: visible from
+/// the moment the finger lands, and clearly stronger than the highlight of
+/// the ayah being played, on light and dark pages alike.
+Color _holdTint(BuildContext context, double progress) => quranOlive.withValues(
+  alpha: .18 + .27 * Curves.easeOut.transform(progress),
+);
+
+/// Drives the hold feedback: runs forward while pressed, fades back out on
+/// release.
+mixin _HoldFeedback<T extends StatefulWidget>
+    on State<T>, SingleTickerProviderStateMixin<T> {
+  late final hold = AnimationController(
+    vsync: this,
+    duration: kAyahHoldDuration,
+    reverseDuration: const Duration(milliseconds: 180),
+  );
+
+  void startHold() => hold.forward(from: 0);
+  void endHold() => hold.reverse();
+
+  @override
+  void dispose() {
+    hold.dispose();
+    super.dispose();
+  }
+}
+
+/// Calls [onHold] once [child] has been pressed for [kAyahHoldDuration],
+/// tinting it as the press builds up.
+class QuranAyahHold extends StatefulWidget {
+  const QuranAyahHold({super.key, required this.onHold, required this.child});
+  final VoidCallback onHold;
+  final Widget child;
+
+  @override
+  State<QuranAyahHold> createState() => _QuranAyahHoldState();
+}
+
+class _QuranAyahHoldState extends State<QuranAyahHold>
+    with SingleTickerProviderStateMixin, _HoldFeedback {
+  @override
+  Widget build(BuildContext context) => RawGestureDetector(
+    behavior: HitTestBehavior.opaque,
+    gestures: {
+      LongPressGestureRecognizer:
+          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+            () => _holdRecognizer(
+              onHold: () => widget.onHold(),
+              onPress: startHold,
+              onRelease: endHold,
+            ),
+            (_) {},
+          ),
+    },
+    child: AnimatedBuilder(
+      animation: hold,
+      builder: (context, child) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: hold.value == 0 ? null : _holdTint(context, hold.value),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: child,
+      ),
+      child: widget.child,
+    ),
+  );
+}
 
 class QuranReadingText extends StatefulWidget {
   const QuranReadingText({
@@ -15,20 +103,35 @@ class QuranReadingText extends StatefulWidget {
     required this.active,
     required this.scale,
     required this.font,
-    required this.onTap,
+    this.onHold,
   });
   final List<QuranAyah> ayahs;
   final int active;
   final double scale;
   final ArabicFont font;
-  final ValueChanged<QuranAyah> onTap;
+
+  /// An ayah held for [kAyahHoldDuration]; null leaves the text inert.
+  final ValueChanged<QuranAyah>? onHold;
   @override
   State<QuranReadingText> createState() => _QuranReadingTextState();
 }
 
-class _QuranReadingTextState extends State<QuranReadingText> {
+class _QuranReadingTextState extends State<QuranReadingText>
+    with SingleTickerProviderStateMixin, _HoldFeedback {
   final _textKey = GlobalKey();
-  final _recognizers = <TapGestureRecognizer>[];
+  final _recognizers = <LongPressGestureRecognizer>[];
+
+  /// The ayah being pressed, shown with the hold tint.
+  int? _pressed;
+
+  LongPressGestureRecognizer _recognizerFor(QuranAyah ayah) => _holdRecognizer(
+    onHold: () => widget.onHold?.call(ayah),
+    onPress: () {
+      setState(() => _pressed = ayah.ayahNumber);
+      startHold();
+    },
+    onRelease: endHold,
+  );
   @override
   void initState() {
     super.initState();
@@ -40,17 +143,19 @@ class _QuranReadingTextState extends State<QuranReadingText> {
       recognizer.dispose();
     }
     _recognizers.clear();
+    if (widget.onHold == null) return;
     for (final ayah in widget.ayahs) {
-      _recognizers.add(
-        TapGestureRecognizer()..onTap = () => widget.onTap(ayah),
-      );
+      _recognizers.add(_recognizerFor(ayah));
     }
   }
 
   @override
   void didUpdateWidget(QuranReadingText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.ayahs != widget.ayahs) _bind();
+    if (oldWidget.ayahs != widget.ayahs ||
+        (oldWidget.onHold == null) != (widget.onHold == null)) {
+      _bind();
+    }
     if (oldWidget.active != widget.active) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _follow());
     }
@@ -104,7 +209,12 @@ class _QuranReadingTextState extends State<QuranReadingText> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      AnimatedBuilder(animation: hold, builder: (context, _) => _text(context));
+
+  Widget _text(BuildContext context) {
+    // How far the pressed ayah's hold has come, 0 when nothing is pressed.
+    double held(QuranAyah a) => _pressed == a.ayahNumber ? hold.value : 0;
     final span = TextSpan(
       style: widget.font.apply(
         TextStyle(
@@ -117,21 +227,33 @@ class _QuranReadingTextState extends State<QuranReadingText> {
         for (final (i, a) in widget.ayahs.indexed) ...[
           TextSpan(
             text: a.textArabic,
-            recognizer: _recognizers[i],
+            recognizer: widget.onHold == null ? null : _recognizers[i],
             style: TextStyle(
-              backgroundColor: widget.active == a.ayahNumber
+              backgroundColor: held(a) > 0
+                  ? _holdTint(context, held(a))
+                  : widget.active == a.ayahNumber
                   ? context.surfaceColor(quranPale).withValues(alpha: .7)
                   : null,
             ),
           ),
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
-            child: GestureDetector(
-              onTap: () => widget.onTap(a),
-              child: QuranAyahMarker(
-                key: ValueKey('ayah-marker-${a.verseKey}'),
-                number: a.ayahNumber,
-                scale: widget.scale,
+            child: RawGestureDetector(
+              gestures: {
+                if (widget.onHold != null)
+                  LongPressGestureRecognizer:
+                      GestureRecognizerFactoryWithHandlers<
+                        LongPressGestureRecognizer
+                      >(() => _recognizerFor(a), (_) {}),
+              },
+              child: Transform.scale(
+                // The marker swells slightly as the hold builds.
+                scale: 1 + .12 * Curves.easeOut.transform(held(a)),
+                child: QuranAyahMarker(
+                  key: ValueKey('ayah-marker-${a.verseKey}'),
+                  number: a.ayahNumber,
+                  scale: widget.scale,
+                ),
               ),
             ),
           ),

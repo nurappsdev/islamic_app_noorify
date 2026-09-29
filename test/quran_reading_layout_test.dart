@@ -101,4 +101,58 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('a tap in the upper half shows the header, lower half the bar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 80, child: Text('Header')),
+            bottom: const SizedBox(height: 100, child: Text('Player')),
+            page: QuranPageViewport(
+              pageNumber: 2,
+              footer: const SizedBox(),
+              child: const SizedBox(height: 2000, child: Text('Ayahs')),
+            ),
+          ),
+        ),
+      ),
+    );
+    bool shown(String text) =>
+        find.text(text).hitTestable().evaluate().isNotEmpty;
+    Future<void> idle() async {
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    }
+
+    final page = tester.getRect(find.byType(QuranReadingLayout));
+    await idle();
+    expect(shown('Header'), isFalse);
+    expect(shown('Player'), isFalse);
+
+    await tester.tapAt(Offset(page.center.dx, page.top + page.height * .3));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isTrue);
+    expect(shown('Player'), isFalse);
+
+    await idle();
+    await tester.tapAt(Offset(page.center.dx, page.top + page.height * .7));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isFalse);
+    expect(shown('Player'), isTrue);
+
+    // A finger resting (with a little jitter) stays a one-sided reveal.
+    await idle();
+    final rest = await tester.startGesture(
+      Offset(page.center.dx, page.top + page.height * .3),
+    );
+    await rest.moveBy(const Offset(3, 2));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isTrue);
+    expect(shown('Player'), isFalse);
+    await rest.up();
+    await tester.pumpWidget(const SizedBox());
+  });
 }

@@ -795,8 +795,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           children: [
                             if (prefs.showTranslation)
                               for (final ayah in state.ayahs)
-                                InkWell(
-                                  onTap: () => _showAyah(ayah),
+                                QuranAyahHold(
+                                  onHold: () => _showAyah(ayah),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -813,7 +813,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                             font: arabicFontById(
                                               prefs.arabicFontFamily,
                                             ),
-                                            onTap: _showAyah,
+                                            // The row below takes the hold.
                                           ),
                                         const SizedBox(height: 12),
                                         if (ayatView == _AyatView.tafsir)
@@ -866,7 +866,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 active: active,
                                 scale: arabicScale,
                                 font: arabicFontById(prefs.arabicFontFamily),
-                                onTap: (ayah) {
+                                onHold: (ayah) {
                                   context.read<SurahPlaybackBloc>().add(
                                     SetActiveAyah(ayah.ayahNumber),
                                   );

@@ -96,7 +96,6 @@ class _QuranTafsirScreenState extends State<QuranTafsirScreen> {
                   active: int.parse(widget.verseKey.split(':').last),
                   scale: 1,
                   font: arabicFontById('noorehuda'),
-                  onTap: (_) {},
                 ),
               ),
               Center(

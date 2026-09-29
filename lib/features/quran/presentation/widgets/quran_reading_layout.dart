@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 
 /// Keeps controls mounted (including audio listeners) while reclaiming their
@@ -20,19 +21,28 @@ class QuranReadingLayout extends StatefulWidget {
 }
 
 class _QuranReadingLayoutState extends State<QuranReadingLayout>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controls = AnimationController(
+    with TickerProviderStateMixin {
+  // The header and the bottom bar show and hide on their own: a touch in the
+  // upper half of the screen brings back the header, one in the lower half
+  // the bottom bar. A drag (scroll or page swipe) brings back both.
+  late final AnimationController _top = _chromeController();
+  late final AnimationController _bottom = _chromeController();
+  late final CurvedAnimation _topSize = _curve(_top);
+  late final CurvedAnimation _bottomSize = _curve(_bottom);
+  final _scroll = ScrollController();
+  Timer? _idle;
+  // Where each finger touching the reader landed.
+  final Map<int, Offset> _pointers = {};
+
+  AnimationController _chromeController() => AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 260),
     value: 1,
   );
-  late final CurvedAnimation _size = CurvedAnimation(
-    parent: _controls,
-    curve: Curves.easeInOut,
-  );
-  final _scroll = ScrollController();
-  Timer? _idle;
-  final Set<int> _pointers = {};
+
+  static CurvedAnimation _curve(AnimationController parent) =>
+      CurvedAnimation(parent: parent, curve: Curves.easeInOut);
+
   @override
   void initState() {
     super.initState();
@@ -43,38 +53,61 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
     _idle?.cancel();
     if (_pointers.isEmpty) {
       _idle = Timer(widget.idleDuration, () {
-        if (mounted) _controls.reverse();
+        if (!mounted) return;
+        _top.reverse();
+        _bottom.reverse();
       });
     }
   }
 
-  void _reveal() {
+  void _reveal({bool top = true, bool bottom = true}) {
     _idle?.cancel();
-    _controls.forward();
+    if (top) _top.forward();
+    if (bottom) _bottom.forward();
+  }
+
+  /// Reveals the header or the bottom bar, whichever half [dy] falls in.
+  void _revealHalf(double dy) {
+    final height = context.size?.height ?? 0;
+    final upper = height > 0 && dy < height / 2;
+    _reveal(top: upper, bottom: !upper);
   }
 
   @override
   void dispose() {
     _idle?.cancel();
     _scroll.dispose();
-    _size.dispose();
-    _controls.dispose();
+    _topSize.dispose();
+    _bottomSize.dispose();
+    _top.dispose();
+    _bottom.dispose();
     super.dispose();
   }
 
-  Widget _chrome(Widget child) => SizeTransition(
-    sizeFactor: _size,
+  Widget _chrome(
+    Widget child,
+    AnimationController controller,
+    Animation<double> size,
+  ) => SizeTransition(
+    sizeFactor: size,
     alignment: Alignment.topCenter,
-    child: FadeTransition(opacity: _controls, child: child),
+    child: FadeTransition(opacity: controller, child: child),
   );
   @override
   Widget build(BuildContext context) => Listener(
     behavior: HitTestBehavior.translucent,
     onPointerDown: (event) {
-      _pointers.add(event.pointer);
-      _reveal();
+      _pointers[event.pointer] = event.localPosition;
+      _revealHalf(event.localPosition.dy);
     },
-    onPointerMove: (_) => _reveal(),
+    onPointerMove: (event) {
+      // A finger resting on an ayah jitters a little; only a real drag counts.
+      final landed = _pointers[event.pointer];
+      if (landed == null ||
+          (event.localPosition - landed).distance > kTouchSlop) {
+        _reveal();
+      }
+    },
     onPointerUp: (event) {
       _pointers.remove(event.pointer);
       _scheduleHide();
@@ -119,9 +152,9 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
                 height: bounds.maxHeight,
                 child: Column(
                   children: [
-                    _chrome(widget.top),
+                    _chrome(widget.top, _top, _topSize),
                     Expanded(child: widget.page),
-                    _chrome(widget.bottom),
+                    _chrome(widget.bottom, _bottom, _bottomSize),
                   ],
                 ),
               ),
