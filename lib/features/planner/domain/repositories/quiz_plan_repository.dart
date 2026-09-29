@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
 
 /// Contract for the scheduled quiz plans. Every call returns [Right] with the
 /// server's result or [Left] with a typed [Failure].

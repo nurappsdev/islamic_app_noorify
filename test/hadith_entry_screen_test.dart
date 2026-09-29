@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_intro_store.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_entry_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_intro_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_entry_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// A store whose storage fails, to check the screen doesn't get stuck.

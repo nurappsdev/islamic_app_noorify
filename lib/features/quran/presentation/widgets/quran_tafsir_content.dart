@@ -5,8 +5,8 @@ import '../../domain/quran_ayah.dart';
 import '../bloc/tafsir/tafsir_bloc.dart';
 import 'quran_design.dart';
 import 'quran_surah_frame.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 /// Embedded Tafsir content. Scrolling is owned by its host reader; no routes
 /// or additional audio players are created when this section opens.

@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/home/data/datasources/home_remote_data_source.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/home_dashboard.dart';
-import 'package:islami_app_noorify/features/home/domain/repositories/home_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/home_dashboard.dart';
+import 'package:tuhfatul_muslim/features/home/domain/repositories/home_repository.dart';
 
 class HomeRepositoryImpl implements HomeRepository {
   HomeRepositoryImpl(this._remote);

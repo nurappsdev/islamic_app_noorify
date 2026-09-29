@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
 
 class TestAudio extends BaseAudioHandler implements QuranAudioHandler {
   final completed = StreamController<void>.broadcast();

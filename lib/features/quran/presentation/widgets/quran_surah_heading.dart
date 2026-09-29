@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../domain/surah_summary.dart';
 import 'quran_design.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
-import 'package:islami_app_noorify/core/localization/localization_context.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_format_helpers.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// A single scrolling header owns the ornament, metadata, and Bismillah.
 /// Its measured height keeps every ayah below both the artwork and text.

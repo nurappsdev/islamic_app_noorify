@@ -1,10 +1,10 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/create_quiz_plan.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_categories.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/create_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_categories.dart';
 
 enum CreateQuizPlanCategoriesStatus { loading, success, failure }
 

@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
 
 /// Reads a JSON number that may arrive as a num or a numeric string.
 num? readNum(Object? value) {

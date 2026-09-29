@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_dashboard_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card_content.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_dashboard_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/amal_tracker_card_content.dart';
 
 const _footerGreen = Color(0xFF9DAA62);
 

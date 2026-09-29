@@ -1,7 +1,7 @@
 import 'quran_offline_database.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import '../../domain/surah_summary.dart';
 import '../../domain/juz_summary.dart';
 import '../../domain/quran_ayah.dart';

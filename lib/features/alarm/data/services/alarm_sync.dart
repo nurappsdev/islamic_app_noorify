@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/features/alarm/data/repositories/alarm_repository_impl.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
-import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/repositories/alarm_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_log.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync_plan.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/repositories/alarm_repository.dart';
 
 /// Makes the OS alarm schedule match the alarms saved on this device: arms
 /// every alarm that is on, disarms the ones that are off or deleted, and

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
 
 abstract class HadithCreatePlanEvent {
   const HadithCreatePlanEvent();

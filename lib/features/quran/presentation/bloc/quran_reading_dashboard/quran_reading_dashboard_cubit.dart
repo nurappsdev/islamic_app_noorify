@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_reading_repository.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/dashboard/quran_period_dropdown.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/dashboard/quran_period_dropdown.dart';
 
 import 'quran_reading_dashboard_state.dart';
 

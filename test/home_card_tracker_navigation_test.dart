@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 
 Future<void> _pumpHome(WidgetTester tester, Widget body) async {
   tester.view.physicalSize = const Size(375, 812);

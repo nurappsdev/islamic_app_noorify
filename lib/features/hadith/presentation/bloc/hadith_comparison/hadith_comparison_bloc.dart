@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_reading_comparison.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_history.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_reading_comparison.dart';
 
 import 'hadith_comparison_event.dart';
 import 'hadith_comparison_state.dart';

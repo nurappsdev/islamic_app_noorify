@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/delete_hadith_plan.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/update_hadith_plan.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/delete_hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/update_hadith_plan.dart';
 
 import 'hadith_plan_actions_event.dart';
 import 'hadith_plan_actions_state.dart';

@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/update_hadith_plan.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_edit_plan/hadith_edit_plan_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/update_hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_edit_plan/hadith_edit_plan_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _catA = HadithCategory(
   id: 'cat-a',

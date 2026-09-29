@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 /// A plan's `status`, as the server derives it. Any value this build does not
 /// know is kept as [unknown], with the raw text in [QuizPlan.rawStatus].

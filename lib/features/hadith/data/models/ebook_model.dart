@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
 
 class EbookModel extends Ebook {
   const EbookModel({

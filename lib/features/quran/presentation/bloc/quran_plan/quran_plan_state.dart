@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_plan.dart';
 
 enum QuranPlanLoadStatus { initial, loading, success, failure }
 

@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/otp_verification_result.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/verify_otp_params.dart';
-import 'package:islami_app_noorify/features/auth/domain/repositories/account_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/verify_otp_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/repositories/account_repository.dart';
 
-export 'package:islami_app_noorify/features/auth/domain/entities/otp_verification_result.dart';
-export 'package:islami_app_noorify/features/auth/domain/entities/verify_otp_params.dart';
+export 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
+export 'package:tuhfatul_muslim/features/auth/domain/entities/verify_otp_params.dart';
 
 /// Verifies the 6-digit OTP through the [AccountRepository].
 ///

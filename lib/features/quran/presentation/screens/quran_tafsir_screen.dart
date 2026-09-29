@@ -1,15 +1,15 @@
 import '../widgets/quran_tafsir_content.dart';
 import '../../data/services/quran_reader_service.dart';
 import 'package:flutter/material.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/quran_ayah.dart';
 import '../../domain/arabic_font.dart';
 import '../widgets/quran_design.dart';
 import '../widgets/quran_reading_text.dart';
 import '../widgets/quran_surah_frame.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 class QuranTafsirScreen extends StatefulWidget {
   const QuranTafsirScreen({

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 String revelationPlaceLabel(AppText appText, String rawPlace) {
   final normalized = rawPlace.toLowerCase();

@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_dashboard.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_history.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/dashboard/quran_period_dropdown.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/dashboard/quran_period_dropdown.dart';
 
 enum QuranReadingDashboardStatus {
   initial,

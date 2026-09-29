@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/home/data/models/home_dashboard_model.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/features/home/data/models/home_dashboard_model.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 void main() {
   test('keeps the dashboard API localized strings for both languages', () {

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/auth/auth_feature.dart';
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _ids = [
   AuthFeatures.general,

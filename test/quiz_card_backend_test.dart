@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/quiz_card_content.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/pillar_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/quiz_card_content.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 PillarCard _quiz({required num points}) => PillarCard(
   pillarKey: 'quiz',

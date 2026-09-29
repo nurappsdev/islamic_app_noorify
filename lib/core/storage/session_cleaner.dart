@@ -1,8 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 
 /// Wipes everything that belongs to the signed-in user, so the next login
 /// (the same account or another) starts from a clean slate and only loads its

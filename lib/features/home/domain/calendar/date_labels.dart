@@ -1,10 +1,10 @@
-import 'package:islami_app_noorify/core/localization/localized_date_formatter.dart';
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
-import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_time_formatter.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
-export 'package:islami_app_noorify/core/localization/localized_date_formatter.dart'
+export 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart'
     show hijriLocalOffsetDays, isAfterMaghrib, localHijriDate;
 
 // Thin wrappers over the shared formatters in `core/localization`, kept so the

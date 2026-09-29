@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/home/data/models/highlight_card_model.dart';
-import 'package:islami_app_noorify/features/home/data/models/pillar_card_model.dart';
-import 'package:islami_app_noorify/features/home/data/models/user_summary_model.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/home_dashboard.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/home/data/models/highlight_card_model.dart';
+import 'package:tuhfatul_muslim/features/home/data/models/pillar_card_model.dart';
+import 'package:tuhfatul_muslim/features/home/data/models/user_summary_model.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/home_dashboard.dart';
 
 /// Data-layer representation of [HomeDashboard], parsed from the `data`
 /// payload of `GET /home/dashboard`.

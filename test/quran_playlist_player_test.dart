@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_playlist.dart';
-import 'package:islami_app_noorify/features/quran/presentation/screens/quran_audio_player_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_playlist.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/screens/quran_audio_player_screen.dart';
 
 import 'quran_playback_test.dart' show TestAudio, TestDownloader;
 

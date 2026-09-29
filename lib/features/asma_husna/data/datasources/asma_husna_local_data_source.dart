@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/asma_husna/data/models/asma_name_model.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/asma_husna/data/models/asma_name_model.dart';
 
 /// Hive-backed cache of the full 99-name list — one entry per name, each
 /// carrying its full explanation. Populated once from `GET /asma-ul-husna`

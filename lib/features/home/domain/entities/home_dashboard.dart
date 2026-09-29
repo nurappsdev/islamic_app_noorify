@@ -1,6 +1,6 @@
-import 'package:islami_app_noorify/features/home/domain/entities/highlight_card.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/user_summary.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/highlight_card.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/pillar_card.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/user_summary.dart';
 
 /// The full payload of `GET /home/dashboard`.
 class HomeDashboard {

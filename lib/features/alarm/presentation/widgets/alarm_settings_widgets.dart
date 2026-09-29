@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/alarm/data/repositories/ringtone_repository_impl.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_ringtones.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/repositories/ringtone_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_ringtones.dart';
 
 TextStyle alarmItalicStyle(
   double size, {

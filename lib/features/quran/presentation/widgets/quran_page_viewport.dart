@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// The ornaments stay still. Both vertical scrolling and the page-turn
 /// animation are clipped to the interior rectangle, below the frame artwork.

@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_entry_model.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_entry_model.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_board.dart';
 
 class LeaderboardPeriodModel extends LeaderboardPeriod {
   const LeaderboardPeriodModel({

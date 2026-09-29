@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
 
 abstract class PlannerEvent {
   const PlannerEvent();

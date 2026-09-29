@@ -10,18 +10,18 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book_reference.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_entry.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
 
 /// Route arguments for [HadithBookReaderScreen]: the book, and optionally the
 /// hadith to open at.

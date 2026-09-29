@@ -3,17 +3,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
-import 'package:islami_app_noorify/features/dua/presentation/dua_route_args.dart';
-import 'package:islami_app_noorify/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_bookmark_sheet.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_page_header.dart';
-import 'package:islami_app_noorify/features/dua/presentation/widgets/dua_zoom_control.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bookmark_sheet.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_zoom_control.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Single-dua reader (design `devImg/img_6.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].

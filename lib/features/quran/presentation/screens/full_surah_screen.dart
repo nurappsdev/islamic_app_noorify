@@ -4,21 +4,21 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_playback/surah_playback_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_format_helpers.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_sheets.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_translation_switch.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_zoom_control.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/surah_hero_card.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class FullSurahScreen extends StatelessWidget {
   const FullSurahScreen({super.key, required this.surahNo});

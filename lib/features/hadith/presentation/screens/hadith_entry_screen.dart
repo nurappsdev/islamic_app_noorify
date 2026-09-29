@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_intro_store.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_intro_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_library_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_intro_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_intro_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_library_screen.dart';
 
 /// Where the Hadith card on the Home screen leads.
 ///

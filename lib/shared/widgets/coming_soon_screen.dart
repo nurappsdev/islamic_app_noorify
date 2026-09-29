@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 
 /// Generic placeholder page for a feature that's linked from the UI but not
 /// built yet (e.g. the home screen's Zakat/Age calculator shortcuts).

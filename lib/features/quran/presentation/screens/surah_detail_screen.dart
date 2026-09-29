@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_translation_switch.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_ayah_card.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/surah_hero_card.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/surah_detail.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_detail/surah_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_format_helpers.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_sheets.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_translation_switch.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/surah_ayah_card.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/surah_hero_card.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   const SurahDetailScreen({

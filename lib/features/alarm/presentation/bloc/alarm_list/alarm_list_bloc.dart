@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/add_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/delete_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/get_prayer_alarms.dart';
-import 'package:islami_app_noorify/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/add_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
 
 import 'alarm_list_event.dart';
 import 'alarm_list_state.dart';

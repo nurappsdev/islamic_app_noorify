@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/auth/domain/entities/otp_verification_result.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
 
 /// Parses the envelope of a successful `POST {verifyEmailEndPoint}` response:
 /// `{ success, message, data: { resetToken? / token? / accessToken? } }`.

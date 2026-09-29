@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_range.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_range.dart';
 
 /// Data-layer representation of [AmolAnalyticsRange], parsed from
 /// `GET /amol/analytics/graph`'s `range` object, e.g.

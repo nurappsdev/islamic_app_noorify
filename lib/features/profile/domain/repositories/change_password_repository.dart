@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
 
 /// Contract for changing the signed-in user's password.
 abstract interface class ChangePasswordRepository {

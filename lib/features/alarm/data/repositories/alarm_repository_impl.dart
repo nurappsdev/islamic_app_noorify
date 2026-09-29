@@ -1,18 +1,18 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/datasources/prayer_alarm_local_data_source.dart';
-import 'package:islami_app_noorify/features/alarm/data/models/alarm_model.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_setting.dart';
-import 'package:islami_app_noorify/features/alarm/domain/prayer_alarm_builder.dart';
-import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/datasources/alarm_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/datasources/prayer_alarm_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/models/alarm_model.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_batch.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_setting.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/prayer_alarm_builder.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/repositories/alarm_repository.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 
 /// The alarms, kept entirely on the device (Hive). No server call is made.
 ///

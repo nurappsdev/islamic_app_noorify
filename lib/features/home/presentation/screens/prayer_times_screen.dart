@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/localization/localization_context.dart';
-import 'package:islami_app_noorify/core/localization/localized_time_formatter.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/bloc/prayer_times_bloc.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_time_formatter.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/prayer_times_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});

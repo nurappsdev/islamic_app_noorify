@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_item_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_item_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 
 class AmolPillarModel extends AmolPillar {
   const AmolPillarModel({

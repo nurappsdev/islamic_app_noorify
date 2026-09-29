@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
 
 /// Contract for the Learning (articles) API. Every call returns [Right] with
 /// the result or [Left] with a typed [Failure].

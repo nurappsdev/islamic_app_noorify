@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/repositories/quran_playlist_repository_impl.dart';
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_playlist_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_playlist_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_playlist_repository.dart';
 
 import 'quran_playlist_event.dart';
 import 'quran_playlist_state.dart';

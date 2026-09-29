@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
 
 /// Base type for everything that can go wrong in the domain layer.
 ///

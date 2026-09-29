@@ -5,20 +5,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_sub_categories.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_sub_category_reading_progress.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_sub_category/hadith_sub_category_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_progress_ring.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_sub_categories.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_sub_category_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_reading_progress/hadith_reading_progress_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_sub_category/hadith_sub_category_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_progress_ring.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Route arguments for [HadithSubCategoryScreen].
 class HadithSubCategoryArgs {

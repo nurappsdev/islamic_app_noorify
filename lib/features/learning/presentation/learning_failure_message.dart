@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 /// What a Learning request was fetching, to word a 404.
 enum LearningResource { categories, articles, article }

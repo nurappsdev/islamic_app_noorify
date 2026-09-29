@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:tuhfatul_muslim/features/home/domain/usecases/get_home_dashboard.dart';
 
 import 'home_dashboard_event.dart';
 import 'home_dashboard_state.dart';

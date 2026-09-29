@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
 
 /// Contract for reading the Amol Dashboard screen's chart data.
 abstract interface class AmolAnalyticsRepository {

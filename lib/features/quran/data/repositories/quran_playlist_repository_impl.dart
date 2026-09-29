@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/quran/data/datasources/quran_playlist_remote_data_source.dart';
-import 'package:islami_app_noorify/features/quran/data/repositories/quran_reading_repository_impl.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_playlist_store.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_playlist.dart';
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_playlist_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_playlist_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_playlist_store.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_playlist.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_playlist_repository.dart';
 
 class QuranPlaylistRepositoryImpl implements QuranPlaylistRepository {
   QuranPlaylistRepositoryImpl(

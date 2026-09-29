@@ -1,11 +1,11 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_dashboard_model.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_model.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_dashboard_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 int _int(Object? value) => readNum(value)?.toInt() ?? 0;
 

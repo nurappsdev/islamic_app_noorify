@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/ringtone.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
 
 /// The ringtones an admin makes available for alarms. This is the only alarm
 /// data that comes from the server.

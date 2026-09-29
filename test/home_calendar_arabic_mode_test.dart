@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_calendar_card.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_calendar_card.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final _arabicDigit = RegExp('[٠-٩]');

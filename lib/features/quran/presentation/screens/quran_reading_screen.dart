@@ -18,10 +18,10 @@ import '../bloc/tafsir/tafsir_bloc.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../data/services/quran_local_store.dart';
 import '../../domain/arabic_font.dart';
@@ -39,7 +39,7 @@ import '../widgets/quran_design.dart';
 import '../widgets/quran_player_widgets.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_sheets.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class QuranReadingScreen extends StatelessWidget {
   const QuranReadingScreen({

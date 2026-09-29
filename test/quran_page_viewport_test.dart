@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_page_viewport.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_page_viewport.dart';
 
 void main() {
   testWidgets('Surah opening omits the upper ornament', (tester) async {

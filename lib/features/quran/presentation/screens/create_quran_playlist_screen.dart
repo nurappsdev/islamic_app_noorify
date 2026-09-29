@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_preference.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 import '../../data/repositories/quran_playlist_repository_impl.dart';
 import '../../domain/quran_playlist.dart';

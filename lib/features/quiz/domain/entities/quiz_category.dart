@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// A number together with how it is written in each language, e.g.
 /// `{value: 17, bn: "১৭", en: "17"}`.

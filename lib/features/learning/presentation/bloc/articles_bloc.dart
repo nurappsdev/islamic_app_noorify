@@ -1,10 +1,10 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
-import 'package:islami_app_noorify/features/learning/domain/usecases/get_articles.dart';
-import 'package:islami_app_noorify/features/learning/presentation/bloc/learning_paged_state.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/usecases/get_articles.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/bloc/learning_paged_state.dart';
 
-export 'package:islami_app_noorify/features/learning/presentation/bloc/learning_paged_state.dart';
+export 'package:tuhfatul_muslim/features/learning/presentation/bloc/learning_paged_state.dart';
 
 typedef ArticlesState = LearningPagedState<Article>;
 

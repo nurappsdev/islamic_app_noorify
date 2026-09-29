@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/auth/domain/usecases/register_account.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/register_account.dart';
 
 import 'register_event.dart';
 import 'register_state.dart';

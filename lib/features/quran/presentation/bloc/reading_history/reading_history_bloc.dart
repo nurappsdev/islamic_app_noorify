@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
 
 import 'reading_history_event.dart';
 import 'reading_history_state.dart';

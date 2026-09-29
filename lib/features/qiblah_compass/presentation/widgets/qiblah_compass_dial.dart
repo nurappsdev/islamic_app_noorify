@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 
 /// A compass rose that points at the Kaaba (design `img_40.png` /
 /// `img_41.png`).

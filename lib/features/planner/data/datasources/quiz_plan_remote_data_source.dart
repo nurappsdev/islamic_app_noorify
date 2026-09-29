@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/planner/data/models/quiz_plan_model.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/quiz/data/datasources/quiz_api_requests.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/planner/data/models/quiz_plan_model.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/datasources/quiz_api_requests.dart';
 
 /// Talks to the `/quizzes/plans` endpoints. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.

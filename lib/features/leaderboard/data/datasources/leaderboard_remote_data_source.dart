@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_board_model.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/models/leaderboard_user_detail_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_board_model.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_user_detail_model.dart';
 
 /// Talks to the leaderboard REST endpoint. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.

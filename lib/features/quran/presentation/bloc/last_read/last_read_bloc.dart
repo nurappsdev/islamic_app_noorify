@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/repositories/quran_reading_repository_impl.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_progress.dart';
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_reading_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
 
 import 'last_read_event.dart';
 import 'last_read_state.dart';

@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quiz/domain/entities/daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/daily_quiz_status.dart';
 
 class DailyQuizStatusModel extends DailyQuizStatus {
   const DailyQuizStatusModel({

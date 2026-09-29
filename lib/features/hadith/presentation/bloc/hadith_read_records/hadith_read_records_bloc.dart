@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_read_records.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_read_records.dart';
 
 import 'hadith_read_records_event.dart';
 import 'hadith_read_records_state.dart';

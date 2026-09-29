@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/features/profile/data/datasources/family_remote_data_source.dart';
-import 'package:islami_app_noorify/features/profile/data/repositories/family_repository_impl.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/repositories/family_repository.dart';
-import 'package:islami_app_noorify/features/profile/domain/usecases/get_family_members.dart';
+import 'package:tuhfatul_muslim/features/profile/data/datasources/family_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/profile/data/repositories/family_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/repositories/family_repository.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/usecases/get_family_members.dart';
 
 /// Fetches the signed-in user's family members (`GET /user/family`) for
 /// screens to render, the same way [ProfileService] fetches the profile.

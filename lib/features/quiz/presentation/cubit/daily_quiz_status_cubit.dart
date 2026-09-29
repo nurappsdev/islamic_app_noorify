@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:islami_app_noorify/features/quiz/domain/entities/daily_quiz_status.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/daily_quiz_status.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_daily_quiz_status.dart';
 
 enum DailyQuizStatusLoadStatus { initial, loading, success, failure }
 

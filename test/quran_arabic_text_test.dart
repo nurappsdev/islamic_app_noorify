@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_arabic_text.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_ayah.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_arabic_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_ayah.dart';
 
 void main() {
   test('removes the ﭤ mark from ayah ends and elsewhere', () {

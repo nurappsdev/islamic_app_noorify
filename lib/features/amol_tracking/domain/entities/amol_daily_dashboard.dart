@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_summary.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_summary.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 
 /// The full payload of `GET /amol/tracker/daily?date=YYYY-MM-DD`.
 class AmolDailyDashboard {

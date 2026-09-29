@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_last_read.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_dashboard.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_history.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_progress.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_last_read.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_progress.dart';
 
 /// The signed-in user's Quran reading endpoints (`/quran/reading/...`). Every
 /// call sends the stored login token; an expired one is renewed by the shared

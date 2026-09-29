@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 
 /// Arguments for [RouteNames.zikrCounter] — an ordered sequence of zikr the
 /// counter walks through, one after another.

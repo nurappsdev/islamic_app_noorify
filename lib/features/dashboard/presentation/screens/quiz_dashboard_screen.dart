@@ -4,22 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
-// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_activity_chart.dart';
-// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_comparison_card.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_segmented_tabs.dart';
-// import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_stat_grid.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_attempt_card.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_failure_message.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
+// import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_activity_chart.dart';
+// import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_comparison_card.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_segmented_tabs.dart';
+// import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_stat_grid.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_attempt_card.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
 /// Reads the [QuizDashboardBloc] (`/quizzes/dashboard` and

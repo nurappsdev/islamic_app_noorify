@@ -2,15 +2,15 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:islami_app_noorify/features/profile/data/repositories/profile_repository_impl.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/repositories/profile_repository.dart';
-import 'package:islami_app_noorify/features/profile/domain/usecases/get_profile.dart';
-import 'package:islami_app_noorify/features/profile/domain/usecases/update_profile.dart';
-import 'package:islami_app_noorify/features/profile/domain/usecases/upload_avatar.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/repositories/profile_repository.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/usecases/get_profile.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/usecases/update_profile.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/usecases/upload_avatar.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 
 /// Keeps [profileNameNotifier] in sync with the REST profile
 /// (`GET /user/me`), the same way [AuthService] keeps it in sync for the

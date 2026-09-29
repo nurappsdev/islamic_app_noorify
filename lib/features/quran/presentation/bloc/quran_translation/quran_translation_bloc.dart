@@ -1,13 +1,13 @@
 import '../../../data/services/quran_content_service.dart';
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_database.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_translation_downloader.dart';
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_database.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_reader_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_translation_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 import 'quran_translation_event.dart';
 import 'quran_translation_state.dart';

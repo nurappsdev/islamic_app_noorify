@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/repositories/quran_plan_repository_impl.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_plan_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_plan_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_plan.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_plan_repository.dart';
 
 import 'quran_plan_event.dart';
 import 'quran_plan_state.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
 /// Wraps [child] with the app-wide shimmer sweep used for loading skeletons
 /// (same colors as [QuranShimmer]/[HomeShimmer], kept local to this feature).

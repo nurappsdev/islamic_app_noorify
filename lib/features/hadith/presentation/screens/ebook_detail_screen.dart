@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/ebook_downloader.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/ebook_download/ebook_download_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/ebook_reader_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/ebook_cover.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/ebook_downloader.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/ebook_download/ebook_download_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/ebook_reader_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/ebook_cover.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// One e-book: cover, title, author, language, publisher and reference, with a
 /// button that downloads the PDF onto the device, then reads it in the app.

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/ayah_card.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/verse_reader/verse_reader_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/ayah_card.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_shimmer.dart';
 
 class VerseReaderScreen extends StatelessWidget {
   const VerseReaderScreen({super.key, required this.juzNumber});

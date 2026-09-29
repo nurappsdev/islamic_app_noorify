@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_summary.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_pillar.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/repositories/amol_tracking_repository.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/delete_amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/get_amol_daily.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/usecases/log_amol_item.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_summary.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/repositories/amol_tracking_repository.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _titles = {
   'fardh_prayer': 'Fardh Prayer',

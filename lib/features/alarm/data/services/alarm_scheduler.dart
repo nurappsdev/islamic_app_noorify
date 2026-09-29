@@ -14,14 +14,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:vibration/vibration.dart';
 
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/prayer_alarm_builder.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_log.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync_plan.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/prayer_alarm_builder.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_ring_payload.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 // Bumped to `_v2`: on Android 8+, a channel's sound/importance are locked in
 // at first creation and can't be changed by the app afterwards — only by

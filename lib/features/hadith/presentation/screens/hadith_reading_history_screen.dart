@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/repositories/hadith_library_repository_impl.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_read_records.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_read_record_row.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_read_records.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_read_record_row.dart';
 
 /// How close to the end of the list (in logical pixels) the next page starts
 /// loading.

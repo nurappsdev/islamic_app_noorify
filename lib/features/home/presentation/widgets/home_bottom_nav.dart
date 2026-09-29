@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 
 /// Navigation bar shown on the app's main Home screen.
 class HomeBottomNav extends StatelessWidget {

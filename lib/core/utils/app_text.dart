@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text_bn.dart';
-import 'package:islami_app_noorify/core/utils/app_text_en.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text_bn.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text_en.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 
 class AppText {
   const AppText({

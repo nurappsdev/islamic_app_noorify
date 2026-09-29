@@ -13,8 +13,8 @@ import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'quran_design.dart';
 import 'quran_sheets.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 class QuranAyahDetails extends StatefulWidget {
   const QuranAyahDetails({

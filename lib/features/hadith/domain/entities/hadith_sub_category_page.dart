@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_category.dart';
 
 /// One page of `GET /hadiths/categories/{id}/subcategories` plus its
 /// pagination `meta`.

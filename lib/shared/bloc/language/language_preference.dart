@@ -1,6 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/core/localization/localized_number_formatter.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
 
 import 'language_state.dart';
 

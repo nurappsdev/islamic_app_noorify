@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/bloc/create_quiz_plan_bloc.dart';
-import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failure_message.dart';
-import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/bloc/create_quiz_plan_bloc.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/quiz_plan_failure_message.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/widgets/quiz_plan_widgets.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_failure_message.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
 
 /// How many quizzes of one category can be added at once.
 const _quizCountChoices = [1, 2, 3, 4, 5];

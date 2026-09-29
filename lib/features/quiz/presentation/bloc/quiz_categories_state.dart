@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_category.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
 
 enum QuizCategoriesStatus { initial, loading, success, failure }
 

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_log.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_sync_plan.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_entry.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_log.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync_plan.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 AlarmEntry _alarm(

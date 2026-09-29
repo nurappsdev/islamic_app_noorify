@@ -177,6 +177,10 @@ class ApiConstants {
   static const String notificationBadgeEndPoint = "/notifications/badge";
   static const String notificationReadAllEndPoint = "/notifications/read-all";
 
+  /// Registers (`POST`) or unregisters (`DELETE`, same body) this device's
+  /// FCM push token against the signed-in user's account.
+  static const String fcmTokenEndPoint = "/notifications/fcm-token";
+
   static String notificationReadEndPoint(String notificationId) =>
       "/notifications/$notificationId/read";
 }

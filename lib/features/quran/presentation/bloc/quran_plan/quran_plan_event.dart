@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_plan.dart';
 
 sealed class QuranPlanEvent {
   const QuranPlanEvent();

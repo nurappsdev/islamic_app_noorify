@@ -7,14 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/profile/data/services/profile_service.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
-import 'package:islami_app_noorify/shared/widgets/profile_avatar_circle.dart';
-import 'package:islami_app_noorify/core/localization/localized_validator.dart';
-import 'package:islami_app_noorify/core/localization/localized_form_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});

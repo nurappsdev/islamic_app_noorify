@@ -1,9 +1,9 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/bloc/quiz_dashboard_paging.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_dashboard_paging.dart';
 
 import 'quiz_dashboard_event.dart';
 import 'quiz_dashboard_state.dart';

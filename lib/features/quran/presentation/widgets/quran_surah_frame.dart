@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/surah_summary.dart';
 import 'quran_design.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 /// Reuses the two supplied transparent ornaments around live content.
 class QuranSurahFrame extends StatelessWidget {

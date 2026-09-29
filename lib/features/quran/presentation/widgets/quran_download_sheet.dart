@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/offline_quran/offline_quran_bloc.dart';
 import 'quran_design.dart';
 import 'quran_modal.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 Future<void> showQuranDownload(
   BuildContext context, {

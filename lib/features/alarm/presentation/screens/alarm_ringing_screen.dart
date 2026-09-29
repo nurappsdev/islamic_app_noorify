@@ -7,14 +7,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/alarm/data/services/alarm_scheduler.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/alarm_ring_payload.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_ring_payload.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 
 const _olive = Color(0xFF8D9B70);
 

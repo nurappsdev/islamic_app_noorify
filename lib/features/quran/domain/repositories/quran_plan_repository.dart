@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_plan.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_plan.dart';
 
 abstract interface class QuranPlanRepository {
   /// Whether a user is currently signed in.

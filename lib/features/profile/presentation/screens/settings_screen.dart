@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/profile/presentation/screens/change_password_screen.dart';
-import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
-import 'package:islami_app_noorify/features/legal/presentation/screens/legal_document_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/presentation/screens/legal_document_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

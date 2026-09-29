@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/track_hadith_reading.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/controllers/hadith_reading_tracker.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/track_hadith_reading.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/controllers/hadith_reading_tracker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _Call {

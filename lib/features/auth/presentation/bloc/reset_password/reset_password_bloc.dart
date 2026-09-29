@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/auth/domain/usecases/reset_password.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/reset_password.dart';
 
 import 'reset_password_event.dart';
 import 'reset_password_state.dart';

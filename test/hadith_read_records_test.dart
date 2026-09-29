@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_read_record_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_read_records.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_read_record_row.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_read_record_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_read_record.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_read_records.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_read_records/hadith_read_records_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_read_record_row.dart';
 
 /// Serves [total] records, [limit] per page, and remembers each request.
 class _FakeRepository implements HadithLibraryRepository {

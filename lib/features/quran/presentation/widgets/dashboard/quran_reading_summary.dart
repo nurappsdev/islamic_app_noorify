@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_dashboard.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_progress.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_progress.dart';
 
 import '../../quran_text.dart';
 import 'quran_stat_cards.dart';

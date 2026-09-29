@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/app_route_observer.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_bloc.dart';
-import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failure_message.dart';
-import 'package:islami_app_noorify/features/planner/presentation/widgets/quiz_plan_widgets.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_status_view.dart';
-import 'package:islami_app_noorify/core/auth/auth_feature.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/bloc/planner_bloc.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/quiz_plan_failure_message.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/widgets/quiz_plan_widgets.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// The user's quiz plans (`GET /quizzes/plans`), reached from index 2 of the
 /// Quiz navigation bar. Expects a [PlannerBloc] above it.

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/learning/domain/entities/article.dart';
-import 'package:islami_app_noorify/features/learning/presentation/bloc/article_detail_bloc.dart';
-import 'package:islami_app_noorify/features/learning/presentation/learning_failure_message.dart';
-import 'package:islami_app_noorify/features/learning/presentation/widgets/learning_widgets.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_formatters.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/learning/domain/entities/article.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/bloc/article_detail_bloc.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/learning_failure_message.dart';
+import 'package:tuhfatul_muslim/features/learning/presentation/widgets/learning_widgets.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
 
 /// One article in full. Expects an [ArticleDetailBloc] above it.
 class ArticleDetailsScreen extends StatelessWidget {

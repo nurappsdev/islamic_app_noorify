@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/core/storage/session_cleaner.dart';
-import 'package:islami_app_noorify/features/auth/domain/usecases/logout_user.dart';
+import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
 
 import 'logout_event.dart';
 import 'logout_state.dart';

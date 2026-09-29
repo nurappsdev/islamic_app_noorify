@@ -5,16 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/create_hadith_plan.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_create_plan/hadith_create_plan_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_create_plan_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/create_hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_create_plan/hadith_create_plan_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_create_plan_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _book = HadithLibraryBook(
   id: 'book-1',

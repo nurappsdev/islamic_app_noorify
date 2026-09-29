@@ -14,8 +14,8 @@ import '../../domain/usecases/verify_email_otp.dart';
 import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({

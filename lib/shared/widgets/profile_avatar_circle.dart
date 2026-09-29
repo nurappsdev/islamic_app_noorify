@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 
 /// Circular avatar that reflects the signed-in user's photo everywhere it's
 /// shown (home header, profile screen, edit-profile screen): a locally

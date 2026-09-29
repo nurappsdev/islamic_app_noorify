@@ -1,6 +1,6 @@
 import '../../../domain/translation_edition.dart';
-import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Progress of an in-flight translation-edition download.
 class EditionDownloadProgress {

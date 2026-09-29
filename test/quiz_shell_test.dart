@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/screens/quiz_shell.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/screens/quiz_shell.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// A tab with a counter, to show a tab keeps its state while hidden.
 class _CounterTab extends StatefulWidget {

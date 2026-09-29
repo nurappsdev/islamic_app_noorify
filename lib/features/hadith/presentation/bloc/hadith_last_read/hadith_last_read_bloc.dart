@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/core/widgets/login_required_dialog.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_last_read.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_last_read.dart';
 
 import 'hadith_last_read_event.dart';
 import 'hadith_last_read_state.dart';

@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/features/quran/domain/arabic_font.dart';
-import 'package:islami_app_noorify/features/quran/domain/bookmark.dart';
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/bookmark.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class QuranLocalStore {
   QuranLocalStore(this._preferences);

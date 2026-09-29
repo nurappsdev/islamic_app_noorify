@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_daily_summary_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/models/amol_pillar_model.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_daily_summary_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_pillar_model.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 
 /// Data-layer representation of [AmolDailyDashboard], parsed from the `data`
 /// payload of `GET /amol/tracker/daily?date=YYYY-MM-DD`.

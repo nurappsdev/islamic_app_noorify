@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_category_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_category_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Opens the reader for a Hadith library collection. Books without bundled
 /// content ([HadithBook.isAvailable] is false) show a "coming soon" notice

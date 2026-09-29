@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
 
 /// Data-layer representation of [AuthUser] that knows how to read the API JSON.
 ///

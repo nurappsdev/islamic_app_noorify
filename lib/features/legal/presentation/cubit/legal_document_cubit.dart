@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:islami_app_noorify/features/legal/domain/entities/legal_document.dart';
-import 'package:islami_app_noorify/features/legal/domain/usecases/get_legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/usecases/get_legal_document.dart';
 
 enum LegalDocumentStatus { loading, success, failure }
 

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_shimmer.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/domain/qiblah_bearing.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/widgets/qiblah_compass_shimmer.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
 
 /// Full-screen live Qiblah compass, opened from [HomeProgressSection]'s
 /// "View Full Screen" button (design `img_41.png`). [qiblahAngle] is the

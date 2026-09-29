@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_last_read.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_dashboard.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_history.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_reading_progress.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_last_read.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_progress.dart';
 
 /// Default window, in days, of the reading history and comparison.
 const kQuranReadingHistoryDays = 7;

@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
-import 'package:islami_app_noorify/features/quran/domain/surah_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/juz_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/surah_detail.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/surah_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/verse_item.dart';
 
 import 'quran_api_service.dart';
 import 'quran_offline_database.dart';

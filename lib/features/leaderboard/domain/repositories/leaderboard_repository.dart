@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
 
 /// Contract for reading the top-N leaderboard standings.
 abstract interface class LeaderboardRepository {

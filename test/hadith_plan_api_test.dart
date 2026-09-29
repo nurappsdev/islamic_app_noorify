@@ -3,11 +3,11 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_detail_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_detail_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
 
 /// Answers every request with a canned body, and remembers the requests.
 class _StubAdapter implements HttpClientAdapter {

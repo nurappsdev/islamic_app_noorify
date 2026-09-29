@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/user_summary.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/user_summary.dart';
 
 class UserSummaryModel extends UserSummary {
   const UserSummaryModel({

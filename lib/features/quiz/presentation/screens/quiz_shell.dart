@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
 
 /// The Quiz & Learn section: Home, Learn, Planner and Dashboard behind one
 /// sticky [QuizBottomNav]. Switching tabs only swaps the content - the bar

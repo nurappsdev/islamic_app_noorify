@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// The pastel-green "Duas for help" card shown on the dashboard's Featured
 /// Dua row and on the full Featured Dua list (design `img_1.png` /

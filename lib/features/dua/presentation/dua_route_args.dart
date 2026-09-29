@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 
 /// Arguments for [RouteNames.duaReader] — which dua to show, and which
 /// featured group it belongs to (for the header's "Daily Life"-style

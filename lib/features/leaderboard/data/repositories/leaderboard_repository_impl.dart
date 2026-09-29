@@ -1,11 +1,11 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_board.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
-import 'package:islami_app_noorify/features/leaderboard/domain/repositories/leaderboard_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/data/datasources/leaderboard_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_board.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/entities/leaderboard_user_detail.dart';
+import 'package:tuhfatul_muslim/features/leaderboard/domain/repositories/leaderboard_repository.dart';
 
 class LeaderboardRepositoryImpl implements LeaderboardRepository {
   LeaderboardRepositoryImpl(this._remote);

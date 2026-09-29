@@ -1,17 +1,17 @@
 import 'package:dio/dio.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/network/dio_client.dart';
-import 'package:islami_app_noorify/core/services/api_constants.dart';
-import 'package:islami_app_noorify/features/auth/data/models/auth_user_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/forgot_password_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/login_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/login_response_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/register_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/resend_otp_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/reset_password_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/verify_otp_request_model.dart';
-import 'package:islami_app_noorify/features/auth/data/models/verify_otp_result_model.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/auth_user_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/forgot_password_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/login_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/login_response_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/register_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/resend_otp_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/reset_password_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/verify_otp_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/verify_otp_result_model.dart';
 
 /// Talks to the REST auth endpoints via Dio. Throws [ServerException] /
 /// [NetworkException] / [ParsingException]; never returns error states.

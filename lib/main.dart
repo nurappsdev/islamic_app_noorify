@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,14 +25,26 @@ import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'shared/services/firebase/firebase_service.dart';
+import 'shared/services/firebase/firebase_token_service.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await AppFirebaseService.initialize();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // Must come after Hive is open: FirebaseTokenService reads the auth box
+  // (via AuthLocalDataSourceImpl) as soon as its singleton is built.
   await HiveService.init();
+  if (kDebugMode) {
+    debugPrint('[FCM] token: ${await FirebaseTokenService.instance.getToken()}');
+  }
   // The access token can't be renewed: wipe the dead session and send the user
   // back to sign in.
   AuthRefreshInterceptor.onSessionExpired = () async {

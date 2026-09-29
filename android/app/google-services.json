@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104828246708",
+    "project_id": "tuhfatulmuslim-3bb03",
+    "storage_bucket": "tuhfatulmuslim-3bb03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104828246708:android:fbc1fcd03fc1693f8195e1",
+        "android_client_info": {
+          "package_name": "com.tuhfatulmuslim.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFbIH_uCTCfh6Zs_kgbFH2BZ7l97E-oAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

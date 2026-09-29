@@ -1,21 +1,21 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/ebook.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_category_page.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_detail_page.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_last_read.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_library_book.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan_draft.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_read_record.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_comparison.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_history.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_reading_progress.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_sub_category_page.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_last_read.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_read_record.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_comparison.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_history.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_progress.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_category_page.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
 
 class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   HadithLibraryRepositoryImpl(this._remote);

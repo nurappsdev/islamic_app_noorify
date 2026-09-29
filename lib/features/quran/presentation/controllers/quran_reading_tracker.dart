@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
-import 'package:islami_app_noorify/features/quran/domain/repositories/quran_reading_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
 
 /// Tunables of the Quran reading tracker.
 abstract final class QuranReadingTrackerConfig {

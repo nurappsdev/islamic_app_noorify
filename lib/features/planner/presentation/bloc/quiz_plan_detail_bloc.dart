@@ -1,14 +1,14 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/planner/domain/entities/quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/abandon_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/get_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/start_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/domain/usecases/update_quiz_plan.dart';
-import 'package:islami_app_noorify/features/planner/presentation/bloc/planner_state.dart';
-import 'package:islami_app_noorify/features/planner/presentation/quiz_plan_failure_message.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/entities/quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/abandon_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/get_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/start_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/domain/usecases/update_quiz_plan.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/bloc/planner_state.dart';
+import 'package:tuhfatul_muslim/features/planner/presentation/quiz_plan_failure_message.dart';
 
 enum QuizPlanDetailStatus { loading, success, failure }
 

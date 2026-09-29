@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
-import 'package:islami_app_noorify/features/amol_tracking/domain/repositories/amol_analytics_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_graph.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/repositories/amol_analytics_repository.dart';
 
 class AmolAnalyticsRepositoryImpl implements AmolAnalyticsRepository {
   AmolAnalyticsRepositoryImpl(this._remote);

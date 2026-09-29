@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_setting.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_setting.dart';
 
 class PrayerAlarmSettingModel extends PrayerAlarmSetting {
   const PrayerAlarmSettingModel({

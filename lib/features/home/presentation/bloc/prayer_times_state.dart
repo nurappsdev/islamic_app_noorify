@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 
 class PrayerTimesState {
   const PrayerTimesState({

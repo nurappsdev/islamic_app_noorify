@@ -1,7 +1,7 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/profile/data/models/badge_model.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/badge_entity.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/profile/data/models/badge_model.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/badge_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
 
 /// Data-layer representation of [ProfileEntity] that knows how to read the
 /// API JSON (`GET /user/me`'s `data` payload) and how to (de)serialize to a

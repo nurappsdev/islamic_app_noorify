@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_detail_screen.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_plan_model.dart';
-import 'package:islami_app_noorify/features/hadith/domain/entities/hadith_plan.dart';
-import 'package:islami_app_noorify/features/hadith/domain/repositories/hadith_library_repository.dart';
-import 'package:islami_app_noorify/features/hadith/domain/usecases/get_hadith_plans.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/bloc/hadith_plans/hadith_plans_bloc.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/screens/hadith_planner_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_edit_plan_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_plan_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/repositories/hadith_library_repository.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_plans.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_plans/hadith_plans_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_planner_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// The two plans of a real `GET /hadiths/plans` response, trimmed.
 final _realPlans = <Map<String, dynamic>>[

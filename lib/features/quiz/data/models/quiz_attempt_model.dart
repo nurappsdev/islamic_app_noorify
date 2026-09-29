@@ -1,8 +1,8 @@
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_category_model.dart';
-import 'package:islami_app_noorify/features/quiz/data/models/quiz_model.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_attempt.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_category_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/models/quiz_model.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
 /// The `POST /quizzes/attempts` body. Only what the user did is sent - the
 /// checked option keys and the time taken - never a score or an answer key.

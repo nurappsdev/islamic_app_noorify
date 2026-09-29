@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
 
 /// Data-layer representation of [FamilyMemberEntity] that knows how to read
 /// the API JSON (one item of `GET /user/family`'s `data` array).

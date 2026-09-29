@@ -1,17 +1,17 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:islami_app_noorify/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/presentation/screens/signin_screen.dart';
-import 'package:islami_app_noorify/features/auth/presentation/screens/signup_screen.dart';
-import 'package:islami_app_noorify/features/auth/presentation/screens/forgot_password_screen.dart';
-import 'package:islami_app_noorify/features/auth/presentation/screens/reset_password_screen.dart';
-import 'package:islami_app_noorify/features/profile/presentation/screens/change_password_screen.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/screens/signin_screen.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/screens/signup_screen.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Every piece of user-visible text on screen: text, hints and tooltips.
 List<String> visible(WidgetTester t) => [

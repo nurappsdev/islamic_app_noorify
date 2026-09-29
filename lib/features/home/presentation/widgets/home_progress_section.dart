@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/theme/app_palette.dart';
-import 'package:islami_app_noorify/core/theme/theme_colors.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
-import 'package:islami_app_noorify/features/home/domain/entities/pillar_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_calendar_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_shimmer.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/domain/qiblah_bearing.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
-import 'package:islami_app_noorify/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/pillar_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_calendar_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_shimmer.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/domain/qiblah_bearing.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/widgets/qiblah_compass_dial.dart';
+import 'package:tuhfatul_muslim/features/qiblah_compass/presentation/widgets/qiblah_heading_listener.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Fallback bearing (degrees clockwise from true north) shown before the
 /// dashboard API's `kiblahAngle` has loaded.

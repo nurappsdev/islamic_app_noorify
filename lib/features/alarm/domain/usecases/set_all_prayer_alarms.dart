@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/alarm/domain/entities/prayer_alarm_batch.dart';
-import 'package:islami_app_noorify/features/alarm/domain/repositories/alarm_repository.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_batch.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/repositories/alarm_repository.dart';
 
 class SetAllPrayerAlarms {
   const SetAllPrayerAlarms(this._repository);

@@ -1,12 +1,12 @@
 import 'package:dartz/dartz.dart';
 
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/auth_user.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/login_params.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/otp_verification_result.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/register_params.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/reset_password_params.dart';
-import 'package:islami_app_noorify/features/auth/domain/entities/verify_otp_params.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/login_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/reset_password_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/verify_otp_params.dart';
 
 /// Contract for account related REST operations.
 ///

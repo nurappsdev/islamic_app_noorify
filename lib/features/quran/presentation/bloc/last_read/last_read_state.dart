@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
 
 /// Where "Continue Reading" opens the reader.
 typedef QuranContinueTarget = ({int surahNo, int ayahNo, String surahName});

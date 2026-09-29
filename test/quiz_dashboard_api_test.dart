@@ -3,19 +3,19 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/errors/failures.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
-import 'package:islami_app_noorify/features/quiz/data/datasources/quiz_remote_data_source.dart';
-import 'package:islami_app_noorify/features/quiz/data/repositories/quiz_repository_impl.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/entities/quiz_enums.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_dashboard.dart';
-import 'package:islami_app_noorify/features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/quiz_failure_message.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/datasources/quiz_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/quiz/data/repositories/quiz_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/usecases/get_quiz_dashboard_comparison.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_failure_message.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// Answers by path; a route may give one body per page.
 class _StubAdapter implements HttpClientAdapter {

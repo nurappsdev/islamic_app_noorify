@@ -3,14 +3,14 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/errors/exceptions.dart';
-import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
-import 'package:islami_app_noorify/features/auth/data/datasources/auth_local_data_source.dart';
-import 'package:islami_app_noorify/features/quran/data/datasources/quran_playlist_remote_data_source.dart';
-import 'package:islami_app_noorify/features/quran/data/repositories/quran_playlist_repository_impl.dart';
-import 'package:islami_app_noorify/features/quran/domain/quran_playlist.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_playlist/quran_playlist_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_playlist_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_playlist_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_playlist.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_playlist/quran_playlist_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _StubAdapter implements HttpClientAdapter {
