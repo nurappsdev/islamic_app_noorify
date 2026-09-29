@@ -1,14 +1,20 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:islami_app_noorify/core/errors/failures.dart';
+import 'package:islami_app_noorify/core/localization/localized_failure_message.dart';
 import 'package:islami_app_noorify/core/theme/theme_colors.dart';
+import '../../data/repositories/quran_plan_repository_impl.dart';
 import '../../domain/quran_plan.dart';
+import '../../domain/repositories/quran_plan_repository.dart';
 import '../../domain/surah_summary.dart';
-import '../../data/services/quran_plan_store.dart';
 import '../quran_text.dart';
 import '../widgets/quran_surah_picker_sheet.dart';
 
 class CreateQuranPlanScreen extends StatefulWidget {
-  const CreateQuranPlanScreen({super.key});
+  const CreateQuranPlanScreen({super.key, this.repository});
+
+  final QuranPlanRepository? repository;
 
   @override
   State<CreateQuranPlanScreen> createState() => _CreateQuranPlanScreenState();
@@ -50,7 +56,11 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
     }
   }
 
+  bool _submitting = false;
+
   Future<void> _submit() async {
+    if (_submitting) return;
+
     final name = _nameController.text.trim();
     final daysText = _daysController.text.trim();
     final t = QuranText.read(context);
@@ -76,21 +86,49 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
       return;
     }
 
-    final plan = QuranPlan(
-      id: 'plan_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      days: days,
-      startSurah: _startSurah?.number ?? 1,
-      startSurahName: _startSurah?.name ?? 'Al-Fatiha',
-      endSurah: _endSurah?.number ?? 114,
-      endSurahName: _endSurah?.name ?? 'An-Nas',
-      createdAt: DateTime.now(),
+    final startNo = _startSurah?.number ?? 1;
+    final endNo = _endSurah?.number ?? 114;
+    final isWhole = startNo == 1 && endNo == 114;
+    final surahs = isWhole
+        ? const <int>[]
+        : [
+            for (int i = math.min(startNo, endNo);
+                i <= math.max(startNo, endNo);
+                i++)
+              i,
+          ];
+
+    setState(() => _submitting = true);
+
+    final repo = widget.repository ?? QuranPlanRepositoryImpl.shared;
+    final result = await repo.createPlan(
+      CreateQuranPlanRequest(
+        name: name,
+        targetDays: days,
+        wholeQuran: isWhole,
+        surahNumbers: surahs,
+      ),
     );
 
-    await QuranPlanStore.savePlan(plan);
-
     if (!mounted) return;
-    Navigator.of(context).pop(plan);
+    setState(() => _submitting = false);
+
+    result.fold(
+      (failure) {
+        final message = (failure is ServerFailure && failure.statusCode == 409)
+            ? t.quranPlanDuplicateName
+            : localizeFailureMessage(failure.message);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      },
+      (createdPlan) {
+        Navigator.of(context).pop(createdPlan);
+      },
+    );
   }
 
   @override
@@ -365,22 +403,32 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _submit,
+                  onPressed: _submitting ? null : _submit,
                   style: FilledButton.styleFrom(
                     backgroundColor: oliveColor,
+                    disabledBackgroundColor: oliveColor.withValues(alpha: 0.6),
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28.r),
                     ),
                   ),
-                  child: Text(
-                    t.create,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _submitting
+                      ? SizedBox(
+                          width: 22.r,
+                          height: 22.r,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          t.create,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ),

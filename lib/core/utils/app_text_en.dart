@@ -886,4 +886,9 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'calendarArabicInBangla': 'Arabic calendar in Bangla',
   // Quran filter chips
   'quranAllTypes': 'All Types',
+  'failureQuranPlanDuplicateName':
+      'You already have a Quran plan with this name.',
+  'failureQuranPlanLoad': 'Failed to load Quran plans.',
+  'failureQuranPlanCreate': 'Failed to create Quran plan.',
+  'failureQuranPlanUpdate': 'Failed to update Quran plan.',
 };

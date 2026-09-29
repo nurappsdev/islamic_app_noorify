@@ -15,8 +15,6 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_design.dart';
-import 'package:islami_app_noorify/core/utils/localized_text.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_format_helpers.dart';
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});

@@ -177,6 +177,47 @@ class QuranText {
   String get enterValidDays =>
       _t('Please enter valid completion days', 'সঠিক দিনের সংখ্যা লিখুন');
   String example(String value) => '${_t('Eg', 'যেমন')} : $value';
+  String get quranPlan => _t('Quran Plan', 'কুরআন প্ল্যান');
+  String get createQuranPlan =>
+      _t('Create Quran Plan', 'কুরআন প্ল্যান তৈরি করুন');
+  String get targetDays => _t('Target Days', 'লক্ষ্য দিন');
+  String get wholeQuran => _t('Whole Quran', 'সম্পূর্ণ কুরআন');
+  String get startDate => _t('Start Date', 'শুরুর তারিখ');
+  String get endDate => _t('End Date', 'শেষের তারিখ');
+  String get daysLeft => _t('Days Left', 'বাকি দিন');
+  String get day => _t('Day', 'দিন');
+  String get dailyTarget => _t('Daily Target', 'প্রতিদিনের লক্ষ্য');
+  String get ayahsCompleted => _t('Ayahs Completed', 'পঠিত আয়াত');
+  String get ayahsRemaining => _t('Ayahs Remaining', 'বাকি আয়াত');
+  String get progress => _t('Progress', 'অগ্রগতি');
+  String get onTrack => _t('On Track', 'সময়সূচি অনুযায়ী');
+  String get behindSchedule => _t('Behind Schedule', 'সময়সূচি থেকে পিছিয়ে');
+  String get aheadOfSchedule =>
+      _t('Ahead of Schedule', 'সময়সূচির চেয়ে এগিয়ে');
+  String get overdue => _t('Overdue', 'সময়সীমা অতিক্রম হয়েছে');
+  String get completedPlans => _t('Completed Plans', 'সম্পন্ন প্ল্যান');
+  String get activePlans => _t('Active Plans', 'চলমান প্ল্যান');
+  String get noActivePlans =>
+      _t('No Active Plans', 'কোনো চলমান প্ল্যান নেই');
+  String get noCompletedPlans =>
+      _t('No Completed Plans', 'কোনো সম্পন্ন প্ল্যান নেই');
+  String get planCreatedSuccessfully =>
+      _t('Plan created successfully!', 'প্ল্যান সফলভাবে তৈরি হয়েছে!');
+  String get planUpdatedSuccessfully =>
+      _t('Plan updated successfully!', 'প্ল্যান সফলভাবে আপডেট হয়েছে!');
+  String get quranPlanDuplicateName => _t(
+    'You already have a Quran plan with this name.',
+    'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।',
+  );
+  String get failedToLoadPlans =>
+      _t('Failed to load Quran plans.', 'কুরআন প্ল্যান লোড করা যায়নি।');
+  String get failedToCreatePlan =>
+      _t('Failed to create Quran plan.', 'কুরআন প্ল্যান তৈরি করা যায়নি।');
+  String get failedToUpdatePlan =>
+      _t('Failed to update Quran plan.', 'কুরআন প্ল্যান আপডেট করা যায়নি।');
+  String get todayRemaining => _t("Today's Remaining", 'আজকের বাকি');
+  String get markInProgress =>
+      _t('Mark In Progress', 'চলমান হিসেবে চিহ্নিত করুন');
 
   /// Names of the built-in plans, by id; [fallback] for the user's own.
   String presetPlanName(String id, String fallback) => !isBangla

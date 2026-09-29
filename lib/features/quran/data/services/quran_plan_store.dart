@@ -5,10 +5,11 @@ import '../../domain/quran_plan.dart';
 class QuranPlanStore {
   static const _plansKey = 'quran_saved_plans_v1';
 
-  static final List<QuranPlan> presetSearchPlans = [
+  static List<QuranPlan> get presetSearchPlans => [
     QuranPlan(
       id: 'preset_1_month',
       name: 'One month Quran',
+      targetDays: 30,
       days: 30,
       startSurah: 1,
       startSurahName: 'Al-Fatiha',
@@ -19,6 +20,7 @@ class QuranPlanStore {
     QuranPlan(
       id: 'preset_2_month',
       name: 'Two month Quran',
+      targetDays: 60,
       days: 60,
       startSurah: 1,
       startSurahName: 'Al-Fatiha',
@@ -29,6 +31,7 @@ class QuranPlanStore {
     QuranPlan(
       id: 'preset_3_month',
       name: 'Three month Quran',
+      targetDays: 90,
       days: 90,
       startSurah: 1,
       startSurahName: 'Al-Fatiha',
@@ -39,6 +42,7 @@ class QuranPlanStore {
     QuranPlan(
       id: 'preset_juz_amma',
       name: 'Juz Amma (30th Para)',
+      targetDays: 15,
       days: 15,
       startSurah: 78,
       startSurahName: 'An-Naba',
@@ -49,6 +53,7 @@ class QuranPlanStore {
     QuranPlan(
       id: 'preset_baqarah',
       name: 'Surah Al-Baqarah',
+      targetDays: 10,
       days: 10,
       startSurah: 2,
       startSurahName: 'Al-Baqarah',

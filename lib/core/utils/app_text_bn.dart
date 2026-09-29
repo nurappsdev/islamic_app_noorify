@@ -889,4 +889,9 @@ const Map<String, String> appTextBn = <String, String>{
   'calendarArabicInBangla': 'আরবি ক্যালেন্ডার বাংলায়',
   // Quran filter chips
   'quranAllTypes': 'সব ধরন',
+  'failureQuranPlanDuplicateName':
+      'এই নামে আপনার ইতোমধ্যে একটি কুরআন প্ল্যান রয়েছে।',
+  'failureQuranPlanLoad': 'কুরআন প্ল্যান লোড করা যায়নি।',
+  'failureQuranPlanCreate': 'কুরআন প্ল্যান তৈরি করা যায়নি।',
+  'failureQuranPlanUpdate': 'কুরআন প্ল্যান আপডেট করা যায়নি।',
 };

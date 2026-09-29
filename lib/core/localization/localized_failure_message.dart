@@ -52,6 +52,13 @@ String localizeFailureMessage(String raw) {
     'this translation is already built in': text.failureTranslationBuiltIn,
     'the e-book has no pdf file': text.failureEbookNoPdf,
     'download failed': text.failureDownloadFailed,
+    'you already have a plan with this name':
+        text.failureQuranPlanDuplicateName,
+    'you already have a quran plan with this name':
+        text.failureQuranPlanDuplicateName,
+    'failed to load quran plans': text.failureQuranPlanLoad,
+    'failed to create quran plan': text.failureQuranPlanCreate,
+    'failed to update quran plan': text.failureQuranPlanUpdate,
   };
   final match = known[key];
   if (match != null) return match;

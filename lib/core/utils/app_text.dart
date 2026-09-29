@@ -648,6 +648,10 @@ class AppText {
     required this.failureNoTranslationSurah,
     required this.failureEbookNoPdf,
     required this.failureDownloadFailed,
+    required this.failureQuranPlanDuplicateName,
+    required this.failureQuranPlanLoad,
+    required this.failureQuranPlanCreate,
+    required this.failureQuranPlanUpdate,
     required this.quranSurahBookmarked,
     required this.quranSurahBookmarkRemoved,
     required this.quranViewInAyat,
@@ -1510,6 +1514,10 @@ class AppText {
   final String failureNoTranslationSurah;
   final String failureEbookNoPdf;
   final String failureDownloadFailed;
+  final String failureQuranPlanDuplicateName;
+  final String failureQuranPlanLoad;
+  final String failureQuranPlanCreate;
+  final String failureQuranPlanUpdate;
   final String quranSurahBookmarked;
   final String quranSurahBookmarkRemoved;
   final String quranViewInAyat;
@@ -4063,6 +4071,26 @@ class AppText {
         map,
         'failureDownloadFailed',
         fallback?.failureDownloadFailed ?? '',
+      ),
+      failureQuranPlanDuplicateName: _read(
+        map,
+        'failureQuranPlanDuplicateName',
+        fallback?.failureQuranPlanDuplicateName ?? '',
+      ),
+      failureQuranPlanLoad: _read(
+        map,
+        'failureQuranPlanLoad',
+        fallback?.failureQuranPlanLoad ?? '',
+      ),
+      failureQuranPlanCreate: _read(
+        map,
+        'failureQuranPlanCreate',
+        fallback?.failureQuranPlanCreate ?? '',
+      ),
+      failureQuranPlanUpdate: _read(
+        map,
+        'failureQuranPlanUpdate',
+        fallback?.failureQuranPlanUpdate ?? '',
       ),
       quranSurahBookmarked: _read(
         map,
