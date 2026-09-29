@@ -12,6 +12,7 @@ import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderbo
 import 'package:islami_app_noorify/features/leaderboard/domain/entities/leaderboard_entry.dart';
 import 'package:islami_app_noorify/features/leaderboard/presentation/screens/leaderboard_user_detail_screen.dart';
 import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_avatar.dart';
+import 'package:islami_app_noorify/features/leaderboard/presentation/widgets/leaderboard_shimmer.dart';
 import 'package:islami_app_noorify/core/utils/localized_text.dart';
 
 class LeaderboardScreen extends StatefulWidget {
@@ -106,7 +107,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ),
                   SizedBox(height: 14.h),
                   if (_isLoading && _board == null)
-                    const _LeaderboardLoading()
+                    const LeaderboardLoadingShimmer()
                   else if (_errorMessage != null && _board == null)
                     _LeaderboardError(message: _errorMessage!, onRetry: _load)
                   else if (_board != null)
@@ -165,20 +166,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         _YourRankCard(position: board.myPosition!, appText: appText),
       ],
     ];
-  }
-}
-
-class _LeaderboardLoading extends StatelessWidget {
-  const _LeaderboardLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 80.h),
-      child: const Center(
-        child: CircularProgressIndicator(color: AppColor.primary),
-      ),
-    );
   }
 }
 
