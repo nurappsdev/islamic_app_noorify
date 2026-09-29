@@ -143,8 +143,8 @@ void main() {
         expect(
           find.text(
             language == AppLanguage.bangla
-                ? 'মোট কুরআন পাঠের সময়'
-                : 'Total Quran Reading time',
+                ? 'মোট কুরআন পাঠের সময় (গত ৭ দিন)'
+                : 'Total Quran Reading time (Last 7 days)',
           ),
           findsOneWidget,
         );

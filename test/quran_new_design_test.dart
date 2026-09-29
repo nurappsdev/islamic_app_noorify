@@ -111,6 +111,40 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+  testWidgets('Back on a root Quran home leaves to the app Home', (
+    tester,
+  ) async {
+    // The Home bottom bar replaces Home with Quran, so nothing is below it.
+    var exits = 0;
+    await tester.pumpWidget(
+      BlocProvider(
+        create: (_) =>
+            LanguageBloc()..add(const UpdateLanguage(AppLanguage.english)),
+        child: ScreenUtilInit(
+          designSize: const Size(375, 812),
+          builder: (_, child) => MaterialApp(
+            home: QuranTabShell(
+              onExit: () => exits++,
+              child: const Scaffold(body: Text('Quran home')),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('quran-nav-saved')));
+    await tester.pumpAndSettle();
+
+    // The first back returns to the Quran home tab, the next leaves Quran.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(exits, 0);
+    expect(find.text('Quran home'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(exits, 1);
+  });
+
   testWidgets('Quran bar switches sections in place and preserves its route', (
     tester,
   ) async {

@@ -348,6 +348,23 @@ class QuranText {
 
   String get totalReadingTime =>
       _t('Total Quran Reading time', 'মোট কুরআন পাঠের সময়');
+
+  /// [totalReadingTime] with the window it covers, so it is not mistaken for
+  /// today's figure.
+  String totalReadingTimeFor({required int days, DateTime? month}) {
+    final window = month != null
+        ? '${monthName(month.month)} ${n(month.year)}'
+        : days == 1
+        ? _t('Today', 'আজ')
+        : _t('Last ${n(days)} days', 'গত ${n(days)} দিন');
+    return '$totalReadingTime ($window)';
+  }
+
+  /// A reading time in the same form as the daily figures: minutes to one
+  /// decimal under an hour, hours and minutes above.
+  String readingDuration(int seconds) => seconds < 3600
+      ? minutes((seconds / 6).round() / 10)
+      : duration(Duration(seconds: seconds));
   String get mostReadSurah => _t('Most Reading Sura', 'সর্বাধিক পঠিত সূরা');
   String get todaysValue => _t('Todays Value In Graph', 'আজকের পাঠ');
 

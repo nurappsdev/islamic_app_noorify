@@ -19,33 +19,7 @@ class QuranDashboardHeader extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20.r),
-                onTap: () {
-                  if (onBack != null) {
-                    onBack!();
-                  } else {
-                    Navigator.maybePop(context);
-                  }
-                },
-                child: Container(
-                  width: 38.r,
-                  height: 38.r,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFDEE99D),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.chevron_left_rounded,
-                    size: 24,
-                    color: Color(0xFF282828),
-                  ),
-                ),
-              ),
-            ),
+            child: QuranBackButton(onBack: onBack),
           ),
           // Clear of the back button on both sides, so long titles stay
           // centred without running under it.
@@ -65,5 +39,40 @@ class QuranDashboardHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// The Quran module's round back button. Pops the route unless [onBack] is
+/// given.
+class QuranBackButton extends StatelessWidget {
+  const QuranBackButton({super.key, this.onBack, this.tooltip});
+
+  final VoidCallback? onBack;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final button = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20.r),
+        onTap: onBack ?? () => Navigator.maybePop(context),
+        child: Container(
+          width: 38.r,
+          height: 38.r,
+          decoration: const BoxDecoration(
+            color: Color(0xFFDEE99D),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.chevron_left_rounded,
+            size: 24,
+            color: Color(0xFF282828),
+          ),
+        ),
+      ),
+    );
+    return tooltip == null ? button : Tooltip(message: tooltip, child: button);
   }
 }

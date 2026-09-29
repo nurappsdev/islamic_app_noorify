@@ -157,19 +157,27 @@ class QuranPlaylistItem {
   };
 
   factory QuranPlaylistItem.fromJson(Map<String, dynamic> json) {
+    // The server sends `start`/`end` as `{surah, ayah}`; older payloads as ints.
+    int? refPart(Object? ref, String key) => ref is Map
+        ? (ref[key] as num?)?.toInt()
+        : (key == 'ayah' ? (ref as num?)?.toInt() : null);
+    final startAyahRef = refPart(json['start'], 'ayah');
+    final endAyahRef = refPart(json['end'], 'ayah');
+
     final sNo =
         (json['surahNumber'] as num?)?.toInt() ??
         (json['surahNo'] as num?)?.toInt() ??
+        refPart(json['start'], 'surah') ??
         1;
     final fAyah =
         (json['fromAyah'] as num?)?.toInt() ??
         (json['startAyah'] as num?)?.toInt() ??
-        (json['start'] as num?)?.toInt() ??
+        startAyahRef ??
         1;
     final tAyah =
         (json['toAyah'] as num?)?.toInt() ??
         (json['endAyah'] as num?)?.toInt() ??
-        (json['end'] as num?)?.toInt() ??
+        endAyahRef ??
         (json['totalAyahs'] as num?)?.toInt() ??
         (json['totalAyah'] as num?)?.toInt() ??
         1;
@@ -212,8 +220,8 @@ class QuranPlaylistItem {
       percentage: pct,
       isCompleted:
           json['isCompleted'] as bool? ?? (tAyahs > 0 && rAyahs >= tAyahs),
-      start: (json['start'] as num?)?.toInt(),
-      end: (json['end'] as num?)?.toInt(),
+      start: startAyahRef,
+      end: endAyahRef,
     );
   }
 }
@@ -238,9 +246,15 @@ class QuranPlaylistCounts {
 
   factory QuranPlaylistCounts.fromJson(Map<String, dynamic> json) =>
       QuranPlaylistCounts(
-        totalItems: (json['totalItems'] as num?)?.toInt() ?? 0,
+        totalItems:
+            (json['totalItems'] as num?)?.toInt() ??
+            (json['itemCount'] as num?)?.toInt() ??
+            0,
         totalAyahs: (json['totalAyahs'] as num?)?.toInt() ?? 0,
-        completedAyahs: (json['completedAyahs'] as num?)?.toInt() ?? 0,
+        completedAyahs:
+            (json['completedAyahs'] as num?)?.toInt() ??
+            (json['readAyahs'] as num?)?.toInt() ??
+            0,
         remainingAyahs: (json['remainingAyahs'] as num?)?.toInt() ?? 0,
         percentage: (json['percentage'] as num?)?.toDouble() ?? 0.0,
         isCompleted: json['isCompleted'] as bool? ?? false,
@@ -556,21 +570,28 @@ class PlaylistItemInput {
   final int? paraNumber;
 
   Map<String, dynamic> toJson() => {
-    'type': type,
     if (surahNumber != null) 'surahNumber': surahNumber,
     if (fromAyah != null) 'fromAyah': fromAyah,
     if (toAyah != null) 'toAyah': toAyah,
     if (paraNumber != null) 'paraNumber': paraNumber,
   };
 
-  factory PlaylistItemInput.fromPlaylistItem(QuranPlaylistItem item) =>
-      PlaylistItemInput(
-        type: item.type,
+  /// The server takes exactly one of: `{paraNumber}`, `{surahNumber}` or
+  /// `{surahNumber, fromAyah, toAyah}`.
+  factory PlaylistItemInput.fromPlaylistItem(QuranPlaylistItem item) {
+    if (item.type == 'para' || item.paraNumber != null) {
+      return PlaylistItemInput(type: 'para', paraNumber: item.paraNumber ?? 1);
+    }
+    if (item.type == 'ayahs') {
+      return PlaylistItemInput(
+        type: 'ayahs',
         surahNumber: item.surahNumber,
         fromAyah: item.fromAyah,
         toAyah: item.toAyah,
-        paraNumber: item.paraNumber,
       );
+    }
+    return PlaylistItemInput(surahNumber: item.surahNumber);
+  }
 }
 
 /// Request body for `POST /quran/playlists`.
@@ -630,12 +651,29 @@ class QuranPlaylistAyahText {
   final String english;
   final String bangla;
 
-  factory QuranPlaylistAyahText.fromJson(Map<String, dynamic> json) =>
-      QuranPlaylistAyahText(
-        arabic: cleanQuranArabic(json['arabic'] as String? ?? ''),
-        english: json['english'] as String? ?? '',
-        bangla: json['bangla'] as String? ?? '',
-      );
+  factory QuranPlaylistAyahText.fromJson(Map<String, dynamic> json) {
+    String translation(String languageCode) {
+      final list = json['translations'];
+      if (list is! List) return '';
+      for (final t in list.whereType<Map>()) {
+        if (t['languageCode'] == languageCode) {
+          return (t['textPlain'] ?? t['text'])?.toString() ?? '';
+        }
+      }
+      return '';
+    }
+
+    return QuranPlaylistAyahText(
+      arabic: cleanQuranArabic(
+        json['arabic'] as String? ??
+            json['textArabic'] as String? ??
+            json['textIndopak'] as String? ??
+            '',
+      ),
+      english: json['english'] as String? ?? translation('en'),
+      bangla: json['bangla'] as String? ?? translation('bn'),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'arabic': arabic,

@@ -15,6 +15,7 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_design.dart';
+import '../widgets/dashboard/quran_dashboard_header.dart' show QuranBackButton;
 
 class SurahListScreen extends StatefulWidget {
   const SurahListScreen({super.key});
@@ -87,6 +88,7 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
     final text = AppText.of(context);
     final t = QuranText.of(context);
     return QuranTabShell(
+      onExit: () => _goToGlobalHome(context),
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
         body: SafeArea(
@@ -103,20 +105,9 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: const Color(0xffe5ece5),
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              iconSize: 18,
-                              tooltip: text.home,
-                              onPressed: () => _goToGlobalHome(context),
-                              icon: const Icon(
-                                Icons.arrow_back_ios_new_rounded,
-                                color: Color(0xff385c46),
-                                size: 16,
-                              ),
-                            ),
+                          QuranBackButton(
+                            tooltip: text.home,
+                            onBack: () => _goToGlobalHome(context),
                           ),
                           const SizedBox(width: 8),
                           Flexible(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
@@ -257,7 +258,9 @@ class QuranPlaylistRepositoryImpl implements QuranPlaylistRepository {
       return Left(NetworkFailure(e.message));
     } on ParsingException catch (e) {
       return Left(ParsingFailure(e.message));
-    } catch (_) {
+    } catch (e, stack) {
+      // Usually a response that no longer matches the model; keep it visible.
+      debugPrint('QuranPlaylistRepository: $e\n$stack');
       return const Left(UnknownFailure());
     }
   }

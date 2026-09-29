@@ -242,12 +242,16 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
 
                       // 4. Summary Card 1: reading time over the period
                       QuranTotalReadingTimeCard(
-                        readingTime: t.duration(
-                          Duration(
-                            seconds: state.history?.totals.totalSeconds ?? 0,
-                          ),
+                        readingTime: t.readingDuration(
+                          state.history?.totals.totalSeconds ?? 0,
                         ),
-                        label: t.totalReadingTime,
+                        label: t.totalReadingTimeFor(
+                          days: state.history?.days.length ??
+                              kQuranReadingHistoryDays,
+                          month: state.period == QuranDashboardPeriod.monthly
+                              ? state.month
+                              : null,
+                        ),
                       ),
 
                       SizedBox(height: 16.h),

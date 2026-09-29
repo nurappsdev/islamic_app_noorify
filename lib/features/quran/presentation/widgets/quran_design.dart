@@ -157,8 +157,13 @@ class _NumberStar extends CustomPainter {
 
 /// Owns tab content and keeps the Quran subtree and navigation bar mounted.
 class QuranTabShell extends StatefulWidget {
-  const QuranTabShell({super.key, required this.child});
+  const QuranTabShell({super.key, required this.child, this.onExit});
   final Widget child;
+
+  /// Called for a back from the home tab when there is no route below to
+  /// return to (e.g. Quran replaced the app's Home), instead of closing the
+  /// app.
+  final VoidCallback? onExit;
 
   @override
   State<QuranTabShell> createState() => _QuranTabShellState();
@@ -176,10 +181,16 @@ class _QuranTabShellState extends State<QuranTabShell> {
   Widget build(BuildContext context) {
     final text = AppText.of(context);
     final sections = ['home', 'learn', 'saved', 'plan', 'dashboard'];
+    final hasRouteBelow = ModalRoute.of(context)?.canPop ?? false;
     return PopScope(
-      canPop: _selected == 'home',
+      canPop: _selected == 'home' && (hasRouteBelow || widget.onExit == null),
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) _select('home');
+        if (didPop) return;
+        if (_selected != 'home') {
+          _select('home');
+        } else {
+          widget.onExit?.call();
+        }
       },
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
