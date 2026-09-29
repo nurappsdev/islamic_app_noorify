@@ -1,7 +1,10 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+
+import 'quran_reading_layout.dart' show QuranReadingInsets;
 
 /// The ornaments stay still. Both vertical scrolling and the page-turn
 /// animation are clipped to the interior rectangle, below the frame artwork.
@@ -44,6 +47,7 @@ const _artInset = 4.0; // left/right offset of the artwork
 const _headerTop = 8.0;
 const _footerBottom = 16.0;
 const _gap = 6.0;
+const ValueListenable<double> _noInset = AlwaysStoppedAnimation(0);
 
 class _QuranPageViewportState extends State<QuranPageViewport> {
   bool _forward = true;
@@ -220,10 +224,16 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                   ),
                 ),
               ),
-              Positioned(
-                bottom: 4,
-                left: 0,
-                right: 0,
+              // Kept clear of the reader's floating player while it shows.
+              ValueListenableBuilder<double>(
+                valueListenable:
+                    QuranReadingInsets.bottomOf(context) ?? _noInset,
+                builder: (context, cover, footer) => Positioned(
+                  bottom: math.max(4.0, cover + 4),
+                  left: 0,
+                  right: 0,
+                  child: footer!,
+                ),
                 child: Center(child: widget.footer),
               ),
             ],

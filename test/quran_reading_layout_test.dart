@@ -51,7 +51,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('idle controls collapse, preserve player, and reveal on swipe', (
+  testWidgets('idle controls hide, preserve player, and reveal on swipe', (
     tester,
   ) async {
     var next = 0;
@@ -72,32 +72,43 @@ void main() {
       ),
     );
     final page = find.byType(QuranPageViewport);
-    final initialHeight = tester.getSize(page).height;
+    // The controls float over the page: it never changes size or moves.
+    final pageRect = tester.getRect(page);
+    final textTop = tester.getTopLeft(find.text('Ayahs')).dy;
+    void expectPageFixed() {
+      expect(tester.getRect(page), pageRect);
+      expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
+    }
+
     final playerElement = tester.element(find.text('Player'));
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(tester.getSize(page).height, initialHeight + 180);
+    expectPageFixed();
     expect(tester.element(find.text('Player')), same(playerElement));
     expect(find.text('Player').hitTestable(), findsNothing);
     // Pages turn like an Arabic book: a right swipe goes forward.
     await tester.drag(page, const Offset(150, 0));
     await tester.pumpAndSettle();
     expect(next, 1);
-    expect(tester.getSize(page).height, initialHeight);
+    expectPageFixed();
     expect(find.text('Player').hitTestable(), findsOneWidget);
+    expect(find.text('Filters and timer').hitTestable(), findsOneWidget);
     // Holding a finger on the page must not start another idle timeout.
     final gesture = await tester.startGesture(tester.getCenter(page));
     await tester.pump(const Duration(seconds: 6));
-    expect(tester.getSize(page).height, initialHeight);
+    expect(find.text('Player').hitTestable(), findsOneWidget);
     await gesture.up();
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
-    expect(tester.getSize(page).height, initialHeight + 180);
+    expect(find.text('Player').hitTestable(), findsNothing);
+    expect(find.text('Filters and timer').hitTestable(), findsNothing);
+    expectPageFixed();
     // Vertical scrolling reveals controls without triggering a page turn.
     await tester.drag(page, const Offset(0, -150));
     await tester.pumpAndSettle();
     expect(next, 1);
-    expect(tester.getSize(page).height, initialHeight);
+    expect(find.text('Player').hitTestable(), findsOneWidget);
+    expect(find.text('Filters and timer').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
@@ -132,16 +143,22 @@ void main() {
     expect(shown('Header'), isFalse);
     expect(shown('Player'), isFalse);
 
+    // Scroll the page a little: showing controls must not move the text.
+    await tester.drag(find.byType(QuranPageViewport), const Offset(0, -120));
+    await idle();
+    final textTop = tester.getTopLeft(find.text('Ayahs')).dy;
     await tester.tapAt(Offset(page.center.dx, page.top + page.height * .3));
     await tester.pumpAndSettle();
     expect(shown('Header'), isTrue);
     expect(shown('Player'), isFalse);
+    expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
 
     await idle();
     await tester.tapAt(Offset(page.center.dx, page.top + page.height * .7));
     await tester.pumpAndSettle();
     expect(shown('Header'), isFalse);
     expect(shown('Player'), isTrue);
+    expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
 
     // A finger resting (with a little jitter) stays a one-sided reveal.
     await idle();

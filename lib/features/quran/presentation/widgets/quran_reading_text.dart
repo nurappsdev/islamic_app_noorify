@@ -15,11 +15,11 @@ const kAyahHoldDuration = Duration(milliseconds: 800);
 
 /// A hold on one ayah: [onPress] as the finger lands, [onRelease] when it
 /// lifts or the press turns into a scroll, [onHold] once the hold completes.
-LongPressGestureRecognizer _holdRecognizer({
+_AyahHoldRecognizer _holdRecognizer({
   required VoidCallback onHold,
   required VoidCallback onPress,
   required VoidCallback onRelease,
-}) => LongPressGestureRecognizer(duration: kAyahHoldDuration)
+}) => _AyahHoldRecognizer(onRejected: onRelease)
   ..onLongPressDown = ((_) => onPress())
   ..onLongPressCancel = onRelease
   ..onLongPressEnd = ((_) => onRelease())
@@ -28,29 +28,75 @@ LongPressGestureRecognizer _holdRecognizer({
     onHold();
   };
 
-/// The tint a held ayah fills with over [kAyahHoldDuration]: visible from
-/// the moment the finger lands, and clearly stronger than the highlight of
-/// the ayah being played, on light and dark pages alike.
-Color _holdTint(BuildContext context, double progress) => quranOlive.withValues(
-  alpha: .18 + .27 * Curves.easeOut.transform(progress),
-);
+/// A long press that also reports losing the arena. When a scroll claims the
+/// drag first, [LongPressGestureRecognizer] goes quiet without calling
+/// `onLongPressCancel`, which would leave the press tint on screen.
+class _AyahHoldRecognizer extends LongPressGestureRecognizer {
+  _AyahHoldRecognizer({required this.onRejected})
+    : super(duration: kAyahHoldDuration);
+  final VoidCallback onRejected;
 
-/// Drives the hold feedback: runs forward while pressed, fades back out on
-/// release.
+  @override
+  void rejectGesture(int pointer) {
+    final pending = state == GestureRecognizerState.possible;
+    super.rejectGesture(pointer);
+    if (pending) onRejected();
+  }
+}
+
+/// The ayah currently playing: the existing subtle page tint.
+Color _playingTint(BuildContext context) =>
+    context.surfaceColor(quranPale).withValues(alpha: .7);
+
+/// Drives the press feedback. [touch] fades the olive press tint in as the
+/// finger lands and back out on release; [hold] deepens it towards
+/// [kAyahHoldDuration]. The tint blends over [base] (the playing tint, or
+/// none), so the press shows on a playing ayah too and release returns to it
+/// smoothly.
 mixin _HoldFeedback<T extends StatefulWidget>
-    on State<T>, SingleTickerProviderStateMixin<T> {
+    on State<T>, TickerProviderStateMixin<T> {
   late final hold = AnimationController(
     vsync: this,
     duration: kAyahHoldDuration,
-    reverseDuration: const Duration(milliseconds: 180),
   );
+  late final touch = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+    reverseDuration: const Duration(milliseconds: 200),
+  );
+  late final Listenable feedback = Listenable.merge([hold, touch]);
 
-  void startHold() => hold.forward(from: 0);
-  void endHold() => hold.reverse();
+  void startHold() {
+    touch.forward();
+    hold.forward(from: 0);
+  }
+
+  void endHold() {
+    hold.stop();
+    touch.reverse();
+  }
+
+  /// How deep the press is, 0-1: fades with [touch] so release is smooth.
+  double get pressDepth => Curves.easeOut.transform(hold.value) * touch.value;
+
+  /// [base] with the olive press tint over it: faint on touch, deeper near
+  /// the threshold, never so strong the Arabic stops reading well.
+  Color? pressTint(Color? base) {
+    if (touch.value == 0) return base;
+    final pressed = quranOlive.withValues(
+      alpha: .16 + .22 * Curves.easeOut.transform(hold.value),
+    );
+    return Color.lerp(
+      base ?? quranOlive.withValues(alpha: 0),
+      pressed,
+      touch.value,
+    );
+  }
 
   @override
   void dispose() {
     hold.dispose();
+    touch.dispose();
     super.dispose();
   }
 }
@@ -67,26 +113,28 @@ class QuranAyahHold extends StatefulWidget {
 }
 
 class _QuranAyahHoldState extends State<QuranAyahHold>
-    with SingleTickerProviderStateMixin, _HoldFeedback {
+    with TickerProviderStateMixin, _HoldFeedback {
   @override
   Widget build(BuildContext context) => RawGestureDetector(
     behavior: HitTestBehavior.opaque,
     gestures: {
-      LongPressGestureRecognizer:
-          GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+      _AyahHoldRecognizer:
+          GestureRecognizerFactoryWithHandlers<_AyahHoldRecognizer>(
             () => _holdRecognizer(
               onHold: () => widget.onHold(),
               onPress: startHold,
               onRelease: endHold,
             ),
-            (_) {},
+            // The platform's touch slop, the same one scrolling uses.
+            (recognizer) => recognizer.gestureSettings =
+                MediaQuery.maybeGestureSettingsOf(context),
           ),
     },
     child: AnimatedBuilder(
-      animation: hold,
+      animation: feedback,
       builder: (context, child) => DecoratedBox(
         decoration: BoxDecoration(
-          color: hold.value == 0 ? null : _holdTint(context, hold.value),
+          color: pressTint(null),
           borderRadius: BorderRadius.circular(12),
         ),
         child: child,
@@ -117,25 +165,33 @@ class QuranReadingText extends StatefulWidget {
 }
 
 class _QuranReadingTextState extends State<QuranReadingText>
-    with SingleTickerProviderStateMixin, _HoldFeedback {
+    with TickerProviderStateMixin, _HoldFeedback {
   final _textKey = GlobalKey();
-  final _recognizers = <LongPressGestureRecognizer>[];
+  final _recognizers = <_AyahHoldRecognizer>[];
 
   /// The ayah being pressed, shown with the hold tint.
   int? _pressed;
 
-  LongPressGestureRecognizer _recognizerFor(QuranAyah ayah) => _holdRecognizer(
-    onHold: () => widget.onHold?.call(ayah),
+  // Reads the ayah at hold time, so a re-emitted list with the same ayahs
+  // keeps its recognizers and a press in progress is not dropped.
+  _AyahHoldRecognizer _recognizerFor(int index) => _holdRecognizer(
+    onHold: () => widget.onHold?.call(widget.ayahs[index]),
     onPress: () {
-      setState(() => _pressed = ayah.ayahNumber);
+      setState(() => _pressed = widget.ayahs[index].ayahNumber);
       startHold();
     },
     onRelease: endHold,
-  );
+  )..gestureSettings = MediaQuery.maybeGestureSettingsOf(context);
+
   @override
-  void initState() {
-    super.initState();
-    _bind();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The platform's touch slop, the same one scrolling uses.
+    final settings = MediaQuery.maybeGestureSettingsOf(context);
+    if (_recognizers.isEmpty) _bind();
+    for (final recognizer in _recognizers) {
+      recognizer.gestureSettings = settings;
+    }
   }
 
   void _bind() {
@@ -144,15 +200,22 @@ class _QuranReadingTextState extends State<QuranReadingText>
     }
     _recognizers.clear();
     if (widget.onHold == null) return;
-    for (final ayah in widget.ayahs) {
-      _recognizers.add(_recognizerFor(ayah));
+    for (var i = 0; i < widget.ayahs.length; i++) {
+      _recognizers.add(_recognizerFor(i));
     }
   }
+
+  static bool _sameAyahs(List<QuranAyah> a, List<QuranAyah> b) =>
+      identical(a, b) ||
+      (a.length == b.length &&
+          [
+            for (var i = 0; i < a.length; i++) i,
+          ].every((i) => a[i].verseKey == b[i].verseKey));
 
   @override
   void didUpdateWidget(QuranReadingText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.ayahs != widget.ayahs ||
+    if (!_sameAyahs(oldWidget.ayahs, widget.ayahs) ||
         (oldWidget.onHold == null) != (widget.onHold == null)) {
       _bind();
     }
@@ -209,12 +272,19 @@ class _QuranReadingTextState extends State<QuranReadingText>
   }
 
   @override
-  Widget build(BuildContext context) =>
-      AnimatedBuilder(animation: hold, builder: (context, _) => _text(context));
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: feedback,
+    builder: (context, _) => _text(context),
+  );
 
   Widget _text(BuildContext context) {
-    // How far the pressed ayah's hold has come, 0 when nothing is pressed.
-    double held(QuranAyah a) => _pressed == a.ayahNumber ? hold.value : 0;
+    bool pressed(QuranAyah a) => _pressed == a.ayahNumber;
+    // The playing ayah keeps its tint; a press shows over it, taking priority.
+    Color? tint(QuranAyah a) {
+      final base = widget.active == a.ayahNumber ? _playingTint(context) : null;
+      return pressed(a) ? pressTint(base) : base;
+    }
+
     final span = TextSpan(
       style: widget.font.apply(
         TextStyle(
@@ -228,27 +298,22 @@ class _QuranReadingTextState extends State<QuranReadingText>
           TextSpan(
             text: a.textArabic,
             recognizer: widget.onHold == null ? null : _recognizers[i],
-            style: TextStyle(
-              backgroundColor: held(a) > 0
-                  ? _holdTint(context, held(a))
-                  : widget.active == a.ayahNumber
-                  ? context.surfaceColor(quranPale).withValues(alpha: .7)
-                  : null,
-            ),
+            style: TextStyle(backgroundColor: tint(a)),
           ),
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: RawGestureDetector(
               gestures: {
                 if (widget.onHold != null)
-                  LongPressGestureRecognizer:
-                      GestureRecognizerFactoryWithHandlers<
-                        LongPressGestureRecognizer
-                      >(() => _recognizerFor(a), (_) {}),
+                  _AyahHoldRecognizer:
+                      GestureRecognizerFactoryWithHandlers<_AyahHoldRecognizer>(
+                        () => _recognizerFor(i),
+                        (_) {},
+                      ),
               },
               child: Transform.scale(
                 // The marker swells slightly as the hold builds.
-                scale: 1 + .12 * Curves.easeOut.transform(held(a)),
+                scale: 1 + .12 * (pressed(a) ? pressDepth : 0),
                 child: QuranAyahMarker(
                   key: ValueKey('ayah-marker-${a.verseKey}'),
                   number: a.ayahNumber,
