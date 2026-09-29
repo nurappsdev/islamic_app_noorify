@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/notifications/domain/entities/notification_entity.dart';
 import 'package:tuhfatul_muslim/features/notifications/presentation/bloc/notification_bloc.dart';
 import 'package:tuhfatul_muslim/features/notifications/presentation/screens/notification_detail_screen.dart';
 import 'package:tuhfatul_muslim/features/notifications/presentation/widgets/notification_card.dart';
@@ -49,9 +50,9 @@ class NotificationListScreen extends StatelessWidget {
       ),
       body: BlocConsumer<NotificationBloc, NotificationState>(
         listenWhen: (previous, current) =>
-            previous.markReadFailureTick != current.markReadFailureTick,
+            previous.markReadResultTick != current.markReadResultTick,
         listener: (context, state) {
-          final failure = state.markReadFailure;
+          final failure = state.markReadResultFailure;
           if (failure == null) return;
           ScaffoldMessenger.of(
             context,
@@ -92,6 +93,46 @@ class _NotificationList extends StatelessWidget {
     final done = bloc.stream.firstWhere((s) => s.refreshTick != startTick);
     bloc.add(const RefreshNotifications());
     return done;
+  }
+
+  void _openDetail(BuildContext context, NotificationEntity notification) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotificationDetailScreen(
+          notificationId: notification.id,
+          notification: notification,
+        ),
+      ),
+    );
+  }
+
+  /// Already read: opens the detail screen directly, no API call. Unread:
+  /// marks it read first and only opens the detail screen once that
+  /// succeeds - a failed mark-read leaves the item unread and stays on the
+  /// list (the [BlocConsumer] listener above surfaces the failure).
+  Future<void> _onTapNotification(
+    BuildContext context,
+    NotificationEntity item,
+  ) async {
+    if (item.isRead) {
+      _openDetail(context, item);
+      return;
+    }
+    final bloc = context.read<NotificationBloc>();
+    // Subscribe before dispatching so this id's completion can't be missed.
+    final done = bloc.stream.firstWhere(
+      (s) =>
+          s.markReadResultTick != state.markReadResultTick &&
+          s.markReadResultId == item.id,
+    );
+    bloc.add(MarkNotificationAsRead(item.id));
+    final result = await done;
+    if (!context.mounted || result.markReadResultFailure != null) return;
+    final fresh = result.notifications.firstWhere(
+      (n) => n.id == item.id,
+      orElse: () => item,
+    );
+    _openDetail(context, fresh);
   }
 
   @override
@@ -137,22 +178,7 @@ class _NotificationList extends StatelessWidget {
             return NotificationCard(
               notification: item,
               isMarkingRead: state.markingReadId == item.id,
-              onTap: () {
-                if (item.isRead) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => NotificationDetailScreen(
-                        notificationId: item.id,
-                        notification: item,
-                      ),
-                    ),
-                  );
-                  return;
-                }
-                context.read<NotificationBloc>().add(
-                  MarkNotificationAsRead(item.id),
-                );
-              },
+              onTap: () => _onTapNotification(context, item),
             );
           },
         ),

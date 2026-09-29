@@ -16,7 +16,7 @@ abstract interface class NotificationRemoteDataSource {
     required bool unreadOnly,
   });
 
-  /// `POST /notifications/{notificationId}/read`.
+  /// `PATCH /notifications/{notificationId}/read`.
   Future<void> markAsRead(String notificationId);
 }
 
@@ -77,7 +77,7 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<void> markAsRead(String notificationId) async {
     final Response<dynamic> response;
     try {
-      response = await _dio.post<dynamic>(
+      response = await _dio.patch<dynamic>(
         ApiConstants.notificationReadEndPoint(notificationId),
         options: Options(headers: _authHeaders()),
       );

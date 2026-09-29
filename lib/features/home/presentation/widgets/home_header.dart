@@ -124,7 +124,7 @@ class HomeHeader extends StatelessWidget {
                         Navigator.of(context).pushNamed(RouteNames.notifications),
                     padding: EdgeInsets.zero,
                     style: IconButton.styleFrom(
-                      backgroundColor: context.surfaceColor(palette.tint),
+                      backgroundColor: Colors.transparent,
                       foregroundColor: AppColor.primary,
                     ),
                     icon: Icon(Icons.notifications_none, size: 20.sp),

@@ -5,10 +5,11 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/notifications/domain/entities/notification_entity.dart';
 
-/// Placeholder detail screen. [NotificationListScreen] only opens this for an
-/// already-read item — tapping an unread one instead dispatches
-/// `MarkNotificationAsRead` and marks it read in place, without navigating
-/// here. [notification] therefore always arrives with `isRead == true`.
+/// Placeholder detail screen. [NotificationListScreen] opens this once
+/// [notification] is known to be read: directly for an already-read item, or
+/// for a previously-unread one only after `MarkNotificationAsRead` succeeds
+/// (marking it read in place first). [notification] therefore always arrives
+/// with `isRead == true`.
 ///
 /// TODO(future): the actual detail content/layout for this screen.
 class NotificationDetailScreen extends StatelessWidget {

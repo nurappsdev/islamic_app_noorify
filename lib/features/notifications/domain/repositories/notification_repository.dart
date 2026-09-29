@@ -13,7 +13,7 @@ abstract interface class NotificationRepository {
     bool unreadOnly,
   });
 
-  /// `POST /notifications/{notificationId}/read`.
+  /// `PATCH /notifications/{notificationId}/read`.
   Future<Either<Failure, Unit>> markNotificationAsRead({
     required String notificationId,
   });

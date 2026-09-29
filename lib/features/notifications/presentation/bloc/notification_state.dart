@@ -19,8 +19,9 @@ class NotificationState {
     this.failure,
     this.refreshTick = 0,
     this.markingReadId,
-    this.markReadFailure,
-    this.markReadFailureTick = 0,
+    this.markReadResultId,
+    this.markReadResultFailure,
+    this.markReadResultTick = 0,
   });
 
   final NotificationStatus status;
@@ -44,12 +45,17 @@ class NotificationState {
   /// its unread dot while the request is out.
   final String? markingReadId;
 
-  /// The most recent `MarkNotificationAsRead` failure, if any - a transient
-  /// signal for a listener (e.g. a SnackBar), paired with
-  /// [markReadFailureTick] so the same kind of failure twice in a row still
-  /// triggers it a second time.
-  final Failure? markReadFailure;
-  final int markReadFailureTick;
+  /// The id [MarkNotificationAsRead] most recently finished for, success or
+  /// failure - paired with [markReadResultTick] (bumped on every completion)
+  /// so a caller that dispatched the event can reliably await exactly its
+  /// own outcome via `bloc.stream.firstWhere`, the same way [refreshTick]
+  /// lets pull-to-refresh detect completion.
+  final String? markReadResultId;
+
+  /// `null` when that id's mark-read succeeded; the failure otherwise. Also
+  /// used by a `BlocListener` to show a SnackBar on failure.
+  final Failure? markReadResultFailure;
+  final int markReadResultTick;
 
   NotificationState copyWith({
     NotificationStatus? status,
@@ -63,8 +69,10 @@ class NotificationState {
     int? refreshTick,
     String? markingReadId,
     bool clearMarkingReadId = false,
-    Failure? markReadFailure,
-    int? markReadFailureTick,
+    String? markReadResultId,
+    Failure? markReadResultFailure,
+    bool clearMarkReadResultFailure = false,
+    int? markReadResultTick,
   }) {
     return NotificationState(
       status: status ?? this.status,
@@ -79,8 +87,11 @@ class NotificationState {
       markingReadId: clearMarkingReadId
           ? null
           : (markingReadId ?? this.markingReadId),
-      markReadFailure: markReadFailure ?? this.markReadFailure,
-      markReadFailureTick: markReadFailureTick ?? this.markReadFailureTick,
+      markReadResultId: markReadResultId ?? this.markReadResultId,
+      markReadResultFailure: clearMarkReadResultFailure
+          ? null
+          : (markReadResultFailure ?? this.markReadResultFailure),
+      markReadResultTick: markReadResultTick ?? this.markReadResultTick,
     );
   }
 }

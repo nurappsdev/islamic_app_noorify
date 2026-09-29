@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
 import 'package:tuhfatul_muslim/features/notifications/domain/repositories/notification_repository.dart';
 
-/// `POST /notifications/{notificationId}/read`.
+/// `PATCH /notifications/{notificationId}/read`.
 ///
 /// Named without "As" (unlike the bloc's `MarkNotificationAsRead` event) so
 /// the two don't collide when both are imported into `notification_bloc.dart`.

@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 
 import 'package:tuhfatul_muslim/features/notifications/domain/usecases/get_notifications.dart';
 import 'package:tuhfatul_muslim/features/notifications/domain/usecases/mark_notification_read.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 
 import 'notification_event.dart';
 import 'notification_state.dart';
@@ -36,16 +37,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       (failure) => emit(
         state.copyWith(status: NotificationStatus.failure, failure: failure),
       ),
-      (page) => emit(
-        NotificationState(
-          status: NotificationStatus.success,
-          notifications: page.notifications,
-          page: page.page,
-          totalPage: page.totalPage,
-          unreadCount: page.unreadCount,
-          hasMore: page.hasMore,
-        ),
-      ),
+      (page) {
+        _syncBadge(page.unreadCount);
+        emit(
+          NotificationState(
+            status: NotificationStatus.success,
+            notifications: page.notifications,
+            page: page.page,
+            totalPage: page.totalPage,
+            unreadCount: page.unreadCount,
+            hasMore: page.hasMore,
+          ),
+        );
+      },
     );
   }
 
@@ -68,16 +72,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     result.fold(
       // The rows already shown stay; scrolling to the end again retries.
       (_) => emit(state.copyWith(isLoadingMore: false)),
-      (page) => emit(
-        state.copyWith(
-          notifications: [...state.notifications, ...page.notifications],
-          page: page.page,
-          totalPage: page.totalPage,
-          unreadCount: page.unreadCount,
-          hasMore: page.hasMore,
-          isLoadingMore: false,
-        ),
-      ),
+      (page) {
+        _syncBadge(page.unreadCount);
+        emit(
+          state.copyWith(
+            notifications: [...state.notifications, ...page.notifications],
+            page: page.page,
+            totalPage: page.totalPage,
+            unreadCount: page.unreadCount,
+            hasMore: page.hasMore,
+            isLoadingMore: false,
+          ),
+        );
+      },
     );
   }
 
@@ -91,17 +98,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       // with an error screen; the gesture just settles without change. The
       // bumped tick is still emitted so the caller's `firstWhere` resolves.
       (_) => emit(state.copyWith(refreshTick: state.refreshTick + 1)),
-      (page) => emit(
-        state.copyWith(
-          status: NotificationStatus.success,
-          notifications: page.notifications,
-          page: page.page,
-          totalPage: page.totalPage,
-          unreadCount: page.unreadCount,
-          hasMore: page.hasMore,
-          refreshTick: state.refreshTick + 1,
-        ),
-      ),
+      (page) {
+        _syncBadge(page.unreadCount);
+        emit(
+          state.copyWith(
+            status: NotificationStatus.success,
+            notifications: page.notifications,
+            page: page.page,
+            totalPage: page.totalPage,
+            unreadCount: page.unreadCount,
+            hasMore: page.hasMore,
+            refreshTick: state.refreshTick + 1,
+          ),
+        );
+      },
     );
   }
 
@@ -127,8 +137,9 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       (failure) => emit(
         state.copyWith(
           clearMarkingReadId: true,
-          markReadFailure: failure,
-          markReadFailureTick: state.markReadFailureTick + 1,
+          markReadResultId: event.notificationId,
+          markReadResultFailure: failure,
+          markReadResultTick: state.markReadResultTick + 1,
         ),
       ),
       (_) {
@@ -138,14 +149,29 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
                 ? item.copyWith(isRead: true, readAt: DateTime.now())
                 : item,
         ];
+        final newUnreadCount = state.unreadCount > 0
+            ? state.unreadCount - 1
+            : 0;
+        _syncBadge(newUnreadCount);
         emit(
           state.copyWith(
             notifications: updated,
             clearMarkingReadId: true,
-            unreadCount: state.unreadCount > 0 ? state.unreadCount - 1 : 0,
+            unreadCount: newUnreadCount,
+            markReadResultId: event.notificationId,
+            clearMarkReadResultFailure: true,
+            markReadResultTick: state.markReadResultTick + 1,
           ),
         );
       },
     );
+  }
+
+  /// Keeps the Home AppBar's badge ([unreadNotificationCountNotifier]) in
+  /// sync with whatever this bloc last learned from the server, so opening
+  /// the notification list - or marking one read from it - is instantly
+  /// reflected on Home without a separate `NotificationBadgeService` fetch.
+  void _syncBadge(int unreadCount) {
+    unreadNotificationCountNotifier.value = unreadCount;
   }
 }
