@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_cache.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/ebook_model.dart';
 import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_plan_draft.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_category_page_model.dart';
@@ -148,12 +151,26 @@ abstract interface class HadithLibraryRemoteDataSource {
 
 class HadithLibraryRemoteDataSourceImpl
     implements HadithLibraryRemoteDataSource {
-  HadithLibraryRemoteDataSourceImpl({Dio? dio, AuthLocalDataSource? local})
-    : _dio = dio ?? DioClient().dio,
-      _local = local ?? AuthLocalDataSourceImpl();
+  HadithLibraryRemoteDataSourceImpl({
+    Dio? dio,
+    AuthLocalDataSource? local,
+    HadithContentCache? cache,
+    bool useCache = true,
+  }) : _dio = dio ?? DioClient().dio,
+       _local = local ?? AuthLocalDataSourceImpl(),
+       _cache = useCache ? cache ?? HadithContentCache.shared : null;
 
   final Dio _dio;
   final AuthLocalDataSource _local;
+
+  /// Where the library's static content is kept on the device. Only
+  /// unauthenticated, non-search requests use it: user data (progress,
+  /// plans, read state, history, last read) always comes from the API.
+  final HadithContentCache? _cache;
+
+  /// The most hadith pages of one scope fetched ahead in the background.
+  static const _prefetchPages = 30;
+  final _refreshing = <String>{};
 
   @override
   Future<List<HadithLibraryBookModel>> getBooks() async {
@@ -545,11 +562,84 @@ class HadithLibraryRemoteDataSourceImpl
   /// GETs [path] and returns the envelope's `data` array (as maps) and `meta`,
   /// throwing the data-layer exceptions on any failure. Public endpoints need
   /// no token; pass [authenticated] to send the login token.
+  ///
+  /// Public, non-search content is offline-first: a stored copy is returned
+  /// at once (refreshed in the background once it is a day old), and only a
+  /// miss goes to the API, whose answer is stored for next time.
   Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})>
   _getList(
     String path,
     Map<String, dynamic> query,
     String what, {
+    bool authenticated = false,
+  }) async {
+    final cache = authenticated || query['searchTerm'] != null ? null : _cache;
+    final key = HadithContentCache.keyOf(path, query);
+    if (cache != null) {
+      final hit = await cache.read(key);
+      if (hit != null) {
+        if (HadithContentCache.isStale(hit.at)) {
+          unawaited(_refresh(cache, key, path, query));
+        }
+        return _envelopeOf(hit.json, what);
+      }
+    }
+
+    final json = await _fetchJson(path, query, authenticated: authenticated);
+    final envelope = _envelopeOf(json, what);
+    if (cache != null && await cache.write(key, json)) {
+      unawaited(_prefetchRest(cache, path, query, envelope.meta));
+    }
+    return envelope;
+  }
+
+  /// Re-fetches a stored response in the background; failures keep the copy.
+  Future<void> _refresh(
+    HadithContentCache cache,
+    String key,
+    String path,
+    Map<String, dynamic> query,
+  ) async {
+    if (!_refreshing.add(key)) return;
+    try {
+      final json = await _fetchJson(path, query);
+      _envelopeOf(json, '');
+      await cache.write(key, json);
+    } catch (_) {
+      /* Offline or failed: the stored copy stays in use. */
+    } finally {
+      _refreshing.remove(key);
+    }
+  }
+
+  /// After the first page of a scope's hadiths, stores the remaining pages
+  /// in the background, so the whole scope reads without waiting.
+  Future<void> _prefetchRest(
+    HadithContentCache cache,
+    String path,
+    Map<String, dynamic> query,
+    Map<String, dynamic> meta,
+  ) async {
+    if (path != ApiConstants.hadithsEndPoint || query['page'] != 1) return;
+    final totalPage = (meta['totalPage'] as num?)?.toInt() ?? 1;
+    for (var page = 2; page <= totalPage && page <= _prefetchPages; page++) {
+      final pageQuery = {...query, 'page': page};
+      final key = HadithContentCache.keyOf(path, pageQuery);
+      if (await cache.read(key) != null) continue;
+      try {
+        final json = await _fetchJson(path, pageQuery);
+        _envelopeOf(json, '');
+        await cache.write(key, json);
+      } catch (_) {
+        return; // Offline or failed: pages load one by one when reached.
+      }
+    }
+  }
+
+  /// The response body of GET [path], or a data-layer exception.
+  Future<Map<String, dynamic>> _fetchJson(
+    String path,
+    Map<String, dynamic> query, {
     bool authenticated = false,
   }) async {
     final token = authenticated ? _local.getToken() : null;
@@ -578,7 +668,13 @@ class HadithLibraryRemoteDataSourceImpl
         statusCode: status,
       );
     }
+    return json;
+  }
 
+  ({List<Map<String, dynamic>> items, Map<String, dynamic> meta}) _envelopeOf(
+    Map<String, dynamic> json,
+    String what,
+  ) {
     final data = json['data'];
     if (data is! List) {
       throw ParsingException('$what response is missing "data".');

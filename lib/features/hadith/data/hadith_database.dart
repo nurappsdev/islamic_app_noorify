@@ -19,12 +19,13 @@ class HadithDatabase {
   static final HadithDatabase _instance = HadithDatabase._();
 
   static const _fileName = 'hadith_books.db';
-  static const _version = 3;
+  static const _version = 4;
   static const _booksTable = 'hadith_books';
   static const _entriesTable = 'hadith_entries';
   static const _bookmarksTable = 'hadith_bookmarks';
   static const _bookmarkFoldersTable = 'hadith_bookmark_folders';
   static const _bookmarkFolderMapTable = 'hadith_bookmark_folder_map';
+  static const _contentCacheTable = 'hadith_content_cache';
 
   Database? _db;
 
@@ -43,6 +44,7 @@ class HadithDatabase {
       onCreate: (db, _) async {
         await _createSchema(db);
         await _createBookmarkSchema(db);
+        await _createContentCacheSchema(db);
       },
       onUpgrade: (db, oldVersion, _) async {
         if (oldVersion < 2) {
@@ -52,7 +54,65 @@ class HadithDatabase {
             'ALTER TABLE $_bookmarksTable ADD COLUMN payload TEXT',
           );
         }
+        // v3 -> v4: additive — the library content cache.
+        if (oldVersion < 4) await _createContentCacheSchema(db);
       },
+    );
+  }
+
+  /// Library content from the API (books, e-books, categories,
+  /// sub-categories, hadith pages), one row per request, so it opens without
+  /// the network. Shared content: kept across sign-out.
+  Future<void> _createContentCacheSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $_contentCacheTable (
+        cache_key TEXT PRIMARY KEY,
+        body TEXT NOT NULL,
+        content_version INTEGER NOT NULL,
+        cached_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  /// The cached response for [key] written under [version], or null.
+  Future<({String body, DateTime cachedAt})?> cachedContent(
+    String key,
+    int version,
+  ) async {
+    final db = await open();
+    final rows = await db.query(
+      _contentCacheTable,
+      columns: ['body', 'cached_at'],
+      where: 'cache_key = ? AND content_version = ?',
+      whereArgs: [key, version],
+    );
+    if (rows.isEmpty) return null;
+    return (
+      body: rows.first['body'] as String,
+      cachedAt: DateTime.fromMillisecondsSinceEpoch(
+        rows.first['cached_at'] as int,
+      ),
+    );
+  }
+
+  /// Stores [body] for [key], replacing any older copy.
+  Future<void> cacheContent(String key, String body, int version) async {
+    final db = await open();
+    await db.insert(_contentCacheTable, {
+      'cache_key': key,
+      'body': body,
+      'content_version': version,
+      'cached_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Drops cached content written under any other [version].
+  Future<void> dropStaleContent(int version) async {
+    final db = await open();
+    await db.delete(
+      _contentCacheTable,
+      where: 'content_version <> ?',
+      whereArgs: [version],
     );
   }
 
