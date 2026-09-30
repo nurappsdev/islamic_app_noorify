@@ -117,7 +117,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             ),
             const Align(
               alignment: Alignment.bottomCenter,
-              child: HomeBottomNav(selectedIndex: 2),
+              child: HomeBottomNav(
+                selectedIndex: HomeBottomNav.leaderboardIndex,
+              ),
             ),
           ],
         ),

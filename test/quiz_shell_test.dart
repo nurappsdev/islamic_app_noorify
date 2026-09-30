@@ -77,8 +77,12 @@ void main() {
     expect(find.text('home 0'), findsNothing);
     // The very same bar element: it was not rebuilt from scratch.
     expect(tester.element(find.byType(QuizBottomNav)), same(bar));
-    // Nothing was pushed, so there is no page transition to animate.
-    expect(tester.hasRunningAnimations, isFalse);
+    // Nothing was pushed, so there is no page transition. (The tapped
+    // item's ink ripple may still be running; that is not a transition.)
+    expect(
+      tester.state<NavigatorState>(find.byType(Navigator)).canPop(),
+      isFalse,
+    );
   });
 
   testWidgets('a tab keeps its state and is built only once', (tester) async {

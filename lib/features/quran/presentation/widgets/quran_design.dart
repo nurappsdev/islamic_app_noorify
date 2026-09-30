@@ -8,6 +8,7 @@ import '../quran_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
 
 const quranOlive = Color(0xffa1ae57);
 const quranInk = Color(0xff889569);
@@ -266,78 +267,17 @@ class QuranBottomNav extends StatelessWidget {
         Icons.grid_view_outlined,
       ),
     ];
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: quranOlive,
-          borderRadius: BorderRadius.circular(36),
-          boxShadow: [
-            BoxShadow(
-              color: quranInk.withValues(alpha: .16),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: LayoutBuilder(
-          builder: (context, bounds) {
-            final showLabel = bounds.maxWidth >= 300;
-            return Row(
-              children: [
-                for (final item in items)
-                  Expanded(
-                    flex: item.$1 == selected && showLabel ? 2 : 1,
-                    child: Semantics(
-                      selected: item.$1 == selected,
-                      button: true,
-                      child: Tooltip(
-                        message: item.$2,
-                        child: Material(
-                          color: item.$1 == selected
-                              ? const Color(0xff5d886b)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(28),
-                          child: InkWell(
-                            key: ValueKey('quran-nav-${item.$1}'),
-                            borderRadius: BorderRadius.circular(28),
-                            onTap: () => onSelected?.call(item.$1),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(item.$3, color: Colors.white, size: 24),
-                                  if (item.$1 == selected && showLabel) ...[
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        item.$2,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
+    return AppBottomNavBar(
+      selectedIndex: items.indexWhere((item) => item.$1 == selected),
+      items: [
+        for (final item in items)
+          AppBottomNavItem(
+            key: ValueKey('quran-nav-${item.$1}'),
+            icon: item.$3,
+            label: item.$2,
+            onTap: () => onSelected?.call(item.$1),
+          ),
+      ],
     );
   }
 }

@@ -1,74 +1,52 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
 
 /// Navigation bar shown on the app's main Home screen.
 class HomeBottomNav extends StatelessWidget {
   const HomeBottomNav({super.key, this.selectedIndex = 0});
+
+  /// Home, Quran, Hadith, Leaderboard.
+  static const leaderboardIndex = 3;
 
   final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    // SafeArea keeps the bar above the system navigation buttons / gesture bar.
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 9.h),
-        child: Container(
-          height: 58.h,
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          decoration: BoxDecoration(
-            color: AppColor.primary,
-            borderRadius: BorderRadius.circular(24.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: .08),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: appText.home,
-                selected: selectedIndex == 0,
-                onPressed: () => _goTo(context, RouteNames.home),
-              ),
-              _NavItem(
-                icon: Icons.menu_book_outlined,
-                label: appText.categoryQuran,
-                selected: selectedIndex == 1,
-                onPressed: () => _goTo(context, RouteNames.quranSurahs),
-              ),
-              _NavItem(
-                icon: Icons.leaderboard_rounded,
-                label: appText.leaderboard,
-                selected: selectedIndex == 2,
-                onPressed: () => _goTo(
-                  context,
-                  RouteNames.leaderboard,
-                  loginFeature: AuthFeatures.leaderboard,
-                ),
-              ),
-              // _NavItem(
-              //   icon: Icons.bookmark_border_rounded,
-              //   onPressed: () =>
-              //       Navigator.of(context).pushNamed(RouteNames.quranBookmarks),
-              // ),
-            ],
+    return AppBottomNavBar(
+      selectedIndex: selectedIndex,
+      items: [
+        AppBottomNavItem(
+          icon: Icons.home_outlined,
+          label: appText.home,
+          onTap: () => _goTo(context, RouteNames.home),
+        ),
+        AppBottomNavItem(
+          icon: Icons.menu_book_outlined,
+          label: appText.categoryQuran,
+          onTap: () => _goTo(context, RouteNames.quranSurahs),
+        ),
+        // Opened over Home, so back returns to it.
+        AppBottomNavItem(
+          icon: Icons.local_library_outlined,
+          label: appText.categoryHadith,
+          onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
+        ),
+        AppBottomNavItem(
+          icon: Icons.leaderboard_rounded,
+          label: appText.leaderboard,
+          onTap: () => _goTo(
+            context,
+            RouteNames.leaderboard,
+            loginFeature: AuthFeatures.leaderboard,
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -85,58 +63,4 @@ Future<void> _goTo(
   }
   if (!context.mounted) return;
   Navigator.of(context).pushReplacementNamed(routeName);
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    this.label,
-    this.selected = false,
-    this.onPressed,
-  });
-
-  final IconData icon;
-  final String? label;
-  final bool selected;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!selected) {
-      return IconButton(
-        tooltip: label,
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 22.sp),
-      );
-    }
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 8.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF738A69),
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 20.sp),
-              SizedBox(width: 4.w),
-              Text(
-                label ?? '',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

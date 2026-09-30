@@ -379,7 +379,7 @@ const Map<String, String> appTextBn = <String, String>{
   'sunsetTimePlaceholder': 'সন্ধ্যা ৬:৫৪',
   'dhuhrPrayerTime': 'যোহরের নামাজের সময়',
   'prohibitedPrayerTimes': 'নিষিদ্ধ নামাজের সময়',
-  'jawaal': 'জাওয়াল',
+  'jawaal': 'মধ্যাহ্নকাল',
   'prayerTimesTitle': 'নামাজের সময়',
   'hijriDateUnavailable': 'হিজরি তারিখ পাওয়া যায়নি',
   'nextPrefix': 'পরবর্তী:',
