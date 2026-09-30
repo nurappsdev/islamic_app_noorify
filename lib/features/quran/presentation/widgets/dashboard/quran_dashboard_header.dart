@@ -3,40 +3,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
-/// Top bar header for the Quran Dashboard with back button and title.
+/// Top bar header for the Quran module's tabs: a centred title. The tabs
+/// have no back button; the bottom bar and the system back gesture move
+/// between them.
 class QuranDashboardHeader extends StatelessWidget {
-  const QuranDashboardHeader({super.key, required this.title, this.onBack});
+  const QuranDashboardHeader({super.key, required this.title});
 
   final String title;
-  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4.h),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: QuranBackButton(onBack: onBack),
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Center(
+        child: Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: context.inkColor(const Color(0xFF677647)),
+            fontSize: 21.sp,
+            fontWeight: FontWeight.w600,
           ),
-          // Clear of the back button on both sides, so long titles stay
-          // centred without running under it.
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 48.r),
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.inkColor(const Color(0xFF677647)),
-                fontSize: 21.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

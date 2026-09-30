@@ -390,7 +390,6 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
                       child: QuranDashboardHeader(
                         title: AppText.of(context).planner,
-                        onBack: widget.onBack,
                       ),
                     ),
                     Padding(

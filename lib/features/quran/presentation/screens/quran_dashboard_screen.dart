@@ -174,7 +174,6 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                         title: appText.dashboard.isNotEmpty
                             ? appText.dashboard
                             : 'Dashboard',
-                        onBack: widget.onBack,
                       ),
 
                       SizedBox(height: 18.h),
@@ -246,7 +245,8 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                           state.history?.totals.totalSeconds ?? 0,
                         ),
                         label: t.totalReadingTimeFor(
-                          days: state.history?.days.length ??
+                          days:
+                              state.history?.days.length ??
                               kQuranReadingHistoryDays,
                           month: state.period == QuranDashboardPeriod.monthly
                               ? state.month

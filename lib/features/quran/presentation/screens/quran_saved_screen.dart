@@ -240,10 +240,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
               children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-                  child: QuranDashboardHeader(
-                    title: t.saved,
-                    onBack: widget.onBack,
-                  ),
+                  child: QuranDashboardHeader(title: t.saved),
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
