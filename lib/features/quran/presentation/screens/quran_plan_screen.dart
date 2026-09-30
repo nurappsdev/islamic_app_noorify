@@ -16,6 +16,7 @@ import 'create_quran_plan_screen.dart';
 import 'quran_plan_details_screen.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart';
 import '../widgets/quran_segmented_tabs.dart';
+import '../../data/services/quran_content_service.dart';
 
 class QuranPlanScreen extends StatefulWidget {
   const QuranPlanScreen({super.key, this.onBack, this.repository, this.bloc});
@@ -38,8 +39,17 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
   final _activeScroll = ScrollController();
   final _completedScroll = ScrollController();
 
-  int _tab = 0; // 0 = My Plan, 1 = Search Plan, 2 = Complete Plan
+  int _tab = 0; // 0 = My Plan, 1 = Search Plan, 2 = Completed
   String _searchQuery = '';
+
+  /// Presets whose plan is being created, so a second tap waits.
+  final _starting = <String>{};
+
+  /// Ayah count per surah, for each preset's daily load.
+  late final Future<Map<int, int>> _ayahCounts = QuranContentService.shared
+      .loadSurahs()
+      .then((list) => {for (final s in list) s.number: s.totalAyah})
+      .catchError((Object _) => <int, int>{});
 
   @override
   void initState() {
@@ -92,17 +102,31 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     }
   }
 
+  /// A preset covers the whole Quran or a run of surahs (Juz Amma is surahs
+  /// 78-114, exactly para 30).
+  static bool _isWholeQuran(QuranPlan preset) =>
+      preset.startSurah == 1 && preset.endSurah == 114;
+
+  static List<int> _presetSurahs(QuranPlan preset) => [
+    for (var n = preset.startSurah; n <= preset.endSurah; n++) n,
+  ];
+
   Future<void> _enrollPreset(QuranPlan preset) async {
+    if (_starting.contains(preset.id)) return;
     final t = QuranText.read(context);
     final repo = widget.repository ?? QuranPlanRepositoryImpl.shared;
+    final whole = _isWholeQuran(preset);
+    setState(() => _starting.add(preset.id));
     final result = await repo.createPlan(
       CreateQuranPlanRequest(
         name: preset.name,
         targetDays: preset.targetDays,
-        wholeQuran: true,
+        wholeQuran: whole,
+        surahNumbers: whole ? const [] : _presetSurahs(preset),
       ),
     );
     if (!mounted) return;
+    setState(() => _starting.remove(preset.id));
     result.fold(
       (failure) {
         final message = (failure.statusCode == 409)
@@ -186,7 +210,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           style: TextStyle(
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF282442),
+            color: dialogCtx.inkColor(_ink),
           ),
         ),
         content: Text(
@@ -216,8 +240,48 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
     }
   }
 
-  void _markCompleted(QuranPlan plan) {
-    _bloc.add(CompleteQuranPlan(planId: plan.id));
+  Future<void> _markCompleted(QuranPlan plan) async {
+    final t = QuranText.read(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: dialogCtx.surfaceColor(Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          t.markCompletedConfirmTitle,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: dialogCtx.inkColor(_ink),
+          ),
+        ),
+        content: Text(
+          t.markCompletedConfirmMessage,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: dialogCtx.inkColor(const Color(0xFF5D6B44)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF7A8D49),
+            ),
+            child: Text(t.markCompleted),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      _bloc.add(CompleteQuranPlan(planId: plan.id));
+    }
   }
 
   void _markInProgress(QuranPlan plan) {
@@ -232,13 +296,26 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
   }
 
   void _openPlanReading(QuranPlan plan) {
-    Navigator.of(context).pushNamed(
-      RouteNames.quranSurahDetail,
-      arguments: SurahRouteArgs(
-        surahNo: plan.startSurah,
-        surahName: plan.startSurahName,
-      ),
-    );
+    final next = plan.nextAyah;
+    Navigator.of(context)
+        .pushNamed(
+          RouteNames.quranSurahDetail,
+          arguments: next == null
+              ? SurahRouteArgs(
+                  surahNo: plan.startSurah,
+                  surahName: plan.startSurahName,
+                )
+              : SurahRouteArgs(
+                  surahNo: next.surahNumber,
+                  surahName: next.surahNameEnglish,
+                  ayahNo: next.ayahNumber,
+                  paraNumber: next.paraNumber,
+                ),
+        )
+        .then((_) {
+          // Reading moves the plan's progress and next ayah.
+          if (mounted) _bloc.add(const LoadQuranPlans(forceRefresh: true));
+        });
   }
 
   @override
@@ -320,7 +397,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
                       child: QuranSegmentedTabs(
                         selected: _tab,
-                        labels: [t.myPlan, t.searchPlan, t.completePlan],
+                        labels: [t.myPlan, t.searchPlan, t.completed],
                         onSelected: (index) => setState(() => _tab = index),
                       ),
                     ),
@@ -382,8 +459,9 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                   ],
                 ),
 
-                // Floating "Create Plan" button on "My Plan" and "Search Plan" tabs
-                if (_tab != 2)
+                // Floating "Create Plan" on "My Plan"; the preset list offers
+                // it as its first entry instead, so it never covers a preset.
+                if (_tab == 0)
                   Positioned(
                     right: 20.w,
                     bottom: 24.h,
@@ -436,7 +514,11 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
               state.activeFailure != null
                   ? localizeFailureMessage(state.activeFailure!.message)
                   : t.failedToLoadPlans,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade700),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: context.inkColor(Colors.grey.shade700),
+              ),
             ),
             SizedBox(height: 12.h),
             ElevatedButton(
@@ -447,7 +529,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                 backgroundColor: const Color(0xFF9EAA52),
                 foregroundColor: Colors.white,
               ),
-              child: Text(t.read),
+              child: Text(t.retry),
             ),
           ],
         ),
@@ -466,7 +548,14 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             SizedBox(height: 100.h),
-            Center(child: _PlanEmptyIllustration(message: t.noActivePlans)),
+            Center(
+              child: _PlanEmptyIllustration(
+                message: t.noActivePlans,
+                hint: t.noActivePlansHint,
+                action: t.exploreReadyPlans,
+                onAction: () => setState(() => _tab = 1),
+              ),
+            ),
           ],
         ),
       );
@@ -523,20 +612,40 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
           t.n(p.days).contains(query);
     }).toList();
 
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 90.h),
-      itemCount: presets.length,
-      separatorBuilder: (_, _) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) {
-        final plan = presets[index];
-        return _QuranPresetCard(
-          plan: plan,
-          name: t.presetPlanName(plan.id, plan.name),
-          daysLabel: t.days(plan.days),
-          buttonText: t.getStarted,
-          onAction: () => _enrollPreset(plan),
-        );
-      },
+    return FutureBuilder<Map<int, int>>(
+      future: _ayahCounts,
+      builder: (context, counts) => ListView.separated(
+        padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 90.h),
+        itemCount: presets.length + 1,
+        separatorBuilder: (_, _) => SizedBox(height: 12.h),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _CreateOwnPlanCard(
+              title: t.createPlan,
+              onTap: _openCreatePlan,
+            );
+          }
+          final plan = presets[index - 1];
+          final ayahs = _isWholeQuran(plan)
+              ? 6236
+              : _presetSurahs(plan).fold<int?>(0, (sum, surah) {
+                  final count = counts.data?[surah];
+                  return sum == null || count == null ? null : sum + count;
+                });
+          return _QuranPresetCard(
+            plan: plan,
+            name: t.presetPlanName(plan.id, plan.name),
+            daysLabel: [
+              t.days(plan.days),
+              if (ayahs != null && ayahs > 0)
+                t.aboutPerDay((ayahs / plan.days).ceil()),
+            ].join(' · '),
+            buttonText: t.getStarted,
+            busy: _starting.contains(plan.id),
+            onAction: () => _enrollPreset(plan),
+          );
+        },
+      ),
     );
   }
 
@@ -557,7 +666,11 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
               state.completedFailure != null
                   ? localizeFailureMessage(state.completedFailure!.message)
                   : t.failedToLoadPlans,
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey.shade700),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: context.inkColor(Colors.grey.shade700),
+              ),
             ),
             SizedBox(height: 12.h),
             ElevatedButton(
@@ -568,7 +681,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                 backgroundColor: const Color(0xFF9EAA52),
                 foregroundColor: Colors.white,
               ),
-              child: Text(t.read),
+              child: Text(t.retry),
             ),
           ],
         ),
@@ -634,7 +747,90 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
   }
 }
 
-/// Rich active plan card powered directly by backend counts and schedule.
+const _ink = Color(0xFF2D3A1F);
+const _muted = Color(0xFF7C8A63);
+const _olive = Color(0xFF7A8D49);
+const _cardLine = Color(0xFFD2E3A8);
+
+/// The shared card frame of the Planner lists.
+class _PlanCardFrame extends StatelessWidget {
+  const _PlanCardFrame({required this.child, this.onTap});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(20.r);
+    return Material(
+      color: context.surfaceColor(Colors.white),
+      borderRadius: radius,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: Container(
+          padding: EdgeInsets.all(14.r),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: context.lineColor(_cardLine)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// The Quran artwork tile at the start of every plan card.
+class _PlanIcon extends StatelessWidget {
+  const _PlanIcon({this.size = 48});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size.r,
+    height: size.r,
+    padding: EdgeInsets.all(6.r),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(const Color(0xFFDDEBBE)),
+      borderRadius: BorderRadius.circular(14.r),
+    ),
+    child: Image.asset('assets/images/Quran.png', fit: BoxFit.contain),
+  );
+}
+
+/// One menu entry with its icon; destructive entries are red.
+PopupMenuItem<String> _menuItem(
+  String value,
+  IconData icon,
+  String label, {
+  bool destructive = false,
+}) {
+  const red = Color(0xFFC15B4B);
+  return PopupMenuItem(
+    value: value,
+    child: Row(
+      children: [
+        Icon(
+          icon,
+          color: destructive ? red : const Color(0xFF6B8042),
+          size: 20,
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            label,
+            style: destructive ? const TextStyle(color: red) : null,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// An active plan: where it stands, what today asks for, and one clear way
+/// to carry on reading.
 class _ActiveQuranPlanCard extends StatelessWidget {
   const _ActiveQuranPlanCard({
     required this.plan,
@@ -656,341 +852,258 @@ class _ActiveQuranPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cardBorderColor = Color(0xFFD2E3A8);
     final schedule = plan.schedule;
     final counts = plan.counts;
+    final next = plan.nextAyah;
 
-    // Determine status badge details based on backend-calculated fields
-    final (statusText, statusBg, statusFg, statusIcon) = () {
-      if (schedule.isOverdue) {
-        return (
-          t.overdue,
-          const Color(0xFFFFEBEE),
-          const Color(0xFFC62828),
-          Icons.warning_amber_rounded,
-        );
-      }
-      if (schedule.aheadBy > 0) {
-        return (
-          '+${t.n(schedule.aheadBy)} ${t.aheadOfSchedule}',
-          const Color(0xFFE8F5E9),
-          const Color(0xFF2E7D32),
-          Icons.trending_up_rounded,
-        );
-      }
-      if (schedule.aheadBy < 0 || !schedule.isOnTrack) {
-        return (
-          t.behindSchedule,
-          const Color(0xFFFFF3E0),
-          const Color(0xFFE65100),
-          Icons.trending_down_rounded,
-        );
-      }
-      return (
-        t.onTrack,
-        const Color(0xFFE5EED0),
-        const Color(0xFF52692D),
-        Icons.check_circle_outline_rounded,
-      );
-    }();
+    final (statusText, statusFg, statusIcon) = schedule.isOverdue
+        ? (t.overdue, const Color(0xFFC62828), Icons.warning_amber_rounded)
+        : schedule.aheadBy > 0
+        ? (
+            '+${t.n(schedule.aheadBy)} ${t.aheadOfSchedule}',
+            const Color(0xFF2E7D32),
+            Icons.trending_up_rounded,
+          )
+        : schedule.aheadBy < 0 || !schedule.isOnTrack
+        ? (
+            t.behindSchedule,
+            const Color(0xFFE65100),
+            Icons.trending_down_rounded,
+          )
+        : (
+            t.onTrack,
+            const Color(0xFF52692D),
+            Icons.check_circle_outline_rounded,
+          );
+    final statusColor = context.inkColor(statusFg);
+    final todayDone = schedule.todayRemainingAyahs <= 0;
 
-    final daySub =
-        '${t.day} ${t.n(schedule.dayNumber)} / ${t.n(schedule.targetDays)} · ${t.n(schedule.daysLeft)} ${t.daysLeft}';
-
-    return InkWell(
+    return _PlanCardFrame(
       onTap: onOpenDetails,
-      borderRadius: BorderRadius.circular(20.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: context.pageColor(Colors.white),
-          borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: cardBorderColor, width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row: Book icon, Name, Day subtitle, and Menu
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 52.r,
-                  height: 52.r,
-                  padding: EdgeInsets.all(6.r),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDEBBE),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: Image.asset(
-                    'assets/images/Quran.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        t.presetPlanName(plan.id, plan.name),
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF282442),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 3.h),
-                      Text(
-                        daySub,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF8B9875),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(
-                    Icons.more_vert_rounded,
-                    color: Color(0xFF7A8D49),
-                  ),
-                  onSelected: (val) {
-                    if (val == 'details') {
-                      onOpenDetails?.call();
-                    } else if (val == 'complete') {
-                      onMarkCompleted();
-                    } else if (val == 'edit') {
-                      onEdit?.call();
-                    } else if (val == 'delete') {
-                      onDelete?.call();
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: 'details',
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline_rounded,
-                            color: Color(0xFF6B8042),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(child: Text(t.quranPlanDetails)),
-                        ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const _PlanIcon(),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.presetPlanName(plan.id, plan.name),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: context.inkColor(_ink),
                       ),
                     ),
-                    PopupMenuItem(
-                      value: 'complete',
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            color: Color(0xFF6B8042),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(child: Text(t.markCompleted)),
-                        ],
+                    SizedBox(height: 3.h),
+                    Text(
+                      t.dayOfTotal(
+                        schedule.dayNumber,
+                        schedule.targetDays,
+                        schedule.daysLeft,
                       ),
-                    ),
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.edit_note_rounded,
-                            color: Color(0xFF6B8042),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(child: Text(t.editPlan)),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.delete_outline_rounded,
-                            color: Color(0xFFC15B4B),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              t.deletePlan,
-                              style: const TextStyle(color: Color(0xFFC15B4B)),
-                            ),
-                          ),
-                        ],
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: context.inkColor(_muted),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-
-            SizedBox(height: 10.h),
-
-            // Schedule status badge & Progress percentage
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 4.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 14.sp, color: statusFg),
-                      SizedBox(width: 4.w),
-                      Text(
-                        statusText,
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: statusFg,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  '${t.progress}: ${t.n(counts.percentage)}%',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF5D7133),
-                  ),
-                ),
-              ],
-            ),
-
-            SizedBox(height: 8.h),
-
-            // Progress bar
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6.r),
-              child: LinearProgressIndicator(
-                value: (counts.percentage.clamp(0, 100) / 100.0),
-                minHeight: 6.h,
-                backgroundColor: const Color(0xFFE9EED9),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  Color(0xFF9EAA52),
-                ),
               ),
-            ),
-
-            SizedBox(height: 12.h),
-
-            // Stats grid (Ayahs completed, remaining, daily target, today remaining)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F9F0),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: const Color(0xFFE4ECD2)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _StatColumn(
-                      title: t.ayahsCompleted,
-                      value: t.n(counts.completedAyahs),
-                    ),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert_rounded,
+                  color: context.inkColor(_olive),
+                ),
+                onSelected: (val) => switch (val) {
+                  'details' => onOpenDetails?.call(),
+                  'complete' => onMarkCompleted(),
+                  'edit' => onEdit?.call(),
+                  'delete' => onDelete?.call(),
+                  _ => null,
+                },
+                itemBuilder: (_) => [
+                  _menuItem(
+                    'details',
+                    Icons.info_outline_rounded,
+                    t.quranPlanDetails,
                   ),
-                  Container(
-                    width: 1,
-                    height: 24.h,
-                    color: const Color(0xFFD4E5A8),
+                  _menuItem(
+                    'complete',
+                    Icons.check_circle_outline,
+                    t.markCompleted,
                   ),
-                  Expanded(
-                    child: _StatColumn(
-                      title: t.ayahsRemaining,
-                      value: t.n(counts.remainingAyahs),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 24.h,
-                    color: const Color(0xFFD4E5A8),
-                  ),
-                  Expanded(
-                    child: _StatColumn(
-                      title: t.dailyTarget,
-                      value: t.n(schedule.ayahsPerDay),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 24.h,
-                    color: const Color(0xFFD4E5A8),
-                  ),
-                  Expanded(
-                    child: _StatColumn(
-                      title: t.todayRemaining,
-                      value: t.n(schedule.todayRemainingAyahs),
-                    ),
+                  _menuItem('edit', Icons.edit_note_rounded, t.editPlan),
+                  _menuItem(
+                    'delete',
+                    Icons.delete_outline_rounded,
+                    t.deletePlan,
+                    destructive: true,
                   ),
                 ],
               ),
-            ),
+            ],
+          ),
+          SizedBox(height: 12.h),
 
-            SizedBox(height: 12.h),
-
-            // Read button
-            Align(
-              alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: onRead,
-                borderRadius: BorderRadius.circular(16.r),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4E5A8),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.menu_book_rounded,
-                        size: 16.sp,
-                        color: const Color(0xFF26321F),
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        t.read,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF26321F),
-                        ),
-                      ),
-                    ],
+          // Schedule status and overall progress.
+          Row(
+            children: [
+              Icon(statusIcon, size: 16.sp, color: statusColor),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Text(
+                  statusText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
                   ),
                 ),
               ),
+              Text(
+                '${t.n(counts.percentage)}%',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.inkColor(const Color(0xFF5D7133)),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: LinearProgressIndicator(
+              value: counts.percentage.clamp(0, 100) / 100.0,
+              minHeight: 6.h,
+              backgroundColor: context.lineColor(const Color(0xFFE9EED9)),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF9EAA52)),
             ),
-          ],
-        ),
+          ),
+          SizedBox(height: 12.h),
+
+          // Today's goal, the number that matters most day to day.
+          Container(
+            key: const ValueKey('quran-plan-today'),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(
+                todayDone ? const Color(0xFFE8F5E9) : const Color(0xFFF4F7EA),
+              ),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  todayDone ? Icons.check_circle_rounded : Icons.today_rounded,
+                  size: 18.sp,
+                  color: context.inkColor(
+                    todayDone ? const Color(0xFF2E7D32) : _olive,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    todayDone
+                        ? t.todayTargetDone
+                        : t.todayToGo(schedule.todayRemainingAyahs),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: context.inkColor(_ink),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _StatColumn(
+                  title: t.ayahsCompleted,
+                  value: t.n(counts.completedAyahs),
+                ),
+              ),
+              Expanded(
+                child: _StatColumn(
+                  title: t.ayahsRemaining,
+                  value: t.n(counts.remainingAyahs),
+                ),
+              ),
+              Expanded(
+                child: _StatColumn(
+                  title: t.dailyTarget,
+                  value: t.n(schedule.ayahsPerDay),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // The one main action: pick up where the reading stopped.
+          FilledButton(
+            key: const ValueKey('quran-plan-continue'),
+            onPressed: onRead,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF9EAA52),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.menu_book_rounded, size: 20.sp),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.continueReading,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (next != null)
+                        Text(
+                          t.continueAt(
+                            t.surahName(
+                              next.surahNumber,
+                              next.surahNameEnglish,
+                            ),
+                            next.ayahNumber,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.white.withValues(alpha: .9),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_rounded, size: 18.sp),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1005,30 +1118,33 @@ class _StatColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           value,
           style: TextStyle(
-            fontSize: 13.sp,
+            fontSize: 15.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF282442),
+            color: context.inkColor(_ink),
           ),
         ),
         SizedBox(height: 2.h),
+        // Wraps rather than cutting the label short.
         Text(
           title,
           textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 10.sp, color: const Color(0xFF8B9875)),
+          maxLines: 2,
+          style: TextStyle(
+            fontSize: 11.sp,
+            height: 1.2,
+            color: context.inkColor(_muted),
+          ),
         ),
       ],
     );
   }
 }
 
-/// Completed plan card
+/// A completed plan: its name in full, what it covered, and a way back in.
 class _CompletedQuranPlanCard extends StatelessWidget {
   const _CompletedQuranPlanCard({
     required this.plan,
@@ -1046,132 +1162,59 @@ class _CompletedQuranPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cardBorderColor = Color(0xFFD2E3A8);
-
-    return InkWell(
+    return _PlanCardFrame(
       onTap: onOpenDetails,
-      borderRadius: BorderRadius.circular(20.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: context.pageColor(Colors.white),
-          borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: cardBorderColor, width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52.r,
-              height: 52.r,
-              padding: EdgeInsets.all(6.r),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDDEBBE),
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Image.asset(
-                'assets/images/Quran.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    t.presetPlanName(plan.id, plan.name),
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF282442),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    '${t.days(plan.days)} · ${t.n(plan.counts.totalAyahs)} ${t.ayahsCompleted}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: const Color(0xFF8B9875),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5EED0),
-                borderRadius: BorderRadius.circular(14.r),
-              ),
-              child: Text(
-                t.completed,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF6B8042),
-                ),
-              ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_vert_rounded,
-                color: Color(0xFF7A8D49),
-              ),
-              onSelected: (val) {
-                if (val == 'details') {
-                  onOpenDetails?.call();
-                } else if (val == 'reopen') {
-                  onMarkInProgress();
-                } else if (val == 'delete') {
-                  onDelete?.call();
-                }
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'details',
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline_rounded,
-                        color: Color(0xFF6B8042),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(child: Text(t.quranPlanDetails)),
-                    ],
+      child: Row(
+        children: [
+          const _PlanIcon(),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.presetPlanName(plan.id, plan.name),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(_ink),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'reopen',
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.refresh_rounded,
-                        color: Color(0xFF6B8042),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(child: Text(t.markInProgress)),
-                    ],
+                SizedBox(height: 4.h),
+                Text(
+                  '${t.days(plan.days)} · ${t.n(plan.counts.totalAyahs)} ${t.ayahsCompleted}',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: context.inkColor(_muted),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'delete',
+                SizedBox(height: 8.h),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(const Color(0xFFE5EED0)),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Color(0xFFC15B4B),
-                        size: 20,
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 14.sp,
+                        color: context.inkColor(const Color(0xFF6B8042)),
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          t.deletePlan,
-                          style: const TextStyle(color: Color(0xFFC15B4B)),
+                      SizedBox(width: 4.w),
+                      Text(
+                        t.completed,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(const Color(0xFF6B8042)),
                         ),
                       ),
                     ],
@@ -1179,14 +1222,40 @@ class _CompletedQuranPlanCard extends StatelessWidget {
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: context.inkColor(_olive),
+            ),
+            onSelected: (val) => switch (val) {
+              'details' => onOpenDetails?.call(),
+              'reopen' => onMarkInProgress(),
+              'delete' => onDelete?.call(),
+              _ => null,
+            },
+            itemBuilder: (_) => [
+              _menuItem(
+                'details',
+                Icons.info_outline_rounded,
+                t.quranPlanDetails,
+              ),
+              _menuItem('reopen', Icons.refresh_rounded, t.markInProgress),
+              _menuItem(
+                'delete',
+                Icons.delete_outline_rounded,
+                t.deletePlan,
+                destructive: true,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Preset card for Tab 1 (Search Plan)
+/// A ready-made plan: its length and daily load, and a button to start it.
 class _QuranPresetCard extends StatelessWidget {
   const _QuranPresetCard({
     required this.plan,
@@ -1194,6 +1263,7 @@ class _QuranPresetCard extends StatelessWidget {
     required this.daysLabel,
     this.buttonText,
     this.onAction,
+    this.busy = false,
   });
 
   final QuranPlan plan;
@@ -1201,115 +1271,212 @@ class _QuranPresetCard extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onAction;
 
+  /// The plan is being created; the button waits.
+  final bool busy;
+
   @override
   Widget build(BuildContext context) {
-    const cardBorderColor = Color(0xFFD2E3A8);
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: context.pageColor(Colors.white),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: cardBorderColor, width: 1),
-      ),
+    return _PlanCardFrame(
       child: Row(
         children: [
-          Container(
-            width: 56.r,
-            height: 56.r,
-            padding: EdgeInsets.all(6.r),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDDEBBE),
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Image.asset('assets/images/Quran.png', fit: BoxFit.contain),
-          ),
-          SizedBox(width: 14.w),
+          const _PlanIcon(size: 52),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF282442),
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(_ink),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   daysLabel,
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: const Color(0xFF8B9875),
+                    height: 1.3,
+                    color: context.inkColor(_muted),
                   ),
                 ),
               ],
             ),
           ),
-          if (buttonText != null && onAction != null)
-            InkWell(
-              onTap: onAction,
-              borderRadius: BorderRadius.circular(16.r),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4E5A8),
+          if (buttonText != null && onAction != null) ...[
+            SizedBox(width: 8.w),
+            FilledButton(
+              key: ValueKey('quran-preset-${plan.id}'),
+              onPressed: busy ? null : onAction,
+              style: FilledButton.styleFrom(
+                backgroundColor: context.surfaceColor(const Color(0xFFD4E5A8)),
+                foregroundColor: context.inkColor(const Color(0xFF26321F)),
+                disabledBackgroundColor: context.surfaceColor(
+                  const Color(0xFFD4E5A8),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                minimumSize: Size(0, 36.h),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16.r),
                 ),
-                child: Text(
-                  buttonText!,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF26321F),
-                  ),
-                ),
               ),
+              child: busy
+                  ? SizedBox(
+                      width: 16.r,
+                      height: 16.r,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: context.inkColor(_olive),
+                      ),
+                    )
+                  : Text(
+                      buttonText!,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Custom Empty state illustration matching the user's design screenshots
-class _PlanEmptyIllustration extends StatelessWidget {
-  const _PlanEmptyIllustration({required this.message});
+/// "Create Plan" as a list entry, for a plan of one's own choosing.
+class _CreateOwnPlanCard extends StatelessWidget {
+  const _CreateOwnPlanCard({required this.title, required this.onTap});
 
-  final String message;
+  final String title;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: MediaQuery.sizeOf(context).width * .38,
-          child: AspectRatio(
-            aspectRatio: 140 / 130,
-            child: CustomPaint(painter: _EmptyDocumentPainter()),
+    final radius = BorderRadius.circular(20.r);
+    return Material(
+      key: const ValueKey('quran-plan-create-own'),
+      color: context.surfaceColor(const Color(0xFFF4F7EA)),
+      borderRadius: radius,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: radius,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          child: Row(
+            children: [
+              Container(
+                width: 40.r,
+                height: 40.r,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF9EAA52),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.edit_note_rounded,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(_ink),
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.inkColor(_olive),
+                size: 22.sp,
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 16.h),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Text(
+      ),
+    );
+  }
+}
+
+/// The empty-list illustration, with an optional hint and next step.
+class _PlanEmptyIllustration extends StatelessWidget {
+  const _PlanEmptyIllustration({
+    required this.message,
+    this.hint,
+    this.action,
+    this.onAction,
+  });
+
+  final String message;
+  final String? hint, action;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 32.w),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: MediaQuery.sizeOf(context).width * .34,
+            child: AspectRatio(
+              aspectRatio: 140 / 130,
+              child: CustomPaint(painter: _EmptyDocumentPainter()),
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Text(
             message,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14.sp,
-              color: const Color(0xFF888888),
-              fontWeight: FontWeight.w400,
-              letterSpacing: 0.2,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: context.inkColor(_ink),
             ),
           ),
-        ),
-      ],
+          if (hint != null) ...[
+            SizedBox(height: 6.h),
+            Text(
+              hint!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                height: 1.4,
+                color: context.inkColor(_muted),
+              ),
+            ),
+          ],
+          if (action != null && onAction != null) ...[
+            SizedBox(height: 16.h),
+            OutlinedButton.icon(
+              key: const ValueKey('quran-plan-explore'),
+              onPressed: onAction,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.inkColor(_olive),
+                side: BorderSide(color: context.lineColor(_cardLine)),
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+              ),
+              icon: Icon(Icons.auto_stories_rounded, size: 18.sp),
+              label: Text(
+                action!,
+                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

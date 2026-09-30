@@ -127,7 +127,10 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.text(language == AppLanguage.bangla ? '৩০ দিন' : '30 Days'),
+          // Followed by the preset's daily load.
+          find.textContaining(
+            language == AppLanguage.bangla ? '৩০ দিন ·' : '30 Days ·',
+          ),
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);

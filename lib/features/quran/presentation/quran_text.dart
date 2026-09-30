@@ -210,7 +210,7 @@ class QuranText {
   String get createPlanTitle => _t('Create plan', 'পরিকল্পনা তৈরি');
   String get create => _t('Create', 'তৈরি করুন');
   String get read => _t('Read', 'পড়ুন');
-  String get getStarted => _t('Get Start', 'শুরু করুন');
+  String get getStarted => _t('Get Started', 'শুরু করুন');
   String get completed => _t('Completed', 'সম্পন্ন');
   String get markCompleted => _t('Mark Completed', 'সম্পন্ন চিহ্নিত করুন');
   String get deletePlan => _t('Delete Plan', 'প্ল্যান মুছে ফেলুন');
@@ -261,6 +261,40 @@ class QuranText {
   String get completedPlans => _t('Completed Plans', 'সম্পন্ন প্ল্যান');
   String get activePlans => _t('Active Plans', 'চলমান প্ল্যান');
   String get noActivePlans => _t('No Active Plans', 'কোনো চলমান প্ল্যান নেই');
+  String get noActivePlansHint => _t(
+    'Pick a ready-made plan or create your own, and read a little of the '
+        'Quran every day.',
+    'একটি তৈরি পরিকল্পনা বেছে নিন বা নিজের পরিকল্পনা তৈরি করুন, আর প্রতিদিন '
+        'একটু করে কুরআন পড়ুন।',
+  );
+  String get exploreReadyPlans =>
+      _t('Explore ready-made plans', 'তৈরি পরিকল্পনা দেখুন');
+
+  /// Ayahs still to read today to stay on schedule.
+  String todayToGo(int ayahs) =>
+      _t('Today: ${n(ayahs)} ayahs to go', 'আজ বাকি: ${n(ayahs)} আয়াত');
+  String get todayTargetDone =>
+      _t("Today's target done", 'আজকের লক্ষ্য পূরণ হয়েছে');
+
+  /// A preset's reading load, before it is started.
+  String aboutPerDay(int ayahs) =>
+      _t('about ${n(ayahs)} ayahs a day', 'প্রতিদিন প্রায় ${n(ayahs)} আয়াত');
+
+  /// Where "Continue reading" picks up.
+  String continueAt(String surahName, int ayahNo) =>
+      '$surahName · ${_t('Ayah', 'আয়াত')} ${n(ayahNo)}';
+  String dayOfTotal(int day, int total, int left) => _t(
+    'Day ${n(day)} of ${n(total)} · ${n(left)} days left',
+    'দিন ${n(day)}/${n(total)} · ${n(left)} দিন বাকি',
+  );
+  String get markCompletedConfirmTitle => _t(
+    'Mark this plan as completed?',
+    'পরিকল্পনাটি সম্পন্ন হিসেবে চিহ্নিত করবেন?',
+  );
+  String get markCompletedConfirmMessage => _t(
+    'It moves to Completed. You can reopen it later.',
+    'এটি সম্পন্ন তালিকায় চলে যাবে। পরে আবার চালু করতে পারবেন।',
+  );
   String get noCompletedPlans =>
       _t('No Completed Plans', 'কোনো সম্পন্ন প্ল্যান নেই');
   String get planCreatedSuccessfully =>
