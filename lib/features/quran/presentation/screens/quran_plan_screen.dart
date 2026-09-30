@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import '../../data/repositories/quran_plan_repository_impl.dart';
 import '../../data/services/quran_plan_store.dart';
 import '../../domain/quran_plan.dart';
@@ -13,6 +14,8 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import 'create_quran_plan_screen.dart';
 import 'quran_plan_details_screen.dart';
+import '../widgets/dashboard/quran_dashboard_header.dart';
+import '../widgets/quran_segmented_tabs.dart';
 
 class QuranPlanScreen extends StatefulWidget {
   const QuranPlanScreen({super.key, this.onBack, this.repository, this.bloc});
@@ -306,28 +309,19 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
               children: [
                 Column(
                   children: [
-                    SizedBox(height: 8.h),
-                    // Top Segmented Tabs: "My Plan", "Search Plan", "Complete Plan"
-                    Container(
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: borderColor, width: 1),
-                        ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                      child: QuranDashboardHeader(
+                        title: AppText.of(context).planner,
+                        onBack: widget.onBack,
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      child: Row(
-                        children: [
-                          for (final (i, title) in [
-                            t.myPlan,
-                            t.searchPlan,
-                            t.completePlan,
-                          ].indexed) ...[
-                            if (i > 0) SizedBox(width: 8.w),
-                            Flexible(
-                              child: _buildTopTab(index: i, title: title),
-                            ),
-                          ],
-                        ],
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                      child: QuranSegmentedTabs(
+                        selected: _tab,
+                        labels: [t.myPlan, t.searchPlan, t.completePlan],
+                        onSelected: (index) => setState(() => _tab = index),
                       ),
                     ),
 
@@ -350,7 +344,9 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                               vertical: 10.h,
                             ),
                             filled: true,
-                            fillColor: const Color(0xFFF6F8EF),
+                            fillColor: context.surfaceColor(
+                              const Color(0xFFF6F8EF),
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24.r),
                               borderSide: const BorderSide(color: borderColor),
@@ -416,35 +412,6 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
                     ),
                   ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopTab({required int index, required String title}) {
-    final isSelected = _tab == index;
-    return InkWell(
-      onTap: () => setState(() => _tab = index),
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFD4E5A8) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            title,
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF232D1C)
-                  : const Color(0xFF4A553E),
             ),
           ),
         ),

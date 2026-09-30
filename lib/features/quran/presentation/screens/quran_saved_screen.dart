@@ -18,6 +18,7 @@ import '../quran_text.dart';
 import 'create_quran_playlist_screen.dart';
 import 'quran_playlist_detail_screen.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart';
+import '../widgets/quran_segmented_tabs.dart';
 
 class QuranSavedScreen extends StatefulWidget {
   const QuranSavedScreen({
@@ -246,7 +247,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-                  child: _SegmentedTabs(
+                  child: QuranSegmentedTabs(
                     selected: _tab,
                     labels: [AppText.of(context).bookmarksTitle, t.playList],
                     onSelected: (index) => setState(() => _tab = index),
@@ -482,69 +483,6 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
 const _ink = Color(0xFF2D3A1F);
 const _muted = Color(0xFF7C8A63);
 const _tint = Color(0xFFEEF3DC);
-
-/// Two equal segments in a soft pill, the selected one filled; labels never
-/// share their width with other controls, so they are not cut short.
-class _SegmentedTabs extends StatelessWidget {
-  const _SegmentedTabs({
-    required this.selected,
-    required this.labels,
-    required this.onSelected,
-  });
-
-  final int selected;
-  final List<String> labels;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(4.r),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(_tint),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          for (final (index, label) in labels.indexed)
-            Expanded(
-              child: GestureDetector(
-                key: ValueKey('quran-saved-tab-$index'),
-                behavior: HitTestBehavior.opaque,
-                onTap: () => onSelected(index),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                  decoration: BoxDecoration(
-                    color: index == selected
-                        ? context.surfaceColor(const Color(0xFFD4E5A8))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: index == selected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: context.inkColor(
-                        index == selected ? _ink : _muted,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 /// A saved item: icon tile, title and subtitle, an optional footer (such as
 /// progress) and a trailing control.
