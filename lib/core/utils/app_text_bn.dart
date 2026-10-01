@@ -79,6 +79,10 @@ const Map<String, String> appTextBn = <String, String>{
   'deleteRingtoneTitle': 'রিংটোন মুছুন',
   'deleteRingtoneMessage': 'আপনি কি নিশ্চিত এই রিংটোনটি মুছে ফেলতে চান?',
   'deleteRingtoneConfirm': 'মুছুন',
+  'alarmNotSetForPrayer': 'এই নামাজের জন্য অ্যালার্ম সেট করা নেই',
+  'exactAlarmPermissionNeeded':
+      'আপনার নামাজের অ্যালার্ম সময়মতো বাজানোর জন্য সেটিংসে '
+      'অ্যালার্ম ও রিমাইন্ডার অনুমতি দিন।',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',

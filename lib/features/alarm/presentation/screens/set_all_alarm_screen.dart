@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +8,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/repositories/alarm_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/ringtone_cache.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/prayer_alarm_batch.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
@@ -115,6 +119,11 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
         );
       });
       if (on.isEmpty) return;
+      // Re-ensures it's cached in case it never finished downloading (or the
+      // cache was cleared) since it was first selected.
+      unawaited(
+        RingtoneCache.ensureCached(on.first.ringtoneId, on.first.ringtoneUrl),
+      );
       if (on.first.offsetMinutesBefore > 0) {
         alarmBloc.add(SelectOffset(on.first.offsetMinutesBefore));
       }
@@ -171,11 +180,26 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
       (failure) =>
           messenger.showSnackBar(SnackBar(content: Text(failure.message))),
       (_) async {
-        // Saved on the device; now arm the alarms that are on and disarm the
-        // rest.
+        // Saved on the device first either way. Exact-alarm access is
+        // checked only now, right as the user turns these alarms on — if
+        // it isn't granted, this opens Android's "Alarms & reminders"
+        // settings screen so they can grant it; `sync` below arms nothing
+        // until it is (see AlarmScheduler._applyPlan), so this is also the
+        // single source of truth even for callers that skip this check.
+        final granted = await AlarmScheduler.ensureExactAlarmPermission();
+        if (!mounted) return;
+        if (!granted) {
+          messenger.showSnackBar(
+            SnackBar(content: Text(appText.exactAlarmPermissionNeeded)),
+          );
+        }
         await syncLocalAlarms();
         if (!mounted) return;
-        messenger.showSnackBar(SnackBar(content: Text(appText.allAlarmsSaved)));
+        if (granted) {
+          messenger.showSnackBar(
+            SnackBar(content: Text(appText.allAlarmsSaved)),
+          );
+        }
         // `true` tells the caller the saved prayer alarms changed.
         Navigator.of(context).pop(true);
       },
@@ -444,77 +468,87 @@ class _AllAlarmRow extends StatelessWidget {
         ),
         SizedBox(width: 13.w),
         Expanded(
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
-            decoration: BoxDecoration(
-              color: context.surfaceColor(Colors.white),
-              borderRadius: BorderRadius.circular(30.r),
-              border: Border.all(color: const Color(0xFF7F8E60), width: 1.4),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38.r,
-                  height: 38.r,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(Color(0xFFFFF8D7)),
-                    borderRadius: BorderRadius.circular(9.r),
+          child: Opacity(
+            // Clearly reads as off, same as a disabled custom alarm on the
+            // "All Alarm" list (`_AlarmListItem`'s muted colour there).
+            opacity: selected ? 1 : 0.55,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
+                borderRadius: BorderRadius.circular(30.r),
+                border: Border.all(color: const Color(0xFF7F8E60), width: 1.4),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38.r,
+                    height: 38.r,
+                    decoration: BoxDecoration(
+                      color: context.surfaceColor(Color(0xFFFFF8D7)),
+                      borderRadius: BorderRadius.circular(9.r),
+                    ),
+                    child: Icon(
+                      _icon(period),
+                      color: context.inkColor(_iconColor(period)),
+                      size: 23.sp,
+                    ),
                   ),
-                  child: Icon(
-                    _icon(period),
-                    color: context.inkColor(_iconColor(period)),
-                    size: 23.sp,
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        name,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      if (range != null) ...[
-                        SizedBox(height: 3.h),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            range,
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              color: context.inkColor(Colors.black54),
+                        // Off: says so plainly instead of a waqt window the
+                        // alarm won't actually ring at. On: the usual range.
+                        if (!selected || range != null) ...[
+                          SizedBox(height: 3.h),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              selected ? range! : appText.alarmNotSetForPrayer,
+                              style: TextStyle(
+                                fontSize: 9.sp,
+                                fontStyle: selected
+                                    ? FontStyle.normal
+                                    : FontStyle.italic,
+                                color: context.inkColor(Colors.black54),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (period != null)
+                    Tooltip(
+                      message: '${appText.setAlarmFor} $name',
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => SetAlarmScreen(
+                              period: period,
+                              initialTime: times == null
+                                  ? null
+                                  : prayerStart(period, times!),
                             ),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (period != null)
-                  Tooltip(
-                    message: '${appText.setAlarmFor} $name',
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => SetAlarmScreen(
-                            period: period,
-                            initialTime: times == null
-                                ? null
-                                : prayerStart(period, times!),
-                          ),
-                        ),
+                        icon: Icon(Icons.access_alarm, size: 20.sp),
+                        color: context.inkColor(Color(0xFF7E8C61)),
                       ),
-                      icon: Icon(Icons.access_alarm, size: 20.sp),
-                      color: context.inkColor(Color(0xFF7E8C61)),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

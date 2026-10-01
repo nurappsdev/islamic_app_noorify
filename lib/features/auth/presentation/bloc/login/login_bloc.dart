@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 
+import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 
 import 'login_event.dart';
@@ -30,9 +31,12 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       ),
     );
 
-    result.fold(
-      (failure) => emit(LoginState.failure(failure)),
-      (user) => emit(LoginState.success(user)),
-    );
+    await result.fold((failure) async => emit(LoginState.failure(failure)), (
+      user,
+    ) async {
+      // Whatever was armed as a Guest must not carry into this account.
+      await SessionCleaner.clearGuestAlarms();
+      emit(LoginState.success(user));
+    });
   }
 }
