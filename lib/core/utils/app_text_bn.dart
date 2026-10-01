@@ -335,6 +335,11 @@ const Map<String, String> appTextBn = <String, String>{
   'zikrTapToCount': 'গণনা করতে ট্যাপ করুন',
   'zikrCompletingProgress': 'সম্পন্ন হচ্ছে',
   'zikrCompleted': 'সম্পন্ন',
+  'zikrNameSubhanAllah': 'সুবহানাল্লাহ',
+  'zikrNameAlhamdulillah': 'আলহামদুলিল্লাহ',
+  'zikrNameAllahuAkbar': 'আল্লাহু আকবার',
+  'zikrNameFinalZikr':
+      'লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারীকা লাহু, লাহুল মুলকু ওয়া লাহুল হামদু ওয়া হুওয়া আলা কুল্লি শাইয়িন ক্বাদীর',
   'duaIntroTitle': 'দোয়া',
   'duaIntroSubtitle': 'প্রতিদিনের দোয়ার মাধ্যমে আপনার ঈমান মজবুত করুন',
   'duaIntroStartButton': 'শুরু করুন',

@@ -315,6 +315,10 @@ class AppText {
     required this.zikrTapToCount,
     required this.zikrCompletingProgress,
     required this.zikrCompleted,
+    required this.zikrNameSubhanAllah,
+    required this.zikrNameAlhamdulillah,
+    required this.zikrNameAllahuAkbar,
+    required this.zikrNameFinalZikr,
     required this.duaIntroTitle,
     required this.duaIntroSubtitle,
     required this.duaIntroStartButton,
@@ -1196,6 +1200,10 @@ class AppText {
   final String zikrTapToCount;
   final String zikrCompletingProgress;
   final String zikrCompleted;
+  final String zikrNameSubhanAllah;
+  final String zikrNameAlhamdulillah;
+  final String zikrNameAllahuAkbar;
+  final String zikrNameFinalZikr;
 
   // Dua feature
   final String duaIntroTitle;
@@ -2851,6 +2859,26 @@ class AppText {
         fallback?.zikrCompletingProgress ?? '',
       ),
       zikrCompleted: _read(map, 'zikrCompleted', fallback?.zikrCompleted ?? ''),
+      zikrNameSubhanAllah: _read(
+        map,
+        'zikrNameSubhanAllah',
+        fallback?.zikrNameSubhanAllah ?? '',
+      ),
+      zikrNameAlhamdulillah: _read(
+        map,
+        'zikrNameAlhamdulillah',
+        fallback?.zikrNameAlhamdulillah ?? '',
+      ),
+      zikrNameAllahuAkbar: _read(
+        map,
+        'zikrNameAllahuAkbar',
+        fallback?.zikrNameAllahuAkbar ?? '',
+      ),
+      zikrNameFinalZikr: _read(
+        map,
+        'zikrNameFinalZikr',
+        fallback?.zikrNameFinalZikr ?? '',
+      ),
       duaIntroTitle: _read(map, 'duaIntroTitle', fallback?.duaIntroTitle ?? ''),
       duaIntroSubtitle: _read(
         map,

@@ -9,6 +9,7 @@ class ZikrItem {
     required this.arabic,
     required this.transliteration,
     required this.target,
+    this.trackingKey,
   });
 
   final String name;
@@ -16,8 +17,21 @@ class ZikrItem {
   final String transliteration;
   final int target;
 
+  /// Stable Hive key for the Home Screen's Prayer Zikr 1 & 2 counters. `null`
+  /// for every other zikr (All Zikr list, dropdown, My Created Zikr, custom
+  /// zikr) — those stay in-memory only.
+  final String? trackingKey;
+
   /// e.g. "Subhan Allah (33)"
   String get labelWithTarget => '$name ($target)';
+
+  ZikrItem copyWith({int? target, String? trackingKey}) => ZikrItem(
+    name: name,
+    arabic: arabic,
+    transliteration: transliteration,
+    target: target ?? this.target,
+    trackingKey: trackingKey ?? this.trackingKey,
+  );
 }
 
 /// A named group of zikr counts, shown as a card on the dashboard.
@@ -131,33 +145,71 @@ abstract final class ZikrCatalog {
     subhanAllahiWaBihamdihi,
   ];
 
-  /// The two "Prayer Zikr" presets shown in the dashboard header.
-  static const List<ZikrPreset> prayerPresets = [
+  /// Prayer Zikr 1's three counters, each persisted in Hive under its own
+  /// [ZikrItem.trackingKey] (Home Screen Zikr section).
+  static final subhanAllahPrayer1 = subhanAllah.copyWith(
+    trackingKey: 'subhanAllah1',
+  );
+  static final alhamdulillahPrayer1 = alhamdulillah.copyWith(
+    trackingKey: 'alhamdulillah1',
+  );
+  static const allahuAkbarPrayer1 = ZikrItem(
+    name: 'Allahu Akbar',
+    arabic: 'اَللّٰهُ أَكْبَر',
+    transliteration: 'Allāhu akbar',
+    target: 33,
+    trackingKey: 'allahuAkbar1',
+  );
+
+  /// Prayer Zikr 2's 4th counter (its first 3 are shared with Prayer Zikr 1 —
+  /// see [prayerPresets]), persisted in Hive under its [ZikrItem.trackingKey]
+  /// (Home Screen Zikr section).
+  static const finalZikrPrayer2 = ZikrItem(
+    name:
+        "La ilaha illallahu wahdahu la sharika lah, lahul mulku wa lahul "
+        "hamdu wa huwa 'ala kulli shay'in qadir",
+    arabic:
+        'لَا إِلٰهَ إِلَّا اللّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ '
+        'وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِير',
+    transliteration:
+        "Lā ilāha illā-llāhu waḥdahu lā sharīka lahu, lahu-l-mulku wa "
+        "lahu-l-ḥamdu wa huwa ʿalā kulli shayʾin qadīr",
+    target: 1,
+    trackingKey: 'finalZikr2',
+  );
+
+  /// The two "Prayer Zikr" presets shown in the dashboard header, backed by
+  /// Hive — see [ZikrItem.trackingKey].
+  ///
+  /// Prayer Zikr 2 walks the same SubhanAllah / Alhamdulillah / Allahu Akbar
+  /// counters as Prayer Zikr 1 (same [ZikrItem] instances, same Hive keys)
+  /// plus its own 4th zikr, so counting from either preset updates one
+  /// shared progress and the Home Screen total never double-counts.
+  static final List<ZikrPreset> prayerPresets = [
     ZikrPreset(
       name: 'Prayer Zikr 1',
-      formula: '33 +33 +34',
-      items: [subhanAllah, alhamdulillah, allahuAkbar],
+      formula: '33 +33 +33',
+      items: [subhanAllahPrayer1, alhamdulillahPrayer1, allahuAkbarPrayer1],
     ),
     ZikrPreset(
       name: 'Prayer Zikr 2',
       formula: '33 +33 +33 +1',
       items: [
-        subhanAllah,
-        alhamdulillah,
-        ZikrItem(
-          name: 'Allahu Akbar',
-          arabic: 'اَللّٰهُ أَكْبَر',
-          transliteration: 'Allāhu akbar',
-          target: 33,
-        ),
-        ZikrItem(
-          name: 'La ilaha illallah',
-          arabic: 'لَا إِلٰهَ إِلَّا اللّٰه',
-          transliteration: 'Lā ilāha illā-llāh',
-          target: 1,
-        ),
+        subhanAllahPrayer1,
+        alhamdulillahPrayer1,
+        allahuAkbarPrayer1,
+        finalZikrPrayer2,
       ],
     ),
+  ];
+
+  /// Every [ZikrItem.trackingKey] used by the Home Screen Zikr section, in
+  /// display order — the keys [ZikrProgressStore] persists in Hive.
+  static const List<String> trackedKeys = [
+    'subhanAllah1',
+    'alhamdulillah1',
+    'allahuAkbar1',
+    'finalZikr2',
   ];
 
   /// The single "My Created Zikr" card shown on the dashboard (mock data).
@@ -190,13 +242,7 @@ abstract final class ZikrCatalog {
     ),
   ];
 
-  // --- Mock dashboard numbers ---------------------------------------------
-
-  static const int mockTotalCount = 176337;
-  static const ZikrItem mockLastZikr = subhanAllah;
-  static const int mockLastZikrDone = 28;
-
-  /// Formats [mockTotalCount] the Indian way — "1,76,337".
+  /// Formats a count the Indian way — e.g. "1,76,337".
   static String formatIndian(int value) {
     final digits = value.toString();
     if (digits.length <= 3) return digits;

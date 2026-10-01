@@ -7,7 +7,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
@@ -16,7 +18,9 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 ///
 /// Walks through [ZikrCounterArgs.items] one zikr at a time. The header count is
 /// the running total; the dotted ring tracks the current zikr, the bottom bar
-/// tracks the whole sequence. Count is in memory only.
+/// tracks the whole sequence. An item with a [ZikrItem.trackingKey] (Prayer
+/// Zikr 1 & 2) restores its count from [ZikrProgressStore] and persists every
+/// tap and reset there; every other item stays in-memory only, as before.
 class ZikrCounterScreen extends StatefulWidget {
   const ZikrCounterScreen({super.key, required this.args});
 
@@ -27,7 +31,12 @@ class ZikrCounterScreen extends StatefulWidget {
 }
 
 class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
-  late final List<int> _counts = List<int>.filled(_items.length, 0);
+  late final List<int> _counts = [
+    for (final item in _items)
+      item.trackingKey == null
+          ? 0
+          : ZikrProgressStore.instance.countOf(item.trackingKey!),
+  ];
   late final PageController _pageController = PageController(
     viewportFraction: 0.44,
   );
@@ -76,7 +85,14 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       return;
     }
     HapticFeedback.selectionClick();
-    setState(() => _counts[_index]++);
+    final trackingKey = _item.trackingKey;
+    setState(() {
+      _counts[_index]++;
+      if (trackingKey != null) {
+        ZikrProgressStore.instance.increment(trackingKey, _item.target);
+        _counts[_index] = ZikrProgressStore.instance.countOf(trackingKey);
+      }
+    });
     if (_itemDone) {
       HapticFeedback.mediumImpact();
       final next = _nextIncomplete();
@@ -93,6 +109,13 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 
   void _reset() {
     HapticFeedback.lightImpact();
+    final trackingKeys = [
+      for (final item in _items)
+        if (item.trackingKey != null) item.trackingKey!,
+    ];
+    if (trackingKeys.isNotEmpty) {
+      ZikrProgressStore.instance.resetAll(trackingKeys);
+    }
     setState(() {
       for (var i = 0; i < _counts.length; i++) {
         _counts[i] = 0;
@@ -224,6 +247,10 @@ class _CurrentZikrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizedName = localizedTrackedZikrName(
+      AppText.of(context),
+      item.trackingKey,
+    );
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 40.w),
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),
@@ -241,17 +268,35 @@ class _CurrentZikrCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              item.arabic.isNotEmpty ? item.arabic : item.name,
-              textAlign: TextAlign.center,
-              textDirection: item.arabic.isNotEmpty
-                  ? TextDirection.rtl
-                  : TextDirection.ltr,
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF33421F)),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.arabic.isNotEmpty ? item.arabic : item.name,
+                  textAlign: TextAlign.center,
+                  textDirection: item.arabic.isNotEmpty
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(Color(0xFF33421F)),
+                  ),
+                ),
+                if (localizedName != null) ...[
+                  SizedBox(height: 4.h),
+                  Text(
+                    localizedName,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: context.inkColor(Color(0xFF4C5A34)),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           SizedBox(width: 10.w),

@@ -21,6 +21,11 @@ class HiveService {
   /// explanation), one entry per name keyed by its id.
   static const String asmaHusnaBox = 'asma_husna_box';
 
+  /// Box that holds the Home Screen's Zikr counters (Prayer Zikr 1 & 2
+  /// progress, and the latest zikr performed). Device-local only, never
+  /// synced to the backend.
+  static const String zikrBox = 'zikr_box';
+
   static bool _initialized = false;
 
   static Future<void> init() async {
@@ -30,6 +35,7 @@ class HiveService {
     await Hive.openBox<dynamic>(alarmsBox);
     await Hive.openBox<dynamic>(prayerAlarmsBox);
     await Hive.openBox<dynamic>(asmaHusnaBox);
+    await Hive.openBox<dynamic>(zikrBox);
     _initialized = true;
   }
 
@@ -44,4 +50,7 @@ class HiveService {
 
   /// Already-opened Asma-ul-Husna cache box. Safe to call after [init].
   static Box<dynamic> get asmaHusna => Hive.box<dynamic>(asmaHusnaBox);
+
+  /// Already-opened Zikr counters box. Safe to call after [init].
+  static Box<dynamic> get zikr => Hive.box<dynamic>(zikrBox);
 }

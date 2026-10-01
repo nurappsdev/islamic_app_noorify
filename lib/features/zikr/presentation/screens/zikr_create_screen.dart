@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 
@@ -210,7 +211,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       backgroundColor: context.pageColor(Colors.white),
       body: Column(
         children: [
-          ZikrGradientHeader(title: appText.zikrNewTitle),
+          ZikrGradientHeader(
+            title: appText.zikrNewTitle,
+            total: ZikrProgressStore.instance.totalCount,
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.fromLTRB(22.w, 26.h, 22.w, 20.h),
