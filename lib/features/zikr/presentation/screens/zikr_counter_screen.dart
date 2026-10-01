@@ -6,17 +6,79 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_planner_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+
+const _customKeyPrefix = 'custom:';
+const _planKeyPrefix = 'plan:';
+
+/// Reads [trackingKey]'s current count from whichever store owns it: a
+/// `custom:<id>` key (My Created Zikr) goes to [CustomZikrStore], a
+/// `plan:<planId>:<index>` key (the planner) goes to [ZikrPlannerStore], and
+/// every other key (Prayer Zikr 1 & 2) goes to [ZikrProgressStore].
+int _storeCountOf(String trackingKey) {
+  if (trackingKey.startsWith(_customKeyPrefix)) {
+    return CustomZikrStore.instance.countOf(
+      trackingKey.substring(_customKeyPrefix.length),
+    );
+  }
+  if (trackingKey.startsWith(_planKeyPrefix)) {
+    final parts = trackingKey.split(':');
+    return ZikrPlannerStore.instance.countOf(parts[1], int.parse(parts[2]));
+  }
+  return ZikrProgressStore.instance.countOf(trackingKey);
+}
+
+/// Taps [trackingKey] once in whichever store owns it — see [_storeCountOf].
+void _storeIncrement(String trackingKey, int target) {
+  if (trackingKey.startsWith(_customKeyPrefix)) {
+    CustomZikrStore.instance.increment(
+      trackingKey.substring(_customKeyPrefix.length),
+    );
+    return;
+  }
+  if (trackingKey.startsWith(_planKeyPrefix)) {
+    final parts = trackingKey.split(':');
+    ZikrPlannerStore.instance.incrementItem(parts[1], int.parse(parts[2]));
+    return;
+  }
+  ZikrProgressStore.instance.increment(trackingKey, target);
+}
+
+/// Resets every key in [trackingKeys] in whichever store owns it — see
+/// [_storeCountOf].
+void _storeResetAll(Iterable<String> trackingKeys) {
+  final progressKeys = <String>[];
+  for (final key in trackingKeys) {
+    if (key.startsWith(_customKeyPrefix)) {
+      CustomZikrStore.instance.reset(key.substring(_customKeyPrefix.length));
+    } else if (key.startsWith(_planKeyPrefix)) {
+      final parts = key.split(':');
+      ZikrPlannerStore.instance.resetItem(parts[1], int.parse(parts[2]));
+    } else {
+      progressKeys.add(key);
+    }
+  }
+  if (progressKeys.isNotEmpty) {
+    ZikrProgressStore.instance.resetAll(progressKeys);
+  }
+}
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
 ///
 /// Walks through [ZikrCounterArgs.items] one zikr at a time. The header count is
 /// the running total; the dotted ring tracks the current zikr, the bottom bar
-/// tracks the whole sequence. Count is in memory only.
+/// tracks the whole sequence. An item with a [ZikrItem.trackingKey] (Prayer
+/// Zikr 1 & 2, My Created Zikr, or a planner plan) restores its count from the
+/// matching store and persists every tap and reset there — see
+/// [_storeCountOf]; every other item stays in-memory only, as before.
 class ZikrCounterScreen extends StatefulWidget {
   const ZikrCounterScreen({super.key, required this.args});
 
@@ -27,7 +89,10 @@ class ZikrCounterScreen extends StatefulWidget {
 }
 
 class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
-  late final List<int> _counts = List<int>.filled(_items.length, 0);
+  late final List<int> _counts = [
+    for (final item in _items)
+      item.trackingKey == null ? 0 : _storeCountOf(item.trackingKey!),
+  ];
   late final PageController _pageController = PageController(
     viewportFraction: 0.44,
   );
@@ -76,7 +141,14 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       return;
     }
     HapticFeedback.selectionClick();
-    setState(() => _counts[_index]++);
+    final trackingKey = _item.trackingKey;
+    setState(() {
+      _counts[_index]++;
+      if (trackingKey != null) {
+        _storeIncrement(trackingKey, _item.target);
+        _counts[_index] = _storeCountOf(trackingKey);
+      }
+    });
     if (_itemDone) {
       HapticFeedback.mediumImpact();
       final next = _nextIncomplete();
@@ -93,6 +165,13 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 
   void _reset() {
     HapticFeedback.lightImpact();
+    final trackingKeys = [
+      for (final item in _items)
+        if (item.trackingKey != null) item.trackingKey!,
+    ];
+    if (trackingKeys.isNotEmpty) {
+      _storeResetAll(trackingKeys);
+    }
     setState(() {
       for (var i = 0; i < _counts.length; i++) {
         _counts[i] = 0;
@@ -224,6 +303,13 @@ class _CurrentZikrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A Prayer Zikr 1/2 key resolves its label from AppText directly; a My
+    // Created Zikr / planner item already carries its localized label in
+    // [item.name] (resolved by the caller), shown as a caption only when
+    // there's Arabic text above it to caption.
+    final localizedName =
+        localizedTrackedZikrName(AppText.of(context), item.trackingKey) ??
+        (item.arabic.isNotEmpty ? item.name : null);
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 40.w),
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),
@@ -241,17 +327,35 @@ class _CurrentZikrCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              item.arabic.isNotEmpty ? item.arabic : item.name,
-              textAlign: TextAlign.center,
-              textDirection: item.arabic.isNotEmpty
-                  ? TextDirection.rtl
-                  : TextDirection.ltr,
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF33421F)),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.arabic.isNotEmpty ? item.arabic : item.name,
+                  textAlign: TextAlign.center,
+                  textDirection: item.arabic.isNotEmpty
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(Color(0xFF33421F)),
+                  ),
+                ),
+                if (localizedName != null) ...[
+                  SizedBox(height: 4.h),
+                  Text(
+                    localizedName,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: context.inkColor(Color(0xFF4C5A34)),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           SizedBox(width: 10.w),

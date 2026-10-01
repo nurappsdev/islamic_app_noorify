@@ -143,6 +143,7 @@ import '../../features/zikr/presentation/screens/zikr_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_plan_create_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_plan_detail_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_planner_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_set_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_stats_screen.dart';
@@ -667,6 +668,9 @@ class AppRoutes {
         return _page(const ZikrPlannerScreen(), settings);
       case RouteNames.zikrPlanCreate:
         return _page(const ZikrPlanCreateScreen(), settings);
+      case RouteNames.zikrPlanDetail:
+        final planId = settings.arguments as String? ?? '';
+        return _page(ZikrPlanDetailScreen(planId: planId), settings);
       case RouteNames.zikrAll:
         return _page(const ZikrAllScreen(), settings);
       case RouteNames.zikrStats:
