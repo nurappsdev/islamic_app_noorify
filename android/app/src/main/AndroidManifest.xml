@@ -9,13 +9,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- User-grantable on Android 13+ ("Alarms & reminders" in Settings); the
+         app checks/requests it via AlarmScheduler.ensureExactAlarmPermission
+         before arming any alarm. USE_EXACT_ALARM (auto-granted, no user
+         prompt) is deliberately not declared: it is restricted to a narrow
+         set of app categories under Play policy and isn't appropriate here. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-    <!-- Lets the alarm notification launch AlarmRingingScreen straight over
-         the lock screen. Normal permission, auto-granted at install; on
-         Android 14+ some OEMs still require enabling it by hand in
-         Settings > Apps > Tuhfatul Muslim > Alarms & reminders / full-screen notifications. -->
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <!-- USE_FULL_SCREEN_INTENT is deliberately not declared: alarms are shown
+         as a high-priority (Importance.max/Priority.max, alarm-category)
+         notification instead of a full-screen intent, which keeps the app
+         clear of that permission's Play Store policy restrictions. See
+         AlarmScheduler's `_androidDetails`. -->
     <application
         android:label="Tuhfatul Muslim"
         android:name="${applicationName}"

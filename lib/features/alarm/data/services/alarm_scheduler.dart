@@ -17,6 +17,7 @@ import 'package:vibration/vibration.dart';
 import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_log.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync_plan.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/ringtone_cache.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/prayer_alarm_builder.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_ring_payload.dart';
@@ -49,14 +50,15 @@ const _ringingScreenGroup = 'ringing_screen';
 
 /// Android's `Notification.FLAG_INSISTENT` — repeats the notification's
 /// sound/vibration continuously until it's cancelled (our Stop/Snooze
-/// actions both do) or its window is opened. This is what actually makes
-/// the alarm ring continuously: it's driven entirely by the OS's own
+/// actions both do) or the notification is opened. This is what actually
+/// makes the alarm ring continuously: it's driven entirely by the OS's own
 /// NotificationManager, so — unlike a custom audio player — it doesn't
-/// depend on `AlarmRingingScreen` ever being shown (which Android only
-/// auto-launches over a *locked* screen; on an unlocked device a fired
-/// alarm is otherwise just an ordinary heads-up notification that plays
-/// its sound once, like the "1 second, like a notification" symptom this
-/// fixes) or on any background isolate/process staying alive for minutes.
+/// depend on `AlarmRingingScreen` ever being opened (the notification isn't
+/// a full-screen intent, so nothing auto-launches it; without this flag a
+/// fired alarm would otherwise just be an ordinary heads-up notification
+/// that plays its sound once, like the "1 second, like a notification"
+/// symptom this fixes) or on any background isolate/process staying alive
+/// for minutes.
 const _insistentFlag = 4;
 final _insistentFlags = Int32List.fromList(<int>[_insistentFlag]);
 
@@ -70,6 +72,12 @@ final _insistentFlags = Int32List.fromList(<int>[_insistentFlag]);
 const _alarmChannelSound = RawResourceAndroidNotificationSound(
   'alarm_fallback',
 );
+
+/// The Flutter asset `just_audio` plays when the chosen ringtone isn't
+/// cached locally (see [_playChosenRingtone]) — the same sound as
+/// [_alarmChannelSound], just packaged for `AudioPlayer` instead of the
+/// notification channel.
+const _bundledFallbackAsset = 'assets/audio/alarm_fallback.wav';
 
 /// What to do with an [AlarmRingPayload] once a notification response comes
 /// back — `open` means "bring the ringing screen to the foreground",
@@ -125,10 +133,12 @@ int _legacySnoozeManagerIdFor(String alarmId) =>
 ///
 /// Android: [AndroidAlarmManager] fires a background-isolate callback at the
 /// exact wall-clock time (persisted across reboots via
-/// `rescheduleOnReboot`), which shows a full-screen-intent, alarm-category
-/// notification; that notification launches `AlarmRingingScreen` — even over
-/// the lock screen (see `MainActivity`'s `showWhenLocked`/`turnScreenOn`) —
-/// which is what actually loops the ringtone audio.
+/// `rescheduleOnReboot`), which shows a high-priority, alarm-category
+/// notification (`Importance.max`/`Priority.max`, no full-screen intent —
+/// see `_androidDetails`) that loops the ringtone/vibration via
+/// `Notification.FLAG_INSISTENT` until Stop/Snooze; opening it (tap, or
+/// either action) launches `AlarmRingingScreen`, which takes over playing
+/// the chosen ringtone itself.
 ///
 /// iOS: Apple gives third-party apps no way to run code (or audio) in the
 /// background at an arbitrary wall-clock time, so the OS itself fires a
@@ -192,6 +202,43 @@ class AlarmScheduler {
     );
   }
 
+  static AndroidFlutterLocalNotificationsPlugin? get _android => _notifications
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
+  /// Whether this device can currently schedule exact alarms. Always `true`
+  /// off Android (and on Android below 12, where the permission doesn't
+  /// exist). Best-effort: a failed check never blocks scheduling, since the
+  /// check itself failing isn't evidence the permission is missing.
+  static Future<bool> hasExactAlarmPermission() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      return await _android?.canScheduleExactNotifications() ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Checks exact-alarm access and, if it isn't granted, opens Android's
+  /// "Alarms & reminders" settings screen so the user can grant it — the
+  /// `SCHEDULE_EXACT_ALARM` permission's user-facing name since Android 13 made
+  /// it user-togglable rather than install-time. Returns whether it ends up
+  /// granted. Call this before scheduling so a newly enabled/created alarm is
+  /// only armed once access is actually available (see [_applyPlan], which
+  /// also gates on this as a safety net for every other caller).
+  static Future<bool> ensureExactAlarmPermission() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final android = _android;
+      if (android == null) return true;
+      if (await android.canScheduleExactNotifications() ?? false) return true;
+      return await android.requestExactAlarmsPermission() ?? false;
+    } catch (_) {
+      return true;
+    }
+  }
+
   /// Logs what the OS has scheduled for this app, so an alarm the app doesn't
   /// list stands out in the log. Call once after [init].
   static Future<void> logScheduledAlarms() async {
@@ -231,6 +278,20 @@ class AlarmScheduler {
   }
 
   static Future<void> _applyPlan(AlarmSyncPlan plan) async {
+    // Disabling/deleting an alarm never needs this permission — only arming
+    // a new one does — so a missing permission still lets the loop below
+    // disarm and sweep normally; it just skips arming until it's granted.
+    final canArm = plan.armed.isEmpty || await hasExactAlarmPermission();
+    if (!canArm) {
+      await AlarmLog.record(
+        'arm',
+        status: 'skipped',
+        detail:
+            'exact-alarm permission not granted; ${plan.armed.length} '
+            'alarm(s) left unarmed until it is',
+      );
+    }
+
     final desired = <int, String>{}; // OS id -> alarm id
     for (final alarm in plan.armed) {
       final osId = alarmManagerIdFor(alarm.id);
@@ -248,6 +309,7 @@ class AlarmScheduler {
         continue;
       }
       desired[osId] = alarm.id;
+      if (!canArm) continue;
       try {
         await scheduleAlarm(alarm, source: AlarmSource.backend);
       } catch (e) {
@@ -741,17 +803,24 @@ Future<void> _rearmDaily(int id, AlarmRingPayload payload) async {
 bool _playsChosenRingtone(AlarmRingPayload payload) =>
     payload.shouldPlaySound && payload.ringtoneUrl.isNotEmpty;
 
-/// Plays the alarm's chosen ringtone (`ringtoneUrl`, resolved from its
-/// `ringtoneId`) on a loop straight from the background isolate, so the
-/// selected music sounds even when `AlarmRingingScreen` never opens (an
-/// unlocked phone only gets a heads-up notification). Vibrates alongside it
-/// when the alarm asks for vibration. Stops once the notification is
-/// dismissed (Stop/Snooze), once the ringing screen takes over, or after
-/// [_maxBackgroundRing].
+/// Plays the alarm's chosen ringtone on a loop straight from the background
+/// isolate, so the selected music sounds even when `AlarmRingingScreen`
+/// never opens (an unlocked phone only gets a heads-up notification).
+/// Vibrates alongside it when the alarm asks for vibration. Stops once the
+/// notification is dismissed (Stop/Snooze), once the ringing screen takes
+/// over, or after [_maxBackgroundRing].
+///
+/// Plays from [RingtoneCache]'s local copy of `ringtoneId` — never streams
+/// `ringtoneUrl` at fire time, since the exact moment an alarm fires (often
+/// a pre-dawn Fajr, with the network possibly asleep or absent) is the worst
+/// possible time to depend on a network request. When nothing is cached
+/// (the selection's download never finished, or the file was cleared), the
+/// bundled [_bundledFallbackAsset] plays instead — the alarm is never
+/// silent and never waits on the network.
 ///
 /// The notification is posted on the silent channel for these alarms, so if
-/// the ringtone can't load (404, offline) it is re-posted on the beep
-/// channel — the alarm never goes silent, and never plays both at once.
+/// even that somehow throws, it is re-posted on the beep channel — the
+/// alarm never goes silent, and never plays both at once.
 Future<void> _playChosenRingtone(
   FlutterLocalNotificationsPlugin plugin,
   AlarmRingPayload payload, {
@@ -760,6 +829,7 @@ Future<void> _playChosenRingtone(
 }) async {
   if (!_playsChosenRingtone(payload)) return;
 
+  final cached = await RingtoneCache.cachedFile(payload.ringtoneId);
   final player = AudioPlayer();
   try {
     await player.setAndroidAudioAttributes(
@@ -768,7 +838,11 @@ Future<void> _playChosenRingtone(
         contentType: AndroidAudioContentType.music,
       ),
     );
-    await player.setUrl(payload.ringtoneUrl);
+    if (cached != null) {
+      await player.setFilePath(cached.path);
+    } else {
+      await player.setAsset(_bundledFallbackAsset);
+    }
     await player.setLoopMode(LoopMode.one);
     await player.setVolume(1);
     // Stop/Snooze may have landed while the ringtone was still loading.
@@ -832,7 +906,7 @@ Future<FlutterLocalNotificationsPlugin> _showAlarmNotification(
     body: _timeLabel(payload.hour, payload.minute),
     notificationDetails: NotificationDetails(
       android: _playsChosenRingtone(payload)
-          ? _silentDetails(payload, fullScreenIntent: true)
+          ? _silentDetails(payload)
           : _androidDetails(payload),
     ),
     payload: payload.encode(),
@@ -842,6 +916,14 @@ Future<FlutterLocalNotificationsPlugin> _showAlarmNotification(
 
 /// The default alarm notification: the channel's looping fallback beep (and
 /// vibration) repeats via [_insistentFlags] until Stop/Snooze cancels it.
+///
+/// Deliberately not a full-screen intent (`USE_FULL_SCREEN_INTENT` is no
+/// longer declared — see `AndroidManifest.xml` — since Play policy reserves
+/// it for a narrow set of app categories): `Importance.max` + `Priority.max`
+/// + `AndroidNotificationCategory.alarm` is enough for a heads-up alarm
+/// notification that bypasses Do Not Disturb on supported devices. Opening
+/// it (tap, or the Stop/Snooze actions) still reaches `AlarmRingingScreen`
+/// via [alarmNotificationEvents] / `main.dart`.
 AndroidNotificationDetails _androidDetails(AlarmRingPayload payload) =>
     AndroidNotificationDetails(
       _channelId,
@@ -850,7 +932,6 @@ AndroidNotificationDetails _androidDetails(AlarmRingPayload payload) =>
       importance: Importance.max,
       priority: Priority.max,
       category: AndroidNotificationCategory.alarm,
-      fullScreenIntent: true,
       ongoing: true,
       autoCancel: false,
       visibility: NotificationVisibility.public,
@@ -871,13 +952,12 @@ AndroidNotificationDetails _androidDetails(AlarmRingPayload payload) =>
     );
 
 /// Same notification on the silent channel: no beep, no vibration of its
-/// own. Used when the app plays the chosen ringtone itself (initially, with
-/// [fullScreenIntent] so a locked phone still opens `AlarmRingingScreen`) and
-/// for the update `AlarmRingingScreen` posts once it takes over ([groupKey]
-/// tells the background player to stop). Still cancellable via Stop/Snooze.
+/// own. Used when the app plays the chosen ringtone itself (initially, and
+/// for the update `AlarmRingingScreen` posts once it takes over — [groupKey]
+/// tells the background player to stop). Still cancellable via Stop/Snooze;
+/// see [_androidDetails] for why this isn't a full-screen intent either.
 AndroidNotificationDetails _silentDetails(
   AlarmRingPayload payload, {
-  bool fullScreenIntent = false,
   String? groupKey,
 }) => AndroidNotificationDetails(
   _silentChannelId,
@@ -886,7 +966,6 @@ AndroidNotificationDetails _silentDetails(
   importance: Importance.max,
   priority: Priority.max,
   category: AndroidNotificationCategory.alarm,
-  fullScreenIntent: fullScreenIntent,
   ongoing: true,
   autoCancel: false,
   onlyAlertOnce: true,
