@@ -43,16 +43,16 @@ class AppBottomNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
-        padding: EdgeInsets.all(8.r),
+        margin: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 10.h),
+        padding: EdgeInsets.all(6.r),
         decoration: BoxDecoration(
           color: _barColor,
-          borderRadius: BorderRadius.circular(36.r),
+          borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
               color: _shadowColor.withValues(alpha: .16),
-              blurRadius: 16.r,
-              offset: Offset(0, 4.h),
+              blurRadius: 12.r,
+              offset: Offset(0, 3.h),
             ),
           ],
         ),
@@ -101,19 +101,19 @@ class _NavButton extends StatelessWidget {
         message: item.label,
         child: Material(
           color: selected ? AppBottomNavBar._selectedColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(28.r),
+          borderRadius: BorderRadius.circular(22.r),
           child: InkWell(
             key: item.key,
-            borderRadius: BorderRadius.circular(28.r),
+            borderRadius: BorderRadius.circular(22.r),
             onTap: item.onTap,
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
+              padding: EdgeInsets.symmetric(vertical: 12.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(item.icon, color: Colors.white, size: 24.sp),
+                  Icon(item.icon, color: Colors.white, size: 20.sp),
                   if (selected && showLabel) ...[
-                    SizedBox(width: 6.w),
+                    SizedBox(width: 5.w),
                     Flexible(
                       child: Text(
                         item.label,
@@ -121,7 +121,7 @@ class _NavButton extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
