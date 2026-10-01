@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_model.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
@@ -16,9 +18,9 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 /// on [ZikrIntroScreen].
 ///
 /// "Total Zikr", "Last Zikr" and the two Prayer Zikr pills come from
-/// [ZikrProgressStore] (Hive-backed, device-local); the "My Created Zikr"
-/// card is still mock data. Tapping a zikr opens [ZikrCounterScreen]; the `+`
-/// button opens the "New Zikr" screen.
+/// [ZikrProgressStore]; "My Created Zikr" comes from [CustomZikrStore] (both
+/// Hive-backed, device-local, and fully reactive). Tapping a zikr opens
+/// [ZikrCounterScreen]; the `+` button opens the "New Zikr" screen.
 class ZikrDashboardScreen extends StatelessWidget {
   const ZikrDashboardScreen({super.key});
 
@@ -117,15 +119,31 @@ class ZikrDashboardScreen extends StatelessWidget {
                   SizedBox(height: 12.h),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: _CreatedZikrCard(
-                      preset: ZikrCatalog.createdSample,
-                      appText: appText,
-                      onOpenItem: (item) =>
-                          _openCounter(context, ZikrCounterArgs.fromItem(item)),
-                      onGetStart: () => _openCounter(
-                        context,
-                        ZikrCounterArgs.fromPreset(ZikrCatalog.createdSample),
-                      ),
+                    child: ValueListenableBuilder<List<CustomZikrModel>>(
+                      valueListenable: CustomZikrStore.instance,
+                      builder: (context, customZikr, _) {
+                        final items = [
+                          for (final model in customZikr)
+                            _zikrItemFor(appText, model),
+                        ];
+                        return _CreatedZikrCard(
+                          title: appText.zikrMyCreatedZikr,
+                          items: items,
+                          onOpenItem: (item) => _openCounter(
+                            context,
+                            ZikrCounterArgs.fromItem(item),
+                          ),
+                          onGetStart: items.isEmpty
+                              ? null
+                              : () => _openCounter(
+                                  context,
+                                  ZikrCounterArgs(
+                                    title: appText.zikrMyCreatedZikr,
+                                    items: items,
+                                  ),
+                                ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -303,18 +321,30 @@ class _PresetPill extends StatelessWidget {
   }
 }
 
+/// Builds the [ZikrItem] shown/opened for one "My Created Zikr" entry: its
+/// name follows the active language (via its seeded `nameKey`, when it has
+/// one) and its `trackingKey` routes [ZikrCounterScreen] to
+/// [CustomZikrStore].
+ZikrItem _zikrItemFor(AppText appText, CustomZikrModel model) => ZikrItem(
+  name: localizedSeedZikrName(appText, model.nameKey) ?? model.name,
+  arabic: model.arabic,
+  transliteration: model.transliteration,
+  target: model.target,
+  trackingKey: 'custom:${model.id}',
+);
+
 class _CreatedZikrCard extends StatelessWidget {
   const _CreatedZikrCard({
-    required this.preset,
-    required this.appText,
+    required this.title,
+    required this.items,
     required this.onOpenItem,
     required this.onGetStart,
   });
 
-  final ZikrPreset preset;
-  final AppText appText;
+  final String title;
+  final List<ZikrItem> items;
   final ValueChanged<ZikrItem> onOpenItem;
-  final VoidCallback onGetStart;
+  final VoidCallback? onGetStart;
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +359,7 @@ class _CreatedZikrCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            preset.name,
+            title,
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
@@ -341,7 +371,7 @@ class _CreatedZikrCard extends StatelessWidget {
             spacing: 10.w,
             runSpacing: 10.h,
             children: [
-              for (final item in preset.items)
+              for (final item in items)
                 InkWell(
                   onTap: () => onOpenItem(item),
                   borderRadius: BorderRadius.circular(20.r),
@@ -358,7 +388,9 @@ class _CreatedZikrCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      item.labelWithTarget,
+                      '${item.name} ('
+                      '${context.localizedDigits(_doneFor(item))}'
+                      '/${context.localizedDigits('${item.target}')})',
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: context.inkColor(Color(0xFF3C4A28)),
@@ -384,7 +416,7 @@ class _CreatedZikrCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                appText.zikrGetStart,
+                AppText.of(context).zikrGetStart,
                 style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
               ),
             ),
@@ -392,6 +424,12 @@ class _CreatedZikrCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _doneFor(ZikrItem item) {
+    final key = item.trackingKey;
+    if (key == null || !key.startsWith('custom:')) return '0';
+    return CustomZikrStore.instance.countOf(key.substring(7)).toString();
   }
 }
 

@@ -6,13 +6,17 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_plan_model.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_planner_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// "Create plan" screen (designs `devImg/img_23.png` and `devImg/img_24.png`),
 /// reached from the "Create Plan" button on [ZikrPlannerScreen].
 ///
-/// UI only. Fill the plan name + completion days, add one or more zikr with a
-/// reading value, then "Create" (which just returns to the planner).
+/// Fill the plan name + completion days, add one or more zikr with a reading
+/// value, then "Create" persists the plan to [ZikrPlannerStore] and returns
+/// to the planner, where it appears immediately in "My Plans".
 class ZikrPlanCreateScreen extends StatefulWidget {
   const ZikrPlanCreateScreen({super.key});
 
@@ -29,7 +33,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
   final _valueController = TextEditingController();
 
   final List<ZikrPlanEntry> _entries = [];
+  final List<String?> _entryNameKeys = [];
   String? _zikrName;
+  String? _zikrNameKey;
   bool _adding = true;
 
   late AppText _appText;
@@ -118,46 +124,26 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     if (result == null || !mounted) return;
     if (result == _customValue) {
       final name = await _askCustomName();
-      if (name != null && name.isNotEmpty) setState(() => _zikrName = name);
+      if (!mounted) return;
+      if (name != null && name.isNotEmpty) {
+        setState(() {
+          _zikrName = name;
+          _zikrNameKey = null;
+        });
+      }
       return;
     }
-    setState(() => _zikrName = result);
+    setState(() {
+      _zikrName = result;
+      _zikrNameKey = zikrNameKeyFor(result);
+    });
   }
 
   Future<String?> _askCustomName() {
-    final controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          _appText.zikrCustom,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: _appText.zikrWriteZikrNameHint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(_appText.zikrCancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
-            child: Text(_appText.zikrCreateAdd),
-          ),
-        ],
-      ),
-    ).whenComplete(controller.dispose);
+      builder: (dialogContext) => _CustomZikrNameDialog(appText: _appText),
+    );
   }
 
   void _add() {
@@ -175,7 +161,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           value: (value == null || value < 1) ? 33 : value,
         ),
       );
+      _entryNameKeys.add(_zikrNameKey);
       _zikrName = null;
+      _zikrNameKey = null;
       _valueController.clear();
       _adding = false;
     });
@@ -185,15 +173,48 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     setState(() => _adding = true);
   }
 
+  /// The entries already added via "Add", plus whatever zikr is still
+  /// filled in on the form but wasn't explicitly added yet — so tapping
+  /// "Create" right after selecting a preset/custom zikr and a target count
+  /// (without tapping the small "Add" first) still saves it, instead of the
+  /// selection being silently dropped and failing validation.
+  (List<ZikrPlanEntry>, List<String?>) _resolvedEntries() {
+    final entries = List.of(_entries);
+    final nameKeys = List.of(_entryNameKeys);
+    final pendingName = _zikrName;
+    if (pendingName != null && pendingName.isNotEmpty) {
+      final pendingValue = int.tryParse(_valueController.text.trim());
+      entries.add(
+        ZikrPlanEntry(
+          name: pendingName,
+          value: (pendingValue == null || pendingValue < 1) ? 33 : pendingValue,
+        ),
+      );
+      nameKeys.add(_zikrNameKey);
+    }
+    return (entries, nameKeys);
+  }
+
   void _create() {
-    if (_entries.isEmpty) {
+    final (entries, nameKeys) = _resolvedEntries();
+    if (entries.isEmpty) {
       _toast(_appText.zikrSelectZikr);
       return;
     }
     HapticFeedback.selectionClick();
-    Navigator.of(context).pop(
-      ZikrPlan(name: _planName, days: _planDays, entries: List.of(_entries)),
+    ZikrPlannerStore.instance.create(
+      name: _planName,
+      durationDays: _planDays,
+      items: [
+        for (var i = 0; i < entries.length; i++)
+          PlanZikrItem(
+            name: entries[i].name,
+            nameKey: nameKeys[i],
+            target: entries[i].value,
+          ),
+      ],
     );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -420,6 +441,63 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
               style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Body of the "Custom" name dialog from [_ZikrPlanCreateScreenState.
+/// _askCustomName]. Owns its own [TextEditingController] so Flutter disposes
+/// it only after this widget's `Element` is actually unmounted (once the
+/// dialog's exit animation finishes) — disposing it as soon as the
+/// `showDialog` future resolves (i.e. the instant "Add" is tapped) races the
+/// still-animating-out dialog, which still has a live [TextField] reading
+/// that controller, and throws.
+class _CustomZikrNameDialog extends StatefulWidget {
+  const _CustomZikrNameDialog({required this.appText});
+
+  final AppText appText;
+
+  @override
+  State<_CustomZikrNameDialog> createState() => _CustomZikrNameDialogState();
+}
+
+class _CustomZikrNameDialogState extends State<_CustomZikrNameDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = widget.appText;
+    return AlertDialog(
+      title: Text(
+        appText.zikrCustom,
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          hintText: appText.zikrWriteZikrNameHint,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(appText.zikrCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
+          child: Text(appText.zikrCreateAdd),
         ),
       ],
     );

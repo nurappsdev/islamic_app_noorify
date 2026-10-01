@@ -26,6 +26,15 @@ class HiveService {
   /// synced to the backend.
   static const String zikrBox = 'zikr_box';
 
+  /// Box that holds the Home Screen's "My Created Zikr" list (the default
+  /// SubhanAllah/Alhamdulillah/Allahu Akbar set plus every custom zikr the
+  /// user adds), one entry per zikr keyed by its id.
+  static const String customZikrBox = 'custom_zikr_box';
+
+  /// Box that holds the Zikr planner's plans, one entry per plan keyed by
+  /// its id.
+  static const String zikrPlannerBox = 'zikr_planner_box';
+
   static bool _initialized = false;
 
   static Future<void> init() async {
@@ -36,6 +45,8 @@ class HiveService {
     await Hive.openBox<dynamic>(prayerAlarmsBox);
     await Hive.openBox<dynamic>(asmaHusnaBox);
     await Hive.openBox<dynamic>(zikrBox);
+    await Hive.openBox<dynamic>(customZikrBox);
+    await Hive.openBox<dynamic>(zikrPlannerBox);
     _initialized = true;
   }
 
@@ -53,4 +64,10 @@ class HiveService {
 
   /// Already-opened Zikr counters box. Safe to call after [init].
   static Box<dynamic> get zikr => Hive.box<dynamic>(zikrBox);
+
+  /// Already-opened "My Created Zikr" box. Safe to call after [init].
+  static Box<dynamic> get customZikr => Hive.box<dynamic>(customZikrBox);
+
+  /// Already-opened Zikr planner box. Safe to call after [init].
+  static Box<dynamic> get zikrPlanner => Hive.box<dynamic>(zikrPlannerBox);
 }

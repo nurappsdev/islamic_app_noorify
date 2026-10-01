@@ -51,29 +51,13 @@ class ZikrPreset {
   int get total => items.fold(0, (sum, item) => sum + item.target);
 }
 
-/// One zikr line inside a [ZikrPlan] — a zikr name and its total reading target.
+/// One zikr line being built on [ZikrPlanCreateScreen] — a zikr name and its
+/// total reading target, before it's persisted as a `PlanZikrItem`.
 class ZikrPlanEntry {
   const ZikrPlanEntry({required this.name, required this.value});
 
   final String name;
   final int value;
-}
-
-/// A daily-zikr plan (design `devImg/img_22.png` / `img_24.png`). UI only.
-class ZikrPlan {
-  const ZikrPlan({
-    required this.name,
-    required this.days,
-    required this.entries,
-    this.completed = false,
-  });
-
-  final String name;
-  final int days;
-  final List<ZikrPlanEntry> entries;
-  final bool completed;
-
-  int get totalValue => entries.fold(0, (sum, e) => sum + e.value);
 }
 
 abstract final class ZikrCatalog {
@@ -212,34 +196,11 @@ abstract final class ZikrCatalog {
     'finalZikr2',
   ];
 
-  /// The single "My Created Zikr" card shown on the dashboard (mock data).
-  static const ZikrPreset createdSample = ZikrPreset(
-    name: 'Prayer Zikr',
-    formula: '33 +33 +34',
-    items: [subhanAllah, alhamdulillah, allahuAkbar],
-  );
-
   /// Names shown in the "Select Zikr" dropdown (design `devImg/img_14.png`).
   static const List<ZikrItem> dropdownItems = [
     subhanAllah,
     alhamdulillah,
     allahuAkbar,
-  ];
-
-  /// Mock finished plans for the planner's "Complete Plan" tab.
-  static const List<ZikrPlan> mockCompletedPlans = [
-    ZikrPlan(
-      name: 'Subhan-Allah',
-      days: 30,
-      completed: true,
-      entries: [ZikrPlanEntry(name: 'Subhan-Allah', value: 5000)],
-    ),
-    ZikrPlan(
-      name: 'Allahu Akbar',
-      days: 30,
-      completed: true,
-      entries: [ZikrPlanEntry(name: 'Allahu Akbar', value: 5000)],
-    ),
   ];
 
   /// Formats a count the Indian way — e.g. "1,76,337".
