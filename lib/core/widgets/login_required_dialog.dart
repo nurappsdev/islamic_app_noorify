@@ -105,8 +105,8 @@ class _LoginRequiredCard extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: AppColor.primary.withValues(alpha: .35),
-                      blurRadius: 32,
-                      offset: const Offset(0, 14),
+                      blurRadius: 32.r,
+                      offset: Offset(0, 14.h),
                     ),
                   ],
                 ),
@@ -174,8 +174,8 @@ class _LoginRequiredCard extends StatelessWidget {
                                   color: AppColor.authLogo.withValues(
                                     alpha: .4,
                                   ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 5),
+                                  blurRadius: 12.r,
+                                  offset: Offset(0, 5.h),
                                 ),
                               ],
                             ),
@@ -218,13 +218,13 @@ class _LoginRequiredCard extends StatelessWidget {
                   ),
                   border: Border.all(
                     color: context.surfaceColor(Colors.white),
-                    width: 5,
+                    width: 5.r,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColor.authLogo.withValues(alpha: .45),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+                      blurRadius: 18.r,
+                      offset: Offset(0, 8.h),
                     ),
                   ],
                 ),
