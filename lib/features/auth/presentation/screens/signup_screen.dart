@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
@@ -297,6 +298,10 @@ class _SignupViewState extends State<_SignupView> {
 
   Future<String> _defaultGoogleSignUpRouteResolver() async {
     await SignUpUseCase(AuthRepositoryImpl(AuthService.instance)).withGoogle();
+    // This is a Firebase-only session (no REST token), so it never touches
+    // the auth Hive box `LoginBloc`/`OtpVerificationBloc` watch — clear
+    // whatever was armed as a Guest here too.
+    await SessionCleaner.clearGuestAlarms();
     await _setSkipAuthGate(false);
     return RouteNames.home;
   }
