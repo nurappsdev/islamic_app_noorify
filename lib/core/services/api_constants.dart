@@ -6,6 +6,10 @@ class ApiConstants {
    static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1/";
   static const String imageBaseUrl = "";
 
+  /// Sent as the `X-API-Key` header on every request by [DioClient].
+  static const String apiKey =
+      "c954a39d0ce7ff714e0e87f15a21c5a1cfde41787c2b4a3e6ec0417a2e4bfb9a";
+
   // static const String socketBaseUrl = "https://api.drop-dr.com";
 
   // static const String baseUrl = "https://health-mamun.sarv.live/api/v1";
