@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/reset_password.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  const ResetPasswordScreen({super.key, this.resetToken});
+
+  /// Short-lived token from OTP verification that authorises the reset.
+  final String? resetToken;
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
 
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -22,11 +32,56 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
+  late final ResetPasswordBloc _bloc = ResetPasswordBloc(
+    ResetPassword(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+  );
+
   @override
   void dispose() {
+    _bloc.close();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    _bloc.add(
+      ResetPasswordSubmitted(
+        resetToken: widget.resetToken ?? '',
+        password: _newPasswordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      ),
+    );
+  }
+
+  void _onState(BuildContext context, ResetPasswordState state) {
+    switch (state.status) {
+      case ResetPasswordStatus.success:
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(AppText.readOf(context).passwordUpdated)),
+          );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
+      case ResetPasswordStatus.failure:
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                state.errorMessage ??
+                    AppText.readOf(context).resetPasswordFailed,
+              ),
+            ),
+          );
+        _bloc.add(const ResetPasswordReset());
+      case ResetPasswordStatus.initial:
+      case ResetPasswordStatus.loading:
+        break;
+    }
   }
 
   InputDecoration _fieldDecoration({
@@ -52,15 +107,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         ),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -96,8 +155,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
+    return BlocProvider<ResetPasswordBloc>.value(
+      value: _bloc,
+      child: BlocListener<ResetPasswordBloc, ResetPasswordState>(
+        listenWhen: (previous, current) => previous.status != current.status,
+        listener: _onState,
+        child: _buildScaffold(appText),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(AppText appText) {
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
@@ -118,8 +188,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFFAD7),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFFFFAD7),
+                          ),
+                          foregroundColor: context.inkColor(Colors.black),
                           fixedSize: Size(30.r, 30.r),
                         ),
                         onPressed: () => Navigator.of(context).maybePop(),
@@ -129,7 +201,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text(
                       appText.resetPassword,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w400,
                       ),
@@ -149,9 +221,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Noorify',
+                          AppText.of(context).tuhfatulMuslim,
                           style: TextStyle(
-                            color: AppColor.authLogo,
+                            color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -160,17 +232,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  appText.noorify,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14.sp,
-                    height: 1.2,
-                    fontFamily: 'Times New Roman',
-                  ),
-                ),
+                // The logo already carries the app name.
+                // SizedBox(height: 8.h),
+                // Text(
+                // appText.tuhfatulMuslim,
+                // textAlign: TextAlign.center,
+                // style: TextStyle(
+                // color: context.inkColor(Colors.black),
+                // fontSize: 14.sp,
+                // height: 1.2,
+                // fontFamily: 'Times New Roman',
+                // ),
+                // ),
                 SizedBox(height: 40.h),
                 _passwordField(
                   controller: _newPasswordController,
@@ -196,10 +269,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   },
                 ),
                 SizedBox(height: 78.h),
-                AuthButton(
-                  label: appText.confirm,
-                  height: 50.h,
-                  onPressed: () {},
+                BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+                  builder: (context, state) {
+                    return AuthButton(
+                      label: appText.confirm,
+                      height: 50.h,
+                      isLoading: state.isLoading,
+                      onPressed: _submit,
+                    );
+                  },
                 ),
                 SizedBox(height: 120.h),
               ],

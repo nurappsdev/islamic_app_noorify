@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:islami_app_noorify/core/bloc/app_preferences/app_preferences_bloc.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart'
+import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart'
     as sign_up;
 
 void main() {
@@ -30,16 +30,16 @@ void main() {
   });
 
   group('LanguageBloc', () {
-    test('starts in english and updates language', () async {
-      final bloc = LanguageBloc();
+    test('starts in bangla and updates language', () async {
+      final bloc = LanguageBloc(persist: (_) async {});
       addTearDown(bloc.close);
 
-      expect(bloc.state.language, AppLanguage.english);
+      expect(bloc.state.language, AppLanguage.bangla);
 
-      bloc.add(const UpdateLanguage(AppLanguage.bangla));
+      bloc.add(const UpdateLanguage(AppLanguage.english));
       await Future<void>.delayed(Duration.zero);
 
-      expect(bloc.state.language, AppLanguage.bangla);
+      expect(bloc.state.language, AppLanguage.english);
     });
   });
 
@@ -67,18 +67,18 @@ void main() {
 
       expect(bloc.state.obscurePassword, isTrue);
       expect(bloc.state.obscureConfirm, isTrue);
-      expect(bloc.state.saveInfo, isTrue);
+      expect(bloc.state.saveInfo, isFalse);
       expect(bloc.state.isLoading, isFalse);
 
       bloc.add(const sign_up.ToggleObscurePassword());
       bloc.add(const sign_up.ToggleObscureConfirm());
-      bloc.add(const sign_up.SetSaveInfo(false));
+      bloc.add(const sign_up.SetSaveInfo(true));
       bloc.add(const sign_up.SetLoading(true));
       await Future<void>.delayed(Duration.zero);
 
       expect(bloc.state.obscurePassword, isFalse);
       expect(bloc.state.obscureConfirm, isFalse);
-      expect(bloc.state.saveInfo, isFalse);
+      expect(bloc.state.saveInfo, isTrue);
       expect(bloc.state.isLoading, isTrue);
     });
   });

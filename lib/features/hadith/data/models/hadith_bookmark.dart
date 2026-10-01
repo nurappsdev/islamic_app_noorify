@@ -13,6 +13,7 @@ class HadithBookmark {
     required this.titleBn,
     required this.savedAt,
     this.folders = const [],
+    this.payload,
   });
 
   /// Reserved folder marking a quick per-hadith bookmark (never shown as a
@@ -28,6 +29,11 @@ class HadithBookmark {
   final String titleBn;
   final DateTime savedAt;
   final List<String> folders;
+
+  /// JSON copy of the hadith, kept for hadiths saved from the online library
+  /// so they can be read from the Saved screen. Null for local-book hadiths,
+  /// which are re-read from the book itself.
+  final String? payload;
 
   /// Identity of the bookmarked hadith (`"<book slug>#<hadith no>"`).
   String get key => '$bookSlug#$hadithNo';
@@ -47,5 +53,6 @@ class HadithBookmark {
         titleBn: titleBn,
         savedAt: savedAt ?? this.savedAt,
         folders: folders ?? this.folders,
+        payload: payload,
       );
 }

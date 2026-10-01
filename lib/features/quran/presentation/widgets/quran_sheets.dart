@@ -1,16 +1,20 @@
+import '../screens/quran_tafsir_screen.dart';
+import '../../domain/quran_ayah.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/tafsir/tafsir_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_zoom_control.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_zoom_control.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
 /// user pick one. Pass the ancestor's [ReciterBloc] explicitly since a
@@ -61,8 +65,10 @@ class ReciterPickerSheet extends StatelessWidget {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: state.reciters.length,
-                      separatorBuilder: (_, _) =>
-                          Divider(height: 1, color: const Color(0xFFE3ECC5)),
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        color: context.lineColor(Color(0xFFE3ECC5)),
+                      ),
                       itemBuilder: (context, index) {
                         final reciter = state.reciters[index];
                         final selected = reciter.id == state.selectedId;
@@ -97,83 +103,26 @@ class ReciterPickerSheet extends StatelessWidget {
   }
 }
 
-/// Opens a bottom sheet with the tafsir text for [verseKey], choosing the
-/// tafsir resource based on [isBangla].
-void openTafsirSheet(BuildContext context, String verseKey, bool isBangla) {
-  final resourceId = isBangla
-      ? banglaTafsirResourceId
-      : englishTafsirResourceId;
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    builder: (_) => BlocProvider(
-      create: (_) =>
-          TafsirBloc(tafsirResourceId: resourceId)..add(LoadTafsir(verseKey)),
-      child: const TafsirSheet(),
+/// Retains the existing entry point while presenting the new Tafsir reader.
+void openTafsirSheet(
+  BuildContext context,
+  String verseKey,
+  bool isBangla, {
+  List<QuranAyah>? ayahs,
+  Widget? player,
+  String? surahName,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => QuranTafsirScreen(
+        verseKey: verseKey,
+        isBangla: isBangla,
+        ayahs: ayahs,
+        player: player,
+        surahName: surahName,
+      ),
     ),
   );
-}
-
-class TafsirSheet extends StatelessWidget {
-  const TafsirSheet({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              appText.tafsirTitle,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10.h),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: 420.h),
-              child: BlocBuilder<TafsirBloc, TafsirState>(
-                builder: (context, state) {
-                  if (state.isLoading) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColor.primary,
-                        ),
-                      ),
-                    );
-                  }
-                  if (state.hasError) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: Center(
-                        child: Text(
-                          appText.quranLoadError,
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  return SingleChildScrollView(
-                    child: Text(
-                      state.text,
-                      style: TextStyle(fontSize: 13.sp, height: 1.5),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// Shown when the user tries to play recitation that is not on the device.
@@ -270,7 +219,7 @@ class _SurahAudioSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     height: 1.5,
-                    color: const Color(0xFF5A6350),
+                    color: context.inkColor(Color(0xFF5A6350)),
                   ),
                 ),
                 SizedBox(height: 18.h),
@@ -280,13 +229,15 @@ class _SurahAudioSheet extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: state.progress,
                       minHeight: 8.h,
-                      backgroundColor: const Color(0xFFE0E6CC),
+                      backgroundColor: context.surfaceColor(Color(0xFFE0E6CC)),
                       color: AppColor.primary,
                     ),
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
+                    context.localizedDigits(
+                      '${appText.quranDownloadSurahAudio}  ${percent ?? 0}%',
+                    ),
                     style: TextStyle(fontSize: 12.sp, color: AppColor.primary),
                   ),
                 ] else ...[
@@ -295,7 +246,7 @@ class _SurahAudioSheet extends StatelessWidget {
                       appText.quranAudioDownloadFailed,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Colors.red.shade400,
+                        color: context.inkColor(Colors.red.shade400),
                       ),
                     ),
                     SizedBox(height: 12.h),
@@ -330,7 +281,7 @@ class _SurahAudioSheet extends StatelessWidget {
                       appText.offlineQuranNotNow,
                       style: TextStyle(
                         fontSize: 13.sp,
-                        color: const Color(0xFF7A8368),
+                        color: context.inkColor(Color(0xFF7A8368)),
                       ),
                     ),
                   ),
@@ -391,6 +342,14 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                   SizedBox(height: 14.h),
                   _SettingLabel(appText.quranArabicSizeLabel),
                   const QuranZoomControl(target: QuranZoomTarget.arabic),
+                  SizedBox(height: 10.h),
+                  _SettingLabel(appText.quranArabicFontLabel),
+                  SizedBox(height: 4.h),
+                  for (final font in kArabicFonts)
+                    _ArabicFontRow(
+                      font: font,
+                      selected: font.id == state.arabicFontFamily,
+                    ),
                   SizedBox(height: 8.h),
                   _SettingLabel(appText.quranTranslationSizeLabel),
                   const QuranZoomControl(target: QuranZoomTarget.translation),
@@ -412,7 +371,19 @@ class _QuranReaderSettingsSheet extends StatelessWidget {
                   SizedBox(height: 10.h),
                   _SettingLabel(appText.quranTranslationLabel),
                   SizedBox(height: 4.h),
-                  for (final edition in kTranslationEditions)
+                  if (state.editionsLoading) const LinearProgressIndicator(),
+                  if (state.editionsError)
+                    TextButton(
+                      onPressed: () => context.read<QuranTranslationBloc>().add(
+                        const LoadTranslationEditions(),
+                      ),
+                      child: Text(appText.tryAgain),
+                    ),
+                  if (!state.editionsLoading &&
+                      !state.editionsError &&
+                      state.editions.isEmpty)
+                    Text(AppText.of(context).quranNoTranslations),
+                  for (final edition in state.editions)
                     _EditionRow(edition: edition, state: state),
                 ],
               ),
@@ -438,7 +409,59 @@ class _SettingLabel extends StatelessWidget {
         style: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF5A6350),
+          color: context.inkColor(Color(0xFF5A6350)),
+        ),
+      ),
+    );
+  }
+}
+
+class _ArabicFontRow extends StatelessWidget {
+  const _ArabicFontRow({required this.font, required this.selected});
+
+  final ArabicFont font;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.read<QuranTranslationBloc>().add(
+        SetArabicFontFamily(font.id),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.h),
+        child: Row(
+          children: [
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              size: 18.sp,
+              color: selected ? AppColor.primary : const Color(0xFF9AA187),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                font.label,
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                  color: context.inkColor(
+                    selected ? AppColor.primary : const Color(0xFF3A4032),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              'بِسْمِ اللَّهِ',
+              textDirection: TextDirection.rtl,
+              style: font.apply(
+                TextStyle(
+                  fontSize: 18.sp,
+                  color: context.inkColor(const Color(0xFF3A4032)),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -467,7 +490,7 @@ class _EditionRow extends StatelessWidget {
     if (isDownloading) {
       final pct = dl.fraction == null ? 0 : (dl.fraction! * 100).round();
       trailing = Text(
-        '${appText.quranEditionDownloading} $pct%',
+        context.localizedDigits('${appText.quranEditionDownloading} $pct%'),
         style: TextStyle(fontSize: 11.sp, color: AppColor.primary),
       );
     } else if (!downloaded) {
@@ -504,7 +527,7 @@ class _EditionRow extends StatelessWidget {
     }
 
     return InkWell(
-      onTap: downloaded && !isDownloading
+      onTap: !isDownloading
           ? () => bloc.add(SelectTranslationEdition(edition.id))
           : null,
       child: Padding(
@@ -520,9 +543,9 @@ class _EditionRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                      color: selected
-                          ? AppColor.primary
-                          : const Color(0xFF3A4032),
+                      color: context.inkColor(
+                        selected ? AppColor.primary : const Color(0xFF3A4032),
+                      ),
                     ),
                   ),
                   Text(
@@ -539,7 +562,9 @@ class _EditionRow extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: dl.fraction,
                         minHeight: 4.h,
-                        backgroundColor: const Color(0xFFE0E6CC),
+                        backgroundColor: context.surfaceColor(
+                          Color(0xFFE0E6CC),
+                        ),
                         color: AppColor.primary,
                       ),
                     ),
@@ -613,7 +638,7 @@ class _AyahRepeatSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12.sp,
                     height: 1.4,
-                    color: const Color(0xFF5A6350),
+                    color: context.inkColor(Color(0xFF5A6350)),
                   ),
                 ),
                 SizedBox(height: 18.h),
@@ -627,11 +652,13 @@ class _AyahRepeatSheet extends StatelessWidget {
                     ),
                     SizedBox(width: 24.w),
                     Text(
-                      count <= 1 ? appText.repeatOff : '$count×',
+                      count <= 1
+                          ? appText.repeatOff
+                          : context.localizedDigits('$count×'),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF3A4032),
+                        color: context.inkColor(Color(0xFF3A4032)),
                       ),
                     ),
                     SizedBox(width: 24.w),
@@ -672,7 +699,9 @@ class _StepButton extends StatelessWidget {
         height: 40.w,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: enabled ? const Color(0xFFE7EECB) : const Color(0xFFEDEEE6),
+          color: context.surfaceColor(
+            enabled ? const Color(0xFFE7EECB) : const Color(0xFFEDEEE6),
+          ),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Icon(

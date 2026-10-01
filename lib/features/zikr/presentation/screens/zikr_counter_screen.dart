@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
@@ -110,11 +112,16 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
         : 0.0;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: ListView(
         padding: EdgeInsets.only(bottom: 30.h),
         children: [
-          ZikrGradientHeader(title: widget.args.title, total: _total),
+          ZikrGradientHeader(
+            title: widget.args.title.isEmpty
+                ? AppText.of(context).zikrTitle
+                : widget.args.title,
+            total: _total,
+          ),
           Transform.translate(
             offset: Offset(0, -18.h),
             child: SizedBox(
@@ -180,7 +187,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF3C4A28),
+                color: context.inkColor(Color(0xFF3C4A28)),
               ),
             ),
           ),
@@ -195,7 +202,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded, size: 18),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF4C5A34),
+                foregroundColor: context.inkColor(Color(0xFF4C5A34)),
               ),
               label: Text(
                 appText.zikrCounterReset,
@@ -221,7 +228,7 @@ class _CurrentZikrCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 40.w),
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE8C4),
+        color: context.surfaceColor(Color(0xFFDCE8C4)),
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
@@ -243,7 +250,7 @@ class _CurrentZikrCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF33421F),
+                color: context.inkColor(Color(0xFF33421F)),
               ),
             ),
           ),
@@ -259,15 +266,15 @@ class _CurrentZikrCard extends StatelessWidget {
                       ? (done / item.target).clamp(0.0, 1.0)
                       : 0.0,
                   strokeWidth: 3,
-                  backgroundColor: const Color(0xFFC4D6A0),
+                  backgroundColor: context.surfaceColor(Color(0xFFC4D6A0)),
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF6E8B3D)),
                 ),
                 Text(
-                  '$done/${item.target}',
+                  context.localizedDigits('$done/${item.target}'),
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4C5A34),
+                    color: context.inkColor(Color(0xFF4C5A34)),
                   ),
                 ),
               ],
@@ -338,7 +345,7 @@ class _TapButtonState extends State<_TapButton> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4C5A34),
+                    color: context.inkColor(Color(0xFF4C5A34)),
                   ),
                 ),
               ),
@@ -416,7 +423,7 @@ class _ProgressBar extends StatelessWidget {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE8C4),
+                  color: context.surfaceColor(Color(0xFFDCE8C4)),
                   borderRadius: BorderRadius.circular(height / 2),
                 ),
               ),
@@ -424,7 +431,7 @@ class _ProgressBar extends StatelessWidget {
                 Container(
                   width: fillWidth,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFBBD08C),
+                    color: context.surfaceColor(Color(0xFFBBD08C)),
                     borderRadius: BorderRadius.circular(height / 2),
                   ),
                 ),
@@ -438,16 +445,16 @@ class _ProgressBar extends StatelessWidget {
                     width: height,
                     height: height,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFCFE0AE),
+                      color: context.surfaceColor(Color(0xFFCFE0AE)),
                     ),
                     child: Text(
-                      '$percent %',
+                      context.localizedDigits('$percent %'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF4C5A34),
+                        color: context.inkColor(Color(0xFF4C5A34)),
                       ),
                     ),
                   ),

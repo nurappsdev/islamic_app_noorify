@@ -1,4 +1,6 @@
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import '../../../domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Progress of an in-flight translation-edition download.
 class EditionDownloadProgress {
@@ -22,16 +24,23 @@ class QuranTranslationState {
     this.surahLang = AppLanguage.english,
     this.ayahOverrides = const {},
     this.loaded = false,
-    this.arabicFontScale = 1.0,
+    this.arabicFontScale = kDefaultArabicFontScale,
+    this.arabicFontFamily = kDefaultArabicFontId,
     this.translationFontScale = 1.0,
     this.showArabic = true,
-    this.showTranslation = true,
+    this.showTranslation = false,
     this.selectedEditionId = 'english',
     this.downloadedEditionIds = const {},
     this.editionDownload,
     this.surahEditionText = const {},
     this.editionTextSurahNo,
+    this.editions = const [],
+    this.editionsLoading = false,
+    this.editionsError = false,
   });
+
+  final List<TranslationEdition> editions;
+  final bool editionsLoading, editionsError;
 
   /// Translation language applied to every ayah (built-in editions only).
   final AppLanguage surahLang;
@@ -44,6 +53,9 @@ class QuranTranslationState {
 
   /// Zoom for the Arabic ayah text.
   final double arabicFontScale;
+
+  /// Id of the [ArabicFont] used to render the Arabic ayah text.
+  final String arabicFontFamily;
 
   /// Zoom for the translation text.
   final double translationFontScale;
@@ -80,6 +92,7 @@ class QuranTranslationState {
     Map<int, AppLanguage>? ayahOverrides,
     bool? loaded,
     double? arabicFontScale,
+    String? arabicFontFamily,
     double? translationFontScale,
     bool? showArabic,
     bool? showTranslation,
@@ -89,12 +102,19 @@ class QuranTranslationState {
     bool clearEditionDownload = false,
     Map<int, String>? surahEditionText,
     int? editionTextSurahNo,
+    List<TranslationEdition>? editions,
+    bool? editionsLoading,
+    bool? editionsError,
   }) {
     return QuranTranslationState(
+      editions: editions ?? this.editions,
+      editionsLoading: editionsLoading ?? this.editionsLoading,
+      editionsError: editionsError ?? this.editionsError,
       surahLang: surahLang ?? this.surahLang,
       ayahOverrides: ayahOverrides ?? this.ayahOverrides,
       loaded: loaded ?? this.loaded,
       arabicFontScale: arabicFontScale ?? this.arabicFontScale,
+      arabicFontFamily: arabicFontFamily ?? this.arabicFontFamily,
       translationFontScale: translationFontScale ?? this.translationFontScale,
       showArabic: showArabic ?? this.showArabic,
       showTranslation: showTranslation ?? this.showTranslation,

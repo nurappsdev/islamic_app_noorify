@@ -1,40 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_navigation.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_route_args.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/screens/quiz_categories_screen.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 
+/// The server-scored result of a submitted quiz. Every figure is shown as the
+/// API returned it. Expects a `QuizCategoriesBloc` above it.
 class QuizCompletionScreen extends StatelessWidget {
-  const QuizCompletionScreen({super.key});
+  const QuizCompletionScreen({super.key, required this.args});
 
-  static List<_CompletedCategory> _categories(AppText appText) => [
-    _CompletedCategory(
-      appText.exploreQuranicSciences,
-      '120 ${appText.quizzesCountLabel}',
-      '950',
-    ),
-    _CompletedCategory(
-      appText.seerahAndHistory,
-      '85 ${appText.quizzesCountLabel}',
-      '810',
-    ),
-  ];
+  final QuizCompletionArgs? args;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final categories = _categories(appText);
+    final result = args?.result;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
             ListView(
               padding: EdgeInsets.only(bottom: 90.h),
               children: [
-                _CompletionHero(onBack: () => Navigator.maybePop(context)),
+                _CompletionHero(
+                  result: result,
+                  onBack: () => Navigator.maybePop(context),
+                ),
+                if (result != null)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(13.w, 18.h, 13.w, 0),
+                    child: _ResultSummary(result: result),
+                  ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(22.w, 23.h, 22.w, 14.h),
                   child: Row(
@@ -54,7 +62,7 @@ class QuizCompletionScreen extends StatelessWidget {
                         child: Text(
                           appText.seeAll,
                           style: TextStyle(
-                            color: Colors.black,
+                            color: context.inkColor(Colors.black),
                             fontSize: 12.sp,
                           ),
                         ),
@@ -62,17 +70,7 @@ class QuizCompletionScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 13.w),
-                  child: Column(
-                    children: [
-                      for (final category in categories) ...[
-                        _CompletedCategoryCard(category: category),
-                        SizedBox(height: 9.h),
-                      ],
-                    ],
-                  ),
-                ),
+                const QuizCategoryPreview(count: 2),
               ],
             ),
             const Align(
@@ -87,17 +85,22 @@ class QuizCompletionScreen extends StatelessWidget {
 }
 
 class _CompletionHero extends StatelessWidget {
-  const _CompletionHero({required this.onBack});
+  const _CompletionHero({required this.result, required this.onBack});
+  final QuizAttemptResult? result;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final isDaily = result?.attemptType == QuizAttemptType.daily;
+    // Today's quiz points as the amol record now holds them (the best of the
+    // day), falling back to this attempt's points.
+    final todaysPoints = result?.amol?.quizPoints ?? result?.pointsEarned;
     return Container(
       height: 246.h,
       padding: EdgeInsets.fromLTRB(19.w, 16.h, 24.w, 28.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFE4ECC5),
+        color: context.surfaceColor(Color(0xFFE4ECC5)),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(37.r),
           bottomRight: Radius.circular(37.r),
@@ -111,7 +114,7 @@ class _CompletionHero extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -123,7 +126,9 @@ class _CompletionHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  appText.youCompletedTodaysChallenge,
+                  isDaily || result == null
+                      ? appText.youCompletedTodaysChallenge
+                      : appText.youCompletedTheQuiz,
                   style: TextStyle(
                     color: AppColor.primary,
                     fontSize: 22.sp,
@@ -131,24 +136,29 @@ class _CompletionHero extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: 28.h),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: Color(0xFF31555D),
-                      size: 31,
-                    ),
-                    SizedBox(width: 10.w),
-                    Text(
-                      '${appText.todaysPointsLabel} : 0.5',
-                      style: TextStyle(
-                        color: AppColor.primary,
-                        fontSize: 14.sp,
+                if (isDaily && todaysPoints != null) ...[
+                  SizedBox(height: 28.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.workspace_premium_rounded,
+                        color: context.inkColor(Color(0xFF31555D)),
+                        size: 31,
                       ),
-                    ),
-                  ],
-                ),
+                      SizedBox(width: 10.w),
+                      Text(
+                        context.localizedDigits(
+                          '${appText.todaysPointsLabel} : '
+                          '${formatPoints(todaysPoints)}',
+                        ),
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -175,7 +185,7 @@ class _SuccessMark extends StatelessWidget {
             width: 106.w,
             height: 106.w,
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F4),
+              color: context.surfaceColor(Color(0xFFF5F5F4)),
               borderRadius: BorderRadius.circular(35.r),
               boxShadow: [
                 BoxShadow(
@@ -189,7 +199,7 @@ class _SuccessMark extends StatelessWidget {
         ),
         Icon(
           Icons.check_rounded,
-          color: const Color(0xFF82D020),
+          color: context.inkColor(Color(0xFF82D020)),
           size: 87.sp,
           shadows: [
             Shadow(
@@ -204,89 +214,56 @@ class _SuccessMark extends StatelessWidget {
   );
 }
 
-class _CompletedCategoryCard extends StatelessWidget {
-  const _CompletedCategoryCard({required this.category});
-  final _CompletedCategory category;
+/// The attempt's figures exactly as the server scored them.
+class _ResultSummary extends StatelessWidget {
+  const _ResultSummary({required this.result});
+
+  final QuizAttemptResult result;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: EdgeInsets.all(19.w),
-    decoration: BoxDecoration(
-      color: const Color(0xFFDFE9B9),
-      borderRadius: BorderRadius.circular(18.r),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 27.r,
-              height: 27.r,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColor.primary),
-                borderRadius: BorderRadius.circular(4.r),
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    // Category practice earns no amol points, so its points are not shown.
+    final showPoints = result.attemptType == QuizAttemptType.daily;
+    final stats = <QuizStat>[
+      (appText.questionsWord, '${result.totalQuestions}'),
+      (appText.correctAnswers, '${result.correctAnswers}'),
+      (appText.incorrectAnswers, '${result.incorrectAnswers}'),
+      (appText.scoreLabel, formatPercent(result.scorePercentage)),
+      if (showPoints)
+        (
+          appText.pointsWord,
+          '${formatPoints(result.pointsEarned)} / '
+              '${formatPoints(result.maxPoints)}',
+        ),
+      (appText.timeSpent, formatClock(result.timeSpentSeconds)),
+    ];
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Color(0xFFDFE9B9)),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      child: Column(
+        children: [
+          QuizStatGrid(stats: stats),
+          if (result.id.isNotEmpty) ...[
+            SizedBox(height: 14.h),
+            FilledButton(
+              onPressed: () => openQuizAttemptReview(context, result.id),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColor.primary,
+                minimumSize: Size(double.infinity, 40.h),
               ),
-              child: Icon(
-                Icons.menu_book_outlined,
-                size: 16.sp,
-                color: AppColor.primary,
-              ),
-            ),
-            OutlinedButton.icon(
-              onPressed: () {},
-              iconAlignment: IconAlignment.end,
-              icon: Icon(Icons.north_east_rounded, size: 17.sp),
-              label: Text(AppText.of(context).explore),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF4D5542),
-                side: const BorderSide(color: AppColor.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11.r),
-                ),
+              child: Text(
+                appText.reviewAnswers,
+                style: TextStyle(fontSize: 12.sp),
               ),
             ),
           ],
-        ),
-        SizedBox(height: 16.h),
-        Text(
-          category.title,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
-        ),
-        SizedBox(height: 14.h),
-        Text(
-          category.quizzes,
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFF56614F)),
-        ),
-        SizedBox(height: 14.h),
-        Row(
-          children: [
-            Text(
-              AppText.of(context).highScore,
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF697269)),
-            ),
-            SizedBox(width: 10.w),
-            Text(
-              category.score,
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF89958B)),
-            ),
-            Icon(
-              Icons.workspace_premium_outlined,
-              size: 14.sp,
-              color: const Color(0xFF89958B),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-class _CompletedCategory {
-  const _CompletedCategory(this.title, this.quizzes, this.score);
-  final String title;
-  final String quizzes;
-  final String score;
+        ],
+      ),
+    );
+  }
 }

@@ -1,0 +1,197 @@
+class ApiConstants {
+  // local
+  // static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
+
+  //live
+   static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1/";
+  static const String imageBaseUrl = "";
+
+  /// Sent as the `X-API-Key` header on every request by [DioClient].
+  static const String apiKey =
+      "c954a39d0ce7ff714e0e87f15a21c5a1cfde41787c2b4a3e6ec0417a2e4bfb9a";
+
+  // static const String socketBaseUrl = "https://api.drop-dr.com";
+
+  // static const String baseUrl = "https://health-mamun.sarv.live/api/v1";
+  // static const String imageBaseUrl = "https://health-mamun.sarv.live/uploads/";
+  // static const String socketBaseUrl = "https://health-mamun.sarv.live";
+
+  /// client key
+  ///AIzaSyAxaYzHRBhydkW_TwUGHeRYSUV2iCc_uuk
+  static const String mapAPIEndPoint =
+      "AIzaSyAxaYzHRBhydkW_TwUGHeRYSUV2iCc_uuk";
+
+  // from maqmun bro
+  //static const String mapAPIEndPoint = "AIzaSyBTNR1NWw7LcTsEJTTogqVZ39tgY--eD5U";
+
+  /// amader key
+  //static const String mapAPIEndPoint = "AIzaSyA-Iri6x5mzNv45XO3a-Ew3z4nvF4CdYo0";
+
+  static const String signUpEndPoint = "/auth/register";
+  static const String verifyEmailEndPoint = "/auth/verify-otp";
+  static const String resendOtpEndPoint = "/auth/resend-otp";
+  static const String signInEndPoint = "/auth/login";
+  static const String forgotPasswordPoint = "/auth/forgot-password";
+  static const String resetPasswordEndPoint = "/auth/reset-password";
+
+  static const String refreshTokenEndPoint = "/auth/refresh-token";
+  static const String accountDelete = "/users/delete";
+
+  /// `DELETE`: permanently deletes the signed-in user's account, once the
+  /// password has been verified via [deleteAccountEndPoint] below.
+  static const String deleteMeEndPoint = "/user/me";
+  static const String getProfileEndPoint = "/user/me";
+  static const String updateProfileEndPoint = "/user/me";
+  static const String s3UploadEndPoint = "/s3/upload";
+  static const String profileImagesPrimaryPath = "Profile_Images";
+  static const String familyMembersEndPoint = "/user/family";
+  static const String homeDashboardEndPoint = "/home/dashboard";
+  static const String amolTrackerDailyEndPoint = "/amol/tracker/daily";
+  static const String amolTrackerLogItemEndPoint = "/amol/tracker/log-item";
+  static const String amolTrackerDeleteItemEndPoint =
+      "/amol/tracker/delete-item";
+  static const String amolAnalyticsGraphEndPoint = "/amol/analytics/graph";
+
+  static const String aboutUsEndPoint = "/settings/about-us";
+  static const String termsOfServiceEndPoint = "/settings/terms-of-service";
+  static const String privacyPolicyEndPoint = "/settings/privacy-policy";
+
+  static const String leaderboardTopEndPoint = "/leaderboard/top";
+
+  /// One user's standing: `?period=daily|weekly|monthly|yearly` and
+  /// the period's `date` key (e.g. `2026-09`).
+  static String leaderboardUserEndPoint(String userId) =>
+      "/leaderboard/users/$userId";
+
+  static const String quizCategoriesEndPoint = "/quizzes/categories";
+  static const String quizDailyEndPoint = "/quizzes/daily";
+  static const String quizDailyStatusEndPoint = "/quizzes/daily/status";
+  static const String quizAttemptsEndPoint = "/quizzes/attempts";
+
+  /// A practice quiz drawn from one category.
+  static String quizCategoryQuizEndPoint(String categoryId) =>
+      "$quizCategoriesEndPoint/$categoryId/quiz";
+
+  /// One attempt with every answer revealed and grouped, for the review screen.
+  static String quizAttemptReviewEndPoint(String attemptId) =>
+      "$quizAttemptsEndPoint/$attemptId/review";
+
+  static const String quizPlansEndPoint = "/quizzes/plans";
+
+  /// One plan: `GET` reads it, `PATCH` edits it, `DELETE` abandons it.
+  static String quizPlanEndPoint(String planId) => "$quizPlansEndPoint/$planId";
+
+  static String quizPlanStartEndPoint(String planId) =>
+      "${quizPlanEndPoint(planId)}/start";
+
+  static String quizPlanQuestionsEndPoint(String planId) =>
+      "${quizPlanEndPoint(planId)}/questions";
+
+  static String quizPlanPortionAttemptsEndPoint(
+    String planId,
+    String portionId,
+  ) => "${quizPlanEndPoint(planId)}/portions/$portionId/attempts";
+
+  static const String quizDashboardEndPoint = "/quizzes/dashboard";
+  static const String quizDashboardCompareEndPoint =
+      "/quizzes/dashboard/compare";
+  static const String quizDashboardHistoryCompareEndPoint =
+      "/quizzes/dashboard/history/compare";
+
+  static const String articlesEndPoint = "/articles";
+  static const String articleCategoriesEndPoint = "/articles/categories";
+
+  /// A category's articles.
+  static String articleCategoryArticlesEndPoint(String categoryId) =>
+      "$articleCategoriesEndPoint/$categoryId";
+
+  /// One article with its full content.
+  static String articleEndPoint(String articleId) =>
+      "$articlesEndPoint/$articleId";
+
+  static const String hadithBooksListEndPoint = "/hadiths/books/lists";
+  static const String hadithCategoriesEndPoint = "/hadiths/categories";
+  static const String hadithsEndPoint = "/hadiths";
+  static const String hadithReadingTrackEndPoint = "/learning/reading/track";
+  static const String hadithReadingProgressCategoriesEndPoint =
+      "/hadiths/reading/progress/categories";
+  static const String hadithReadingProgressSubCategoriesEndPoint =
+      "/hadiths/reading/progress/sub-categories";
+  static const String hadithLastReadEndPoint = "/hadiths/reading/last-read";
+  static const String hadithReadingHistoryEndPoint =
+      "/learning/reading/history";
+  static const String hadithReadingCompareEndPoint =
+      "/hadiths/reading/history/compare";
+  static const String hadithReadingRecentEndPoint = "/hadiths/reading/recent";
+  static const String hadithReadingReadEndPoint = "/hadiths/reading/read";
+
+  /// Quran reading (all need the login token).
+  static const String quranReadingTrackEndPoint = "/quran/reading/track";
+  static const String quranReadingDashboardEndPoint =
+      "/quran/reading/dashboard";
+  static const String quranReadingHistoryEndPoint = "/quran/reading/history";
+  static const String quranReadingCompareEndPoint =
+      "/quran/reading/history/compare";
+  static const String quranLastReadEndPoint = "/quran/reading/last-read";
+  static const String quranPlansEndPoint = "/quran/plans";
+  static String quranPlanEndPoint(String id) => "$quranPlansEndPoint/$id";
+  static String quranPlanCompleteEndPoint(String id) =>
+      "${quranPlanEndPoint(id)}/complete";
+  static String quranPlanAyahsEndPoint(String id) =>
+      "${quranPlanEndPoint(id)}/ayahs";
+  static const String quranPlaylistsEndPoint = "/quran/playlists";
+  static String quranPlaylistEndPoint(String id) =>
+      "$quranPlaylistsEndPoint/$id";
+  static String quranPlaylistAyahsEndPoint(String id) =>
+      "${quranPlaylistEndPoint(id)}/ayahs";
+  static String quranPlaylistPositionEndPoint(String id) =>
+      "${quranPlaylistEndPoint(id)}/position";
+  static String quranPlaylistItemsEndPoint(String id) =>
+      "${quranPlaylistEndPoint(id)}/items";
+  static String quranPlaylistItemsReorderEndPoint(String id) =>
+      "${quranPlaylistItemsEndPoint(id)}/reorder";
+  static String quranPlaylistItemEndPoint(String id, String itemId) =>
+      "${quranPlaylistItemsEndPoint(id)}/$itemId";
+  static const String hadithPlansEndPoint = "/hadiths/plans";
+
+  /// One plan: `PATCH` renames / edits it, `DELETE` removes it.
+  static String hadithPlanEndPoint(String id) => "$hadithPlansEndPoint/$id";
+
+  /// The hadiths of one plan, each with its read state.
+  static String hadithPlanHadithsEndPoint(String id) =>
+      "${hadithPlanEndPoint(id)}/hadiths";
+
+  static const String ebooksEndPoint = "/ebooks";
+
+  static String hadithSubCategoriesEndPoint(String categoryId) =>
+      "$hadithCategoriesEndPoint/$categoryId/subcategories";
+
+  static const String asmaUlHusnaEndPoint = "/asma-ul-husna";
+
+  static String asmaUlHusnaDetailEndPoint(String id) =>
+      "$asmaUlHusnaEndPoint/$id";
+
+  /// The only alarm endpoint the app uses: the ringtone catalog an admin
+  /// maintains (`GET`). Alarms themselves are saved on the device.
+  static const String alarmsRingtonesEndPoint = "/alarms/ringtones";
+
+  static const String updateMoreInformationEndPoint =
+      "/employee/update-employee-profile";
+
+  static const String changePasswordEndPoint = "/settings/change-password";
+
+  /// `POST`: verifies the signed-in user's current password before account
+  /// deletion (body: `{ "password": "..." }`). The deletion itself is a
+  /// separate call to [deleteMeEndPoint].
+  static const String deleteAccountEndPoint = "/auth/delete-account";
+  static const String notification = "/notifications";
+  static const String notificationBadgeEndPoint = "/notifications/badge";
+  static const String notificationReadAllEndPoint = "/notifications/read-all";
+
+  /// Registers (`POST`) or unregisters (`DELETE`, same body) this device's
+  /// FCM push token against the signed-in user's account.
+  static const String fcmTokenEndPoint = "/notifications/fcm-token";
+
+  static String notificationReadEndPoint(String notificationId) =>
+      "/notifications/$notificationId/read";
+}

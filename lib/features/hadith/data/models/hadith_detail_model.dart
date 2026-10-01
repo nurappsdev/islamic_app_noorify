@@ -1,0 +1,121 @@
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail_page.dart';
+
+class HadithDetailModel extends HadithDetail {
+  const HadithDetailModel({
+    required super.id,
+    required super.hadithNumber,
+    required super.hadithNumberInChapter,
+    required super.textArabic,
+    required super.textBangla,
+    required super.textEnglish,
+    required super.titleBangla,
+    required super.titleEnglish,
+    required super.chapter,
+    required super.narrator,
+    required super.grade,
+    required super.gradeBangla,
+    required super.takhrij,
+    required super.authorBangla,
+    required super.authorEnglish,
+    required super.sourceBangla,
+    required super.sourceEnglish,
+    required super.sectionNameBangla,
+    required super.explanationEnglish,
+  });
+
+  factory HadithDetailModel.fromJson(Map<String, dynamic> json) {
+    String str(String key) => json[key]?.toString() ?? '';
+    int number(String key) => (json[key] as num?)?.toInt() ?? 0;
+
+    return HadithDetailModel(
+      id: (json['_id'] ?? json['id'])?.toString() ?? '',
+      hadithNumber: number('hadithNumber'),
+      hadithNumberInChapter: number('hadithNumberInChapter'),
+      // The API embeds `<br />` tags in some Arabic texts.
+      textArabic: str(
+        'textArabic',
+      ).replaceAll(RegExp(r'<br\s*/?>'), '\n').trim(),
+      // `textBangla` and `text` carry the same translation; either may be
+      // missing.
+      textBangla: (json['textBangla'] ?? json['text'])?.toString() ?? '',
+      textEnglish: str('textEnglish'),
+      titleBangla: str('titleBangla'),
+      titleEnglish: str('titleEnglish'),
+      chapter: str('chapter'),
+      narrator: str('narrator'),
+      grade: str('grade'),
+      gradeBangla: str('gradeBangla'),
+      takhrij: str('takhrij'),
+      authorBangla: str('authorBangla'),
+      authorEnglish: str('authorEnglish'),
+      sourceBangla: str('sourceBangla'),
+      sourceEnglish: str('sourceEnglish'),
+      sectionNameBangla: str('sectionNameBangla'),
+      explanationEnglish: str('explanationEnglish'),
+    );
+  }
+}
+
+/// Serialises a hadith so a copy can be kept with a bookmark; the keys are the
+/// ones [HadithDetailModel.fromJson] reads back.
+extension HadithDetailJson on HadithDetail {
+  Map<String, dynamic> toJson() => {
+    '_id': id,
+    'hadithNumber': hadithNumber,
+    'hadithNumberInChapter': hadithNumberInChapter,
+    'textArabic': textArabic,
+    'textBangla': textBangla,
+    'textEnglish': textEnglish,
+    'titleBangla': titleBangla,
+    'titleEnglish': titleEnglish,
+    'chapter': chapter,
+    'narrator': narrator,
+    'grade': grade,
+    'gradeBangla': gradeBangla,
+    'takhrij': takhrij,
+    'authorBangla': authorBangla,
+    'authorEnglish': authorEnglish,
+    'sourceBangla': sourceBangla,
+    'sourceEnglish': sourceEnglish,
+    'sectionNameBangla': sectionNameBangla,
+    'explanationEnglish': explanationEnglish,
+  };
+}
+
+/// An item of `GET /hadiths/plans/{id}/hadiths` as a plain hadith map.
+///
+/// That endpoint returns each hadith together with its read state. The
+/// hadith may be nested (an object under `hadith` or `hadithId`) or the item
+/// itself may be the hadith with extra fields; both come out as the hadith's
+/// own map, which [HadithDetailModel.fromJson] reads.
+Map<String, dynamic> unwrapPlanHadith(Map<String, dynamic> item) {
+  for (final key in const ['hadith', 'hadithId']) {
+    final nested = item[key];
+    if (nested is Map<String, dynamic>) return nested;
+  }
+  return item;
+}
+
+class HadithDetailPageModel extends HadithDetailPage {
+  const HadithDetailPageModel({
+    required super.hadiths,
+    required super.page,
+    required super.totalPage,
+    required super.total,
+  });
+
+  factory HadithDetailPageModel.fromJson(
+    List<Map<String, dynamic>> items,
+    Map<String, dynamic> meta,
+  ) {
+    final hadiths = items.map(HadithDetailModel.fromJson).toList();
+    return HadithDetailPageModel(
+      hadiths: hadiths,
+      page: (meta['page'] as num?)?.toInt() ?? 1,
+      // Without `meta`, treat what we got as the only page.
+      totalPage: (meta['totalPage'] as num?)?.toInt() ?? 1,
+      total: (meta['total'] as num?)?.toInt() ?? hadiths.length,
+    );
+  }
+}

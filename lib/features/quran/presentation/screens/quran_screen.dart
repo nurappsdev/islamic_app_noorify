@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 
 class QuranScreen extends StatelessWidget {
   const QuranScreen({super.key});
-
-  void _goToHome(BuildContext context) {
-    if (ModalRoute.of(context)?.settings.name != RouteNames.home) {
-      Navigator.of(context).pushReplacementNamed(RouteNames.home);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,23 +25,6 @@ class QuranScreen extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: 8.h),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 18.w),
-                    child: IconButton(
-                      onPressed: () => _goToHome(context),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFEDE7A6),
-                        foregroundColor: AppColor.authLogo,
-                      ),
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -72,7 +50,7 @@ class QuranScreen extends StatelessWidget {
                           appText.quranIntroSubtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColor.authLogo,
+                            color: context.inkColor(AppColor.authLogo),
                             fontSize: 13.sp,
                             height: 1.4,
                           ),
@@ -91,7 +69,7 @@ class QuranScreen extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: () => Navigator.of(
                         context,
-                      ).pushNamed(RouteNames.quranSurahs),
+                      ).pushReplacementNamed(RouteNames.quranSurahs),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColor.primary,
                         foregroundColor: Colors.white,

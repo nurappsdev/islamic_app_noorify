@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
-import 'package:islami_app_noorify/shared/services/fcm_token_service.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
 
 class AuthService {
   AuthService._();
@@ -78,7 +78,7 @@ class AuthService {
     try {
       // Link this device's push token so targeted notifications (e.g. family
       // requests) can reach the user. Never block auth on this.
-      await FcmTokenService.instance.registerCurrentToken();
+      await FirebaseTokenService.instance.registerCurrentToken();
     } catch (_) {
       // Ignore token registration failures.
     }
@@ -179,7 +179,7 @@ class AuthService {
     // Unlink this device's push token before clearing auth, while the uid is
     // still available, so a signed-out device stops receiving this user's pushes.
     try {
-      await FcmTokenService.instance.removeCurrentToken();
+      await FirebaseTokenService.instance.removeCurrentToken();
     } catch (_) {
       // Ignore token cleanup failures; continue signing out.
     }
@@ -225,7 +225,10 @@ class AuthService {
     }
   }
 
-  String messageForGoogleException(GoogleSignInException error, AppText appText) {
+  String messageForGoogleException(
+    GoogleSignInException error,
+    AppText appText,
+  ) {
     switch (error.code) {
       case GoogleSignInExceptionCode.canceled:
         return '';

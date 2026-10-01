@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class LearningTestResultScreen extends StatelessWidget {
   const LearningTestResultScreen({super.key});
@@ -10,7 +12,7 @@ class LearningTestResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(12.w, 15.h, 12.w, 16.h),
@@ -22,10 +24,7 @@ class LearningTestResultScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               Text(
                 appText.quizScore,
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
               ),
               SizedBox(height: 6.h),
               Text(appText.testSubjectSabr, style: TextStyle(fontSize: 11.sp)),
@@ -42,7 +41,9 @@ class LearningTestResultScreen extends StatelessWidget {
                     child: _Metric(
                       icon: Icons.access_time_rounded,
                       label: appText.timeSpent,
-                      value: '6 : 17 min',
+                      value: context.localizedDigits(
+                        '6 : 17 ${appText.minLabel}',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -160,7 +161,10 @@ class _ScoreRing extends StatelessWidget {
           children: [
             Text(
               '67%',
-              style: TextStyle(color: const Color(0xFF22CC53), fontSize: 26.sp),
+              style: TextStyle(
+                color: context.inkColor(Color(0xFF22CC53)),
+                fontSize: 26.sp,
+              ),
             ),
             Text(
               AppText.of(context).overallScore,
@@ -181,7 +185,7 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 105.h,
     decoration: BoxDecoration(
-      border: Border.all(color: const Color(0xFFE5E5E5)),
+      border: Border.all(color: context.lineColor(Color(0xFFE5E5E5))),
       borderRadius: BorderRadius.circular(13.r),
     ),
     child: Column(
@@ -211,7 +215,7 @@ class _AnswerResult extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9F0),
+        color: context.surfaceColor(Color(0xFFF7F9F0)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Column(
@@ -221,7 +225,7 @@ class _AnswerResult extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 13.r,
-                backgroundColor: color,
+                backgroundColor: context.surfaceColor(color),
                 child: Icon(
                   correct ? Icons.check : Icons.close,
                   color: Colors.white,
@@ -230,8 +234,11 @@ class _AnswerResult extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                count,
-                style: TextStyle(color: color, fontSize: 14.sp),
+                context.localizedDigits(count),
+                style: TextStyle(
+                  color: context.inkColor(color),
+                  fontSize: 14.sp,
+                ),
               ),
             ],
           ),
@@ -251,14 +258,12 @@ class _AnswerResult extends StatelessWidget {
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              foregroundColor: color,
-              side: BorderSide(color: color),
+              foregroundColor: context.inkColor(color),
+              side: BorderSide(color: context.lineColor(color)),
               minimumSize: Size(double.infinity, 39.h),
             ),
             child: Text(
-              correct
-                  ? appText.viewCorrectAnswer
-                  : appText.viewIncorrectAnswer,
+              correct ? appText.viewCorrectAnswer : appText.viewIncorrectAnswer,
               style: TextStyle(fontSize: 10.sp),
             ),
           ),

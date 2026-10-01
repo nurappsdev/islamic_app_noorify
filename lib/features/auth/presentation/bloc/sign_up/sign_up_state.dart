@@ -2,7 +2,7 @@ class SignUpState {
   const SignUpState({
     this.obscurePassword = true,
     this.obscureConfirm = true,
-    this.saveInfo = true,
+    this.saveInfo = false,
     this.isLoading = false,
   });
 

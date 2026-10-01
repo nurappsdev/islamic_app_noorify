@@ -2,68 +2,116 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_database.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/ebook.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_last_read.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_ebooks.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_last_read.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_library_books.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/ebooks/ebooks_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_last_read/hadith_last_read_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/ebook_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/ebook_cover.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Hadith library landing screen.
 ///
-/// Reached from the "Let's Get Start" button on [HadithIntroScreen]. Shows a
-/// summary header, the collection library and a shelf of e-books.
+/// Reached from the Hadith card on Home (through [HadithEntryScreen]) on every
+/// visit but the first, and from the "Let's Get Start" button on
+/// [HadithIntroScreen] on the first. Shows a summary header, the collection
+/// library and a shelf of e-books.
 class HadithLibraryScreen extends StatelessWidget {
   const HadithLibraryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final repository = HadithLibraryRepositoryImpl(
+      HadithLibraryRemoteDataSourceImpl(),
+    );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              HadithLibraryBloc(GetHadithLibraryBooks(repository))
+                ..add(const LoadHadithLibrary()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              EbooksBloc(GetEbooks(repository))..add(const LoadEbooks()),
+        ),
+        BlocProvider(
+          create: (_) =>
+              HadithLastReadBloc(GetHadithLastRead(repository))
+                ..add(const LoadHadithLastRead()),
+        ),
+      ],
+      child: const _HadithLibraryView(),
+    );
+  }
+}
+
+class _HadithLibraryView extends StatelessWidget {
+  const _HadithLibraryView();
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
-          ListView(
-            padding: EdgeInsets.only(bottom: 92.h + bottomInset),
-            children: [
-              _HadithHeader(appText: appText),
-              SizedBox(height: 22.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(
-                  appText.hadithLibrary,
-                  onSeeAll: () => Navigator.of(
-                    context,
-                  ).pushNamed(RouteNames.hadithLibraryList),
-                ),
-              ),
-              SizedBox(height: 14.h),
-              SizedBox(
-                height: 170.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
+          RefreshIndicator(
+            color: const Color(0xFF4F7A43),
+            backgroundColor: context.surfaceColor(Colors.white),
+            // Keep the spinner below the status bar, over the green header.
+            edgeOffset: MediaQuery.of(context).padding.top,
+            onRefresh: () => _refreshLibrary(context),
+            child: ListView(
+              // Always scrollable, so pulling works even if the content ever
+              // fits on screen.
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(bottom: 92.h + bottomInset),
+              children: [
+                _HadithHeader(appText: appText),
+                SizedBox(height: 22.h),
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: HadithBookCatalog.libraryCollections.length,
-                  separatorBuilder: (_, _) => SizedBox(width: 12.w),
-                  itemBuilder: (context, index) => _CollectionCard(
-                    book: HadithBookCatalog.libraryCollections[index],
-                    appText: appText,
+                  child: _SectionTitle(
+                    appText.hadithLibrary,
+                    onSeeAll: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.hadithLibraryList),
                   ),
                 ),
-              ),
-              SizedBox(height: 26.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: _SectionTitle(appText.hadithEbook),
-              ),
-              SizedBox(height: 14.h),
-              const _EbookShelf(),
-            ],
+                SizedBox(height: 14.h),
+                _CollectionShelf(appText: appText),
+                SizedBox(height: 26.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: _SectionTitle(
+                    appText.hadithEbook,
+                    onSeeAll: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.hadithEbookList),
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                const _EbookShelf(),
+              ],
+            ),
           ),
           const SafeArea(
             top: false,
@@ -76,6 +124,28 @@ class HadithLibraryScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Reloads everything on the screen and completes once all three requests
+/// have finished, so the [RefreshIndicator] spins for exactly that long.
+Future<void> _refreshLibrary(BuildContext context) {
+  final library = context.read<HadithLibraryBloc>()
+    ..add(const LoadHadithLibrary());
+  final ebooks = context.read<EbooksBloc>()..add(const LoadEbooks());
+  final lastRead = context.read<HadithLastReadBloc>()
+    ..add(const LoadHadithLastRead());
+
+  // The first state after the event is `loading` (or the final one), never
+  // the stale one, so waiting for "not loading" waits for the fresh result.
+  // `orElse` covers a bloc that closes (screen popped) mid-refresh.
+  return Future.wait([
+    library.stream.firstWhere((s) => !s.isLoading, orElse: () => library.state),
+    ebooks.stream.firstWhere((s) => !s.isLoading, orElse: () => ebooks.state),
+    lastRead.stream.firstWhere(
+      (s) => !s.isLoading,
+      orElse: () => lastRead.state,
+    ),
+  ]);
 }
 
 class _HadithHeader extends StatelessWidget {
@@ -110,8 +180,10 @@ class _HadithHeader extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -141,14 +213,14 @@ class _HadithHeader extends StatelessWidget {
               Text(
                 appText.hadithTotalHadith,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: .9),
+                  color: context.inkColor(Colors.white.withValues(alpha: .9)),
                   fontSize: 14.sp,
                   fontStyle: FontStyle.italic,
                 ),
               ),
               SizedBox(height: 6.h),
               Text(
-                '1,76,337',
+                context.localizedDigits(_headerTotal(context)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,
@@ -165,6 +237,115 @@ class _HadithHeader extends StatelessWidget {
   }
 }
 
+/// The header's total across every collection the API returned; a dash while
+/// loading or if the request failed.
+String _headerTotal(BuildContext context) {
+  final state = context.watch<HadithLibraryBloc>().state;
+  if (state.status != HadithLibraryStatus.success) return '—';
+  return formatHadithCount(state.totalHadiths);
+}
+
+/// Horizontal shelf of the API-backed hadith collections, with loading,
+/// error (retry) and empty states.
+/// Height of the collection shelf: just tall enough for a card with a
+/// two-line title, so cards have no dead space at the bottom.
+double get _collectionShelfHeight => 150.h;
+
+class _CollectionShelf extends StatelessWidget {
+  const _CollectionShelf({required this.appText});
+
+  final AppText appText;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HadithLibraryBloc>().state;
+    if (state.isLoading) return const _CollectionShelfSkeleton();
+    if (state.status == HadithLibraryStatus.failure) {
+      return _ShelfMessage(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () =>
+            context.read<HadithLibraryBloc>().add(const LoadHadithLibrary()),
+      );
+    }
+    if (state.books.isEmpty) {
+      return _ShelfMessage(message: appText.hadithBookComingSoon);
+    }
+    return SizedBox(
+      height: _collectionShelfHeight,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        itemCount: state.books.length,
+        separatorBuilder: (_, _) => SizedBox(width: 12.w),
+        itemBuilder: (context, index) =>
+            _CollectionCard(book: state.books[index], appText: appText),
+      ),
+    );
+  }
+}
+
+class _CollectionShelfSkeleton extends StatelessWidget {
+  const _CollectionShelfSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _collectionShelfHeight,
+      child: Shimmer.fromColors(
+        baseColor: context.surfaceColor(Color(0xFFE3ECC5)),
+        highlightColor: context.surfaceColor(Color(0xFFF6F9EC)),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          itemCount: 2,
+          separatorBuilder: (_, _) => SizedBox(width: 12.w),
+          itemBuilder: (_, _) => Container(
+            width: 218.w,
+            decoration: BoxDecoration(
+              color: context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShelfMessage extends StatelessWidget {
+  const _ShelfMessage({required this.message, this.actionLabel, this.onAction});
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF5D6B44)),
+            ),
+          ),
+          if (onAction != null) ...[
+            SizedBox(height: 8.h),
+            TextButton(onPressed: onAction, child: Text(actionLabel ?? '')),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _LastReadPill extends StatelessWidget {
   const _LastReadPill({required this.appText});
 
@@ -172,16 +353,25 @@ class _LastReadPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    final lastRead = context.watch<HadithLastReadBloc>().state.lastRead;
+    final label = lastRead == null
+        ? '—'
+        : '${lastRead.source(bangla: isBangla)} ( ${lastRead.hadithNumber} )';
+
     return Container(
       padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: .55)),
+        border: Border.all(
+          color: context.lineColor(Colors.white.withValues(alpha: .55)),
+        ),
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
         children: [
           Text(
-            '${appText.hadithLastRead} :  ',
+            context.localizedDigits('${appText.hadithLastRead} :  '),
             style: TextStyle(
               color: Colors.white,
               fontSize: 13.sp,
@@ -190,27 +380,57 @@ class _LastReadPill extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Riadus -Salehin ( 71 )',
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(color: Colors.white, fontSize: 13.sp),
             ),
           ),
-          Container(
-            width: 30.r,
-            height: 30.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: .7)),
-            ),
-            child: Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.white,
-              size: 18.sp,
+          InkWell(
+            onTap: lastRead == null
+                ? null
+                : () => _openLastRead(context, lastRead, isBangla),
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 30.r,
+              height: 30.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: context.lineColor(Colors.white.withValues(alpha: .7)),
+                ),
+              ),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white,
+                size: 18.sp,
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Opens the sub-category the last-read hadith belongs to, scrolled to that
+/// hadith, then refreshes the pill since reading there may have moved the last-read hadith.
+Future<void> _openLastRead(
+  BuildContext context,
+  HadithLastRead lastRead,
+  bool isBangla,
+) async {
+  final bloc = context.read<HadithLastReadBloc>();
+  await Navigator.of(context).pushNamed(
+    RouteNames.hadithDetail,
+    arguments: HadithDetailArgs(
+      subCategoryId: lastRead.subCategoryId,
+      title: lastRead.subCategoryName(bangla: isBangla),
+      initialHadithId: lastRead.hadithId,
+      initialHadithNumber: lastRead.hadithNumber,
+    ),
+  );
+  if (!bloc.isClosed) bloc.add(const LoadHadithLastRead());
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -233,7 +453,10 @@ class _SectionTitle extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Text(
             AppText.of(context).seeAll,
-            style: TextStyle(color: Colors.black, fontSize: 12.sp),
+            style: TextStyle(
+              color: context.inkColor(Colors.black),
+              fontSize: 12.sp,
+            ),
           ),
         ),
       ],
@@ -244,75 +467,112 @@ class _SectionTitle extends StatelessWidget {
 class _CollectionCard extends StatelessWidget {
   const _CollectionCard({required this.book, required this.appText});
 
-  final HadithBook book;
+  final HadithLibraryBook book;
   final AppText appText;
 
   @override
   Widget build(BuildContext context) {
     final isBangla =
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    final localized = isBangla ? book.titleBn : book.titleEn;
+    final title = localized.isEmpty ? book.titleEn : localized;
+
     return Container(
       width: 218.w,
-      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE8AE),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFE9F1C4), Color(0xFFD3E2A0)],
+        ),
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: context.lineColor(Color(0xFFC4D68A))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(7.r),
+                width: 32.r,
+                height: 32.r,
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF9BAE6C)),
-                  borderRadius: BorderRadius.circular(9.r),
+                  color: context.surfaceColor(Colors.white),
+                  shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.menu_book_outlined,
-                  size: 18.sp,
-                  color: const Color(0xFF5F6E3E),
+                  Icons.menu_book_rounded,
+                  size: 17.sp,
+                  color: context.inkColor(Color(0xFF5F7A43)),
                 ),
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => openHadithCollection(context, book),
+                onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
-                icon: Icon(Icons.north_east_rounded, size: 14.sp),
+                icon: Icon(Icons.north_east_rounded, size: 13.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4C5A34),
-                  side: const BorderSide(color: Color(0xFF9BAE6C)),
+                  foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                  side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
                   padding: EdgeInsets.symmetric(horizontal: 10.w),
-                  minimumSize: Size(0, 32.h),
+                  minimumSize: Size(0, 30.h),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: TextStyle(fontSize: 12.sp),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9.r),
+                    borderRadius: BorderRadius.circular(20.r),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
-          Text(
-            isBangla ? book.titleBn : book.titleEn,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-              color: const Color(0xFF2C3320),
+          // The title takes whatever height is left, so the button below is
+          // always pinned to the bottom edge instead of leaving a gap.
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: context.inkColor(Color(0xFF2C3320)),
+                ),
+              ),
             ),
           ),
-          SizedBox(height: 6.h),
-          Text(
-            '${appText.hadithTotalHadith} : ${book.hadithCount}',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: const Color(0xFF5D6B44),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => openAllHadithsOfBook(context, book),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF5F7A43),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                minimumSize: Size(0, 34.h),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  context.localizedDigits(
+                    '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+                  ),
+                  maxLines: 1,
+                ),
+              ),
             ),
           ),
         ],
@@ -321,61 +581,93 @@ class _CollectionCard extends StatelessWidget {
   }
 }
 
-/// Horizontal shelf of hadith e-books. Tracks which books are already saved on
-/// the device so a downloaded book shows an "offline" badge and opens straight
-/// into the reader.
-class _EbookShelf extends StatefulWidget {
+/// Horizontal shelf of the API-backed e-books (`GET /ebooks`), with loading,
+/// error (retry) and empty states. Tapping a book opens its detail screen.
+class _EbookShelf extends StatelessWidget {
   const _EbookShelf();
 
-  @override
-  State<_EbookShelf> createState() => _EbookShelfState();
-}
-
-class _EbookShelfState extends State<_EbookShelf> {
-  Set<String> _downloaded = const {};
-
-  @override
-  void initState() {
-    super.initState();
-    _refresh();
-  }
-
-  Future<void> _refresh() async {
-    final slugs = await HadithDatabase().downloadedSlugs();
-    if (mounted) setState(() => _downloaded = slugs);
-  }
-
-  Future<void> _open(HadithBook book) async {
-    if (!book.isAvailable) {
-      final appText = AppText.forLanguage(
-        context.read<LanguageBloc>().state.language,
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appText.hadithBookComingSoon)),
-      );
-      return;
-    }
-    await Navigator.of(
-      context,
-    ).pushNamed(RouteNames.hadithBookReader, arguments: book.slug);
-    _refresh();
-  }
+  static double get _height => 208.h;
 
   @override
   Widget build(BuildContext context) {
-    final books = HadithBookCatalog.all;
+    final appText = AppText.of(context);
+    final state = context.watch<EbooksBloc>().state;
+    if (state.isLoading) return const _EbookShelfSkeleton();
+    if (state.status == EbooksStatus.failure) {
+      return _ShelfMessage(
+        message: state.failure?.message ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () => context.read<EbooksBloc>().add(const LoadEbooks()),
+      );
+    }
+    if (state.ebooks.isEmpty) {
+      return _ShelfMessage(message: appText.hadithBookComingSoon);
+    }
     return SizedBox(
-      height: 208.h,
+      height: _height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        itemCount: books.length,
+        itemCount: state.ebooks.length,
         separatorBuilder: (_, _) => SizedBox(width: 12.w),
         itemBuilder: (context, index) => _EbookCard(
-          book: books[index],
-          downloaded: _downloaded.contains(books[index].slug),
-          onTap: () => _open(books[index]),
+          ebook: state.ebooks[index],
+          onTap: () => _openEbook(context, state.ebooks[index]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the e-book's detail screen (where the PDF can be downloaded).
+void _openEbook(BuildContext context, Ebook ebook) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => EbookDetailScreen(ebook: ebook)),
+  );
+}
+
+class _EbookShelfSkeleton extends StatelessWidget {
+  const _EbookShelfSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _EbookShelf._height,
+      child: Shimmer.fromColors(
+        baseColor: context.surfaceColor(const Color(0xFFE3ECC5)),
+        highlightColor: context.surfaceColor(const Color(0xFFF6F9EC)),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          itemCount: 3,
+          separatorBuilder: (_, _) => SizedBox(width: 12.w),
+          itemBuilder: (_, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 128.w,
+                height: 140.h,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(Colors.white),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                width: 100.w,
+                height: 12.h,
+                color: context.surfaceColor(Colors.white),
+              ),
+              SizedBox(height: 6.h),
+              Container(
+                width: 70.w,
+                height: 10.h,
+                color: context.surfaceColor(Colors.white),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -383,23 +675,13 @@ class _EbookShelfState extends State<_EbookShelf> {
 }
 
 class _EbookCard extends StatelessWidget {
-  const _EbookCard({
-    required this.book,
-    required this.downloaded,
-    required this.onTap,
-  });
+  const _EbookCard({required this.ebook, required this.onTap});
 
-  final HadithBook book;
-  final bool downloaded;
+  final Ebook ebook;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final isBangla =
-        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
-    final title = isBangla ? book.titleBn : book.titleEn;
-
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -410,82 +692,40 @@ class _EbookCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14.r),
-              child: Stack(
-                children: [
-                  Container(
-                    width: 128.w,
-                    height: 140.h,
-                    color: const Color(0xFFF0F3E4),
-                    child: Opacity(
-                      opacity: book.isAvailable ? 1 : .45,
-                      child: Image.asset(
-                        'assets/images/book.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 6.h,
-                    right: 6.w,
-                    child: _StatusBadge(
-                      book: book,
-                      downloaded: downloaded,
-                    ),
-                  ),
-                ],
+              child: Container(
+                width: 128.w,
+                height: 140.h,
+                color: context.surfaceColor(const Color(0xFFF0F3E4)),
+                child: EbookCover(url: ebook.coverImageUrl),
               ),
             ),
             SizedBox(height: 8.h),
             Text(
-              title,
+              ebook.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF2C3320),
+                color: context.inkColor(const Color(0xFF2C3320)),
                 height: 1.3,
               ),
             ),
-            SizedBox(height: 2.h),
-            Text(
-              book.isAvailable
-                  ? '${book.hadithCount} ${appText.categoryHadith}'
-                  : appText.hadithBookComingSoon,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: const Color(0xFF9BA85B),
+            if (ebook.author.isNotEmpty) ...[
+              SizedBox(height: 2.h),
+              Text(
+                ebook.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: const Color(0xFF9BA85B),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.book, required this.downloaded});
-
-  final HadithBook book;
-  final bool downloaded;
-
-  @override
-  Widget build(BuildContext context) {
-    final (IconData icon, Color bg) = switch ((book.isAvailable, downloaded)) {
-      (false, _) => (Icons.lock_outline_rounded, const Color(0xFF9AA37E)),
-      (true, true) => (Icons.check_rounded, const Color(0xFF5F8B3E)),
-      (true, false) => (Icons.download_rounded, const Color(0xFF7C8A48)),
-    };
-    return Container(
-      padding: EdgeInsets.all(4.r),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Icon(icon, size: 13.sp, color: Colors.white),
     );
   }
 }

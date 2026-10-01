@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_reading_layout.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_page_viewport.dart';
+
+void main() {
+  testWidgets('scrolling past the Quran reaches inline Tafsir', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 60),
+            bottom: const SizedBox(height: 60),
+            page: QuranPageViewport(
+              pageNumber: 1,
+              footer: const SizedBox(),
+              child: const SizedBox(height: 1200, child: Text('Arabic')),
+            ),
+            extension: const SizedBox(
+              height: 1000,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text('Inline Tafsir'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    final page = find.byType(QuranPageViewport);
+    final inner = tester
+        .widget<SingleChildScrollView>(
+          find.descendant(
+            of: page,
+            matching: find.byType(SingleChildScrollView),
+          ),
+        )
+        .controller!;
+    final outer = tester
+        .widget<SingleChildScrollView>(
+          find.byKey(const ValueKey('quran-reader-scroll')),
+        )
+        .controller!;
+    inner.jumpTo(inner.position.maxScrollExtent);
+    await tester.pump();
+    await tester.drag(page, const Offset(0, -220));
+    await tester.pumpAndSettle();
+    expect(outer.offset, greaterThan(0));
+    expect(find.text('Inline Tafsir').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('idle controls hide, preserve player, and reveal on swipe', (
+    tester,
+  ) async {
+    var next = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 80, child: Text('Filters and timer')),
+            bottom: const SizedBox(height: 100, child: Text('Player')),
+            page: QuranPageViewport(
+              pageNumber: 2,
+              footer: const SizedBox(),
+              onNext: () => next++,
+              child: const SizedBox(height: 2000, child: Text('Ayahs')),
+            ),
+          ),
+        ),
+      ),
+    );
+    final page = find.byType(QuranPageViewport);
+    // The controls float over the page: it never changes size or moves.
+    final pageRect = tester.getRect(page);
+    final textTop = tester.getTopLeft(find.text('Ayahs')).dy;
+    void expectPageFixed() {
+      expect(tester.getRect(page), pageRect);
+      expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
+    }
+
+    final playerElement = tester.element(find.text('Player'));
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expectPageFixed();
+    expect(tester.element(find.text('Player')), same(playerElement));
+    expect(find.text('Player').hitTestable(), findsNothing);
+    // Pages turn like an Arabic book: a right swipe goes forward.
+    await tester.drag(page, const Offset(150, 0));
+    await tester.pumpAndSettle();
+    expect(next, 1);
+    expectPageFixed();
+    expect(find.text('Player').hitTestable(), findsOneWidget);
+    expect(find.text('Filters and timer').hitTestable(), findsOneWidget);
+    // Holding a finger on the page must not start another idle timeout.
+    final gesture = await tester.startGesture(tester.getCenter(page));
+    await tester.pump(const Duration(seconds: 6));
+    expect(find.text('Player').hitTestable(), findsOneWidget);
+    await gesture.up();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Player').hitTestable(), findsNothing);
+    expect(find.text('Filters and timer').hitTestable(), findsNothing);
+    expectPageFixed();
+    // Vertical scrolling reveals controls without triggering a page turn.
+    await tester.drag(page, const Offset(0, -150));
+    await tester.pumpAndSettle();
+    expect(next, 1);
+    expect(find.text('Player').hitTestable(), findsOneWidget);
+    expect(find.text('Filters and timer').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a tap in the upper half shows the header, lower half the bar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 80, child: Text('Header')),
+            bottom: const SizedBox(height: 100, child: Text('Player')),
+            page: QuranPageViewport(
+              pageNumber: 2,
+              footer: const SizedBox(),
+              child: const SizedBox(height: 2000, child: Text('Ayahs')),
+            ),
+          ),
+        ),
+      ),
+    );
+    bool shown(String text) =>
+        find.text(text).hitTestable().evaluate().isNotEmpty;
+    Future<void> idle() async {
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    }
+
+    final page = tester.getRect(find.byType(QuranReadingLayout));
+    await idle();
+    expect(shown('Header'), isFalse);
+    expect(shown('Player'), isFalse);
+
+    // Scroll the page a little: showing controls must not move the text.
+    await tester.drag(find.byType(QuranPageViewport), const Offset(0, -120));
+    await idle();
+    final textTop = tester.getTopLeft(find.text('Ayahs')).dy;
+    await tester.tapAt(Offset(page.center.dx, page.top + page.height * .3));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isTrue);
+    expect(shown('Player'), isFalse);
+    expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
+
+    await idle();
+    await tester.tapAt(Offset(page.center.dx, page.top + page.height * .7));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isFalse);
+    expect(shown('Player'), isTrue);
+    expect(tester.getTopLeft(find.text('Ayahs')).dy, textTop);
+
+    // A finger resting (with a little jitter) stays a one-sided reveal.
+    await idle();
+    final rest = await tester.startGesture(
+      Offset(page.center.dx, page.top + page.height * .3),
+    );
+    await rest.moveBy(const Offset(3, 2));
+    await tester.pumpAndSettle();
+    expect(shown('Header'), isTrue);
+    expect(shown('Player'), isFalse);
+    await rest.up();
+    await tester.pumpWidget(const SizedBox());
+  });
+}

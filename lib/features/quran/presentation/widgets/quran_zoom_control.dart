@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Which text a [QuranZoomControl] resizes.
 enum QuranZoomTarget { arabic, translation }
@@ -42,17 +45,17 @@ class QuranZoomControl extends StatelessWidget {
             ),
             child: Slider(
               value: value,
-              min: 0.8,
-              max: 2.5,
+              min: kMinArabicFontScale,
+              max: kMaxArabicFontScale,
               onChanged: (val) => _set(context, val),
             ),
           ),
         ),
         Text(
-          '${(value * 100).toInt()}%',
+          context.localizedDigits('${(value * 100).toInt()}%'),
           style: TextStyle(
             fontSize: 11.sp,
-            color: const Color(0xFF6B7458),
+            color: context.inkColor(Color(0xFF6B7458)),
             fontWeight: FontWeight.w600,
           ),
         ),

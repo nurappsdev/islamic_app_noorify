@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 
 /// Arguments for [RouteNames.zikrCounter] — an ordered sequence of zikr the
 /// counter walks through, one after another.
@@ -30,7 +30,8 @@ class ZikrCounterArgs {
   int get totalTarget => items.fold(0, (sum, item) => sum + item.target);
 
   static const ZikrCounterArgs fallback = ZikrCounterArgs(
-    title: 'Zikr',
+    // Empty: the screen shows the app's own "Zikr" title.
+    title: '',
     items: [ZikrCatalog.subhanAllah],
   );
 }

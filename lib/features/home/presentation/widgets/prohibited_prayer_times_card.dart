@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/domain/calendar/date_labels.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class ProhibitedPrayerTimesCard extends StatefulWidget {
   const ProhibitedPrayerTimesCard({
@@ -51,34 +56,45 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     final times = _times;
     final windows = times == null
         ? null
         : ProhibitedPrayerWindows.fromDailyTimes(times);
     return HomeCard(
       padding: EdgeInsets.fromLTRB(10.w, 10.h, 10.w, 10.h),
-      backgroundColor: const Color(0xFFFFF4F4),
-      borderColor: const Color(0xFFFF4B4B),
+      backgroundColor: context.appPalette.dangerSurface,
+      borderColor: context.lineColor(Color(0xFFFF4B4B)),
       child: Column(
         children: [
           Text(
             appText.prohibitedPrayerTimes,
-            style: homeSansStyle(fontSize: 14.sp),
+            style: homeSansStyle(context: context, fontSize: 14.sp),
           ),
           SizedBox(height: 10.h),
           Row(
             children: [
               _ForbiddenTime(
                 title: appText.sunrise,
-                value: windows?.sunrise.formatted ?? '--:-- – --:--',
+                value: localizeClockText(
+                  windows?.sunrise.formatted ?? '--:-- – --:--',
+                  bangla: bangla,
+                ),
               ),
               _ForbiddenTime(
                 title: appText.jawaal,
-                value: windows?.zawal.formatted ?? '--:-- – --:--',
+                value: localizeClockText(
+                  windows?.zawal.formatted ?? '--:-- – --:--',
+                  bangla: bangla,
+                ),
               ),
               _ForbiddenTime(
                 title: appText.sunset,
-                value: windows?.sunset.formatted ?? '--:-- – --:--',
+                value: localizeClockText(
+                  windows?.sunset.formatted ?? '--:-- – --:--',
+                  bangla: bangla,
+                ),
               ),
             ],
           ),
@@ -101,17 +117,21 @@ class _ForbiddenTime extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 3.w),
         padding: EdgeInsets.symmetric(vertical: 9.h, horizontal: 4.w),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFD8D8),
+          color: context.appPalette.dangerTint,
           borderRadius: BorderRadius.circular(7.r),
         ),
         child: Column(
           children: [
-            Text(title, style: homeSansStyle(fontSize: 10.sp)),
+            Text(
+              title,
+              style: homeSansStyle(context: context, fontSize: 10.sp),
+            ),
             SizedBox(height: 7.h),
             FittedBox(
               child: Text(
                 value,
                 style: homeSansStyle(
+                  context: context,
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w700,
                 ),

@@ -2,19 +2,22 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/home/presentation/screens/home_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/features/home/domain/calendar/date_labels.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 
-part 'prayer_time_card_widgets.dart';
 part 'prayer_time_card_painters.dart';
+part 'prayer_time_card_widgets.dart';
 
 class PrayerTimeCard extends StatefulWidget {
   const PrayerTimeCard({super.key, this.prayerTimeService, this.now});
@@ -25,6 +28,9 @@ class PrayerTimeCard extends StatefulWidget {
   @override
   State<PrayerTimeCard> createState() => _PrayerTimeCardState();
 }
+
+bool _isBangla(BuildContext context) =>
+    context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
 
 class _PrayerTimeCardState extends State<PrayerTimeCard> {
   DailyPrayerTimes? _times;
@@ -38,18 +44,31 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
   DateTime _now() => widget.now?.call() ?? bangladeshNow();
 
-  double get _dayProgress {
+  bool get _isNightPhase {
     final times = _times;
-    return times == null ? 0 : dayProgress(_now(), times);
+    return times != null && isNightPhase(_now(), times);
   }
 
-  String _formattedDate(AppText appText) {
+  double get _arcProgress {
+    final times = _times;
+    if (times == null) return 0;
     final now = _now();
-    return '${now.day} ${appText.monthNames[now.month - 1]} ${now.year}';
+    return isNightPhase(now, times)
+        ? nightProgress(now, times)
+        : dayProgress(now, times);
   }
 
-  String _formattedTime() => formatPrayerTime(
-    PrayerClockTime(hour: _now().hour, minute: _now().minute),
+  String _formattedDate(AppText appText, bool bangla) {
+    final now = _now();
+    return localizeDigits(
+      '${now.day} ${appText.monthNames[now.month - 1]} ${now.year}',
+      bangla: bangla,
+    );
+  }
+
+  String _formattedTime(bool bangla) => localizeClockText(
+    formatPrayerTime(PrayerClockTime(hour: _now().hour, minute: _now().minute)),
+    bangla: bangla,
   );
 
   @override
@@ -119,6 +138,11 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = _isBangla(context);
+    String clock(PrayerClockTime t) =>
+        localizeClockText(formatPrayerTime(t), bangla: bangla);
+    final isNight = isNightPrayerTheme(now: _now(), fajr: _fajr);
+    final topDateColor = isNight ? Colors.white : Colors.black;
     return SizedBox(
       height: 319.h,
       child: Padding(
@@ -179,40 +203,14 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         top: 19.h,
                         left: 20.w,
                         right: 20.w,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(
-                                  _times?.hijriDate ??
-                                      appText.hijriDatePlaceholder,
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(width: 28.w),
-
-                            Expanded(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  appText.bengaliDatePlaceholder,
-                                  style: homeSerifStyle(
-                                    fontSize: 14.sp,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: _CardDateRow(
+                          start: hijriDateLabel(
+                            _now(),
+                            bangla: bangla,
+                            maghrib: _times?.maghrib,
+                          ),
+                          end: banglaDateLabel(_now(), english: !bangla),
+                          color: topDateColor,
                         ),
                       ),
 
@@ -224,7 +222,10 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 33.w,
                         child: SizedBox(
                           height: 142.h,
-                          child: PrayerDayProgress(progress: _dayProgress),
+                          child: PrayerDayProgress(
+                            progress: _arcProgress,
+                            isNight: _isNightPhase,
+                          ),
                         ),
                       ),
 
@@ -235,16 +236,17 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         right: 0,
                         child: Column(
                           children: [
+                            SizedBox(height: 8.h),
                             Text(
-                              _formattedDate(appText),
+                              _formattedDate(appText, bangla),
                               style: homeSansStyle(
-                                fontSize: 15.sp,
+                                fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
                               ),
                             ),
 
                             Text(
-                              _formattedTime(),
+                              _formattedTime(bangla),
                               style: homeSansStyle(
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.w700,
@@ -265,7 +267,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Current Prayer Badge
                       Positioned(
-                        top: 171.h,
+                        top: 178.h,
                         left: 0,
                         right: 0,
                         child: Center(
@@ -280,7 +282,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       Positioned(
                         left: 13.w,
                         right: 13.w,
-                        bottom: 15.h,
+                        bottom: 13.h,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -288,12 +290,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunrise}, ${appText.trishal}',
                                 time: _times != null
-                                    ? formatPrayerTime(_times!.sunrise)
+                                    ? clock(_times!.sunrise)
                                     : appText.sunriseTimePlaceholder,
                                 isSunrise: true,
                                 secondaryLabel: appText.sehri,
                                 secondaryTime: _times != null
-                                    ? formatPrayerTime(_times!.fajr)
+                                    ? clock(_times!.fajr)
                                     : appText.sunriseTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),
@@ -305,12 +307,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               child: _PrayerEdgeTime(
                                 label: '${appText.sunset}, ${appText.trishal}',
                                 time: _times != null
-                                    ? formatPrayerTime(_times!.sunset)
+                                    ? clock(_times!.sunset)
                                     : appText.sunsetTimePlaceholder,
                                 isSunrise: false,
                                 secondaryLabel: appText.iftar,
                                 secondaryTime: _times != null
-                                    ? formatPrayerTime(_times!.maghrib)
+                                    ? clock(_times!.maghrib)
                                     : appText.sunsetTimePlaceholder,
                                 showPrimary: _showSunriseAndSunset,
                               ),

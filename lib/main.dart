@@ -1,22 +1,59 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_route_observer.dart';
 import 'core/constants/app_routes.dart';
 import 'core/constants/route_names.dart';
+import 'core/network/auth_refresh_interceptor.dart';
+import 'core/storage/session_cleaner.dart';
+import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
-import 'core/theme/brand_colors.dart';
+import 'core/theme/dark_theme.dart';
+import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
+import 'features/alarm/data/services/alarm_scheduler.dart';
+import 'features/alarm/data/services/alarm_migration.dart';
+import 'features/alarm/data/services/alarm_sync.dart';
+import 'features/alarm/domain/entities/alarm_ring_payload.dart';
+import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'shared/services/firebase/firebase_service.dart';
+import 'shared/services/firebase/firebase_token_service.dart';
 
 final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await AppFirebaseService.initialize();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // Must come after Hive is open: FirebaseTokenService reads the auth box
+  // (via AuthLocalDataSourceImpl) as soon as its singleton is built.
+  await HiveService.init();
+  if (kDebugMode) {
+    debugPrint('[FCM] token: ${await FirebaseTokenService.instance.getToken()}');
+  }
+  // The access token can't be renewed: wipe the dead session and send the user
+  // back to sign in.
+  AuthRefreshInterceptor.onSessionExpired = () async {
+    await SessionCleaner.clearUserData();
+    appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      RouteNames.signIn,
+      (_) => false,
+    );
+  };
   await AppText.load();
   quranAudioHandler = await AudioService.init(
     builder: QuranAudioHandler.new,
@@ -27,15 +64,70 @@ Future<void> main() async {
       androidStopForegroundOnPause: true,
     ),
   );
+
+  final preferences = await SharedPreferences.getInstance();
+  final savedDarkTheme =
+      preferences.getBool(AppPreferencesBloc.darkThemeKey) ?? false;
+  // Read before the first frame, so the app opens in the saved language - or
+  // Bangla when none was ever saved - instead of switching after it renders.
+  final savedLanguage = LanguagePreference.read(preferences);
+
+  await AlarmScheduler.init();
+  await AlarmScheduler.logScheduledAlarms();
+  await migrateToOnDeviceAlarms();
+  // Alarms live only on the device (Hive). Re-arm from them at every start, so
+  // the OS schedule matches what is saved and today's prayer times: it also
+  // removes any alarm the app no longer has.
+  unawaited(syncLocalAlarms());
+  // Tapping the alarm notification — or its Stop/Snooze buttons — opens the
+  // ringing screen, which is where stopping/snoozing reliably silences the
+  // alarm. A Stop/Snooze press carries its action so the screen applies it
+  // straight away. If that screen is already up it handles the event itself.
+  alarmNotificationEvents.stream.listen((event) {
+    if (AlarmRingingScreen.isShowing(event.payload.alarmId)) return;
+    appNavigatorKey.currentState?.push(
+      MaterialPageRoute<void>(
+        builder: (_) => AlarmRingingScreen(
+          payload: event.payload,
+          autoAction: event.action == 'open' ? null : event.action,
+        ),
+      ),
+    );
+  });
+  final launchDetails = await AlarmScheduler.launchDetails();
+  final launchPayload = launchDetails?.didNotificationLaunchApp == true
+      ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)
+      : null;
+  final launchAction = AlarmScheduler.actionFor(
+    launchDetails?.notificationResponse?.actionId,
+  );
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => LanguageBloc()),
-        BlocProvider(create: (_) => AppPreferencesBloc()),
+        BlocProvider(
+          create: (_) => LanguageBloc(initialLanguage: savedLanguage),
+        ),
+        BlocProvider(
+          create: (_) => AppPreferencesBloc(darkThemeEnabled: savedDarkTheme),
+        ),
       ],
       child: const MyApp(),
     ),
   );
+
+  if (launchPayload != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      appNavigatorKey.currentState?.push(
+        MaterialPageRoute<void>(
+          builder: (_) => AlarmRingingScreen(
+            payload: launchPayload,
+            autoAction: launchAction,
+          ),
+        ),
+      );
+    });
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -56,31 +148,28 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: appNavigatorKey,
           navigatorObservers: [appRouteObserver],
-          title: 'Noorify',
-          theme: ThemeData(
-            useMaterial3: true,
-            colorSchemeSeed: const Color.fromRGBO(30, 168, 184, 1),
-            scaffoldBackgroundColor: BrandColors.screenBackground,
-            textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            colorSchemeSeed: BrandColors.primary,
-            textTheme: GoogleFonts.plusJakartaSansTextTheme(
-              ThemeData(brightness: Brightness.dark).textTheme,
-            ),
-          ),
+          title: 'Tuhfatul Muslim',
+          theme: lightTheme(),
+          darkTheme: darkTheme(),
+          themeAnimationDuration: const Duration(milliseconds: 300),
           themeMode: appPreferences.darkThemeEnabled
               ? ThemeMode.dark
               : ThemeMode.light,
           builder: (context, child) {
             final media = MediaQuery.of(context);
             final textScale = appFontScale(appPreferences.fontSize);
-            return MediaQuery(
+            final content = MediaQuery(
               data: media.copyWith(textScaler: TextScaler.linear(textScale)),
               child: child ?? const SizedBox.shrink(),
             );
+            // Light status-bar icons over the dark background. Light mode
+            // keeps the platform default.
+            return appPreferences.darkThemeEnabled
+                ? AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle.light,
+                    child: content,
+                  )
+                : content;
           },
           initialRoute: initialRoute ?? RouteNames.splash,
           onGenerateRoute: AppRoutes.onGenerateRoute,

@@ -1,0 +1,174 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_settings.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+
+/// Right-hand drawer with the hadith list's content settings: show Arabic,
+/// show translation, and the Arabic / translation font sizes.
+class HadithContentSettingsDrawer extends StatelessWidget {
+  const HadithContentSettingsDrawer({
+    super.key,
+    required this.settings,
+    required this.onChanged,
+    required this.onOpenProfileSettings,
+  });
+
+  final HadithContentSettings settings;
+  final ValueChanged<HadithContentSettings> onChanged;
+
+  /// Tapped from the gear in the drawer's top-right corner.
+  final VoidCallback onOpenProfileSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Drawer(
+      backgroundColor: context.surfaceColor(Colors.white),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 24.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      appText.quranReaderSettingsTitle,
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: context.inkColor(Color(0xFF2C3320)),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onOpenProfileSettings,
+                    tooltip: appText.settingsTitle,
+                    style: IconButton.styleFrom(
+                      backgroundColor: context.surfaceColor(Color(0xFFEDF1DE)),
+                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                      minimumSize: Size(38.r, 38.r),
+                    ),
+                    icon: const Icon(Icons.settings_outlined, size: 18),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              // At least one text stays on, so a card is never empty.
+              _ToggleRow(
+                label: appText.showArabicLabel,
+                value: settings.showArabic,
+                onChanged: settings.showArabic && !settings.showTranslation
+                    ? null
+                    : (v) => onChanged(settings.copyWith(showArabic: v)),
+              ),
+              _ToggleRow(
+                label: appText.showTranslationLabel,
+                value: settings.showTranslation,
+                onChanged: settings.showTranslation && !settings.showArabic
+                    ? null
+                    : (v) => onChanged(settings.copyWith(showTranslation: v)),
+              ),
+              Divider(height: 28, color: context.lineColor(Color(0xFFE3E7D3))),
+              _SizeSlider(
+                label: appText.quranArabicSizeLabel,
+                value: settings.arabicScale,
+                enabled: settings.showArabic,
+                onChanged: (v) => onChanged(settings.copyWith(arabicScale: v)),
+              ),
+              SizedBox(height: 8.h),
+              _SizeSlider(
+                label: appText.quranTranslationSizeLabel,
+                value: settings.translationScale,
+                enabled: settings.showTranslation,
+                onChanged: (v) =>
+                    onChanged(settings.copyWith(translationScale: v)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      activeThumbColor: AppColor.primary,
+      title: Text(label, style: TextStyle(fontSize: 13.5.sp)),
+      value: value,
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _SizeSlider extends StatelessWidget {
+  const _SizeSlider({
+    required this.label,
+    required this.value,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final String label;
+  final double value;
+  final bool enabled;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: context.inkColor(Color(0xFF5A6350)),
+                ),
+              ),
+            ),
+            Text(
+              context.localizedDigits('${(value * 100).round()}%'),
+              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9BA85B)),
+            ),
+          ],
+        ),
+        Slider(
+          value: value.clamp(
+            HadithContentSettings.minScale,
+            HadithContentSettings.maxScale,
+          ),
+          min: HadithContentSettings.minScale,
+          max: HadithContentSettings.maxScale,
+          divisions: 8,
+          activeColor: AppColor.primary,
+          onChanged: enabled ? onChanged : null,
+        ),
+      ],
+    );
+  }
+}

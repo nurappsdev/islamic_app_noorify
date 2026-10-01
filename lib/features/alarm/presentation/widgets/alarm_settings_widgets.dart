@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:just_audio/just_audio.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/repositories/ringtone_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_ringtones.dart';
 
-TextStyle alarmItalicStyle(double size, {Color color = Colors.black}) =>
-    TextStyle(
-      color: color,
-      fontSize: size,
-      fontFamily: 'Times New Roman',
-      fontStyle: FontStyle.italic,
-    );
+TextStyle alarmItalicStyle(
+  double size, {
+  Color color = Colors.black,
+  BuildContext? context,
+}) => TextStyle(
+  color: context?.inkColor(color) ?? color,
+  fontSize: size,
+  fontFamily: 'Times New Roman',
+  fontStyle: FontStyle.italic,
+);
 
 class AlarmBackHeader extends StatelessWidget {
   const AlarmBackHeader({super.key, required this.title, this.subtitle});
@@ -30,8 +38,8 @@ class AlarmBackHeader extends StatelessWidget {
               tooltip: AppText.of(context).back,
               onPressed: () => Navigator.of(context).pop(),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F5CE),
-                foregroundColor: const Color(0xFF526044),
+                backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+                foregroundColor: context.inkColor(Color(0xFF526044)),
               ),
               icon: const Icon(Icons.chevron_left),
             ),
@@ -85,36 +93,191 @@ class AlarmToggleRow extends StatelessWidget {
           activeThumbColor: const Color(0xFF8D9B70),
           activeTrackColor: const Color(0xFFDCE9B8),
           inactiveThumbColor: const Color(0xFFBDBDBD),
-          inactiveTrackColor: const Color(0xFFE0E0E0),
+          inactiveTrackColor: context.surfaceColor(Color(0xFFE0E0E0)),
         ),
       ],
     );
   }
 }
 
-class RingtoneSearchField extends StatelessWidget {
-  const RingtoneSearchField({super.key});
+/// A search box over the `GET /alarms/ringtones` catalog. Typing filters the
+/// list shown below the box; tapping an entry fills the field with its name
+/// and reports the pick via [onSelected].
+class RingtoneSearchField extends StatefulWidget {
+  const RingtoneSearchField({super.key, this.onSelected});
+
+  final ValueChanged<Ringtone>? onSelected;
+
+  @override
+  State<RingtoneSearchField> createState() => _RingtoneSearchFieldState();
+}
+
+class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
+  final _controller = TextEditingController();
+  final _focusNode = FocusNode();
+  final _repository = RingtoneRepositoryImpl();
+  late final _getRingtones = GetRingtones(_repository);
+  List<Ringtone> _ringtones = const [];
+  bool _loading = true;
+
+  final _player = AudioPlayer();
+  String? _playingId;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() => setState(() {}));
+    _controller.addListener(() => setState(() {}));
+    _player.processingStateStream.listen((state) {
+      if (state == ProcessingState.completed && mounted) {
+        setState(() => _playingId = null);
+      }
+    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    final result = await _getRingtones();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _ringtones = result.fold((_) => const [], (list) => list);
+    });
+  }
+
+  Future<void> _togglePlay(Ringtone ringtone) async {
+    if (_playingId == ringtone.id) {
+      await _player.stop();
+      if (mounted) setState(() => _playingId = null);
+      return;
+    }
+    setState(() => _playingId = ringtone.id);
+    try {
+      await _player.setUrl(ringtone.audioUrl);
+      await _player.play();
+    } catch (_) {
+      if (mounted) setState(() => _playingId = null);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    _player.dispose();
+    super.dispose();
+  }
+
+  List<Ringtone> get _filtered {
+    final query = _controller.text.trim().toLowerCase();
+    if (query.isEmpty) return _ringtones;
+    return _ringtones
+        .where((r) => r.name.toLowerCase().contains(query))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 44.h,
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22.r),
-        border: Border.all(color: const Color(0xFFDCE9B8)),
-      ),
-      child: Center(
-        child: TextField(
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            isDense: true,
-            hintText: AppText.of(context).searchHere,
-            hintStyle: alarmItalicStyle(13.sp, color: const Color(0xFF9AA687)),
+    final showList = _focusNode.hasFocus && (_loading || _filtered.isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 44.h,
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22.r),
+            border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
           ),
-          style: alarmItalicStyle(13.sp),
+          child: Center(
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                hintText: AppText.of(context).searchHere,
+                hintStyle: alarmItalicStyle(
+                  13.sp,
+                  color: const Color(0xFF9AA687),
+                ),
+              ),
+              style: alarmItalicStyle(13.sp),
+            ),
+          ),
         ),
-      ),
+        if (showList)
+          Container(
+            margin: EdgeInsets.only(top: 6.h),
+            constraints: BoxConstraints(maxHeight: 160.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: context.lineColor(Color(0xFFDCE9B8))),
+            ),
+            child: _loading
+                ? Padding(
+                    padding: EdgeInsets.all(14.r),
+                    child: Center(
+                      child: SizedBox(
+                        width: 16.r,
+                        height: 16.r,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: EdgeInsets.symmetric(vertical: 4.h),
+                    shrinkWrap: true,
+                    itemCount: _filtered.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: context.lineColor(Color(0xFFF0F2E6)),
+                    ),
+                    itemBuilder: (context, index) {
+                      final ringtone = _filtered[index];
+                      final isPlaying = _playingId == ringtone.id;
+                      return ListTile(
+                        dense: true,
+                        title: Text(
+                          ringtone.name,
+                          style: alarmItalicStyle(13.sp),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              ringtone.duration,
+                              style: alarmItalicStyle(
+                                11.sp,
+                                color: const Color(0xFF9AA687),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            IconButton(
+                              iconSize: 20.sp,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              visualDensity: VisualDensity.compact,
+                              color: context.inkColor(Color(0xFF7E8C61)),
+                              icon: Icon(
+                                isPlaying
+                                    ? Icons.stop_circle_outlined
+                                    : Icons.play_circle_outline,
+                              ),
+                              onPressed: () => _togglePlay(ringtone),
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          _controller.text = ringtone.name;
+                          widget.onSelected?.call(ringtone);
+                          _focusNode.unfocus();
+                        },
+                      );
+                    },
+                  ),
+          ),
+      ],
     );
   }
 }

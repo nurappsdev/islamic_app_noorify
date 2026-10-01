@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 
 class DailyPrayerTimes {
   const DailyPrayerTimes({
@@ -75,6 +75,24 @@ String formatPrayerTime(PrayerClockTime time) {
   return '$hour:$minute $period';
 }
 
+final _clockTimeRegExp = RegExp(
+  r'^(\d{1,2}):(\d{2})\s*(AM|PM)$',
+  caseSensitive: false,
+);
+
+/// The inverse of [formatPrayerTime] — parses a 12-hour clock string like
+/// `"10:00 AM"` (as returned by `GET /alarms`'s `time`/`alarmTime` fields)
+/// into a [PrayerClockTime], or `null` if it doesn't match that shape.
+PrayerClockTime? parseClockTime12h(String time) {
+  final match = _clockTimeRegExp.firstMatch(time.trim());
+  if (match == null) return null;
+  final hour12 = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  final isPm = match.group(3)!.toUpperCase() == 'PM';
+  final hour24 = hour12 % 12 + (isPm ? 12 : 0);
+  return PrayerClockTime(hour: hour24, minute: minute);
+}
+
 /// Fraction (0..1) of daylight elapsed between [DailyPrayerTimes.sunrise] and
 /// [DailyPrayerTimes.sunset] at [now] — 0 at/before sunrise, 1 at/after
 /// sunset.
@@ -84,6 +102,31 @@ double dayProgress(DateTime now, DailyPrayerTimes times) {
   if (sunset <= sunrise) return 0;
   final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
   return ((nowMinutes - sunrise) / (sunset - sunrise)).clamp(0.0, 1.0);
+}
+
+/// True when [now] falls between [DailyPrayerTimes.maghrib] and the next
+/// day's [DailyPrayerTimes.fajr] — the night span [nightProgress] tracks.
+bool isNightPhase(DateTime now, DailyPrayerTimes times) {
+  final maghrib = times.maghrib.totalMinutes;
+  final fajr = times.fajr.totalMinutes;
+  final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
+  return nowMinutes >= maghrib || nowMinutes < fajr;
+}
+
+/// Fraction (0..1) of the night elapsed between [DailyPrayerTimes.maghrib]
+/// and the next day's [DailyPrayerTimes.fajr] at [now] — 0 at/just after
+/// Maghrib, 1 at/after the next Fajr. Only meaningful when [isNightPhase]
+/// is true for the same [now]/[times].
+double nightProgress(DateTime now, DailyPrayerTimes times) {
+  final maghrib = times.maghrib.totalMinutes;
+  final fajr = times.fajr.totalMinutes;
+  final totalNightMinutes = (24 * 60 - maghrib) + fajr;
+  if (totalNightMinutes <= 0) return 0;
+  final nowMinutes = now.hour * 60 + now.minute + now.second / 60;
+  final elapsed = nowMinutes >= maghrib
+      ? nowMinutes - maghrib
+      : (24 * 60 - maghrib) + nowMinutes;
+  return (elapsed / totalNightMinutes).clamp(0.0, 1.0);
 }
 
 extension PrayerClockTimeShift on PrayerClockTime {
@@ -123,8 +166,10 @@ class ProhibitedPrayerWindows {
         end: times.sunrise.plusMinutes(15),
       ),
       zawal: ProhibitedPrayerWindow(
-        start: times.dhuhr.plusMinutes(-10),
-        end: times.dhuhr,
+        // Centred on solar noon: a few minutes either side of Dhuhr, which
+        // matches the windows other prayer-time apps show.
+        start: times.dhuhr.plusMinutes(-4),
+        end: times.dhuhr.plusMinutes(2),
       ),
       sunset: ProhibitedPrayerWindow(
         start: times.sunset.plusMinutes(-15),

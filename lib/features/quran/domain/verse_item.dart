@@ -1,3 +1,5 @@
+import 'quran_arabic_text.dart';
+
 class VerseItem {
   const VerseItem({
     required this.surahNo,
@@ -23,7 +25,7 @@ class VerseItem {
     return VerseItem(
       surahNo: int.tryParse(parts[0]) ?? 0,
       ayahNo: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
-      arabic: json['text_uthmani'] as String? ?? '',
+      arabic: cleanQuranArabic(json['text_uthmani'] as String? ?? ''),
       translation: translationText.replaceAll(_htmlTag, ''),
     );
   }

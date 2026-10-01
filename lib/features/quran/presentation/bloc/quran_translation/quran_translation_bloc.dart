@@ -1,12 +1,13 @@
+import '../../../data/services/quran_content_service.dart';
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_database.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_offline_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_reader_service.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_translation_downloader.dart';
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_database.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_reader_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_translation_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 import 'quran_translation_event.dart';
 import 'quran_translation_state.dart';
@@ -22,12 +23,14 @@ class QuranTranslationBloc
     extends Bloc<QuranTranslationEvent, QuranTranslationState> {
   QuranTranslationBloc({
     QuranLocalStore? store,
+    QuranContentService? contentService,
     QuranOfflineDatabase? database,
     QuranOfflineService? offlineService,
     QuranReaderService? readerService,
     QuranTranslationDownloader? downloader,
     AppLanguage? initial,
-  }) : _store = store,
+  }) : _content = contentService ?? QuranContentService.shared,
+       _store = store,
        _db = database ?? QuranOfflineDatabase(),
        _offlineService = offlineService ?? QuranOfflineService(),
        _reader = readerService ?? QuranComReaderService(),
@@ -37,6 +40,7 @@ class QuranTranslationBloc
     on<SetSurahTranslationLang>(_onSetSurah);
     on<SetAyahTranslationLang>(_onSetAyah);
     on<SetArabicFontScale>(_onSetArabicFontScale);
+    on<SetArabicFontFamily>(_onSetArabicFontFamily);
     on<SetTranslationFontScale>(_onSetTranslationFontScale);
     on<SetShowArabic>(_onSetShowArabic);
     on<SetShowTranslation>(_onSetShowTranslation);
@@ -47,6 +51,7 @@ class QuranTranslationBloc
     on<LoadSurahEditionText>(_onLoadSurahEditionText);
   }
 
+  final QuranContentService _content;
   QuranLocalStore? _store;
   final QuranOfflineDatabase _db;
   final QuranOfflineService _offlineService;
@@ -71,10 +76,6 @@ class QuranTranslationBloc
     }
     final lang = store.translationLanguage() ?? event.uiFallback;
     var editionId = store.selectedTranslationEditionId();
-    // A custom edition that is no longer on the device falls back to English.
-    if (!isBuiltInEditionId(editionId) && !downloaded.contains(editionId)) {
-      editionId = kBuiltInEnglishId;
-    }
     // Keep the built-in edition in step with the persisted pill language.
     if (isBuiltInEditionId(editionId)) {
       editionId = lang == AppLanguage.bangla
@@ -85,6 +86,7 @@ class QuranTranslationBloc
       state.copyWith(
         surahLang: lang,
         arabicFontScale: store.arabicFontScale(),
+        arabicFontFamily: store.arabicFontFamily(),
         translationFontScale: store.translationFontScale(),
         showArabic: store.showArabic(),
         showTranslation: store.showTranslation(),
@@ -137,6 +139,14 @@ class QuranTranslationBloc
     await (await _resolveStore()).setArabicFontScale(event.value);
   }
 
+  Future<void> _onSetArabicFontFamily(
+    SetArabicFontFamily event,
+    Emitter<QuranTranslationState> emit,
+  ) async {
+    emit(state.copyWith(arabicFontFamily: event.fontId));
+    await (await _resolveStore()).setArabicFontFamily(event.fontId);
+  }
+
   Future<void> _onSetTranslationFontScale(
     SetTranslationFontScale event,
     Emitter<QuranTranslationState> emit,
@@ -170,12 +180,12 @@ class QuranTranslationBloc
     LoadTranslationEditions event,
     Emitter<QuranTranslationState> emit,
   ) async {
+    emit(state.copyWith(editionsLoading: true, editionsError: false));
     try {
-      emit(
-        state.copyWith(downloadedEditionIds: await _db.downloadedEditionIds()),
-      );
+      final editions = await _content.loadTranslations();
+      emit(state.copyWith(editions: editions, editionsLoading: false));
     } catch (_) {
-      // keep whatever we have
+      emit(state.copyWith(editionsLoading: false, editionsError: true));
     }
   }
 
@@ -289,7 +299,8 @@ class QuranTranslationBloc
       );
       return;
     }
-    final edition = translationEditionById(id);
+    final matching = state.editions.where((e) => e.id == id);
+    final edition = matching.isEmpty ? null : matching.first;
     if (edition?.resourceId == null) {
       emit(state.copyWith(surahEditionText: const {}));
       return;

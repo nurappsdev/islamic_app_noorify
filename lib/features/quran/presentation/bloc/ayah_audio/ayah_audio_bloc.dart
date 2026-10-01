@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_downloader.dart';
-import 'package:islami_app_noorify/features/quran/data/services/quran_audio_handler.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_downloader.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_audio_handler.dart';
 
 import 'ayah_audio_event.dart';
 import 'ayah_audio_state.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
 
 export 'ayah_audio_event.dart';
 export 'ayah_audio_state.dart';
@@ -108,7 +111,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
       }
       await _audio.playFile(
         localPath,
-        item: MediaItem(id: event.verseKey, title: 'Ayah ${event.verseKey}'),
+        item: MediaItem(id: event.verseKey, title: _audioTitle(event.verseKey)),
       );
       emit(state.copyWith(playingVerseKey: event.verseKey, isBuffering: false));
     } catch (_) {
@@ -142,7 +145,7 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
         }
         await _audio.playFile(
           localPath,
-          item: MediaItem(id: verseKey, title: 'Ayah $verseKey'),
+          item: MediaItem(id: verseKey, title: _audioTitle(verseKey)),
         );
         emit(state.copyWith(isBuffering: false));
       } catch (_) {
@@ -185,3 +188,10 @@ class AyahAudioBloc extends Bloc<AyahAudioEvent, AyahAudioState> {
     return super.close();
   }
 }
+
+/// The title of the audio notification, in the selected language. It has no
+/// `BuildContext`, so it reads the language the app is showing right now.
+String _audioTitle(String verseKey) =>
+    AppText.forLanguage(LanguagePreference.current).quranAudioAyahTitle.fill({
+      'key': LanguagePreference.numbers.digits(verseKey),
+    });

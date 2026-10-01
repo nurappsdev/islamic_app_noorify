@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
 
 class ReadingHistoryState {
   const ReadingHistoryState({this.isLoading = true, this.entries = const []});

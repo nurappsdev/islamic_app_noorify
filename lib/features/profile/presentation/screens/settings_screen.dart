@@ -1,26 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/delete_account_dialogs.dart';
+import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
+import 'package:tuhfatul_muslim/features/legal/presentation/screens/legal_document_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  static void _openLegal(BuildContext context, LegalDocumentType type) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => LegalDocumentScreen(type: type)),
+    );
+  }
+
+  static void _comingSoon(BuildContext context, AppText appText) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(appText.comingSoon)));
+  }
+
   static List<_SettingsItem> _items(BuildContext context, AppText appText) => [
-    _SettingsItem(appText.aboutUs, Icons.person_outline),
-    _SettingsItem(appText.ourProducts, Icons.eco_outlined),
-    _SettingsItem(appText.privacyPolicy, Icons.privacy_tip_outlined),
-    _SettingsItem(appText.termsOfServices, Icons.description_outlined),
-    _SettingsItem(appText.adminSupport, Icons.support_agent_outlined),
-    _SettingsItem(appText.feedback, Icons.feedback_outlined),
+    _SettingsItem(
+      appText.aboutUs,
+      Icons.person_outline,
+      onTap: () => _openLegal(context, LegalDocumentType.aboutUs),
+    ),
+    _SettingsItem(
+      appText.ourProducts,
+      Icons.eco_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
+    _SettingsItem(
+      appText.privacyPolicy,
+      Icons.privacy_tip_outlined,
+      onTap: () => _openLegal(context, LegalDocumentType.privacyPolicy),
+    ),
+    _SettingsItem(
+      appText.termsOfServices,
+      Icons.description_outlined,
+      onTap: () => _openLegal(context, LegalDocumentType.termsOfService),
+    ),
+    _SettingsItem(
+      appText.adminSupport,
+      Icons.support_agent_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
+    _SettingsItem(
+      appText.feedback,
+      Icons.feedback_outlined,
+      onTap: () => _comingSoon(context, appText),
+    ),
     _SettingsItem(
       appText.appLanguage,
       Icons.translate_outlined,
       onTap: () => Navigator.of(context).pushNamed(RouteNames.appLanguage),
     ),
-    _SettingsItem(appText.changePassword, Icons.sync_alt_rounded),
+    _SettingsItem(
+      appText.changePassword,
+      Icons.sync_alt_rounded,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen()),
+      ),
+    ),
   ];
 
   @override
@@ -28,7 +75,7 @@ class SettingsScreen extends StatelessWidget {
     final appText = AppText.of(context);
     final items = _items(context, appText);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -75,7 +122,7 @@ class _SettingsHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -110,7 +157,7 @@ class _SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       borderRadius: BorderRadius.circular(20.r),
       child: InkWell(
         onTap: item.onTap ?? () {},
@@ -119,7 +166,7 @@ class _SettingsRow extends StatelessWidget {
           height: 54.h,
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDDE8C1)),
+            border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
             borderRadius: BorderRadius.circular(20.r),
           ),
           child: Row(
@@ -153,10 +200,10 @@ class _DeleteAccountButton extends StatelessWidget {
     return SizedBox(
       height: 52.h,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () => showDeleteAccountFlow(context),
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: AppColor.forgotPassword,
+          backgroundColor: context.surfaceColor(Colors.white),
+          foregroundColor: context.inkColor(AppColor.forgotPassword),
           side: const BorderSide(color: AppColor.forgotPassword),
           padding: EdgeInsets.symmetric(horizontal: 18.w),
           shape: RoundedRectangleBorder(

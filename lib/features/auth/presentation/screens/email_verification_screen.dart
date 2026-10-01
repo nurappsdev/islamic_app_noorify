@@ -1,20 +1,48 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/utils/app_text.dart';
 import '../../../../core/utils/app_color.dart';
+import '../../data/datasources/auth_remote_data_source.dart';
+import '../../data/repositories/account_repository_impl.dart';
+import '../../domain/usecases/resend_otp.dart';
+import '../../domain/usecases/verify_email_otp.dart';
+import '../bloc/otp_verification/otp_verification_bloc.dart';
 import '../widgets/auth_button.dart';
+
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({
     super.key,
     this.initiallyShowOtp = false,
+    this.email,
+    this.onRequestOtp,
     this.onOtpVerified,
+    this.startSession = false,
   });
 
   final bool initiallyShowOtp;
-  final VoidCallback? onOtpVerified;
+
+  /// Sign-up: verifying the code signs the user in (stores the access token).
+  final bool startSession;
+
+  /// E-mail the OTP was sent to. Required for the verify call in OTP mode.
+  final String? email;
+
+  /// Called by the "Send OTP" button (email step). Return `null` on success to
+  /// advance to the code step, or an error message to show. When omitted the
+  /// button just switches to the code step without a network call (sign-up).
+  final Future<String?> Function(String email)? onRequestOtp;
+
+  /// Called after the code is verified. Receives the `resetToken` when the
+  /// backend returns one (forgot-password flow); `null` otherwise (sign-up).
+  final void Function(String? resetToken)? onOtpVerified;
 
   @override
   State<EmailVerificationScreen> createState() =>
@@ -22,7 +50,7 @@ class EmailVerificationScreen extends StatefulWidget {
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogo.png';
   static const _otpLength = 6;
 
   final TextEditingController _emailController = TextEditingController();
@@ -38,8 +66,33 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
   late bool _isOtpMode = widget.initiallyShowOtp;
 
+  static const int _resendCooldownSeconds = 60;
+
+  late final OtpVerificationBloc _otpBloc = _createOtpBloc();
+
+  Timer? _resendTimer;
+  int _resendSecondsLeft = 0;
+
+  OtpVerificationBloc _createOtpBloc() {
+    final repository = AccountRepositoryImpl(AuthRemoteDataSourceImpl());
+    return OtpVerificationBloc(
+      VerifyEmailOtp(repository),
+      ResendOtp(repository),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.email != null && widget.email!.isNotEmpty) {
+      _emailController.text = widget.email!;
+    }
+  }
+
   @override
   void dispose() {
+    _resendTimer?.cancel();
+    _otpBloc.close();
     _emailController.dispose();
     for (final controller in _otpControllers) {
       controller.dispose();
@@ -48,6 +101,117 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       focusNode.dispose();
     }
     super.dispose();
+  }
+
+  String get _enteredOtp => _otpControllers.map((c) => c.text).join();
+
+  void _submitOtpWhenComplete() {
+    if (_enteredOtp.length == _otpLength && !_otpBloc.state.isLoading) {
+      _submitOtp();
+    }
+  }
+
+  void _handleOtpChanged(int index, String value) {
+    if (value.length > 1) {
+      // A full code is commonly pasted into a single field. Distribute it
+      // across the fields before checking whether it is ready to submit.
+      final isFullCode = value.length >= _otpLength;
+      final startIndex = isFullCode ? 0 : index;
+      final digits = isFullCode ? value.substring(0, _otpLength) : value;
+      final availableSlots = _otpLength - startIndex;
+
+      for (
+        var offset = 0;
+        offset < digits.length && offset < availableSlots;
+        offset++
+      ) {
+        _otpControllers[startIndex + offset].value = TextEditingValue(
+          text: digits[offset],
+          selection: const TextSelection.collapsed(offset: 1),
+        );
+      }
+
+      setState(() {});
+      _submitOtpWhenComplete();
+      return;
+    }
+
+    setState(() {});
+    if (value.isNotEmpty && index < _otpLength - 1) {
+      _otpFocusNodes[index + 1].requestFocus();
+    } else if (value.isEmpty && index > 0) {
+      _otpFocusNodes[index - 1].requestFocus();
+    }
+    _submitOtpWhenComplete();
+  }
+
+  void _submitOtp() {
+    FocusScope.of(context).unfocus();
+    _otpBloc.add(
+      OtpSubmitted(
+        email: _emailController.text.trim(),
+        otp: _enteredOtp,
+        startSession: widget.startSession,
+      ),
+    );
+  }
+
+  void _resendOtp() {
+    if (_resendSecondsLeft > 0) return;
+    FocusScope.of(context).unfocus();
+    _otpBloc.add(OtpResendRequested(_emailController.text.trim()));
+  }
+
+  void _startResendCooldown() {
+    _resendTimer?.cancel();
+    setState(() => _resendSecondsLeft = _resendCooldownSeconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _resendSecondsLeft <= 0) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _resendSecondsLeft--);
+    });
+  }
+
+  void _showSnack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _onOtpState(BuildContext context, OtpVerificationState state) {
+    switch (state.resendStatus) {
+      case OtpResendStatus.sent:
+        // The app's own text, not the server's English one, so it follows the
+        // selected language.
+        _showSnack(context, AppText.readOf(context).verificationCodeSent);
+        _startResendCooldown();
+      case OtpResendStatus.failure:
+        _showSnack(
+          context,
+          state.resendErrorMessage ??
+              AppText.readOf(context).verificationResendFailed,
+        );
+      case OtpResendStatus.idle:
+      case OtpResendStatus.sending:
+        break;
+    }
+
+    switch (state.status) {
+      case OtpVerificationStatus.success:
+        // Consumer navigates away here; don't touch the (soon-disposed) bloc.
+        widget.onOtpVerified?.call(state.resetToken);
+      case OtpVerificationStatus.failure:
+        _showSnack(
+          context,
+          state.errorMessage ?? AppText.readOf(context).verificationFailed,
+        );
+        _otpBloc.add(const OtpVerificationReset());
+      case OtpVerificationStatus.initial:
+      case OtpVerificationStatus.loading:
+        break;
+    }
   }
 
   InputDecoration _fieldDecoration({
@@ -60,15 +224,19 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       hintStyle: TextStyle(color: AppColor.authHint, fontSize: 11.sp),
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 16.sp),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
@@ -77,10 +245,71 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     );
   }
 
-  void _showOtpInput() {
-    setState(() {
-      _isOtpMode = true;
-    });
+  Widget _buildResendControl() {
+    return BlocBuilder<OtpVerificationBloc, OtpVerificationState>(
+      buildWhen: (previous, current) =>
+          previous.resendStatus != current.resendStatus,
+      builder: (context, state) {
+        if (state.isResending) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 6.h),
+            child: SizedBox(
+              width: 16.w,
+              height: 16.w,
+              child: const CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
+        final onCooldown = _resendSecondsLeft > 0;
+        return TextButton(
+          onPressed: onCooldown ? null : _resendOtp,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.symmetric(horizontal: 4.w),
+            minimumSize: Size(0, 32.h),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            foregroundColor: AppColor.primary,
+          ),
+          child: Text(
+            onCooldown
+                ? AppText.of(context).resendCodeInSeconds.replaceAll(
+                    '{s}',
+                    context.localizedDigits('$_resendSecondsLeft'),
+                  )
+                : AppText.of(context).didntGetCodeResend,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: context.inkColor(
+                onCooldown ? AppColor.authLogo : AppColor.primary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  bool _sendingOtp = false;
+
+  Future<void> _sendOtp() async {
+    final onRequestOtp = widget.onRequestOtp;
+    if (onRequestOtp == null) {
+      setState(() => _isOtpMode = true);
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    FocusScope.of(context).unfocus();
+    setState(() => _sendingOtp = true);
+    final error = await onRequestOtp(email);
+    if (!mounted) return;
+    setState(() => _sendingOtp = false);
+
+    if (error == null) {
+      setState(() => _isOtpMode = true);
+    } else if (error.isNotEmpty) {
+      _showSnack(context, error);
+    }
   }
 
   Widget _buildOtpFields() {
@@ -99,31 +328,33 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ? TextInputAction.done
                 : TextInputAction.next,
             textAlign: TextAlign.center,
-            maxLength: 1,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
             ],
             style: TextStyle(
-              color: AppColor.otpDigit,
+              color: context.inkColor(AppColor.otpDigit),
               fontSize: 15.sp,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: hasDigit ? AppColor.otpFieldFill : Colors.white,
+              fillColor: context.surfaceColor(
+                hasDigit ? AppColor.otpFieldFill : Colors.white,
+              ),
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5.r),
-                borderSide: const BorderSide(color: AppColor.authFieldBorder),
+                borderSide: BorderSide(
+                  color: context.lineColor(AppColor.authFieldBorder),
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(5.r),
                 borderSide: BorderSide(
-                  color: hasDigit
-                      ? AppColor.otpFieldFill
-                      : AppColor.authFieldBorder,
+                  color: context.lineColor(
+                    hasDigit ? AppColor.otpFieldFill : AppColor.authFieldBorder,
+                  ),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
@@ -134,14 +365,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ),
               ),
             ),
-            onChanged: (value) {
-              setState(() {});
-              if (value.isNotEmpty && index < _otpLength - 1) {
-                _otpFocusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                _otpFocusNodes[index - 1].requestFocus();
-              }
-            },
+            onChanged: (value) => _handleOtpChanged(index, value),
           ),
         );
       }),
@@ -152,8 +376,21 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
+    return BlocProvider<OtpVerificationBloc>.value(
+      value: _otpBloc,
+      child: BlocListener<OtpVerificationBloc, OtpVerificationState>(
+        listenWhen: (previous, current) =>
+            previous.status != current.status ||
+            previous.resendStatus != current.resendStatus,
+        listener: _onOtpState,
+        child: _buildScaffold(appText),
+      ),
+    );
+  }
+
+  Widget _buildScaffold(AppText appText) {
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
@@ -174,8 +411,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFFAD7),
-                          foregroundColor: Colors.black,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFFFFAD7),
+                          ),
+                          foregroundColor: context.inkColor(Colors.black),
                           fixedSize: Size(30.r, 30.r),
                         ),
                         onPressed: () => Navigator.of(context).maybePop(),
@@ -187,7 +426,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           ? appText.otpVerification
                           : appText.emailVerification,
                       style: TextStyle(
-                        color: Colors.black,
+                        color: context.inkColor(Colors.black),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w400,
                       ),
@@ -207,9 +446,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Text(
-                          'Noorify',
+                          AppText.of(context).tuhfatulMuslim,
                           style: TextStyle(
-                            color: AppColor.authLogo,
+                            color: context.inkColor(AppColor.authLogo),
                             fontSize: 28.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -218,30 +457,25 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  appText.noorify,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14.sp,
-                    height: 1.2,
-                    fontFamily: 'Times New Roman',
-                  ),
-                ),
+                // The logo already carries the app name.
+                // SizedBox(height: 8.h),
+                // Text(
+                // appText.tuhfatulMuslim,
+                // textAlign: TextAlign.center,
+                // style: TextStyle(
+                // color: context.inkColor(Colors.black),
+                // fontSize: 14.sp,
+                // height: 1.2,
+                // fontFamily: 'Times New Roman',
+                // ),
+                // ),
                 SizedBox(height: _isOtpMode ? 38.h : 32.h),
                 if (_isOtpMode) ...[
                   _buildOtpFields(),
-                  SizedBox(height: 10.h),
+                  SizedBox(height: 6.h),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Text(
-                      appText.resendIn,
-                      style: TextStyle(
-                        color: AppColor.authLogo,
-                        fontSize: 12.sp,
-                      ),
-                    ),
+                    child: _buildResendControl(),
                   ),
                 ] else
                   SizedBox(
@@ -258,12 +492,21 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
                   ),
                 SizedBox(height: _isOtpMode ? 110.h : 94.h),
-                AuthButton(
-                  label: _isOtpMode ? appText.verify : appText.sendOtp,
-                  height: 50.h,
-                  onPressed: _isOtpMode
-                      ? widget.onOtpVerified ?? () {}
-                      : _showOtpInput,
+                BlocBuilder<OtpVerificationBloc, OtpVerificationState>(
+                  builder: (context, state) {
+                    return AuthButton(
+                      label: _isOtpMode ? appText.verify : appText.sendOtp,
+                      height: 50.h,
+                      isLoading: _isOtpMode ? state.isLoading : _sendingOtp,
+                      onPressed: () {
+                        if (_isOtpMode) {
+                          _submitOtp();
+                        } else {
+                          _sendOtp();
+                        }
+                      },
+                    );
+                  },
                 ),
                 SizedBox(height: 120.h),
               ],

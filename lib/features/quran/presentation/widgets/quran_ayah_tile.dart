@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_sheets.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/ayah_audio/ayah_audio_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_translation/quran_translation_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_sheets.dart';
 
 /// A single ayah in the plain mushaf style: centered Arabic text with no
 /// card/border, a row of small action icons (tafsir, play, bookmark)
@@ -35,6 +38,9 @@ class QuranAyahTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final arabicFont = context.select<QuranTranslationBloc, ArabicFont>(
+      (bloc) => arabicFontById(bloc.state.arabicFontFamily),
+    );
     return BlocProvider(
       create: (_) => AyahBookmarkBloc(
         surahNo: surahNo,
@@ -51,10 +57,12 @@ class QuranAyahTile extends StatelessWidget {
               arabic,
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize: 21.sp,
-                height: 1.9,
-                color: Colors.black87,
+              style: arabicFont.apply(
+                TextStyle(
+                  fontSize: 21.sp,
+                  height: 1.9,
+                  color: context.inkColor(Colors.black87),
+                ),
               ),
             ),
           ),
@@ -151,15 +159,28 @@ class _AyahDivider extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 6.h),
       child: Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(
+              color: context.lineColor(Colors.grey.shade300),
+              height: 1,
+            ),
+          ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Text(
               '•••',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 12.sp),
+              style: TextStyle(
+                color: context.inkColor(Colors.grey.shade400),
+                fontSize: 12.sp,
+              ),
             ),
           ),
-          Expanded(child: Divider(color: Colors.grey.shade300, height: 1)),
+          Expanded(
+            child: Divider(
+              color: context.lineColor(Colors.grey.shade300),
+              height: 1,
+            ),
+          ),
         ],
       ),
     );

@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/quran/domain/translation_edition.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/translation_edition.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 abstract class QuranTranslationEvent {
   const QuranTranslationEvent();
@@ -34,6 +34,13 @@ class SetArabicFontScale extends QuranTranslationEvent {
   const SetArabicFontScale(this.value);
 
   final double value;
+}
+
+/// Updates the Arabic typeface, by [ArabicFont.id] (persisted).
+class SetArabicFontFamily extends QuranTranslationEvent {
+  const SetArabicFontFamily(this.fontId);
+
+  final String fontId;
 }
 
 /// Updates the translation-text zoom (persisted).
