@@ -42,7 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _profile = ProfileService.instance.cachedProfile;
     unawaited(_loadProfile());
-    unawaited(_loadFamilyMembers());
+    // Family Members: temporarily disabled (not needed for now). Kept so
+    // the feature can be restored later; see the matching UI block below.
+    // unawaited(_loadFamilyMembers());
   }
 
   Future<void> _loadProfile() async {
@@ -62,7 +64,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
+    // Only used by the Family Members section, disabled below.
+    // final appText = AppText.of(context);
     final profile = _profile;
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -76,6 +79,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(height: 14.h),
                 _ProfileHeroCard(profile: profile),
                 SizedBox(height: 24.h),
+                // Family Members: temporarily disabled (not needed for now).
+                // Kept so the feature can be restored later; see also the
+                // disabled _loadFamilyMembers() call above.
+                /*
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -118,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _FamilyMemberCard(member: member),
                   SizedBox(height: 10.h),
                 ],
+                */
               ],
             ),
             // Positioned(

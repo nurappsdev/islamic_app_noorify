@@ -69,19 +69,19 @@ class HomeFeatureGrid extends StatelessWidget {
               _FeatureTile(feature: features[index]),
         ),
         SizedBox(height: 12.h),
-        _LinkTile(
-          title: appText.zakatCalculator,
-          icon: Icons.price_check,
-          iconColor: context.inkColor(Color(0xFF0DA334)),
-          onTap: () => _openComingSoon(context, appText.zakatCalculator),
-        ),
-        SizedBox(height: 6.h),
-        _LinkTile(
-          title: appText.ageCalculate,
-          icon: Icons.calculate,
-          iconColor: const Color(0xFFAAB781),
-          onTap: () => _openComingSoon(context, appText.ageCalculate),
-        ),
+        // _LinkTile(
+        //   title: appText.zakatCalculator,
+        //   icon: Icons.price_check,
+        //   iconColor: context.inkColor(Color(0xFF0DA334)),
+        //   onTap: () => _openComingSoon(context, appText.zakatCalculator),
+        // ),
+        // SizedBox(height: 6.h),
+        // _LinkTile(
+        //   title: appText.ageCalculate,
+        //   icon: Icons.calculate,
+        //   iconColor: const Color(0xFFAAB781),
+        //   onTap: () => _openComingSoon(context, appText.ageCalculate),
+        // ),
       ],
     );
   }

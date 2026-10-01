@@ -862,6 +862,14 @@ class AppText {
     required this.leaderboardTitle,
     required this.yourRank,
     required this.ptsToRank,
+    required this.deleteAccountConfirmPasswordTitle,
+    required this.deleteAccountConfirmPasswordMessage,
+    required this.deleteAccountPasswordHint,
+    required this.deleteAccountEmptyPassword,
+    required this.deleteAccountIncorrectPassword,
+    required this.deleteAccountFinalTitle,
+    required this.deleteAccountFinalMessage,
+    required this.deleteAccountFailureMessage,
   });
 
   final String tuhfatulMuslim;
@@ -1751,6 +1759,16 @@ class AppText {
   final String leaderboardTitle;
   final String yourRank;
   final String ptsToRank;
+
+  // Delete account flow
+  final String deleteAccountConfirmPasswordTitle;
+  final String deleteAccountConfirmPasswordMessage;
+  final String deleteAccountPasswordHint;
+  final String deleteAccountEmptyPassword;
+  final String deleteAccountIncorrectPassword;
+  final String deleteAccountFinalTitle;
+  final String deleteAccountFinalMessage;
+  final String deleteAccountFailureMessage;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -4948,6 +4966,46 @@ class AppText {
       ),
       yourRank: _read(map, 'yourRank', fallback?.yourRank ?? ''),
       ptsToRank: _read(map, 'ptsToRank', fallback?.ptsToRank ?? ''),
+      deleteAccountConfirmPasswordTitle: _read(
+        map,
+        'deleteAccountConfirmPasswordTitle',
+        fallback?.deleteAccountConfirmPasswordTitle ?? '',
+      ),
+      deleteAccountConfirmPasswordMessage: _read(
+        map,
+        'deleteAccountConfirmPasswordMessage',
+        fallback?.deleteAccountConfirmPasswordMessage ?? '',
+      ),
+      deleteAccountPasswordHint: _read(
+        map,
+        'deleteAccountPasswordHint',
+        fallback?.deleteAccountPasswordHint ?? '',
+      ),
+      deleteAccountEmptyPassword: _read(
+        map,
+        'deleteAccountEmptyPassword',
+        fallback?.deleteAccountEmptyPassword ?? '',
+      ),
+      deleteAccountIncorrectPassword: _read(
+        map,
+        'deleteAccountIncorrectPassword',
+        fallback?.deleteAccountIncorrectPassword ?? '',
+      ),
+      deleteAccountFinalTitle: _read(
+        map,
+        'deleteAccountFinalTitle',
+        fallback?.deleteAccountFinalTitle ?? '',
+      ),
+      deleteAccountFinalMessage: _read(
+        map,
+        'deleteAccountFinalMessage',
+        fallback?.deleteAccountFinalMessage ?? '',
+      ),
+      deleteAccountFailureMessage: _read(
+        map,
+        'deleteAccountFailureMessage',
+        fallback?.deleteAccountFailureMessage ?? '',
+      ),
     );
   }
 

@@ -1,10 +1,9 @@
 class ApiConstants {
   // local
-  static const String baseUrl =
-      "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
+  // static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
   //live
-  // static const String baseUrl = https://siamnahidul7000.ilmifygroup.com/api/v1";
+   static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1/";
   static const String imageBaseUrl = "";
 
   // static const String socketBaseUrl = "https://api.drop-dr.com";
@@ -33,6 +32,10 @@ class ApiConstants {
 
   static const String refreshTokenEndPoint = "/auth/refresh-token";
   static const String accountDelete = "/users/delete";
+
+  /// `DELETE`: permanently deletes the signed-in user's account, once the
+  /// password has been verified via [deleteAccountEndPoint] below.
+  static const String deleteMeEndPoint = "/user/me";
   static const String getProfileEndPoint = "/user/me";
   static const String updateProfileEndPoint = "/user/me";
   static const String s3UploadEndPoint = "/s3/upload";
@@ -172,6 +175,10 @@ class ApiConstants {
       "/employee/update-employee-profile";
 
   static const String changePasswordEndPoint = "/settings/change-password";
+
+  /// `POST`: verifies the signed-in user's current password before account
+  /// deletion (body: `{ "password": "..." }`). The deletion itself is a
+  /// separate call to [deleteMeEndPoint].
   static const String deleteAccountEndPoint = "/auth/delete-account";
   static const String notification = "/notifications";
   static const String notificationBadgeEndPoint = "/notifications/badge";

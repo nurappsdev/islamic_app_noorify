@@ -35,6 +35,13 @@ abstract interface class AuthRemoteDataSource {
 
   /// Signs in; returns the auth token (+ user when the API includes it).
   Future<LoginResponseModel> login(LoginRequestModel body);
+
+  /// Verifies the signed-in user's current [password] ahead of account
+  /// deletion. `POST /auth/delete-account` with the session's bearer token.
+  Future<String> verifyDeleteAccountPassword(
+    String password, {
+    required String authToken,
+  });
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -105,6 +112,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           response.headers.value('authorization') ??
           response.headers.value('x-access-token'),
     );
+  }
+
+  @override
+  Future<String> verifyDeleteAccountPassword(
+    String password, {
+    required String authToken,
+  }) async {
+    final json = _envelope(
+      await _send(
+        ApiConstants.deleteAccountEndPoint,
+        {'password': password},
+        headers: {'Authorization': 'Bearer $authToken'},
+      ),
+    );
+    return json['message']?.toString() ?? 'Password verified.';
   }
 
   // ---------------------------------------------------------------------------

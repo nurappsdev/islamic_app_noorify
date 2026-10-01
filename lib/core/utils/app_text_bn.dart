@@ -649,6 +649,17 @@ const Map<String, String> appTextBn = <String, String>{
   'appLanguage': 'অ্যাপের ভাষা',
   'changePassword': 'পাসওয়ার্ড পরিবর্তন করুন',
   'deleteAccount': 'অ্যাকাউন্ট মুছুন',
+  'deleteAccountConfirmPasswordTitle': 'আপনার পাসওয়ার্ড নিশ্চিত করুন',
+  'deleteAccountConfirmPasswordMessage':
+      'নিরাপত্তার জন্য, অ্যাকাউন্ট ডিলিট করতে আপনার বর্তমান পাসওয়ার্ড দিন।',
+  'deleteAccountPasswordHint': 'আপনার পাসওয়ার্ড দিন',
+  'deleteAccountEmptyPassword': 'অনুগ্রহ করে আপনার পাসওয়ার্ড দিন।',
+  'deleteAccountIncorrectPassword': 'পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।',
+  'deleteAccountFinalTitle': 'অ্যাকাউন্ট ডিলিট করবেন?',
+  'deleteAccountFinalMessage':
+      'আপনি কি নিশ্চিতভাবে আপনার অ্যাকাউন্ট স্থায়ীভাবে ডিলিট করতে চান? এই কাজটি ফেরানো যাবে না।',
+  'deleteAccountFailureMessage':
+      'এই মুহূর্তে আপনার অ্যাকাউন্ট ডিলিট করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
 
   // App language feature
   'languageTitle': 'ভাষা',

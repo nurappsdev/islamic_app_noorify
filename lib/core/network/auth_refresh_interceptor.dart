@@ -51,7 +51,9 @@ class AuthRefreshInterceptor extends Interceptor {
       sendTimeout: const Duration(seconds: 20),
       contentType: Headers.jsonContentType,
       responseType: ResponseType.json,
-      headers: {'Accept': 'application/json'},
+      headers: {'Accept': 'application/json',
+        'X-API-Key': 'c954a39d0ce7ff714e0e87f15a21c5a1cfde41787c2b4a3e6ec0417a2e4bfb9a',
+      },
       validateStatus: (status) => status != null && status < 500,
     ),
   );

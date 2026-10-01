@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/delete_account_dialogs.dart';
 import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
 import 'package:tuhfatul_muslim/features/legal/presentation/screens/legal_document_screen.dart';
 
@@ -199,7 +200,7 @@ class _DeleteAccountButton extends StatelessWidget {
     return SizedBox(
       height: 52.h,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () => showDeleteAccountFlow(context),
         style: OutlinedButton.styleFrom(
           backgroundColor: context.surfaceColor(Colors.white),
           foregroundColor: context.inkColor(AppColor.forgotPassword),
