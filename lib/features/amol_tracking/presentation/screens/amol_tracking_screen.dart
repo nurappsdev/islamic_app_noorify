@@ -22,12 +22,14 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_localized_format.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
@@ -44,6 +46,7 @@ const _pillarKeyByTitle = {
   'Quran': 'quran',
   'Hadith': 'hadith',
   'Quiz': 'quiz',
+  'Zikr': 'zikr',
   'Nafl & more': 'nafl_and_more',
 };
 
@@ -56,6 +59,7 @@ const _pillarTitleKeyByKey = {
   'quran': 'Quran',
   'hadith': 'Hadith',
   'quiz': 'Quiz',
+  'zikr': 'Zikr',
   'nafl_and_more': 'Nafl & more',
 };
 
@@ -233,11 +237,11 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   @override
   void initState() {
     super.initState();
-    _logFailureSub = _bloc.logFailures.listen((message) {
+    _logFailureSub = _bloc.logFailures.listen((_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppText.of(context).failureUnknown)),
+      );
     });
     unawaited(_loadPrayerTimes());
   }
@@ -268,7 +272,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     // At the top the target is normally on screen already; only an item deep in
     // a long section may still need bringing into view.
     final target = _targetContext();
-    if (target != null && !_isFullyVisible(target)) await _centerOn(target);
+    if (target != null && target.mounted && !_isFullyVisible(target)) {
+      await _centerOn(target);
+    }
     if (!mounted) return;
     await Future<void>.delayed(_settlePause);
     if (!mounted || _focusedPillarKey == null) return;
@@ -455,9 +461,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     // log/uncheck API call - and the day is reloaded on return so reading done
     // meanwhile shows up checked.
     if (pillarKey == 'quran' || pillarKey == 'hadith') {
-      await Navigator.of(context).pushNamed(
-        pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith,
-      );
+      await Navigator.of(
+        context,
+      ).pushNamed(pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith);
       if (mounted) _reload();
       return;
     }
@@ -583,13 +589,24 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       child: BlocBuilder<AmolDailyBloc, AmolDailyState>(
         builder: (context, state) {
           final dashboard = state.dashboard;
-          final pointLabel = dashboard?.summary.pointsText ?? widget.pointLabel;
+          final pointLabel = dashboard == null
+              ? widget.pointLabel == 'Point : 30/40'
+                    ? formatAmolPoints(30, 40, appText, languageOf(context))
+                    : context.localizedDigits(widget.pointLabel)
+              : formatAmolPoints(
+                  dashboard.summary.totalEarnedPoints,
+                  dashboard.summary.totalPossiblePoints,
+                  appText,
+                  languageOf(context),
+                );
           final progress = dashboard == null
               ? widget.progress
               : (dashboard.completionPercentage / 100).clamp(0, 1).toDouble();
-          final progressLabel = dashboard == null
-              ? widget.progressLabel
-              : _formatPercentage(dashboard.completionPercentage);
+          final progressLabel = context.localizedDigits(
+            dashboard == null
+                ? widget.progressLabel
+                : _formatPercentage(dashboard.completionPercentage),
+          );
 
           if (dashboard != null) _beginReveal();
           // A section the server didn't send would leave everything dimmed with
@@ -672,10 +689,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                                 ),
                               )
                           else if (state.status == AmolDailyStatus.failure)
-                            _LoadFailedNotice(
-                              message: state.errorMessage,
-                              onRetry: _reload,
-                            )
+                            _LoadFailedNotice(onRetry: _reload)
                           else
                             const _PillarListShimmer(),
                         ],
@@ -1112,7 +1126,7 @@ class _PillarRow extends StatelessWidget {
           _AccordionHeader(
             title: appText.categoryLabel(titleKey),
             progress: (pillar.percentage / 100).clamp(0.0, 1.0).toDouble(),
-            fractionLabel: pillar.formattedSubtext,
+            fractionLabel: context.localizedDigits(pillar.formattedSubtext),
             expanded: expanded,
             onTap: onToggleExpanded,
           ),
@@ -1350,9 +1364,8 @@ class _PillarListShimmer extends StatelessWidget {
 }
 
 class _LoadFailedNotice extends StatelessWidget {
-  const _LoadFailedNotice({required this.message, required this.onRetry});
+  const _LoadFailedNotice({required this.onRetry});
 
-  final String? message;
   final VoidCallback onRetry;
 
   @override
@@ -1363,7 +1376,7 @@ class _LoadFailedNotice extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            message ?? AppText.of(context).failureUnknown,
+            appText.failureUnknown,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,

@@ -89,6 +89,7 @@ Future<AmolDailyBloc> _pump(
   WidgetTester tester, {
   AmalSection? section,
   String? itemKey,
+  AppLanguage selectedLanguage = AppLanguage.english,
 }) async {
   tester.view.physicalSize = const Size(375, 812);
   tester.view.devicePixelRatio = 1;
@@ -103,7 +104,7 @@ Future<AmolDailyBloc> _pump(
   );
   addTearDown(bloc.close);
   final language = LanguageBloc(
-    initialLanguage: AppLanguage.english,
+    initialLanguage: selectedLanguage,
     persist: (_) async {},
   );
   addTearDown(language.close);
@@ -151,6 +152,13 @@ List<String> _order(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('Bangla checklist localizes points and progress', (tester) async {
+    await _pump(tester, selectedLanguage: AppLanguage.bangla);
+    expect(find.text('পয়েন্ট : ০/১০'), findsOneWidget);
+    expect(find.text('০ %'), findsOneWidget);
+    expect(find.text('০/২'), findsNWidgets(7));
+  });
+
   testWidgets('opened without a target, the order is untouched', (
     tester,
   ) async {

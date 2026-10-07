@@ -15,6 +15,8 @@ import '../quran_route_args.dart';
 import 'quran_design.dart';
 import 'quran_modal.dart';
 
+import '../quran_text.dart';
+
 const _sectionTitle = TextStyle(fontSize: 18, fontWeight: FontWeight.w700);
 
 class QuranFilterSheet extends StatefulWidget {
@@ -107,10 +109,12 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final qText = QuranText.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error) return QuranRetry(onRetry: _load);
     if (_surahs.isEmpty || _paras.isEmpty) {
-      return Center(child: Text(AppText.of(context).quranNoFilters));
+      return Center(child: Text(appText.quranNoFilters));
     }
     final background = context.surfaceColor(Colors.white);
     final matches = _surahs
@@ -125,7 +129,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
       top: false,
       child: Column(
         children: [
-          QuranSheetHeading(AppText.of(context).quranFilterTitle),
+          QuranSheetHeading(appText.quranFilterTitle),
           Expanded(
             child: CustomScrollView(
               slivers: [
@@ -135,21 +139,36 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Surah', style: _sectionTitle),
+                        Text(QuranText.of(context).surah, style: _sectionTitle),
                         const SizedBox(height: 4),
                         Wrap(
                           spacing: 5,
                           children: [
                             for (final item in [
-                              ('', 'All Types'),
-                              ('mec', 'Makki'),
-                              ('med', 'Madani'),
+                              (
+                                '',
+                                QuranText.of(context).isBangla
+                                    ? 'সকল প্রকার'
+                                    : 'All Types',
+                              ),
+                              (
+                                'mec',
+                                QuranText.of(context).isBangla
+                                    ? 'মাক্কী'
+                                    : 'Makki',
+                              ),
+                              (
+                                'med',
+                                QuranText.of(context).isBangla
+                                    ? 'মাদানী'
+                                    : 'Madani',
+                              ),
                             ])
                               ChoiceChip(
                                 label: Text(
                                   item.$1.isEmpty
                                       ? item.$2
-                                      : '${item.$2} (${_surahs.where((s) => s.revelationPlace.toLowerCase().startsWith(item.$1)).length})',
+                                      : '${item.$2} (${context.localizedDigits('${_surahs.where((s) => s.revelationPlace.toLowerCase().startsWith(item.$1)).length}')})',
                                 ),
                                 selected: _type == item.$1,
                                 selectedColor: quranBorder,
@@ -187,9 +206,9 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                             height: 40,
                             child: Row(
                               children: [
-                                const Expanded(
+                                Expanded(
                                   child: Text(
-                                    'Juz / Para Carousel',
+                                    appText.quranJuzParaCarousel,
                                     style: _sectionTitle,
                                   ),
                                 ),
@@ -197,7 +216,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                                   TextButton(
                                     onPressed: () =>
                                         setState(() => _para = null),
-                                    child: const Text('All'),
+                                    child: Text(qText.isBangla ? 'সব' : 'All'),
                                   ),
                               ],
                             ),
@@ -224,15 +243,17 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                       padding: const EdgeInsets.fromLTRB(20, 0, 12, 0),
                       child: Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Search and Select Surah',
+                              appText.quranSearchAndSelectSurah,
                               style: _sectionTitle,
                             ),
                           ),
                           IconButton.filledTonal(
                             key: const ValueKey('quran-filter-search'),
-                            tooltip: 'Search Surah',
+                            tooltip: qText.isBangla
+                                ? 'সূরা খুঁজুন'
+                                : 'Search Surah',
                             onPressed: matches.isEmpty
                                 ? null
                                 : () => _openSearch(matches),
@@ -248,9 +269,9 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                   ),
                 ),
                 if (matches.isEmpty)
-                  const SliverFillRemaining(
+                  SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(child: Text('No Surahs found')),
+                    child: Center(child: Text(appText.quranNoSurahsFound)),
                   )
                 else
                   SliverPadding(
@@ -279,12 +300,18 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
               children: [
                 Row(
                   children: [
-                    const Text('Select Ayat', style: _sectionTitle),
+                    Text(appText.quranSelectAyat, style: _sectionTitle),
                     const SizedBox(width: 12),
                     if (_surah != null)
                       Expanded(
                         child: Text(
-                          'Selected: ${_surah!.number}. ${_surah!.name}',
+                          appText.quranSelectedSurah.fill({
+                            'n': context.localizedDigits('${_surah!.number}'),
+                            'name': qText.surahName(
+                              _surah!.number,
+                              _surah!.name,
+                            ),
+                          }),
                           textAlign: TextAlign.end,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -315,7 +342,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                           side: const BorderSide(color: Colors.red),
                           minimumSize: const Size(0, 50),
                         ),
-                        child: const Text('Cancel'),
+                        child: Text(qText.cancel),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -338,7 +365,7 @@ class _QuranFilterSheetState extends State<QuranFilterSheet>
                           backgroundColor: quranOlive,
                           minimumSize: const Size(0, 50),
                         ),
-                        child: const Text('Apply'),
+                        child: Text(qText.isBangla ? 'প্রয়োগ করুন' : 'Apply'),
                       ),
                     ),
                   ],
@@ -461,7 +488,7 @@ class _SurahRow extends StatelessWidget {
                 radius: 16,
                 backgroundColor: selected ? quranOlive : quranPale,
                 child: Text(
-                  '${surah.number}',
+                  context.localizedDigits('${surah.number}'),
                   style: TextStyle(
                     color: selected ? Colors.white : quranOlive,
                     fontSize: 12,
@@ -475,7 +502,7 @@ class _SurahRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      surah.name,
+                      QuranText.of(context).surahName(surah.number, surah.name),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -484,7 +511,12 @@ class _SurahRow extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${surah.translation} · ${surah.totalAyah} ayahs',
+                      context.localizedDigits(
+                        AppText.of(context).quranSurahTranslationAyahs.fill({
+                          'translation': surah.translation,
+                          'n': surah.totalAyah,
+                        }),
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 12, color: quranInk),
@@ -538,12 +570,14 @@ class _SurahSearchDialogState extends State<_SurahSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final qText = QuranText.of(context);
     final query = _query.trim().toLowerCase();
     final matches = widget.surahs
         .where(
-          (s) => '${s.number} ${s.name} ${s.translation} ${s.nameArabic}'
-              .toLowerCase()
-              .contains(query),
+          (s) =>
+              '${s.number} ${s.name} ${s.translation} ${s.nameArabic} ${qText.surahName(s.number, s.name)}'
+                  .toLowerCase()
+                  .contains(query),
         )
         .toList();
     return Dialog(
@@ -562,11 +596,16 @@ class _SurahSearchDialogState extends State<_SurahSearchDialog> {
               padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
               child: Row(
                 children: [
-                  const Expanded(
-                    child: Text('Search Surah', style: _sectionTitle),
+                  Expanded(
+                    child: Text(
+                      QuranText.of(context).isBangla
+                          ? 'সূরা খুঁজুন'
+                          : 'Search Surah',
+                      style: _sectionTitle,
+                    ),
                   ),
                   IconButton(
-                    tooltip: 'Close',
+                    tooltip: QuranText.of(context).cancel,
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close_rounded),
                   ),
@@ -581,7 +620,9 @@ class _SurahSearchDialogState extends State<_SurahSearchDialog> {
                 textInputAction: TextInputAction.search,
                 onChanged: (q) => setState(() => _query = q),
                 decoration: InputDecoration(
-                  hintText: 'Name, number or meaning',
+                  hintText: QuranText.of(context).isBangla
+                      ? 'নাম, নম্বর বা অর্থ'
+                      : 'Name, number or meaning',
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _query.isEmpty
                       ? null
@@ -612,7 +653,7 @@ class _SurahSearchDialogState extends State<_SurahSearchDialog> {
             const SizedBox(height: 10),
             Expanded(
               child: matches.isEmpty
-                  ? const Center(child: Text('No Surahs found'))
+                  ? Center(child: Text(QuranText.of(context).noSurahsFound))
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                       keyboardDismissBehavior:
@@ -661,8 +702,15 @@ class _ParaCarouselState extends State<_ParaCarousel> {
   }
 
   /// One Surah by name, two joined, or the first and last of three or more.
-  static String _surahLabel(JuzSummary p) {
-    final names = p.surahs.map((s) => s.name).toList();
+  static String _surahLabel(BuildContext context, JuzSummary p) {
+    final qText = QuranText.of(context);
+    final names = p.surahs
+        .map(
+          (s) => qText.isBangla && s.nameBangla.isNotEmpty
+              ? s.nameBangla
+              : qText.surahName(s.number, s.name),
+        )
+        .toList();
     if (names.length <= 2) return names.join(' & ');
     return '${names.first} – ${names.last}';
   }
@@ -726,7 +774,7 @@ class _ParaCarouselState extends State<_ParaCarousel> {
                   radius: 18,
                   backgroundColor: selected ? quranOlive : quranPale,
                   child: Text(
-                    '${p.number}',
+                    context.localizedDigits('${p.number}'),
                     style: TextStyle(
                       color: selected ? Colors.white : quranOlive,
                       fontSize: 15,
@@ -736,7 +784,7 @@ class _ParaCarouselState extends State<_ParaCarousel> {
                 ),
                 Flexible(
                   child: Text(
-                    _surahLabel(p),
+                    _surahLabel(context, p),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -759,7 +807,9 @@ class _ParaCarouselState extends State<_ParaCarousel> {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      '${p.startSurahNo}:${p.startAyah} – ${p.endSurahNo}:${p.endAyah}',
+                      context.localizedDigits(
+                        '${p.startSurahNo}:${p.startAyah} – ${p.endSurahNo}:${p.endAyah}',
+                      ),
                       style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ),
