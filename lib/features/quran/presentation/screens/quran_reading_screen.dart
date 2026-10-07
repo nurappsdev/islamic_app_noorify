@@ -652,20 +652,6 @@ class _ReaderBodyState extends State<_ReaderBody> {
                             // Narrow phones drop the icon to fit the row.
                             compact: MediaQuery.sizeOf(context).width < 360,
                           ),
-                          IconButton(
-                            tooltip: 'Filter Quran',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 34,
-                              height: 40,
-                            ),
-                            onPressed: _jump,
-                            icon: const Icon(
-                              Icons.tune,
-                              size: 20,
-                              color: quranInk,
-                            ),
-                          ),
                           PopupMenuButton<String>(
                             tooltip: 'Quran actions',
                             padding: EdgeInsets.zero,
