@@ -77,13 +77,14 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   /// Builds the carousel items from `GET /home/dashboard`'s
   /// `topHighlightCards`, selecting the language-specific strings returned by
   /// the API and retaining the app's labels as compatibility fallbacks.
+  /// Every card is shown - the per-card `hasData` flag no longer hides any.
   static List<_AmalTrackerItem> _apiItems(
     BuildContext context,
     List<HighlightCard> cards,
     String loggedInUserName,
   ) => [
     for (final card in cards)
-      if (card.hasData) _mapHighlightCard(context, card, loggedInUserName),
+      _mapHighlightCard(context, card, loggedInUserName),
   ];
 
   static _AmalTrackerItem _mapHighlightCard(
