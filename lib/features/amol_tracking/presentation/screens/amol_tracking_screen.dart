@@ -449,6 +449,19 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       if (mounted) _reload();
       return;
     }
+    // Quran and Hadith can't be ticked by hand either: their check comes from
+    // actually reading in those features. Tapping (checked or not) opens the
+    // feature's main screen directly - no login check, no confirm dialog, no
+    // log/uncheck API call - and the day is reloaded on return so reading done
+    // meanwhile shows up checked.
+    if (pillarKey == 'quran' || pillarKey == 'hadith') {
+      await Navigator.of(context).pushNamed(
+        pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith,
+      );
+      if (mounted) _reload();
+      return;
+    }
+
     // Viewing is public, but logging / unchecking (POST / DELETE) needs the
     // login token.
     if (!await requireLogin(context, feature: _loginFeatureFor(pillarKey))) {
@@ -470,21 +483,6 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         ),
       );
       return;
-    }
-
-    // Quran and Hadith count as read on the user's word, so ask first.
-    if (pillarKey == 'quran' || pillarKey == 'hadith') {
-      final confirmed = await _confirmReadTracking();
-      if (!mounted) return;
-      if (!confirmed) {
-        // No: leave without tracking, back to that feature's home screen.
-        unawaited(
-          Navigator.of(context).pushReplacementNamed(
-            pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith,
-          ),
-        );
-        return;
-      }
     }
 
     final times = _prayerTimes;
@@ -524,27 +522,6 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       builder: (dialogContext) => AlertDialog(
         title: Text(appText.amolUntrackTitle),
         content: Text(appText.amolUntrackMessage.replaceAll('{name}', name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(appText.no),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(appText.yes),
-          ),
-        ],
-      ),
-    );
-    return confirmed == true;
-  }
-
-  Future<bool> _confirmReadTracking() async {
-    final appText = AppText.readOf(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: Text(appText.amolReadConfirmMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
