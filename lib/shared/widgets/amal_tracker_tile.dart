@@ -33,16 +33,16 @@ class AmalTrackerTile extends StatelessWidget {
   static double get ringHoleSize => 60.r;
   static const ringStrokeFactor = .18;
   static double get horizontalPadding => 18.w;
-  static double get verticalPadding => 10.h;
+  static double get verticalPadding => 7.h;
   static double get leadingSize => 67.r;
   static double get leadingGap => 14.w;
   static double get ringGap => 12.w;
-  static double get badgeTopInset => 16.h;
+  static double get badgeTopInset => 14.h;
   static double get badgeHeight => 34.h;
 
   /// Includes the room reserved above the card for the overlapping user-name
   /// badge. The Home carousel and shimmer use this exact height.
-  static double get height => 118.h + badgeTopInset;
+  static double get height => 114.h;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +90,7 @@ class AmalTrackerTile extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(height: 20.h,),
+                            SizedBox(height: 14.h),
                             Expanded(
                               child: Align(
                                 alignment: Alignment.centerLeft,
@@ -100,25 +100,24 @@ class AmalTrackerTile extends StatelessWidget {
                                   overflow: TextOverflow.clip,
                                   style: TextStyle(
                                     color: textColor,
-                                    fontSize: 18.sp,
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
                               ),
                             ),
-                              Expanded(
-                                child: Text(
-                                  subtitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.clip,
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w400,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
-
+                            ),
                           ],
                         ),
                       ),
