@@ -29,20 +29,23 @@ class AmalTrackerTile extends StatelessWidget {
   final String? leadingText;
 
   static double get radius => 24.r;
-  static double get ringSize => 86.r;
-  static double get ringHoleSize => 60.r;
+  static double get ringSize => 67.r;
+  static double get ringHoleSize => 47.r;
   static const ringStrokeFactor = .18;
   static double get horizontalPadding => 18.w;
   static double get verticalPadding => 7.h;
-  static double get leadingSize => 67.r;
+  static double get leadingWidth => 67.w;
+  static double get leadingHeight => 67.h;
   static double get leadingGap => 14.w;
   static double get ringGap => 12.w;
-  static double get badgeTopInset => 14.h;
+  // The name pill lives above the green card body. This keeps it clear of
+  // the progress ring while still letting its bottom edge overlap the border.
+  static double get badgeTopInset => 20.h;
   static double get badgeHeight => 34.h;
 
-  /// Includes the room reserved above the card for the overlapping user-name
-  /// badge. The Home carousel and shimmer use this exact height.
-  static double get height => 114.h;
+  /// The green card body is 114 high; the tile adds reserved space above it
+  /// for the overlapping user-name badge.
+  static double get height => 114.h + badgeTopInset;
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +74,19 @@ class AmalTrackerTile extends StatelessWidget {
                 builder: (context, constraints) {
                   // Keep both text columns usable on compact Android phones
                   // without changing the card's proportion on normal widths.
-                  final compact = constraints.maxWidth < 330.w;
-                  final logoSize = compact ? 56.r : leadingSize;
-                  final progressSize = compact ? 72.r : ringSize;
-                  final progressHoleSize = compact ? 50.r : ringHoleSize;
-                  final logoGap = compact ? 10.w : leadingGap;
-                  final progressGap = compact ? 10.w : ringGap;
+                  final compact = constraints.maxWidth < 330;
+                  final logoWidth = compact ? 56.r : leadingWidth;
+                  final logoHeight = compact ? 56.r : leadingHeight;
+                  final progressSize = compact ? 58.r : ringSize;
+                  final progressHoleSize = compact ? 40.r : ringHoleSize;
+                  final logoGap = compact ? 10.r : leadingGap;
+                  final progressGap = compact ? 10.r : ringGap;
                   return Row(
                     children: [
                       _LeadingTile(
                         leadingText: leadingText,
-                        dimension: logoSize,
+                        width: logoWidth,
+                        height: logoHeight,
                         backgroundColor: progressTrack,
                         foregroundColor: progressFill,
                       ),
@@ -100,8 +105,8 @@ class AmalTrackerTile extends StatelessWidget {
                                   overflow: TextOverflow.clip,
                                   style: TextStyle(
                                     color: textColor,
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -113,8 +118,8 @@ class AmalTrackerTile extends StatelessWidget {
                                 overflow: TextOverflow.clip,
                                 style: TextStyle(
                                   color: textColor,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -162,13 +167,15 @@ class AmalTrackerTile extends StatelessWidget {
 class _LeadingTile extends StatelessWidget {
   const _LeadingTile({
     this.leadingText,
-    required this.dimension,
+    required this.width,
+    required this.height,
     required this.backgroundColor,
     required this.foregroundColor,
   });
 
   final String? leadingText;
-  final double dimension;
+  final double width;
+  final double height;
   final Color backgroundColor;
   final Color foregroundColor;
 
@@ -176,9 +183,9 @@ class _LeadingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.appPalette;
     return Container(
-      width: dimension,
-      height: dimension,
-      padding: EdgeInsets.all(leadingText == null ? 11.r : 0),
+      width: width,
+      height: height,
+      padding: EdgeInsets.all(leadingText == null ? 16.r : 0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: backgroundColor,
