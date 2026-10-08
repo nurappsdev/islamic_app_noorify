@@ -34,18 +34,18 @@ class AmalTrackerTile extends StatelessWidget {
   static const ringStrokeFactor = .18;
   static double get horizontalPadding => 18.w;
   static double get verticalPadding => 7.h;
-  static double get leadingWidth => 67.w;
-  static double get leadingHeight => 67.h;
+  static double get leadingWidth => 62.w;
+  static double get leadingHeight => 62.h;
   static double get leadingGap => 14.w;
   static double get ringGap => 12.w;
   // The name pill lives above the green card body. This keeps it clear of
   // the progress ring while still letting its bottom edge overlap the border.
-  static double get badgeTopInset => 20.h;
-  static double get badgeHeight => 34.h;
+  static double get badgeTopInset => 15.h;
+  static double get badgeHeight => 28.h;
 
-  /// The green card body is 114 high; the tile adds reserved space above it
-  /// for the overlapping user-name badge.
-  static double get height => 114.h + badgeTopInset;
+  /// The complete tile, including the reserved space for the overlapping
+  /// user-name badge.
+  static double get height => 110.h;
 
   @override
   Widget build(BuildContext context) {
@@ -75,8 +75,8 @@ class AmalTrackerTile extends StatelessWidget {
                   // Keep both text columns usable on compact Android phones
                   // without changing the card's proportion on normal widths.
                   final compact = constraints.maxWidth < 330;
-                  final logoWidth = compact ? 56.r : leadingWidth;
-                  final logoHeight = compact ? 56.r : leadingHeight;
+                  final logoWidth = 62.r;
+                  final logoHeight = 62.r;
                   final progressSize = compact ? 58.r : ringSize;
                   final progressHoleSize = compact ? 40.r : ringHoleSize;
                   final logoGap = compact ? 10.r : leadingGap;
@@ -138,7 +138,7 @@ class AmalTrackerTile extends StatelessWidget {
                         progressColor: progressFill,
                         labelStyle: TextStyle(
                           color: textColor,
-                          fontSize: compact ? 13.sp : 16.sp,
+                          fontSize: compact ? 11.sp : 14.sp,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
