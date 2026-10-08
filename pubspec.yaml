@@ -153,3 +153,7 @@ flutter:
     - family: Noorehuda
       fonts:
         - asset: assets/fonts/quran/Noorehuda.ttf
+
+    - family: Ubuntu Medium
+      fonts:
+        - asset: assets/fonts/Ubuntu-Medium.ttf
