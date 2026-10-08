@@ -77,13 +77,14 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   /// Builds the carousel items from `GET /home/dashboard`'s
   /// `topHighlightCards`, selecting the language-specific strings returned by
   /// the API and retaining the app's labels as compatibility fallbacks.
+  /// Every card is shown - the per-card `hasData` flag no longer hides any.
   static List<_AmalTrackerItem> _apiItems(
     BuildContext context,
     List<HighlightCard> cards,
     String loggedInUserName,
   ) => [
     for (final card in cards)
-      if (card.hasData) _mapHighlightCard(context, card, loggedInUserName),
+      _mapHighlightCard(context, card, loggedInUserName),
   ];
 
   static _AmalTrackerItem _mapHighlightCard(
@@ -183,6 +184,9 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   bool _isHolding = false;
   bool _isAutoSliding = false;
 
+  /// How many cards the slider is currently showing; set on each build.
+  int _itemCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -251,6 +255,25 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     _scheduleAutoSlide();
   }
 
+  /// Double tap: back to the first card (Today's Amol), so the cards start
+  /// over from the beginning. Already on it, nothing moves.
+  void _restartFromFirst() {
+    if (_itemCount == 0 || !_pageController.hasClients) return;
+    final current = (_pageController.page ?? _currentPage.toDouble()).round();
+    final first = current - current % _itemCount;
+    if (first == current) return;
+    _autoSlideTimer?.cancel();
+    _pageController
+        .animateToPage(
+          first,
+          duration: _transitionDuration,
+          curve: Curves.easeInOutCubic,
+        )
+        .whenComplete(() {
+          if (mounted) _scheduleAutoSlide();
+        });
+  }
+
   @override
   void dispose() {
     _autoSlideTimer?.cancel();
@@ -283,6 +306,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             ? _apiItems(context, dashboard!.topHighlightCards, loggedInUserName)
             : _withDisplayInfo(_items(appText), loggedInUserName);
         if (items.isEmpty) return const SizedBox.shrink();
+        _itemCount = items.length;
         return Stack(
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
@@ -293,45 +317,51 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                 onPointerDown: _onPointerDown,
                 onPointerUp: _onPointerEnd,
                 onPointerCancel: _onPointerEnd,
-                child: PageView.builder(
-                  // Lets the controller restore the page if the slider is rebuilt
-                  // from scratch (e.g. the shimmer shows during a refresh).
-                  key: const PageStorageKey<String>('amal-tracker-slider'),
-                  controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
-                  onPageChanged: (index) {
-                    _currentPage = index;
-                    // A manual swipe shouldn't get cut short by an auto-advance
-                    // landing right after it, so give this slide a fresh 3s dwell.
-                    _scheduleAutoSlide();
-                  },
-                  itemBuilder: (context, pageIndex) {
-                    final index = pageIndex % items.length;
-                    return AnimatedBuilder(
-                      animation: _pageController,
-                      builder: (context, child) {
-                        var page = _currentPage.toDouble();
-                        if (_pageController.hasClients &&
-                            _pageController.position.haveDimensions) {
-                          page = _pageController.page ?? page;
-                        }
-                        final delta = (page - pageIndex).abs().clamp(0.0, 1.0);
-                        final scale = 1 - (delta * 0.08);
-                        final opacity = 1 - (delta * 0.35);
-                        return Opacity(
-                          opacity: opacity,
-                          child: Transform.scale(scale: scale, child: child),
-                        );
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 2.w),
-                        child: _AmalSlide(
-                          item: items[index],
-                          isTodaysTrack: index == 0,
+                child: GestureDetector(
+                  onDoubleTap: _restartFromFirst,
+                  child: PageView.builder(
+                    // Lets the controller restore the page if the slider is rebuilt
+                    // from scratch (e.g. the shimmer shows during a refresh).
+                    key: const PageStorageKey<String>('amal-tracker-slider'),
+                    controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (index) {
+                      _currentPage = index;
+                      // A manual swipe shouldn't get cut short by an auto-advance
+                      // landing right after it, so give this slide a fresh 3s dwell.
+                      _scheduleAutoSlide();
+                    },
+                    itemBuilder: (context, pageIndex) {
+                      final index = pageIndex % items.length;
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          var page = _currentPage.toDouble();
+                          if (_pageController.hasClients &&
+                              _pageController.position.haveDimensions) {
+                            page = _pageController.page ?? page;
+                          }
+                          final delta = (page - pageIndex).abs().clamp(
+                            0.0,
+                            1.0,
+                          );
+                          final scale = 1 - (delta * 0.08);
+                          final opacity = 1 - (delta * 0.35);
+                          return Opacity(
+                            opacity: opacity,
+                            child: Transform.scale(scale: scale, child: child),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          child: _AmalSlide(
+                            item: items[index],
+                            isTodaysTrack: index == 0,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

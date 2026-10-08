@@ -8,9 +8,12 @@ import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_ana
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_localized_format.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 enum _AmolPeriod { daily, weekly, monthly }
 
@@ -108,7 +111,6 @@ class _AmolDashboardView extends StatelessWidget {
   ];
   static const _fallbackPoints = 27;
   static const _fallbackTotalPoints = 40;
-  static const _fallbackCompetitorLabel = 'Ab';
 
   @override
   Widget build(BuildContext context) {
@@ -136,20 +138,17 @@ class _AmolDashboardView extends StatelessWidget {
               graph.competitorValueFor(key)?.toDouble(),
           ];
     final competitorLabel = graph == null
-        ? _fallbackCompetitorLabel
+        ? appText.competitorInitials
         : _initials(graph.competitorName, fallback: appText.competitorInitials);
     // The signed-in device's own name (set on the profile screen), not
     // anything from the server response — mirrors the competitor's pill
     // but labeled with the local user's initials instead.
     final myLabel = _initials(
       profileNameNotifier.value ?? appText.competitorName,
-      fallback: 'Me',
+      fallback: languageOf(context) == AppLanguage.bangla ? 'আমি' : 'Me',
     );
-    // The server's own `summary` carries the same earned/possible points
-    // and percentage as `graph.completionPercentage`/`maxTotalPoints`, but
-    // authoritative (its own business rules, already formatted into
-    // `pointsText`) rather than approximated by summing pillar max scores
-    // client-side — prefer it whenever the server included it.
+    // Use the server's summary totals and percentage, then format the visible
+    // point label in the selected language.
     final summary = graph?.summary;
     final myPoints = graph == null
         ? _fallbackPoints
@@ -158,10 +157,13 @@ class _AmolDashboardView extends StatelessWidget {
         ? _fallbackTotalPoints
         : (summary?.totalPossiblePoints ?? graph.maxTotalPoints).round();
     final pointLabel = graph == null
-        ? '${appText.point} : 30/40'
-        : (summary != null && summary.pointsText.isNotEmpty)
-        ? summary.pointsText
-        : '${appText.point} : ${_formatPoints(graph.myTotalPoints)}/${_formatPoints(graph.maxTotalPoints)}';
+        ? formatAmolPoints(30, 40, appText, languageOf(context))
+        : formatAmolPoints(
+            summary?.totalEarnedPoints ?? graph.myTotalPoints,
+            summary?.totalPossiblePoints ?? graph.maxTotalPoints,
+            appText,
+            languageOf(context),
+          );
     final percentValue = graph == null
         ? 86.0
         : (summary?.percentage ??
@@ -169,19 +171,29 @@ class _AmolDashboardView extends StatelessWidget {
                   graph.completionPercentage)
               .toDouble();
     final progress = (percentValue / 100).clamp(0.0, 1.0);
-    final progressLabel = '${percentValue.round()} %';
+    final progressLabel = context.localizedDigits('${percentValue.round()} %');
     final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
     // Prefer the server's own resolved range (it's the ground truth for
     // exactly which days the response covers) over a locally-guessed
     // label; only fall back to local formatting before the first response
     // lands.
-    // The server's own range text has its digits localized too.
-    final rangeLabel = context.localizedDigits(
-      graph?.range?.formattedRange ??
-          (period == _AmolPeriod.daily
-              ? formatAmolDate(state.date, appText)
-              : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}'),
-    );
+    // Format the server's resolved ISO dates with local month names and digits.
+    final resolvedRange = graph?.range;
+    final localizedRange = resolvedRange == null
+        ? ''
+        : formatAmolRange(
+            resolvedRange.startDate,
+            resolvedRange.endDate,
+            appText,
+            languageOf(context),
+          );
+    final rangeLabel = localizedRange.isNotEmpty
+        ? localizedRange
+        : context.localizedDigits(
+            period == _AmolPeriod.daily
+                ? formatAmolDate(state.date, appText)
+                : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}',
+          );
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -412,8 +424,8 @@ class _MonthDropdown extends StatelessWidget {
   final AppText appText;
   final ValueChanged<DateTime> onChanged;
 
-  String _label(DateTime month) =>
-      '${appText.monthNames[month.month - 1]} ${month.year}';
+  String _label(BuildContext context, DateTime month) => context
+      .localizedDigits('${appText.monthNames[month.month - 1]} ${month.year}');
 
   @override
   Widget build(BuildContext context) {
@@ -430,7 +442,7 @@ class _MonthDropdown extends StatelessWidget {
           // further back with the date-navigator arrows.
           value: months.contains(selectedMonth) ? selectedMonth : null,
           hint: Text(
-            _label(selectedMonth),
+            _label(context, selectedMonth),
             style: TextStyle(
               fontSize: 13.sp,
               color: context.inkColor(Colors.black),
@@ -450,7 +462,10 @@ class _MonthDropdown extends StatelessWidget {
           ),
           items: [
             for (final month in months)
-              DropdownMenuItem(value: month, child: Text(_label(month))),
+              DropdownMenuItem(
+                value: month,
+                child: Text(_label(context, month)),
+              ),
           ],
           onChanged: (value) {
             if (value != null) onChanged(value);
@@ -629,6 +644,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                   points: points,
                   competitorPoints: competitorPoints,
                   maxY: widget.maxY,
+                  language: languageOf(context),
                   selectedIndex: selected,
                 ),
               ),
@@ -835,7 +851,7 @@ class _ScoreTooltip extends StatelessWidget {
             _TooltipRow(
               color: _LineChartPainter.lineColor,
               label: myLabel,
-              value: _formatPoints(myScore),
+              value: context.localizedDigits(_formatPoints(myScore)),
             ),
             SizedBox(height: 2.h),
             _TooltipRow(
@@ -843,7 +859,7 @@ class _ScoreTooltip extends StatelessWidget {
               label: competitorLabel,
               value: competitorScore == null
                   ? '—'
-                  : _formatPoints(competitorScore!),
+                  : context.localizedDigits(_formatPoints(competitorScore!)),
             ),
           ],
         ),
@@ -905,6 +921,7 @@ class _LineChartPainter extends CustomPainter {
     required this.points,
     required this.competitorPoints,
     required this.maxY,
+    required this.language,
     this.selectedIndex,
   });
 
@@ -917,6 +934,7 @@ class _LineChartPainter extends CustomPainter {
   /// no competitor score for.
   final List<Offset?> competitorPoints;
   final double maxY;
+  final AppLanguage language;
 
   /// The category whose tooltip is open: its column gets a guide line and
   /// its points are drawn enlarged with a halo. Null when none is open.
@@ -947,7 +965,7 @@ class _LineChartPainter extends CustomPainter {
       );
       _paintLabel(
         canvas,
-        (maxY * i / _ySteps).round().toString(),
+        localizeDigits((maxY * i / _ySteps).round().toString(), language),
         Offset(plotRect.left - 6.w, y),
         alignRight: true,
       );
@@ -1127,6 +1145,7 @@ class _LineChartPainter extends CustomPainter {
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
       oldDelegate.plotRect != plotRect ||
+      oldDelegate.language != language ||
       oldDelegate.selectedIndex != selectedIndex;
 }
 

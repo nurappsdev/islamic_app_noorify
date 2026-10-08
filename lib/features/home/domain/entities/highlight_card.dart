@@ -39,7 +39,8 @@ class HighlightCard {
   final int? rank;
 
   /// `false` when the API has nothing to show for this card yet (e.g. no
-  /// winner last month); the carousel skips such cards.
+  /// winner last month). Obsolete: the carousel no longer skips such cards;
+  /// kept only so the API field still parses.
   final bool hasData;
 
   final LocalizedText localizedTitle;

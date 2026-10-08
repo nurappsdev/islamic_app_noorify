@@ -105,7 +105,10 @@ class _FeatureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final navigate = feature.routeName == null
+    final isDua = feature.routeName == RouteNames.dua;
+    final navigate = isDua
+        ? () => _showComingSoonDialog(context)
+        : feature.routeName == null
         ? null
         : () => Navigator.of(context).pushNamed(feature.routeName!);
     final isZikr = feature.routeName == RouteNames.zikr;
@@ -188,6 +191,31 @@ class _ZikrIconWithBadge extends StatelessWidget {
 void _openComingSoon(BuildContext context, String title) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(builder: (_) => ComingSoonScreen(title: title)),
+  );
+}
+
+/// The Dua feature's existing screens/routes are temporarily disabled; this
+/// grid tile stays visible but shows a "Coming Soon" message (in the active
+/// app language) instead of opening them.
+void _showComingSoonDialog(BuildContext context) {
+  final appText = AppText.of(context);
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      content: Text(
+        appText.comingSoon,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+      ),
+      actions: [
+        Center(
+          child: TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(appText.ok),
+          ),
+        ),
+      ],
+    ),
   );
 }
 

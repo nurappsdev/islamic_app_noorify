@@ -40,6 +40,7 @@ import '../widgets/quran_player_widgets.dart';
 import '../widgets/quran_shimmer.dart';
 import '../widgets/quran_sheets.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import '../quran_text.dart';
 
 class QuranReadingScreen extends StatelessWidget {
   const QuranReadingScreen({
@@ -269,8 +270,15 @@ class _ReaderBodyState extends State<_ReaderBody> {
       );
     } catch (_) {
       if (mounted) {
+        final qText = QuranText.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to open Surah. Try again.')),
+          SnackBar(
+            content: Text(
+              qText.isBangla
+                  ? 'সূরা খুলতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।'
+                  : 'Unable to open Surah. Try again.',
+            ),
+          ),
         );
         setState(() => _crossingSurah = false);
       }
@@ -570,23 +578,31 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 top: Column(
                   children: [
                     Container(
-                      margin: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: context
                             .surfaceColor(quranPale)
                             .withValues(alpha: .96),
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: quranBorder.withValues(alpha: 0.6),
+                        ),
                       ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           IconButton(
                             key: const ValueKey('quran-back-button'),
-                            tooltip: 'Back',
+                            tooltip: appText.back,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints.tightFor(
                               width: 32,
-                              height: 40,
+                              height: 38,
                             ),
                             onPressed: () async {
                               final popped = await Navigator.of(
@@ -604,76 +620,108 @@ class _ReaderBodyState extends State<_ReaderBody> {
                               color: quranInk,
                             ),
                           ),
-                          // Shrinks (with an ellipsis) rather than pushing
-                          // the actions off narrow screens.
-                          Flexible(
-                            child: TextButton(
-                              onPressed: _jump,
-                              style: TextButton.styleFrom(
-                                foregroundColor: context.inkColor(
-                                  Colors.black87,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                minimumSize: const Size(0, 36),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          InkWell(
+                            onTap: _jump,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 4,
                               ),
-                              child: Text(
-                                'Page ${state.ayahs.isEmpty ? '–' : state.ayahs.first.pageNumber} ⌄',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontFamily: 'serif',
-                                  fontSize: 14,
+                              decoration: BoxDecoration(
+                                color: context
+                                    .surfaceColor(Colors.white)
+                                    .withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: quranBorder.withValues(alpha: 0.7),
                                 ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    context.localizedDigits(
+                                      appText.quranPageLabel.fill({
+                                        'n': state.ayahs.isEmpty
+                                            ? '–'
+                                            : '${state.ayahs.first.pageNumber}',
+                                      }),
+                                    ),
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontFamily: 'serif',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: quranInk,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Icon(
+                                    Icons.arrow_drop_down_rounded,
+                                    size: 18,
+                                    color: quranInk,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          Expanded(
+                          Flexible(
                             child: InkWell(
                               onTap: _jump,
-                              child: Text(
-                                context.localizedDigits(
-                                  AppText.of(context).quranSurahChip.fill({
-                                    'name':
-                                        surah?.name ?? widget.args.surahName,
-                                  }),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 14),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        QuranText.of(context).surahName(
+                                          surah?.number ?? widget.args.surahNo,
+                                          surah?.name ?? widget.args.surahName,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: quranInk,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 16,
+                                      color: quranInk,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                           _ReadingTimerPill(
                             seconds: _seconds,
                             label: appText.yourReadingTimeIs,
-                            // Narrow phones drop the icon to fit the row.
-                            compact: MediaQuery.sizeOf(context).width < 360,
-                          ),
-                          IconButton(
-                            tooltip: 'Filter Quran',
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 34,
-                              height: 40,
-                            ),
-                            onPressed: _jump,
-                            icon: const Icon(
-                              Icons.tune,
-                              size: 20,
-                              color: quranInk,
-                            ),
+                            compact: MediaQuery.sizeOf(context).width < 370,
                           ),
                           PopupMenuButton<String>(
-                            tooltip: 'Quran actions',
+                            tooltip: appText.quranActions,
                             padding: EdgeInsets.zero,
                             style: IconButton.styleFrom(
-                              minimumSize: const Size(32, 40),
+                              minimumSize: const Size(32, 38),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            icon: const Icon(Icons.more_vert, color: quranInk),
+                            icon: const Icon(
+                              Icons.more_vert_rounded,
+                              color: quranInk,
+                            ),
                             onSelected: _menu,
                             itemBuilder: (_) => [
                               _AyatViewMenuEntry(
@@ -835,7 +883,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                                     .translations[state
                                                         .translation]
                                                     ?.text ??
-                                                'Translation unavailable for this ayah',
+                                                (QuranText.of(context).isBangla
+                                                    ? 'এই আয়াতের জন্য কোনো অনুবাদ নেই'
+                                                    : 'Translation unavailable for this ayah'),
                                             style: TextStyle(
                                               fontSize:
                                                   15 *
@@ -922,58 +972,73 @@ class _ReadingTimerPill extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => ValueListenableBuilder<int>(
-    valueListenable: seconds,
-    builder: (context, value, _) => Tooltip(
-      message: '$label ${value ~/ 60} min ${value % 60} sec',
-      child: Container(
-        key: const ValueKey('quran-reading-timer'),
-        margin: const EdgeInsets.only(left: 4),
-        padding: EdgeInsets.fromLTRB(compact ? 8 : 6, 4, compact ? 8 : 10, 4),
-        decoration: BoxDecoration(
-          color: context.surfaceColor(Colors.white),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: quranBorder),
-          boxShadow: [
-            BoxShadow(
-              color: quranInk.withValues(alpha: .08),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+  Widget build(BuildContext context) {
+    final qText = QuranText.of(context);
+    return ValueListenableBuilder<int>(
+      valueListenable: seconds,
+      builder: (context, value, _) {
+        final minStr = context.localizedDigits('${value ~/ 60}');
+        final secStr = context.localizedDigits('${value % 60}');
+        final tooltipMsg = qText.isBangla
+            ? '$label $minStr মিনিট $secStr সেকেন্ড'
+            : '$label ${value ~/ 60} min ${value % 60} sec';
+        return Tooltip(
+          message: tooltipMsg,
+          child: Container(
+            key: const ValueKey('quran-reading-timer'),
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.fromLTRB(
+              compact ? 8 : 6,
+              4,
+              compact ? 8 : 10,
+              4,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!compact) ...[
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: quranInk.withValues(alpha: .12),
-                  shape: BoxShape.circle,
+            decoration: BoxDecoration(
+              color: context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: quranBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: quranInk.withValues(alpha: .08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-                child: const Icon(
-                  Icons.timer_outlined,
-                  size: 13,
-                  color: quranInk,
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              _format(value),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: quranInk,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ),
-  );
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!compact) ...[
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: quranInk.withValues(alpha: .12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.timer_outlined,
+                      size: 13,
+                      color: quranInk,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  context.localizedDigits(_format(value)),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: quranInk,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// What "View in ayat" shows under each ayah.
@@ -984,6 +1049,18 @@ enum _AyatView {
 
   const _AyatView(this.label);
   final String label;
+
+  String localizedLabel(BuildContext context) {
+    final isBangla = QuranText.of(context).isBangla;
+    switch (this) {
+      case _AyatView.english:
+        return isBangla ? 'ইংরেজি অনুবাদ' : 'English translation';
+      case _AyatView.bangla:
+        return isBangla ? 'বাংলা অনুবাদ' : 'Bangla translation';
+      case _AyatView.tafsir:
+        return isBangla ? 'তাফসীর' : 'Tafsir';
+    }
+  }
 }
 
 /// "View in ayat" in the actions menu: tapping it drops down a choice of what
@@ -1010,101 +1087,123 @@ class _AyatViewMenuEntryState extends State<_AyatViewMenuEntry> {
   bool _open = false;
 
   @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      InkWell(
-        key: const ValueKey('quran-ayat-view-menu'),
-        onTap: () => setState(() => _open = !_open),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          child: Row(
-            children: [
-              const Icon(Icons.view_agenda_outlined, size: 19, color: quranInk),
-              const SizedBox(width: 14),
-              const Expanded(child: Text('View in ayat')),
-              if (widget.active)
-                const Padding(
-                  padding: EdgeInsets.only(left: 6),
-                  child: Icon(Icons.check_circle, size: 16, color: quranOlive),
+  Widget build(BuildContext context) {
+    final qText = QuranText.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          key: const ValueKey('quran-ayat-view-menu'),
+          onTap: () => setState(() => _open = !_open),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.view_agenda_outlined,
+                  size: 19,
+                  color: quranInk,
                 ),
-              AnimatedRotation(
-                turns: _open ? .5 : 0,
-                duration: const Duration(milliseconds: 200),
-                child: const Icon(Icons.expand_more, color: quranInk),
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(qText.isBangla ? 'আয়াতে দেখুন' : 'View in ayat'),
+                ),
+                if (widget.active)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 6),
+                    child: Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: quranOlive,
+                    ),
+                  ),
+                AnimatedRotation(
+                  turns: _open ? .5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.expand_more, color: quranInk),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      AnimatedSize(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        alignment: Alignment.topCenter,
-        child: !_open
-            ? const SizedBox(width: double.infinity)
-            : Padding(
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
-                // Its own Material so the radio tiles' ink shows on it.
-                child: Material(
-                  color: context.surfaceColor(quranPale),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: quranBorder),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(12, 8, 12, 0),
-                        child: Text(
-                          'Show under each ayah',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: quranInk,
-                            fontWeight: FontWeight.w700,
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: !_open
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
+                  // Its own Material so the radio tiles' ink shows on it.
+                  child: Material(
+                    color: context.surfaceColor(quranPale),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: quranBorder),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                          child: Text(
+                            qText.isBangla
+                                ? 'প্রতিটি আয়াতের নিচে দেখুন'
+                                : 'Show under each ayah',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: quranInk,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
-                      RadioGroup<_AyatView>(
-                        groupValue: widget.active ? widget.value : null,
-                        onChanged: (view) {
-                          if (view != null) {
-                            Navigator.pop(context, 'view:${view.name}');
-                          }
-                        },
-                        child: Column(
-                          children: [
-                            for (final view in _AyatView.values)
-                              RadioListTile<_AyatView>(
-                                key: ValueKey('quran-ayat-view-${view.name}'),
-                                value: view,
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                activeColor: quranOlive,
-                                title: Text(view.label),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (widget.active)
-                        TextButton.icon(
-                          onPressed: () => Navigator.pop(context, 'view:off'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: quranInk,
+                        RadioGroup<_AyatView>(
+                          groupValue: widget.active ? widget.value : null,
+                          onChanged: (view) {
+                            if (view != null) {
+                              Navigator.pop(context, 'view:${view.name}');
+                            }
+                          },
+                          child: Column(
+                            children: [
+                              for (final view in _AyatView.values)
+                                RadioListTile<_AyatView>(
+                                  key: ValueKey('quran-ayat-view-${view.name}'),
+                                  value: view,
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  activeColor: quranOlive,
+                                  title: Text(view.localizedLabel(context)),
+                                ),
+                            ],
                           ),
-                          icon: const Icon(Icons.menu_book_outlined, size: 18),
-                          label: const Text('Back to page view'),
                         ),
-                    ],
+                        if (widget.active)
+                          TextButton.icon(
+                            onPressed: () => Navigator.pop(context, 'view:off'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: quranInk,
+                            ),
+                            icon: const Icon(
+                              Icons.menu_book_outlined,
+                              size: 18,
+                            ),
+                            label: Text(
+                              qText.isBangla
+                                  ? 'পৃষ্ঠা ভিউতে ফিরে যান'
+                                  : 'Back to page view',
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-      ),
-    ],
-  );
+        ),
+      ],
+    );
+  }
 }
 
 /// One ayah's tafsir, loaded on its own when it is shown.
@@ -1138,22 +1237,28 @@ class _AyahTafsir extends StatelessWidget {
           );
         }
         if (state.hasError) {
+          final qText = QuranText.of(context);
           return Align(
             alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
               onPressed: () =>
                   context.read<TafsirBloc>().add(LoadTafsir(ayah.verseKey)),
               icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Could not load tafsir. Retry'),
+              label: Text(
+                qText.isBangla
+                    ? 'তাফসীর লোড করা যায়নি। আবার চেষ্টা করুন'
+                    : 'Could not load tafsir. Retry',
+              ),
             ),
           );
         }
+        final qText = QuranText.of(context);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Tafsir',
-              style: TextStyle(
+            Text(
+              qText.isBangla ? 'তাফসীর' : 'Tafsir',
+              style: const TextStyle(
                 fontSize: 12,
                 color: quranInk,
                 fontWeight: FontWeight.w700,
@@ -1162,7 +1267,9 @@ class _AyahTafsir extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               state.text.isEmpty
-                  ? 'No Tafsir available for this ayah'
+                  ? (qText.isBangla
+                        ? 'এই আয়াতের জন্য কোনো তাফসীর নেই'
+                        : 'No Tafsir available for this ayah')
                   : state.text,
               style: TextStyle(fontSize: 15 * fontScale, height: 1.6),
             ),

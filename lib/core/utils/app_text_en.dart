@@ -80,6 +80,10 @@ const Map<String, String> appTextEn = <String, String>{
   'deleteRingtoneTitle': 'Delete Ringtone',
   'deleteRingtoneMessage': 'Are you sure you want to delete this ringtone?',
   'deleteRingtoneConfirm': 'Delete',
+  'alarmNotSetForPrayer': 'Alarm not set for this prayer',
+  'exactAlarmPermissionNeeded':
+      'Please allow alarms & reminders in Settings so your prayer alarms '
+      'can ring on time.',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',

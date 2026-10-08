@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../quran_text.dart';
 import '../../domain/surah_summary.dart';
 import 'quran_design.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -57,7 +58,9 @@ class QuranSurahHeading extends StatelessWidget {
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: width * .52),
                       child: Text(
-                        surah.name,
+                        QuranText.of(
+                          context,
+                        ).surahName(surah.number, surah.name),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontFamily: 'serif',

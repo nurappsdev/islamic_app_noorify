@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 
+import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/resend_otp.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/verify_email_otp.dart';
 
@@ -37,17 +38,23 @@ class OtpVerificationBloc
       ),
     );
 
-    result.fold(
-      (failure) => emit(
+    await result.fold(
+      (failure) async => emit(
         state.copyWith(status: OtpVerificationStatus.failure, failure: failure),
       ),
-      (result) => emit(
-        state.copyWith(
-          status: OtpVerificationStatus.success,
-          message: result.message,
-          resetToken: result.resetToken,
-        ),
-      ),
+      (result) async {
+        // A verified new account with `startSession` starts a session the
+        // same way signing in does (see AccountRepositoryImpl.verifyEmailOtp)
+        // — whatever was armed as a Guest must not carry into it.
+        if (event.startSession) await SessionCleaner.clearGuestAlarms();
+        emit(
+          state.copyWith(
+            status: OtpVerificationStatus.success,
+            message: result.message,
+            resetToken: result.resetToken,
+          ),
+        );
+      },
     );
   }
 
