@@ -6,17 +6,25 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 
-/// "New Zikr" screen (design `devImg/img_13.png`), reached from the `+` button
-/// on [ZikrDashboardScreen] and from "Add More" on [ZikrSetScreen].
+/// "New Zikr" screen (design `devImg/img_13.png`), reached two ways:
 ///
-/// UI only. "Create" adds the chosen zikr to the set and moves to
-/// [ZikrSetScreen]; "Lets Get Start" opens the counter with the set (plus the
-/// current selection). Any zikr already in the set arrive as route arguments
-/// (`List<ZikrItem>`).
+/// - From the `+` button on [ZikrDashboardScreen] (no route arguments): the
+///   chosen zikr is a new "My Created Zikr" entry — "Create" persists it to
+///   [CustomZikrStore] and returns to the dashboard, where it appears
+///   immediately; "Lets Get Start" persists it the same way and opens the
+///   counter on it directly (progress is saved).
+/// - From "Add More" on [ZikrSetScreen] (route arguments: the `List<ZikrItem>`
+///   built so far): building a one-off counting sequence, unrelated to My
+///   Created Zikr — "Create" adds the chosen zikr to that in-memory set and
+///   moves to [ZikrSetScreen]; "Lets Get Start" opens the counter with the
+///   set (plus the current selection), same as before.
 class ZikrCreateScreen extends StatefulWidget {
   const ZikrCreateScreen({super.key});
 
@@ -37,8 +45,14 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   String? _zikrName;
   String _zikrArabic = '';
+  String? _zikrNameKey;
   List<ZikrItem> _items = [];
   bool _argsRead = false;
+
+  /// True when reached directly from [ZikrDashboardScreen]'s `+` button
+  /// (no route arguments) rather than "Add More" on [ZikrSetScreen] (which
+  /// always passes the in-progress `List<ZikrItem>`, even an empty one).
+  bool _cameFromDashboard = false;
   late AppText _appText;
 
   @override
@@ -48,6 +62,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     if (!_argsRead) {
       _argsRead = true;
       final args = ModalRoute.of(context)?.settings.arguments;
+      _cameFromDashboard = args is! List<ZikrItem>;
       if (args is List<ZikrItem>) _items = List.of(args);
     }
   }
@@ -147,6 +162,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     setState(() {
       _zikrName = item.name;
       _zikrArabic = item.arabic;
+      _zikrNameKey = zikrNameKeyFor(item.name);
       _valueController.text = item.target.toString();
     });
   }
@@ -168,6 +184,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     setState(() {
       _zikrName = name;
       _zikrArabic = '';
+      _zikrNameKey = null;
       _valueController.text = (value != null && value > 0)
           ? value.toString()
           : '';
@@ -181,6 +198,17 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       return;
     }
     HapticFeedback.selectionClick();
+    if (_cameFromDashboard) {
+      CustomZikrStore.instance.create(
+        name: item.name,
+        nameKey: _zikrNameKey,
+        arabic: item.arabic,
+        target: item.target,
+      );
+      _toast(_appText.zikrCreated);
+      Navigator.of(context).pop();
+      return;
+    }
     Navigator.of(
       context,
     ).pushReplacementNamed(RouteNames.zikrSet, arguments: [..._items, item]);
@@ -188,6 +216,26 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   void _start() {
     final item = _currentItem;
+    if (_cameFromDashboard) {
+      if (item == null) {
+        _toast(_appText.zikrSelectZikr);
+        return;
+      }
+      final created = CustomZikrStore.instance.create(
+        name: item.name,
+        nameKey: _zikrNameKey,
+        arabic: item.arabic,
+        target: item.target,
+      );
+      Navigator.of(context).pushReplacementNamed(
+        RouteNames.zikrCounter,
+        arguments: ZikrCounterArgs(
+          title: item.name,
+          items: [item.copyWith(trackingKey: 'custom:${created.id}')],
+        ),
+      );
+      return;
+    }
     final sequence = [..._items, ?item];
     if (sequence.isEmpty) {
       _toast(_appText.zikrSelectZikr);
@@ -210,7 +258,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       backgroundColor: context.pageColor(Colors.white),
       body: Column(
         children: [
-          ZikrGradientHeader(title: appText.zikrNewTitle),
+          ZikrGradientHeader(
+            title: appText.zikrNewTitle,
+            total: ZikrProgressStore.instance.totalCount,
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.fromLTRB(22.w, 26.h, 22.w, 20.h),

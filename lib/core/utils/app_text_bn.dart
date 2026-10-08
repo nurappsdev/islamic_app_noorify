@@ -79,6 +79,10 @@ const Map<String, String> appTextBn = <String, String>{
   'deleteRingtoneTitle': 'রিংটোন মুছুন',
   'deleteRingtoneMessage': 'আপনি কি নিশ্চিত এই রিংটোনটি মুছে ফেলতে চান?',
   'deleteRingtoneConfirm': 'মুছুন',
+  'alarmNotSetForPrayer': 'এই নামাজের জন্য অ্যালার্ম সেট করা নেই',
+  'exactAlarmPermissionNeeded':
+      'আপনার নামাজের অ্যালার্ম সময়মতো বাজানোর জন্য সেটিংসে '
+      'অ্যালার্ম ও রিমাইন্ডার অনুমতি দিন।',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',
@@ -335,6 +339,11 @@ const Map<String, String> appTextBn = <String, String>{
   'zikrTapToCount': 'গণনা করতে ট্যাপ করুন',
   'zikrCompletingProgress': 'সম্পন্ন হচ্ছে',
   'zikrCompleted': 'সম্পন্ন',
+  'zikrNameSubhanAllah': 'সুবহানাল্লাহ',
+  'zikrNameAlhamdulillah': 'আলহামদুলিল্লাহ',
+  'zikrNameAllahuAkbar': 'আল্লাহু আকবার',
+  'zikrNameFinalZikr':
+      'লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারীকা লাহু, লাহুল মুলকু ওয়া লাহুল হামদু ওয়া হুওয়া আলা কুল্লি শাইয়িন ক্বাদীর',
   'duaIntroTitle': 'দোয়া',
   'duaIntroSubtitle': 'প্রতিদিনের দোয়ার মাধ্যমে আপনার ঈমান মজবুত করুন',
   'duaIntroStartButton': 'শুরু করুন',
@@ -649,6 +658,17 @@ const Map<String, String> appTextBn = <String, String>{
   'appLanguage': 'অ্যাপের ভাষা',
   'changePassword': 'পাসওয়ার্ড পরিবর্তন করুন',
   'deleteAccount': 'অ্যাকাউন্ট মুছুন',
+  'deleteAccountConfirmPasswordTitle': 'আপনার পাসওয়ার্ড নিশ্চিত করুন',
+  'deleteAccountConfirmPasswordMessage':
+      'নিরাপত্তার জন্য, অ্যাকাউন্ট ডিলিট করতে আপনার বর্তমান পাসওয়ার্ড দিন।',
+  'deleteAccountPasswordHint': 'আপনার পাসওয়ার্ড দিন',
+  'deleteAccountEmptyPassword': 'অনুগ্রহ করে আপনার পাসওয়ার্ড দিন।',
+  'deleteAccountIncorrectPassword': 'পাসওয়ার্ড সঠিক নয়। আবার চেষ্টা করুন।',
+  'deleteAccountFinalTitle': 'অ্যাকাউন্ট ডিলিট করবেন?',
+  'deleteAccountFinalMessage':
+      'আপনি কি নিশ্চিতভাবে আপনার অ্যাকাউন্ট স্থায়ীভাবে ডিলিট করতে চান? এই কাজটি ফেরানো যাবে না।',
+  'deleteAccountFailureMessage':
+      'এই মুহূর্তে আপনার অ্যাকাউন্ট ডিলিট করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।',
 
   // App language feature
   'languageTitle': 'ভাষা',

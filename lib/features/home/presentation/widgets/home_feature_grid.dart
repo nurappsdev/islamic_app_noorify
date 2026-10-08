@@ -4,7 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/shared/widgets/coming_soon_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
@@ -24,16 +26,16 @@ class HomeFeatureGrid extends StatelessWidget {
       routeName: RouteNames.hadith,
     ),
     _HomeFeature(
+      appText.featureQuizAndLearn,
+      Icons.quiz_outlined,
+      const Color(0xFFFF9D13),
+      routeName: RouteNames.winQuiz,
+    ),
+    _HomeFeature(
       appText.featureAsmaUlHusna,
       Icons.workspace_premium,
       const Color(0xFF37C915),
       routeName: RouteNames.asma,
-    ),
-    _HomeFeature(
-      appText.featureDua,
-      Icons.volunteer_activism,
-      const Color(0xFFFF7D67),
-      routeName: RouteNames.dua,
     ),
     _HomeFeature(
       appText.featureDijpr,
@@ -42,10 +44,10 @@ class HomeFeatureGrid extends StatelessWidget {
       routeName: RouteNames.zikr,
     ),
     _HomeFeature(
-      appText.featureQuizAndLearn,
-      Icons.quiz_outlined,
-      const Color(0xFFFF9D13),
-      routeName: RouteNames.winQuiz,
+      appText.featureDua,
+      Icons.volunteer_activism,
+      const Color(0xFFFF7D67),
+      routeName: RouteNames.dua,
     ),
   ];
 
@@ -69,19 +71,19 @@ class HomeFeatureGrid extends StatelessWidget {
               _FeatureTile(feature: features[index]),
         ),
         SizedBox(height: 12.h),
-        _LinkTile(
-          title: appText.zakatCalculator,
-          icon: Icons.price_check,
-          iconColor: context.inkColor(Color(0xFF0DA334)),
-          onTap: () => _openComingSoon(context, appText.zakatCalculator),
-        ),
-        SizedBox(height: 6.h),
-        _LinkTile(
-          title: appText.ageCalculate,
-          icon: Icons.calculate,
-          iconColor: const Color(0xFFAAB781),
-          onTap: () => _openComingSoon(context, appText.ageCalculate),
-        ),
+        // _LinkTile(
+        //   title: appText.zakatCalculator,
+        //   icon: Icons.price_check,
+        //   iconColor: context.inkColor(Color(0xFF0DA334)),
+        //   onTap: () => _openComingSoon(context, appText.zakatCalculator),
+        // ),
+        // SizedBox(height: 6.h),
+        // _LinkTile(
+        //   title: appText.ageCalculate,
+        //   icon: Icons.calculate,
+        //   iconColor: const Color(0xFFAAB781),
+        //   onTap: () => _openComingSoon(context, appText.ageCalculate),
+        // ),
       ],
     );
   }
@@ -103,9 +105,13 @@ class _FeatureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final navigate = feature.routeName == null
+    final isDua = feature.routeName == RouteNames.dua;
+    final navigate = isDua
+        ? () => _showComingSoonDialog(context)
+        : feature.routeName == null
         ? null
         : () => Navigator.of(context).pushNamed(feature.routeName!);
+    final isZikr = feature.routeName == RouteNames.zikr;
 
     return InkWell(
       onTap: navigate,
@@ -115,11 +121,13 @@ class _FeatureTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              feature.icon,
-              color: context.inkColor(feature.color),
-              size: 28.sp,
-            ),
+            isZikr
+                ? _ZikrIconWithBadge(icon: feature.icon, color: feature.color)
+                : Icon(
+                    feature.icon,
+                    color: context.inkColor(feature.color),
+                    size: 28.sp,
+                  ),
             SizedBox(height: 9.h),
             Text(
               feature.title,
@@ -134,9 +142,80 @@ class _FeatureTile extends StatelessWidget {
   }
 }
 
+/// The grid's Zikr icon with a live badge of the Home Screen Zikr section's
+/// total count (Prayer Zikr 1 & 2, from Hive). Reacts immediately to a new
+/// count or a reset, with no restart or manual refresh.
+class _ZikrIconWithBadge extends StatelessWidget {
+  const _ZikrIconWithBadge({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Map<String, int>>(
+      valueListenable: ZikrProgressStore.instance,
+      builder: (context, _, _) {
+        final total = ZikrProgressStore.instance.totalCount;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(icon, color: context.inkColor(color), size: 28.sp),
+            if (total > 0)
+              Positioned(
+                right: -8.w,
+                top: -4.h,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6E8B3D),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    context.localizedDigits('$total'),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 void _openComingSoon(BuildContext context, String title) {
   Navigator.of(context).push(
     MaterialPageRoute<void>(builder: (_) => ComingSoonScreen(title: title)),
+  );
+}
+
+/// The Dua feature's existing screens/routes are temporarily disabled; this
+/// grid tile stays visible but shows a "Coming Soon" message (in the active
+/// app language) instead of opening them.
+void _showComingSoonDialog(BuildContext context) {
+  final appText = AppText.of(context);
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      content: Text(
+        appText.comingSoon,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+      ),
+      actions: [
+        Center(
+          child: TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(appText.ok),
+          ),
+        ),
+      ],
+    ),
   );
 }
 

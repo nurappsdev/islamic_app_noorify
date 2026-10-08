@@ -8,7 +8,7 @@ import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Green gradient header shared by the Zikr dashboard and the "New Zikr" screen:
-/// back button + centred title, the Bismillah calligraphy, and the (mock)
+/// back button + centred title, the Bismillah calligraphy, and the
 /// "Total Zikr" count. [trailing] is placed below the count (the dashboard uses
 /// it for the "Last Zikr" and "Prayer Zikr" pills).
 class ZikrGradientHeader extends StatelessWidget {
@@ -22,7 +22,7 @@ class ZikrGradientHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
 
-  /// The number shown under "Total Zikr". Defaults to the mock dashboard total.
+  /// The number shown under "Total Zikr". Defaults to 0 when not given.
   final int? total;
 
   @override
@@ -92,9 +92,7 @@ class ZikrGradientHeader extends StatelessWidget {
               ),
               SizedBox(height: 6.h),
               Text(
-                context.localizedDigits(
-                  ZikrCatalog.formatIndian(total ?? ZikrCatalog.mockTotalCount),
-                ),
+                context.localizedDigits(ZikrCatalog.formatIndian(total ?? 0)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,

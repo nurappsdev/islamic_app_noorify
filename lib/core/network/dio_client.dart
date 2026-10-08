@@ -33,6 +33,13 @@ class DioClient {
       ),
     );
 
+    // Sent on every request (GET/POST/PUT/PATCH/DELETE alike) since it lives
+    // on the shared BaseOptions, not on any one call site.
+    dio.options.headers.addAll({
+      'Accept': 'application/json',
+      'X-API-Key': ApiConstants.apiKey,
+    });
+
     if (kDebugMode) {
       dio.interceptors.add(_ColorLogInterceptor());
     }

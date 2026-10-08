@@ -145,65 +145,77 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
       child: Scaffold(
         backgroundColor: context.appPalette.background,
         body: SafeArea(
-          child: Stack(
+          child: Column(
             children: [
-              RefreshIndicator(
-                onRefresh: _onRefresh,
-                color: AppColor.primary,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
-                  child: Column(
-                    children: [
-                      const HomeHeader(),
-                      SizedBox(height: 10.h),
-                      const AmalTrackerCard(),
-
-                      SizedBox(height: 16.h),
-                      KeyedSubtree(
-                        key: ValueKey(
-                          'prayer-time-card-${language.name}-$_refreshTick',
-                        ),
-                        child: const PrayerTimeCard(),
-                      ),
-                      SizedBox(height: 24.h),
-                      KeyedSubtree(
-                        key: ValueKey(
-                          'prohibited-prayer-times-${language.name}-$_refreshTick',
-                        ),
-                        child: const ProhibitedPrayerTimesCard(),
-                      ),
-                      SizedBox(height: 16.h),
-                      HomeFeatureCardSlider(
-                        key: ValueKey('home-feature-slider-${language.name}'),
-                        height: 350.h,
-                        children: [
-                          KeyedSubtree(
-                            key: ValueKey('fardh-prayer-$_refreshTick'),
-                            child: const _FardhPrayerCard(),
-                          ),
-                          const _HadithReadingCard(),
-                          const _QuranCard(),
-                          KeyedSubtree(
-                            key: ValueKey('nafl-more-$_refreshTick'),
-                            child: const _NaflMoreCard(),
-                          ),
-                          const _ZikrCard(),
-                          const _SunnahWitrCard(),
-                          const _QuizCard(),
-                        ],
-                      ),
-                      // SizedBox(height: 14.h),
-                      const HomeProgressSection(),
-                      SizedBox(height: 10.h),
-                      const HomeFeatureGrid(),
-                    ],
-                  ),
-                ),
+              // Fixed above the scroll view (not inside it), so it never
+              // scrolls away with the content below.
+              Padding(
+                padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
+                child: const HomeHeader(),
               ),
-              const Align(
-                alignment: Alignment.bottomCenter,
-                child: HomeBottomNav(),
+              Expanded(
+                child: Stack(
+                  children: [
+                    RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      color: AppColor.primary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
+                        child: Column(
+                          children: [
+                            const AmalTrackerCard(),
+
+                            SizedBox(height: 16.h),
+                            KeyedSubtree(
+                              key: ValueKey(
+                                'prayer-time-card-${language.name}-$_refreshTick',
+                              ),
+                              child: const PrayerTimeCard(),
+                            ),
+                            SizedBox(height: 24.h),
+                            KeyedSubtree(
+                              key: ValueKey(
+                                'prohibited-prayer-times-${language.name}-$_refreshTick',
+                              ),
+                              child: const ProhibitedPrayerTimesCard(),
+                            ),
+                            SizedBox(height: 16.h),
+                            HomeFeatureCardSlider(
+                              key: ValueKey(
+                                'home-feature-slider-${language.name}',
+                              ),
+                              height: 350.h,
+                              children: [
+                                KeyedSubtree(
+                                  key: ValueKey('fardh-prayer-$_refreshTick'),
+                                  child: const _FardhPrayerCard(),
+                                ),
+                                const _HadithReadingCard(),
+                                const _QuranCard(),
+                                KeyedSubtree(
+                                  key: ValueKey('nafl-more-$_refreshTick'),
+                                  child: const _NaflMoreCard(),
+                                ),
+                                const _ZikrCard(),
+                                const _SunnahWitrCard(),
+                                const _QuizCard(),
+                              ],
+                            ),
+                            // SizedBox(height: 14.h),
+                            const HomeProgressSection(),
+                            SizedBox(height: 10.h),
+                            const HomeFeatureGrid(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Align(
+                      alignment: Alignment.bottomCenter,
+                      child: HomeBottomNav(),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

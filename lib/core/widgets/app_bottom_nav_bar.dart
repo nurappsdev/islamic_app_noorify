@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// One destination of an [AppBottomNavBar].
 class AppBottomNavItem {
@@ -42,22 +43,24 @@ class AppBottomNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        padding: const EdgeInsets.all(8),
+        margin: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 10.h),
+        padding: EdgeInsets.all(6.r),
         decoration: BoxDecoration(
           color: _barColor,
-          borderRadius: BorderRadius.circular(36),
+          borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
               color: _shadowColor.withValues(alpha: .16),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              blurRadius: 12.r,
+              offset: Offset(0, 3.h),
             ),
           ],
         ),
         child: LayoutBuilder(
           builder: (context, bounds) {
             // Too narrow for a label: the selected item shows its icon only.
+            // Compared against the real available width, not a design-size
+            // value, so this threshold is intentionally left unscaled.
             final showLabel = bounds.maxWidth >= 300;
             return Row(
               children: [
@@ -98,27 +101,27 @@ class _NavButton extends StatelessWidget {
         message: item.label,
         child: Material(
           color: selected ? AppBottomNavBar._selectedColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(22.r),
           child: InkWell(
             key: item.key,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(22.r),
             onTap: item.onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: 12.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(item.icon, color: Colors.white, size: 24),
+                  Icon(item.icon, color: Colors.white, size: 20.sp),
                   if (selected && showLabel) ...[
-                    const SizedBox(width: 6),
+                    SizedBox(width: 5.w),
                     Flexible(
                       child: Text(
                         item.label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

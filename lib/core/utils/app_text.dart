@@ -86,6 +86,8 @@ class AppText {
     required this.deleteRingtoneTitle,
     required this.deleteRingtoneMessage,
     required this.deleteRingtoneConfirm,
+    required this.alarmNotSetForPrayer,
+    required this.exactAlarmPermissionNeeded,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -315,6 +317,10 @@ class AppText {
     required this.zikrTapToCount,
     required this.zikrCompletingProgress,
     required this.zikrCompleted,
+    required this.zikrNameSubhanAllah,
+    required this.zikrNameAlhamdulillah,
+    required this.zikrNameAllahuAkbar,
+    required this.zikrNameFinalZikr,
     required this.duaIntroTitle,
     required this.duaIntroSubtitle,
     required this.duaIntroStartButton,
@@ -862,6 +868,14 @@ class AppText {
     required this.leaderboardTitle,
     required this.yourRank,
     required this.ptsToRank,
+    required this.deleteAccountConfirmPasswordTitle,
+    required this.deleteAccountConfirmPasswordMessage,
+    required this.deleteAccountPasswordHint,
+    required this.deleteAccountEmptyPassword,
+    required this.deleteAccountIncorrectPassword,
+    required this.deleteAccountFinalTitle,
+    required this.deleteAccountFinalMessage,
+    required this.deleteAccountFailureMessage,
   });
 
   final String tuhfatulMuslim;
@@ -943,6 +957,8 @@ class AppText {
   final String deleteRingtoneTitle;
   final String deleteRingtoneMessage;
   final String deleteRingtoneConfirm;
+  final String alarmNotSetForPrayer;
+  final String exactAlarmPermissionNeeded;
 
   // Amol tracking feature
   final String amolTracking;
@@ -1188,6 +1204,10 @@ class AppText {
   final String zikrTapToCount;
   final String zikrCompletingProgress;
   final String zikrCompleted;
+  final String zikrNameSubhanAllah;
+  final String zikrNameAlhamdulillah;
+  final String zikrNameAllahuAkbar;
+  final String zikrNameFinalZikr;
 
   // Dua feature
   final String duaIntroTitle;
@@ -1752,6 +1772,16 @@ class AppText {
   final String yourRank;
   final String ptsToRank;
 
+  // Delete account flow
+  final String deleteAccountConfirmPasswordTitle;
+  final String deleteAccountConfirmPasswordMessage;
+  final String deleteAccountPasswordHint;
+  final String deleteAccountEmptyPassword;
+  final String deleteAccountIncorrectPassword;
+  final String deleteAccountFinalTitle;
+  final String deleteAccountFinalMessage;
+  final String deleteAccountFailureMessage;
+
   String categoryLabel(String key) {
     switch (key) {
       case 'Fardh Prayer':
@@ -2019,6 +2049,16 @@ class AppText {
         map,
         'deleteRingtoneConfirm',
         fallback?.deleteRingtoneConfirm ?? '',
+      ),
+      alarmNotSetForPrayer: _read(
+        map,
+        'alarmNotSetForPrayer',
+        fallback?.alarmNotSetForPrayer ?? '',
+      ),
+      exactAlarmPermissionNeeded: _read(
+        map,
+        'exactAlarmPermissionNeeded',
+        fallback?.exactAlarmPermissionNeeded ?? '',
       ),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),
@@ -2833,6 +2873,26 @@ class AppText {
         fallback?.zikrCompletingProgress ?? '',
       ),
       zikrCompleted: _read(map, 'zikrCompleted', fallback?.zikrCompleted ?? ''),
+      zikrNameSubhanAllah: _read(
+        map,
+        'zikrNameSubhanAllah',
+        fallback?.zikrNameSubhanAllah ?? '',
+      ),
+      zikrNameAlhamdulillah: _read(
+        map,
+        'zikrNameAlhamdulillah',
+        fallback?.zikrNameAlhamdulillah ?? '',
+      ),
+      zikrNameAllahuAkbar: _read(
+        map,
+        'zikrNameAllahuAkbar',
+        fallback?.zikrNameAllahuAkbar ?? '',
+      ),
+      zikrNameFinalZikr: _read(
+        map,
+        'zikrNameFinalZikr',
+        fallback?.zikrNameFinalZikr ?? '',
+      ),
       duaIntroTitle: _read(map, 'duaIntroTitle', fallback?.duaIntroTitle ?? ''),
       duaIntroSubtitle: _read(
         map,
@@ -4948,6 +5008,46 @@ class AppText {
       ),
       yourRank: _read(map, 'yourRank', fallback?.yourRank ?? ''),
       ptsToRank: _read(map, 'ptsToRank', fallback?.ptsToRank ?? ''),
+      deleteAccountConfirmPasswordTitle: _read(
+        map,
+        'deleteAccountConfirmPasswordTitle',
+        fallback?.deleteAccountConfirmPasswordTitle ?? '',
+      ),
+      deleteAccountConfirmPasswordMessage: _read(
+        map,
+        'deleteAccountConfirmPasswordMessage',
+        fallback?.deleteAccountConfirmPasswordMessage ?? '',
+      ),
+      deleteAccountPasswordHint: _read(
+        map,
+        'deleteAccountPasswordHint',
+        fallback?.deleteAccountPasswordHint ?? '',
+      ),
+      deleteAccountEmptyPassword: _read(
+        map,
+        'deleteAccountEmptyPassword',
+        fallback?.deleteAccountEmptyPassword ?? '',
+      ),
+      deleteAccountIncorrectPassword: _read(
+        map,
+        'deleteAccountIncorrectPassword',
+        fallback?.deleteAccountIncorrectPassword ?? '',
+      ),
+      deleteAccountFinalTitle: _read(
+        map,
+        'deleteAccountFinalTitle',
+        fallback?.deleteAccountFinalTitle ?? '',
+      ),
+      deleteAccountFinalMessage: _read(
+        map,
+        'deleteAccountFinalMessage',
+        fallback?.deleteAccountFinalMessage ?? '',
+      ),
+      deleteAccountFailureMessage: _read(
+        map,
+        'deleteAccountFailureMessage',
+        fallback?.deleteAccountFailureMessage ?? '',
+      ),
     );
   }
 

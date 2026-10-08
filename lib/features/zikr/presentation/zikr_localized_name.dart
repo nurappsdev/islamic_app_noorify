@@ -1,0 +1,48 @@
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+
+/// The English/Bangla label for a Home Screen Zikr section item (Prayer
+/// Zikr 1 & 2), resolved from [ZikrItem.trackingKey] via the app's active
+/// language. `null` for any zikr outside that section ([ZikrItem.name] is
+/// shown as-is for those, same as before).
+String? localizedTrackedZikrName(AppText appText, String? trackingKey) {
+  switch (trackingKey) {
+    case 'subhanAllah1':
+      return appText.zikrNameSubhanAllah;
+    case 'alhamdulillah1':
+      return appText.zikrNameAlhamdulillah;
+    case 'allahuAkbar1':
+      return appText.zikrNameAllahuAkbar;
+    case 'finalZikr2':
+      return appText.zikrNameFinalZikr;
+    default:
+      return null;
+  }
+}
+
+/// The English/Bangla label for a "My Created Zikr" / planner item seeded
+/// from the catalog's SubhanAllah / Alhamdulillah / Allahu Akbar, resolved
+/// from its stored `nameKey` via the app's active language. `null` for a
+/// zikr the user typed themselves (its own name is shown as-is).
+String? localizedSeedZikrName(AppText appText, String? nameKey) {
+  switch (nameKey) {
+    case 'subhanAllah':
+      return appText.zikrNameSubhanAllah;
+    case 'alhamdulillah':
+      return appText.zikrNameAlhamdulillah;
+    case 'allahuAkbar':
+      return appText.zikrNameAllahuAkbar;
+    default:
+      return null;
+  }
+}
+
+/// The `nameKey` to persist for a zikr picked from the catalog's dropdown
+/// (SubhanAllah / Alhamdulillah / Allahu Akbar), matched by its English
+/// [ZikrItem.name]. `null` for a custom, user-typed name.
+String? zikrNameKeyFor(String name) {
+  if (name == ZikrCatalog.subhanAllah.name) return 'subhanAllah';
+  if (name == ZikrCatalog.alhamdulillah.name) return 'alhamdulillah';
+  if (name == ZikrCatalog.allahuAkbar.name) return 'allahuAkbar';
+  return null;
+}

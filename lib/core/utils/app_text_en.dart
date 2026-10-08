@@ -80,6 +80,10 @@ const Map<String, String> appTextEn = <String, String>{
   'deleteRingtoneTitle': 'Delete Ringtone',
   'deleteRingtoneMessage': 'Are you sure you want to delete this ringtone?',
   'deleteRingtoneConfirm': 'Delete',
+  'alarmNotSetForPrayer': 'Alarm not set for this prayer',
+  'exactAlarmPermissionNeeded':
+      'Please allow alarms & reminders in Settings so your prayer alarms '
+      'can ring on time.',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',
@@ -336,6 +340,11 @@ const Map<String, String> appTextEn = <String, String>{
   'zikrTapToCount': 'Tap to Count',
   'zikrCompletingProgress': 'Completing progress',
   'zikrCompleted': 'Completed',
+  'zikrNameSubhanAllah': 'SubhanAllah',
+  'zikrNameAlhamdulillah': 'Alhamdulillah',
+  'zikrNameAllahuAkbar': 'Allahu Akbar',
+  'zikrNameFinalZikr':
+      "La ilaha illallahu wahdahu la sharika lah, lahul mulku wa lahul hamdu wa huwa 'ala kulli shay'in qadir",
   'duaIntroTitle': 'Dua',
   'duaIntroSubtitle': 'Strengthen your faith through daily supplication',
   'duaIntroStartButton': "Let's Get Start",
@@ -649,6 +658,17 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'appLanguage': 'App Language',
   'changePassword': 'Change Password',
   'deleteAccount': 'Delete Account',
+  'deleteAccountConfirmPasswordTitle': 'Confirm Your Password',
+  'deleteAccountConfirmPasswordMessage':
+      'For your security, please enter your current password to continue with account deletion.',
+  'deleteAccountPasswordHint': 'Enter your password',
+  'deleteAccountEmptyPassword': 'Please enter your password.',
+  'deleteAccountIncorrectPassword': 'Incorrect password. Please try again.',
+  'deleteAccountFinalTitle': 'Delete Account?',
+  'deleteAccountFinalMessage':
+      'Are you sure you want to permanently delete your account? This action cannot be undone.',
+  'deleteAccountFailureMessage':
+      "We couldn't delete your account right now. Please try again.",
 
   // App language feature
   'languageTitle': 'Language',
