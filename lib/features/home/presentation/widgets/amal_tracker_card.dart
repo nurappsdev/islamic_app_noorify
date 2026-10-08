@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
@@ -13,6 +15,7 @@ import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_shimmer.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/widgets/amal_tracker_tile.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});
@@ -107,18 +110,17 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     final progressLabel = localizedPercentage.isEmpty
         ? _formatPercentage(card.percentage)
         : '$localizedPercentage %';
-    final userName = card.type == 'todays_amol'
-        ? loggedInUserName
-        : resolveAmolTrackUserName(
-            profileName: card.userName,
-            dashboardName: loggedInUserName,
-          );
-
+    final userName = resolveAmolTrackUserName(
+      profileName: card.userName,
+      dashboardName: loggedInUserName,
+    );
     return _AmalTrackerItem(
       title: title,
       subtitle: _pointsLine(pointsText, subtitle),
       progressLabel: progressLabel,
       progress: progress,
+      // Each card's backend name takes priority; the profile is only a
+      // fallback for older or incomplete highlight-card responses.
       userName: userName,
       // Only the user's own position shows its rank in the leading tile.
       leadingText: card.type == 'my_monthly_position'
@@ -183,6 +185,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   int _currentPage = _initialPage;
   bool _isHolding = false;
   bool _isAutoSliding = false;
+  final ValueNotifier<int> _activeItem = ValueNotifier(0);
 
   /// How many cards the slider is currently showing; set on each build.
   int _itemCount = 0;
@@ -278,6 +281,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   void dispose() {
     _autoSlideTimer?.cancel();
     _pageController.dispose();
+    _activeItem.dispose();
     super.dispose();
   }
 
@@ -307,9 +311,8 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             : _withDisplayInfo(_items(appText), loggedInUserName);
         if (items.isEmpty) return const SizedBox.shrink();
         _itemCount = items.length;
-        return Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               height: AmalTrackerTile.height,
@@ -327,6 +330,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                     physics: const BouncingScrollPhysics(),
                     onPageChanged: (index) {
                       _currentPage = index;
+                      _activeItem.value = index % items.length;
                       // A manual swipe shouldn't get cut short by an auto-advance
                       // landing right after it, so give this slide a fresh 3s dwell.
                       _scheduleAutoSlide();
@@ -353,7 +357,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                           );
                         },
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          padding: EdgeInsets.zero,
                           child: _AmalSlide(
                             item: items[index],
                             isTodaysTrack: index == 0,
@@ -365,9 +369,44 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                 ),
               ),
             ),
+            SizedBox(height: 6.h),
+            _AmalCarouselDots(count: items.length, activeIndex: _activeItem),
           ],
         );
       },
+    );
+  }
+}
+
+class _AmalCarouselDots extends StatelessWidget {
+  const _AmalCarouselDots({required this.count, required this.activeIndex});
+
+  final int count;
+  final ValueListenable<int> activeIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = context.inkColor(amolProgressFillColor);
+    final inactiveColor = context.surfaceColor(amolProgressTrackColor);
+    return ValueListenableBuilder<int>(
+      valueListenable: activeIndex,
+      builder: (context, active, _) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var index = 0; index < count; index++)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              width: index == active ? 28.w : 12.r,
+              height: 12.r,
+              margin: EdgeInsets.symmetric(horizontal: 3.w),
+              decoration: BoxDecoration(
+                color: index == active ? activeColor : inactiveColor,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
