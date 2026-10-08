@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
@@ -386,8 +385,8 @@ class _AmalCarouselDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = context.inkColor(amolProgressFillColor);
-    final inactiveColor = context.surfaceColor(amolProgressTrackColor);
+    const activeColor = Color(0xFFA1AD59);
+    const inactiveColor = Color(0xFFDCE8B8);
     return ValueListenableBuilder<int>(
       valueListenable: activeIndex,
       builder: (context, active, _) => Row(
