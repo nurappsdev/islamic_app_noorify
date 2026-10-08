@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -184,7 +185,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   int _currentPage = _initialPage;
   bool _isHolding = false;
   bool _isAutoSliding = false;
-  final ValueNotifier<int> _activeItem = ValueNotifier(0);
 
   /// How many cards the slider is currently showing; set on each build.
   int _itemCount = 0;
@@ -280,7 +280,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   void dispose() {
     _autoSlideTimer?.cancel();
     _pageController.dispose();
-    _activeItem.dispose();
     super.dispose();
   }
 
@@ -329,7 +328,6 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                     physics: const BouncingScrollPhysics(),
                     onPageChanged: (index) {
                       _currentPage = index;
-                      _activeItem.value = index % items.length;
                       // A manual swipe shouldn't get cut short by an auto-advance
                       // landing right after it, so give this slide a fresh 3s dwell.
                       _scheduleAutoSlide();
@@ -369,7 +367,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
               ),
             ),
             SizedBox(height: 6.h),
-            _AmalCarouselDots(count: items.length, activeIndex: _activeItem),
+            _AmalCarouselDots(count: items.length, controller: _pageController),
           ],
         );
       },
@@ -378,33 +376,26 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
 }
 
 class _AmalCarouselDots extends StatelessWidget {
-  const _AmalCarouselDots({required this.count, required this.activeIndex});
+  const _AmalCarouselDots({required this.count, required this.controller});
 
   final int count;
-  final ValueListenable<int> activeIndex;
+  final PageController controller;
 
   @override
   Widget build(BuildContext context) {
     const activeColor = Color(0xFFA1AD59);
     const inactiveColor = Color(0xFFDCE8B8);
-    return ValueListenableBuilder<int>(
-      valueListenable: activeIndex,
-      builder: (context, active, _) => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          for (var index = 0; index < count; index++)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              width: index == active ? 28.w : 12.r,
-              height: 12.r,
-              margin: EdgeInsets.symmetric(horizontal: 3.w),
-              decoration: BoxDecoration(
-                color: index == active ? activeColor : inactiveColor,
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-            ),
-        ],
+    return SmoothPageIndicator(
+      controller: controller,
+      count: count,
+      effect: ExpandingDotsEffect(
+        activeDotColor: activeColor,
+        dotColor: inactiveColor,
+        dotHeight: 12.r,
+        dotWidth: 12.r,
+        expansionFactor: 28 / 12,
+        spacing: 6.w,
+        radius: 12.r,
       ),
     );
   }
