@@ -170,7 +170,9 @@ class _SignupViewState extends State<_SignupView> {
       isDense: isDense,
       constraints: BoxConstraints(minHeight: 48.h),
       errorStyle: TextStyle(color: _errorColor, fontSize: 11.5.sp, height: 1.2),
-      errorMaxLines: 3,
+      // Password errors are separate, localized lines. Do not cap them: a
+      // narrow screen must be able to show every remaining requirement.
+      errorMaxLines: null,
       filled: true,
       fillColor: context.surfaceColor(Colors.white),
       contentPadding:

@@ -28,94 +28,136 @@ class AmalTrackerTile extends StatelessWidget {
   /// Shown in the leading tile instead of the logo (e.g. a rank).
   final String? leadingText;
 
-  static double get radius => 20.r;
-  static double get ringSize => 68.r;
-  static double get ringHoleSize => 40.r;
+  static double get radius => 24.r;
+  static double get ringSize => 67.r;
+  static double get ringHoleSize => 47.r;
   static const ringStrokeFactor = .18;
-  static double get horizontalPadding => 20.w;
-  static double get verticalPadding => 8.h;
-  static double get leadingSize => 50.r;
+  static double get horizontalPadding => 18.w;
+  static double get verticalPadding => 7.h;
+  static double get leadingWidth => 62.w;
+  static double get leadingHeight => 62.h;
   static double get leadingGap => 14.w;
-  static double get ringGap => 8.w;
+  static double get ringGap => 12.w;
+  // The name pill lives above the green card body. This keeps it clear of
+  // the progress ring while still letting its bottom edge overlap the border.
+  static double get badgeTopInset => 15.h;
+  static double get badgeHeight => 28.h;
 
-  /// Height the tile needs; the Home slider (fixed-height page view) and its
-  /// loading placeholder use it so padding changes really resize the card.
-  static double get height => 80.h + 2 * verticalPadding;
+  /// The complete tile, including the reserved space for the overlapping
+  /// user-name badge.
+  static double get height => 110.h;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
-    TextStyle text(double size, {FontWeight? weight, double? height}) =>
-        TextStyle(
-          color: palette.textPrimary,
-          fontSize: size,
-          fontWeight: weight,
-          height: height,
-        );
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: verticalPadding,
-      ),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(palette.tint),
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: context.lineColor(palette.tint)),
-      ),
-      child: Row(
+    final progressTrack = context.surfaceColor(amolProgressTrackColor);
+    final progressFill = context.inkColor(amolProgressFillColor);
+    final textColor = context.inkColor(Colors.black);
+    return SizedBox(
+      height: height,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          _LeadingTile(leadingText: leadingText),
-          SizedBox(width: leadingGap),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: text(13.sp),
-                ),
-                if ((userName ?? '').isNotEmpty) ...[
-                  SizedBox(height: 2.h),
-                  Text(
-                    userName!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text(10.sp, weight: FontWeight.w600),
-                  ),
-                ],
-                if (subtitle.isNotEmpty) ...[
-                  SizedBox(height: 3.h),
-                  // The points, e.g. `Point : 72.25/1120`: the figure this card
-                  // is about, so it is set larger and bolder than the name.
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: palette.textStrong,
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ],
+          Positioned.fill(
+            top: badgeTopInset,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
+              decoration: BoxDecoration(
+                color: context.surfaceColor(palette.tint),
+                borderRadius: BorderRadius.circular(radius),
+                border: Border.all(color: context.lineColor(palette.tint)),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Keep both text columns usable on compact Android phones
+                  // without changing the card's proportion on normal widths.
+                  final compact = constraints.maxWidth < 330;
+                  final logoWidth = 62.r;
+                  final logoHeight = 62.r;
+                  final progressSize = compact ? 58.r : ringSize;
+                  final progressHoleSize = compact ? 40.r : ringHoleSize;
+                  final logoGap = compact ? 10.r : leadingGap;
+                  final progressGap = compact ? 10.r : ringGap;
+                  return Row(
+                    children: [
+                      _LeadingTile(
+                        leadingText: leadingText,
+                        width: logoWidth,
+                        height: logoHeight,
+                        backgroundColor: progressTrack,
+                        foregroundColor: progressFill,
+                      ),
+                      SizedBox(width: logoGap),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 14.h),
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.clip,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: progressGap),
+                      AmolProgressRing(
+                        label: progressLabel,
+                        progress: progress,
+                        dimension: progressSize,
+                        holeDimension: progressHoleSize,
+                        strokeFactor: ringStrokeFactor,
+                        holeColor: context.surfaceColor(palette.tint),
+                        trackColor: progressTrack,
+                        progressColor: progressFill,
+                        labelStyle: TextStyle(
+                          color: textColor,
+                          fontSize: compact ? 11.sp : 14.sp,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
-          SizedBox(width: ringGap),
-          AmolProgressRing(
-            label: progressLabel,
-            progress: progress,
-            dimension: ringSize,
-            holeDimension: ringHoleSize,
-            strokeFactor: ringStrokeFactor,
-            holeColor: palette.tint,
-            labelStyle: text(9.sp, weight: FontWeight.w700),
-          ),
+          if ((userName ?? '').isNotEmpty)
+            Positioned(
+              top: 0,
+              right: 20.w,
+              child: _UserNameBadge(
+                name: userName!,
+                borderColor: amolNameBadgeBorderColor,
+                textColor: textColor,
+              ),
+            ),
         ],
       ),
     );
@@ -123,36 +165,88 @@ class AmalTrackerTile extends StatelessWidget {
 }
 
 class _LeadingTile extends StatelessWidget {
-  const _LeadingTile({this.leadingText});
+  const _LeadingTile({
+    this.leadingText,
+    required this.width,
+    required this.height,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
 
   final String? leadingText;
+  final double width;
+  final double height;
+  final Color backgroundColor;
+  final Color foregroundColor;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.appPalette;
     return Container(
-      width: AmalTrackerTile.leadingSize,
-      height: AmalTrackerTile.leadingSize,
-      padding: EdgeInsets.all(leadingText == null ? 11.r : 0),
+      width: width,
+      height: height,
+      padding: EdgeInsets.all(leadingText == null ? 16.r : 0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: palette.tintSoft,
-        borderRadius: BorderRadius.circular(12.r),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(18.r),
       ),
       child: leadingText == null
           ? Image.asset(
               'assets/appLogo.png',
               fit: BoxFit.contain,
-              color: context.inkColor(const Color(0xFF879461)),
+              color: foregroundColor,
             )
           : Text(
               leadingText!,
               style: TextStyle(
-                color: palette.textPrimary,
+                color: context.inkColor(palette.textPrimary),
                 fontSize: 22.sp,
                 fontWeight: FontWeight.w700,
               ),
             ),
+    );
+  }
+}
+
+class _UserNameBadge extends StatelessWidget {
+  const _UserNameBadge({
+    required this.name,
+    required this.borderColor,
+    required this.textColor,
+  });
+
+  final String name;
+  final Color borderColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 180.w),
+      child: IntrinsicWidth(
+        child: Container(
+          height: AmalTrackerTile.badgeHeight,
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: context.surfaceColor(Colors.white),
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: borderColor, width: 1.2),
+          ),
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

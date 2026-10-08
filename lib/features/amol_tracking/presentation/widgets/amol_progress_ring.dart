@@ -5,6 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 
+/// The two colours shared by an Amol card's progress ring, name badge, and
+/// leading-logo tile. Keeping them here prevents those visual states from
+/// drifting apart as the card is reused in different screens.
+const amolProgressTrackColor = Color(0xFFFEFCD6);
+const amolProgressFillColor = Color(0xFF879461);
+const amolNameBadgeBorderColor = Color(0xFFA1AD59);
+
 class AmolProgressRing extends StatelessWidget {
   const AmolProgressRing({
     super.key,
@@ -13,6 +20,8 @@ class AmolProgressRing extends StatelessWidget {
     required this.dimension,
     required this.holeDimension,
     this.holeColor = const Color(0xFFDDE8AE),
+    this.trackColor = amolProgressTrackColor,
+    this.progressColor = amolProgressFillColor,
     this.labelStyle,
     this.strokeFactor = .12,
   });
@@ -25,6 +34,8 @@ class AmolProgressRing extends StatelessWidget {
   final double dimension;
   final double holeDimension;
   final Color holeColor;
+  final Color trackColor;
+  final Color progressColor;
   final TextStyle? labelStyle;
 
   @override
@@ -35,6 +46,8 @@ class AmolProgressRing extends StatelessWidget {
         painter: AmolProgressRingPainter(
           progress: progress,
           strokeFactor: strokeFactor,
+          trackColor: trackColor,
+          progressColor: progressColor,
         ),
         child: Center(
           child: Container(
@@ -70,10 +83,14 @@ class AmolProgressRingPainter extends CustomPainter {
   const AmolProgressRingPainter({
     required this.progress,
     this.strokeFactor = .12,
+    this.trackColor = amolProgressTrackColor,
+    this.progressColor = amolProgressFillColor,
   });
 
   final double progress;
   final double strokeFactor;
+  final Color trackColor;
+  final Color progressColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -84,13 +101,13 @@ class AmolProgressRingPainter extends CustomPainter {
     final clampedProgress = progress.clamp(0.0, 1.0);
 
     final trackPaint = Paint()
-      ..color = const Color(0xFFF0EE74)
+      ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
     final progressPaint = Paint()
-      ..color = const Color(0xFF879461)
+      ..color = progressColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -108,6 +125,8 @@ class AmolProgressRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant AmolProgressRingPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.strokeFactor != strokeFactor;
+        oldDelegate.strokeFactor != strokeFactor ||
+        oldDelegate.trackColor != trackColor ||
+        oldDelegate.progressColor != progressColor;
   }
 }

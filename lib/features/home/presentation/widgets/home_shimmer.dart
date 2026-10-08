@@ -64,8 +64,8 @@ class AmalTrackerCardShimmer extends StatelessWidget {
         child: Row(
           children: [
             _ShimmerBox(
-              width: AmalTrackerTile.leadingSize,
-              height: AmalTrackerTile.leadingSize,
+              width: AmalTrackerTile.leadingWidth,
+              height: AmalTrackerTile.leadingHeight,
               radius: 12.r,
             ),
             SizedBox(width: AmalTrackerTile.leadingGap),

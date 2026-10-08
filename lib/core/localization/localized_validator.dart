@@ -66,13 +66,23 @@ class LocalizedValidator {
   String? password(String? value) {
     final password = value ?? '';
     if (password.isEmpty) return _text.validatorPasswordEmpty;
-    if (password.length < passwordMinLength ||
-        !password.contains(RegExp(r'[A-Z]')) ||
-        !password.contains(RegExp(r'[0-9]')) ||
-        !password.contains(_specialForSignIn)) {
-      return _withNumber(_text.validatorPasswordRule, 'min', passwordMinLength);
-    }
-    return null;
+    final missingRequirements = passwordMissingRequirements(password);
+    return missingRequirements.isEmpty ? null : missingRequirements.join('\n');
+  }
+
+  /// Localized messages for only the password requirements that [value] has
+  /// not met yet. Keeping the requirements separate lets field errors update
+  /// as the user types instead of repeating requirements already satisfied.
+  List<String> passwordMissingRequirements(String? value) {
+    final password = value ?? '';
+    return [
+      if (password.length < passwordMinLength)
+        _withNumber(_text.validatorPasswordMin, 'min', passwordMinLength),
+      if (!password.contains(RegExp(r'[A-Z]')))
+        _text.validatorPasswordUppercase,
+      if (!password.contains(RegExp(r'[0-9]'))) _text.validatorPasswordNumber,
+      if (!password.contains(_specialForSignIn)) _text.validatorPasswordSpecial,
+    ];
   }
 
   /// [value] must equal [original].

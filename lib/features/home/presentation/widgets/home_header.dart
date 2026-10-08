@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/brand_colors.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
-import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
@@ -35,7 +34,6 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final palette = context.appPalette;
-    final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
     final dashboard = context.watch<HomeDashboardBloc>().state.dashboard;
     final dashboardName = context.localized(
       dashboard?.userSummary.localizedFullName,
@@ -86,22 +84,6 @@ class HomeHeader extends StatelessWidget {
         SizedBox.square(
           dimension: 32.r,
           child: IconButton(
-            tooltip: isDark
-                ? appText.themeSwitchToLight
-                : appText.themeSwitchToDark,
-            onPressed: () =>
-                context.read<AppPreferencesBloc>().add(const ToggleDarkTheme()),
-            padding: EdgeInsets.zero,
-            icon: Icon(
-              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              color: AppColor.primary,
-              size: 20.sp,
-            ),
-          ),
-        ),
-        SizedBox.square(
-          dimension: 32.r,
-          child: IconButton(
             tooltip: appText.alarm,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
@@ -120,8 +102,9 @@ class HomeHeader extends StatelessWidget {
                   dimension: 36.r,
                   child: IconButton(
                     tooltip: appText.notifications,
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(RouteNames.notifications),
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamed(RouteNames.notifications),
                     padding: EdgeInsets.zero,
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -136,7 +119,10 @@ class HomeHeader extends StatelessWidget {
                     right: 2.w,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      constraints: BoxConstraints(minWidth: 16.r, minHeight: 16.r),
+                      constraints: BoxConstraints(
+                        minWidth: 16.r,
+                        minHeight: 16.r,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF6969),
                         borderRadius: BorderRadius.circular(8.r),

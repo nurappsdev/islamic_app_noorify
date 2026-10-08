@@ -11,6 +11,8 @@ import 'package:tuhfatul_muslim/features/auth/data/repositories/account_reposito
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/reset_password.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/reset_password/reset_password_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key, this.resetToken});
@@ -24,7 +26,10 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   static const _logoImagePath = 'assets/appLogo.png';
+  static const _errorColor = Color(0xFFD93025);
 
+  final _formKey = GlobalKey<FormState>();
+  final _confirmFieldKey = GlobalKey<FormFieldState<String>>();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -46,6 +51,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     _bloc.add(
       ResetPasswordSubmitted(
         resetToken: widget.resetToken ?? '',
@@ -109,6 +115,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       filled: true,
       fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
+      errorStyle: TextStyle(color: _errorColor, fontSize: 11.5.sp, height: 1.2),
+      errorMaxLines: null,
       border: OutlineInputBorder(
         borderRadius: radius,
         borderSide: BorderSide(
@@ -125,6 +133,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor, width: 1.2),
+      ),
     );
   }
 
@@ -133,23 +149,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     required String hint,
     required bool obscureText,
     required VoidCallback onToggleVisibility,
+    required FormFieldValidator<String> validator,
     TextInputAction? textInputAction,
+    Key? fieldKey,
+    ValueChanged<String>? onChanged,
   }) {
-    return SizedBox(
-      height: 45.h,
-      child: TextField(
-        controller: controller,
+    return TextFormField(
+      key: fieldKey,
+      controller: controller,
+      obscureText: obscureText,
+      textInputAction: textInputAction,
+      validator: validator,
+      onChanged: onChanged,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      decoration: _fieldDecoration(
+        hint: hint,
+        prefixIcon: Icons.key_outlined,
         obscureText: obscureText,
-        textInputAction: textInputAction,
-        decoration: _fieldDecoration(
-          hint: hint,
-          prefixIcon: Icons.key_outlined,
-          obscureText: obscureText,
-          onToggleVisibility: onToggleVisibility,
-        ),
+        onToggleVisibility: onToggleVisibility,
       ),
     );
   }
+
+  String? _validatePassword(String? value) =>
+      LocalizedValidator.readOf(context).password(value);
+
+  String? _validateConfirmPassword(String? value) => LocalizedValidator.readOf(
+    context,
+  ).confirmPassword(value, _newPasswordController.text);
 
   @override
   Widget build(BuildContext context) {
@@ -245,28 +272,46 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 // ),
                 // ),
                 SizedBox(height: 40.h),
-                _passwordField(
-                  controller: _newPasswordController,
-                  hint: appText.newPassword,
-                  obscureText: _obscureNewPassword,
-                  textInputAction: TextInputAction.next,
-                  onToggleVisibility: () {
-                    setState(() {
-                      _obscureNewPassword = !_obscureNewPassword;
-                    });
-                  },
-                ),
-                SizedBox(height: 7.h),
-                _passwordField(
-                  controller: _confirmPasswordController,
-                  hint: appText.confirmPassword,
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  onToggleVisibility: () {
-                    setState(() {
-                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                    });
-                  },
+                LocalizedFormScope(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        _passwordField(
+                          controller: _newPasswordController,
+                          hint: appText.newPassword,
+                          obscureText: _obscureNewPassword,
+                          validator: _validatePassword,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (_) {
+                            if (_confirmPasswordController.text.isNotEmpty) {
+                              _confirmFieldKey.currentState?.validate();
+                            }
+                          },
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscureNewPassword = !_obscureNewPassword;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 7.h),
+                        _passwordField(
+                          controller: _confirmPasswordController,
+                          hint: appText.confirmPassword,
+                          obscureText: _obscureConfirmPassword,
+                          validator: _validateConfirmPassword,
+                          fieldKey: _confirmFieldKey,
+                          textInputAction: TextInputAction.done,
+                          onToggleVisibility: () {
+                            setState(() {
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 SizedBox(height: 78.h),
                 BlocBuilder<ResetPasswordBloc, ResetPasswordState>(

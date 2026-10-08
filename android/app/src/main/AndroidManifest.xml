@@ -15,6 +15,15 @@
          prompt) is deliberately not declared: it is restricted to a narrow
          set of app categories under Play policy and isn't appropriate here. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission
+        android:name="android.permission.USE_FULL_SCREEN_INTENT"
+        tools:node="remove" />
+    <!-- Remove restricted Exact Alarm permission -->
+    <uses-permission
+        android:name="android.permission.USE_EXACT_ALARM"
+        tools:node="remove"
+        tools:ignore="ExactAlarm" />
+
     <!-- USE_FULL_SCREEN_INTENT is deliberately not declared: alarms are shown
          as a high-priority (Importance.max/Priority.max, alarm-category)
          notification instead of a full-screen intent, which keeps the app

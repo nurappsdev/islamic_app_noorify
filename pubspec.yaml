@@ -35,6 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_screenutil: ^5.9.3
+  smooth_page_indicator: ^3.0.0
   bloc: ^9.2.1
   flutter_bloc: ^9.1.1
   dartz: ^0.10.1
@@ -153,3 +154,7 @@ flutter:
     - family: Noorehuda
       fonts:
         - asset: assets/fonts/quran/Noorehuda.ttf
+
+    - family: Ubuntu Medium
+      fonts:
+        - asset: assets/fonts/Ubuntu-Medium.ttf

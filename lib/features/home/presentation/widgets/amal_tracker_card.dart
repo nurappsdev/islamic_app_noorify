@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -13,6 +15,7 @@ import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_shimmer.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/widgets/amal_tracker_tile.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});
@@ -107,18 +110,17 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     final progressLabel = localizedPercentage.isEmpty
         ? _formatPercentage(card.percentage)
         : '$localizedPercentage %';
-    final userName = card.type == 'todays_amol'
-        ? loggedInUserName
-        : resolveAmolTrackUserName(
-            profileName: card.userName,
-            dashboardName: loggedInUserName,
-          );
-
+    final userName = resolveAmolTrackUserName(
+      profileName: card.userName,
+      dashboardName: loggedInUserName,
+    );
     return _AmalTrackerItem(
       title: title,
       subtitle: _pointsLine(pointsText, subtitle),
       progressLabel: progressLabel,
       progress: progress,
+      // Each card's backend name takes priority; the profile is only a
+      // fallback for older or incomplete highlight-card responses.
       userName: userName,
       // Only the user's own position shows its rank in the leading tile.
       leadingText: card.type == 'my_monthly_position'
@@ -307,9 +309,8 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
             : _withDisplayInfo(_items(appText), loggedInUserName);
         if (items.isEmpty) return const SizedBox.shrink();
         _itemCount = items.length;
-        return Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.topCenter,
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               height: AmalTrackerTile.height,
@@ -353,7 +354,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                           );
                         },
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          padding: EdgeInsets.zero,
                           child: _AmalSlide(
                             item: items[index],
                             isTodaysTrack: index == 0,
@@ -365,9 +366,37 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
                 ),
               ),
             ),
+            SizedBox(height: 6.h),
+            _AmalCarouselDots(count: items.length, controller: _pageController),
           ],
         );
       },
+    );
+  }
+}
+
+class _AmalCarouselDots extends StatelessWidget {
+  const _AmalCarouselDots({required this.count, required this.controller});
+
+  final int count;
+  final PageController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    const activeColor = Color(0xFFA1AD59);
+    const inactiveColor = Color(0xFFDCE8B8);
+    return SmoothPageIndicator(
+      controller: controller,
+      count: count,
+      effect: ExpandingDotsEffect(
+        activeDotColor: activeColor,
+        dotColor: inactiveColor,
+        dotHeight: 12.r,
+        dotWidth: 12.r,
+        expansionFactor: 28 / 12,
+        spacing: 6.w,
+        radius: 12.r,
+      ),
     );
   }
 }

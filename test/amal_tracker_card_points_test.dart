@@ -85,6 +85,7 @@ void main() {
     );
 
     expect(find.text('First in the month'), findsWidgets);
+    // The overlapping badge uses this card's backend-provided name.
     expect(find.text('Nizam Ilmi'), findsWidgets);
     expect(find.text('Point : 72.25/1120'), findsWidgets);
     // No date or year anywhere on the card.

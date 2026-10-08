@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
@@ -25,7 +27,11 @@ class SettingsScreen extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(appText.comingSoon)));
   }
 
-  static List<_SettingsItem> _items(BuildContext context, AppText appText) => [
+  static List<_SettingsItem> _items(
+    BuildContext context,
+    AppText appText,
+    bool isDark,
+  ) => [
     _SettingsItem(
       appText.aboutUs,
       Icons.person_outline,
@@ -62,6 +68,12 @@ class SettingsScreen extends StatelessWidget {
       onTap: () => Navigator.of(context).pushNamed(RouteNames.appLanguage),
     ),
     _SettingsItem(
+      isDark ? appText.themeSwitchToLight : appText.themeSwitchToDark,
+      isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+      onTap: () =>
+          context.read<AppPreferencesBloc>().add(const ToggleDarkTheme()),
+    ),
+    _SettingsItem(
       appText.changePassword,
       Icons.sync_alt_rounded,
       onTap: () => Navigator.of(context).push(
@@ -73,7 +85,8 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final items = _items(context, appText);
+    final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
+    final items = _items(context, appText, isDark);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
