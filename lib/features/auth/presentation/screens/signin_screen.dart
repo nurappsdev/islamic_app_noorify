@@ -98,6 +98,7 @@ class _SignInViewState extends State<_SignInView> {
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
       errorStyle: TextStyle(color: _errorColor, fontSize: 11.5.sp, height: 1.2),
+      errorMaxLines: null,
       errorBorder: OutlineInputBorder(
         borderRadius: radius,
         borderSide: const BorderSide(color: _errorColor),

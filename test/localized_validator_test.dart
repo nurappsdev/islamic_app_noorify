@@ -48,6 +48,26 @@ void main() {
       }
     });
 
+    test('password warnings include only unmet requirements', () {
+      expect(_en().password(''), 'Please enter your password');
+      expect(_en().passwordMissingRequirements('abc1234'), [
+        'Password must be at least 8 characters',
+        'Add at least one uppercase letter',
+        'Add at least one special character',
+      ]);
+      expect(_en().passwordMissingRequirements('Abc12345'), [
+        'Add at least one special character',
+      ]);
+      expect(_en().password('Abc12345'), 'Add at least one special character');
+      expect(_en().passwordMissingRequirements('Abc12345@'), isEmpty);
+      expect(_en().password('Abc12345@'), isNull);
+
+      // Removing a character from a valid password restores just its rule.
+      expect(_en().passwordMissingRequirements('Abc12345'), [
+        'Add at least one special character',
+      ]);
+    });
+
     test('every rule has a message in both languages, none left blank', () {
       final en = AppText.forLanguage(AppLanguage.english);
       final bn = AppText.forLanguage(AppLanguage.bangla);
