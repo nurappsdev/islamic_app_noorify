@@ -161,18 +161,45 @@ class ZikrPlan {
   );
 }
 
+class UserTasbihLastZikr {
+  const UserTasbihLastZikr({
+    required this.zikrKey,
+    required this.zikrName,
+    required this.nameArabic,
+    required this.targetCount,
+    required this.currentCount,
+  });
+
+  final String zikrKey;
+  final String zikrName;
+  final String nameArabic;
+  final int targetCount;
+  final int currentCount;
+
+  factory UserTasbihLastZikr.fromJson(Map<String, dynamic> json) =>
+      UserTasbihLastZikr(
+        zikrKey: json['zikrKey']?.toString() ?? _zikrKey(json['zikrName']),
+        zikrName: json['zikrName']?.toString() ?? '',
+        nameArabic: json['nameArabic']?.toString() ?? '',
+        targetCount: _asInt(json['targetCount']) ?? 33,
+        currentCount: _asInt(json['currentCount']) ?? 0,
+      );
+}
+
 class UserTasbihProfile {
   const UserTasbihProfile({
     required this.lifetimeTotalCount,
     required this.mostPerformedZikrKey,
     required this.mostPerformedZikrName,
     required this.mostPerformedCount,
+    this.lastZikr,
   });
 
   final int lifetimeTotalCount;
   final String mostPerformedZikrKey;
   final String mostPerformedZikrName;
   final int mostPerformedCount;
+  final UserTasbihLastZikr? lastZikr;
 
   factory UserTasbihProfile.fromJson(Map<String, dynamic> json) =>
       UserTasbihProfile(
@@ -180,6 +207,11 @@ class UserTasbihProfile {
         mostPerformedZikrKey: json['mostPerformedZikrKey']?.toString() ?? '',
         mostPerformedZikrName: json['mostPerformedZikrName']?.toString() ?? '',
         mostPerformedCount: _asInt(json['mostPerformedCount']) ?? 0,
+        lastZikr: json['lastZikr'] is Map
+            ? UserTasbihLastZikr.fromJson(
+                Map<String, dynamic>.from(json['lastZikr'] as Map),
+              )
+            : null,
       );
 }
 

@@ -87,7 +87,9 @@ class _ZikrDashboardView extends StatelessWidget {
                   state.lastReadItem ??
                   _resolveLatestItem(state.profile, state.catalog);
               final latestDone = state.lastReadItem == null
-                  ? state.profile?.mostPerformedCount ?? 0
+                  ? state.profile?.lastZikr?.currentCount ??
+                        state.profile?.mostPerformedCount ??
+                        0
                   : state.lastReadCount;
               final presets = [
                 for (final routine in state.routines.where(
@@ -205,9 +207,17 @@ class _ZikrDashboardView extends StatelessWidget {
     UserTasbihProfile? profile,
     List<ZikrCatalogItem> catalog,
   ) {
-    if (profile == null || profile.mostPerformedZikrName.isEmpty) {
-      return null;
+    final lastZikr = profile?.lastZikr;
+    if (lastZikr != null && lastZikr.zikrName.isNotEmpty) {
+      return ZikrItem(
+        name: lastZikr.zikrName,
+        arabic: lastZikr.nameArabic,
+        transliteration: lastZikr.zikrName,
+        target: lastZikr.targetCount < 1 ? 33 : lastZikr.targetCount,
+        zikrKey: lastZikr.zikrKey,
+      );
     }
+    if (profile == null || profile.mostPerformedZikrName.isEmpty) return null;
     for (final item in catalog) {
       if (item.zikrName == profile.mostPerformedZikrName) {
         return item.toUiItem();

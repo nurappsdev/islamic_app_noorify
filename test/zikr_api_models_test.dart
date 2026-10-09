@@ -8,10 +8,19 @@ void main() {
       'mostPerformedZikrKey': 'subhanallah',
       'mostPerformedZikrName': 'Subhan-Allah',
       'mostPerformedCount': 42500,
+      'lastZikr': {
+        'zikrKey': 'subhanallah',
+        'zikrName': 'Subhan-Allah',
+        'nameArabic': 'سُبْحَانَ اللهِ',
+        'targetCount': 33,
+        'currentCount': 12,
+      },
     });
 
     expect(profile.lifetimeTotalCount, 176337);
     expect(profile.mostPerformedZikrKey, 'subhanallah');
+    expect(profile.lastZikr?.zikrName, 'Subhan-Allah');
+    expect(profile.lastZikr?.currentCount, 12);
   });
 
   test('parses plans and their nested items', () {
