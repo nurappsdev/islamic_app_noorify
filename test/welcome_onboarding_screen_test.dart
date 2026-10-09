@@ -16,7 +16,7 @@ void main() {
     expect(await OnboardingPreference.isCompleted(), isTrue);
   });
 
-  testWidgets('shows Bangla first and lets the user switch to English', (
+  testWidgets('shows English first and lets the user switch to Bangla', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -31,20 +31,18 @@ void main() {
         value: languageBloc,
         child: ScreenUtilInit(
           designSize: const Size(375, 812),
-          builder: (_, _) => const MaterialApp(
-            home: WelcomeOnboardingScreen(),
-          ),
+          builder: (_, _) => const MaterialApp(home: WelcomeOnboardingScreen()),
         ),
       ),
     );
 
-    expect(find.text('প্রতিটি ভালো আমলকে মূল্যবান করুন'), findsOneWidget);
-    expect(find.text('বাংলা'), findsOneWidget);
-
-    await tester.tap(find.bySemanticsLabel('Change language'));
-    await tester.pump();
-
     expect(find.text('Make Every Good Deed Count'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
+
+    await tester.tap(find.text('English'));
+    await tester.pump();
+
+    expect(find.text('প্রতিটি ভালো আমলকে মূল্যবান করুন'), findsOneWidget);
+    expect(find.text('বাংলা'), findsOneWidget);
   });
 }

@@ -16,6 +16,10 @@ class WelcomeOnboardingScreen extends StatefulWidget {
 
 class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
   final PageController _pageController = PageController();
+  // The welcome journey intentionally introduces the product in English. Once
+  // the visitor uses the toggle, their choice is also handed to LanguageBloc
+  // and is saved for the rest of the app.
+  AppLanguage _onboardingLanguage = AppLanguage.english;
   var _pageIndex = 0;
   var _isCompleting = false;
 
@@ -48,9 +52,17 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
     ).pushNamedAndRemoveUntil(destination, (route) => false);
   }
 
+  void _toggleLanguage() {
+    final next = _onboardingLanguage == AppLanguage.bangla
+        ? AppLanguage.english
+        : AppLanguage.bangla;
+    setState(() => _onboardingLanguage = next);
+    context.read<LanguageBloc>().add(UpdateLanguage(next));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final language = context.watch<LanguageBloc>().state.language;
+    final language = _onboardingLanguage;
     final isLastPage = _pageIndex == _onboardingPages.length - 1;
 
     return Scaffold(
@@ -69,9 +81,16 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
                 padding: EdgeInsets.fromLTRB(20.w, 8.h, 12.w, 0),
                 child: Row(
                   children: [
-                    if (_pageIndex == 0) const _LanguageToggle(),
+                    if (_pageIndex == 0)
+                      _LanguageToggle(
+                        language: language,
+                        onTap: _toggleLanguage,
+                      ),
                     const Spacer(),
-                    _SkipButton(onPressed: _isCompleting ? null : _complete),
+                    _SkipButton(
+                      language: language,
+                      onPressed: _isCompleting ? null : _complete,
+                    ),
                   ],
                 ),
               ),
@@ -133,15 +152,14 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
 }
 
 class _LanguageToggle extends StatelessWidget {
-  const _LanguageToggle();
+  const _LanguageToggle({required this.language, required this.onTap});
+
+  final AppLanguage language;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final selected = context.watch<LanguageBloc>().state.language;
-    final next = selected == AppLanguage.bangla
-        ? AppLanguage.english
-        : AppLanguage.bangla;
-    final label = selected == AppLanguage.bangla ? 'বাংলা' : 'English';
+    final label = language == AppLanguage.bangla ? 'বাংলা' : 'English';
 
     return Semantics(
       button: true,
@@ -150,7 +168,7 @@ class _LanguageToggle extends StatelessWidget {
         color: Colors.white.withValues(alpha: .74),
         borderRadius: BorderRadius.circular(18.r),
         child: InkWell(
-          onTap: () => context.read<LanguageBloc>().add(UpdateLanguage(next)),
+          onTap: onTap,
           borderRadius: BorderRadius.circular(18.r),
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
@@ -181,13 +199,13 @@ class _LanguageToggle extends StatelessWidget {
 }
 
 class _SkipButton extends StatelessWidget {
-  const _SkipButton({required this.onPressed});
+  const _SkipButton({required this.language, required this.onPressed});
 
+  final AppLanguage language;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final language = context.watch<LanguageBloc>().state.language;
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
