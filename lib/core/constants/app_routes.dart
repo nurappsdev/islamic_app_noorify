@@ -136,6 +136,7 @@ import '../../features/dua/presentation/screens/dua_reader_screen.dart';
 import '../../features/dua/presentation/screens/dua_saved_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
+import '../../features/onboarding/presentation/screens/welcome_onboarding_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
 import '../../features/zikr/data/zikr_catalog.dart';
 import '../../features/zikr/data/models/zikr_api_models.dart';
@@ -690,6 +691,8 @@ class AppRoutes {
         return _page(ZikrCounterScreen(args: args), settings);
       case RouteNames.splash:
         return _page(const RamadanSplashScreen(), settings);
+      case RouteNames.onboardingHadith:
+        return _page(const WelcomeOnboardingScreen(), settings);
       case RouteNames.signIn:
         return _page(const SignInScreen(), settings);
       case RouteNames.signUp:

@@ -151,7 +151,7 @@ class _FeatureTile extends StatelessWidget {
               style: homeSerifStyle(
                 context: context,
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
             SizedBox(height: 10.h),
