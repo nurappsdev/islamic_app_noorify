@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_plan_model.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_planner_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_home_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_planner_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
 /// Zikr planner (design `devImg/img_20.png`), reached from index 1 ("Planner")
 /// of [ZikrBottomNav].
 ///
-/// "My Plan", "Search Plan" and "Complete Plan" all read from
-/// [ZikrPlannerStore] (Hive-backed, device-local, fully reactive) — a plan
-/// created on [ZikrPlanCreateScreen] appears here immediately, and a plan
-/// moves to "Complete Plan" as soon as every one of its zikr reaches target.
+/// "My Plan", "Search Plan" and "Complete Plan" are loaded from their
+/// corresponding backend API queries.
 class ZikrPlannerScreen extends StatefulWidget {
   const ZikrPlannerScreen({super.key});
 
@@ -28,9 +31,11 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
   int _tab = 0; // 0 = My Plan, 1 = Search Plan, 2 = Complete Plan
   final _searchController = TextEditingController();
   String _query = '';
+  late final ZikrPlannerCubit _cubit = ZikrPlannerCubit(zikrRepository);
 
   @override
   void dispose() {
+    _cubit.close();
     _searchController.dispose();
     super.dispose();
   }
@@ -39,12 +44,38 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
     await Navigator.of(context).pushNamed(RouteNames.zikrPlanCreate);
     if (!mounted) return;
     setState(() => _tab = 0);
+    await _cubit.selectTab(0);
   }
 
-  void _openPlan(ZikrPlanModel plan) {
-    Navigator.of(
-      context,
-    ).pushNamed(RouteNames.zikrPlanDetail, arguments: plan.id);
+  Future<void> _openPlan(ZikrPlan plan) async {
+    if (_tab == 1) {
+      try {
+        await _cubit.enroll(plan.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Plan started successfully.')),
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          if (error is AuthenticationRequiredException) {
+            await showZikrLoginRequiredDialog(context);
+            return;
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
+        }
+      }
+      return;
+    }
+    Navigator.of(context).pushNamed(RouteNames.zikrPlanDetail, arguments: plan);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cubit.load();
   }
 
   @override
@@ -52,107 +83,122 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+    return BlocProvider.value(
+      value: _cubit,
+      child: BlocListener<ZikrPlannerCubit, ZikrPlannerState>(
+        listenWhen: (previous, current) =>
+            previous.error != current.error &&
+            current.error?.contains('AuthenticationRequiredException') == true,
+        listener: (context, _) => showZikrLoginRequiredDialog(context),
+        child: Scaffold(
+          backgroundColor: context.pageColor(Colors.white),
+          body: SafeArea(
+            child: Stack(
               children: [
-                SizedBox(height: 6.h),
-                _PlannerTabs(
-                  labels: [
-                    appText.myPlan,
-                    appText.searchPlan,
-                    appText.completePlan,
-                  ],
-                  selected: _tab,
-                  onChanged: (i) => setState(() => _tab = i),
-                ),
-                if (_tab == 1) ...[
-                  SizedBox(height: 16.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value) =>
-                          setState(() => _query = value.trim()),
-                      decoration: InputDecoration(
-                        hintText: appText.searchPlan,
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16.w,
-                          vertical: 12.h,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24.r),
-                          borderSide: BorderSide(
-                            color: context.lineColor(Color(0xFFDDE8C1)),
+                Column(
+                  children: [
+                    SizedBox(height: 6.h),
+                    _PlannerTabs(
+                      labels: [
+                        appText.myPlan,
+                        appText.searchPlan,
+                        appText.completePlan,
+                      ],
+                      selected: _tab,
+                      onChanged: (i) {
+                        setState(() => _tab = i);
+                        _cubit.selectTab(i);
+                      },
+                    ),
+                    if (_tab == 1) ...[
+                      SizedBox(height: 16.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) =>
+                              setState(() => _query = value.trim()),
+                          decoration: InputDecoration(
+                            hintText: appText.searchPlan,
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(
+                                color: context.lineColor(Color(0xFFDDE8C1)),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: const BorderSide(
+                                color: AppColor.primary,
+                              ),
+                            ),
                           ),
                         ),
-                        focusedBorder: OutlineInputBorder(
+                      ),
+                    ],
+                    Expanded(
+                      child: BlocBuilder<ZikrPlannerCubit, ZikrPlannerState>(
+                        builder: (context, state) =>
+                            _buildTabBody(appText, state),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_tab != 2)
+                  Positioned(
+                    right: 24.w,
+                    bottom: 78.h + bottomInset,
+                    child: FilledButton.icon(
+                      onPressed: _createPlan,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF9AAA63),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 12.h,
+                        ),
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24.r),
-                          borderSide: const BorderSide(color: AppColor.primary),
+                        ),
+                      ),
+                      icon: Icon(Icons.edit_outlined, size: 18.sp),
+                      label: Text(
+                        appText.createPlan,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
-                ],
-                Expanded(
-                  child: ValueListenableBuilder<List<ZikrPlanModel>>(
-                    valueListenable: ZikrPlannerStore.instance,
-                    builder: (context, _, _) => _buildTabBody(appText),
+                const SafeArea(
+                  top: false,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ZikrBottomNav(selectedIndex: 1),
                   ),
                 ),
               ],
             ),
-            if (_tab != 2)
-              Positioned(
-                right: 24.w,
-                bottom: 78.h + bottomInset,
-                child: FilledButton.icon(
-                  onPressed: _createPlan,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF9AAA63),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 18.w,
-                      vertical: 12.h,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.r),
-                    ),
-                  ),
-                  icon: Icon(Icons.edit_outlined, size: 18.sp),
-                  label: Text(
-                    appText.createPlan,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            const SafeArea(
-              top: false,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: ZikrBottomNav(selectedIndex: 1),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTabBody(AppText appText) {
+  Widget _buildTabBody(AppText appText, ZikrPlannerState state) {
     final daysLabel = appText.zikrPlanDays.toLowerCase();
-    final store = ZikrPlannerStore.instance;
-
+    if (state.status == ZikrLoadStatus.loading && state.plans.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_tab == 2) {
-      final plans = store.completedPlans;
+      final plans = state.plans;
       if (plans.isEmpty) {
         return Center(
           child: Transform.translate(
@@ -169,12 +215,12 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
       );
     }
 
-    var plans = store.activePlans;
+    var plans = state.plans;
     if (_tab == 1 && _query.isNotEmpty) {
       final query = _query.toLowerCase();
       plans = [
         for (final plan in plans)
-          if (plan.name.toLowerCase().contains(query)) plan,
+          if (plan.planName.toLowerCase().contains(query)) plan,
       ];
     }
     if (plans.isEmpty) {
@@ -197,10 +243,10 @@ class _PlanList extends StatelessWidget {
     this.statusLabel,
   });
 
-  final List<ZikrPlanModel> plans;
+  final List<ZikrPlan> plans;
   final String daysLabel;
   final String? statusLabel;
-  final ValueChanged<ZikrPlanModel> onTap;
+  final ValueChanged<ZikrPlan> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +287,7 @@ class _PlanList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        plan.name,
+                        plan.planName,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -251,8 +297,8 @@ class _PlanList extends StatelessWidget {
                       SizedBox(height: 3.h),
                       Text(
                         context.localizedDigits(
-                          '${plan.totalDone}/${plan.totalTarget} '
-                          '( ${plan.durationDays} $daysLabel )',
+                          '${plan.currentCount}/${plan.totalTargetCount} '
+                          '( ${plan.completionDays} $daysLabel )',
                         ),
                         style: TextStyle(
                           fontSize: 12.sp,

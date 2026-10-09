@@ -7,12 +7,7 @@ import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
 /// Navigation bar dedicated to the Zikr flow.
 ///
 /// Index 0 = the Zikr home (the same way the Hadith library is index 0 of
-/// [HadithBottomNav]); 1 = the Zikr planner.
-///
-/// The Zikr stats dashboard (formerly index 2, [RouteNames.zikrStats]) is
-/// temporarily hidden from this bar — its tab below is commented out, not
-/// deleted. [ZikrStatsScreen] and its route are untouched; re-add the item
-/// below to bring the tab back.
+/// [HadithBottomNav]); 1 = the Zikr planner; 2 = the Zikr stats dashboard.
 class ZikrBottomNav extends StatelessWidget {
   const ZikrBottomNav({super.key, this.selectedIndex = 0});
 
@@ -38,14 +33,11 @@ class ZikrBottomNav extends StatelessWidget {
           label: appText.planner,
           onTap: go(1, RouteNames.zikrPlanner),
         ),
-        // Dashboard tab — temporarily hidden, not deleted. Uncomment to
-        // restore it (and change the Home/Planner `go` calls above back to
-        // index-aware ones if this is re-enabled while index 2 exists again).
-        // AppBottomNavItem(
-        //   icon: Icons.grid_view_rounded,
-        //   label: appText.dashboard,
-        //   onTap: go(2, RouteNames.zikrStats),
-        // ),
+        AppBottomNavItem(
+          icon: Icons.grid_view_rounded,
+          label: appText.dashboard,
+          onTap: go(2, RouteNames.zikrStats),
+        ),
       ],
     );
   }

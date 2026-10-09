@@ -1,44 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_model.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_home_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
 /// Zikr dashboard — the home of the Zikr flow, reached from "Let's Get Start"
 /// on [ZikrIntroScreen].
 ///
-/// "Total Zikr", "Last Zikr" and the two Prayer Zikr pills come from
-/// [ZikrProgressStore]; "My Created Zikr" comes from [CustomZikrStore] (both
-/// Hive-backed, device-local, and fully reactive). Tapping a zikr opens
-/// [ZikrCounterScreen]; the `+` button opens the "New Zikr" screen.
+/// Profile, routines, and catalog data are loaded from the Zikr API. Tapping
+/// a zikr opens [ZikrCounterScreen]; the `+` button opens the "New Zikr"
+/// screen.
 class ZikrDashboardScreen extends StatelessWidget {
   const ZikrDashboardScreen({super.key});
 
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ZikrHomeCubit(zikrRepository)..load(),
+      child: const _ZikrDashboardView(),
+    );
+  }
+}
+
+class _ZikrDashboardView extends StatelessWidget {
+  const _ZikrDashboardView();
+
   void _openCounter(BuildContext context, ZikrCounterArgs args) {
     Navigator.of(context).pushNamed(RouteNames.zikrCounter, arguments: args);
-  }
-
-  /// The [ZikrItem] matching [ZikrProgressStore.latestKey], or `null` if
-  /// nothing has been counted yet.
-  ZikrItem? _resolveLatestItem() {
-    final key = ZikrProgressStore.instance.latestKey;
-    if (key == null) return null;
-    for (final preset in ZikrCatalog.prayerPresets) {
-      for (final item in preset.items) {
-        if (item.trackingKey == key) return item;
-      }
-    }
-    return null;
   }
 
   @override
@@ -46,127 +47,150 @@ class ZikrDashboardScreen extends StatelessWidget {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: Stack(
-        children: [
-          ValueListenableBuilder<Map<String, int>>(
-            valueListenable: ZikrProgressStore.instance,
-            builder: (context, _, _) {
-              final latestItem = _resolveLatestItem();
-              final latestDone = latestItem?.trackingKey == null
-                  ? 0
-                  : ZikrProgressStore.instance.countOf(
-                      latestItem!.trackingKey!,
-                    );
+    return BlocListener<ZikrHomeCubit, ZikrHomeState>(
+      listenWhen: (previous, current) =>
+          previous.error != current.error &&
+          current.error?.contains('AuthenticationRequiredException') == true,
+      listener: (context, _) => showZikrLoginRequiredDialog(context),
+      child: Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: Stack(
+          children: [
+            BlocBuilder<ZikrHomeCubit, ZikrHomeState>(
+              builder: (context, state) {
+                if (state.status == ZikrLoadStatus.loading &&
+                    state.profile == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final latestItem = _resolveLatestItem(
+                  state.profile,
+                  state.catalog,
+                );
+                final presets = [
+                  for (final routine in state.routines) routine.toUiPreset(),
+                ];
+                final customItems = [
+                  for (final item in state.catalog) item.toUiItem(),
+                ];
 
-              return ListView(
-                padding: EdgeInsets.only(bottom: 150.h + bottomInset),
-                children: [
-                  ZikrGradientHeader(
-                    title: appText.zikrTitle,
-                    total: ZikrProgressStore.instance.totalCount,
-                    trailing: Column(
-                      children: [
-                        _LastZikrPill(
-                          appText: appText,
-                          item: latestItem,
-                          done: latestDone,
-                          onTap: latestItem == null
-                              ? null
-                              : () => _openCounter(
-                                  context,
-                                  ZikrCounterArgs.fromItem(latestItem),
-                                ),
-                        ),
-                        SizedBox(height: 12.h),
-                        Row(
-                          children: [
-                            for (
-                              var i = 0;
-                              i < ZikrCatalog.prayerPresets.length;
-                              i++
-                            ) ...[
-                              if (i > 0) SizedBox(width: 12.w),
-                              Expanded(
-                                child: _PresetPill(
-                                  preset: ZikrCatalog.prayerPresets[i],
-                                  onTap: () => _openCounter(
+                return ListView(
+                  padding: EdgeInsets.only(bottom: 150.h + bottomInset),
+                  children: [
+                    ZikrGradientHeader(
+                      title: appText.zikrTitle,
+                      total: state.profile?.lifetimeTotalCount ?? 0,
+                      trailing: Column(
+                        children: [
+                          _LastZikrPill(
+                            appText: appText,
+                            item: latestItem,
+                            done: state.profile?.mostPerformedCount ?? 0,
+                            onTap: latestItem == null
+                                ? null
+                                : () => _openCounter(
                                     context,
-                                    ZikrCounterArgs.fromPreset(
-                                      ZikrCatalog.prayerPresets[i],
+                                    ZikrCounterArgs.fromItem(latestItem),
+                                  ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            children: [
+                              for (
+                                var i = 0;
+                                i < presets.length && i < 2;
+                                i++
+                              ) ...[
+                                if (i > 0) SizedBox(width: 12.w),
+                                Expanded(
+                                  child: _PresetPill(
+                                    preset: presets[i],
+                                    onTap: () => _openCounter(
+                                      context,
+                                      ZikrCounterArgs.fromPreset(presets[i]),
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 22.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Text(
-                      appText.zikrMyCreatedZikr,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: ValueListenableBuilder<List<CustomZikrModel>>(
-                      valueListenable: CustomZikrStore.instance,
-                      builder: (context, customZikr, _) {
-                        final items = [
-                          for (final model in customZikr)
-                            _zikrItemFor(appText, model),
-                        ];
-                        return _CreatedZikrCard(
-                          title: appText.zikrMyCreatedZikr,
-                          items: items,
-                          onOpenItem: (item) => _openCounter(
-                            context,
-                            ZikrCounterArgs.fromItem(item),
-                          ),
-                          onGetStart: items.isEmpty
-                              ? null
-                              : () => _openCounter(
-                                  context,
-                                  ZikrCounterArgs(
-                                    title: appText.zikrMyCreatedZikr,
-                                    items: items,
-                                  ),
-                                ),
-                        );
-                      },
+                    SizedBox(height: 22.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Text(
+                        appText.zikrMyCreatedZikr,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-          Positioned(
-            right: 24.w,
-            bottom: 74.h + bottomInset,
-            child: _AddButton(
-              onTap: () =>
-                  Navigator.of(context).pushNamed(RouteNames.zikrCreate),
+                    SizedBox(height: 12.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: _CreatedZikrCard(
+                        title: appText.zikrMyCreatedZikr,
+                        items: customItems,
+                        onOpenItem: (item) => _openCounter(
+                          context,
+                          ZikrCounterArgs.fromItem(item),
+                        ),
+                        onGetStart: customItems.isEmpty
+                            ? null
+                            : () => _openCounter(
+                                context,
+                                ZikrCounterArgs(
+                                  title: appText.zikrMyCreatedZikr,
+                                  items: customItems,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
-          ),
-          const SafeArea(
-            top: false,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: ZikrBottomNav(selectedIndex: 0),
+            Positioned(
+              right: 24.w,
+              bottom: 74.h + bottomInset,
+              child: _AddButton(
+                onTap: () =>
+                    Navigator.of(context).pushNamed(RouteNames.zikrCreate),
+              ),
             ),
-          ),
-        ],
+            const SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: ZikrBottomNav(selectedIndex: 0),
+              ),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  ZikrItem? _resolveLatestItem(
+    UserTasbihProfile? profile,
+    List<ZikrCatalogItem> catalog,
+  ) {
+    if (profile == null || profile.mostPerformedZikrName.isEmpty) {
+      return null;
+    }
+    for (final item in catalog) {
+      if (item.zikrName == profile.mostPerformedZikrName) {
+        return item.toUiItem();
+      }
+    }
+    return ZikrItem(
+      name: profile.mostPerformedZikrName,
+      arabic: '',
+      transliteration: profile.mostPerformedZikrName,
+      target: 33,
+      zikrKey: profile.mostPerformedZikrKey,
     );
   }
 }
@@ -261,15 +285,10 @@ class _PresetPill extends StatelessWidget {
   final ZikrPreset preset;
   final VoidCallback onTap;
 
-  /// Sum of every item's current Hive count in this preset.
-  int get _done => preset.items.fold(
-    0,
-    (sum, item) =>
-        sum +
-        (item.trackingKey == null
-            ? 0
-            : ZikrProgressStore.instance.countOf(item.trackingKey!)),
-  );
+  /// Routine progress is recorded on the server by the counter session.
+  /// The list endpoint has no per-routine current count, so this card starts
+  /// from zero until that field is supplied by the backend.
+  int get _done => 0;
 
   @override
   Widget build(BuildContext context) {
@@ -320,18 +339,6 @@ class _PresetPill extends StatelessWidget {
     );
   }
 }
-
-/// Builds the [ZikrItem] shown/opened for one "My Created Zikr" entry: its
-/// name follows the active language (via its seeded `nameKey`, when it has
-/// one) and its `trackingKey` routes [ZikrCounterScreen] to
-/// [CustomZikrStore].
-ZikrItem _zikrItemFor(AppText appText, CustomZikrModel model) => ZikrItem(
-  name: localizedSeedZikrName(appText, model.nameKey) ?? model.name,
-  arabic: model.arabic,
-  transliteration: model.transliteration,
-  target: model.target,
-  trackingKey: 'custom:${model.id}',
-);
 
 class _CreatedZikrCard extends StatelessWidget {
   const _CreatedZikrCard({
@@ -426,11 +433,7 @@ class _CreatedZikrCard extends StatelessWidget {
     );
   }
 
-  String _doneFor(ZikrItem item) {
-    final key = item.trackingKey;
-    if (key == null || !key.startsWith('custom:')) return '0';
-    return CustomZikrStore.instance.countOf(key.substring(7)).toString();
-  }
+  String _doneFor(ZikrItem item) => '0';
 }
 
 class _AddButton extends StatelessWidget {

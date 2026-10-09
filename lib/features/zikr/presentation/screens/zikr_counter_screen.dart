@@ -1,74 +1,20 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/custom_zikr_store.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_planner_store.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/tasbih_counter_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
-
-const _customKeyPrefix = 'custom:';
-const _planKeyPrefix = 'plan:';
-
-/// Reads [trackingKey]'s current count from whichever store owns it: a
-/// `custom:<id>` key (My Created Zikr) goes to [CustomZikrStore], a
-/// `plan:<planId>:<index>` key (the planner) goes to [ZikrPlannerStore], and
-/// every other key (Prayer Zikr 1 & 2) goes to [ZikrProgressStore].
-int _storeCountOf(String trackingKey) {
-  if (trackingKey.startsWith(_customKeyPrefix)) {
-    return CustomZikrStore.instance.countOf(
-      trackingKey.substring(_customKeyPrefix.length),
-    );
-  }
-  if (trackingKey.startsWith(_planKeyPrefix)) {
-    final parts = trackingKey.split(':');
-    return ZikrPlannerStore.instance.countOf(parts[1], int.parse(parts[2]));
-  }
-  return ZikrProgressStore.instance.countOf(trackingKey);
-}
-
-/// Taps [trackingKey] once in whichever store owns it — see [_storeCountOf].
-void _storeIncrement(String trackingKey, int target) {
-  if (trackingKey.startsWith(_customKeyPrefix)) {
-    CustomZikrStore.instance.increment(
-      trackingKey.substring(_customKeyPrefix.length),
-    );
-    return;
-  }
-  if (trackingKey.startsWith(_planKeyPrefix)) {
-    final parts = trackingKey.split(':');
-    ZikrPlannerStore.instance.incrementItem(parts[1], int.parse(parts[2]));
-    return;
-  }
-  ZikrProgressStore.instance.increment(trackingKey, target);
-}
-
-/// Resets every key in [trackingKeys] in whichever store owns it — see
-/// [_storeCountOf].
-void _storeResetAll(Iterable<String> trackingKeys) {
-  final progressKeys = <String>[];
-  for (final key in trackingKeys) {
-    if (key.startsWith(_customKeyPrefix)) {
-      CustomZikrStore.instance.reset(key.substring(_customKeyPrefix.length));
-    } else if (key.startsWith(_planKeyPrefix)) {
-      final parts = key.split(':');
-      ZikrPlannerStore.instance.resetItem(parts[1], int.parse(parts[2]));
-    } else {
-      progressKeys.add(key);
-    }
-  }
-  if (progressKeys.isNotEmpty) {
-    ZikrProgressStore.instance.resetAll(progressKeys);
-  }
-}
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
@@ -89,10 +35,8 @@ class ZikrCounterScreen extends StatefulWidget {
 }
 
 class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
-  late final List<int> _counts = [
-    for (final item in _items)
-      item.trackingKey == null ? 0 : _storeCountOf(item.trackingKey!),
-  ];
+  late final List<int> _counts = [for (final _ in _items) 0];
+  late final TasbihCounterCubit _sync = TasbihCounterCubit(zikrRepository);
   late final PageController _pageController = PageController(
     viewportFraction: 0.44,
   );
@@ -109,6 +53,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 
   @override
   void dispose() {
+    _sync.close();
     _pageController.dispose();
     super.dispose();
   }
@@ -141,16 +86,19 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       return;
     }
     HapticFeedback.selectionClick();
-    final trackingKey = _item.trackingKey;
     setState(() {
       _counts[_index]++;
-      if (trackingKey != null) {
-        _storeIncrement(trackingKey, _item.target);
-        _counts[_index] = _storeCountOf(trackingKey);
-      }
+    });
+    _sync.tap({
+      'zikrKey': _item.zikrKey,
+      'zikrName': _item.name,
+      if (_item.arabic.isNotEmpty) 'nameArabic': _item.arabic,
+      if (_item.routineId != null) 'routineId': _item.routineId,
+      if (_item.planId != null) 'planId': _item.planId,
     });
     if (_itemDone) {
       HapticFeedback.mediumImpact();
+      _sync.syncNow();
       final next = _nextIncomplete();
       if (next != null) _goToZikr(next);
     }
@@ -165,13 +113,6 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 
   void _reset() {
     HapticFeedback.lightImpact();
-    final trackingKeys = [
-      for (final item in _items)
-        if (item.trackingKey != null) item.trackingKey!,
-    ];
-    if (trackingKeys.isNotEmpty) {
-      _storeResetAll(trackingKeys);
-    }
     setState(() {
       for (var i = 0; i < _counts.length; i++) {
         _counts[i] = 0;
@@ -190,106 +131,121 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
         ? (_total / _totalTarget).clamp(0.0, 1.0)
         : 0.0;
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: ListView(
-        padding: EdgeInsets.only(bottom: 30.h),
-        children: [
-          ZikrGradientHeader(
-            title: widget.args.title.isEmpty
-                ? AppText.of(context).zikrTitle
-                : widget.args.title,
-            total: _total,
-          ),
-          Transform.translate(
-            offset: Offset(0, -18.h),
-            child: SizedBox(
-              height: 154.h,
-              child: PageView.builder(
-                controller: _pageController,
-                scrollDirection: Axis.vertical,
-                physics: _items.length > 1
-                    ? const BouncingScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                onPageChanged: (i) => setState(() => _index = i),
-                itemCount: _items.length,
-                itemBuilder: (context, i) {
-                  return AnimatedBuilder(
-                    animation: _pageController,
-                    builder: (context, child) {
-                      var delta = (_index - i).toDouble();
-                      if (_pageController.hasClients &&
-                          _pageController.position.haveDimensions) {
-                        delta = (_pageController.page ?? _index.toDouble()) - i;
-                      }
-                      final t = (1 - delta.abs()).clamp(0.0, 1.0);
-                      return Center(
-                        child: OverflowBox(
-                          minHeight: 0,
-                          maxHeight: double.infinity,
-                          child: Opacity(
-                            opacity: 0.18 + 0.82 * t,
-                            child: Transform.scale(
-                              scale: 0.78 + 0.22 * t,
-                              child: child,
+    return BlocProvider.value(
+      value: _sync,
+      child: BlocListener<TasbihCounterCubit, TasbihCounterState>(
+        listenWhen: (previous, current) =>
+            previous.error != current.error &&
+            current.error?.contains('AuthenticationRequiredException') == true,
+        listener: (context, _) => showZikrLoginRequiredDialog(context),
+        child: Scaffold(
+          backgroundColor: context.pageColor(Colors.white),
+          body: ListView(
+            padding: EdgeInsets.only(bottom: 30.h),
+            children: [
+              ZikrGradientHeader(
+                title: widget.args.title.isEmpty
+                    ? AppText.of(context).zikrTitle
+                    : widget.args.title,
+                total: _total,
+              ),
+              Transform.translate(
+                offset: Offset(0, -18.h),
+                child: SizedBox(
+                  height: 154.h,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    scrollDirection: Axis.vertical,
+                    physics: _items.length > 1
+                        ? const BouncingScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    onPageChanged: (i) => setState(() => _index = i),
+                    itemCount: _items.length,
+                    itemBuilder: (context, i) {
+                      return AnimatedBuilder(
+                        animation: _pageController,
+                        builder: (context, child) {
+                          var delta = (_index - i).toDouble();
+                          if (_pageController.hasClients &&
+                              _pageController.position.haveDimensions) {
+                            delta =
+                                (_pageController.page ?? _index.toDouble()) - i;
+                          }
+                          final t = (1 - delta.abs()).clamp(0.0, 1.0);
+                          return Center(
+                            child: OverflowBox(
+                              minHeight: 0,
+                              maxHeight: double.infinity,
+                              child: Opacity(
+                                opacity: 0.18 + 0.82 * t,
+                                child: Transform.scale(
+                                  scale: 0.78 + 0.22 * t,
+                                  child: child,
+                                ),
+                              ),
                             ),
+                          );
+                        },
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _switchZikr,
+                          child: _CurrentZikrCard(
+                            item: _items[i],
+                            done: _counts[i],
                           ),
                         ),
                       );
                     },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _switchZikr,
-                      child: _CurrentZikrCard(
-                        item: _items[i],
-                        done: _counts[i],
-                      ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 18.h),
+              Center(
+                child: _TapButton(
+                  progress: ringProgress.toDouble(),
+                  label: _finished
+                      ? appText.zikrCompleted
+                      : appText.zikrTapToCount,
+                  onTap: _count,
+                ),
+              ),
+              SizedBox(height: 40.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: Text(
+                  appText.zikrCompletingProgress,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(Color(0xFF3C4A28)),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.w),
+                child: _ProgressBar(progress: barProgress.toDouble()),
+              ),
+              SizedBox(height: 26.h),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _reset,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                  ),
+                  label: Text(
+                    appText.zikrCounterReset,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          SizedBox(height: 18.h),
-          Center(
-            child: _TapButton(
-              progress: ringProgress.toDouble(),
-              label: _finished ? appText.zikrCompleted : appText.zikrTapToCount,
-              onTap: _count,
-            ),
-          ),
-          SizedBox(height: 40.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Text(
-              appText.zikrCompletingProgress,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF3C4A28)),
-              ),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: _ProgressBar(progress: barProgress.toDouble()),
-          ),
-          SizedBox(height: 26.h),
-          Center(
-            child: TextButton.icon(
-              onPressed: _reset,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              style: TextButton.styleFrom(
-                foregroundColor: context.inkColor(Color(0xFF4C5A34)),
-              ),
-              label: Text(
-                appText.zikrCounterReset,
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

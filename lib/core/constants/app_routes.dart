@@ -138,10 +138,12 @@ import '../../features/dua/presentation/dua_route_args.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
 import '../../features/zikr/data/zikr_catalog.dart';
+import '../../features/zikr/data/models/zikr_api_models.dart';
 import '../../features/zikr/presentation/screens/zikr_counter_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_history_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_plan_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_plan_detail_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_planner_screen.dart';
@@ -669,10 +671,17 @@ class AppRoutes {
       case RouteNames.zikrPlanCreate:
         return _page(const ZikrPlanCreateScreen(), settings);
       case RouteNames.zikrPlanDetail:
-        final planId = settings.arguments as String? ?? '';
-        return _page(ZikrPlanDetailScreen(planId: planId), settings);
+        final plan = settings.arguments as ZikrPlan?;
+        return _page(
+          plan == null
+              ? const ZikrPlannerScreen()
+              : ZikrPlanDetailScreen(plan: plan),
+          settings,
+        );
       case RouteNames.zikrAll:
         return _page(const ZikrAllScreen(), settings);
+      case RouteNames.zikrHistory:
+        return _page(const ZikrHistoryScreen(), settings);
       case RouteNames.zikrStats:
         return _page(const ZikrStatsScreen(), settings);
       case RouteNames.zikrCounter:

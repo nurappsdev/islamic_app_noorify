@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_analytics_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
-/// Zikr stats dashboard (designs `devImg/img_25.png` and `devImg/img_26.png`),
+/// Zikr stats dashboard (designs `devImg/img_25.png`, `devImg/img_26.png`,
+/// and `devImg/img_63.png`),
 /// reached from index 2 ("Dashboard") of [ZikrBottomNav].
 ///
-/// UI only — every number and the chart are mock data. The period toggle swaps
-/// a "Daily" single-peak graph for a "Weekly" 7-day line.
+/// UI only — every number and the chart are mock data. Monthly initially shows
+/// a rolling 30-day range ending today. Choosing one of the month chips shows
+/// that calendar month instead; its graph is horizontally draggable so the
+/// first ten days remain readable on a phone-sized viewport.
 class ZikrStatsScreen extends StatefulWidget {
   const ZikrStatsScreen({super.key});
 
@@ -21,7 +29,9 @@ class ZikrStatsScreen extends StatefulWidget {
 }
 
 class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
-  int _period = 0; // 0 = Daily, 1 = Weekly
+  int _period = 0; // 0 = Daily, 1 = Weekly, 2 = Monthly
+  DateTime? _selectedMonth;
+  late final ZikrAnalyticsCubit _cubit = ZikrAnalyticsCubit(zikrRepository);
 
   static const _weekly = <double>[490, 690, 880, 240, 250, 760, 180];
   // Saturday first, as an index counted from Sunday.
@@ -34,126 +44,239 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _cubit.load();
+  }
+
+  @override
+  void dispose() {
+    _cubit.close();
+    super.dispose();
+  }
+
+  DateTime get _today {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  List<_MonthlyPoint> get _monthlyPoints {
+    final today = _today;
+    final selected = _selectedMonth;
+    final start = selected == null
+        ? today.subtract(const Duration(days: 29))
+        : DateTime(selected.year, selected.month);
+    final end = selected == null
+        ? today
+        : DateTime(selected.year, selected.month + 1);
+    final dayCount = end.difference(start).inDays + (selected == null ? 1 : 0);
+
+    return List.generate(dayCount, (index) {
+      final date = start.add(Duration(days: index));
+      // Deterministic placeholder values until analytics is wired to the API.
+      const samples = [500.0, 960.0, 190.0, 220.0, 840.0, 420.0, 180.0];
+      return _MonthlyPoint(
+        date: date,
+        value: samples[(date.day + date.month * 2) % samples.length],
+      );
+    });
+  }
+
+  void _selectPeriod(int period) {
+    setState(() {
+      _period = period;
+      if (period != 2) _selectedMonth = null;
+    });
+    _cubit.load(period: const ['daily', 'weekly', 'monthly'][period]);
+  }
+
+  void _selectMonth(DateTime? month) {
+    setState(() {
+      _period = 2;
+      _selectedMonth = month;
+    });
+    _cubit.load(period: 'monthly');
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final isDaily = _period == 0;
+    final isMonthly = _period == 2;
+    final monthlyPoints = _monthlyPoints;
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            ListView(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
-              children: [
-                SizedBox(height: 6.h),
-                _Header(title: appText.dashboard),
-                SizedBox(height: 18.h),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocProvider.value(
+      value: _cubit,
+      child: BlocListener<ZikrAnalyticsCubit, ZikrAnalyticsState>(
+        listenWhen: (previous, current) =>
+            previous.error != current.error &&
+            current.error?.contains('AuthenticationRequiredException') == true,
+        listener: (context, _) => showZikrLoginRequiredDialog(context),
+        child: BlocBuilder<ZikrAnalyticsCubit, ZikrAnalyticsState>(
+          builder: (context, analyticsState) {
+            final analytics = analyticsState.analytics;
+            return Scaffold(
+              backgroundColor: context.pageColor(Colors.white),
+              body: SafeArea(
+                child: Stack(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _LegendDot(
-                            color: const Color(0xFF3F6B4E),
-                            label: appText.myPosition,
-                          ),
-                          SizedBox(height: 10.h),
-                          _LegendDot(
-                            color: const Color(0xFFA9B96A),
-                            label: appText.myNearestOrCompetitor,
+                    ListView(
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
+                      children: [
+                        SizedBox(height: 6.h),
+                        _Header(title: appText.dashboard),
+                        SizedBox(height: 18.h),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _LegendDot(
+                                    color: const Color(0xFF3F6B4E),
+                                    label: appText.myPosition,
+                                  ),
+                                  SizedBox(height: 10.h),
+                                  _LegendDot(
+                                    color: const Color(0xFFA9B96A),
+                                    label: appText.myNearestOrCompetitor,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            _PeriodDropdown(
+                              value: isDaily
+                                  ? appText.daily
+                                  : isMonthly
+                                  ? appText.monthly
+                                  : appText.weekly,
+                              daily: appText.daily,
+                              weekly: appText.weekly,
+                              monthly: appText.monthly,
+                              onSelected: _selectPeriod,
+                            ),
+                          ],
+                        ),
+                        if (isMonthly) ...[
+                          SizedBox(height: 16.h),
+                          _MonthlyFilter(
+                            selectedMonth: _selectedMonth,
+                            onSelected: _selectMonth,
                           ),
                         ],
-                      ),
-                    ),
-                    _PeriodDropdown(
-                      value: isDaily ? appText.daily : appText.weekly,
-                      daily: appText.daily,
-                      weekly: appText.weekly,
-                      onSelected: (i) => setState(() => _period = i),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 18.h),
-                SizedBox(
-                  height: 250.h,
-                  child: _StatsChart(
-                    values: isDaily ? const [0, 900, 0] : _weekly,
-                    labels: isDaily
-                        ? ['', appText.zikrTodaysValueGraph, '']
-                        : [
-                            for (final i in _weekDayIndexes)
-                              context.localizedDates.weekdayShort(i),
+                        SizedBox(height: 18.h),
+                        SizedBox(
+                          height: 250.h,
+                          child: isMonthly
+                              ? _ScrollableMonthlyChart(
+                                  points: monthlyPoints,
+                                  competitorInitials:
+                                      appText.competitorInitials,
+                                )
+                              : _StatsChart(
+                                  values: analytics == null
+                                      ? (isDaily ? const [0, 900, 0] : _weekly)
+                                      : [
+                                          for (final point
+                                              in analytics.chartData)
+                                            point.myPosition,
+                                        ],
+                                  labels: isDaily
+                                      ? ['', appText.zikrTodaysValueGraph, '']
+                                      : analytics == null
+                                      ? [
+                                          for (final i in _weekDayIndexes)
+                                            context.localizedDates.weekdayShort(
+                                              i,
+                                            ),
+                                        ]
+                                      : [
+                                          for (final point
+                                              in analytics.chartData)
+                                            point.label,
+                                        ],
+                                  bubbleAll: !isDaily,
+                                  competitorInitials:
+                                      appText.competitorInitials,
+                                  daily: isDaily,
+                                ),
+                        ),
+                        SizedBox(height: 22.h),
+                        _TotalPill(
+                          label:
+                              '${appText.zikrTotalZikr} : ${analytics?.userTotalZikr ?? 780}',
+                          trailing: '${analytics?.competitorTotalZikr ?? 854}',
+                        ),
+                        SizedBox(height: 16.h),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                label: appText.zikrTotalZikr,
+                                value:
+                                    '${analytics?.lifetimeTotalCount ?? 132765}',
+                              ),
+                            ),
+                            SizedBox(width: 14.w),
+                            Expanded(
+                              child: _StatCard(
+                                label: appText.zikrMostDoing,
+                                value: context.localizedDigits(
+                                  '${analytics?.mostDoingZikrName ?? 'Subhan-Allah'}  ${analytics?.mostDoingZikrCount ?? 34784}',
+                                ),
+                                italicValue: true,
+                              ),
+                            ),
                           ],
-                    bubbleAll: !isDaily,
-                    competitorInitials: appText.competitorInitials,
-                    daily: isDaily,
-                  ),
-                ),
-                SizedBox(height: 22.h),
-                _TotalPill(
-                  label: '${appText.zikrTotalZikr} : 780',
-                  trailing: '854',
-                ),
-                SizedBox(height: 16.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        label: appText.zikrTotalZikr,
-                        value: '132,765',
-                      ),
+                        ),
+                        SizedBox(height: 24.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              appText.zikrHistory,
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.zikrHistory),
+                              child: Text(appText.seeAll),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12.h),
+                        for (final entry
+                            in analytics == null
+                                ? _history
+                                : analytics.recentHistory.map(
+                                    (item) =>
+                                        (item.zikrName, '${item.countAdded}'),
+                                  )) ...[
+                          _HistoryRow(
+                            name: entry.$1,
+                            count: context.localizedDigits(entry.$2),
+                          ),
+                          Divider(
+                            height: 22.h,
+                            color: context.lineColor(Color(0xFFEDEFE0)),
+                          ),
+                        ],
+                      ],
                     ),
-                    SizedBox(width: 14.w),
-                    Expanded(
-                      child: _StatCard(
-                        label: appText.zikrMostDoing,
-                        value: context.localizedDigits('Subhan-Allah  34,784'),
-                        italicValue: true,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 24.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      appText.zikrHistory,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      appText.seeAll,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: context.inkColor(Colors.black),
-                      ),
+                    const Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ZikrBottomNav(selectedIndex: 2),
                     ),
                   ],
                 ),
-                SizedBox(height: 12.h),
-                for (final entry in _history) ...[
-                  _HistoryRow(
-                    name: entry.$1,
-                    count: context.localizedDigits(entry.$2),
-                  ),
-                  Divider(
-                    height: 22.h,
-                    color: context.lineColor(Color(0xFFEDEFE0)),
-                  ),
-                ],
-              ],
-            ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: ZikrBottomNav(selectedIndex: 2),
-            ),
-          ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -238,12 +361,14 @@ class _PeriodDropdown extends StatelessWidget {
     required this.onSelected,
     required this.daily,
     required this.weekly,
+    required this.monthly,
   });
 
   final String value;
   final ValueChanged<int> onSelected;
   final String daily;
   final String weekly;
+  final String monthly;
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +379,7 @@ class _PeriodDropdown extends StatelessWidget {
       itemBuilder: (context) => [
         PopupMenuItem(value: 0, child: Text(daily)),
         PopupMenuItem(value: 1, child: Text(weekly)),
+        PopupMenuItem(value: 2, child: Text(monthly)),
       ],
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
@@ -281,6 +407,150 @@ class _PeriodDropdown extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MonthlyPoint {
+  const _MonthlyPoint({required this.date, required this.value});
+
+  final DateTime date;
+  final double value;
+}
+
+/// The default selection is the most recent 30 days. The remaining chips are
+/// all twelve months of the current year, keeping the filter discoverable
+/// without taking vertical space from the chart.
+class _MonthlyFilter extends StatelessWidget {
+  const _MonthlyFilter({required this.selectedMonth, required this.onSelected});
+
+  final DateTime? selectedMonth;
+  final ValueChanged<DateTime?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final monthNames = AppText.of(context).monthNames;
+    final currentYearMonths = [
+      for (var month = 1; month <= 12; month++) DateTime(now.year, month),
+    ];
+
+    return SizedBox(
+      height: 38.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: currentYearMonths.length + 1,
+        separatorBuilder: (_, _) => SizedBox(width: 8.w),
+        itemBuilder: (context, index) {
+          final isRollingRange = index == 0;
+          final month = isRollingRange ? null : currentYearMonths[index - 1];
+          final selected = isRollingRange
+              ? selectedMonth == null
+              : selectedMonth?.year == month!.year &&
+                    selectedMonth?.month == month.month;
+          final label = isRollingRange
+              ? 'Last 30 days'
+              : monthNames[month!.month - 1];
+
+          return ChoiceChip(
+            label: Text(label),
+            selected: selected,
+            onSelected: (_) => onSelected(month),
+            showCheckmark: false,
+            labelStyle: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w500,
+              color: selected
+                  ? const Color(0xFF3E4A2A)
+                  : context.inkColor(const Color(0xFF6A7350)),
+            ),
+            selectedColor: const Color(0xFFDDE8BA),
+            backgroundColor: context.surfaceColor(Colors.white),
+            side: BorderSide(
+              color: selected
+                  ? const Color(0xFFDDE8BA)
+                  : context.lineColor(const Color(0xFFDDE8C1)),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Scrolls a calendar-month graph horizontally. The child width is calculated
+/// so ten days fill the initial viewport; the remaining days are revealed by
+/// dragging right, matching the monthly design's progress rail.
+class _ScrollableMonthlyChart extends StatefulWidget {
+  const _ScrollableMonthlyChart({
+    required this.points,
+    required this.competitorInitials,
+  });
+
+  final List<_MonthlyPoint> points;
+  final String competitorInitials;
+
+  @override
+  State<_ScrollableMonthlyChart> createState() =>
+      _ScrollableMonthlyChartState();
+}
+
+class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const horizontalChartPadding = 40.0;
+        final pointGap = (constraints.maxWidth - horizontalChartPadding) / 9;
+        final contentWidth =
+            horizontalChartPadding + pointGap * (widget.points.length - 1);
+
+        return ScrollbarTheme(
+          data: ScrollbarThemeData(
+            thumbColor: const WidgetStatePropertyAll(Color(0xFFC8D792)),
+            trackColor: const WidgetStatePropertyAll(Color(0xFFE8EFD5)),
+            trackBorderColor: const WidgetStatePropertyAll(Color(0xFFE8EFD5)),
+            thickness: const WidgetStatePropertyAll(10),
+            radius: const Radius.circular(8),
+          ),
+          child: Scrollbar(
+            controller: _controller,
+            thumbVisibility: true,
+            trackVisibility: true,
+            child: SingleChildScrollView(
+              controller: _controller,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: contentWidth,
+                height: constraints.maxHeight,
+                child: _StatsChart(
+                  values: [for (final point in widget.points) point.value],
+                  labels: [
+                    for (final point in widget.points)
+                      point.date.day.toString(),
+                  ],
+                  bubbleAll: true,
+                  competitorInitials: widget.competitorInitials,
+                  daily: false,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

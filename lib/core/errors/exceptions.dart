@@ -22,6 +22,19 @@ class NetworkException implements Exception {
   String toString() => 'NetworkException: $message';
 }
 
+/// Raised before a protected API request when there is no usable session, or
+/// when a server still responds with 401 after token refresh has been tried.
+class AuthenticationRequiredException implements Exception {
+  AuthenticationRequiredException([
+    this.message = 'Please sign in to continue.',
+  ]);
+
+  final String message;
+
+  @override
+  String toString() => 'AuthenticationRequiredException: $message';
+}
+
 /// Thrown when a response body cannot be decoded into the expected model.
 class ParsingException implements Exception {
   ParsingException([this.message = 'Failed to parse server response.']);

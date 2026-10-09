@@ -10,6 +10,9 @@ class ZikrItem {
     required this.transliteration,
     required this.target,
     this.trackingKey,
+    this.zikrKey = 'general',
+    this.routineId,
+    this.planId,
   });
 
   final String name;
@@ -21,28 +24,42 @@ class ZikrItem {
   /// for every other zikr (All Zikr list, dropdown, My Created Zikr, custom
   /// zikr) — those stay in-memory only.
   final String? trackingKey;
+  final String zikrKey;
+  final String? routineId;
+  final String? planId;
 
   /// e.g. "Subhan Allah (33)"
   String get labelWithTarget => '$name ($target)';
 
-  ZikrItem copyWith({int? target, String? trackingKey}) => ZikrItem(
+  ZikrItem copyWith({
+    int? target,
+    String? trackingKey,
+    String? zikrKey,
+    String? routineId,
+    String? planId,
+  }) => ZikrItem(
     name: name,
     arabic: arabic,
     transliteration: transliteration,
     target: target ?? this.target,
     trackingKey: trackingKey ?? this.trackingKey,
+    zikrKey: zikrKey ?? this.zikrKey,
+    routineId: routineId ?? this.routineId,
+    planId: planId ?? this.planId,
   );
 }
 
 /// A named group of zikr counts, shown as a card on the dashboard.
 class ZikrPreset {
   const ZikrPreset({
+    this.id,
     required this.name,
     required this.formula,
     required this.items,
   });
 
   final String name;
+  final String? id;
 
   /// e.g. "33 +33 +34"
   final String formula;
@@ -66,6 +83,7 @@ abstract final class ZikrCatalog {
     arabic: 'سُبْحَانَ اللّٰه',
     transliteration: 'Subhāna-llāh',
     target: 33,
+    zikrKey: 'subhanallah',
   );
 
   static const alhamdulillah = ZikrItem(
@@ -73,6 +91,7 @@ abstract final class ZikrCatalog {
     arabic: 'اَلْحَمْدُ لِلّٰه',
     transliteration: 'Al-ḥamdu li-llāh',
     target: 33,
+    zikrKey: 'alhamdulillah',
   );
 
   static const allahuAkbar = ZikrItem(
@@ -80,6 +99,7 @@ abstract final class ZikrCatalog {
     arabic: 'اَللّٰهُ أَكْبَر',
     transliteration: 'Allāhu akbar',
     target: 34,
+    zikrKey: 'allahu-akbar',
   );
 
   static const laIlahaIllallah = ZikrItem(
@@ -87,6 +107,7 @@ abstract final class ZikrCatalog {
     arabic: 'لَا إِلٰهَ إِلَّا اللّٰه',
     transliteration: 'Lā ilāha illā-llāh',
     target: 100,
+    zikrKey: 'la-ilaha-illallah',
   );
 
   static const astaghfirullah = ZikrItem(
@@ -94,6 +115,7 @@ abstract final class ZikrCatalog {
     arabic: 'أَسْتَغْفِرُ اللّٰه',
     transliteration: 'Astaghfiru-llāh',
     target: 100,
+    zikrKey: 'astaghfirullah',
   );
 
   static const laHawla = ZikrItem(
@@ -101,6 +123,7 @@ abstract final class ZikrCatalog {
     arabic: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللّٰه',
     transliteration: 'Lā ḥawla wa lā quwwata illā bi-llāh',
     target: 100,
+    zikrKey: 'la-hawla-wa-la-quwwata-illa-billah',
   );
 
   static const salawat = ZikrItem(
@@ -108,6 +131,7 @@ abstract final class ZikrCatalog {
     arabic: 'اَللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّد',
     transliteration: 'Allāhumma ṣalli ʿalā Muḥammad',
     target: 100,
+    zikrKey: 'salawat',
   );
 
   static const subhanAllahiWaBihamdihi = ZikrItem(
@@ -115,6 +139,7 @@ abstract final class ZikrCatalog {
     arabic: 'سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ',
     transliteration: 'Subḥāna-llāhi wa bi-ḥamdihi',
     target: 100,
+    zikrKey: 'subhan-allahi-wa-bihamdihi',
   );
 
   /// Every zikr shown on the "All Zikr" screen.
