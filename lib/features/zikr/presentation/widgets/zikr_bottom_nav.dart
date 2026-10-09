@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 
 /// Navigation bar dedicated to the Zikr flow.
 ///
@@ -20,6 +21,15 @@ class ZikrBottomNav extends StatelessWidget {
         ? null
         : () => Navigator.of(context).pushReplacementNamed(route);
 
+    // Do this check before changing routes.  A guest must keep seeing the
+    // current Zikr page while the sign-in dialog is open; pushing the stats
+    // route first caused its empty white scaffold to flash briefly.
+    Future<void> openProtectedDashboard() async {
+      if (selectedIndex == 2) return;
+      if (!await requireZikrSignIn(context) || !context.mounted) return;
+      Navigator.of(context).pushReplacementNamed(RouteNames.zikrStats);
+    }
+
     return AppBottomNavBar(
       selectedIndex: selectedIndex,
       items: [
@@ -36,7 +46,7 @@ class ZikrBottomNav extends StatelessWidget {
         AppBottomNavItem(
           icon: Icons.grid_view_rounded,
           label: appText.dashboard,
-          onTap: go(2, RouteNames.zikrStats),
+          onTap: selectedIndex == 2 ? null : openProtectedDashboard,
         ),
       ],
     );

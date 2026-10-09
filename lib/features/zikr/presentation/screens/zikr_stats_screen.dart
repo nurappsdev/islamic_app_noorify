@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
@@ -32,6 +33,7 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   int _period = 0; // 0 = Daily, 1 = Weekly, 2 = Monthly
   DateTime? _selectedMonth;
   late final ZikrAnalyticsCubit _cubit = ZikrAnalyticsCubit(zikrRepository);
+  late bool _hasAccessToken;
 
   static const _weekly = <double>[490, 690, 880, 240, 250, 760, 180];
   // Saturday first, as an index counted from Sunday.
@@ -46,7 +48,23 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   @override
   void initState() {
     super.initState();
-    _cubit.load();
+    _hasAccessToken = AuthLocalDataSourceImpl().hasToken;
+    if (_hasAccessToken) {
+      _cubit.load();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _requestSignIn());
+    }
+  }
+
+  Future<void> _requestSignIn() async {
+    await showZikrLoginRequiredDialog(context);
+    if (!mounted) return;
+    if (!AuthLocalDataSourceImpl().hasToken) {
+      Navigator.of(context).pushReplacementNamed(RouteNames.zikrDashboard);
+      return;
+    }
+    setState(() => _hasAccessToken = true);
+    await _cubit.load();
   }
 
   @override
@@ -100,6 +118,14 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Analytics is a protected dashboard. Do not reveal its placeholder or
+    // cached-looking content to guests while the login dialog is displayed.
+    if (!_hasAccessToken) {
+      return Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: const SizedBox.expand(),
+      );
+    }
     final appText = AppText.of(context);
     final isDaily = _period == 0;
     final isMonthly = _period == 2;
