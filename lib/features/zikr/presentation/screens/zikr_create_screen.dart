@@ -230,7 +230,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       }
       if (!mounted) return;
       _toast(_appText.zikrCreated);
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       return;
     }
     Navigator.of(
@@ -250,6 +250,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
         if (!mounted) return;
         Navigator.of(context).pushReplacementNamed(
           RouteNames.zikrCounter,
+          result: true,
           arguments: ZikrCounterArgs(
             title: routine.routineName,
             items: [item.copyWith(routineId: routine.id)],

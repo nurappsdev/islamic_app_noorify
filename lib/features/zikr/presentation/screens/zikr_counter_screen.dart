@@ -41,6 +41,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
     viewportFraction: 0.44,
   );
   int _index = 0;
+  bool _isCompleting = false;
 
   List<ZikrItem> get _items => widget.args.items;
   int get _totalTarget => widget.args.totalTarget;
@@ -80,7 +81,8 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
     );
   }
 
-  void _count() {
+  Future<void> _count() async {
+    if (_isCompleting) return;
     if (_itemDone) {
       _switchZikr();
       return;
@@ -98,9 +100,16 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
     });
     if (_itemDone) {
       HapticFeedback.mediumImpact();
-      _sync.syncNow();
+      await _sync.syncNow();
       final next = _nextIncomplete();
-      if (next != null) _goToZikr(next);
+      if (next != null) {
+        _goToZikr(next);
+        return;
+      }
+      _isCompleting = true;
+      if (!mounted) return;
+      ZikrCounterCompletionStore.complete(_item, _done);
+      Navigator.of(context).pop();
     }
   }
 
@@ -146,7 +155,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
               ZikrGradientHeader(
                 title: widget.args.title.isEmpty
                     ? AppText.of(context).zikrTitle
-                    : widget.args.title,
+                    : localizedRoutineName(context, widget.args.title),
                 total: _total,
               ),
               Transform.translate(
@@ -206,7 +215,9 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
                   label: _finished
                       ? appText.zikrCompleted
                       : appText.zikrTapToCount,
-                  onTap: _count,
+                  onTap: () {
+                    _count();
+                  },
                 ),
               ),
               SizedBox(height: 40.h),
@@ -263,9 +274,9 @@ class _CurrentZikrCard extends StatelessWidget {
     // Created Zikr / planner item already carries its localized label in
     // [item.name] (resolved by the caller), shown as a caption only when
     // there's Arabic text above it to caption.
-    final localizedName =
-        localizedTrackedZikrName(AppText.of(context), item.trackingKey) ??
-        (item.arabic.isNotEmpty ? item.name : null);
+    final localizedName = item.arabic.isNotEmpty
+        ? localizedZikrItemName(AppText.of(context), item)
+        : null;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 40.w),
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),

@@ -1,4 +1,8 @@
+import 'package:flutter/widgets.dart';
+
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 
 /// The English/Bangla label for a Home Screen Zikr section item (Prayer
@@ -34,6 +38,50 @@ String? localizedSeedZikrName(AppText appText, String? nameKey) {
       return appText.zikrNameAllahuAkbar;
     default:
       return null;
+  }
+}
+
+/// Resolves the known API keys to the app language. User-created names stay
+/// exactly as entered because the API does not provide a Bangla translation.
+String localizedZikrNameFromKey(
+  AppText appText, {
+  required String zikrKey,
+  required String fallback,
+}) {
+  switch (zikrKey.trim().toLowerCase()) {
+    case 'subhanallah':
+      return appText.zikrNameSubhanAllah;
+    case 'alhamdulillah':
+      return appText.zikrNameAlhamdulillah;
+    case 'allahu-akbar':
+    case 'allahuakbar':
+      return appText.zikrNameAllahuAkbar;
+    case 'la-ilaha-illallah':
+      return appText.zikrNameFinalZikr;
+    default:
+      return fallback;
+  }
+}
+
+String localizedZikrItemName(AppText appText, ZikrItem item) =>
+    localizedTrackedZikrName(appText, item.trackingKey) ??
+    localizedZikrNameFromKey(
+      appText,
+      zikrKey: item.zikrKey,
+      fallback: item.name,
+    );
+
+/// Translates the two fixed prayer-routine titles while leaving a user's own
+/// custom routine title untouched.
+String localizedRoutineName(BuildContext context, String name) {
+  if (context.appLanguage != AppLanguage.bangla) return name;
+  switch (name.trim().toLowerCase()) {
+    case 'prayer zikr 1':
+      return 'নামাজের যিকর ১';
+    case 'prayer zikr 2':
+      return 'নামাজের যিকর ২';
+    default:
+      return name;
   }
 }
 

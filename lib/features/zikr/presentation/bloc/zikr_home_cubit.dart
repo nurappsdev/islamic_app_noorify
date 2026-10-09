@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
 import 'package:tuhfatul_muslim/features/zikr/domain/repositories/zikr_repository.dart';
 
@@ -11,18 +12,24 @@ class ZikrHomeState {
     this.profile,
     this.routines = const [],
     this.catalog = const [],
+    this.lastReadItem,
+    this.lastReadCount = 0,
     this.error,
   });
   final ZikrLoadStatus status;
   final UserTasbihProfile? profile;
   final List<ZikrRoutine> routines;
   final List<ZikrCatalogItem> catalog;
+  final ZikrItem? lastReadItem;
+  final int lastReadCount;
   final String? error;
   ZikrHomeState copyWith({
     ZikrLoadStatus? status,
     UserTasbihProfile? profile,
     List<ZikrRoutine>? routines,
     List<ZikrCatalogItem>? catalog,
+    ZikrItem? lastReadItem,
+    int? lastReadCount,
     String? error,
     bool clearError = false,
   }) => ZikrHomeState(
@@ -30,6 +37,8 @@ class ZikrHomeState {
     profile: profile ?? this.profile,
     routines: routines ?? this.routines,
     catalog: catalog ?? this.catalog,
+    lastReadItem: lastReadItem ?? this.lastReadItem,
+    lastReadCount: lastReadCount ?? this.lastReadCount,
     error: clearError ? null : (error ?? this.error),
   );
 }
@@ -72,5 +81,9 @@ class ZikrHomeCubit extends Cubit<ZikrHomeState> {
     final item = await _repository.createCatalog(body);
     emit(state.copyWith(catalog: [...state.catalog, item]));
     return item;
+  }
+
+  void recordLastRead(ZikrItem item, int count) {
+    emit(state.copyWith(lastReadItem: item, lastReadCount: count));
   }
 }

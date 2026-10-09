@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shimmer/shimmer.dart';
 
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -38,13 +40,33 @@ class ZikrDashboardScreen extends StatelessWidget {
 class _ZikrDashboardView extends StatelessWidget {
   const _ZikrDashboardView();
 
-  void _openCounter(BuildContext context, ZikrCounterArgs args) {
-    Navigator.of(context).pushNamed(RouteNames.zikrCounter, arguments: args);
+  Future<void> _openCounter(BuildContext context, ZikrCounterArgs args) async {
+    ZikrCounterCompletionStore.clear();
+    await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.zikrCounter, arguments: args);
+    if (!context.mounted) return;
+    final completion = ZikrCounterCompletionStore.consume();
+    await context.read<ZikrHomeCubit>().load();
+    if (completion != null && context.mounted) {
+      context.read<ZikrHomeCubit>().recordLastRead(
+        completion.item,
+        completion.count,
+      );
+    }
   }
 
   Future<void> _openCreateZikr(BuildContext context) async {
     if (!await requireZikrSignIn(context) || !context.mounted) return;
-    Navigator.of(context).pushNamed(RouteNames.zikrCreate);
+    // The central route table creates a MaterialPageRoute<void>, so do not
+    // request a typed route result here. The create screen returns `true`
+    // after a successful save and that result is checked below.
+    final created = await Navigator.of(
+      context,
+    ).pushNamed(RouteNames.zikrCreate);
+    if (created == true && context.mounted) {
+      await context.read<ZikrHomeCubit>().load();
+    }
   }
 
   @override
@@ -58,14 +80,15 @@ class _ZikrDashboardView extends StatelessWidget {
         children: [
           BlocBuilder<ZikrHomeCubit, ZikrHomeState>(
             builder: (context, state) {
-              if (state.status == ZikrLoadStatus.loading &&
-                  state.profile == null) {
-                return const Center(child: CircularProgressIndicator());
+              if (state.status == ZikrLoadStatus.loading) {
+                return const _ZikrDashboardShimmer();
               }
-              final latestItem = _resolveLatestItem(
-                state.profile,
-                state.catalog,
-              );
+              final latestItem =
+                  state.lastReadItem ??
+                  _resolveLatestItem(state.profile, state.catalog);
+              final latestDone = state.lastReadItem == null
+                  ? state.profile?.mostPerformedCount ?? 0
+                  : state.lastReadCount;
               final presets = [
                 for (final routine in state.routines.where(
                   (routine) => routine.isPreset,
@@ -79,81 +102,85 @@ class _ZikrDashboardView extends StatelessWidget {
                   routine.toUiPreset(),
               ];
 
-              return ListView(
-                padding: EdgeInsets.only(bottom: 150.h + bottomInset),
-                children: [
-                  ZikrGradientHeader(
-                    title: appText.zikrTitle,
-                    total: state.profile?.lifetimeTotalCount ?? 0,
-                    trailing: Column(
-                      children: [
-                        _LastZikrPill(
-                          appText: appText,
-                          item: latestItem,
-                          done: state.profile?.mostPerformedCount ?? 0,
-                          onTap: latestItem == null
-                              ? null
-                              : () => _openCounter(
-                                  context,
-                                  ZikrCounterArgs.fromItem(latestItem),
-                                ),
-                        ),
-                        SizedBox(height: 12.h),
-                        Row(
-                          children: [
-                            for (
-                              var i = 0;
-                              i < presets.length && i < 2;
-                              i++
-                            ) ...[
-                              if (i > 0) SizedBox(width: 12.w),
-                              Expanded(
-                                child: _PresetPill(
-                                  preset: presets[i],
-                                  onTap: () => _openCounter(
+              return RefreshIndicator(
+                onRefresh: () => context.read<ZikrHomeCubit>().load(),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: 150.h + bottomInset),
+                  children: [
+                    ZikrGradientHeader(
+                      title: appText.zikrTitle,
+                      total: state.profile?.lifetimeTotalCount ?? 0,
+                      trailing: Column(
+                        children: [
+                          _LastZikrPill(
+                            appText: appText,
+                            item: latestItem,
+                            done: latestDone,
+                            onTap: latestItem == null
+                                ? null
+                                : () => _openCounter(
                                     context,
-                                    ZikrCounterArgs.fromPreset(presets[i]),
+                                    ZikrCounterArgs.fromItem(latestItem),
+                                  ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            children: [
+                              for (
+                                var i = 0;
+                                i < presets.length && i < 2;
+                                i++
+                              ) ...[
+                                if (i > 0) SizedBox(width: 12.w),
+                                Expanded(
+                                  child: _PresetPill(
+                                    preset: presets[i],
+                                    onTap: () => _openCounter(
+                                      context,
+                                      ZikrCounterArgs.fromPreset(presets[i]),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 22.h),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 18.w),
-                    child: Text(
-                      appText.zikrMyCreatedZikr,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  SizedBox(height: 12.h),
-                  for (final routine in customRoutines)
+                    SizedBox(height: 22.h),
                     Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-                      child: _CreatedZikrCard(
-                        title: routine.name,
-                        items: routine.items,
-                        onOpenItem: (item) => _openCounter(
-                          context,
-                          ZikrCounterArgs.fromItem(item),
-                        ),
-                        // Home routines are recitation sequences, not Planner
-                        // challenges. Guests go straight to the counter and
-                        // this never calls the plan-enrol endpoint.
-                        onGetStart: () => _openCounter(
-                          context,
-                          ZikrCounterArgs.fromPreset(routine),
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      child: Text(
+                        appText.zikrMyCreatedZikr,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                ],
+                    SizedBox(height: 12.h),
+                    for (final routine in customRoutines)
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+                        child: _CreatedZikrCard(
+                          title: localizedRoutineName(context, routine.name),
+                          items: routine.items,
+                          onOpenItem: (item) => _openCounter(
+                            context,
+                            ZikrCounterArgs.fromItem(item),
+                          ),
+                          // Home routines are recitation sequences, not Planner
+                          // challenges. Guests go straight to the counter and
+                          // this never calls the plan-enrol endpoint.
+                          onGetStart: () => _openCounter(
+                            context,
+                            ZikrCounterArgs.fromPreset(routine),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               );
             },
           ),
@@ -196,6 +223,63 @@ class _ZikrDashboardView extends StatelessWidget {
   }
 }
 
+/// Layout-shaped loading state for the Zikr home API calls.
+class _ZikrDashboardShimmer extends StatelessWidget {
+  const _ZikrDashboardShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget box({double? width, required double height, double radius = 14}) =>
+        Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: context.surfaceColor(Colors.white),
+            borderRadius: BorderRadius.circular(radius.r),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: context.appPalette.shimmerBase,
+      highlightColor: context.appPalette.shimmerHighlight,
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16.w, 44.h, 16.w, 140.h),
+        children: [
+          Container(
+            height: 245.h,
+            padding: EdgeInsets.all(20.w),
+            decoration: BoxDecoration(
+              color: context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(24.r),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                box(width: 92.w, height: 18.h),
+                const Spacer(),
+                box(width: 180.w, height: 26.h),
+                SizedBox(height: 16.h),
+                Row(
+                  children: [
+                    Expanded(child: box(height: 46.h, radius: 22)),
+                    SizedBox(width: 12.w),
+                    Expanded(child: box(height: 46.h, radius: 22)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 28.h),
+          box(width: 150.w, height: 20.h),
+          SizedBox(height: 14.h),
+          box(height: 155.h, radius: 18),
+        ],
+      ),
+    );
+  }
+}
+
 class _LastZikrPill extends StatelessWidget {
   const _LastZikrPill({
     required this.appText,
@@ -215,9 +299,7 @@ class _LastZikrPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final item = this.item;
-    final name = item == null
-        ? null
-        : localizedTrackedZikrName(appText, item.trackingKey) ?? item.name;
+    final name = item == null ? null : localizedZikrItemName(appText, item);
 
     return InkWell(
       onTap: onTap,
@@ -309,7 +391,7 @@ class _PresetPill extends StatelessWidget {
               ),
             ),
             child: Text(
-              preset.name,
+              localizedRoutineName(context, preset.name),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -396,7 +478,7 @@ class _CreatedZikrCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      '${item.name} ('
+                      '${localizedZikrItemName(AppText.of(context), item)} ('
                       '${context.localizedDigits(_doneFor(item))}'
                       '/${context.localizedDigits('${item.target}')})',
                       style: TextStyle(
