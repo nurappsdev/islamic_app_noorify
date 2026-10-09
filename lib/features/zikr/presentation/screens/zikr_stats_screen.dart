@@ -545,6 +545,9 @@ class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
                   bubbleAll: true,
                   competitorInitials: widget.competitorInitials,
                   daily: false,
+                  // Keep day labels above the horizontal scrollbar. Without
+                  // this reserve, labels such as 10/11 sit under its thumb.
+                  bottomPadding: 42,
                 ),
               ),
             ),
@@ -707,7 +710,7 @@ class _HistoryRow extends StatelessWidget {
             border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
           ),
           child: Icon(
-            Icons.self_improvement_rounded,
+            Icons.menu_book_rounded,
             size: 16.sp,
             color: context.inkColor(Color(0xFF8B9865)),
           ),
@@ -739,6 +742,7 @@ class _StatsChart extends StatelessWidget {
     required this.bubbleAll,
     required this.competitorInitials,
     required this.daily,
+    this.bottomPadding = 22,
   });
 
   final List<double> values;
@@ -746,6 +750,7 @@ class _StatsChart extends StatelessWidget {
   final bool bubbleAll;
   final String competitorInitials;
   final bool daily;
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -757,6 +762,7 @@ class _StatsChart extends StatelessWidget {
         bubbleAll: bubbleAll,
         competitorInitials: competitorInitials,
         daily: daily,
+        bottomPadding: bottomPadding,
       ),
     );
   }
@@ -769,6 +775,7 @@ class _StatsChartPainter extends CustomPainter {
     required this.bubbleAll,
     required this.competitorInitials,
     required this.daily,
+    required this.bottomPadding,
   });
 
   final List<double> values;
@@ -776,6 +783,7 @@ class _StatsChartPainter extends CustomPainter {
   final bool bubbleAll;
   final String competitorInitials;
   final bool daily;
+  final double bottomPadding;
 
   static const _maxY = 1000.0;
   static const _steps = [0, 250, 500, 750, 1000];
@@ -784,7 +792,7 @@ class _StatsChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const leftPad = 34.0;
     const topPad = 44.0;
-    const bottomPad = 22.0;
+    final bottomPad = bottomPadding;
     final chartLeft = leftPad;
     final chartRight = size.width - 6;
     final chartTop = topPad;
@@ -939,5 +947,6 @@ class _StatsChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _StatsChartPainter oldDelegate) =>
       oldDelegate.values != values ||
       oldDelegate.labels != labels ||
-      oldDelegate.daily != daily;
+      oldDelegate.daily != daily ||
+      oldDelegate.bottomPadding != bottomPadding;
 }

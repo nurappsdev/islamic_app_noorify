@@ -71,7 +71,7 @@ class _ZikrHistoryScreenState extends State<ZikrHistoryScreen> {
                 }
                 final item = state.history[index];
                 return ListTile(
-                  leading: const Icon(Icons.self_improvement_rounded),
+                  leading: const Icon(Icons.menu_book_rounded),
                   title: Text(item.zikrName),
                   subtitle: Text(item.sessionDate),
                   trailing: Text(context.localizedDigits('${item.countAdded}')),
