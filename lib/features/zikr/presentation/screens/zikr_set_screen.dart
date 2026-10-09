@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 
 /// The zikr set being built (design `devImg/img_16.png`).
 ///
@@ -18,6 +21,43 @@ class ZikrSetScreen extends StatelessWidget {
   const ZikrSetScreen({super.key, required this.items});
 
   final List<ZikrItem> items;
+
+  Future<void> _createRoutineAndStart(BuildContext context) async {
+    final appText = AppText.of(context);
+    try {
+      final routine = await zikrRepository.createRoutine({
+        'routineName': items.length == 1 ? items.first.name : appText.zikrTitle,
+        'items': [
+          for (final item in items)
+            {
+              'zikrKey': item.zikrKey,
+              'zikrName': item.name,
+              if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
+              'targetCount': item.target,
+            },
+        ],
+      });
+      if (!context.mounted) return;
+      Navigator.of(context).pushNamed(
+        RouteNames.zikrCounter,
+        arguments: ZikrCounterArgs(
+          title: routine.routineName,
+          items: [
+            for (final item in items) item.copyWith(routineId: routine.id),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      if (error is AuthenticationRequiredException) {
+        await showZikrLoginRequiredDialog(context);
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,15 +155,7 @@ class ZikrSetScreen extends StatelessWidget {
                 child: FilledButton(
                   onPressed: items.isEmpty
                       ? null
-                      : () => Navigator.of(context).pushNamed(
-                          RouteNames.zikrCounter,
-                          arguments: ZikrCounterArgs(
-                            title: items.length == 1
-                                ? items.first.name
-                                : appText.zikrTitle,
-                            items: items,
-                          ),
-                        ),
+                      : () => _createRoutineAndStart(context),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColor.primary,
                     foregroundColor: Colors.white,

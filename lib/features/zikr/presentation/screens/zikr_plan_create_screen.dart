@@ -3,20 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_plan_model.dart';
-import 'package:tuhfatul_muslim/features/zikr/data/zikr_planner_store.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
 /// "Create plan" screen (designs `devImg/img_23.png` and `devImg/img_24.png`),
 /// reached from the "Create Plan" button on [ZikrPlannerScreen].
 ///
 /// Fill the plan name + completion days, add one or more zikr with a reading
-/// value, then "Create" persists the plan to [ZikrPlannerStore] and returns
-/// to the planner, where it appears immediately in "My Plans".
+/// value, then "Create" sends the plan to the backend and returns to the
+/// planner.
 class ZikrPlanCreateScreen extends StatefulWidget {
   const ZikrPlanCreateScreen({super.key});
 
@@ -37,6 +39,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
   String? _zikrName;
   String? _zikrNameKey;
   bool _adding = true;
+  bool _submitting = false;
 
   late AppText _appText;
 
@@ -195,26 +198,41 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     return (entries, nameKeys);
   }
 
-  void _create() {
-    final (entries, nameKeys) = _resolvedEntries();
+  Future<void> _create() async {
+    final (entries, _) = _resolvedEntries();
     if (entries.isEmpty) {
       _toast(_appText.zikrSelectZikr);
       return;
     }
+    if (_nameController.text.trim().isEmpty || _planDays < 1) {
+      _toast('Plan name and completion days are required.');
+      return;
+    }
     HapticFeedback.selectionClick();
-    ZikrPlannerStore.instance.create(
-      name: _planName,
-      durationDays: _planDays,
-      items: [
-        for (var i = 0; i < entries.length; i++)
-          PlanZikrItem(
-            name: entries[i].name,
-            nameKey: nameKeys[i],
-            target: entries[i].value,
-          ),
-      ],
-    );
-    Navigator.of(context).pop();
+    setState(() => _submitting = true);
+    try {
+      await zikrRepository.createPlan({
+        'planName': _planName,
+        'completionDays': _planDays,
+        'items': [
+          for (final entry in entries)
+            {
+              'zikrKey': zikrKeyFromName(entry.name),
+              'zikrName': entry.name,
+              'targetCount': entry.value,
+            },
+        ],
+      });
+      if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (error is AuthenticationRequiredException && mounted) {
+        await showZikrLoginRequiredDialog(context);
+        return;
+      }
+      if (mounted) _toast('$error');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -272,7 +290,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   width: double.infinity,
                   height: 54.h,
                   child: FilledButton(
-                    onPressed: _create,
+                    onPressed: _submitting ? null : _create,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColor.primary,
                       foregroundColor: Colors.white,

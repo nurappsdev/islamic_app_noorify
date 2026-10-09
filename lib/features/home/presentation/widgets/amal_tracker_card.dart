@@ -391,11 +391,11 @@ class _AmalCarouselDots extends StatelessWidget {
       effect: ExpandingDotsEffect(
         activeDotColor: activeColor,
         dotColor: inactiveColor,
-        dotHeight: 12.r,
-        dotWidth: 12.r,
-        expansionFactor: 28 / 12,
+        dotHeight: 8.r,
+        dotWidth: 8.r,
+        expansionFactor: 24 / 10,
         spacing: 6.w,
-        radius: 12.r,
+        radius: 10.r,
       ),
     );
   }

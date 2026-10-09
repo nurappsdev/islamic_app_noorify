@@ -35,3 +35,30 @@ class ZikrCounterArgs {
     items: [ZikrCatalog.subhanAllah],
   );
 }
+
+/// In-memory handoff from the counter back to the Home screen. The app route
+/// table uses `MaterialPageRoute<void>`, so a typed Navigator pop result is
+/// not safe here. This small feature-scoped handoff preserves the completed
+/// zikr while Home reloads its API data.
+class ZikrCounterCompletion {
+  const ZikrCounterCompletion({required this.item, required this.count});
+
+  final ZikrItem item;
+  final int count;
+}
+
+abstract final class ZikrCounterCompletionStore {
+  static ZikrCounterCompletion? _completion;
+
+  static void clear() => _completion = null;
+
+  static void complete(ZikrItem item, int count) {
+    _completion = ZikrCounterCompletion(item: item, count: count);
+  }
+
+  static ZikrCounterCompletion? consume() {
+    final completion = _completion;
+    _completion = null;
+    return completion;
+  }
+}
