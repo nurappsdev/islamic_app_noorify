@@ -142,7 +142,7 @@ import '../../features/zikr/data/models/zikr_api_models.dart';
 import '../../features/zikr/presentation/screens/zikr_counter_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_dashboard_screen.dart';
-import '../../features/zikr/presentation/screens/zikr_intro_screen.dart';
+import '../../features/zikr/presentation/screens/zikr_entry_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_history_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_plan_create_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_plan_detail_screen.dart';
@@ -655,7 +655,7 @@ class AppRoutes {
       case RouteNames.duaSaved:
         return _page(const DuaSavedScreen(), settings);
       case RouteNames.zikr:
-        return _page(const ZikrIntroScreen(), settings);
+        return _page(const ZikrEntryScreen(), settings);
       case RouteNames.zikrDashboard:
         return _page(const ZikrDashboardScreen(), settings);
       case RouteNames.zikrCreate:

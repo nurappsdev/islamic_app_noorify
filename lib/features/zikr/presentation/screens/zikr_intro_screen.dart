@@ -86,7 +86,7 @@ class ZikrIntroScreen extends StatelessWidget {
                       child: FilledButton(
                         onPressed: () => Navigator.of(
                           context,
-                        ).pushNamed(RouteNames.zikrDashboard),
+                        ).pushReplacementNamed(RouteNames.zikrDashboard),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColor.primary,
                           foregroundColor: Colors.white,
