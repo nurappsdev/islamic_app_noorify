@@ -33,7 +33,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allows Tuhfatul Muslim to let you pick a profile photo from your gallery.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Tuhfatul Muslim uses your location to point the Qiblah compass toward the Kaaba.</string>
+	<string>Tuhfatul Muslim uses your location to show your local area on prayer cards and point the Qiblah compass toward the Kaaba.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

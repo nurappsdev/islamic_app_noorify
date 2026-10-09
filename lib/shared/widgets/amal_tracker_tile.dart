@@ -14,6 +14,8 @@ class AmalTrackerTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.userName,
+    this.topBadgeText,
+    this.showUserNameBadge = true,
     required this.progressLabel,
     required this.progress,
     this.leadingText,
@@ -22,6 +24,12 @@ class AmalTrackerTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? userName;
+
+  /// Optional replacement for the overlapping top badge. Home uses this for
+  /// the GPS-resolved district/country while the tracker screens retain their
+  /// user-name badge.
+  final String? topBadgeText;
+  final bool showUserNameBadge;
   final String progressLabel;
   final double progress;
 
@@ -148,7 +156,17 @@ class AmalTrackerTile extends StatelessWidget {
               ),
             ),
           ),
-          if ((userName ?? '').isNotEmpty)
+          if ((topBadgeText ?? '').trim().isNotEmpty)
+            Positioned(
+              top: 0,
+              right: 20.w,
+              child: _UserNameBadge(
+                name: topBadgeText!.trim(),
+                borderColor: amolNameBadgeBorderColor,
+                textColor: textColor,
+              ),
+            )
+          else if (showUserNameBadge && (userName ?? '').isNotEmpty)
             Positioned(
               top: 0,
               right: 20.w,

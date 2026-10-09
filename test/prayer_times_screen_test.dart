@@ -22,7 +22,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Prayer times'), findsOneWidget);
-    expect(find.text('Mymensingh, Bangladesh'), findsOneWidget);
+    expect(find.text('Location unavailable'), findsOneWidget);
     for (final prayer in const [
       'Fajr',
       'Dhuhr',

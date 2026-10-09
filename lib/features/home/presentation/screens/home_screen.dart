@@ -33,6 +33,7 @@ import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_feature_
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_header.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/nafl_more_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_time_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/sunnah_witr_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/zikr_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
@@ -48,11 +49,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<HomeDashboardBloc>(
-      create: (_) => HomeDashboardBloc(
-        GetHomeDashboard(HomeRepositoryImpl(HomeRemoteDataSourceImpl())),
-      )..add(const LoadHomeDashboard()),
-      child: const _HomeScreenView(),
+    return PrayerLocationScope(
+      child: BlocProvider<HomeDashboardBloc>(
+        create: (_) => HomeDashboardBloc(
+          GetHomeDashboard(HomeRepositoryImpl(HomeRemoteDataSourceImpl())),
+        )..add(const LoadHomeDashboard()),
+        child: const _HomeScreenView(),
+      ),
     );
   }
 }

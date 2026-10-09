@@ -66,6 +66,7 @@ dependencies:
   vibration: ^3.2.1
   pdfx: ^2.11.0
   flutter_compass: ^0.8.1
+  geocoding: ^4.0.0
   geolocator: ^14.0.2
   hijri: ^3.0.1
   flutter_widget_from_html_core: ^0.17.4
