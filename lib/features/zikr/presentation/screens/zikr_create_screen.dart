@@ -18,8 +18,8 @@ import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 /// "New Zikr" screen (design `devImg/img_13.png`), reached two ways:
 ///
 /// - From the `+` button on [ZikrDashboardScreen] (no route arguments): a
-///   custom zikr is created through the catalog API; "Lets Get Start" then
-///   opens the counter directly.
+///   custom one-item routine is created through the routines API; "Lets Get
+///   Start" then opens its counter directly.
 /// - From "Add More" on [ZikrSetScreen] (route arguments: the `List<ZikrItem>`
 ///   built so far): building a one-off counting sequence, unrelated to My
 ///   Created Zikr — "Create" adds the chosen zikr to that in-memory set and
@@ -40,7 +40,6 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
   String? _zikrName;
   String _zikrArabic = '';
   String _zikrKey = 'general';
-  bool _isCustom = false;
   late Future<List<ZikrCatalogItem>> _catalog;
   List<ZikrItem> _items = [];
   bool _argsRead = false;
@@ -168,7 +167,6 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       _zikrName = item.zikrName;
       _zikrArabic = item.nameArabic;
       _zikrKey = zikrKeyFromName(item.zikrName);
-      _isCustom = false;
       _valueController.text = item.defaultTargetCount.toString();
     });
   }
@@ -191,12 +189,26 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       _zikrName = name;
       _zikrArabic = '';
       _zikrKey = zikrKeyFromName(name);
-      _isCustom = true;
       _valueController.text = (value != null && value > 0)
           ? value.toString()
           : '';
     });
   }
+
+  /// The `/zikr/routines` API requires a named routine with an `items` array,
+  /// even when the New Zikr form contains just one zikr.
+  Future<ZikrRoutine> _createRoutine(ZikrItem item) =>
+      zikrRepository.createRoutine({
+        'routineName': item.name,
+        'items': [
+          {
+            'zikrKey': item.zikrKey,
+            'zikrName': item.name,
+            if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
+            'targetCount': item.target,
+          },
+        ],
+      });
 
   Future<void> _create() async {
     final item = _currentItem;
@@ -207,14 +219,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     HapticFeedback.selectionClick();
     if (_cameFromDashboard) {
       try {
-        if (_isCustom) {
-          await zikrRepository.createCatalog({
-            'zikrName': item.name,
-            if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
-            'nameTransliteration': item.transliteration,
-            'defaultTargetCount': item.target,
-          });
-        }
+        await _createRoutine(item);
       } catch (error) {
         if (error is AuthenticationRequiredException && mounted) {
           await showZikrLoginRequiredDialog(context);
@@ -241,14 +246,15 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
         return;
       }
       try {
-        if (_isCustom) {
-          await zikrRepository.createCatalog({
-            'zikrName': item.name,
-            if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
-            'nameTransliteration': item.transliteration,
-            'defaultTargetCount': item.target,
-          });
-        }
+        final routine = await _createRoutine(item);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          RouteNames.zikrCounter,
+          arguments: ZikrCounterArgs(
+            title: routine.routineName,
+            items: [item.copyWith(routineId: routine.id)],
+          ),
+        );
       } catch (error) {
         if (error is AuthenticationRequiredException && mounted) {
           await showZikrLoginRequiredDialog(context);
@@ -257,11 +263,6 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
         _toast('$error');
         return;
       }
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(
-        RouteNames.zikrCounter,
-        arguments: ZikrCounterArgs(title: item.name, items: [item]),
-      );
       return;
     }
     final sequence = [..._items, ?item];

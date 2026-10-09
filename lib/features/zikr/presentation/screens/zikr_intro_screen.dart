@@ -19,16 +19,13 @@ class ZikrIntroScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFDFEFB), Color(0xFFF3F6E8), Color(0xFFDCE6C4)],
-            stops: [0.0, 0.55, 1.0],
+          image: DecorationImage(
+            image: AssetImage('assets/zikr/zikrPlashImg.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: Stack(
           children: [
-            const Positioned.fill(child: _Decor()),
             SafeArea(
               child: Column(
                 children: [
@@ -112,59 +109,6 @@ class ZikrIntroScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Faint crescent + star at the top and a mosque silhouette along the bottom.
-class _Decor extends StatelessWidget {
-  const _Decor();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          Positioned(
-            top: 70.h,
-            left: 40.w,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Transform.rotate(
-                  angle: 0.4,
-                  child: Icon(
-                    Icons.nightlight_round,
-                    size: 68.sp,
-                    color: context.inkColor(
-                      Color(0xFFC9B26B).withValues(alpha: .35),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 4.w),
-                Padding(
-                  padding: EdgeInsets.only(top: 6.h),
-                  child: Icon(
-                    Icons.star_rounded,
-                    size: 26.sp,
-                    color: context.inkColor(
-                      Color(0xFFC9B26B).withValues(alpha: .35),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Icon(
-              Icons.mosque_rounded,
-              size: 300.sp,
-              color: context.inkColor(Colors.white.withValues(alpha: .45)),
-            ),
-          ),
-        ],
       ),
     );
   }

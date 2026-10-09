@@ -42,133 +42,134 @@ class _ZikrDashboardView extends StatelessWidget {
     Navigator.of(context).pushNamed(RouteNames.zikrCounter, arguments: args);
   }
 
+  Future<void> _openCreateZikr(BuildContext context) async {
+    if (!await requireZikrSignIn(context) || !context.mounted) return;
+    Navigator.of(context).pushNamed(RouteNames.zikrCreate);
+  }
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
-    return BlocListener<ZikrHomeCubit, ZikrHomeState>(
-      listenWhen: (previous, current) =>
-          previous.error != current.error &&
-          current.error?.contains('AuthenticationRequiredException') == true,
-      listener: (context, _) => showZikrLoginRequiredDialog(context),
-      child: Scaffold(
-        backgroundColor: context.pageColor(Colors.white),
-        body: Stack(
-          children: [
-            BlocBuilder<ZikrHomeCubit, ZikrHomeState>(
-              builder: (context, state) {
-                if (state.status == ZikrLoadStatus.loading &&
-                    state.profile == null) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final latestItem = _resolveLatestItem(
-                  state.profile,
-                  state.catalog,
-                );
-                final presets = [
-                  for (final routine in state.routines) routine.toUiPreset(),
-                ];
-                final customItems = [
-                  for (final item in state.catalog) item.toUiItem(),
-                ];
+    return Scaffold(
+      backgroundColor: context.pageColor(Colors.white),
+      body: Stack(
+        children: [
+          BlocBuilder<ZikrHomeCubit, ZikrHomeState>(
+            builder: (context, state) {
+              if (state.status == ZikrLoadStatus.loading &&
+                  state.profile == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final latestItem = _resolveLatestItem(
+                state.profile,
+                state.catalog,
+              );
+              final presets = [
+                for (final routine in state.routines.where(
+                  (routine) => routine.isPreset,
+                ))
+                  routine.toUiPreset(),
+              ];
+              final customRoutines = [
+                for (final routine in state.routines.where(
+                  (routine) => !routine.isPreset,
+                ))
+                  routine.toUiPreset(),
+              ];
 
-                return ListView(
-                  padding: EdgeInsets.only(bottom: 150.h + bottomInset),
-                  children: [
-                    ZikrGradientHeader(
-                      title: appText.zikrTitle,
-                      total: state.profile?.lifetimeTotalCount ?? 0,
-                      trailing: Column(
-                        children: [
-                          _LastZikrPill(
-                            appText: appText,
-                            item: latestItem,
-                            done: state.profile?.mostPerformedCount ?? 0,
-                            onTap: latestItem == null
-                                ? null
-                                : () => _openCounter(
+              return ListView(
+                padding: EdgeInsets.only(bottom: 150.h + bottomInset),
+                children: [
+                  ZikrGradientHeader(
+                    title: appText.zikrTitle,
+                    total: state.profile?.lifetimeTotalCount ?? 0,
+                    trailing: Column(
+                      children: [
+                        _LastZikrPill(
+                          appText: appText,
+                          item: latestItem,
+                          done: state.profile?.mostPerformedCount ?? 0,
+                          onTap: latestItem == null
+                              ? null
+                              : () => _openCounter(
+                                  context,
+                                  ZikrCounterArgs.fromItem(latestItem),
+                                ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Row(
+                          children: [
+                            for (
+                              var i = 0;
+                              i < presets.length && i < 2;
+                              i++
+                            ) ...[
+                              if (i > 0) SizedBox(width: 12.w),
+                              Expanded(
+                                child: _PresetPill(
+                                  preset: presets[i],
+                                  onTap: () => _openCounter(
                                     context,
-                                    ZikrCounterArgs.fromItem(latestItem),
-                                  ),
-                          ),
-                          SizedBox(height: 12.h),
-                          Row(
-                            children: [
-                              for (
-                                var i = 0;
-                                i < presets.length && i < 2;
-                                i++
-                              ) ...[
-                                if (i > 0) SizedBox(width: 12.w),
-                                Expanded(
-                                  child: _PresetPill(
-                                    preset: presets[i],
-                                    onTap: () => _openCounter(
-                                      context,
-                                      ZikrCounterArgs.fromPreset(presets[i]),
-                                    ),
+                                    ZikrCounterArgs.fromPreset(presets[i]),
                                   ),
                                 ),
-                              ],
+                              ),
                             ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 22.h),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 18.w),
-                      child: Text(
-                        appText.zikrMyCreatedZikr,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
+                          ],
                         ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 22.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 18.w),
+                    child: Text(
+                      appText.zikrMyCreatedZikr,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(height: 12.h),
+                  ),
+                  SizedBox(height: 12.h),
+                  for (final routine in customRoutines)
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
                       child: _CreatedZikrCard(
-                        title: appText.zikrMyCreatedZikr,
-                        items: customItems,
+                        title: routine.name,
+                        items: routine.items,
                         onOpenItem: (item) => _openCounter(
                           context,
                           ZikrCounterArgs.fromItem(item),
                         ),
-                        onGetStart: customItems.isEmpty
-                            ? null
-                            : () => _openCounter(
-                                context,
-                                ZikrCounterArgs(
-                                  title: appText.zikrMyCreatedZikr,
-                                  items: customItems,
-                                ),
-                              ),
+                        // Home routines are recitation sequences, not Planner
+                        // challenges. Guests go straight to the counter and
+                        // this never calls the plan-enrol endpoint.
+                        onGetStart: () => _openCounter(
+                          context,
+                          ZikrCounterArgs.fromPreset(routine),
+                        ),
                       ),
                     ),
-                  ],
-                );
-              },
+                ],
+              );
+            },
+          ),
+          Positioned(
+            right: 24.w,
+            bottom: 74.h + bottomInset,
+            child: _AddButton(onTap: () => _openCreateZikr(context)),
+          ),
+          const SafeArea(
+            top: false,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: ZikrBottomNav(selectedIndex: 0),
             ),
-            Positioned(
-              right: 24.w,
-              bottom: 74.h + bottomInset,
-              child: _AddButton(
-                onTap: () =>
-                    Navigator.of(context).pushNamed(RouteNames.zikrCreate),
-              ),
-            ),
-            const SafeArea(
-              top: false,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: ZikrBottomNav(selectedIndex: 0),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

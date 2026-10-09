@@ -41,17 +41,26 @@ class ZikrHomeCubit extends Cubit<ZikrHomeState> {
   Future<void> load() async {
     emit(state.copyWith(status: ZikrLoadStatus.loading, clearError: true));
     try {
-      final results = await Future.wait([
-        _repository.getProfile(),
+      // Catalog and routines are deliberately public.  Do not let the
+      // protected profile request hide those entries for a signed-out user.
+      final publicResults = await Future.wait([
         _repository.getRoutines(),
         _repository.getCatalog(),
       ]);
+      UserTasbihProfile? profile;
+      String? profileError;
+      try {
+        profile = await _repository.getProfile();
+      } catch (error) {
+        profileError = '$error';
+      }
       emit(
         state.copyWith(
           status: ZikrLoadStatus.success,
-          profile: results[0] as UserTasbihProfile,
-          routines: results[1] as List<ZikrRoutine>,
-          catalog: results[2] as List<ZikrCatalogItem>,
+          profile: profile,
+          routines: publicResults[0] as List<ZikrRoutine>,
+          catalog: publicResults[1] as List<ZikrCatalogItem>,
+          error: profileError,
         ),
       );
     } catch (error) {

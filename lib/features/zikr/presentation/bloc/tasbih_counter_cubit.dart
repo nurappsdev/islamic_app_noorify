@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/zikr/domain/repositories/zikr_repository.dart';
 
 class TasbihCounterState {
@@ -34,7 +35,12 @@ class TasbihCounterCubit extends Cubit<TasbihCounterState> {
   Timer? _debounce;
   Map<String, dynamic>? _latestContext;
 
+  bool get _isSignedIn => AuthLocalDataSourceImpl().hasToken;
+
   void tap(Map<String, dynamic> context) {
+    // The counter itself is guest-accessible. The screen updates its local
+    // count immediately; only signed-in users have a server batch to sync.
+    if (!_isSignedIn) return;
     _latestContext = context;
     _debounce?.cancel();
     emit(
@@ -45,6 +51,12 @@ class TasbihCounterCubit extends Cubit<TasbihCounterState> {
 
   Future<void> syncNow() async {
     _debounce?.cancel();
+    if (!_isSignedIn) {
+      if (state.pendingCount > 0) {
+        emit(state.copyWith(pendingCount: 0, isSyncing: false));
+      }
+      return;
+    }
     final count = state.pendingCount;
     final context = _latestContext;
     if (count == 0 || context == null || state.isSyncing) return;

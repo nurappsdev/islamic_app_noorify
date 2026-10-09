@@ -121,6 +121,7 @@ flutter:
     - assets/quiz.png
     - assets/quiz_completed.png
     - assets/quiz_reading_icon.png
+    - assets/zikr/
     - assets/data/
     - assets/database/
   #   - images/a_dot_burr.jpeg

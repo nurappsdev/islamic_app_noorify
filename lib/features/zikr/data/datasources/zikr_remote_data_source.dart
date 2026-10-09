@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
-import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
 
@@ -31,7 +31,9 @@ class ZikrRemoteDataSourceImpl implements ZikrRemoteDataSource {
     : _local = local ?? AuthLocalDataSourceImpl(),
       _dio = dio ?? _buildDio();
 
-  static const baseUrl = 'https://tuhfatulmuslim1.ilmifygroup.com/api/v1';
+  // Use the app's authenticated API host. It serves the same Zikr endpoints
+  // and validates the access token issued by the existing sign-in flow.
+  static const baseUrl = ApiConstants.baseUrl;
   final Dio _dio;
   final AuthLocalDataSource _local;
 
@@ -43,15 +45,16 @@ class ZikrRemoteDataSourceImpl implements ZikrRemoteDataSource {
       sendTimeout: const Duration(seconds: 20),
       contentType: Headers.jsonContentType,
       responseType: ResponseType.json,
-      headers: const {'Accept': 'application/json'},
+      headers: const {
+        'Accept': 'application/json',
+        'X-API-Key': ApiConstants.apiKey,
+      },
       validateStatus: (status) => status != null && status < 500,
     );
     final dio = Dio(options);
-    // The feature is served from its own documented host, so the refresh
-    // request must use that same host rather than the app-wide API base URL.
-    dio.interceptors.add(
-      AuthRefreshInterceptor(dio: dio, refreshDio: Dio(options)),
-    );
+    // The endpoint is on the same host as the app's sign-in API, so the
+    // stored access token can be verified by the Zikr backend. It is attached
+    // by [_options] below.
     if (kDebugMode) dio.interceptors.add(_ZikrApiLogInterceptor());
     return dio;
   }
