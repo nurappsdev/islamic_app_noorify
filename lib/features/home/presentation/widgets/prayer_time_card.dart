@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
 
 part 'prayer_time_card_painters.dart';
 part 'prayer_time_card_widgets.dart';
@@ -185,7 +186,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       // DCE8B8 Dome Shape
                       // DCE8B8 Dome Shape
                       Positioned(
-                        top: 90.h,
+                        top: 80.h,
                         left: 54.w,
                         right: 54.w,
                         child: SizedBox(
@@ -200,7 +201,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Hijri Date
                       Positioned(
-                        top: 19.h,
+                        top: 17.h,
                         left: 20.w,
                         right: 20.w,
                         child: _CardDateRow(
@@ -217,7 +218,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       // Prayer Arc + Sun (position/progress track the actual
                       // time of day between sunrise and sunset).
                       Positioned(
-                        top: 72.h,
+                        top: 64.h,
                         left: 33.w,
                         right: 33.w,
                         child: SizedBox(
@@ -231,7 +232,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Date Time Location
                       Positioned(
-                        top: 102.h,
+                        top: 90.h,
                         left: 0,
                         right: 0,
                         child: Column(
@@ -254,8 +255,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               ),
                             ),
 
-                            Text(
-                              appText.locationPlaceholder,
+                            PrayerLocationText(
                               style: homeSansStyle(
                                 fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
@@ -267,7 +267,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
 
                       // Current Prayer Badge
                       Positioned(
-                        top: 178.h,
+                        top: 170.h,
                         left: 0,
                         right: 0,
                         child: Center(
@@ -283,41 +283,47 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                         left: 13.w,
                         right: 13.w,
                         bottom: 13.h,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: _PrayerEdgeTime(
-                                label: '${appText.sunrise}, ${appText.trishal}',
-                                time: _times != null
-                                    ? clock(_times!.sunrise)
-                                    : appText.sunriseTimePlaceholder,
-                                isSunrise: true,
-                                secondaryLabel: appText.sehri,
-                                secondaryTime: _times != null
-                                    ? clock(_times!.fajr)
-                                    : appText.sunriseTimePlaceholder,
-                                showPrimary: _showSunriseAndSunset,
-                              ),
-                            ),
-
-                            SizedBox(width: 12.w),
-
-                            Expanded(
-                              child: _PrayerEdgeTime(
-                                label: '${appText.sunset}, ${appText.trishal}',
-                                time: _times != null
-                                    ? clock(_times!.sunset)
-                                    : appText.sunsetTimePlaceholder,
-                                isSunrise: false,
-                                secondaryLabel: appText.iftar,
-                                secondaryTime: _times != null
-                                    ? clock(_times!.maghrib)
-                                    : appText.sunsetTimePlaceholder,
-                                showPrimary: _showSunriseAndSunset,
-                              ),
-                            ),
-                          ],
+                        child: PrayerLocationBuilder(
+                          builder: (context, locationState) {
+                            final area =
+                                locationState.location?.shortDisplayName ?? '';
+                            String edgeLabel(String label) =>
+                                area.isEmpty ? label : '$label, $area';
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: _PrayerEdgeTime(
+                                    label: edgeLabel(appText.sunrise),
+                                    time: _times != null
+                                        ? clock(_times!.sunrise)
+                                        : appText.sunriseTimePlaceholder,
+                                    isSunrise: true,
+                                    secondaryLabel: appText.sehri,
+                                    secondaryTime: _times != null
+                                        ? clock(_times!.fajr)
+                                        : appText.sunriseTimePlaceholder,
+                                    showPrimary: _showSunriseAndSunset,
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: _PrayerEdgeTime(
+                                    label: edgeLabel(appText.sunset),
+                                    time: _times != null
+                                        ? clock(_times!.sunset)
+                                        : appText.sunsetTimePlaceholder,
+                                    isSunrise: false,
+                                    secondaryLabel: appText.iftar,
+                                    secondaryTime: _times != null
+                                        ? clock(_times!.maghrib)
+                                        : appText.sunsetTimePlaceholder,
+                                    showPrimary: _showSunriseAndSunset,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],

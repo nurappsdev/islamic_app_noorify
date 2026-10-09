@@ -245,9 +245,9 @@ void main() {
     expect(find.text('Iftar'), findsOneWidget);
     expect(find.text('6:35 PM'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
-    expect(find.text('Sunrise, Trishal'), findsOneWidget);
+    expect(find.text('Sunrise'), findsOneWidget);
     expect(find.text('5:40 AM'), findsOneWidget);
-    expect(find.text('Sunset, Trishal'), findsOneWidget);
+    expect(find.text('Sunset'), findsOneWidget);
     expect(find.text('6:35 PM'), findsOneWidget);
     expect(find.byIcon(Icons.wb_sunny), findsNothing);
     expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);

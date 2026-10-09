@@ -372,6 +372,10 @@ class AppText {
     required this.bengaliDatePlaceholder,
     required this.gregorianDatePlaceholder,
     required this.locationPlaceholder,
+    required this.locationFinding,
+    required this.locationServiceDisabled,
+    required this.locationPermissionDenied,
+    required this.locationUnavailable,
     required this.viewPrayerTimes,
     required this.sunrise,
     required this.sunset,
@@ -1261,6 +1265,10 @@ class AppText {
   final String bengaliDatePlaceholder;
   final String gregorianDatePlaceholder;
   final String locationPlaceholder;
+  final String locationFinding;
+  final String locationServiceDisabled;
+  final String locationPermissionDenied;
+  final String locationUnavailable;
   final String viewPrayerTimes;
   final String sunrise;
   final String sunset;
@@ -3115,6 +3123,26 @@ class AppText {
         map,
         'locationPlaceholder',
         fallback?.locationPlaceholder ?? '',
+      ),
+      locationFinding: _read(
+        map,
+        'locationFinding',
+        fallback?.locationFinding ?? '',
+      ),
+      locationServiceDisabled: _read(
+        map,
+        'locationServiceDisabled',
+        fallback?.locationServiceDisabled ?? '',
+      ),
+      locationPermissionDenied: _read(
+        map,
+        'locationPermissionDenied',
+        fallback?.locationPermissionDenied ?? '',
+      ),
+      locationUnavailable: _read(
+        map,
+        'locationUnavailable',
+        fallback?.locationUnavailable ?? '',
       ),
       viewPrayerTimes: _read(
         map,

@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/bloc/prayer_times_bloc.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
@@ -21,16 +22,18 @@ class PrayerTimesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final bloc = PrayerTimesBloc(
-          prayerTimeService: prayerTimeService,
-          now: now,
-        )..add(const LoadPrayerTimes());
-        if (now == null) bloc.add(const StartClock());
-        return bloc;
-      },
-      child: const _PrayerTimesView(),
+    return PrayerLocationScope(
+      child: BlocProvider(
+        create: (_) {
+          final bloc = PrayerTimesBloc(
+            prayerTimeService: prayerTimeService,
+            now: now,
+          )..add(const LoadPrayerTimes());
+          if (now == null) bloc.add(const StartClock());
+          return bloc;
+        },
+        child: const _PrayerTimesView(),
+      ),
     );
   }
 }
@@ -226,8 +229,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(
-                appText.locationPlaceholder,
+              PrayerLocationText(
                 style: TextStyle(color: Colors.white70, fontSize: 9.sp),
               ),
             ],
@@ -266,23 +268,30 @@ class _PrayerSummaryHeader extends StatelessWidget {
           left: 61.w,
           right: 61.w,
           bottom: 12.h,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: _EdgeLabel(
-                  title: '${appText.sunrise}, ${appText.trishal}',
-                  value: clock.clockOrPlaceholder(times?.sunrise),
-                ),
-              ),
-              SizedBox(width: 20.w),
-              Expanded(
-                child: _EdgeLabel(
-                  title: '${appText.sunset}, ${appText.trishal}',
-                  value: clock.clockOrPlaceholder(times?.sunset),
-                ),
-              ),
-            ],
+          child: PrayerLocationBuilder(
+            builder: (context, locationState) {
+              final area = locationState.location?.shortDisplayName ?? '';
+              String edgeLabel(String label) =>
+                  area.isEmpty ? label : '$label, $area';
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _EdgeLabel(
+                      title: edgeLabel(appText.sunrise),
+                      value: clock.clockOrPlaceholder(times?.sunrise),
+                    ),
+                  ),
+                  SizedBox(width: 20.w),
+                  Expanded(
+                    child: _EdgeLabel(
+                      title: edgeLabel(appText.sunset),
+                      value: clock.clockOrPlaceholder(times?.sunset),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
