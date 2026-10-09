@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,6 +7,7 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_location_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/bloc/prayer_location/prayer_location_cubit.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Provides one location BLoC for a route and refreshes it when the app comes
 /// back to the foreground. A single shared service deduplicates simultaneous
@@ -21,12 +24,46 @@ class PrayerLocationScope extends StatefulWidget {
 class _PrayerLocationScopeState extends State<PrayerLocationScope>
     with WidgetsBindingObserver {
   late final PrayerLocationCubit _cubit;
+  LanguageBloc? _languageBloc;
+  StreamSubscription<LanguageState>? _languageSubscription;
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _cubit = PrayerLocationCubit(PrayerLocationService.instance)..refresh();
+    _cubit = PrayerLocationCubit(PrayerLocationService.instance);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    try {
+      final languageBloc = BlocProvider.of<LanguageBloc>(context);
+      if (identical(languageBloc, _languageBloc)) return;
+      _languageSubscription?.cancel();
+      _languageBloc = languageBloc;
+      _languageSubscription = languageBloc.stream.listen(
+        (state) => unawaited(_setLanguage(state.language)),
+      );
+      unawaited(_setLanguage(languageBloc.state.language));
+    } on FlutterError {
+      _startLocation();
+    }
+  }
+
+  Future<void> _setLanguage(AppLanguage language) async {
+    await _cubit.setLocaleIdentifier(
+      language == AppLanguage.bangla ? 'bn_BD' : 'en_US',
+    );
+    if (!mounted) return;
+    _startLocation();
+  }
+
+  void _startLocation() {
+    if (_started) return;
+    _started = true;
+    unawaited(_cubit.refresh());
   }
 
   @override
@@ -43,6 +80,7 @@ class _PrayerLocationScopeState extends State<PrayerLocationScope>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _languageSubscription?.cancel();
     _cubit.close();
     super.dispose();
   }
@@ -110,7 +148,7 @@ class PrayerLocationText extends StatelessWidget {
   );
 
   static String _label(BuildContext context, PrayerLocationState state) {
-    final location = state.location?.displayName ?? '';
+    final location = state.location?.districtCountryDisplayName ?? '';
     if (location.isNotEmpty) return location;
 
     final text = AppText.of(context);

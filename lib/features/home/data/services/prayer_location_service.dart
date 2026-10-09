@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geocoding/geocoding.dart' as geocoding show setLocaleIdentifier;
 import 'package:geolocator/geolocator.dart';
 
 import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
@@ -18,13 +19,16 @@ class PrayerLocationService extends ChangeNotifier {
     Stream<Position> Function(LocationSettings settings)? positionStream,
     Future<List<Placemark>> Function(double latitude, double longitude)?
     reverseGeocode,
+    Future<void> Function(String localeIdentifier)? setGeocodingLocale,
   }) : _isServiceEnabled =
            isServiceEnabled ?? Geolocator.isLocationServiceEnabled,
        _checkPermission = checkPermission ?? Geolocator.checkPermission,
        _requestPermission = requestPermission ?? Geolocator.requestPermission,
        _currentPosition = currentPosition ?? _defaultCurrentPosition,
        _positionStream = positionStream ?? _defaultPositionStream,
-       _reverseGeocode = reverseGeocode ?? placemarkFromCoordinates;
+       _reverseGeocode = reverseGeocode ?? placemarkFromCoordinates,
+       _setGeocodingLocale =
+           setGeocodingLocale ?? geocoding.setLocaleIdentifier;
 
   static final PrayerLocationService instance = PrayerLocationService();
 
@@ -35,11 +39,13 @@ class PrayerLocationService extends ChangeNotifier {
   final Stream<Position> Function(LocationSettings settings) _positionStream;
   final Future<List<Placemark>> Function(double latitude, double longitude)
   _reverseGeocode;
+  final Future<void> Function(String localeIdentifier) _setGeocodingLocale;
 
   PrayerLocationState _state = const PrayerLocationState();
   Future<void>? _starting;
   DateTime? _lastResolvedAt;
   StreamSubscription<Position>? _positionSubscription;
+  String? _localeIdentifier;
 
   PrayerLocationState get state => _state;
 
@@ -75,6 +81,28 @@ class PrayerLocationService extends ChangeNotifier {
     final future = _start();
     _starting = future;
     return future.whenComplete(() => _starting = null);
+  }
+
+  /// Makes future native reverse-geocoding responses match the app language.
+  /// If an address has already been resolved, it is immediately re-geocoded
+  /// at the same coordinate so the visible district/country also changes.
+  Future<void> setLocaleIdentifier(String localeIdentifier) async {
+    if (_localeIdentifier == localeIdentifier) return;
+    try {
+      await _setGeocodingLocale(localeIdentifier);
+      _localeIdentifier = localeIdentifier;
+      final location = _state.location;
+      if (location != null) {
+        await _resolveCoordinates(
+          location.latitude,
+          location.longitude,
+          force: true,
+        );
+      }
+    } catch (_) {
+      // A platform that cannot set a geocoder locale still returns its
+      // verified native address instead of a fabricated translation.
+    }
   }
 
   Future<void> _start() async {
@@ -152,14 +180,22 @@ class PrayerLocationService extends ChangeNotifier {
     await subscription?.cancel();
   }
 
-  Future<void> _resolvePosition(Position position) async {
+  Future<void> _resolvePosition(Position position) =>
+      _resolveCoordinates(position.latitude, position.longitude);
+
+  Future<void> _resolveCoordinates(
+    double latitude,
+    double longitude, {
+    bool force = false,
+  }) async {
     final previous = _state.location;
-    if (previous != null &&
+    if (!force &&
+        previous != null &&
         Geolocator.distanceBetween(
               previous.latitude,
               previous.longitude,
-              position.latitude,
-              position.longitude,
+              latitude,
+              longitude,
             ) <
             100) {
       _setState(
@@ -172,18 +208,15 @@ class PrayerLocationService extends ChangeNotifier {
       return;
     }
     try {
-      final placemarks = await _reverseGeocode(
-        position.latitude,
-        position.longitude,
-      );
+      final placemarks = await _reverseGeocode(latitude, longitude);
       if (placemarks.isEmpty) throw const FormatException('No address found');
       final placemark = placemarks.first;
       _setState(
         PrayerLocationState(
           status: PrayerLocationStatus.ready,
           location: PrayerLocation(
-            latitude: position.latitude,
-            longitude: position.longitude,
+            latitude: latitude,
+            longitude: longitude,
             localArea: _firstNonEmpty([
               placemark.subLocality,
               placemark.locality,

@@ -15,6 +15,9 @@ class PrayerLocationCubit extends Cubit<PrayerLocationState> {
 
   Future<void> refresh({bool force = false}) => _service.start(force: force);
 
+  Future<void> setLocaleIdentifier(String localeIdentifier) =>
+      _service.setLocaleIdentifier(localeIdentifier);
+
   Future<void> pauseUpdates() => _service.stopMonitoring();
 
   void _onLocationChanged() {

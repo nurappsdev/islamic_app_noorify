@@ -98,6 +98,35 @@ void main() {
     );
     await service.stopMonitoring();
   });
+
+  test(
+    're-geocodes the district and country in the selected app language',
+    () async {
+      var bangla = false;
+      final service = PrayerLocationService(
+        isServiceEnabled: () async => true,
+        checkPermission: () async => LocationPermission.whileInUse,
+        currentPosition: () async => _position(),
+        positionStream: (_) => const Stream.empty(),
+        setGeocodingLocale: (locale) async => bangla = locale == 'bn_BD',
+        reverseGeocode: (_, _) async => [
+          Placemark(
+            locality: bangla ? 'ময়মনসিংহ' : 'Bhaluka',
+            subAdministrativeArea: bangla ? 'ময়মনসিংহ' : 'Mymensingh',
+            country: bangla ? 'বাংলাদেশ' : 'Bangladesh',
+          ),
+        ],
+      );
+
+      await service.start();
+      await service.setLocaleIdentifier('bn_BD');
+
+      expect(
+        service.state.location?.districtCountryDisplayName,
+        'ময়মনসিংহ, বাংলাদেশ',
+      );
+    },
+  );
 }
 
 Position _position() => Position(
