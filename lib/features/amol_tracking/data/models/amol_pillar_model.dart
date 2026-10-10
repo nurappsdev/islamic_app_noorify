@@ -12,10 +12,18 @@ class AmolPillarModel extends AmolPillar {
     required super.items,
   });
 
+  /// `pillarKey` -> `itemKey`s to hide, even though the server still sends
+  /// them (e.g. Asr Sunnah was dropped from the Sunnah and Witr checklist).
+  static const _hiddenItemKeysByPillar = {
+    'sunnah_witr': {'asr_sunnah'},
+  };
+
   factory AmolPillarModel.fromJson(Map<String, dynamic> json) {
     final items = json['items'];
+    final pillarKey = json['pillarKey']?.toString() ?? '';
+    final hidden = _hiddenItemKeysByPillar[pillarKey];
     return AmolPillarModel(
-      pillarKey: json['pillarKey']?.toString() ?? '',
+      pillarKey: pillarKey,
       title: json['title']?.toString() ?? '',
       earnedPoints: (json['earnedPoints'] as num?) ?? 0,
       maxPoints: (json['maxPoints'] as num?) ?? 0,
@@ -27,6 +35,7 @@ class AmolPillarModel extends AmolPillar {
                 .map(
                   (e) => AmolItemModel.fromJson(Map<String, dynamic>.from(e)),
                 )
+                .where((item) => hidden == null || !hidden.contains(item.itemKey))
                 .toList()
           : const [],
     );

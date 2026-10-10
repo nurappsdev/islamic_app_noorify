@@ -556,7 +556,7 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
     final appText = AppText.of(context);
     return switch (item.itemKey) {
       'sadaqah' => appText.moreSadaqah,
-      'roza_kaffarah' => appText.moreRozaKaffarah,
+      'roza_kaffarah' => appText.moreKarzeHasanah,
       'nafl_fasting' => appText.moreNaflFasting,
       'physical_exercise' => appText.morePhysicalExercise,
       'good_advice' => appText.moreGivenGoodAdvice,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -12,7 +13,7 @@ import 'package:tuhfatul_muslim/features/home/domain/calendar/bangla_date.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
-import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 enum _CalTab { bangla, arabic, english }
 
@@ -91,7 +92,12 @@ class HomeCalendarCard extends StatefulWidget {
 }
 
 class _HomeCalendarCardState extends State<HomeCalendarCard> {
-  _CalTab _tab = _CalTab.english;
+  // Starts in whichever calendar matches the app language (Bangla by
+  // default); a live language switch updates it via the [BlocListener] in
+  // [build].
+  _CalTab _tab = LanguagePreference.current == AppLanguage.bangla
+      ? _CalTab.bangla
+      : _CalTab.english;
 
   /// Arabic tab only: show the Hijri calendar in Bangla (month names, digits,
   /// weekdays) instead of Arabic script. Flipped by tapping the Arabic tab while
@@ -432,61 +438,72 @@ class _HomeCalendarCardState extends State<HomeCalendarCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final showBanglaHijriLine = _tab == _CalTab.bangla;
-    return HomeCard(
-      padding: EdgeInsets.all(12.w),
-      shadows: [
-        BoxShadow(
-          color: const Color(0xFF8D9B70).withValues(alpha: .22),
-          blurRadius: 18,
-          offset: const Offset(0, 6),
-        ),
-      ],
-      child: Column(
-        children: [
-          _TabRow(
-            tab: _tab,
-            banglaLabel: appText.bangla,
-            arabicLabel: appText.quranArabicLabel,
-            englishLabel: appText.english,
-            arabicInBangla: _arabicInBangla,
-            onChanged: _onTabTapped,
+    return BlocListener<LanguageBloc, LanguageState>(
+      // Follows the app language so the default calendar (Bangla/English)
+      // switches live, with no restart; a manually-picked Arabic tab is
+      // overridden too, matching the Bangla/English switch it mirrors.
+      listenWhen: (previous, current) => previous.language != current.language,
+      listener: (context, state) => setState(() {
+        _tab = state.language == AppLanguage.bangla
+            ? _CalTab.bangla
+            : _CalTab.english;
+      }),
+      child: HomeCard(
+        padding: EdgeInsets.all(12.w),
+        shadows: [
+          BoxShadow(
+            color: const Color(0xFF8D9B70).withValues(alpha: .22),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
-          SizedBox(height: 12.h),
-          Text(
-            _primaryTodayLine(),
-            textDirection: _textDirection,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: context.inkColor(const Color(0xFF2A331C)),
+        ],
+        child: Column(
+          children: [
+            _TabRow(
+              tab: _tab,
+              banglaLabel: appText.bangla,
+              arabicLabel: appText.quranArabicLabel,
+              englishLabel: appText.english,
+              arabicInBangla: _arabicInBangla,
+              onChanged: _onTabTapped,
             ),
-          ),
-          if (showBanglaHijriLine) ...[
-            SizedBox(height: 2.h),
+            SizedBox(height: 12.h),
             Text(
-              _hijriInBangla(),
+              _primaryTodayLine(),
+              textDirection: _textDirection,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColor.primary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: context.inkColor(const Color(0xFF2A331C)),
               ),
             ),
+            if (showBanglaHijriLine) ...[
+              SizedBox(height: 2.h),
+              Text(
+                _hijriInBangla(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.primary,
+                ),
+              ),
+            ],
+            SizedBox(height: 10.h),
+            _MonthYearRow(
+              yearLabel: _localizeDigits(_year, _digits),
+              monthName: _monthNames[_month - 1],
+              textDirection: _textDirection,
+              onTapYear: _pickYear,
+              onTapMonth: _pickMonth,
+            ),
+            SizedBox(height: 14.h),
+            _WeekdayHeader(labels: _weekdayShort),
+            SizedBox(height: 4.h),
+            _DayGrid(cells: _buildCells(), digits: _digits),
           ],
-          SizedBox(height: 10.h),
-          _MonthYearRow(
-            yearLabel: _localizeDigits(_year, _digits),
-            monthName: _monthNames[_month - 1],
-            textDirection: _textDirection,
-            onTapYear: _pickYear,
-            onTapMonth: _pickMonth,
-          ),
-          SizedBox(height: 14.h),
-          _WeekdayHeader(labels: _weekdayShort),
-          SizedBox(height: 4.h),
-          _DayGrid(cells: _buildCells(), digits: _digits),
-        ],
+        ),
       ),
     );
   }
