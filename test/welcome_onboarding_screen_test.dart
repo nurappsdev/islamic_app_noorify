@@ -38,11 +38,30 @@ void main() {
 
     expect(find.text('Make Every Good Deed Count'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
+    expect(_onboardingImage('assets/onboard/salatImg.png'), findsOneWidget);
 
     await tester.tap(find.text('English'));
     await tester.pump();
 
     expect(find.text('প্রতিটি ভালো আমলকে মূল্যবান করুন'), findsOneWidget);
     expect(find.text('বাংলা'), findsOneWidget);
+    expect(_onboardingImage('assets/onboard/salatBangla.png'), findsOneWidget);
+
+    for (var index = 0; index < 3; index++) {
+      await tester.tap(find.text('পরবর্তী'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(
+      _onboardingImage('assets/onboard/onBoard4Bangla.png'),
+      findsOneWidget,
+    );
   });
 }
+
+Finder _onboardingImage(String assetPath) => find.byWidgetPredicate(
+  (widget) =>
+      widget is Image &&
+      widget.image is AssetImage &&
+      (widget.image as AssetImage).assetName == assetPath,
+);
