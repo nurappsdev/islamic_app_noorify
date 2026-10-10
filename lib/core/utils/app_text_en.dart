@@ -100,7 +100,7 @@ const Map<String, String> appTextEn = <String, String>{
   'myNearestOrCompetitor': 'My Nearest Or Competitor',
   'competitorInitials': 'Ab',
   'viewInDashboard': 'View In Dashboard',
-  'amolPrayerTimeNotStarted': 'The prayer time has not started yet.',
+  'amolPrayerTimeNotStarted': 'The time for {name} has not started yet.',
   'ok': 'OK',
   'categoryFardhPrayer': 'Fardh Prayer',
   'categorySunnahAndWitr': 'Sunnah And Witr',

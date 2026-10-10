@@ -509,7 +509,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
           gate.minute,
         );
         if (now.isBefore(gateTime)) {
-          _showPrayerNotStartedAlert();
+          _showPrayerNotStartedAlert(item);
           return;
         }
       }
@@ -548,18 +548,22 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     return confirmed == true;
   }
 
-  void _showPrayerNotStartedAlert() {
+  void _showPrayerNotStartedAlert(AmolItem item) {
     final appText = AppText.readOf(context);
+    final name = _localizedItemName(appText, item);
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: Text(appText.amolPrayerTimeNotStarted),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(appText.ok),
+      barrierColor: Colors.black.withValues(alpha: .45),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 28.w),
+        child: _PrayerNotStartedCard(
+          message: appText.amolPrayerTimeNotStarted.replaceAll(
+            '{name}',
+            name,
           ),
-        ],
+          okLabel: appText.ok,
+        ),
       ),
     );
   }
@@ -798,9 +802,9 @@ const _itemIconByKey = {
   'ishraq': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
   'chasht': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
   'awabin': _ItemIcon(Icons.wb_sunny, Color(0xFFFFC83D)),
-  'quran_tilawat': _ItemIcon(Icons.auto_awesome, Color(0xFFFF8A50)),
-  'hadith_reading': _ItemIcon(Icons.auto_awesome, Color(0xFFFF8A50)),
-  'daily_quiz': _ItemIcon(Icons.quiz, Color(0xFFFFC83D)),
+  'quran_tilawat': _ItemIcon(Icons.menu_book_outlined, Color(0xFFFF8A50)),
+  'hadith_reading': _ItemIcon(Icons.local_library, Color(0xFFFF8A50)),
+  'daily_quiz': _ItemIcon(Icons.quiz_outlined, Color(0xFFFFC83D)),
   'sadaqah': _ItemIcon(Icons.volunteer_activism, Color(0xFFE8916B)),
   'roza_kaffarah': _ItemIcon(Icons.handshake, Color(0xFF6FA8D8)),
   'nafl_fasting': _ItemIcon(Icons.self_improvement, Color(0xFFC9A227)),
@@ -862,42 +866,41 @@ class _AccordionHeader extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+            Row(
+              // Title, mark and the expand arrow all sit together, centered
+              // on this one line.
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
                     title,
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Expanded(child: _ProgressBar(progress: progress)),
-                      SizedBox(width: 10.w),
-                      Text(
-                        fractionLabel,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: context.inkColor(Colors.black54),
-                        ),
-                      ),
-                    ],
+                ),
+                SizedBox(width: 10.w),
+                Text(
+                  fractionLabel,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: context.inkColor(Colors.black54),
                   ),
-                ],
-              ),
+                ),
+                SizedBox(width: 10.w),
+                Icon(
+                  expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
+                  size: 20.sp,
+                  color: context.inkColor(Color(0xFF7E8C61)),
+                ),
+              ],
             ),
-            SizedBox(width: 10.w),
-            Icon(
-              expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
-              size: 20.sp,
-              color: context.inkColor(Color(0xFF7E8C61)),
-            ),
+            SizedBox(height: 8.h),
+            _ProgressBar(progress: progress),
           ],
         ),
       ),
@@ -1324,6 +1327,115 @@ class _CompletionCircle extends StatelessWidget {
         ),
       ),
       child: Icon(Icons.check, size: 13.sp, color: const Color(0xFFB7BBA0)),
+    );
+  }
+}
+
+/// The "this prayer's time hasn't started yet" alert: a rounded card with a
+/// floating clock badge, matching [showLoginRequiredDialog]'s card style
+/// instead of a bare [AlertDialog].
+class _PrayerNotStartedCard extends StatelessWidget {
+  const _PrayerNotStartedCard({required this.message, required this.okLabel});
+
+  final String message;
+  final String okLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = context.inkColor(const Color(0xFF2A331C));
+    return Center(
+      child: Material(
+        type: MaterialType.transparency,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 320.w),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                margin: EdgeInsets.only(top: 34.h),
+                padding: EdgeInsets.fromLTRB(22.w, 48.h, 22.w, 20.h),
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(Colors.white),
+                  borderRadius: BorderRadius.circular(26.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: amolOlive.withValues(alpha: .3),
+                      blurRadius: 28.r,
+                      offset: Offset(0, 12.h),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        height: 1.4,
+                        fontWeight: FontWeight.w600,
+                        color: ink,
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: FilledButton.styleFrom(
+                          minimumSize: Size.fromHeight(46.h),
+                          backgroundColor: amolOlive,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
+                          ),
+                        ),
+                        child: Text(
+                          okLabel,
+                          style: TextStyle(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 68.w,
+                height: 68.w,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [const Color(0xFFC5D077), amolOlive],
+                  ),
+                  border: Border.all(
+                    color: context.surfaceColor(Colors.white),
+                    width: 5.r,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: amolOlive.withValues(alpha: .45),
+                      blurRadius: 16.r,
+                      offset: Offset(0, 7.h),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.access_time_filled_rounded,
+                  color: Colors.white,
+                  size: 32.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -99,7 +99,7 @@ const Map<String, String> appTextBn = <String, String>{
   'myNearestOrCompetitor': 'আমার নিকটতম বা প্রতিযোগী',
   'competitorInitials': 'আঃ',
   'viewInDashboard': 'ড্যাশবোর্ডে দেখুন',
-  'amolPrayerTimeNotStarted': 'নামাজের ওয়াক্ত এখনো শুরু হয়নি।',
+  'amolPrayerTimeNotStarted': '{name} এর ওয়াক্ত এখনো শুরু হয়নি।',
   'ok': 'ঠিক আছে',
   'categoryFardhPrayer': 'ফরজ নামাজ',
   'categorySunnahAndWitr': 'সুন্নত ও বিতর',
