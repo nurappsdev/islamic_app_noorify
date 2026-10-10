@@ -207,6 +207,7 @@ class _DetailCard extends StatelessWidget {
               detail.nameArabic,
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: 'Noorehuda',
                 fontSize: 30.sp,
                 fontWeight: FontWeight.w700,
                 color: context.inkColor(Color(0xFF3F6B2C)),
@@ -264,6 +265,7 @@ class _DetailCard extends StatelessWidget {
                       : TextDirection.ltr,
                   style: paragraph.isArabic
                       ? TextStyle(
+                          fontFamily: 'Noorehuda',
                           fontSize: 17.sp,
                           fontWeight: FontWeight.w600,
                           height: 1.8,

@@ -63,7 +63,6 @@ class QuranSurahHeading extends StatelessWidget {
                         ).surahName(surah.number, surah.name),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontFamily: 'serif',
                           fontSize: 27,
                           height: 1.25,
                           fontWeight: FontWeight.bold,

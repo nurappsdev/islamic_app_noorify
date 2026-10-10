@@ -331,6 +331,7 @@ class _CurrentZikrCard extends StatelessWidget {
                       ? TextDirection.rtl
                       : TextDirection.ltr,
                   style: TextStyle(
+                    fontFamily: item.arabic.isNotEmpty ? 'Noorehuda' : null,
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
                     color: context.inkColor(Color(0xFF33421F)),

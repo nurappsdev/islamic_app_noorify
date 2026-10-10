@@ -50,7 +50,7 @@ class EmailVerificationScreen extends StatefulWidget {
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
-  static const _logoImagePath = 'assets/appLogo.png';
+  static const _logoImagePath = 'assets/appLogoFinal.png';
   static const _otpLength = 6;
 
   final TextEditingController _emailController = TextEditingController();
@@ -457,19 +457,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     ),
                   ),
                 ),
-                // The logo already carries the app name.
-                // SizedBox(height: 8.h),
-                // Text(
-                // appText.tuhfatulMuslim,
-                // textAlign: TextAlign.center,
-                // style: TextStyle(
-                // color: context.inkColor(Colors.black),
-                // fontSize: 14.sp,
-                // height: 1.2,
-                // fontFamily: 'Times New Roman',
-                // ),
-                // ),
-                SizedBox(height: _isOtpMode ? 38.h : 32.h),
+                SizedBox(height: 8.h),
+                Text(
+                  appText.tuhfatulMuslim,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: context.inkColor(Colors.black),
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: _isOtpMode ? 24.h : 18.h),
                 if (_isOtpMode) ...[
                   _buildOtpFields(),
                   SizedBox(height: 6.h),

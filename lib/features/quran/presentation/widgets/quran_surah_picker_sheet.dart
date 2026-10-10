@@ -232,7 +232,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                         trailing: Text(
                           surah.nameArabic,
                           style: TextStyle(
-                            fontFamily: 'noorehuda',
+                            fontFamily: 'Noorehuda',
                             fontSize: 16.sp,
                             color: const Color(0xFF4A5A38),
                           ),

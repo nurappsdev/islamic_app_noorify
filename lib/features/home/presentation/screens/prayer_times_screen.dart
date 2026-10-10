@@ -301,7 +301,6 @@ class _PrayerSummaryHeader extends StatelessWidget {
   static TextStyle _italicStyle(double size) => TextStyle(
     color: Colors.white,
     fontSize: size,
-    fontFamily: 'Times New Roman',
     fontStyle: FontStyle.italic,
   );
 }

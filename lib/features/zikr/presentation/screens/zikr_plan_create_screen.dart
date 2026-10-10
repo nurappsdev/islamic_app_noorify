@@ -106,6 +106,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF2C3320)),
+                
               ),
             ),
           ),

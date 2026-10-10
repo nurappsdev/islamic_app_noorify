@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../data/services/quran_audio_downloader.dart';
 import '../../domain/quran_playlist.dart';
@@ -292,7 +291,7 @@ class _PlayerView extends StatelessWidget {
                               currentItem.surahName,
                             ),
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.amiri(
+                            style: TextStyle(
                               fontSize: 26.sp,
                               fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.w600,

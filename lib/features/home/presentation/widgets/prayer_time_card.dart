@@ -259,6 +259,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                               style: homeSansStyle(
                                 fontSize: 12.sp,
                                 color: const Color(0xFF5B856F),
+
                               ),
                             ),
                           ],

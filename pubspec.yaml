@@ -110,6 +110,7 @@ flutter:
     - assets/hadith/
     - assets/language/
     - assets/appLogo.png
+    - assets/appLogoFinal.png
     - assets/splasImg.png
     - assets/397.png
     - assets/newShape.png
@@ -162,3 +163,7 @@ flutter:
     - family: Ubuntu Medium
       fonts:
         - asset: assets/fonts/Ubuntu-Medium.ttf
+
+    - family: Noto Sans Bengali Regular
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-VariableFont_wdth,wght.ttf

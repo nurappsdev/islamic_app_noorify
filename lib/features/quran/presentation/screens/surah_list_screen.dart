@@ -1,7 +1,6 @@
 import '../widgets/quran_download_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
@@ -534,7 +533,7 @@ class _LastReadCard extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   title,
-                                  style: GoogleFonts.amiri(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
                                     fontStyle: FontStyle.italic,
@@ -548,7 +547,7 @@ class _LastReadCard extends StatelessWidget {
                             surahName,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.amiri(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 22,
                               fontStyle: FontStyle.italic,

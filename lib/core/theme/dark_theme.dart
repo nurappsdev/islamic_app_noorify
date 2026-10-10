@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/app_color.dart';
 import 'app_palette.dart';
+import 'app_typography.dart';
 import 'brand_colors.dart';
 
 /// The app's dark theme: the olive brand on deep green-black surfaces.
-ThemeData darkTheme() {
+ThemeData darkTheme({String fontFamily = appFontFamily}) {
   final scheme =
       ColorScheme.fromSeed(
         seedColor: BrandColors.primary,
@@ -30,9 +30,10 @@ ThemeData darkTheme() {
       foregroundColor: AppColor.darkTextPrimary,
       surfaceTintColor: Colors.transparent,
     ),
-    textTheme: GoogleFonts.plusJakartaSansTextTheme(
-      ThemeData(brightness: Brightness.dark).textTheme,
-    ),
+    fontFamily: fontFamily,
+    textTheme: ThemeData(
+      brightness: Brightness.dark,
+    ).textTheme.apply(fontFamily: fontFamily),
     extensions: const [AppPalette.dark],
   );
 }

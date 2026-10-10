@@ -276,6 +276,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                         textAlign: TextAlign.center,
                         textDirection: TextDirection.rtl,
                         style: TextStyle(
+                          fontFamily: 'Noorehuda',
                           fontSize: 20.sp * multiplier,
                           height: 1.9,
                           color: context.inkColor(Color(0xFF283016)),

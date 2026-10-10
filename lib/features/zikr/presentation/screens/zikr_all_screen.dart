@@ -113,6 +113,7 @@ class _ZikrTile extends StatelessWidget {
                     item.arabic,
                     textDirection: TextDirection.rtl,
                     style: TextStyle(
+                      fontFamily: 'Noorehuda',
                       fontSize: 18.sp,
                       color: context.inkColor(Color(0xFF283016)),
                     ),

@@ -260,7 +260,6 @@ class _AmolDashboardView extends StatelessWidget {
                             color: context.inkColor(Colors.black),
                             fontSize: 15.sp,
                             fontStyle: FontStyle.italic,
-                            fontFamily: 'Times New Roman',
                             fontWeight: FontWeight.w600,
                           ),
                         ),

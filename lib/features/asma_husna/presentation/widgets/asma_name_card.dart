@@ -70,6 +70,7 @@ class AsmaNameCard extends StatelessWidget {
                               name.nameArabic,
                               textAlign: TextAlign.center,
                               style: TextStyle(
+                                fontFamily: 'Noorehuda',
                                 fontSize: 26.sp,
                                 fontWeight: FontWeight.w700,
                                 color: context.inkColor(_arabicGreen),

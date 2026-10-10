@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
@@ -725,7 +724,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
                     item.localizedName(langCode),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.amiri(
+                    style: TextStyle(
                       fontSize: 17.sp,
                       fontStyle: FontStyle.italic,
                       color: const Color(0xFF302647),
