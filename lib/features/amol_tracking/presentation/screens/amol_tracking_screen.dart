@@ -865,20 +865,20 @@ class _AccordionHeader extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+        padding: EdgeInsets.fromLTRB(14.w, 18.h, 14.w, 14.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              // Title, mark and the expand arrow all sit together, centered
-              // on this one line.
+              // Title, mark and the expand arrow all sit together on this
+              // one line.
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 15.sp,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -887,14 +887,14 @@ class _AccordionHeader extends StatelessWidget {
                 Text(
                   fractionLabel,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 14.sp,
                     color: context.inkColor(Colors.black54),
                   ),
                 ),
                 SizedBox(width: 10.w),
                 Icon(
                   expanded ? Icons.keyboard_arrow_down : Icons.chevron_right,
-                  size: 20.sp,
+                  size: 22.sp,
                   color: context.inkColor(Color(0xFF7E8C61)),
                 ),
               ],
