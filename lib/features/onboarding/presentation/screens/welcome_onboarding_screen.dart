@@ -238,6 +238,7 @@ class _OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bangla = language == AppLanguage.bangla;
+    final imagePath = page.assetPathFor(language);
     return Padding(
       padding: EdgeInsets.fromLTRB(24.w, 14.h, 24.w, 0),
       child: Column(
@@ -246,7 +247,8 @@ class _OnboardingPage extends StatelessWidget {
           Flexible(
             flex: 11,
             child: Image.asset(
-              page.assetPath,
+              imagePath,
+              key: ValueKey('onboarding-image-$imagePath'),
               fit: BoxFit.contain,
               errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
@@ -313,6 +315,7 @@ class _PageDots extends StatelessWidget {
 class _OnboardingPageData {
   const _OnboardingPageData({
     required this.assetPath,
+    this.assetPathBn,
     required this.titleEn,
     required this.bodyEn,
     required this.titleBn,
@@ -320,15 +323,20 @@ class _OnboardingPageData {
   });
 
   final String assetPath;
+  final String? assetPathBn;
   final String titleEn;
   final String bodyEn;
   final String titleBn;
   final String bodyBn;
+
+  String assetPathFor(AppLanguage language) =>
+      language == AppLanguage.bangla ? assetPathBn ?? assetPath : assetPath;
 }
 
 const _onboardingPages = [
   _OnboardingPageData(
     assetPath: 'assets/onboard/salatImg.png',
+    assetPathBn: 'assets/onboard/salatBangla.png',
     titleEn: 'Make Every Good Deed Count',
     bodyEn:
         'Track your daily Amol, build meaningful habits, and stay consistent in your worship.',
@@ -356,6 +364,7 @@ const _onboardingPages = [
   ),
   _OnboardingPageData(
     assetPath: 'assets/onboard/onBoard4.png',
+    assetPathBn: 'assets/onboard/onBoard4Bangla.png',
     titleEn: 'Keep Your Heart Close to Allah',
     bodyEn:
         'Make daily remembrance easier and bring more peace and mindfulness into your routine.',
