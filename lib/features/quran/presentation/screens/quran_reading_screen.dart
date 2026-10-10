@@ -650,7 +650,6 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                     ),
                                     maxLines: 1,
                                     style: const TextStyle(
-                                      fontFamily: 'serif',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: quranInk,

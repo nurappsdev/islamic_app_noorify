@@ -1347,6 +1347,7 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
                 textAlign: TextAlign.right,
                 textDirection: TextDirection.rtl,
                 style: TextStyle(
+                  fontFamily: 'Noorehuda',
                   fontSize: 20.sp * settings.arabicScale,
                   height: 2.0,
                   color: context.inkColor(_ink),

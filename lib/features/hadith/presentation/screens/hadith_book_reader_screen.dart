@@ -1037,6 +1037,7 @@ class _HadithCardState extends State<_HadithCard> {
                               textAlign: TextAlign.right,
                               textDirection: TextDirection.rtl,
                               style: TextStyle(
+                                fontFamily: 'Noorehuda',
                                 fontSize: 17.sp,
                                 height: 1.9,
                                 color: context.inkColor(Color(0xFF283016)),

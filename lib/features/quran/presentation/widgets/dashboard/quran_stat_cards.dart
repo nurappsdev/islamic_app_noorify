@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
@@ -140,7 +139,7 @@ class QuranMostReadingSurahCard extends StatelessWidget {
             children: [
               Text(
                 surahName,
-                style: GoogleFonts.cormorantGaramond(
+                style: TextStyle(
                   fontSize: 20.sp,
                   fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.w600,

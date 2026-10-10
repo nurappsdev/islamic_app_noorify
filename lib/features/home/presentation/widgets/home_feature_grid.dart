@@ -130,7 +130,10 @@ class _FeatureTile extends StatelessWidget {
       onTap: navigate,
       borderRadius: BorderRadius.circular(11.r),
       child: HomeCard(
-        padding: EdgeInsets.symmetric(vertical: 13.h),
+        // Ubuntu's glyph metrics are slightly taller than the previous default
+        // font. Keeping one extra logical pixel of vertical room prevents the
+        // fixed-height grid tile from overflowing on compact devices.
+        padding: EdgeInsets.symmetric(vertical: 12.h),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

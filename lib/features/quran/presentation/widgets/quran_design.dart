@@ -5,7 +5,6 @@ import '../screens/quran_saved_screen.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../quran_text.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
@@ -98,7 +97,7 @@ class QuranListRow extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.amiri(
+                    style: TextStyle(
                       fontSize: 18,
                       fontStyle: FontStyle.italic,
                       color: context.inkColor(const Color(0xff302647)),

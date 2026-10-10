@@ -215,11 +215,7 @@ class _SkipButton extends StatelessWidget {
       ),
       child: Text(
         language == AppLanguage.bangla ? 'এড়িয়ে যান' : 'Skip',
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontStyle: FontStyle.italic,
-          fontFamily: 'Times New Roman',
-        ),
+        style: TextStyle(fontSize: 14.sp, fontStyle: FontStyle.italic),
       ),
     );
   }
@@ -271,7 +267,6 @@ class _OnboardingPage extends StatelessWidget {
               fontSize: bangla ? 15.sp : 16.sp,
               fontWeight: FontWeight.w500,
               fontStyle: FontStyle.italic,
-              fontFamily: bangla ? null : 'Times New Roman',
               height: 1.38,
             ),
           ),

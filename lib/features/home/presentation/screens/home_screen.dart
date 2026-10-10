@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -145,85 +146,87 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Light status-bar icons on the dark background.
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: Scaffold(
-        backgroundColor: context.appPalette.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Fixed above the scroll view (not inside it), so it never
-              // scrolls away with the content below.
-              Padding(
-                padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
-                child: const HomeHeader(),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    RefreshIndicator(
-                      onRefresh: _onRefresh,
-                      color: AppColor.primary,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
-                        child: Column(
-                          children: [
-                            const AmalTrackerCard(),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(fontFamily: appFontFamilyFor(language)),
+        child: Scaffold(
+          backgroundColor: context.appPalette.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Fixed above the scroll view (not inside it), so it never
+                // scrolls away with the content below.
+                Padding(
+                  padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
+                  child: const HomeHeader(),
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      RefreshIndicator(
+                        onRefresh: _onRefresh,
+                        color: AppColor.primary,
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
+                          child: Column(
+                            children: [
+                              const AmalTrackerCard(),
 
-                            SizedBox(height: 16.h),
-                            KeyedSubtree(
-                              key: ValueKey(
-                                'prayer-time-card-${language.name}-$_refreshTick',
-                              ),
-                              child: const PrayerTimeCard(),
-                            ),
-                            SizedBox(height: 24.h),
-                            KeyedSubtree(
-                              key: ValueKey(
-                                'prohibited-prayer-times-${language.name}-$_refreshTick',
-                              ),
-                              child: const ProhibitedPrayerTimesCard(),
-                            ),
-                            SizedBox(height: 16.h),
-                            HomeFeatureCardSlider(
-                              key: ValueKey(
-                                'home-feature-slider-${language.name}',
-                              ),
-                              height: 350.h,
-                              children: [
-                                KeyedSubtree(
-                                  key: ValueKey('fardh-prayer-$_refreshTick'),
-                                  child: const _FardhPrayerCard(),
+                              SizedBox(height: 16.h),
+                              KeyedSubtree(
+                                key: ValueKey(
+                                  'prayer-time-card-${language.name}-$_refreshTick',
                                 ),
-                                const _HadithReadingCard(),
-                                const _QuranCard(),
-                                KeyedSubtree(
-                                  key: ValueKey('nafl-more-$_refreshTick'),
-                                  child: const _NaflMoreCard(),
+                                child: const PrayerTimeCard(),
+                              ),
+                              SizedBox(height: 24.h),
+                              KeyedSubtree(
+                                key: ValueKey(
+                                  'prohibited-prayer-times-${language.name}-$_refreshTick',
                                 ),
-                                const _ZikrCard(),
-                                const _SunnahWitrCard(),
-                                const _QuizCard(),
-                              ],
-                            ),
+                                child: const ProhibitedPrayerTimesCard(),
+                              ),
+                              SizedBox(height: 16.h),
+                              HomeFeatureCardSlider(
+                                key: ValueKey(
+                                  'home-feature-slider-${language.name}',
+                                ),
+                                height: 350.h,
+                                children: [
+                                  KeyedSubtree(
+                                    key: ValueKey('fardh-prayer-$_refreshTick'),
+                                    child: const _FardhPrayerCard(),
+                                  ),
+                                  const _HadithReadingCard(),
+                                  const _QuranCard(),
+                                  KeyedSubtree(
+                                    key: ValueKey('nafl-more-$_refreshTick'),
+                                    child: const _NaflMoreCard(),
+                                  ),
+                                  const _ZikrCard(),
+                                  const _SunnahWitrCard(),
+                                  const _QuizCard(),
+                                ],
+                              ),
 
-                            SizedBox(height: 10.h),
-                            const HomeProgressSection(),
-                            SizedBox(height: 10.h),
-                            const HomeFeatureGrid(),
-                            SizedBox(height: 10.h),
-
-                          ],
+                              SizedBox(height: 10.h),
+                              const HomeProgressSection(),
+                              SizedBox(height: 10.h),
+                              const HomeFeatureGrid(),
+                              SizedBox(height: 10.h),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const Align(
-                      alignment: Alignment.bottomCenter,
-                      child: HomeBottomNav(),
-                    ),
-                  ],
+                      const Align(
+                        alignment: Alignment.bottomCenter,
+                        child: HomeBottomNav(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -951,7 +954,7 @@ TextStyle homeSerifStyle({
   return TextStyle(
     color: color ?? (context?.appPalette ?? AppPalette.light).textStrong,
     fontSize: fontSize,
-    fontFamily: 'Times New Roman',
+    fontFamily: appFontFamilyFor(LanguagePreference.current),
     fontStyle: FontStyle.italic,
     fontWeight: fontWeight,
   );
@@ -966,6 +969,7 @@ TextStyle homeSansStyle({
   return TextStyle(
     color: color ?? (context?.appPalette ?? AppPalette.light).textPrimary,
     fontSize: fontSize,
+    fontFamily: appFontFamilyFor(LanguagePreference.current),
     fontWeight: fontWeight,
   );
 }

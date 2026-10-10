@@ -104,7 +104,6 @@ class _QuizDashboardView extends StatelessWidget {
                         text:
                             '${[appText.todays, appText.weekly, appText.monthly][state.selectedPeriod]} - ',
                         style: TextStyle(
-                          fontFamily: 'serif',
                           fontSize: 22.sp,
                           fontStyle: FontStyle.italic,
                         ),

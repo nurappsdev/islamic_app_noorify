@@ -18,7 +18,6 @@ TextStyle alarmItalicStyle(
 }) => TextStyle(
   color: context?.inkColor(color) ?? color,
   fontSize: size,
-  fontFamily: 'Times New Roman',
   fontStyle: FontStyle.italic,
 );
 

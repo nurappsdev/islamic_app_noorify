@@ -868,7 +868,6 @@ class _AccordionHeader extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13.sp,
                       fontStyle: FontStyle.italic,
-                      fontFamily: 'Times New Roman',
                     ),
                   ),
                   SizedBox(height: 8.h),

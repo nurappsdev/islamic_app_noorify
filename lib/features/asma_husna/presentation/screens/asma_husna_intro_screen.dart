@@ -79,6 +79,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       appText.asmaHusnaHadithArabic,
                       textAlign: TextAlign.center,
                       style: TextStyle(
+                        fontFamily: 'Noorehuda',
                         fontSize: 19.sp,
                         fontWeight: FontWeight.w700,
                         color: context.inkColor(Color(0xFF3E6B2E)),

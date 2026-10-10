@@ -163,3 +163,7 @@ flutter:
     - family: Ubuntu Medium
       fonts:
         - asset: assets/fonts/Ubuntu-Medium.ttf
+
+    - family: Noto Sans Bengali Regular
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-VariableFont_wdth,wght.ttf

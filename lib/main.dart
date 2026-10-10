@@ -15,6 +15,7 @@ import 'core/storage/session_cleaner.dart';
 import 'core/storage/hive_service.dart';
 import 'core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'core/theme/dark_theme.dart';
+import 'core/theme/app_typography.dart';
 import 'core/theme/light_theme.dart';
 import 'core/utils/app_text.dart';
 import 'features/alarm/data/services/alarm_scheduler.dart';
@@ -34,16 +35,16 @@ final appNavigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppFirebaseService.initialize();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // Must come after Hive is open: FirebaseTokenService reads the auth box
   // (via AuthLocalDataSourceImpl) as soon as its singleton is built.
   await HiveService.init();
   if (kDebugMode) {
-    debugPrint('[FCM] token: ${await FirebaseTokenService.instance.getToken()}');
+    debugPrint(
+      '[FCM] token: ${await FirebaseTokenService.instance.getToken()}',
+    );
   }
   // The access token can't be renewed: wipe the dead session and send the user
   // back to sign in.
@@ -138,6 +139,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appPreferences = context.watch<AppPreferencesBloc>().state;
+    final language = context.watch<LanguageBloc>().state.language;
+    final fontFamily = appFontFamilyFor(language);
 
     return ScreenUtilInit(
       designSize: const Size(375, 812), // Adjust this to your design size
@@ -149,8 +152,8 @@ class MyApp extends StatelessWidget {
           navigatorKey: appNavigatorKey,
           navigatorObservers: [appRouteObserver],
           title: 'Tuhfatul Muslim',
-          theme: lightTheme(),
-          darkTheme: darkTheme(),
+          theme: lightTheme(fontFamily: fontFamily),
+          darkTheme: darkTheme(fontFamily: fontFamily),
           themeAnimationDuration: const Duration(milliseconds: 300),
           themeMode: appPreferences.darkThemeEnabled
               ? ThemeMode.dark
@@ -160,7 +163,13 @@ class MyApp extends StatelessWidget {
             final textScale = appFontScale(appPreferences.fontSize);
             final content = MediaQuery(
               data: media.copyWith(textScaler: TextScaler.linear(textScale)),
-              child: child ?? const SizedBox.shrink(),
+              // This covers plain [Text] widgets and styles that do not set a
+              // font family themselves. Arabic/Quranic text opts into its own
+              // font at the widget where it is rendered.
+              child: DefaultTextStyle.merge(
+                style: TextStyle(fontFamily: fontFamily),
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
             // Light status-bar icons over the dark background. Light mode
             // keeps the platform default.
