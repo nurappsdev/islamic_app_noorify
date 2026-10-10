@@ -36,6 +36,11 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 /// have no time gate.
 const _timeGatedPillarKeys = {'fardh_prayer', 'sunnah_witr', 'nafl_salat'};
 
+/// `pillarKey`s whose items open another feature screen instead of being
+/// ticked here (see [_AmolTrackingScreenState._onItemTap]) — their rows show
+/// a navigation arrow instead of a checkbox.
+const _navigablePillarKeys = {'quran', 'hadith', 'quiz'};
+
 /// English title -> the pillar key `GET /amol/tracker/daily` uses, so a
 /// caller (e.g. [HomeProgressSection]'s tiles) can still ask for a category
 /// to open expanded by its familiar display name.
@@ -753,7 +758,7 @@ String _localizedItemName(AppText appText, AmolItem item) {
     case 'sadaqah':
       return appText.moreSadaqah;
     case 'roza_kaffarah':
-      return appText.moreRozaKaffarah;
+      return appText.moreKarzeHasanah;
     case 'nafl_fasting':
       return appText.moreNaflFasting;
     case 'physical_exercise':
@@ -1152,6 +1157,9 @@ class _PillarRow extends StatelessWidget {
                         isChecked:
                             completionOverrides[pillar.items[i].itemKey] ??
                             pillar.items[i].isCompleted,
+                        isNavigable: _navigablePillarKeys.contains(
+                          pillar.pillarKey,
+                        ),
                         onTap: () => onItemTap(pillar.items[i]),
                       ),
                     ),
@@ -1180,6 +1188,7 @@ class _AmolItemRow extends StatelessWidget {
     required this.isChecked,
     required this.onTap,
     this.highlighted = false,
+    this.isNavigable = false,
   });
 
   /// The item the user came here for: softly tinted so it reads as selected.
@@ -1189,6 +1198,11 @@ class _AmolItemRow extends StatelessWidget {
   final bool isLogging;
   final bool isChecked;
   final VoidCallback onTap;
+
+  /// True for an item that opens another feature screen on tap (Quran,
+  /// Hadith, Quiz) rather than being ticked here — it shows a navigation
+  /// arrow instead of a checkbox.
+  final bool isNavigable;
 
   @override
   Widget build(BuildContext context) {
@@ -1251,7 +1265,14 @@ class _AmolItemRow extends StatelessWidget {
               ),
             ),
             SizedBox(width: 10.w),
-            _CompletionCircle(isCompleted: isChecked, isLogging: isLogging),
+            if (isNavigable)
+              Icon(
+                Icons.chevron_right,
+                size: 22.sp,
+                color: context.inkColor(const Color(0xFFB7BBA0)),
+              )
+            else
+              _CompletionCircle(isCompleted: isChecked, isLogging: isLogging),
           ],
         ),
       ),

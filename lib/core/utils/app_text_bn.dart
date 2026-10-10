@@ -200,7 +200,7 @@ const Map<String, String> appTextBn = <String, String>{
   'naflIshraq': 'ইশরাক',
   'naflChast': 'চাশত',
   'naflAwabin': 'আওয়াবিন',
-  'moreSadaqah': 'সদকা',
+  'moreSadaqah': 'সদকা/হাদিয়া',
   'moreKarzeHasanah': 'করজে হাসানা',
   'moreRozaKaffarah': 'রোজা/কাফফারা',
   'moreNaflFasting': 'নফল রোজা',
