@@ -16,10 +16,6 @@ class WelcomeOnboardingScreen extends StatefulWidget {
 
 class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
   final PageController _pageController = PageController();
-  // The welcome journey intentionally introduces the product in English. Once
-  // the visitor uses the toggle, their choice is also handed to LanguageBloc
-  // and is saved for the rest of the app.
-  AppLanguage _onboardingLanguage = AppLanguage.english;
   var _pageIndex = 0;
   var _isCompleting = false;
 
@@ -53,16 +49,16 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
   }
 
   void _toggleLanguage() {
-    final next = _onboardingLanguage == AppLanguage.bangla
+    final currentLanguage = context.read<LanguageBloc>().state.language;
+    final next = currentLanguage == AppLanguage.bangla
         ? AppLanguage.english
         : AppLanguage.bangla;
-    setState(() => _onboardingLanguage = next);
     context.read<LanguageBloc>().add(UpdateLanguage(next));
   }
 
   @override
   Widget build(BuildContext context) {
-    final language = _onboardingLanguage;
+    final language = context.watch<LanguageBloc>().state.language;
     final isLastPage = _pageIndex == _onboardingPages.length - 1;
 
     return Scaffold(
