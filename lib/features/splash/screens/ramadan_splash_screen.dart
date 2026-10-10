@@ -18,7 +18,7 @@ class RamadanSplashScreen extends StatefulWidget {
 class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
   static const _splashDuration = Duration(milliseconds: 1800);
   static const _backgroundImagePath = 'assets/splasImg.png';
-  static const _logoImagePath = 'assets/appLogo.png';
+  static const _logoImagePath = 'assets/appLogoFinal.png';
 
   @override
   void initState() {
@@ -81,19 +81,18 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                         );
                       },
                     ),
-                    // The logo already carries the app name.
-                    // SizedBox(height: 6.h),
-                    // Text(
-                    // appText.tuhfatulMuslim,
-                    // textAlign: TextAlign.center,
-                    // style: TextStyle(
-                    // color: context.inkColor(Colors.black),
-                    // fontSize: 15.sp,
-                    // height: 1.2,
-                    // fontFamily: 'Times New Roman',
-                    // ),
-                    // ),
-                    SizedBox(height: 48.h),
+                    SizedBox(height: 8.h),
+                    Text(
+                      appText.tuhfatulMuslim,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: context.inkColor(Colors.black),
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
                     Text(
                       appText.splashTitle,
                       textAlign: TextAlign.center,

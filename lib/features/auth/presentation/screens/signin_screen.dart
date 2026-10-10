@@ -47,7 +47,7 @@ class _SignInView extends StatefulWidget {
 }
 
 class _SignInViewState extends State<_SignInView> {
-  static const _logoImagePath = 'assets/appLogo.png';
+  static const _logoImagePath = 'assets/appLogoFinal.png';
   static const _errorColor = Color(0xFFD93025);
   final _formKey = GlobalKey<FormState>();
 
@@ -214,19 +214,18 @@ class _SignInViewState extends State<_SignInView> {
                       ),
                     ),
                   ),
-                  // The logo already carries the app name.
-                  // SizedBox(height: 8.h),
-                  // Text(
-                  // appText.tuhfatulMuslim,
-                  // textAlign: TextAlign.center,
-                  // style: TextStyle(
-                  // color: context.inkColor(Colors.black),
-                  // fontSize: 14.sp,
-                  // height: 1.2,
-                  // fontFamily: 'Times New Roman',
-                  // ),
-                  // ),
-                  SizedBox(height: 38.h),
+                  SizedBox(height: 8.h),
+                  Text(
+                    appText.tuhfatulMuslim,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: context.inkColor(Colors.black),
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
                   LocalizedFormScope(
                     child: Form(
                       key: _formKey,
