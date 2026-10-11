@@ -222,6 +222,12 @@ class _AmolDashboardView extends StatelessWidget {
               pillar.competitorScore?.toDouble(),
           ]
         : competitorValues;
+    // Identifies the Fardh Prayer column by key (not by its localized
+    // label) so its bar can be drawn slightly wider regardless of language
+    // or whether it's monthly's real pillar list or the fixed weekly one.
+    final chartPillarKeys = showMonthlyPillars
+        ? [for (final pillar in monthlyPillars) pillar.pillarKey]
+        : _pillarOrder;
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -335,7 +341,14 @@ class _AmolDashboardView extends StatelessWidget {
                       columnLayout:
                           period == _AmolPeriod.weekly || showMonthlyPillars,
                       verticalLabels: showMonthlyPillars,
-                      scrollable: showMonthlyPillars,
+                      // Weekly's fixed 7-category list (including Nafl
+                      // Salat and Nafl And More, the last two) can run off
+                      // the screen edge with diagonal labels on a narrow
+                      // device — scrollable horizontally, same as monthly,
+                      // so every category stays reachable by swiping.
+                      scrollable:
+                          period == _AmolPeriod.weekly || showMonthlyPillars,
+                      pillarKeys: chartPillarKeys,
                     ),
                   SizedBox(height: 18.h),
                   _MyPointsBar(myPoints: myPoints, totalPoints: totalPoints),
@@ -625,6 +638,7 @@ class _AmolLineChart extends StatefulWidget {
     required this.columnLayout,
     this.verticalLabels = false,
     this.scrollable = false,
+    this.pillarKeys,
   });
 
   final List<String> categories;
@@ -656,6 +670,11 @@ class _AmolLineChart extends StatefulWidget {
   /// into the viewport. Monthly only — it can have more categories than
   /// daily/weekly's fixed 7-pillar list ever does.
   final bool scrollable;
+
+  /// Index-aligned with [categories]: each category's `pillarKey`, used
+  /// only to widen the Fardh Prayer column's bar regardless of its
+  /// localized label. `null`/missing entries draw at the normal width.
+  final List<String>? pillarKeys;
 
   @override
   State<_AmolLineChart> createState() => _AmolLineChartState();
@@ -750,6 +769,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                         language: languageOf(context),
                         selectedIndex: selected,
                         verticalLabels: widget.verticalLabels,
+                        pillarKeys: widget.pillarKeys,
                       )
                     : _LineChartPainter(
                         plotRect: plotRect,
@@ -771,7 +791,14 @@ class _AmolLineChartState extends State<_AmolLineChart> {
               ),
               for (var i = 0; i < categoryCount; i++)
                 Positioned(
-                  left: (i * stepX - stepX / 2).clamp(0.0, width),
+                  // Centered on the same x the bar/circle for this column
+                  // actually renders at (`plotRect.left + stepX * i`, per
+                  // `_computePoints`) — without `plotRect.left` here, every
+                  // tap zone sat offset from its own column.
+                  left: (plotRect.left + i * stepX - stepX / 2).clamp(
+                    0.0,
+                    width,
+                  ),
                   top: 0,
                   width: stepX,
                   height: plotRect.bottom,
@@ -780,28 +807,60 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                     onTap: () => _select(i),
                   ),
                 ),
-              for (final point in competitorPoints)
-                if (point != null)
+              for (var i = 0; i < competitorPoints.length; i++)
+                if (competitorPoints[i] != null)
                   Positioned(
-                    left: point.dx,
-                    top: (point.dy - 32.h).clamp(0.0, height),
+                    // Column layout (weekly/monthly): the circle sits at
+                    // the bar's own top-right corner, i.e. exactly where
+                    // that series' progress reaches. Line layout (daily)
+                    // keeps its own point marker drawn by the painter, so
+                    // the label floats just above it instead of covering
+                    // it.
+                    left: widget.columnLayout
+                        ? competitorPoints[i]!.dx +
+                              _BarChartPainter.halfWidthForIndex(
+                                i,
+                                categoryCount,
+                                plotRect.width,
+                                widget.pillarKeys,
+                              )
+                        : competitorPoints[i]!.dx,
+                    top: widget.columnLayout
+                        ? competitorPoints[i]!.dy.clamp(0.0, height)
+                        : (competitorPoints[i]!.dy - 32.h).clamp(0.0, height),
                     child: FractionalTranslation(
-                      translation: const Offset(-0.5, 0),
+                      translation: widget.columnLayout
+                          ? const Offset(-0.5, -0.5)
+                          : const Offset(-0.5, 0),
                       child: _ScoreBubble(
                         label: widget.competitorLabel,
                         pillColor: _LineChartPainter.competitorLineColor,
+                        solid: widget.columnLayout,
                       ),
                     ),
                   ),
-              for (final point in points)
+              for (var i = 0; i < points.length; i++)
                 Positioned(
-                  left: point.dx,
-                  top: (point.dy + 8.h).clamp(0.0, height),
+                  left: widget.columnLayout
+                      ? points[i].dx +
+                            _BarChartPainter.halfWidthForIndex(
+                              i,
+                              categoryCount,
+                              plotRect.width,
+                              widget.pillarKeys,
+                            )
+                      : points[i].dx,
+                  top: widget.columnLayout
+                      ? points[i].dy.clamp(0.0, height)
+                      : (points[i].dy + 8.h).clamp(0.0, height),
                   child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0),
+                    translation: widget.columnLayout
+                        ? const Offset(-0.5, -0.5)
+                        : const Offset(-0.5, 0),
                     child: _ScoreBubble(
                       label: widget.myLabel,
                       pillColor: _LineChartPainter.lineColor,
+                      solid: widget.columnLayout,
                     ),
                   ),
                 ),
@@ -880,41 +939,39 @@ class _AmolLineChartState extends State<_AmolLineChart> {
 /// The small pill shown at each of "my"/the competitor's chart points,
 /// carrying a 1-2 letter initials [label].
 class _ScoreBubble extends StatelessWidget {
-  const _ScoreBubble({required this.label, required this.pillColor});
+  const _ScoreBubble({
+    required this.label,
+    required this.pillColor,
+    this.solid = false,
+  });
 
   final String label;
   final Color pillColor;
 
+  /// True for the bar/column layout: the circle sits directly on the bar
+  /// it labels, so it's filled in that bar's exact color instead of a
+  /// softened one.
+  final bool solid;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 22.r,
-      padding: EdgeInsets.symmetric(horizontal: 7.w),
+      width: 18.r,
+      height: 18.r,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: context.surfaceColor(pillColor.withValues(alpha: .55)),
-        borderRadius: BorderRadius.circular(11.r),
+        color: context.surfaceColor(
+          solid ? pillColor : pillColor.withValues(alpha: .55),
+        ),
+        shape: BoxShape.circle,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5.r,
-            height: 5.r,
-            decoration: const BoxDecoration(
-              color: Color(0xFF3F4A32),
-              shape: BoxShape.circle,
-            ),
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.sp,
-              fontWeight: FontWeight.w700,
-              color: context.inkColor(Color(0xFF3F4A32)),
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 8.sp,
+          fontWeight: FontWeight.w700,
+          color: context.inkColor(Color(0xFF3F4A32)),
+        ),
       ),
     );
   }
@@ -1285,6 +1342,7 @@ class _BarChartPainter extends CustomPainter {
     required this.language,
     this.selectedIndex,
     this.verticalLabels = false,
+    this.pillarKeys,
   });
 
   final Rect plotRect;
@@ -1299,11 +1357,36 @@ class _BarChartPainter extends CustomPainter {
   /// diagonally (reference image).
   final bool verticalLabels;
 
-  double get _barHalfWidth {
-    final count = points.length;
-    if (count <= 1) return (plotRect.width / 2).clamp(4.0, 20.0);
-    final stepX = plotRect.width / (count - 1);
+  /// Index-aligned with [categories]/[points]: used only to draw the Fardh
+  /// Prayer column's bar slightly wider than the rest.
+  final List<String>? pillarKeys;
+
+  static const _fardhPrayerKey = 'fardh_prayer';
+
+  static double _baseHalfWidth(int count, double plotWidth) {
+    if (count <= 1) return (plotWidth / 2).clamp(4.0, 20.0);
+    final stepX = plotWidth / (count - 1);
     return (stepX * 0.28).clamp(4.0, 16.0);
+  }
+
+  /// [_baseHalfWidth], widened for the Fardh Prayer column specifically —
+  /// looked up by `pillarKey` (not the localized label) so it's unaffected
+  /// by language or which category list (weekly's fixed one vs. monthly's
+  /// real one) is in play. Shared with [_AmolLineChartState] so the score
+  /// bubble it positions at a bar's top-right corner lines up with the
+  /// exact width this painter draws that bar at.
+  static double halfWidthForIndex(
+    int index,
+    int count,
+    double plotWidth,
+    List<String>? pillarKeys,
+  ) {
+    final base = _baseHalfWidth(count, plotWidth);
+    final isFardhPrayer =
+        pillarKeys != null &&
+        index < pillarKeys.length &&
+        pillarKeys[index] == _fardhPrayerKey;
+    return isFardhPrayer ? (base * 1.3).clamp(4.0, 20.0) : base;
   }
 
   @override
@@ -1331,8 +1414,13 @@ class _BarChartPainter extends CustomPainter {
       );
     }
 
-    final halfWidth = _barHalfWidth;
     for (var i = 0; i < points.length; i++) {
+      final halfWidth = halfWidthForIndex(
+        i,
+        points.length,
+        plotRect.width,
+        pillarKeys,
+      );
       final competitor = i < competitorPoints.length
           ? competitorPoints[i]
           : null;
@@ -1416,6 +1504,7 @@ class _BarChartPainter extends CustomPainter {
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
       oldDelegate.verticalLabels != verticalLabels ||
+      oldDelegate.pillarKeys != pillarKeys ||
       oldDelegate.plotRect != plotRect ||
       oldDelegate.language != language ||
       oldDelegate.selectedIndex != selectedIndex;
