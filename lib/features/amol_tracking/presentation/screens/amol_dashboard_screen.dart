@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,6 +8,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_point.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_localized_format.dart';
@@ -58,6 +61,54 @@ DateTime _startOfWindow(_AmolPeriod period, AmolDashboardState state) {
 
 bool _isSameDate(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Weekly/monthly bar charts only: a clean, human-readable y-axis built
+/// entirely from the values actually on screen — e.g. `[0, 50, 100, 150,
+/// 200, 250, 300]` when the highest score shown is 300 — instead of a
+/// fixed division of some external ceiling. Every bar's height is then a
+/// mathematically exact ratio against this same axis for every column, so
+/// 10 vs. 300 reads on screen exactly as dramatic a gap as it is in real
+/// points; the axis simply grows or shrinks to whatever the current data
+/// actually needs, at 10, 300, 1000, or any other magnitude.
+///
+/// Mirrors the classic "nice numbers for graph labels" algorithm
+/// (Heckbert): pick a round step from `{1, 2, 5} × 10ⁿ` close to
+/// `highest / targetIntervals`, then the axis max is the smallest
+/// multiple of that step at or above the highest value.
+List<double> _niceAxisTicks(List<double> values, List<double?> competitorValues) {
+  var highest = 0.0;
+  for (final value in values) {
+    if (value > highest) highest = value;
+  }
+  for (final value in competitorValues) {
+    if (value != null && value > highest) highest = value;
+  }
+  // No data at all (e.g. everyone's at 0 this window) still needs a
+  // non-zero axis to divide into readable steps.
+  if (highest <= 0) highest = 4;
+  const targetIntervals = 5;
+  final step = _niceStep(highest / targetIntervals);
+  final tickCount = (highest / step).ceil();
+  return [for (var i = 0; i <= tickCount; i++) i * step];
+}
+
+/// Rounds [value] to the nearest "nice" leading digit (1, 2 or 5) at its
+/// own order of magnitude — e.g. 83 -> 100, 42 -> 50, 18 -> 20 — the
+/// standard building block for human-friendly axis steps.
+double _niceStep(double value) {
+  if (value <= 0) return 1;
+  final exponent = (math.log(value) / math.ln10).floor();
+  final magnitude = math.pow(10, exponent).toDouble();
+  final fraction = value / magnitude;
+  final niceFraction = fraction < 1.5
+      ? 1
+      : fraction < 3
+      ? 2
+      : fraction < 7
+      ? 5
+      : 10;
+  return niceFraction * magnitude;
+}
 
 extension on _AmolPeriod {
   String label(AppText appText) => switch (this) {
@@ -194,6 +245,35 @@ class _AmolDashboardView extends StatelessWidget {
                 ? formatAmolDate(state.date, appText)
                 : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}',
           );
+    // Monthly shows the same real per-pillar categories as daily/weekly,
+    // but reads them straight off the loaded graph's own `pillars` instead
+    // of the fixed `_pillarOrder`/`categories` above — so any category the
+    // server actually returns (e.g. one this hardcoded list doesn't cover)
+    // still shows up, instead of being silently dropped.
+    final monthlyPillars = graph?.pillars ?? const <AmolAnalyticsPoint>[];
+    final isBangla = languageOf(context) == AppLanguage.bangla;
+    final showMonthlyPillars = period == _AmolPeriod.monthly && graph != null;
+    final chartCategories = showMonthlyPillars
+        ? [
+            for (final pillar in monthlyPillars)
+              (isBangla && pillar.titleBn.isNotEmpty)
+                  ? pillar.titleBn
+                  : pillar.title,
+          ]
+        : categories;
+    final chartValues = showMonthlyPillars
+        ? [for (final pillar in monthlyPillars) pillar.myScore.toDouble()]
+        : values;
+    final chartCompetitorValues = showMonthlyPillars
+        ? [
+            for (final pillar in monthlyPillars)
+              pillar.competitorScore?.toDouble(),
+          ]
+        : competitorValues;
+    // Weekly/monthly bars compute their own fully data-driven y-axis (see
+    // `_niceAxisTicks`) instead of using the server's `maxY`. Daily keeps
+    // the server's `maxY` as-is.
+    final isColumnLayout = period == _AmolPeriod.weekly || showMonthlyPillars;
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -220,6 +300,11 @@ class _AmolDashboardView extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   AmolSummaryCard(
+                    title: switch (period) {
+                      _AmolPeriod.daily => null,
+                      _AmolPeriod.weekly => appText.weeklyAmolTrack,
+                      _AmolPeriod.monthly => appText.monthlyAmolTrack,
+                    },
                     pointLabel: pointLabel,
                     progressLabel: progressLabel,
                     progress: progress,
@@ -252,38 +337,84 @@ class _AmolDashboardView extends StatelessWidget {
                   ],
                   SizedBox(height: 18.h),
                   RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: appText.todays,
-                          style: TextStyle(
-                            color: context.inkColor(Colors.black),
-                            fontSize: 15.sp,
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w600,
+                    // Daily keeps its existing two-part caption unchanged;
+                    // weekly/monthly have no analogous "average todays
+                    // days" clause, so they show just the corrected
+                    // heading ("This Week's"/"This Month's Average") in
+                    // the same bold-italic style as daily's "Todays".
+                    text: period == _AmolPeriod.daily
+                        ? TextSpan(
+                            children: [
+                              TextSpan(
+                                text: appText.todays,
+                                style: TextStyle(
+                                  color: context.inkColor(Colors.black),
+                                  fontSize: 15.sp,
+                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' ${appText.averageTodaysDays}',
+                                style: TextStyle(
+                                  color: context.inkColor(Colors.black87),
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ],
+                          )
+                        : TextSpan(
+                            text: period == _AmolPeriod.weekly
+                                ? appText.thisWeeksAverage
+                                : appText.thisMonthsAverage,
+                            style: TextStyle(
+                              color: context.inkColor(Colors.black),
+                              fontSize: 15.sp,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: ' ${appText.averageTodaysDays}',
-                          style: TextStyle(
-                            color: context.inkColor(Colors.black87),
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                   SizedBox(height: 12.h),
                   const _Legend(),
                   SizedBox(height: 10.h),
-                  _AmolLineChart(
-                    categories: categories,
-                    values: values,
-                    myLabel: myLabel,
-                    competitorValues: competitorValues,
-                    competitorLabel: competitorLabel,
-                    maxY: maxY,
-                  ),
+                  if (showMonthlyPillars && monthlyPillars.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: Center(
+                        child: Text(
+                          appText.noResultsFound,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(const Color(0xFF5D6B44)),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    _AmolLineChart(
+                      categories: chartCategories,
+                      values: chartValues,
+                      myLabel: myLabel,
+                      competitorValues: chartCompetitorValues,
+                      competitorLabel: competitorLabel,
+                      maxY: maxY,
+                      // Weekly mirrors the Hadith dashboard's weekly tab:
+                      // the same per-pillar data, drawn as columns instead
+                      // of a line. Monthly uses every real category (not
+                      // just the fixed list above) with vertical, scrollable
+                      // labels; tapping a column shows the same my/competitor
+                      // points tooltip weekly uses. Daily keeps the existing
+                      // line chart.
+                      columnLayout: isColumnLayout,
+                      verticalLabels: showMonthlyPillars,
+                      // Weekly's fixed 7-category list (including Nafl
+                      // Salat and Nafl And More, the last two) can run off
+                      // the screen edge with diagonal labels on a narrow
+                      // device — scrollable horizontally, same as monthly,
+                      // so every category stays reachable by swiping.
+                      scrollable: isColumnLayout,
+                    ),
                   SizedBox(height: 18.h),
                   _MyPointsBar(myPoints: myPoints, totalPoints: totalPoints),
                 ],
@@ -569,6 +700,9 @@ class _AmolLineChart extends StatefulWidget {
     required this.competitorValues,
     required this.competitorLabel,
     required this.maxY,
+    required this.columnLayout,
+    this.verticalLabels = false,
+    this.scrollable = false,
   });
 
   final List<String> categories;
@@ -584,29 +718,109 @@ class _AmolLineChart extends StatefulWidget {
   final String competitorLabel;
   final double maxY;
 
+  /// True for the weekly and monthly tabs: draws the same per-pillar
+  /// points as overlapping columns ([_BarChartPainter]) instead of a
+  /// connected line ([_LineChartPainter]), matching the Hadith dashboard's
+  /// weekly bar chart. Everything else (grid, axis labels, score bubbles,
+  /// tap-to-select tooltip) is shared and unaffected by this flag.
+  final bool columnLayout;
+
+  /// Monthly's vertical category labels instead of daily/weekly's diagonal
+  /// ones (reference image). Only meaningful together with [columnLayout].
+  final bool verticalLabels;
+
+  /// Wraps the chart in horizontal scrolling and widens it to fit every
+  /// category at a readable column width, instead of squeezing them all
+  /// into the viewport. Monthly only — it can have more categories than
+  /// daily/weekly's fixed 7-pillar list ever does.
+  final bool scrollable;
+
   @override
   State<_AmolLineChart> createState() => _AmolLineChartState();
 }
 
 class _AmolLineChartState extends State<_AmolLineChart> {
-  /// Which category column is showing its tap tooltip, `null` when none is.
+  /// Which category column is showing its tap tooltip; `null` when none is.
   int? _selectedIndex;
 
   void _select(int index) {
     setState(() => _selectedIndex = _selectedIndex == index ? null : index);
   }
 
+  /// The widest category label at the chart's label font size — monthly's
+  /// vertical labels need the bottom plot margin sized to this (rotated 90°,
+  /// a label's width becomes its vertical extent), so nothing is truncated
+  /// regardless of how long a category's name is.
+  static double _verticalLabelExtent(List<String> categories) {
+    var maxWidth = 0.0;
+    for (final category in categories) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: category,
+          style: TextStyle(fontSize: 9.sp),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (painter.width > maxWidth) maxWidth = painter.width;
+    }
+    return maxWidth;
+  }
+
+  /// The widest y-axis tick label at the chart's label font size — needed
+  /// so the left gutter ([_AmolLineChartState.build]'s `plotLeft`) can
+  /// grow enough to keep 4-digit-plus values (1,000+) fully on-screen
+  /// instead of clipping against the chart's left edge.
+  static double _tickLabelExtent(List<double> ticks, AppLanguage language) {
+    var maxWidth = 0.0;
+    for (final tick in ticks) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: localizeDigits(tick.round().toString(), language),
+          style: TextStyle(fontSize: 9.sp),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (painter.width > maxWidth) maxWidth = painter.width;
+    }
+    return maxWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final height = 240.h;
-    final plotLeft = 24.w;
+    // Weekly/monthly bar charts get their own fully data-driven y-axis
+    // (see `_niceAxisTicks`) instead of the line chart's fixed division
+    // of `widget.maxY`; `tickValues.last` is then the bar chart's axis
+    // ceiling everywhere it's needed (point scaling, grid, labels).
+    final tickValues = widget.columnLayout
+        ? _niceAxisTicks(widget.values, widget.competitorValues)
+        : null;
+    final axisMaxY = tickValues?.last ?? widget.maxY;
+    final language = languageOf(context);
+    // Grows past its normal width only when a tick label (e.g. "1,250")
+    // genuinely needs the room, so small values look exactly as before.
+    final plotLeft = tickValues == null
+        ? 24.w
+        : math.max(24.w, _tickLabelExtent(tickValues, language) + 10.w);
     final plotTop = 30.h;
-    final plotBottom = 48.h;
     final plotRight = 6.w;
+    final plotBottom = widget.verticalLabels
+        ? _verticalLabelExtent(widget.categories) + 16.h
+        : 48.h;
+    // The plotted area always gets the same vertical room (the original
+    // 240.h total, minus its 30.h top and 48.h bottom); only the label band
+    // below it grows for monthly's taller vertical labels.
+    final height = plotTop + 162.h + plotBottom;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
+        final categoryCount = widget.categories.length;
+        // Wide enough for each column's bar and vertical label to have
+        // breathing room; scrolls past that instead of squeezing every
+        // category into the viewport when there are many of them.
+        final minColumnWidth = 56.w;
+        final width = widget.scrollable
+            ? math.max(constraints.maxWidth, categoryCount * minColumnWidth)
+            : constraints.maxWidth;
         final plotRect = Rect.fromLTWH(
           plotLeft,
           plotTop,
@@ -616,20 +830,25 @@ class _AmolLineChartState extends State<_AmolLineChart> {
         final points = _computePoints(
           plotRect,
           widget.values,
-          widget.maxY,
+          axisMaxY,
+          slotted: widget.columnLayout,
         ).cast<Offset>();
         final competitorPoints = _computePoints(
           plotRect,
           widget.competitorValues,
-          widget.maxY,
+          axisMaxY,
+          slotted: widget.columnLayout,
         );
-        final categoryCount = widget.categories.length;
-        final stepX = categoryCount > 1
-            ? plotRect.width / (categoryCount - 1)
-            : plotRect.width;
+        // Mirrors `_computePoints`' own spacing for this layout, so the
+        // tap zones below land exactly on the columns they're meant for.
+        final stepX = widget.columnLayout
+            ? (categoryCount > 0 ? plotRect.width / categoryCount : 0.0)
+            : (categoryCount > 1
+                  ? plotRect.width / (categoryCount - 1)
+                  : plotRect.width);
         final selected = _selectedIndex;
 
-        return SizedBox(
+        final chart = SizedBox(
           height: height,
           width: width,
           child: Stack(
@@ -637,18 +856,29 @@ class _AmolLineChartState extends State<_AmolLineChart> {
             children: [
               CustomPaint(
                 size: Size(width, height),
-                painter: _LineChartPainter(
-                  plotRect: plotRect,
-                  categories: widget.categories,
-                  points: points,
-                  competitorPoints: competitorPoints,
-                  maxY: widget.maxY,
-                  language: languageOf(context),
-                  selectedIndex: selected,
-                ),
+                painter: widget.columnLayout
+                    ? _BarChartPainter(
+                        plotRect: plotRect,
+                        categories: widget.categories,
+                        points: points,
+                        competitorPoints: competitorPoints,
+                        tickValues: tickValues!,
+                        language: language,
+                        selectedIndex: selected,
+                        verticalLabels: widget.verticalLabels,
+                      )
+                    : _LineChartPainter(
+                        plotRect: plotRect,
+                        categories: widget.categories,
+                        points: points,
+                        competitorPoints: competitorPoints,
+                        maxY: widget.maxY,
+                        language: language,
+                        selectedIndex: selected,
+                      ),
               ),
               // Tapping the empty chart background (outside any category's
-              // column) dismisses the tooltip.
+              // column) dismisses the tooltip/highlight.
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
@@ -657,7 +887,11 @@ class _AmolLineChartState extends State<_AmolLineChart> {
               ),
               for (var i = 0; i < categoryCount; i++)
                 Positioned(
-                  left: (i * stepX - stepX / 2).clamp(0.0, width),
+                  // Centered on `points[i].dx` — the same x the bar/circle
+                  // for this column actually renders at — rather than a
+                  // separately re-derived formula that could (and once
+                  // did) drift out of sync with it.
+                  left: (points[i].dx - stepX / 2).clamp(0.0, width),
                   top: 0,
                   width: stepX,
                   height: plotRect.bottom,
@@ -666,34 +900,68 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                     onTap: () => _select(i),
                   ),
                 ),
-              for (final point in competitorPoints)
-                if (point != null)
+              for (var i = 0; i < competitorPoints.length; i++)
+                if (competitorPoints[i] != null)
                   Positioned(
-                    left: point.dx,
-                    top: (point.dy - 32.h).clamp(0.0, height),
+                    // Column layout (weekly/monthly): the circle sits at
+                    // the bar's own top-left corner, i.e. exactly where
+                    // that series' progress reaches — clamped the same way
+                    // the painter clamps the bar's own left edge, so the
+                    // two always land on the same pixel even for the
+                    // first/last column. Line layout (daily) keeps its own
+                    // point marker drawn by the painter, so the label
+                    // floats just above it instead of covering it.
+                    left: widget.columnLayout
+                        ? (competitorPoints[i]!.dx -
+                                  _BarChartPainter.barHalfWidth(
+                                    categoryCount,
+                                    plotRect.width,
+                                  ))
+                              .clamp(plotRect.left, plotRect.right)
+                        : competitorPoints[i]!.dx,
+                    top: widget.columnLayout
+                        ? competitorPoints[i]!.dy.clamp(0.0, height)
+                        : (competitorPoints[i]!.dy - 32.h).clamp(0.0, height),
                     child: FractionalTranslation(
-                      translation: const Offset(-0.5, 0),
+                      translation: widget.columnLayout
+                          ? const Offset(-0.5, -0.5)
+                          : const Offset(-0.5, 0),
                       child: _ScoreBubble(
                         label: widget.competitorLabel,
                         pillColor: _LineChartPainter.competitorLineColor,
+                        solid: widget.columnLayout,
                       ),
                     ),
                   ),
-              for (final point in points)
+              for (var i = 0; i < points.length; i++)
                 Positioned(
-                  left: point.dx,
-                  top: (point.dy + 8.h).clamp(0.0, height),
+                  left: widget.columnLayout
+                      ? (points[i].dx -
+                                _BarChartPainter.barHalfWidth(
+                                  categoryCount,
+                                  plotRect.width,
+                                ))
+                            .clamp(plotRect.left, plotRect.right)
+                      : points[i].dx,
+                  top: widget.columnLayout
+                      ? points[i].dy.clamp(0.0, height)
+                      : (points[i].dy + 8.h).clamp(0.0, height),
                   child: FractionalTranslation(
-                    translation: const Offset(-0.5, 0),
+                    translation: widget.columnLayout
+                        ? const Offset(-0.5, -0.5)
+                        : const Offset(-0.5, 0),
                     child: _ScoreBubble(
                       label: widget.myLabel,
                       pillColor: _LineChartPainter.lineColor,
+                      solid: widget.columnLayout,
                     ),
                   ),
                 ),
+              // Tapping any column (daily/weekly/monthly alike) shows the
+              // same my/competitor points tooltip.
               if (selected != null)
                 Positioned(
-                  left: (selected * stepX + plotRect.left).clamp(
+                  left: points[selected].dx.clamp(
                     56.w,
                     (width - 56.w).clamp(56.w, double.infinity),
                   ),
@@ -713,6 +981,12 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                 ),
             ],
           ),
+        );
+
+        if (!widget.scrollable) return chart;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: chart,
         );
       },
     );
@@ -736,19 +1010,34 @@ class _AmolLineChartState extends State<_AmolLineChart> {
   /// Maps [values] onto [rect] using [maxY] as the y-axis ceiling. A `null`
   /// entry (only possible for competitor values) stays `null` in the
   /// result, so its bubble is skipped.
+  ///
+  /// [slotted] (bar charts, i.e. [_AmolLineChart.columnLayout]) divides
+  /// [rect] into `values.length` equal slots and centers each point in its
+  /// own slot, so the first/last bars get the same breathing room on both
+  /// sides as every bar in between. Without it (the default, used by the
+  /// line chart), the first and last points sit exactly on [rect]'s left
+  /// and right edges instead — correct for a line chart's endpoints, but
+  /// for a bar chart it means the first/last bar's own half-width always
+  /// extends past the plot edge and gets clamped there, rendering as a
+  /// visibly thinner, lopsided bar whose score bubble (anchored to the
+  /// *unclamped* point) then drifts away from the bar's actual edge.
   static List<Offset?> _computePoints(
     Rect rect,
     List<double?> values,
-    double maxY,
-  ) {
-    final stepX = values.length > 1 ? rect.width / (values.length - 1) : 0.0;
+    double maxY, {
+    bool slotted = false,
+  }) {
+    final count = values.length;
+    final stepX = slotted
+        ? (count > 0 ? rect.width / count : 0.0)
+        : (count > 1 ? rect.width / (count - 1) : 0.0);
     return [
-      for (var i = 0; i < values.length; i++)
+      for (var i = 0; i < count; i++)
         if (values[i] == null)
           null
         else
           Offset(
-            rect.left + stepX * i,
+            rect.left + stepX * (slotted ? i + 0.5 : i.toDouble()),
             rect.bottom - (values[i]! / maxY).clamp(0.0, 1.0) * rect.height,
           ),
     ];
@@ -758,41 +1047,39 @@ class _AmolLineChartState extends State<_AmolLineChart> {
 /// The small pill shown at each of "my"/the competitor's chart points,
 /// carrying a 1-2 letter initials [label].
 class _ScoreBubble extends StatelessWidget {
-  const _ScoreBubble({required this.label, required this.pillColor});
+  const _ScoreBubble({
+    required this.label,
+    required this.pillColor,
+    this.solid = false,
+  });
 
   final String label;
   final Color pillColor;
 
+  /// True for the bar/column layout: the circle sits directly on the bar
+  /// it labels, so it's filled in that bar's exact color instead of a
+  /// softened one.
+  final bool solid;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 22.r,
-      padding: EdgeInsets.symmetric(horizontal: 7.w),
+      width: 18.r,
+      height: 18.r,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: context.surfaceColor(pillColor.withValues(alpha: .55)),
-        borderRadius: BorderRadius.circular(11.r),
+        color: context.surfaceColor(
+          solid ? pillColor : pillColor.withValues(alpha: .55),
+        ),
+        shape: BoxShape.circle,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5.r,
-            height: 5.r,
-            decoration: const BoxDecoration(
-              color: Color(0xFF3F4A32),
-              shape: BoxShape.circle,
-            ),
-          ),
-          SizedBox(width: 4.w),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.sp,
-              fontWeight: FontWeight.w700,
-              color: context.inkColor(Color(0xFF3F4A32)),
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 8.sp,
+          fontWeight: FontWeight.w700,
+          color: context.inkColor(Color(0xFF3F4A32)),
+        ),
       ),
     );
   }
@@ -1091,7 +1378,7 @@ class _LineChartPainter extends CustomPainter {
     }
   }
 
-  void _paintLabel(
+  static void _paintLabel(
     Canvas canvas,
     String text,
     Offset anchor, {
@@ -1143,6 +1430,172 @@ class _LineChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.plotRect != plotRect ||
+      oldDelegate.language != language ||
+      oldDelegate.selectedIndex != selectedIndex;
+}
+
+/// Weekly tab's chart style (img reference: Hadith dashboard's weekly bar
+/// chart): the same per-pillar `points`/`competitorPoints` [_LineChartPainter]
+/// uses, drawn as overlapping columns — taller bar behind, shorter in front —
+/// instead of a connected line. Grid, y-axis labels and x-axis category
+/// labels are identical to [_LineChartPainter]'s.
+class _BarChartPainter extends CustomPainter {
+  const _BarChartPainter({
+    required this.plotRect,
+    required this.categories,
+    required this.points,
+    required this.competitorPoints,
+    required this.tickValues,
+    required this.language,
+    this.selectedIndex,
+    this.verticalLabels = false,
+  });
+
+  final Rect plotRect;
+  final List<String> categories;
+  final List<Offset> points;
+  final List<Offset?> competitorPoints;
+
+  /// This window's own data-driven y-axis labels, evenly spaced from `0`
+  /// to the axis ceiling (e.g. `[0, 50, 100, 150, 200, 250, 300]`) — see
+  /// `_niceAxisTicks`. [points]/[competitorPoints] are already scaled
+  /// against the same ceiling (`tickValues.last`), so this list only
+  /// needs drawing, not any further ratio math.
+  final List<double> tickValues;
+  final AppLanguage language;
+  final int? selectedIndex;
+
+  /// Monthly's category labels read bottom-to-top instead of leaning
+  /// diagonally (reference image).
+  final bool verticalLabels;
+
+  /// Every column's bar half-width — all columns (Fardh Prayer, Nafl
+  /// Salat, Quran, etc.) are drawn at this same width; only their height
+  /// differs, based on actual progress. Derived from the slotted spacing
+  /// `_computePoints`/[_AmolLineChartState] use for bar charts (each
+  /// category gets an equal `plotWidth / count` slot), so the bar — and
+  /// the score bubble [_AmolLineChartState] positions at its top-left
+  /// corner — always matches the slot it's actually centered in.
+  static double barHalfWidth(int count, double plotWidth) {
+    if (count <= 0) return 0.0;
+    final stepX = plotWidth / count;
+    return (stepX * 0.28).clamp(4.0, 16.0);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = _LineChartPainter._gridColor
+      ..strokeWidth = 1;
+
+    // tickValues are evenly spaced by construction (0, step, 2*step, ...),
+    // so each one's screen y is just its position in the list over the
+    // list's own span — no separate ratio against a ceiling value needed.
+    final lastTickIndex = tickValues.length - 1;
+    for (var i = 0; i <= lastTickIndex; i++) {
+      final y = lastTickIndex == 0
+          ? plotRect.bottom
+          : plotRect.bottom - plotRect.height * i / lastTickIndex;
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        gridPaint,
+      );
+      _LineChartPainter._paintLabel(
+        canvas,
+        localizeDigits(tickValues[i].round().toString(), language),
+        Offset(plotRect.left - 6.w, y),
+        alignRight: true,
+      );
+    }
+
+    final halfWidth = barHalfWidth(points.length, plotRect.width);
+    for (var i = 0; i < points.length; i++) {
+      final competitor = i < competitorPoints.length
+          ? competitorPoints[i]
+          : null;
+      final bars = <(Offset, Color)>[
+        (points[i], _LineChartPainter.lineColor),
+        if (competitor != null)
+          (competitor, _LineChartPainter.competitorLineColor),
+      ]..sort((a, b) => a.$1.dy.compareTo(b.$1.dy));
+      for (final (point, color) in bars) {
+        final left = (point.dx - halfWidth).clamp(
+          plotRect.left,
+          plotRect.right,
+        );
+        final right = (point.dx + halfWidth).clamp(
+          plotRect.left,
+          plotRect.right,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromLTRB(left, point.dy, right, plotRect.bottom),
+            topLeft: Radius.circular(4.r),
+            topRight: Radius.circular(4.r),
+          ),
+          Paint()..color = color,
+        );
+      }
+    }
+
+    // Highlight the selected column, same treatment as the line chart's.
+    final selected = selectedIndex;
+    if (selected != null && selected >= 0 && selected < points.length) {
+      final x = points[selected].dx;
+      final guide = Paint()
+        ..color = _LineChartPainter.lineColor.withValues(alpha: .45)
+        ..strokeWidth = 1.2;
+      for (var y = plotRect.top; y < plotRect.bottom; y += 6) {
+        canvas.drawLine(
+          Offset(x, y),
+          Offset(x, (y + 3).clamp(plotRect.top, plotRect.bottom)),
+          guide,
+        );
+      }
+
+      void highlight(Offset point, Color color) {
+        canvas.drawCircle(
+          point,
+          11.r,
+          Paint()..color = color.withValues(alpha: .22),
+        );
+        canvas.drawCircle(point, 6.5.r, Paint()..color = Colors.white);
+        canvas.drawCircle(point, 4.5.r, Paint()..color = color);
+      }
+
+      if (selected < competitorPoints.length &&
+          competitorPoints[selected] != null) {
+        highlight(
+          competitorPoints[selected]!,
+          _LineChartPainter.competitorLineColor,
+        );
+      }
+      highlight(points[selected], _LineChartPainter.lineColor);
+    }
+
+    for (var i = 0; i < categories.length; i++) {
+      final x = i < points.length ? points[i].dx : plotRect.left;
+      canvas.save();
+      canvas.translate(x, plotRect.bottom + 10.h);
+      canvas.rotate(verticalLabels ? -math.pi / 2 : -0.6);
+      _LineChartPainter._paintLabel(
+        canvas,
+        categories[i],
+        Offset.zero,
+        alignRight: true,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
+      oldDelegate.points != points ||
+      oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.tickValues != tickValues ||
+      oldDelegate.verticalLabels != verticalLabels ||
       oldDelegate.plotRect != plotRect ||
       oldDelegate.language != language ||
       oldDelegate.selectedIndex != selectedIndex;

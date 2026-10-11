@@ -38,118 +38,126 @@ class HomeHeader extends StatelessWidget {
     final dashboardName = context.localized(
       dashboard?.userSummary.localizedFullName,
     );
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
-          child: ProfileAvatarCircle(
-            dimension: 38.r,
-            backgroundColor: context.surfaceColor(palette.avatar),
-            placeholderIconColor: AppColor.primary,
-          ),
-        ),
-        SizedBox(width: 7.w),
-        Expanded(
-          child: GestureDetector(
+    // Taller than the row's natural content height (bounded by the 38.r
+    // avatar) but not doubled, so the header has breathing room without
+    // looking oversized; every child keeps its existing size and stays
+    // centered within the band.
+    return SizedBox(
+      height: 46.r,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
             onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
-            behavior: HitTestBehavior.opaque,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ValueListenableBuilder<String?>(
-                  valueListenable: profileNameNotifier,
-                  builder: (context, name, _) {
-                    return Text(
-                      (name == null || name.isEmpty)
-                          ? (dashboardName.isEmpty
-                                ? appText.competitorName
-                                : dashboardName)
-                          : name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: homeSansStyle(
-                        context: context,
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: 2.h),
-                const _HeaderRotatingSubtitle(),
-              ],
+            child: ProfileAvatarCircle(
+              dimension: 38.r,
+              backgroundColor: context.surfaceColor(palette.avatar),
+              placeholderIconColor: AppColor.primary,
             ),
           ),
-        ),
-        SizedBox.square(
-          dimension: 32.r,
-          child: IconButton(
-            tooltip: appText.alarm,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
+          SizedBox(width: 7.w),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ValueListenableBuilder<String?>(
+                    valueListenable: profileNameNotifier,
+                    builder: (context, name, _) {
+                      return Text(
+                        (name == null || name.isEmpty)
+                            ? (dashboardName.isEmpty
+                                  ? appText.competitorName
+                                  : dashboardName)
+                            : name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: homeSansStyle(
+                          context: context,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 2.h),
+                  const _HeaderRotatingSubtitle(),
+                ],
+              ),
             ),
-            padding: EdgeInsets.zero,
-            icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
           ),
-        ),
-        ValueListenableBuilder<int>(
-          valueListenable: unreadNotificationCountNotifier,
-          builder: (context, unreadCount, _) {
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                SizedBox.square(
-                  dimension: 36.r,
-                  child: IconButton(
-                    tooltip: appText.notifications,
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).pushNamed(RouteNames.notifications),
-                    padding: EdgeInsets.zero,
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: AppColor.primary,
-                    ),
-                    icon: Icon(Icons.notifications_none, size: 20.sp),
-                  ),
-                ),
-                if (unreadCount > 0)
-                  Positioned(
-                    top: 2.h,
-                    right: 2.w,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      constraints: BoxConstraints(
-                        minWidth: 16.r,
-                        minHeight: 16.r,
+          SizedBox.square(
+            dimension: 32.r,
+            child: IconButton(
+              tooltip: appText.alarm,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
+              ),
+              padding: EdgeInsets.zero,
+              icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
+            ),
+          ),
+          ValueListenableBuilder<int>(
+            valueListenable: unreadNotificationCountNotifier,
+            builder: (context, unreadCount, _) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  SizedBox.square(
+                    dimension: 36.r,
+                    child: IconButton(
+                      tooltip: appText.notifications,
+                      onPressed: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.notifications),
+                      padding: EdgeInsets.zero,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: AppColor.primary,
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF6969),
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(
-                          color: context.lineColor(palette.background),
-                          width: 1.2,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        unreadCount > _maxBadgeCount
-                            ? '$_maxBadgeCount+'
-                            : '$unreadCount',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.w700,
-                          height: 1,
-                        ),
-                      ),
+                      icon: Icon(Icons.notifications_none, size: 20.sp),
                     ),
                   ),
-              ],
-            );
-          },
-        ),
-      ],
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: 2.h,
+                      right: 2.w,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        constraints: BoxConstraints(
+                          minWidth: 16.r,
+                          minHeight: 16.r,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6969),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: context.lineColor(palette.background),
+                            width: 1.2,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          unreadCount > _maxBadgeCount
+                              ? '$_maxBadgeCount+'
+                              : '$unreadCount',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
