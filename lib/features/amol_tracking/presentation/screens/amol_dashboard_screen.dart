@@ -62,6 +62,38 @@ DateTime _startOfWindow(_AmolPeriod period, AmolDashboardState state) {
 bool _isSameDate(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
+/// Weekly/monthly bar charts only: the y-axis ceiling scaled to this
+/// window's own tallest bar instead of [serverMaxY] (the server's
+/// full-period ceiling). Early in a month, that ceiling already accounts
+/// for every day through the 30th/31st, so even a strong first 9-10 days
+/// reads as squashed near the bottom purely because the month isn't over
+/// yet — not because progress is actually low. Scaling to what's actually
+/// been plotted keeps every bar's *height relative to the axis* an honest
+/// read of "how does this compare to the best score shown right now" —
+/// the real earned-points numbers (grid labels, tooltip, bubbles) never
+/// change, only how much headroom sits above the tallest bar — and it
+/// grows back out on its own as later, higher-scoring days are added.
+double _dynamicColumnMaxY(
+  List<double> values,
+  List<double?> competitorValues,
+  double serverMaxY,
+) {
+  var highest = 0.0;
+  for (final value in values) {
+    if (value > highest) highest = value;
+  }
+  for (final value in competitorValues) {
+    if (value != null && value > highest) highest = value;
+  }
+  if (highest <= 0) return serverMaxY;
+  // ~25% headroom above the tallest bar, rounded up to a multiple of the
+  // chart's 4 grid steps so the y-axis labels land on clean numbers.
+  const steps = 4;
+  final target = ((highest * 1.25) / steps).ceil() * steps;
+  // Never scale past the server's true ceiling for this window.
+  return math.min(target.toDouble(), serverMaxY);
+}
+
 extension on _AmolPeriod {
   String label(AppText appText) => switch (this) {
     _AmolPeriod.daily => appText.daily,
@@ -228,6 +260,15 @@ class _AmolDashboardView extends StatelessWidget {
     final chartPillarKeys = showMonthlyPillars
         ? [for (final pillar in monthlyPillars) pillar.pillarKey]
         : _pillarOrder;
+    // Weekly/monthly bars: scale the y-axis to this window's own tallest
+    // bar instead of the server's full-period ceiling (`maxY`) — early in
+    // a month, that ceiling reflects all ~30 days' worth of achievable
+    // points, so even a perfect first 9-10 days looks squashed near the
+    // bottom purely because the month isn't over yet. Daily is unaffected.
+    final isColumnLayout = period == _AmolPeriod.weekly || showMonthlyPillars;
+    final columnMaxY = isColumnLayout
+        ? _dynamicColumnMaxY(chartValues, chartCompetitorValues, maxY)
+        : maxY;
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -347,7 +388,7 @@ class _AmolDashboardView extends StatelessWidget {
                       myLabel: myLabel,
                       competitorValues: chartCompetitorValues,
                       competitorLabel: competitorLabel,
-                      maxY: maxY,
+                      maxY: columnMaxY,
                       // Weekly mirrors the Hadith dashboard's weekly tab:
                       // the same per-pillar data, drawn as columns instead
                       // of a line. Monthly uses every real category (not
@@ -355,16 +396,14 @@ class _AmolDashboardView extends StatelessWidget {
                       // labels; tapping a column shows the same my/competitor
                       // points tooltip weekly uses. Daily keeps the existing
                       // line chart.
-                      columnLayout:
-                          period == _AmolPeriod.weekly || showMonthlyPillars,
+                      columnLayout: isColumnLayout,
                       verticalLabels: showMonthlyPillars,
                       // Weekly's fixed 7-category list (including Nafl
                       // Salat and Nafl And More, the last two) can run off
                       // the screen edge with diagonal labels on a narrow
                       // device — scrollable horizontally, same as monthly,
                       // so every category stays reachable by swiping.
-                      scrollable:
-                          period == _AmolPeriod.weekly || showMonthlyPillars,
+                      scrollable: isColumnLayout,
                       pillarKeys: chartPillarKeys,
                     ),
                   SizedBox(height: 18.h),
