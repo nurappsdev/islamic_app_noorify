@@ -62,22 +62,20 @@ DateTime _startOfWindow(_AmolPeriod period, AmolDashboardState state) {
 bool _isSameDate(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
-/// Weekly/monthly bar charts only: the y-axis ceiling scaled to this
-/// window's own tallest bar instead of [serverMaxY] (the server's
-/// full-period ceiling). Early in a month, that ceiling already accounts
-/// for every day through the 30th/31st, so even a strong first 9-10 days
-/// reads as squashed near the bottom purely because the month isn't over
-/// yet — not because progress is actually low. Scaling to what's actually
-/// been plotted keeps every bar's *height relative to the axis* an honest
-/// read of "how does this compare to the best score shown right now" —
-/// the real earned-points numbers (grid labels, tooltip, bubbles) never
-/// change, only how much headroom sits above the tallest bar — and it
-/// grows back out on its own as later, higher-scoring days are added.
-double _dynamicColumnMaxY(
-  List<double> values,
-  List<double?> competitorValues,
-  double serverMaxY,
-) {
+/// Weekly/monthly bar charts only: a clean, human-readable y-axis built
+/// entirely from the values actually on screen — e.g. `[0, 50, 100, 150,
+/// 200, 250, 300]` when the highest score shown is 300 — instead of a
+/// fixed division of some external ceiling. Every bar's height is then a
+/// mathematically exact ratio against this same axis for every column, so
+/// 10 vs. 300 reads on screen exactly as dramatic a gap as it is in real
+/// points; the axis simply grows or shrinks to whatever the current data
+/// actually needs, at 10, 300, 1000, or any other magnitude.
+///
+/// Mirrors the classic "nice numbers for graph labels" algorithm
+/// (Heckbert): pick a round step from `{1, 2, 5} × 10ⁿ` close to
+/// `highest / targetIntervals`, then the axis max is the smallest
+/// multiple of that step at or above the highest value.
+List<double> _niceAxisTicks(List<double> values, List<double?> competitorValues) {
   var highest = 0.0;
   for (final value in values) {
     if (value > highest) highest = value;
@@ -85,13 +83,31 @@ double _dynamicColumnMaxY(
   for (final value in competitorValues) {
     if (value != null && value > highest) highest = value;
   }
-  if (highest <= 0) return serverMaxY;
-  // ~25% headroom above the tallest bar, rounded up to a multiple of the
-  // chart's 4 grid steps so the y-axis labels land on clean numbers.
-  const steps = 4;
-  final target = ((highest * 1.25) / steps).ceil() * steps;
-  // Never scale past the server's true ceiling for this window.
-  return math.min(target.toDouble(), serverMaxY);
+  // No data at all (e.g. everyone's at 0 this window) still needs a
+  // non-zero axis to divide into readable steps.
+  if (highest <= 0) highest = 4;
+  const targetIntervals = 5;
+  final step = _niceStep(highest / targetIntervals);
+  final tickCount = (highest / step).ceil();
+  return [for (var i = 0; i <= tickCount; i++) i * step];
+}
+
+/// Rounds [value] to the nearest "nice" leading digit (1, 2 or 5) at its
+/// own order of magnitude — e.g. 83 -> 100, 42 -> 50, 18 -> 20 — the
+/// standard building block for human-friendly axis steps.
+double _niceStep(double value) {
+  if (value <= 0) return 1;
+  final exponent = (math.log(value) / math.ln10).floor();
+  final magnitude = math.pow(10, exponent).toDouble();
+  final fraction = value / magnitude;
+  final niceFraction = fraction < 1.5
+      ? 1
+      : fraction < 3
+      ? 2
+      : fraction < 7
+      ? 5
+      : 10;
+  return niceFraction * magnitude;
 }
 
 extension on _AmolPeriod {
@@ -260,15 +276,10 @@ class _AmolDashboardView extends StatelessWidget {
     final chartPillarKeys = showMonthlyPillars
         ? [for (final pillar in monthlyPillars) pillar.pillarKey]
         : _pillarOrder;
-    // Weekly/monthly bars: scale the y-axis to this window's own tallest
-    // bar instead of the server's full-period ceiling (`maxY`) — early in
-    // a month, that ceiling reflects all ~30 days' worth of achievable
-    // points, so even a perfect first 9-10 days looks squashed near the
-    // bottom purely because the month isn't over yet. Daily is unaffected.
+    // Weekly/monthly bars compute their own fully data-driven y-axis (see
+    // `_niceAxisTicks`) instead of using the server's `maxY`. Daily keeps
+    // the server's `maxY` as-is.
     final isColumnLayout = period == _AmolPeriod.weekly || showMonthlyPillars;
-    final columnMaxY = isColumnLayout
-        ? _dynamicColumnMaxY(chartValues, chartCompetitorValues, maxY)
-        : maxY;
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -388,7 +399,7 @@ class _AmolDashboardView extends StatelessWidget {
                       myLabel: myLabel,
                       competitorValues: chartCompetitorValues,
                       competitorLabel: competitorLabel,
-                      maxY: columnMaxY,
+                      maxY: maxY,
                       // Weekly mirrors the Hadith dashboard's weekly tab:
                       // the same per-pillar data, drawn as columns instead
                       // of a line. Monthly uses every real category (not
@@ -763,9 +774,41 @@ class _AmolLineChartState extends State<_AmolLineChart> {
     return maxWidth;
   }
 
+  /// The widest y-axis tick label at the chart's label font size — needed
+  /// so the left gutter ([_AmolLineChartState.build]'s `plotLeft`) can
+  /// grow enough to keep 4-digit-plus values (1,000+) fully on-screen
+  /// instead of clipping against the chart's left edge.
+  static double _tickLabelExtent(List<double> ticks, AppLanguage language) {
+    var maxWidth = 0.0;
+    for (final tick in ticks) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: localizeDigits(tick.round().toString(), language),
+          style: TextStyle(fontSize: 9.sp),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (painter.width > maxWidth) maxWidth = painter.width;
+    }
+    return maxWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final plotLeft = 24.w;
+    // Weekly/monthly bar charts get their own fully data-driven y-axis
+    // (see `_niceAxisTicks`) instead of the line chart's fixed division
+    // of `widget.maxY`; `tickValues.last` is then the bar chart's axis
+    // ceiling everywhere it's needed (point scaling, grid, labels).
+    final tickValues = widget.columnLayout
+        ? _niceAxisTicks(widget.values, widget.competitorValues)
+        : null;
+    final axisMaxY = tickValues?.last ?? widget.maxY;
+    final language = languageOf(context);
+    // Grows past its normal width only when a tick label (e.g. "1,250")
+    // genuinely needs the room, so small values look exactly as before.
+    final plotLeft = tickValues == null
+        ? 24.w
+        : math.max(24.w, _tickLabelExtent(tickValues, language) + 10.w);
     final plotTop = 30.h;
     final plotRight = 6.w;
     final plotBottom = widget.verticalLabels
@@ -795,13 +838,13 @@ class _AmolLineChartState extends State<_AmolLineChart> {
         final points = _computePoints(
           plotRect,
           widget.values,
-          widget.maxY,
+          axisMaxY,
           slotted: widget.columnLayout,
         ).cast<Offset>();
         final competitorPoints = _computePoints(
           plotRect,
           widget.competitorValues,
-          widget.maxY,
+          axisMaxY,
           slotted: widget.columnLayout,
         );
         // Mirrors `_computePoints`' own spacing for this layout, so the
@@ -827,8 +870,8 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                         categories: widget.categories,
                         points: points,
                         competitorPoints: competitorPoints,
-                        maxY: widget.maxY,
-                        language: languageOf(context),
+                        tickValues: tickValues!,
+                        language: language,
                         selectedIndex: selected,
                         verticalLabels: widget.verticalLabels,
                         pillarKeys: widget.pillarKeys,
@@ -839,7 +882,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                         points: points,
                         competitorPoints: competitorPoints,
                         maxY: widget.maxY,
-                        language: languageOf(context),
+                        language: language,
                         selectedIndex: selected,
                       ),
               ),
@@ -1416,7 +1459,7 @@ class _BarChartPainter extends CustomPainter {
     required this.categories,
     required this.points,
     required this.competitorPoints,
-    required this.maxY,
+    required this.tickValues,
     required this.language,
     this.selectedIndex,
     this.verticalLabels = false,
@@ -1427,7 +1470,13 @@ class _BarChartPainter extends CustomPainter {
   final List<String> categories;
   final List<Offset> points;
   final List<Offset?> competitorPoints;
-  final double maxY;
+
+  /// This window's own data-driven y-axis labels, evenly spaced from `0`
+  /// to the axis ceiling (e.g. `[0, 50, 100, 150, 200, 250, 300]`) — see
+  /// `_niceAxisTicks`. [points]/[competitorPoints] are already scaled
+  /// against the same ceiling (`tickValues.last`), so this list only
+  /// needs drawing, not any further ratio math.
+  final List<double> tickValues;
   final AppLanguage language;
   final int? selectedIndex;
 
@@ -1451,7 +1500,7 @@ class _BarChartPainter extends CustomPainter {
   /// looked up by `pillarKey` (not the localized label) so it's unaffected
   /// by language or which category list (weekly's fixed one vs. monthly's
   /// real one) is in play. Shared with [_AmolLineChartState] so the score
-  /// bubble it positions at a bar's top-right corner lines up with the
+  /// bubble it positions at a bar's top-left corner lines up with the
   /// exact width this painter draws that bar at.
   static double halfWidthForIndex(
     int index,
@@ -1473,9 +1522,14 @@ class _BarChartPainter extends CustomPainter {
       ..color = _LineChartPainter._gridColor
       ..strokeWidth = 1;
 
-    for (var i = 0; i <= _LineChartPainter._ySteps; i++) {
-      final y =
-          plotRect.bottom - plotRect.height * i / _LineChartPainter._ySteps;
+    // tickValues are evenly spaced by construction (0, step, 2*step, ...),
+    // so each one's screen y is just its position in the list over the
+    // list's own span — no separate ratio against a ceiling value needed.
+    final lastTickIndex = tickValues.length - 1;
+    for (var i = 0; i <= lastTickIndex; i++) {
+      final y = lastTickIndex == 0
+          ? plotRect.bottom
+          : plotRect.bottom - plotRect.height * i / lastTickIndex;
       canvas.drawLine(
         Offset(plotRect.left, y),
         Offset(plotRect.right, y),
@@ -1483,10 +1537,7 @@ class _BarChartPainter extends CustomPainter {
       );
       _LineChartPainter._paintLabel(
         canvas,
-        localizeDigits(
-          (maxY * i / _LineChartPainter._ySteps).round().toString(),
-          language,
-        ),
+        localizeDigits(tickValues[i].round().toString(), language),
         Offset(plotRect.left - 6.w, y),
         alignRight: true,
       );
@@ -1581,6 +1632,7 @@ class _BarChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.tickValues != tickValues ||
       oldDelegate.verticalLabels != verticalLabels ||
       oldDelegate.pillarKeys != pillarKeys ||
       oldDelegate.plotRect != plotRect ||
