@@ -193,10 +193,10 @@ class _CompassFacePainter extends CustomPainter {
     final center = size.center(Offset.zero);
     // `radius` spans the full asset (its outer circle, middle ring and
     // innermost disc, per the measured ring boundaries in
-    // assets/compassIcon.png). The middle ring carries the full original
-    // marking set (minor/major ticks + degree numbers); the outermost
-    // circle shows only the N/E/S/W labels (img_1.png); the innermost disc
-    // stays bare.
+    // assets/compassIcon.png). The middle ring carries every degree number
+    // (including 0°/90°/180°/270°, under the cardinals) plus the tick
+    // marks; the outermost circle shows only the N/E/S/W labels, aligned
+    // with those same angles (img_1.png). The innermost disc stays bare.
     final radius = size.width / 2;
     final midRingEdge = radius * 0.588;
     final outerEdge = radius * 0.90;
@@ -216,9 +216,10 @@ class _CompassFacePainter extends CustomPainter {
       );
 
       // Degree labels lean along the middle ring like a printed compass
-      // card; cardinal letters (drawn separately below) stay upright and
-      // sit on the outermost circle instead.
-      if (isMajor && deg % 90 != 0) {
+      // card, including under the cardinal angles; the N/E/S/W letters
+      // (drawn separately below) stay upright and sit on the outermost
+      // circle instead.
+      if (isMajor) {
         _drawLabel(
           canvas,
           '$deg°',
