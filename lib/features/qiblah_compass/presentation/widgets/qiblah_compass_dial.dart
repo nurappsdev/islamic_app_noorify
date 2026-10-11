@@ -19,11 +19,23 @@ class QiblahCompassDial extends StatelessWidget {
     required this.qiblahAngle,
     this.heading = 0,
     this.size = 200,
+    this.labelFontScale = 1,
+    this.cardinalFontWeight = FontWeight.w700,
   });
 
   final double qiblahAngle;
   final double heading;
   final double size;
+
+  /// Scales the degree-number and N/E/S/W font sizes without touching the
+  /// dial's geometry. The full-screen Qiblah compass uses the default
+  /// (1.0); the smaller Home card dial passes a reduced scale so its labels
+  /// don't look cluttered at that size.
+  final double labelFontScale;
+
+  /// Weight of the N/E/S/W letters. Defaults to the original bold weight;
+  /// the Home card dial passes a lighter one to match its reduced scale.
+  final FontWeight cardinalFontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -31,33 +43,42 @@ class QiblahCompassDial extends StatelessWidget {
     final headingRad = heading * math.pi / 180;
     final qiblahRad = qiblahAngle * math.pi / 180;
     final markerRadius = size / 2 * 0.76;
+    // The asset's own halo/rings render larger than the dial's footprint
+    // (devImg/img_1.png); `Clip.none` below lets that extent paint without
+    // being hard-cropped back down to `size`, and the tick/label painter
+    // shares this same larger canvas so its two outer rings line up with
+    // the asset's rings exactly.
+    final faceSize = size * 1.34;
 
     return SizedBox.square(
       dimension: size,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           // Layered glassy disc (halo + embossed rings baked into the
           // asset), matching the reference dial in img_1.png.
           Image.asset(
             'assets/compassIcon.png',
-            width: size * 1.34,
-            height: size * 1.34,
+            width: faceSize,
+            height: faceSize,
             fit: BoxFit.contain,
           ),
           Transform.rotate(
             angle: -headingRad,
             child: Stack(
               alignment: Alignment.center,
+              clipBehavior: Clip.none,
               children: [
                 CustomPaint(
-                  size: Size.square(size),
+                  size: Size.square(faceSize),
                   painter: _CompassFacePainter(
                     qiblahAngleRad: qiblahRad,
-                    ringColor: palette.border,
                     tickColor: palette.textPrimary.withValues(alpha: 0.4),
                     labelColor: palette.textPrimary.withValues(alpha: 0.65),
                     needleColor: AppColor.primary,
+                    labelFontScale: labelFontScale,
+                    cardinalFontWeight: cardinalFontWeight,
                   ),
                 ),
                 Transform.translate(
@@ -150,17 +171,19 @@ class _KaabaBadge extends StatelessWidget {
 class _CompassFacePainter extends CustomPainter {
   _CompassFacePainter({
     required this.qiblahAngleRad,
-    required this.ringColor,
     required this.tickColor,
     required this.labelColor,
     required this.needleColor,
+    required this.labelFontScale,
+    required this.cardinalFontWeight,
   });
 
   final double qiblahAngleRad;
-  final Color ringColor;
   final Color tickColor;
   final Color labelColor;
   final Color needleColor;
+  final double labelFontScale;
+  final FontWeight cardinalFontWeight;
 
   static const _cardinals = ['N', 'E', 'S', 'W'];
   static const _northColor = Color(0xFFD1523B);
@@ -168,22 +191,21 @@ class _CompassFacePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
+    // `radius` spans the full asset (its outer circle, middle ring and
+    // innermost disc, per the measured ring boundaries in
+    // assets/compassIcon.png). The middle ring carries every degree number
+    // (including 0°/90°/180°/270°, under the cardinals) plus the tick
+    // marks; the outermost circle shows only the N/E/S/W labels, aligned
+    // with those same angles (img_1.png). The innermost disc stays bare.
     final radius = size.width / 2;
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..color = ringColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+    final midRingEdge = radius * 0.588;
+    final outerEdge = radius * 0.90;
 
     for (var deg = 0; deg < 360; deg += 10) {
       final rad = deg * math.pi / 180;
       final isMajor = deg % 30 == 0;
       final dir = Offset(math.sin(rad), -math.cos(rad));
-      final outer = radius - 4;
+      final outer = midRingEdge - 4;
       final inner = outer - (isMajor ? 10 : 5);
       canvas.drawLine(
         center + dir * outer,
@@ -193,17 +215,19 @@ class _CompassFacePainter extends CustomPainter {
           ..strokeWidth = isMajor ? 1.6 : 1,
       );
 
-      // Degree labels lean along the ring like a printed compass card;
-      // cardinal letters (drawn separately below) stay upright.
-      if (isMajor && deg % 90 != 0) {
+      // Degree labels lean along the middle ring like a printed compass
+      // card, including under the cardinal angles; the N/E/S/W letters
+      // (drawn separately below) stay upright and sit on the outermost
+      // circle instead.
+      if (isMajor) {
         _drawLabel(
           canvas,
           '$deg°',
           center,
           rad,
-          radius - 22,
+          midRingEdge - 18,
           labelColor,
-          9,
+          9 * labelFontScale,
           rotate: true,
         );
       }
@@ -216,16 +240,21 @@ class _CompassFacePainter extends CustomPainter {
         _cardinals[i],
         center,
         rad,
-        radius - 22,
+        outerEdge - 18,
         i == 0 ? _northColor : labelColor,
-        13,
-        bold: true,
+        13 * labelFontScale,
+        fontWeight: cardinalFontWeight,
       );
     }
 
+    // The needle's reach is independent of the marking bands above (it
+    // points from the center disc out toward the Kaaba badge, which sits
+    // at `markerRadius` in the parent widget), so it keeps the same
+    // proportions the dial used before the asset grew to `faceSize`.
+    final legacyRadius = radius * 0.746;
     final dir = Offset(math.sin(qiblahAngleRad), -math.cos(qiblahAngleRad));
-    final tip = center + dir * (radius * 0.62);
-    final tail = center - dir * (radius * 0.22);
+    final tip = center + dir * (legacyRadius * 0.62);
+    final tail = center - dir * (legacyRadius * 0.22);
     canvas.drawLine(
       tail,
       tip,
@@ -257,17 +286,13 @@ class _CompassFacePainter extends CustomPainter {
     double distance,
     Color color,
     double fontSize, {
-    bool bold = false,
+    FontWeight fontWeight = FontWeight.w500,
     bool rotate = false,
   }) {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: fontSize,
-          fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-        ),
+        style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
@@ -294,9 +319,10 @@ class _CompassFacePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CompassFacePainter oldDelegate) {
     return oldDelegate.qiblahAngleRad != qiblahAngleRad ||
-        oldDelegate.ringColor != ringColor ||
         oldDelegate.tickColor != tickColor ||
         oldDelegate.labelColor != labelColor ||
-        oldDelegate.needleColor != needleColor;
+        oldDelegate.needleColor != needleColor ||
+        oldDelegate.labelFontScale != labelFontScale ||
+        oldDelegate.cardinalFontWeight != cardinalFontWeight;
   }
 }

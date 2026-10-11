@@ -165,6 +165,10 @@ class _CompassCard extends StatelessWidget {
               qiblahAngle: qiblahAngle,
               heading: access == QiblahAccess.ready ? (heading ?? 0) : 0,
               size: 150.w,
+              // Smaller and lighter than the full-screen dial's labels (its
+              // defaults), so they don't look cluttered at this card size.
+              labelFontScale: 0.8,
+              cardinalFontWeight: FontWeight.w600,
             ),
           ),
         ],
