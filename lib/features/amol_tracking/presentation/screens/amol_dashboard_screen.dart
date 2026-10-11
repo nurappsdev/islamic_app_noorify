@@ -796,15 +796,21 @@ class _AmolLineChartState extends State<_AmolLineChart> {
           plotRect,
           widget.values,
           widget.maxY,
+          slotted: widget.columnLayout,
         ).cast<Offset>();
         final competitorPoints = _computePoints(
           plotRect,
           widget.competitorValues,
           widget.maxY,
+          slotted: widget.columnLayout,
         );
-        final stepX = categoryCount > 1
-            ? plotRect.width / (categoryCount - 1)
-            : plotRect.width;
+        // Mirrors `_computePoints`' own spacing for this layout, so the
+        // tap zones below land exactly on the columns they're meant for.
+        final stepX = widget.columnLayout
+            ? (categoryCount > 0 ? plotRect.width / categoryCount : 0.0)
+            : (categoryCount > 1
+                  ? plotRect.width / (categoryCount - 1)
+                  : plotRect.width);
         final selected = _selectedIndex;
 
         final chart = SizedBox(
@@ -847,14 +853,11 @@ class _AmolLineChartState extends State<_AmolLineChart> {
               ),
               for (var i = 0; i < categoryCount; i++)
                 Positioned(
-                  // Centered on the same x the bar/circle for this column
-                  // actually renders at (`plotRect.left + stepX * i`, per
-                  // `_computePoints`) — without `plotRect.left` here, every
-                  // tap zone sat offset from its own column.
-                  left: (plotRect.left + i * stepX - stepX / 2).clamp(
-                    0.0,
-                    width,
-                  ),
+                  // Centered on `points[i].dx` — the same x the bar/circle
+                  // for this column actually renders at — rather than a
+                  // separately re-derived formula that could (and once
+                  // did) drift out of sync with it.
+                  left: (points[i].dx - stepX / 2).clamp(0.0, width),
                   top: 0,
                   width: stepX,
                   height: plotRect.bottom,
@@ -867,19 +870,22 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                 if (competitorPoints[i] != null)
                   Positioned(
                     // Column layout (weekly/monthly): the circle sits at
-                    // the bar's own top-right corner, i.e. exactly where
-                    // that series' progress reaches. Line layout (daily)
-                    // keeps its own point marker drawn by the painter, so
-                    // the label floats just above it instead of covering
-                    // it.
+                    // the bar's own top-left corner, i.e. exactly where
+                    // that series' progress reaches — clamped the same way
+                    // the painter clamps the bar's own left edge, so the
+                    // two always land on the same pixel even for the
+                    // first/last column. Line layout (daily) keeps its own
+                    // point marker drawn by the painter, so the label
+                    // floats just above it instead of covering it.
                     left: widget.columnLayout
-                        ? competitorPoints[i]!.dx +
-                              _BarChartPainter.halfWidthForIndex(
-                                i,
-                                categoryCount,
-                                plotRect.width,
-                                widget.pillarKeys,
-                              )
+                        ? (competitorPoints[i]!.dx -
+                                  _BarChartPainter.halfWidthForIndex(
+                                    i,
+                                    categoryCount,
+                                    plotRect.width,
+                                    widget.pillarKeys,
+                                  ))
+                              .clamp(plotRect.left, plotRect.right)
                         : competitorPoints[i]!.dx,
                     top: widget.columnLayout
                         ? competitorPoints[i]!.dy.clamp(0.0, height)
@@ -898,13 +904,14 @@ class _AmolLineChartState extends State<_AmolLineChart> {
               for (var i = 0; i < points.length; i++)
                 Positioned(
                   left: widget.columnLayout
-                      ? points[i].dx +
-                            _BarChartPainter.halfWidthForIndex(
-                              i,
-                              categoryCount,
-                              plotRect.width,
-                              widget.pillarKeys,
-                            )
+                      ? (points[i].dx -
+                                _BarChartPainter.halfWidthForIndex(
+                                  i,
+                                  categoryCount,
+                                  plotRect.width,
+                                  widget.pillarKeys,
+                                ))
+                            .clamp(plotRect.left, plotRect.right)
                       : points[i].dx,
                   top: widget.columnLayout
                       ? points[i].dy.clamp(0.0, height)
@@ -924,7 +931,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
               // same my/competitor points tooltip.
               if (selected != null)
                 Positioned(
-                  left: (selected * stepX + plotRect.left).clamp(
+                  left: points[selected].dx.clamp(
                     56.w,
                     (width - 56.w).clamp(56.w, double.infinity),
                   ),
@@ -973,19 +980,34 @@ class _AmolLineChartState extends State<_AmolLineChart> {
   /// Maps [values] onto [rect] using [maxY] as the y-axis ceiling. A `null`
   /// entry (only possible for competitor values) stays `null` in the
   /// result, so its bubble is skipped.
+  ///
+  /// [slotted] (bar charts, i.e. [_AmolLineChart.columnLayout]) divides
+  /// [rect] into `values.length` equal slots and centers each point in its
+  /// own slot, so the first/last bars get the same breathing room on both
+  /// sides as every bar in between. Without it (the default, used by the
+  /// line chart), the first and last points sit exactly on [rect]'s left
+  /// and right edges instead — correct for a line chart's endpoints, but
+  /// for a bar chart it means the first/last bar's own half-width always
+  /// extends past the plot edge and gets clamped there, rendering as a
+  /// visibly thinner, lopsided bar whose score bubble (anchored to the
+  /// *unclamped* point) then drifts away from the bar's actual edge.
   static List<Offset?> _computePoints(
     Rect rect,
     List<double?> values,
-    double maxY,
-  ) {
-    final stepX = values.length > 1 ? rect.width / (values.length - 1) : 0.0;
+    double maxY, {
+    bool slotted = false,
+  }) {
+    final count = values.length;
+    final stepX = slotted
+        ? (count > 0 ? rect.width / count : 0.0)
+        : (count > 1 ? rect.width / (count - 1) : 0.0);
     return [
-      for (var i = 0; i < values.length; i++)
+      for (var i = 0; i < count; i++)
         if (values[i] == null)
           null
         else
           Offset(
-            rect.left + stepX * i,
+            rect.left + stepX * (slotted ? i + 0.5 : i.toDouble()),
             rect.bottom - (values[i]! / maxY).clamp(0.0, 1.0) * rect.height,
           ),
     ];
