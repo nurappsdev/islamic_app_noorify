@@ -283,6 +283,10 @@ class _AmolDashboardView extends StatelessWidget {
                     competitorValues: competitorValues,
                     competitorLabel: competitorLabel,
                     maxY: maxY,
+                    // Weekly mirrors the Hadith dashboard's weekly tab: the
+                    // same per-pillar data, drawn as columns instead of a
+                    // line. Daily/monthly keep the existing line chart.
+                    columnLayout: period == _AmolPeriod.weekly,
                   ),
                   SizedBox(height: 18.h),
                   _MyPointsBar(myPoints: myPoints, totalPoints: totalPoints),
@@ -569,6 +573,7 @@ class _AmolLineChart extends StatefulWidget {
     required this.competitorValues,
     required this.competitorLabel,
     required this.maxY,
+    required this.columnLayout,
   });
 
   final List<String> categories;
@@ -583,6 +588,13 @@ class _AmolLineChart extends StatefulWidget {
   final List<double?> competitorValues;
   final String competitorLabel;
   final double maxY;
+
+  /// True for the weekly tab: draws the same per-pillar points as
+  /// overlapping columns ([_BarChartPainter]) instead of a connected line
+  /// ([_LineChartPainter]), matching the Hadith dashboard's weekly bar
+  /// chart. Everything else (grid, axis labels, score bubbles, tap-to-select
+  /// tooltip) is shared and unaffected by this flag.
+  final bool columnLayout;
 
   @override
   State<_AmolLineChart> createState() => _AmolLineChartState();
@@ -637,15 +649,25 @@ class _AmolLineChartState extends State<_AmolLineChart> {
             children: [
               CustomPaint(
                 size: Size(width, height),
-                painter: _LineChartPainter(
-                  plotRect: plotRect,
-                  categories: widget.categories,
-                  points: points,
-                  competitorPoints: competitorPoints,
-                  maxY: widget.maxY,
-                  language: languageOf(context),
-                  selectedIndex: selected,
-                ),
+                painter: widget.columnLayout
+                    ? _BarChartPainter(
+                        plotRect: plotRect,
+                        categories: widget.categories,
+                        points: points,
+                        competitorPoints: competitorPoints,
+                        maxY: widget.maxY,
+                        language: languageOf(context),
+                        selectedIndex: selected,
+                      )
+                    : _LineChartPainter(
+                        plotRect: plotRect,
+                        categories: widget.categories,
+                        points: points,
+                        competitorPoints: competitorPoints,
+                        maxY: widget.maxY,
+                        language: languageOf(context),
+                        selectedIndex: selected,
+                      ),
               ),
               // Tapping the empty chart background (outside any category's
               // column) dismisses the tooltip.
@@ -1091,7 +1113,7 @@ class _LineChartPainter extends CustomPainter {
     }
   }
 
-  void _paintLabel(
+  static void _paintLabel(
     Canvas canvas,
     String text,
     Offset anchor, {
@@ -1141,6 +1163,151 @@ class _LineChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LineChartPainter oldDelegate) =>
+      oldDelegate.points != points ||
+      oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.plotRect != plotRect ||
+      oldDelegate.language != language ||
+      oldDelegate.selectedIndex != selectedIndex;
+}
+
+/// Weekly tab's chart style (img reference: Hadith dashboard's weekly bar
+/// chart): the same per-pillar `points`/`competitorPoints` [_LineChartPainter]
+/// uses, drawn as overlapping columns — taller bar behind, shorter in front —
+/// instead of a connected line. Grid, y-axis labels and x-axis category
+/// labels are identical to [_LineChartPainter]'s.
+class _BarChartPainter extends CustomPainter {
+  const _BarChartPainter({
+    required this.plotRect,
+    required this.categories,
+    required this.points,
+    required this.competitorPoints,
+    required this.maxY,
+    required this.language,
+    this.selectedIndex,
+  });
+
+  final Rect plotRect;
+  final List<String> categories;
+  final List<Offset> points;
+  final List<Offset?> competitorPoints;
+  final double maxY;
+  final AppLanguage language;
+  final int? selectedIndex;
+
+  double get _barHalfWidth {
+    final count = points.length;
+    if (count <= 1) return (plotRect.width / 2).clamp(4.0, 20.0);
+    final stepX = plotRect.width / (count - 1);
+    return (stepX * 0.28).clamp(4.0, 16.0);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = _LineChartPainter._gridColor
+      ..strokeWidth = 1;
+
+    for (var i = 0; i <= _LineChartPainter._ySteps; i++) {
+      final y =
+          plotRect.bottom - plotRect.height * i / _LineChartPainter._ySteps;
+      canvas.drawLine(
+        Offset(plotRect.left, y),
+        Offset(plotRect.right, y),
+        gridPaint,
+      );
+      _LineChartPainter._paintLabel(
+        canvas,
+        localizeDigits(
+          (maxY * i / _LineChartPainter._ySteps).round().toString(),
+          language,
+        ),
+        Offset(plotRect.left - 6.w, y),
+        alignRight: true,
+      );
+    }
+
+    final halfWidth = _barHalfWidth;
+    for (var i = 0; i < points.length; i++) {
+      final competitor = i < competitorPoints.length
+          ? competitorPoints[i]
+          : null;
+      final bars = <(Offset, Color)>[
+        (points[i], _LineChartPainter.lineColor),
+        if (competitor != null)
+          (competitor, _LineChartPainter.competitorLineColor),
+      ]..sort((a, b) => a.$1.dy.compareTo(b.$1.dy));
+      for (final (point, color) in bars) {
+        final left = (point.dx - halfWidth).clamp(
+          plotRect.left,
+          plotRect.right,
+        );
+        final right = (point.dx + halfWidth).clamp(
+          plotRect.left,
+          plotRect.right,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromLTRB(left, point.dy, right, plotRect.bottom),
+            topLeft: Radius.circular(4.r),
+            topRight: Radius.circular(4.r),
+          ),
+          Paint()..color = color,
+        );
+      }
+    }
+
+    // Highlight the selected column, same treatment as the line chart's.
+    final selected = selectedIndex;
+    if (selected != null && selected >= 0 && selected < points.length) {
+      final x = points[selected].dx;
+      final guide = Paint()
+        ..color = _LineChartPainter.lineColor.withValues(alpha: .45)
+        ..strokeWidth = 1.2;
+      for (var y = plotRect.top; y < plotRect.bottom; y += 6) {
+        canvas.drawLine(
+          Offset(x, y),
+          Offset(x, (y + 3).clamp(plotRect.top, plotRect.bottom)),
+          guide,
+        );
+      }
+
+      void highlight(Offset point, Color color) {
+        canvas.drawCircle(
+          point,
+          11.r,
+          Paint()..color = color.withValues(alpha: .22),
+        );
+        canvas.drawCircle(point, 6.5.r, Paint()..color = Colors.white);
+        canvas.drawCircle(point, 4.5.r, Paint()..color = color);
+      }
+
+      if (selected < competitorPoints.length &&
+          competitorPoints[selected] != null) {
+        highlight(
+          competitorPoints[selected]!,
+          _LineChartPainter.competitorLineColor,
+        );
+      }
+      highlight(points[selected], _LineChartPainter.lineColor);
+    }
+
+    for (var i = 0; i < categories.length; i++) {
+      final x = i < points.length ? points[i].dx : plotRect.left;
+      canvas.save();
+      canvas.translate(x, plotRect.bottom + 10.h);
+      canvas.rotate(-0.6);
+      _LineChartPainter._paintLabel(
+        canvas,
+        categories[i],
+        Offset.zero,
+        alignRight: true,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
       oldDelegate.plotRect != plotRect ||
