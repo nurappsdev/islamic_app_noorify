@@ -37,45 +37,13 @@ class QiblahCompassDial extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outermost soft halo, the way img_40/img_41 fade the dial into
-          // the page instead of hard-edging it.
-          Container(
+          // Layered glassy disc (halo + embossed rings baked into the
+          // asset), matching the reference dial in img_1.png.
+          Image.asset(
+            'assets/compassIcon.png',
             width: size * 1.34,
             height: size * 1.34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColor.primary.withValues(alpha: 0.16),
-                  AppColor.primary.withValues(alpha: 0),
-                ],
-              ),
-            ),
-          ),
-          // Glassy face: a lit outer disc over a dimmer, smaller inner disc
-          // fakes the embossed/layered look of the reference dial.
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: palette.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColor.primary.withValues(alpha: 0.12),
-                  blurRadius: 24,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: size * 0.66,
-            height: size * 0.66,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: palette.tintSoft.withValues(alpha: 0.6),
-            ),
+            fit: BoxFit.contain,
           ),
           Transform.rotate(
             angle: -headingRad,
