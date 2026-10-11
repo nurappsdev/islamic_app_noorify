@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,6 +8,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_analytics_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_analytics_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_analytics_point.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_analytics_graph.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_dashboard_bloc.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_localized_format.dart';
@@ -194,6 +197,31 @@ class _AmolDashboardView extends StatelessWidget {
                 ? formatAmolDate(state.date, appText)
                 : '${formatAmolDate(_startOfWindow(period, state), appText)} - ${formatAmolDate(state.date, appText)}',
           );
+    // Monthly shows the same real per-pillar categories as daily/weekly,
+    // but reads them straight off the loaded graph's own `pillars` instead
+    // of the fixed `_pillarOrder`/`categories` above — so any category the
+    // server actually returns (e.g. one this hardcoded list doesn't cover)
+    // still shows up, instead of being silently dropped.
+    final monthlyPillars = graph?.pillars ?? const <AmolAnalyticsPoint>[];
+    final isBangla = languageOf(context) == AppLanguage.bangla;
+    final showMonthlyPillars = period == _AmolPeriod.monthly && graph != null;
+    final chartCategories = showMonthlyPillars
+        ? [
+            for (final pillar in monthlyPillars)
+              (isBangla && pillar.titleBn.isNotEmpty)
+                  ? pillar.titleBn
+                  : pillar.title,
+          ]
+        : categories;
+    final chartValues = showMonthlyPillars
+        ? [for (final pillar in monthlyPillars) pillar.myScore.toDouble()]
+        : values;
+    final chartCompetitorValues = showMonthlyPillars
+        ? [
+            for (final pillar in monthlyPillars)
+              pillar.competitorScore?.toDouble(),
+          ]
+        : competitorValues;
     final navigation = graph?.navigation;
     // Whether stepping "next" would go anywhere: computed locally rather
     // than trusted from the server's `navigation.hasNext` — that field
@@ -276,18 +304,39 @@ class _AmolDashboardView extends StatelessWidget {
                   SizedBox(height: 12.h),
                   const _Legend(),
                   SizedBox(height: 10.h),
-                  _AmolLineChart(
-                    categories: categories,
-                    values: values,
-                    myLabel: myLabel,
-                    competitorValues: competitorValues,
-                    competitorLabel: competitorLabel,
-                    maxY: maxY,
-                    // Weekly mirrors the Hadith dashboard's weekly tab: the
-                    // same per-pillar data, drawn as columns instead of a
-                    // line. Daily/monthly keep the existing line chart.
-                    columnLayout: period == _AmolPeriod.weekly,
-                  ),
+                  if (showMonthlyPillars && monthlyPillars.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: Center(
+                        child: Text(
+                          appText.noResultsFound,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(const Color(0xFF5D6B44)),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    _AmolLineChart(
+                      categories: chartCategories,
+                      values: chartValues,
+                      myLabel: myLabel,
+                      competitorValues: chartCompetitorValues,
+                      competitorLabel: competitorLabel,
+                      maxY: maxY,
+                      // Weekly mirrors the Hadith dashboard's weekly tab:
+                      // the same per-pillar data, drawn as columns instead
+                      // of a line. Monthly uses every real category (not
+                      // just the fixed list above) with vertical, scrollable
+                      // labels; tapping a column shows the same my/competitor
+                      // points tooltip weekly uses. Daily keeps the existing
+                      // line chart.
+                      columnLayout:
+                          period == _AmolPeriod.weekly || showMonthlyPillars,
+                      verticalLabels: showMonthlyPillars,
+                      scrollable: showMonthlyPillars,
+                    ),
                   SizedBox(height: 18.h),
                   _MyPointsBar(myPoints: myPoints, totalPoints: totalPoints),
                 ],
@@ -574,6 +623,8 @@ class _AmolLineChart extends StatefulWidget {
     required this.competitorLabel,
     required this.maxY,
     required this.columnLayout,
+    this.verticalLabels = false,
+    this.scrollable = false,
   });
 
   final List<String> categories;
@@ -589,36 +640,77 @@ class _AmolLineChart extends StatefulWidget {
   final String competitorLabel;
   final double maxY;
 
-  /// True for the weekly tab: draws the same per-pillar points as
-  /// overlapping columns ([_BarChartPainter]) instead of a connected line
-  /// ([_LineChartPainter]), matching the Hadith dashboard's weekly bar
-  /// chart. Everything else (grid, axis labels, score bubbles, tap-to-select
-  /// tooltip) is shared and unaffected by this flag.
+  /// True for the weekly and monthly tabs: draws the same per-pillar
+  /// points as overlapping columns ([_BarChartPainter]) instead of a
+  /// connected line ([_LineChartPainter]), matching the Hadith dashboard's
+  /// weekly bar chart. Everything else (grid, axis labels, score bubbles,
+  /// tap-to-select tooltip) is shared and unaffected by this flag.
   final bool columnLayout;
+
+  /// Monthly's vertical category labels instead of daily/weekly's diagonal
+  /// ones (reference image). Only meaningful together with [columnLayout].
+  final bool verticalLabels;
+
+  /// Wraps the chart in horizontal scrolling and widens it to fit every
+  /// category at a readable column width, instead of squeezing them all
+  /// into the viewport. Monthly only — it can have more categories than
+  /// daily/weekly's fixed 7-pillar list ever does.
+  final bool scrollable;
 
   @override
   State<_AmolLineChart> createState() => _AmolLineChartState();
 }
 
 class _AmolLineChartState extends State<_AmolLineChart> {
-  /// Which category column is showing its tap tooltip, `null` when none is.
+  /// Which category column is showing its tap tooltip; `null` when none is.
   int? _selectedIndex;
 
   void _select(int index) {
     setState(() => _selectedIndex = _selectedIndex == index ? null : index);
   }
 
+  /// The widest category label at the chart's label font size — monthly's
+  /// vertical labels need the bottom plot margin sized to this (rotated 90°,
+  /// a label's width becomes its vertical extent), so nothing is truncated
+  /// regardless of how long a category's name is.
+  static double _verticalLabelExtent(List<String> categories) {
+    var maxWidth = 0.0;
+    for (final category in categories) {
+      final painter = TextPainter(
+        text: TextSpan(
+          text: category,
+          style: TextStyle(fontSize: 9.sp),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      if (painter.width > maxWidth) maxWidth = painter.width;
+    }
+    return maxWidth;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final height = 240.h;
     final plotLeft = 24.w;
     final plotTop = 30.h;
-    final plotBottom = 48.h;
     final plotRight = 6.w;
+    final plotBottom = widget.verticalLabels
+        ? _verticalLabelExtent(widget.categories) + 16.h
+        : 48.h;
+    // The plotted area always gets the same vertical room (the original
+    // 240.h total, minus its 30.h top and 48.h bottom); only the label band
+    // below it grows for monthly's taller vertical labels.
+    final height = plotTop + 162.h + plotBottom;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
+        final categoryCount = widget.categories.length;
+        // Wide enough for each column's bar and vertical label to have
+        // breathing room; scrolls past that instead of squeezing every
+        // category into the viewport when there are many of them.
+        final minColumnWidth = 56.w;
+        final width = widget.scrollable
+            ? math.max(constraints.maxWidth, categoryCount * minColumnWidth)
+            : constraints.maxWidth;
         final plotRect = Rect.fromLTWH(
           plotLeft,
           plotTop,
@@ -635,13 +727,12 @@ class _AmolLineChartState extends State<_AmolLineChart> {
           widget.competitorValues,
           widget.maxY,
         );
-        final categoryCount = widget.categories.length;
         final stepX = categoryCount > 1
             ? plotRect.width / (categoryCount - 1)
             : plotRect.width;
         final selected = _selectedIndex;
 
-        return SizedBox(
+        final chart = SizedBox(
           height: height,
           width: width,
           child: Stack(
@@ -658,6 +749,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                         maxY: widget.maxY,
                         language: languageOf(context),
                         selectedIndex: selected,
+                        verticalLabels: widget.verticalLabels,
                       )
                     : _LineChartPainter(
                         plotRect: plotRect,
@@ -670,7 +762,7 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                       ),
               ),
               // Tapping the empty chart background (outside any category's
-              // column) dismisses the tooltip.
+              // column) dismisses the tooltip/highlight.
               Positioned.fill(
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
@@ -713,6 +805,8 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                     ),
                   ),
                 ),
+              // Tapping any column (daily/weekly/monthly alike) shows the
+              // same my/competitor points tooltip.
               if (selected != null)
                 Positioned(
                   left: (selected * stepX + plotRect.left).clamp(
@@ -735,6 +829,12 @@ class _AmolLineChartState extends State<_AmolLineChart> {
                 ),
             ],
           ),
+        );
+
+        if (!widget.scrollable) return chart;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: chart,
         );
       },
     );
@@ -1184,6 +1284,7 @@ class _BarChartPainter extends CustomPainter {
     required this.maxY,
     required this.language,
     this.selectedIndex,
+    this.verticalLabels = false,
   });
 
   final Rect plotRect;
@@ -1193,6 +1294,10 @@ class _BarChartPainter extends CustomPainter {
   final double maxY;
   final AppLanguage language;
   final int? selectedIndex;
+
+  /// Monthly's category labels read bottom-to-top instead of leaning
+  /// diagonally (reference image).
+  final bool verticalLabels;
 
   double get _barHalfWidth {
     final count = points.length;
@@ -1295,7 +1400,7 @@ class _BarChartPainter extends CustomPainter {
       final x = i < points.length ? points[i].dx : plotRect.left;
       canvas.save();
       canvas.translate(x, plotRect.bottom + 10.h);
-      canvas.rotate(-0.6);
+      canvas.rotate(verticalLabels ? -math.pi / 2 : -0.6);
       _LineChartPainter._paintLabel(
         canvas,
         categories[i],
@@ -1310,6 +1415,7 @@ class _BarChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
       oldDelegate.points != points ||
       oldDelegate.competitorPoints != competitorPoints ||
+      oldDelegate.verticalLabels != verticalLabels ||
       oldDelegate.plotRect != plotRect ||
       oldDelegate.language != language ||
       oldDelegate.selectedIndex != selectedIndex;
