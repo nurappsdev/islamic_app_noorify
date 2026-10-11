@@ -286,26 +286,43 @@ class _AmolDashboardView extends StatelessWidget {
                   ],
                   SizedBox(height: 18.h),
                   RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: appText.todays,
-                          style: TextStyle(
-                            color: context.inkColor(Colors.black),
-                            fontSize: 15.sp,
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w600,
+                    // Daily keeps its existing two-part caption unchanged;
+                    // weekly/monthly have no analogous "average todays
+                    // days" clause, so they show just the corrected
+                    // heading ("This Week's"/"This Month's Average") in
+                    // the same bold-italic style as daily's "Todays".
+                    text: period == _AmolPeriod.daily
+                        ? TextSpan(
+                            children: [
+                              TextSpan(
+                                text: appText.todays,
+                                style: TextStyle(
+                                  color: context.inkColor(Colors.black),
+                                  fontSize: 15.sp,
+                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' ${appText.averageTodaysDays}',
+                                style: TextStyle(
+                                  color: context.inkColor(Colors.black87),
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                            ],
+                          )
+                        : TextSpan(
+                            text: period == _AmolPeriod.weekly
+                                ? appText.thisWeeksAverage
+                                : appText.thisMonthsAverage,
+                            style: TextStyle(
+                              color: context.inkColor(Colors.black),
+                              fontSize: 15.sp,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: ' ${appText.averageTodaysDays}',
-                          style: TextStyle(
-                            color: context.inkColor(Colors.black87),
-                            fontSize: 13.sp,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                   SizedBox(height: 12.h),
                   const _Legend(),

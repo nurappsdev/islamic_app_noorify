@@ -98,6 +98,8 @@ class AppText {
     required this.amolTrack,
     required this.todays,
     required this.averageTodaysDays,
+    required this.thisWeeksAverage,
+    required this.thisMonthsAverage,
     required this.myPosition,
     required this.myNearestOrCompetitor,
     required this.competitorInitials,
@@ -975,6 +977,8 @@ class AppText {
   final String amolTrack;
   final String todays;
   final String averageTodaysDays;
+  final String thisWeeksAverage;
+  final String thisMonthsAverage;
   final String myPosition;
   final String myNearestOrCompetitor;
   final String competitorInitials;
@@ -2085,6 +2089,16 @@ class AppText {
         map,
         'averageTodaysDays',
         fallback?.averageTodaysDays ?? '',
+      ),
+      thisWeeksAverage: _read(
+        map,
+        'thisWeeksAverage',
+        fallback?.thisWeeksAverage ?? '',
+      ),
+      thisMonthsAverage: _read(
+        map,
+        'thisMonthsAverage',
+        fallback?.thisMonthsAverage ?? '',
       ),
       myPosition: _read(map, 'myPosition', fallback?.myPosition ?? ''),
       myNearestOrCompetitor: _read(
