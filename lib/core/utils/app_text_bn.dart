@@ -92,6 +92,8 @@ const Map<String, String> appTextBn = <String, String>{
   'point': 'পয়েন্ট',
   'myPoints': 'আমার পয়েন্ট',
   'todaysAmolTrack': 'আজকের আমল ট্র্যাক',
+  'weeklyAmolTrack': 'সাপ্তাহিক আমল ট্র্যাক',
+  'monthlyAmolTrack': 'মাসিক আমল ট্র্যাক',
   'amolTrack': 'আমল ট্র্যাক',
   'todays': 'আজকের',
   'averageTodaysDays': '– আজকের দিনের গড়।',

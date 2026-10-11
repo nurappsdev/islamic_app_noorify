@@ -95,6 +95,8 @@ class AppText {
     required this.point,
     required this.myPoints,
     required this.todaysAmolTrack,
+    required this.weeklyAmolTrack,
+    required this.monthlyAmolTrack,
     required this.amolTrack,
     required this.todays,
     required this.averageTodaysDays,
@@ -974,6 +976,8 @@ class AppText {
   final String point;
   final String myPoints;
   final String todaysAmolTrack;
+  final String weeklyAmolTrack;
+  final String monthlyAmolTrack;
   final String amolTrack;
   final String todays;
   final String averageTodaysDays;
@@ -2082,6 +2086,16 @@ class AppText {
         map,
         'todaysAmolTrack',
         fallback?.todaysAmolTrack ?? '',
+      ),
+      weeklyAmolTrack: _read(
+        map,
+        'weeklyAmolTrack',
+        fallback?.weeklyAmolTrack ?? '',
+      ),
+      monthlyAmolTrack: _read(
+        map,
+        'monthlyAmolTrack',
+        fallback?.monthlyAmolTrack ?? '',
       ),
       amolTrack: _read(map, 'amolTrack', fallback?.amolTrack ?? ''),
       todays: _read(map, 'todays', fallback?.todays ?? ''),

@@ -60,16 +60,23 @@ class AmolSummaryCard extends StatelessWidget {
     required this.pointLabel,
     required this.progressLabel,
     required this.progress,
+    this.title,
   });
 
   final String pointLabel;
   final String progressLabel;
   final double progress;
 
+  /// Overrides the card's default "Todays Amol Track" title — the
+  /// dashboard screen uses this to show "Weekly"/"Monthly Amol Track"
+  /// under those filters instead. `null` (every other caller) keeps the
+  /// original title.
+  final String? title;
+
   @override
   Widget build(BuildContext context) {
     return AmalTrackerTile(
-      title: AppText.of(context).todaysAmolTrack,
+      title: title ?? AppText.of(context).todaysAmolTrack,
       subtitle: pointLabel,
       progressLabel: progressLabel,
       progress: progress,

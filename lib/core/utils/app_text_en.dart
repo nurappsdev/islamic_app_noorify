@@ -93,6 +93,8 @@ const Map<String, String> appTextEn = <String, String>{
   'point': 'Point',
   'myPoints': 'My Points',
   'todaysAmolTrack': 'Todays Amol Track',
+  'weeklyAmolTrack': 'Weekly Amol Track',
+  'monthlyAmolTrack': 'Monthly Amol Track',
   'amolTrack': 'Amol Track',
   'todays': 'Todays',
   'averageTodaysDays': '–  average todays days.',
