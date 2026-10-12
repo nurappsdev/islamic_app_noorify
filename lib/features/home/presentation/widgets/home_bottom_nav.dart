@@ -22,18 +22,20 @@ class HomeBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       items: [
         AppBottomNavItem(
-          icon: Icons.home_outlined,
+          iconAsset: 'assets/homeImg/mainHomeIcon.png',
           label: appText.home,
           onTap: () => _goTo(context, RouteNames.home),
         ),
         AppBottomNavItem(
-          icon: Icons.menu_book_outlined,
+          iconAsset: 'assets/homeImg/quranImg.png',
+          iconAssetColor: Colors.white,
           label: appText.categoryQuran,
           onTap: () => _goTo(context, RouteNames.quranSurahs),
         ),
         // Opened over Home, so back returns to it.
         AppBottomNavItem(
-          icon: Icons.local_library_outlined,
+          iconAsset: 'assets/homeImg/haditImg.png',
+          iconAssetColor: Colors.white,
           label: appText.categoryHadith,
           onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
         ),
