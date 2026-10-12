@@ -195,90 +195,109 @@ class _DetailCard extends StatelessWidget {
 
   final AsmaNameDetail detail;
 
+  // Bottom-only: the name/title block always sits at the very top of the
+  // scroll content, so a top fade would wash it out there too (that's what
+  // made it look blurry). Only the trailing paragraphs fade, starting well
+  // before the physical edge so they're clearly hidden within the container
+  // rather than cut off right at it.
+  static const _bottomFadeExtent = 0.18;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 28.h),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              detail.nameArabic,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Noorehuda',
-                fontSize: 30.sp,
-                fontWeight: FontWeight.w700,
-                color: context.inkColor(Color(0xFF3F6B2C)),
-                height: 1.5,
-              ),
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              detail.nameTransliteration,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22.sp,
-                fontWeight: FontWeight.w700,
-                color: context.inkColor(AppColor.authLogo),
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Text(
-              detail.nameBangla,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.sp, color: AppColor.authHint),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              detail.meaningEnglish,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF93A23A)),
-              ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              detail.meaningBangla,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12.5.sp,
-                fontStyle: FontStyle.italic,
-                color: const Color(0xFF8B9678),
-              ),
-            ),
-            SizedBox(height: 18.h),
-            for (final paragraph in detail.explanationParagraphs)
-              Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: Text(
-                  paragraph.text,
-                  textAlign: paragraph.isArabic
-                      ? TextAlign.center
-                      : TextAlign.start,
-                  textDirection: paragraph.isArabic
-                      ? TextDirection.rtl
-                      : TextDirection.ltr,
-                  style: paragraph.isArabic
-                      ? TextStyle(
-                          fontFamily: 'Noorehuda',
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w600,
-                          height: 1.8,
-                          color: context.inkColor(Color(0xFF3F6B2C)),
-                        )
-                      : TextStyle(
-                          fontSize: 13.sp,
-                          height: 1.6,
-                          color: context.inkColor(Color(0xFF4B5540)),
-                        ),
+      child: ClipRect(
+        child: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black, Colors.black, Colors.transparent],
+            stops: [0.0, 1 - _bottomFadeExtent, 1.0],
+          ).createShader(bounds),
+          blendMode: BlendMode.dstIn,
+          child: SingleChildScrollView(
+            clipBehavior: Clip.hardEdge,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  detail.nameArabic,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Noorehuda',
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(Color(0xFF3F6B2C)),
+                    height: 1.5,
+                  ),
                 ),
-              ),
-          ],
+                SizedBox(height: 6.h),
+                Text(
+                  detail.nameTransliteration,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(AppColor.authLogo),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  detail.nameBangla,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: AppColor.authHint),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  detail.meaningEnglish,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(Color(0xFF93A23A)),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  detail.meaningBangla,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.5.sp,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF8B9678),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                for (final paragraph in detail.explanationParagraphs)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12.h),
+                    child: Text(
+                      paragraph.text,
+                      textAlign: paragraph.isArabic
+                          ? TextAlign.center
+                          : TextAlign.start,
+                      textDirection: paragraph.isArabic
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                      style: paragraph.isArabic
+                          ? TextStyle(
+                              fontFamily: 'Noorehuda',
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w600,
+                              height: 1.8,
+                              color: context.inkColor(Color(0xFF3F6B2C)),
+                            )
+                          : TextStyle(
+                              fontSize: 13.sp,
+                              height: 1.6,
+                              color: context.inkColor(Color(0xFF4B5540)),
+                            ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
