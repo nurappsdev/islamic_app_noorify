@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_n
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_analytics_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
@@ -249,7 +250,7 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                               child: _StatCard(
                                 label: appText.zikrMostDoing,
                                 value: context.localizedDigits(
-                                  '${analytics?.mostDoingZikrName ?? 'Subhan-Allah'}  ${analytics?.mostDoingZikrCount ?? 34784}',
+                                  '${localizedZikrNameFromKey(appText, zikrKey: analytics?.mostDoingZikrKey ?? '', fallback: analytics?.mostDoingZikrName ?? 'Subhan-Allah')}  ${analytics?.mostDoingZikrCount ?? 34784}',
                                 ),
                                 italicValue: true,
                               ),
@@ -280,8 +281,14 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                             in analytics == null
                                 ? _history
                                 : analytics.recentHistory.map(
-                                    (item) =>
-                                        (item.zikrName, '${item.countAdded}'),
+                                    (item) => (
+                                      localizedZikrNameFromKey(
+                                        appText,
+                                        zikrKey: item.zikrKey,
+                                        fallback: item.zikrName,
+                                      ),
+                                      '${item.countAdded}',
+                                    ),
                                   )) ...[
                           _HistoryRow(
                             name: entry.$1,
@@ -742,14 +749,18 @@ class _HistoryRow extends StatelessWidget {
           ),
         ),
         SizedBox(width: 12.w),
-        Text(
-          name,
-          style: TextStyle(
-            fontSize: 14.sp,
-            color: context.inkColor(Color(0xFF2C3320)),
+        Expanded(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: context.inkColor(Color(0xFF2C3320)),
+            ),
           ),
         ),
-        const Spacer(),
+        SizedBox(width: 8.w),
         Text(
           context.localizedDigits(count),
           style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),

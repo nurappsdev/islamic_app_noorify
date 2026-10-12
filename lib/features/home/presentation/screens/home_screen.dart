@@ -30,6 +30,7 @@ import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_bottom_n
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_feature_card_slider.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/quiz_card_content.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/quran_card_content.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_feature_grid.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_header.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/nafl_more_card_content.dart';
@@ -210,7 +211,7 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                               ),
 
                               SizedBox(height: 10.h),
-                               const HomeProgressSection(),
+                              const HomeProgressSection(),
                               SizedBox(height: 10.h),
                               const HomeFeatureGrid(),
                               SizedBox(height: 10.h),
@@ -656,7 +657,12 @@ class _ZikrCardState extends State<_ZikrCard> {
         : [
             for (final item in tracked.items)
               ZikrItemData(
-                name: item.title,
+                name:
+                    localizedTrackedZikrName(
+                      AppText.of(context),
+                      item.itemKey,
+                    ) ??
+                    item.title,
                 completed: item.isCompleted,
                 itemKey: item.itemKey,
               ),

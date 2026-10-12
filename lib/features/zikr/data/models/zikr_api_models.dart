@@ -299,6 +299,7 @@ class TasbihAnalyticsResponse {
     required this.competitorTotalZikr,
     required this.competitorName,
     required this.lifetimeTotalCount,
+    required this.mostDoingZikrKey,
     required this.mostDoingZikrName,
     required this.mostDoingZikrCount,
     required this.chartData,
@@ -310,6 +311,7 @@ class TasbihAnalyticsResponse {
   final int competitorTotalZikr;
   final String competitorName;
   final int lifetimeTotalCount;
+  final String mostDoingZikrKey;
   final String mostDoingZikrName;
   final int mostDoingZikrCount;
   final List<TasbihChartPoint> chartData;
@@ -322,6 +324,9 @@ class TasbihAnalyticsResponse {
         competitorTotalZikr: _asInt(json['competitorTotalZikr']) ?? 0,
         competitorName: json['competitorName']?.toString() ?? '',
         lifetimeTotalCount: _asInt(json['lifetimeTotalCount']) ?? 0,
+        mostDoingZikrKey:
+            json['mostDoingZikrKey']?.toString() ??
+            _zikrKey(json['mostDoingZikrName']),
         mostDoingZikrName: json['mostDoingZikrName']?.toString() ?? '',
         mostDoingZikrCount: _asInt(json['mostDoingZikrCount']) ?? 0,
         chartData: [
