@@ -758,8 +758,8 @@ const Map<String, String> appTextBn = <String, String>{
   'validatorTermsRequired': 'চালিয়ে যেতে সেবার শর্তাবলী গ্রহণ করুন',
   'passwordRequirementsHint':
       '{min}+ অক্ষরের পাসওয়ার্ডে বড় হাতের ও ছোট হাতের অক্ষর, একটি সংখ্যা এবং একটি বিশেষ চিহ্ন ব্যবহার করুন।',
-  'amLabel': 'পূর্বাহ্ণ',
-  'pmLabel': 'অপরাহ্ণ',
+  'amLabel': 'এএম',
+  'pmLabel': 'পিএম',
   'hijriSuffix': 'হিজরি',
   'failureNetwork': 'ইন্টারনেট সংযোগ নেই। অনুগ্রহ করে আবার চেষ্টা করুন।',
   'failureTimeout':
