@@ -50,6 +50,8 @@ class _SignInViewState extends State<_SignInView> {
   static const _logoImagePath = 'assets/appLogoFinal.png';
   static const _errorColor = Color(0xFFD93025);
   final _formKey = GlobalKey<FormState>();
+  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
+  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -229,13 +231,21 @@ class _SignInViewState extends State<_SignInView> {
                   LocalizedFormScope(
                     child: Form(
                       key: _formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      // Disabled here, not onUserInteraction: Form tracks
+                      // "has the user interacted" at the form level, so
+                      // onUserInteraction on the Form re-validates every
+                      // field once ANY field is touched. Each field below
+                      // instead validates only itself via its own key.
+                      autovalidateMode: AutovalidateMode.disabled,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           TextFormField(
+                            key: _emailFieldKey,
                             controller: _emailController,
                             validator: _validateEmail,
+                            onChanged: (_) =>
+                                _emailFieldKey.currentState?.validate(),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             autofillHints: const [
@@ -249,8 +259,11 @@ class _SignInViewState extends State<_SignInView> {
                           ),
                           SizedBox(height: 8.h),
                           TextFormField(
+                            key: _passwordFieldKey,
                             controller: _passwordController,
                             validator: _validatePassword,
+                            onChanged: (_) =>
+                                _passwordFieldKey.currentState?.validate(),
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
                             autofillHints: const [AutofillHints.password],
