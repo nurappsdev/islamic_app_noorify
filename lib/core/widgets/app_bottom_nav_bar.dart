@@ -4,13 +4,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 /// One destination of an [AppBottomNavBar].
 class AppBottomNavItem {
   const AppBottomNavItem({
-    required this.icon,
+    this.icon,
+    this.iconAsset,
+    this.iconAssetColor,
     required this.label,
     this.onTap,
     this.key,
-  });
+  }) : assert(
+         icon != null || iconAsset != null,
+         'Provide either icon or iconAsset.',
+       );
 
-  final IconData icon;
+  /// Used when [iconAsset] is null.
+  final IconData? icon;
+
+  /// Image asset path; takes precedence over [icon] when set.
+  final String? iconAsset;
+
+  /// Optional tint for [iconAsset]. Null keeps the asset's own colors.
+  final Color? iconAssetColor;
+
   final String label;
 
   /// Null leaves the item inert (the selected one, or a placeholder).
@@ -111,7 +124,18 @@ class _NavButton extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(item.icon, color: Colors.white, size: 20.sp),
+                  item.iconAsset != null
+                      ? Image.asset(
+                          item.iconAsset!,
+                          width: 20.sp,
+                          height: 20.sp,
+                          fit: BoxFit.contain,
+                          color: item.iconAssetColor,
+                          colorBlendMode: item.iconAssetColor != null
+                              ? BlendMode.srcIn
+                              : null,
+                        )
+                      : Icon(item.icon, color: Colors.white, size: 20.sp),
                   if (selected && showLabel) ...[
                     SizedBox(width: 5.w),
                     Flexible(

@@ -45,21 +45,7 @@ class AsmaHusnaListScreen extends StatelessWidget {
               SizedBox(height: 6.h),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: DuaPageHeader(
-                  title: appText.asmaHusnaTitle,
-                  action: IconButton(
-                    onPressed: () {},
-                    style: IconButton.styleFrom(
-                      backgroundColor: context.surfaceColor(Colors.white),
-                      foregroundColor: context.inkColor(AppColor.authLogo),
-                      side: BorderSide(
-                        color: context.lineColor(Color(0xFFDCE3BE)),
-                      ),
-                      minimumSize: Size(38.r, 38.r),
-                    ),
-                    icon: const Icon(Icons.access_time, size: 18),
-                  ),
-                ),
+                child: DuaPageHeader(title: appText.asmaHusnaTitle),
               ),
               SizedBox(height: 16.h),
               Padding(
