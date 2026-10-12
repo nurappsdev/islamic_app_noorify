@@ -264,7 +264,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   appText.tuhfatulMuslim,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: context.inkColor(Colors.black),
+                    color: context.inkColor(const Color(0xFF859065)),
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
                     height: 1.2,
