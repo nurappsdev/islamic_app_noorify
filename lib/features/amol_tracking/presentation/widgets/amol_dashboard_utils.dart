@@ -10,11 +10,12 @@ String formatAmolScoreValue(num value) {
 }
 
 /// The competitor bubble is a small pill, so a full server-given name (e.g.
-/// "Khalid Saifullah") is shortened to initials (e.g. "KS") to fit it.
+/// "Abdullah Al Masud") is shortened to its first two characters (e.g. "Ab")
+/// to fit it — never the full name.
 String amolInitials(String name, {required String fallback}) {
-  final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
-  final letters = words.map((w) => w[0].toUpperCase()).take(2).join();
-  return letters.isEmpty ? fallback : letters;
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return fallback;
+  return trimmed.substring(0, trimmed.length < 2 ? trimmed.length : 2);
 }
 
 /// The current calendar month plus the 11 before it, newest first, for the

@@ -86,7 +86,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       appText.tuhfatulMuslim,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.inkColor(Colors.black),
+                        color: context.inkColor(const Color(0xFF859065)),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
@@ -97,7 +97,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       appText.splashTitle,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.inkColor(Colors.black),
+                        color: context.inkColor(const Color(0xFFA1AD59)),
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w400,
                         height: 1.2,
@@ -105,12 +105,11 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                     ),
                     SizedBox(height: 28.h),
                     Text(
-                      '"${appText.splashQuote}"',
+                      appText.splashQuote,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: context.inkColor(Colors.black),
                         fontSize: 16.sp,
-                        fontStyle: FontStyle.italic,
                         fontWeight: FontWeight.w600,
                         height: 1.35,
                       ),
@@ -122,9 +121,9 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       child: CircularProgressIndicator(
                         strokeWidth: 5.r,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF9BA680),
+                          Color(0xFF859065),
                         ),
-                        backgroundColor: const Color(0x669BA680),
+                        backgroundColor: const Color(0x80859065),
                       ),
                     ),
                     SizedBox(height: 44.h),

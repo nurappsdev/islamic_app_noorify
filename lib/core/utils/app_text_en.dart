@@ -2,7 +2,7 @@ const Map<String, String> appTextEn = <String, String>{
   'tuhfatulMuslim': 'Tuhfatul Muslim',
   'splashTitle': 'Find Peace Through Faith',
   'splashQuote':
-      'Build meaningful daily habits with Quran recitation, duas, and timely prayer reminders.',
+      '"Build meaningful daily habits with Quran recitation, duas, and timely prayer reminders."',
   'emailOrPhoneHint': 'Email Or Phone No',
   'passwordHint': 'Password',
   'forgotPassword': 'Forgot Password',

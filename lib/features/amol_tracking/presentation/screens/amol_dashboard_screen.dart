@@ -49,6 +49,14 @@ class _AmolDashboardView extends StatelessWidget {
     final appText = AppText.of(context);
     final vm = AmolDashboardViewModel.fromState(context, state);
     final period = vm.period;
+    final dateNavigator = AmolDateNavigator(
+      label: vm.rangeLabel,
+      subtitle: '${period.label(appText)} ${appText.amolTrack}',
+      onPrevious: vm.hasPrevious
+          ? () => bloc.add(ShiftDate(period.step, -1))
+          : null,
+      onNext: vm.hasNext ? () => bloc.add(ShiftDate(period.step, 1)) : null,
+    );
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -71,17 +79,13 @@ class _AmolDashboardView extends StatelessWidget {
                     progressLabel: vm.progressLabel,
                     progress: vm.progress,
                   ),
-                  SizedBox(height: 14.h),
-                  AmolDateNavigator(
-                    label: vm.rangeLabel,
-                    subtitle: '${period.label(appText)} ${appText.amolTrack}',
-                    onPrevious: vm.hasPrevious
-                        ? () => bloc.add(ShiftDate(period.step, -1))
-                        : null,
-                    onNext: vm.hasNext
-                        ? () => bloc.add(ShiftDate(period.step, 1))
-                        : null,
-                  ),
+                  // Weekly shows its navigator below the chart instead (see
+                  // the one placed after it further down); every other tab
+                  // keeps it here, above the chart.
+                  if (period != AmolPeriod.weekly) ...[
+                    SizedBox(height: 14.h),
+                    dateNavigator,
+                  ],
                   if (period == AmolPeriod.monthly) ...[
                     SizedBox(height: 10.h),
                     Align(
@@ -139,6 +143,10 @@ class _AmolDashboardView extends StatelessWidget {
                       // so every category stays reachable by swiping.
                       scrollable: vm.isColumnLayout,
                     ),
+                  if (period == AmolPeriod.weekly) ...[
+                    SizedBox(height: 14.h),
+                    dateNavigator,
+                  ],
                   SizedBox(height: 18.h),
                   AmolMyPointsBar(
                     myPoints: vm.myPoints,
