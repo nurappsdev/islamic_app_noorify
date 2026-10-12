@@ -10,10 +10,21 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_analytics_cubit.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+
+/// The chart's point bubbles are small pills, so a full name (e.g.
+/// "Abdullah Al Masud") is shortened to its first two characters ("Ab") —
+/// never shown in full.
+String _zikrInitials(String name, {required String fallback}) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return fallback;
+  return trimmed.substring(0, trimmed.length < 2 ? trimmed.length : 2);
+}
 
 /// Zikr stats dashboard (designs `devImg/img_25.png`, `devImg/img_26.png`,
 /// and `devImg/img_63.png`),
@@ -37,6 +48,9 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   late bool _hasAccessToken;
 
   static const _weekly = <double>[490, 690, 880, 240, 250, 760, 180];
+  static const _weeklyCompetitor = <double>[420, 610, 790, 300, 180, 820, 260];
+  static const _dailyMock = <double>[0, 900, 0];
+  static const _dailyCompetitorMock = <double>[0, 640, 0];
   // Saturday first, as an index counted from Sunday.
   static const _weekDayIndexes = [6, 0, 1, 2, 3, 4, 5];
 
@@ -92,11 +106,24 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
 
     return List.generate(dayCount, (index) {
       final date = start.add(Duration(days: index));
-      // Deterministic placeholder values until analytics is wired to the API.
+      // Deterministic placeholders shown only before the real monthly
+      // analytics response lands.
       const samples = [500.0, 960.0, 190.0, 220.0, 840.0, 420.0, 180.0];
+      const competitorSamples = [
+        430.0,
+        760.0,
+        260.0,
+        150.0,
+        690.0,
+        340.0,
+        90.0,
+      ];
       return _MonthlyPoint(
         date: date,
         value: samples[(date.day + date.month * 2) % samples.length],
+        competitorValue:
+            competitorSamples[(date.day + date.month * 3) %
+                competitorSamples.length],
       );
     });
   }
@@ -115,6 +142,34 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
       _selectedMonth = month;
     });
     _cubit.load(period: 'monthly');
+  }
+
+  /// The day (Daily) or 7-day window (Weekly) the navigator is showing.
+  /// Prefers the server's own resolved `startDate`/`endDate` — ground truth
+  /// for exactly which days a response covers — and only falls back to a
+  /// locally computed window before the first response for this offset
+  /// lands.
+  String _rangeLabel(
+    BuildContext context,
+    AppText appText,
+    TasbihAnalyticsResponse? analytics,
+    int offset,
+  ) {
+    final serverStart = DateTime.tryParse(analytics?.startDate ?? '');
+    final serverEnd = DateTime.tryParse(analytics?.endDate ?? '');
+    final isDaily = _period == 0;
+    final localEnd = _today.subtract(
+      Duration(days: isDaily ? offset : offset * 7),
+    );
+    final localStart = isDaily
+        ? localEnd
+        : localEnd.subtract(const Duration(days: 6));
+    final start = serverStart ?? localStart;
+    final end = serverEnd ?? localEnd;
+    final dates = context.localizedDates;
+    if (isDaily) return dates.gregorian(end, shortMonth: true);
+    return '${dates.gregorian(start, shortMonth: true)} - '
+        '${dates.gregorian(end, shortMonth: true)}';
   }
 
   @override
@@ -142,6 +197,24 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
         child: BlocBuilder<ZikrAnalyticsCubit, ZikrAnalyticsState>(
           builder: (context, analyticsState) {
             final analytics = analyticsState.analytics;
+            // Real initials in the chart's point bubbles, never the full
+            // name: mine from the signed-in profile, the competitor's from
+            // the analytics response.
+            final myInitials = _zikrInitials(
+              profileNameNotifier.value ?? '',
+              fallback: appText.competitorInitials,
+            );
+            final competitorInitials = _zikrInitials(
+              analytics?.competitorName ?? '',
+              fallback: appText.competitorInitials,
+            );
+            // Switching tabs keeps the previous period's `analytics` on
+            // screen until the new response lands — only trust it for the
+            // monthly chart once it's actually a monthly response, so a
+            // stale daily/weekly one isn't briefly drawn as if it were days
+            // of a month.
+            final monthlyAnalyticsReady =
+                isMonthly && analytics?.period == 'monthly';
             return Scaffold(
               backgroundColor: context.pageColor(Colors.white),
               body: SafeArea(
@@ -191,41 +264,93 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                             selectedMonth: _selectedMonth,
                             onSelected: _selectMonth,
                           ),
+                        ] else ...[
+                          SizedBox(height: 14.h),
+                          _ZikrDateNavigator(
+                            label: _rangeLabel(
+                              context,
+                              appText,
+                              analytics,
+                              analyticsState.offset,
+                            ),
+                            onPrevious: () => _cubit.shiftOffset(-1),
+                            onNext: analyticsState.offset == 0
+                                ? null
+                                : () => _cubit.shiftOffset(1),
+                          ),
                         ],
                         SizedBox(height: 18.h),
                         SizedBox(
                           height: 250.h,
                           child: isMonthly
                               ? _ScrollableMonthlyChart(
-                                  points: monthlyPoints,
-                                  competitorInitials:
-                                      appText.competitorInitials,
+                                  values: monthlyAnalyticsReady
+                                      ? [
+                                          for (final point
+                                              in analytics!.chartData)
+                                            point.myPosition,
+                                        ]
+                                      : [
+                                          for (final point in monthlyPoints)
+                                            point.value,
+                                        ],
+                                  competitorValues: monthlyAnalyticsReady
+                                      ? [
+                                          for (final point
+                                              in analytics!.chartData)
+                                            point.competitor,
+                                        ]
+                                      : [
+                                          for (final point in monthlyPoints)
+                                            point.competitorValue,
+                                        ],
+                                  labels: monthlyAnalyticsReady
+                                      ? [
+                                          for (final point
+                                              in analytics!.chartData)
+                                            point.label,
+                                        ]
+                                      : [
+                                          for (final point in monthlyPoints)
+                                            point.date.day.toString(),
+                                        ],
+                                  myInitials: myInitials,
+                                  competitorInitials: competitorInitials,
                                 )
                               : _StatsChart(
                                   values: analytics == null
-                                      ? (isDaily ? const [0, 900, 0] : _weekly)
+                                      ? (isDaily ? _dailyMock : _weekly)
                                       : [
                                           for (final point
                                               in analytics.chartData)
                                             point.myPosition,
                                         ],
-                                  labels: isDaily
-                                      ? ['', appText.zikrTodaysValueGraph, '']
-                                      : analytics == null
+                                  competitorValues: analytics == null
+                                      ? (isDaily
+                                            ? _dailyCompetitorMock
+                                            : _weeklyCompetitor)
+                                      : [
+                                          for (final point
+                                              in analytics.chartData)
+                                            point.competitor,
+                                        ],
+                                  labels: analytics != null
                                       ? [
+                                          for (final point
+                                              in analytics.chartData)
+                                            point.label,
+                                        ]
+                                      : isDaily
+                                      ? ['', appText.zikrTodaysValueGraph, '']
+                                      : [
                                           for (final i in _weekDayIndexes)
                                             context.localizedDates.weekdayShort(
                                               i,
                                             ),
-                                        ]
-                                      : [
-                                          for (final point
-                                              in analytics.chartData)
-                                            point.label,
                                         ],
                                   bubbleAll: !isDaily,
-                                  competitorInitials:
-                                      appText.competitorInitials,
+                                  myInitials: myInitials,
+                                  competitorInitials: competitorInitials,
                                   daily: isDaily,
                                 ),
                         ),
@@ -444,11 +569,92 @@ class _PeriodDropdown extends StatelessWidget {
   }
 }
 
+/// Left/right arrows around the currently shown day or week range, for the
+/// Daily and Weekly tabs (Monthly has its own [_MonthlyFilter] instead).
+/// `onNext` is `null` once the current day/week is showing — stepping
+/// forward from there has nowhere left to go.
+class _ZikrDateNavigator extends StatelessWidget {
+  const _ZikrDateNavigator({
+    required this.label,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final String label;
+  final VoidCallback onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
+      ),
+      child: Row(
+        children: [
+          _ZikrDateNavArrow(icon: Icons.chevron_left, onTap: onPrevious),
+          Expanded(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: context.inkColor(Color(0xFF3E4A2A)),
+              ),
+            ),
+          ),
+          _ZikrDateNavArrow(icon: Icons.chevron_right, onTap: onNext),
+        ],
+      ),
+    );
+  }
+}
+
+class _ZikrDateNavArrow extends StatelessWidget {
+  const _ZikrDateNavArrow({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return SizedBox.square(
+      dimension: 30.r,
+      child: IconButton(
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: context.surfaceColor(
+            enabled ? const Color(0xFFDDE8BA) : const Color(0xFFF2F3EA),
+          ),
+        ),
+        icon: Icon(
+          icon,
+          size: 16.sp,
+          color: context.inkColor(
+            enabled ? const Color(0xFF3E4A2A) : const Color(0xFFC5CAB8),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MonthlyPoint {
-  const _MonthlyPoint({required this.date, required this.value});
+  const _MonthlyPoint({
+    required this.date,
+    required this.value,
+    required this.competitorValue,
+  });
 
   final DateTime date;
   final double value;
+  final double competitorValue;
 }
 
 /// The default selection is the most recent 30 days. The remaining chips are
@@ -521,11 +727,17 @@ class _MonthlyFilter extends StatelessWidget {
 /// dragging right, matching the monthly design's progress rail.
 class _ScrollableMonthlyChart extends StatefulWidget {
   const _ScrollableMonthlyChart({
-    required this.points,
+    required this.values,
+    required this.competitorValues,
+    required this.labels,
+    required this.myInitials,
     required this.competitorInitials,
   });
 
-  final List<_MonthlyPoint> points;
+  final List<double> values;
+  final List<double> competitorValues;
+  final List<String> labels;
+  final String myInitials;
   final String competitorInitials;
 
   @override
@@ -549,7 +761,7 @@ class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
         const horizontalChartPadding = 40.0;
         final pointGap = (constraints.maxWidth - horizontalChartPadding) / 9;
         final contentWidth =
-            horizontalChartPadding + pointGap * (widget.points.length - 1);
+            horizontalChartPadding + pointGap * (widget.values.length - 1);
 
         return ScrollbarTheme(
           data: ScrollbarThemeData(
@@ -570,12 +782,11 @@ class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
                 width: contentWidth,
                 height: constraints.maxHeight,
                 child: _StatsChart(
-                  values: [for (final point in widget.points) point.value],
-                  labels: [
-                    for (final point in widget.points)
-                      point.date.day.toString(),
-                  ],
+                  values: widget.values,
+                  competitorValues: widget.competitorValues,
+                  labels: widget.labels,
                   bubbleAll: true,
+                  myInitials: widget.myInitials,
                   competitorInitials: widget.competitorInitials,
                   daily: false,
                   // Keep day labels above the horizontal scrollbar. Without
@@ -770,21 +981,27 @@ class _HistoryRow extends StatelessWidget {
   }
 }
 
-/// Area-line chart: "Weekly" draws a 7-point line with an "Ab" bubble over every
-/// node; "Daily" draws a single peak with one bubble.
+/// Area-line chart: draws my position as a solid line and the competitor's
+/// as a second line in the legend's olive color, each with its own dots.
+/// "Weekly" shows an "Ab" bubble with the competitor's initials over every
+/// one of their points; "Daily" shows it only where they have activity.
 class _StatsChart extends StatelessWidget {
   const _StatsChart({
     required this.values,
+    required this.competitorValues,
     required this.labels,
     required this.bubbleAll,
+    required this.myInitials,
     required this.competitorInitials,
     required this.daily,
     this.bottomPadding = 22,
   });
 
   final List<double> values;
+  final List<double> competitorValues;
   final List<String> labels;
   final bool bubbleAll;
+  final String myInitials;
   final String competitorInitials;
   final bool daily;
   final double bottomPadding;
@@ -795,8 +1012,10 @@ class _StatsChart extends StatelessWidget {
       size: Size.infinite,
       painter: _StatsChartPainter(
         values: values,
+        competitorValues: competitorValues,
         labels: labels,
         bubbleAll: bubbleAll,
+        myInitials: myInitials,
         competitorInitials: competitorInitials,
         daily: daily,
         bottomPadding: bottomPadding,
@@ -808,16 +1027,20 @@ class _StatsChart extends StatelessWidget {
 class _StatsChartPainter extends CustomPainter {
   _StatsChartPainter({
     required this.values,
+    required this.competitorValues,
     required this.labels,
     required this.bubbleAll,
+    required this.myInitials,
     required this.competitorInitials,
     required this.daily,
     required this.bottomPadding,
   });
 
   final List<double> values;
+  final List<double> competitorValues;
   final List<String> labels;
   final bool bubbleAll;
+  final String myInitials;
   final String competitorInitials;
   final bool daily;
   final double bottomPadding;
@@ -921,12 +1144,71 @@ class _StatsChartPainter extends CustomPainter {
           ..strokeWidth = 1.6,
       );
       if (bubbleAll || (daily && values[i] > 0)) {
-        _bubble(canvas, size, Offset(p.dx, p.dy - 16));
+        _bubble(
+          canvas,
+          size,
+          Offset(p.dx, p.dy - 16),
+          label: myInitials,
+          pillColor: const Color(0xFFBFD19B),
+          dotColor: const Color(0xFF3F6B4E),
+        );
+      }
+    }
+
+    // Competitor's own line, in the legend's olive — same x positions, their
+    // own values. Skipped once there's nothing to compare (fewer values than
+    // mine, e.g. the loading placeholder).
+    if (competitorValues.length == values.length) {
+      final competitorPoints = [
+        for (var i = 0; i < competitorValues.length; i++)
+          Offset(xAt(i), yAt(competitorValues[i])),
+      ];
+      final competitorLinePath = Path()
+        ..moveTo(competitorPoints.first.dx, competitorPoints.first.dy);
+      for (final p in competitorPoints.skip(1)) {
+        competitorLinePath.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(
+        competitorLinePath,
+        Paint()
+          ..color = const Color(0xFFA9B96A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4,
+      );
+      for (var i = 0; i < competitorPoints.length; i++) {
+        final p = competitorPoints[i];
+        if (daily && competitorValues[i] == 0) continue;
+        canvas.drawCircle(p, 5, Paint()..color = Colors.white);
+        canvas.drawCircle(
+          p,
+          5,
+          Paint()
+            ..color = const Color(0xFFA9B96A)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6,
+        );
+        if (bubbleAll || (daily && competitorValues[i] > 0)) {
+          _bubble(
+            canvas,
+            size,
+            Offset(p.dx, p.dy - 16),
+            label: competitorInitials,
+            pillColor: const Color(0xFFCDD891),
+            dotColor: const Color(0xFF6C7A3C),
+          );
+        }
       }
     }
   }
 
-  void _bubble(Canvas canvas, Size size, Offset anchor) {
+  void _bubble(
+    Canvas canvas,
+    Size size,
+    Offset anchor, {
+    required String label,
+    required Color pillColor,
+    required Color dotColor,
+  }) {
     const w = 42.0;
     const h = 22.0;
     var left = anchor.dx - w / 2;
@@ -934,16 +1216,16 @@ class _StatsChartPainter extends CustomPainter {
     final rect = Rect.fromLTWH(left, anchor.dy - h, w, h);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(11)),
-      Paint()..color = const Color(0xFFCDD891),
+      Paint()..color = pillColor,
     );
     canvas.drawCircle(
       Offset(rect.left + 12, rect.center.dy),
       3,
-      Paint()..color = const Color(0xFF6C7A3C),
+      Paint()..color = dotColor,
     );
     _text(
       canvas,
-      competitorInitials,
+      label,
       Offset(rect.left + 19, rect.center.dy),
       color: const Color(0xFF3E4A2A),
       fontSize: 10,
@@ -983,7 +1265,10 @@ class _StatsChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _StatsChartPainter oldDelegate) =>
       oldDelegate.values != values ||
+      oldDelegate.competitorValues != competitorValues ||
       oldDelegate.labels != labels ||
+      oldDelegate.myInitials != myInitials ||
+      oldDelegate.competitorInitials != competitorInitials ||
       oldDelegate.daily != daily ||
       oldDelegate.bottomPadding != bottomPadding;
 }

@@ -295,6 +295,8 @@ class PaginatedHistory {
 class TasbihAnalyticsResponse {
   const TasbihAnalyticsResponse({
     required this.period,
+    required this.startDate,
+    required this.endDate,
     required this.userTotalZikr,
     required this.competitorTotalZikr,
     required this.competitorName,
@@ -307,6 +309,12 @@ class TasbihAnalyticsResponse {
   });
 
   final String period;
+
+  /// The server's own resolved window for this response (e.g. weekly
+  /// `2026-09-17` to `2026-09-23`) — ground truth for the range actually
+  /// shown, same convention as the Amol analytics graph endpoint.
+  final String startDate;
+  final String endDate;
   final int userTotalZikr;
   final int competitorTotalZikr;
   final String competitorName;
@@ -320,6 +328,8 @@ class TasbihAnalyticsResponse {
   factory TasbihAnalyticsResponse.fromJson(Map<String, dynamic> json) =>
       TasbihAnalyticsResponse(
         period: json['period']?.toString() ?? 'daily',
+        startDate: json['startDate']?.toString() ?? '',
+        endDate: json['endDate']?.toString() ?? '',
         userTotalZikr: _asInt(json['userTotalZikr']) ?? 0,
         competitorTotalZikr: _asInt(json['competitorTotalZikr']) ?? 0,
         competitorName: json['competitorName']?.toString() ?? '',

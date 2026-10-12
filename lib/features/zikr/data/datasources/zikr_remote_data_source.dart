@@ -22,7 +22,7 @@ abstract interface class ZikrRemoteDataSource {
   Future<ZikrPlan> enrollPlan(String id);
   Future<ZikrPlan> incrementPlan(String id, int countAdded);
   Future<void> deletePlan(String id);
-  Future<TasbihAnalyticsResponse> getAnalytics(String period);
+  Future<TasbihAnalyticsResponse> getAnalytics(String period, {int offset});
   Future<PaginatedHistory> getHistory({required int page, required int limit});
 }
 
@@ -137,10 +137,17 @@ class ZikrRemoteDataSourceImpl implements ZikrRemoteDataSource {
   Future<void> deletePlan(String id) => _delete('/zikr/plans/$id');
 
   @override
-  Future<TasbihAnalyticsResponse> getAnalytics(String period) async =>
-      TasbihAnalyticsResponse.fromJson(
-        _dataMap(await _get('/zikr/analytics', query: {'period': period})),
-      );
+  Future<TasbihAnalyticsResponse> getAnalytics(
+    String period, {
+    int offset = 0,
+  }) async => TasbihAnalyticsResponse.fromJson(
+    _dataMap(
+      await _get(
+        '/zikr/analytics',
+        query: {'period': period, if (offset != 0) 'offset': offset},
+      ),
+    ),
+  );
 
   @override
   Future<PaginatedHistory> getHistory({

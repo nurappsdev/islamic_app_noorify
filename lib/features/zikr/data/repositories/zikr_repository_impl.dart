@@ -45,8 +45,10 @@ class ZikrRepositoryImpl implements ZikrRepository {
   @override
   Future<void> deletePlan(String id) => _remote.deletePlan(id);
   @override
-  Future<TasbihAnalyticsResponse> getAnalytics(String period) =>
-      _remote.getAnalytics(period);
+  Future<TasbihAnalyticsResponse> getAnalytics(
+    String period, {
+    int offset = 0,
+  }) => _remote.getAnalytics(period, offset: offset);
   @override
   Future<PaginatedHistory> getHistory({
     required int page,

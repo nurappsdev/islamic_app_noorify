@@ -16,6 +16,6 @@ abstract interface class ZikrRepository {
   Future<ZikrPlan> enrollPlan(String id);
   Future<ZikrPlan> incrementPlan(String id, int countAdded);
   Future<void> deletePlan(String id);
-  Future<TasbihAnalyticsResponse> getAnalytics(String period);
+  Future<TasbihAnalyticsResponse> getAnalytics(String period, {int offset});
   Future<PaginatedHistory> getHistory({required int page, required int limit});
 }
