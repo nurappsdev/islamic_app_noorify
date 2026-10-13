@@ -131,7 +131,7 @@ import '../../features/dua/presentation/screens/dua_all_dua_screen.dart';
 import '../../features/dua/presentation/screens/dua_dashboard_screen.dart';
 import '../../features/dua/presentation/screens/dua_featured_screen.dart';
 import '../../features/dua/presentation/screens/dua_group_screen.dart';
-import '../../features/dua/presentation/screens/dua_intro_screen.dart';
+import '../../features/dua/presentation/screens/dua_entry_screen.dart';
 import '../../features/dua/presentation/screens/dua_reader_screen.dart';
 import '../../features/dua/presentation/screens/dua_saved_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
@@ -634,7 +634,7 @@ class AppRoutes {
           settings,
         );
       case RouteNames.dua:
-        return _page(const DuaIntroScreen(), settings);
+        return _page(const DuaEntryScreen(), settings);
       case RouteNames.duaDashboard:
         return _page(const DuaDashboardScreen(), settings);
       case RouteNames.duaAllCategory:
