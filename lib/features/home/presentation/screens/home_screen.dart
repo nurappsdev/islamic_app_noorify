@@ -84,6 +84,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
   /// dashboard request while a pull-to-refresh request is already in flight.
   bool _isPullRefreshing = false;
 
+  /// Avoid opening more than one confirmation dialog if back is invoked again
+  /// before the current dialog has been dismissed.
+  bool _isExitDialogVisible = false;
+
   @override
   void initState() {
     super.initState();
@@ -140,93 +144,136 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
     setState(() => _refreshTick++);
   }
 
+  Future<void> _confirmExit() async {
+    if (_isExitDialogVisible || !mounted) return;
+    _isExitDialogVisible = true;
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('অ্যাপ থেকে বের হতে চান?'),
+        content: const Text('আপনি কি নিশ্চিত যে অ্যাপ থেকে বের হতে চান?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('না'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('হ্যাঁ'),
+          ),
+        ],
+      ),
+    );
+
+    _isExitDialogVisible = false;
+    if (shouldExit == true && mounted) {
+      // This closes the app without affecting the signed-in session or any
+      // locally stored user data.
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final language = context.watch<LanguageBloc>().state.language;
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Light status-bar icons on the dark background.
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      child: DefaultTextStyle.merge(
-        style: TextStyle(fontFamily: appFontFamilyFor(language)),
-        child: Scaffold(
-          backgroundColor: context.appPalette.background,
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Fixed above the scroll view (not inside it), so it never
-                // scrolls away with the content below.
-                Padding(
-                  padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
-                  child: const HomeHeader(),
-                ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      RefreshIndicator(
-                        onRefresh: _onRefresh,
-                        color: AppColor.primary,
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
-                          child: Column(
-                            children: [
-                              const AmalTrackerCard(),
+    // The confirmation applies only when Home is the navigator's root. When
+    // Home has been opened above another route, normal back navigation remains
+    // available; internal pages are not wrapped by this PopScope.
+    final isRootRoute = ModalRoute.of(context)?.isFirst ?? true;
+    return PopScope(
+      canPop: !isRootRoute,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && isRootRoute) _confirmExit();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        // Light status-bar icons on the dark background.
+        value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: DefaultTextStyle.merge(
+          style: TextStyle(fontFamily: appFontFamilyFor(language)),
+          child: Scaffold(
+            backgroundColor: context.appPalette.background,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Fixed above the scroll view (not inside it), so it never
+                  // scrolls away with the content below.
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
+                    child: const HomeHeader(),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        RefreshIndicator(
+                          onRefresh: _onRefresh,
+                          color: AppColor.primary,
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
+                            child: Column(
+                              children: [
+                                const AmalTrackerCard(),
 
-                              SizedBox(height: 16.h),
-                              KeyedSubtree(
-                                key: ValueKey(
-                                  'prayer-time-card-${language.name}-$_refreshTick',
-                                ),
-                                child: const PrayerTimeCard(),
-                              ),
-                              SizedBox(height: 24.h),
-                              KeyedSubtree(
-                                key: ValueKey(
-                                  'prohibited-prayer-times-${language.name}-$_refreshTick',
-                                ),
-                                child: const ProhibitedPrayerTimesCard(),
-                              ),
-                              SizedBox(height: 16.h),
-                              HomeFeatureCardSlider(
-                                key: ValueKey(
-                                  'home-feature-slider-${language.name}',
-                                ),
-                                height: 350.h,
-                                children: [
-                                  KeyedSubtree(
-                                    key: ValueKey('fardh-prayer-$_refreshTick'),
-                                    child: const _FardhPrayerCard(),
+                                SizedBox(height: 16.h),
+                                KeyedSubtree(
+                                  key: ValueKey(
+                                    'prayer-time-card-${language.name}-$_refreshTick',
                                   ),
-                                  const _HadithReadingCard(),
-                                  const _QuranCard(),
-                                  KeyedSubtree(
-                                    key: ValueKey('nafl-more-$_refreshTick'),
-                                    child: const _NaflMoreCard(),
+                                  child: const PrayerTimeCard(),
+                                ),
+                                SizedBox(height: 24.h),
+                                KeyedSubtree(
+                                  key: ValueKey(
+                                    'prohibited-prayer-times-${language.name}-$_refreshTick',
                                   ),
-                                  const _ZikrCard(),
-                                  const _SunnahWitrCard(),
-                                  const _QuizCard(),
-                                ],
-                              ),
+                                  child: const ProhibitedPrayerTimesCard(),
+                                ),
+                                SizedBox(height: 16.h),
+                                HomeFeatureCardSlider(
+                                  key: ValueKey(
+                                    'home-feature-slider-${language.name}',
+                                  ),
+                                  height: 350.h,
+                                  children: [
+                                    KeyedSubtree(
+                                      key: ValueKey(
+                                        'fardh-prayer-$_refreshTick',
+                                      ),
+                                      child: const _FardhPrayerCard(),
+                                    ),
+                                    const _HadithReadingCard(),
+                                    const _QuranCard(),
+                                    KeyedSubtree(
+                                      key: ValueKey('nafl-more-$_refreshTick'),
+                                      child: const _NaflMoreCard(),
+                                    ),
+                                    const _ZikrCard(),
+                                    const _SunnahWitrCard(),
+                                    const _QuizCard(),
+                                  ],
+                                ),
 
-                              SizedBox(height: 10.h),
-                              const HomeProgressSection(),
-                              SizedBox(height: 10.h),
-                              const HomeFeatureGrid(),
-                              SizedBox(height: 10.h),
-                            ],
+                                SizedBox(height: 10.h),
+                                const HomeProgressSection(),
+                                SizedBox(height: 10.h),
+                                const HomeFeatureGrid(),
+                                SizedBox(height: 10.h),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const Align(
-                        alignment: Alignment.bottomCenter,
-                        child: HomeBottomNav(),
-                      ),
-                    ],
+                        const Align(
+                          alignment: Alignment.bottomCenter,
+                          child: HomeBottomNav(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
