@@ -133,7 +133,11 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
       _period = period;
       if (period != 2) _selectedMonth = null;
     });
-    _cubit.load(period: const ['daily', 'weekly', 'monthly'][period]);
+    if (period == 2) {
+      _cubit.loadMonthly();
+    } else {
+      _cubit.load(period: const ['daily', 'weekly', 'monthly'][period]);
+    }
   }
 
   void _selectMonth(DateTime? month) {
@@ -141,7 +145,23 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
       _period = 2;
       _selectedMonth = month;
     });
-    _cubit.load(period: 'monthly');
+    _cubit.loadMonthly(month: month);
+  }
+
+  /// The window's end date (Daily: that day itself; Weekly: the last day of
+  /// the 7-day window), used to seed the date picker on the current offset.
+  DateTime _windowEnd(int offset) =>
+      _today.subtract(Duration(days: _period == 0 ? offset : offset * 7));
+
+  Future<void> _pickDate(BuildContext context, int offset) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _windowEnd(offset),
+      firstDate: DateTime(2020),
+      lastDate: _today,
+    );
+    if (picked == null) return;
+    await _cubit.jumpToDate(picked);
   }
 
   /// The day (Daily) or 7-day window (Weekly) the navigator is showing.
@@ -273,10 +293,12 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                               analytics,
                               analyticsState.offset,
                             ),
-                            onPrevious: () => _cubit.shiftOffset(-1),
-                            onNext: analyticsState.offset == 0
+                            onNewer: analyticsState.offset == 0
                                 ? null
                                 : () => _cubit.shiftOffset(1),
+                            onOlder: () => _cubit.shiftOffset(-1),
+                            onTapLabel: () =>
+                                _pickDate(context, analyticsState.offset),
                           ),
                         ],
                         SizedBox(height: 18.h),
@@ -571,18 +593,30 @@ class _PeriodDropdown extends StatelessWidget {
 
 /// Left/right arrows around the currently shown day or week range, for the
 /// Daily and Weekly tabs (Monthly has its own [_MonthlyFilter] instead).
-/// `onNext` is `null` once the current day/week is showing — stepping
-/// forward from there has nowhere left to go.
+/// Left (chevron_left) steps to the previous day/week — always available,
+/// there's no limit how far back it can go. Right (chevron_right) steps
+/// forward toward today and is `null` once the current day/week is already
+/// showing — there's nowhere forward left to go.
 class _ZikrDateNavigator extends StatelessWidget {
   const _ZikrDateNavigator({
     required this.label,
-    required this.onPrevious,
-    required this.onNext,
+    required this.onOlder,
+    required this.onNewer,
+    this.onTapLabel,
   });
 
   final String label;
-  final VoidCallback onPrevious;
-  final VoidCallback? onNext;
+
+  /// Left arrow: steps to the previous day/week.
+  final VoidCallback onOlder;
+
+  /// Right arrow: steps toward today. Null once the current day/week is
+  /// already showing.
+  final VoidCallback? onNewer;
+
+  /// Opens a date picker to jump straight to a day/week instead of only
+  /// stepping with the arrows. Null leaves the label inert.
+  final VoidCallback? onTapLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -595,19 +629,41 @@ class _ZikrDateNavigator extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _ZikrDateNavArrow(icon: Icons.chevron_left, onTap: onPrevious),
+          _ZikrDateNavArrow(icon: Icons.chevron_left, onTap: onOlder),
           Expanded(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: context.inkColor(Color(0xFF3E4A2A)),
+            child: InkWell(
+              onTap: onTapLabel,
+              borderRadius: BorderRadius.circular(10.r),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(Color(0xFF3E4A2A)),
+                        ),
+                      ),
+                    ),
+                    if (onTapLabel != null) ...[
+                      SizedBox(width: 6.w),
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 15.sp,
+                        color: context.inkColor(Color(0xFF6A7350)),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
-          _ZikrDateNavArrow(icon: Icons.chevron_right, onTap: onNext),
+          _ZikrDateNavArrow(icon: Icons.chevron_right, onTap: onNewer),
         ],
       ),
     );
@@ -1045,8 +1101,42 @@ class _StatsChartPainter extends CustomPainter {
   final bool daily;
   final double bottomPadding;
 
-  static const _maxY = 1000.0;
-  static const _steps = [0, 250, 500, 750, 1000];
+  /// Candidate top-of-chart values, each a multiple of 4 so the four
+  /// gridlines below land on clean numbers. Real zikr counts (tens to a
+  /// few hundred) are tiny next to a fixed 0–1000 scale — every day's line
+  /// hugs the bottom and looks the same no matter how the count changes.
+  /// Scaling to the data's own range makes day-to-day/week-to-week changes
+  /// actually visible.
+  static const _niceMaxCandidates = [
+    20,
+    40,
+    100,
+    200,
+    400,
+    1000,
+    2000,
+    4000,
+    10000,
+    20000,
+    40000,
+    100000,
+  ];
+
+  double get _maxY {
+    final rawMax = [
+      ...values,
+      ...competitorValues,
+    ].fold<double>(0, (max, v) => v > max ? v : max);
+    for (final step in _niceMaxCandidates) {
+      if (rawMax <= step) return step.toDouble();
+    }
+    return ((rawMax / 20000).ceil() * 20000).toDouble();
+  }
+
+  List<int> get _steps {
+    final max = _maxY;
+    return [for (var i = 0; i <= 4; i++) (max * i / 4).round()];
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1059,9 +1149,14 @@ class _StatsChartPainter extends CustomPainter {
     final chartBottom = size.height - bottomPad;
     final chartWidth = chartRight - chartLeft;
     final chartHeight = chartBottom - chartTop;
+    final maxY = _maxY;
 
-    double xAt(int i) => chartLeft + chartWidth * (i / (values.length - 1));
-    double yAt(double v) => chartBottom - chartHeight * (v / _maxY);
+    // A single point (e.g. a one-day custom range) has no span to divide
+    // by — center it instead of dividing by zero.
+    double xAt(int i) => values.length < 2
+        ? chartLeft + chartWidth / 2
+        : chartLeft + chartWidth * (i / (values.length - 1));
+    double yAt(double v) => chartBottom - chartHeight * (v / maxY);
 
     final gridPaint = Paint()
       ..color = const Color(0xFFECEFE1)

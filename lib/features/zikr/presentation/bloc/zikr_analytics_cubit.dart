@@ -74,7 +74,75 @@ class ZikrAnalyticsCubit extends Cubit<ZikrAnalyticsState> {
     await _load(period: state.period, offset: nextOffset);
   }
 
-  Future<void> _load({required String period, required int offset}) async {
+  /// Jumps straight to the day (Daily) or the 7-day window containing it
+  /// (Weekly), from a date picked on [_ZikrDateNavigator]. Converts the pick
+  /// into the equivalent `offset` so the arrows keep stepping from here;
+  /// [_load] turns that back into the explicit `from`/`to` dates actually
+  /// sent. Ignores a future date — same limit the forward arrow enforces.
+  Future<void> jumpToDate(DateTime date) async {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diffDays = todayDate.difference(target).inDays;
+    if (diffDays < 0) return;
+    final nextOffset = state.period == 'weekly' ? diffDays ~/ 7 : diffDays;
+    await _load(period: state.period, offset: nextOffset);
+  }
+
+  /// Monthly's own filter: `month: null` is the default "Last 30 days" chip
+  /// (today and the 29 days before it); a picked month sends that calendar
+  /// month's first and last day instead. Unlike Daily/Weekly there's no
+  /// `offset` for Monthly — each chip names an explicit range directly.
+  Future<void> loadMonthly({DateTime? month}) async {
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final DateTime from, to;
+    if (month == null) {
+      to = todayDate;
+      from = todayDate.subtract(const Duration(days: 29));
+    } else {
+      from = DateTime(month.year, month.month);
+      to = DateTime(month.year, month.month + 1).subtract(
+        const Duration(days: 1),
+      );
+    }
+    await _load(
+      period: 'monthly',
+      offset: 0,
+      from: _isoDate(from),
+      to: _isoDate(to),
+    );
+  }
+
+  static String _isoDate(DateTime date) {
+    String pad2(int n) => n.toString().padLeft(2, '0');
+    return '${date.year}-${pad2(date.month)}-${pad2(date.day)}';
+  }
+
+  /// Daily/Weekly always query an explicit `from`/`to` range computed from
+  /// `offset` (day 0 = today; week 0 = the 7 days ending today), rather than
+  /// sending `offset` itself — confirmed against the live API as the
+  /// reliable shape (`isCustomRange: true` in its response). Monthly builds
+  /// its own range directly in [loadMonthly] instead of going through here.
+  (String?, String?) _rangeFor(String period, int offset) {
+    if (period != 'daily' && period != 'weekly') return (null, null);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    if (period == 'daily') {
+      final day = todayDate.subtract(Duration(days: offset));
+      return (_isoDate(day), _isoDate(day));
+    }
+    final end = todayDate.subtract(Duration(days: offset * 7));
+    final start = end.subtract(const Duration(days: 6));
+    return (_isoDate(start), _isoDate(end));
+  }
+
+  Future<void> _load({
+    required String period,
+    required int offset,
+    String? from,
+    String? to,
+  }) async {
     final requestId = ++_requestId;
     emit(
       state.copyWith(
@@ -85,7 +153,15 @@ class ZikrAnalyticsCubit extends Cubit<ZikrAnalyticsState> {
       ),
     );
     try {
-      final result = await _repository.getAnalytics(period, offset: offset);
+      final range = from == null && to == null
+          ? _rangeFor(period, offset)
+          : (from, to);
+      final result = await _repository.getAnalytics(
+        period,
+        offset: offset,
+        from: range.$1,
+        to: range.$2,
+      );
       if (requestId != _requestId) return;
       emit(state.copyWith(status: ZikrLoadStatus.success, analytics: result));
     } catch (error) {
