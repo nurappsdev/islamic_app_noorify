@@ -1,15 +1,23 @@
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 
-/// Arguments for [RouteNames.duaReader] — which dua to show, and which
-/// featured group it belongs to (for the header's "Daily Life"-style
-/// breadcrumb label).
+/// Arguments for [RouteNames.duaReader] — which dua to show.
+///
+/// [featuredModel] carries a real `/duas/featured` item (one ready-to-read
+/// dua); [featured]/[detail] are the legacy mock pair still used by
+/// [DuaGroupScreen] / [DuaAllDuaScreen]'s demo "All dua" lists. Exactly one
+/// of the two pairs is set.
 class DuaReaderArgs {
-  const DuaReaderArgs({required this.featured, required this.detail});
+  const DuaReaderArgs.mock({required this.featured, required this.detail})
+    : featuredModel = null;
 
-  final DuaFeatured featured;
-  final DuaDetail detail;
+  const DuaReaderArgs.real(this.featuredModel) : featured = null, detail = null;
 
-  static DuaReaderArgs get fallback => DuaReaderArgs(
+  final DuaFeatured? featured;
+  final DuaDetail? detail;
+  final DuaFeaturedModel? featuredModel;
+
+  static DuaReaderArgs get fallback => DuaReaderArgs.mock(
     featured: DuaCatalog.featured.first,
     detail: DuaCatalog.groupDuas.first,
   );

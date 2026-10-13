@@ -21,61 +21,16 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 /// UI only: the recitation counter is in-memory and resets when the screen is
 /// left; the bookmark icon opens [DuaBookmarkSheet]. The play icon has no
 /// audio yet, so it isn't wired.
-class DuaReaderScreen extends StatefulWidget {
+class DuaReaderScreen extends StatelessWidget {
   const DuaReaderScreen({super.key, required this.args});
 
   final DuaReaderArgs args;
 
   @override
-  State<DuaReaderScreen> createState() => _DuaReaderScreenState();
-}
-
-class _DuaReaderScreenState extends State<DuaReaderScreen> {
-  int _count = 0;
-
-  DuaDetail get _detail => widget.args.detail;
-
-  void _increment() {
-    final cap = _detail.repeatCount;
-    if (cap != null && _count >= cap) return;
-    HapticFeedback.selectionClick();
-    setState(() => _count++);
-  }
-
-  void _reset() {
-    HapticFeedback.lightImpact();
-    setState(() => _count = 0);
-  }
-
-  Future<void> _showBookmarkSheet() async {
-    // This method is invoked by a tap handler, outside the build phase. Using
-    // `AppText.of` here would call `context.watch` and trigger Provider's
-    // "tried to listen ... from outside of the widget tree" assertion. Read
-    // the current language without subscribing instead.
-    final appText = AppText.forLanguage(
-      context.read<LanguageBloc>().state.language,
-    );
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DuaBookmarkSheet(appText: appText),
-    );
-    if (saved == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(appText.duaBookmarkAdded),
-          duration: const Duration(milliseconds: 1200),
-        ),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => DuaSettingsBloc()..add(const LoadDuaSettings()),
-      child: _DuaReaderView(args: widget.args),
+      child: _DuaReaderView(args: args),
     );
   }
 }
@@ -92,10 +47,41 @@ class _DuaReaderView extends StatefulWidget {
 class _DuaReaderViewState extends State<_DuaReaderView> {
   int _count = 0;
 
-  DuaDetail get _detail => widget.args.detail;
+  /// Unifies a real `/duas/featured` item and the legacy mock [DuaDetail]
+  /// into one shape the view below renders, resolving bilingual fields in
+  /// the app's current language.
+  _DuaReadable _readable(BuildContext context) {
+    final model = widget.args.featuredModel;
+    if (model != null) {
+      final categoryName = context.localized(model.category?.name);
+      final title = context.localized(model.title);
+      return _DuaReadable(
+        headerTitle: categoryName.isNotEmpty ? categoryName : title,
+        name: title,
+        segments: [
+          DuaSegment(
+            arabic: model.arabic,
+            translation: context.localized(model.translation),
+          ),
+        ],
+        transliteration: context.localized(model.transliteration),
+        repeatCount: model.recommendedRepeatCount > 0
+            ? model.recommendedRepeatCount
+            : null,
+      );
+    }
+    final detail = widget.args.detail!;
+    return _DuaReadable(
+      headerTitle: widget.args.featured!.groupLabel,
+      name: detail.name,
+      segments: detail.segments,
+      transliteration: detail.transliteration,
+      repeatCount: detail.repeatCount,
+    );
+  }
 
   void _increment() {
-    final cap = _detail.repeatCount;
+    final cap = _readable(context).repeatCount;
     if (cap != null && _count >= cap) return;
     HapticFeedback.selectionClick();
     setState(() => _count++);
@@ -216,6 +202,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final readable = _readable(context);
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -234,7 +221,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                 children: [
                   SizedBox(height: 36.h),
                   DuaPageHeader(
-                    title: widget.args.featured.groupLabel,
+                    title: readable.headerTitle,
                     action: IconButton(
                       onPressed: _showSettingsModal,
                       style: IconButton.styleFrom(
@@ -249,17 +236,17 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                   ),
                   SizedBox(height: 18.h),
                   Text(
-                    _detail.name,
+                    readable.name,
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (_detail.repeatCount != null) ...[
+                  if (readable.repeatCount != null) ...[
                     SizedBox(height: 10.h),
                     Text(
                       context.localizedDigits(
-                        '${appText.duaRecitePrefix} ${_detail.repeatCount} '
+                        '${appText.duaRecitePrefix} ${readable.repeatCount} '
                         '${appText.duaReciteSuffix}',
                       ),
                       style: TextStyle(
@@ -269,7 +256,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                     ),
                   ],
                   SizedBox(height: 20.h),
-                  for (final segment in _detail.segments) ...[
+                  for (final segment in readable.segments) ...[
                     if (settings.showArabic)
                       Text(
                         segment.arabic,
@@ -298,7 +285,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                   if (settings.showTransliteration) ...[
                     SizedBox(height: 6.h),
                     Text(
-                      _detail.transliteration,
+                      readable.transliteration,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.5.sp * multiplier,
@@ -328,6 +315,25 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
       ),
     );
   }
+}
+
+/// The reader content, once a real `/duas/featured` item or the legacy mock
+/// [DuaDetail] has been resolved to plain display strings in the app's
+/// current language.
+class _DuaReadable {
+  const _DuaReadable({
+    required this.headerTitle,
+    required this.name,
+    required this.segments,
+    required this.transliteration,
+    required this.repeatCount,
+  });
+
+  final String headerTitle;
+  final String name;
+  final List<DuaSegment> segments;
+  final String transliteration;
+  final int? repeatCount;
 }
 
 class _VisibilityToggle extends StatelessWidget {

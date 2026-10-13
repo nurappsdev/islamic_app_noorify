@@ -3,24 +3,24 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
-/// The pastel-green "Duas for help" card shown on the dashboard's Featured
-/// Dua row and on the full Featured Dua list (design `img_1.png` /
-/// `img_3.png`).
+/// The pastel-green dua card shown on the dashboard's Featured Dua row and on
+/// the full Featured Dua list (design `img_1.png` / `img_3.png`).
 class DuaFeaturedCard extends StatelessWidget {
   const DuaFeaturedCard({super.key, required this.featured, this.onExplore});
 
-  final DuaFeatured featured;
+  final DuaFeaturedModel featured;
 
-  /// Called when the "Explore" pill is tapped — opens the group's detail
-  /// screen ([DuaGroupScreen], design `img_4.png`).
+  /// Called when the "Explore" pill is tapped — opens this dua on
+  /// [DuaReaderScreen].
   final VoidCallback? onExplore;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final totalDuas = featured.category?.totalDuasCount ?? 0;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
@@ -88,7 +88,9 @@ class DuaFeaturedCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                featured.title,
+                context.localized(featured.title),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
@@ -98,7 +100,7 @@ class DuaFeaturedCard extends StatelessWidget {
               SizedBox(height: 6.h),
               Text(
                 context.localizedDigits(
-                  '${appText.duaTotalDuaLabel} : ${featured.totalDua}',
+                  '${appText.duaTotalDuaLabel} : $totalDuas',
                 ),
                 style: TextStyle(
                   fontSize: 11.sp,
