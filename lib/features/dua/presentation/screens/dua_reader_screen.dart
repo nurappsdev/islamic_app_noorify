@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
@@ -79,6 +80,63 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
     );
   }
 
+  /// The dua's own `_id`, or `mock:<name>` for the legacy catalog's demo
+  /// duas — stable per-dua key used by [DuaBookmarkStore].
+  String get _duaId {
+    final model = widget.args.featuredModel;
+    if (model != null) return model.id;
+    return 'mock:${widget.args.detail!.name}';
+  }
+
+  /// Snapshots the current dua (bilingually, not just the resolved display
+  /// language) for [folder], so it renders correctly later regardless of
+  /// the app's language when it's reopened from Saved.
+  DuaBookmarkModel _buildSnapshot(String folder) {
+    final model = widget.args.featuredModel;
+    final now = DateTime.now();
+    if (model != null) {
+      return DuaBookmarkModel(
+        duaId: model.id,
+        folder: folder,
+        titleBn: model.title.bn ?? model.title.en ?? '',
+        titleEn: model.title.en ?? model.title.bn ?? '',
+        arabic: model.arabic,
+        transliterationBn:
+            model.transliteration.bn ?? model.transliteration.en ?? '',
+        transliterationEn:
+            model.transliteration.en ?? model.transliteration.bn ?? '',
+        translationBn: model.translation.bn ?? model.translation.en ?? '',
+        translationEn: model.translation.en ?? model.translation.bn ?? '',
+        referenceBn: model.reference.bn ?? '',
+        referenceEn: model.reference.en ?? '',
+        categoryNameBn: model.category?.name.bn ?? '',
+        categoryNameEn: model.category?.name.en ?? '',
+        recommendedRepeatCount: model.recommendedRepeatCount,
+        createdAt: now,
+        iconUrl: model.iconUrl ?? model.category?.iconUrl,
+      );
+    }
+    final detail = widget.args.detail!;
+    final segment = detail.segments.isNotEmpty ? detail.segments.first : null;
+    return DuaBookmarkModel(
+      duaId: _duaId,
+      folder: folder,
+      titleBn: detail.name,
+      titleEn: detail.name,
+      arabic: segment?.arabic ?? '',
+      transliterationBn: detail.transliteration,
+      transliterationEn: detail.transliteration,
+      translationBn: segment?.translation ?? '',
+      translationEn: segment?.translation ?? '',
+      referenceBn: '',
+      referenceEn: '',
+      categoryNameBn: widget.args.featured?.groupLabel ?? '',
+      categoryNameEn: widget.args.featured?.groupLabel ?? '',
+      recommendedRepeatCount: detail.repeatCount ?? 1,
+      createdAt: now,
+    );
+  }
+
   Future<void> _showBookmarkSheet() async {
     final appText = AppText.forLanguage(
       context.read<LanguageBloc>().state.language,
@@ -87,7 +145,11 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DuaBookmarkSheet(appText: appText),
+      builder: (_) => DuaBookmarkSheet(
+        appText: appText,
+        duaId: _duaId,
+        buildSnapshot: _buildSnapshot,
+      ),
     );
     if (saved == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

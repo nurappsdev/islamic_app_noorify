@@ -3,19 +3,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_create_folder_sheet.dart';
 
 /// "Book Mark" bottom sheet (design `devImg/img_7.png`): pick (or create) the
 /// folder a dua is saved into, then Save. Pops with `true` when a save
-/// happened.
-///
-/// UI only: the folder list and selection live only for the life of this
-/// sheet — nothing is persisted, unlike the Hadith feature's
-/// [HadithBookmarkSheet].
+/// happened. Backed by [DuaBookmarkStore] (Hive) — folders and saved duas
+/// persist and surface on [DuaSavedScreen].
 class DuaBookmarkSheet extends StatefulWidget {
-  const DuaBookmarkSheet({super.key, required this.appText});
+  const DuaBookmarkSheet({
+    super.key,
+    required this.appText,
+    required this.duaId,
+    required this.buildSnapshot,
+  });
 
   final AppText appText;
+
+  /// The dua being bookmarked — its own `_id`, or `mock:<name>` for the
+  /// legacy catalog's demo duas.
+  final String duaId;
+
+  /// Builds the snapshot saved into a given folder.
+  final DuaBookmarkModel Function(String folder) buildSnapshot;
 
   @override
   State<DuaBookmarkSheet> createState() => _DuaBookmarkSheetState();
@@ -23,9 +33,14 @@ class DuaBookmarkSheet extends StatefulWidget {
 
 class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
   final _searchController = TextEditingController();
-  List<String> _folders = const ['Favorite'];
-  final Set<String> _selected = {'Favorite'};
+  final _store = DuaBookmarkStore.instance;
+  late final Set<String> _selected = _initialSelection();
   String _query = '';
+
+  Set<String> _initialSelection() {
+    final existing = _store.foldersFor(widget.duaId);
+    return existing.isEmpty ? {DuaBookmarkStore.defaultFolder} : existing;
+  }
 
   @override
   void initState() {
@@ -51,22 +66,26 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
     );
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty || !mounted) return;
-    setState(() {
-      if (!_folders.any((f) => f.toLowerCase() == trimmed.toLowerCase())) {
-        _folders = [..._folders, trimmed];
-      }
-      _selected.add(trimmed);
-    });
+    _store.createFolder(trimmed);
+    setState(() => _selected.add(trimmed));
   }
 
-  void _save() => Navigator.pop(context, true);
+  void _save() {
+    _store.saveToFolders(
+      duaId: widget.duaId,
+      folders: _selected,
+      build: widget.buildSnapshot,
+    );
+    Navigator.pop(context, true);
+  }
 
   @override
   Widget build(BuildContext context) {
     final appText = widget.appText;
+    final folders = _store.folders;
     final visible = _query.isEmpty
-        ? _folders
-        : _folders.where((f) => f.toLowerCase().contains(_query)).toList();
+        ? folders
+        : folders.where((f) => f.toLowerCase().contains(_query)).toList();
 
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
     final safeBottom = MediaQuery.of(context).viewPadding.bottom;
@@ -176,7 +195,7 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Text(
-                              folder == 'Favorite'
+                              folder == DuaBookmarkStore.defaultFolder
                                   ? appText.favoriteFolder
                                   : folder,
                               style: TextStyle(
