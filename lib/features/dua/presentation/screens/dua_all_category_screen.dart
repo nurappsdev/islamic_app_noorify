@@ -153,7 +153,7 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                     itemCount: filtered.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      mainAxisExtent: 96.h,
+                      mainAxisExtent: 116.h,
                       crossAxisSpacing: 10.w,
                       mainAxisSpacing: 10.h,
                     ),

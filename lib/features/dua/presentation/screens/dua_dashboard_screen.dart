@@ -44,105 +44,110 @@ class _DuaDashboardView extends StatelessWidget {
       backgroundColor: context.pageColor(Colors.white),
       body: Stack(
         children: [
-          BlocBuilder<DuaHomeCubit, DuaHomeState>(
-            builder: (context, state) {
-              if (state.status == DuaLoadStatus.loading ||
-                  state.status == DuaLoadStatus.initial) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (state.status == DuaLoadStatus.failure) {
-                return DuaErrorRetry(
-                  message: state.error ?? '',
-                  onRetry: () => context.read<DuaHomeCubit>().load(),
-                );
-              }
+          SafeArea(
+            bottom: false,
+            child: BlocBuilder<DuaHomeCubit, DuaHomeState>(
+              builder: (context, state) {
+                if (state.status == DuaLoadStatus.loading ||
+                    state.status == DuaLoadStatus.initial) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (state.status == DuaLoadStatus.failure) {
+                  return DuaErrorRetry(
+                    message: state.error ?? '',
+                    onRetry: () => context.read<DuaHomeCubit>().load(),
+                  );
+                }
 
-              final featured = state.featured;
-              final dashboardCategories = state.categories.take(6).toList();
+                final featured = state.featured;
+                final dashboardCategories = state.categories.take(9).toList();
 
-              return ListView(
-                padding: EdgeInsets.fromLTRB(
-                  16.w,
-                  0,
-                  16.w,
-                  150.h + bottomInset,
-                ),
-                children: [
-                  SizedBox(height: 6.h),
-                  DuaPageHeader(title: appText.duaIntroTitle),
-                  SizedBox(height: 18.h),
-                  _SectionHeader(
-                    title: appText.duaFeaturedTitle,
-                    onSeeAll: () =>
-                        Navigator.of(context).pushNamed(RouteNames.duaFeatured),
+                return ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    16.w,
+                    0,
+                    16.w,
+                    150.h + bottomInset,
                   ),
-                  SizedBox(height: 12.h),
-                  if (featured.isEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      child: Text(
-                        appText.noResultsFound,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: context.inkColor(Color(0xFF5D6B44)),
+                  children: [
+                    SizedBox(height: 6.h),
+                    DuaPageHeader(title: appText.duaIntroTitle),
+                    SizedBox(height: 18.h),
+                    _SectionHeader(
+                      title: appText.duaFeaturedTitle,
+                      onSeeAll: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.duaFeatured),
+                    ),
+                    SizedBox(height: 12.h),
+                    if (featured.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Text(
+                          appText.noResultsFound,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(Color(0xFF5D6B44)),
+                          ),
                         ),
-                      ),
-                    )
-                  else
-                    SizedBox(
-                      height: 150.h,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: featured.length,
-                        separatorBuilder: (_, _) => SizedBox(width: 12.w),
-                        itemBuilder: (context, index) => SizedBox(
-                          width: 250.w,
-                          child: DuaFeaturedCard(
-                            featured: featured[index],
-                            onExplore: () => Navigator.of(context).pushNamed(
-                              RouteNames.duaReader,
-                              arguments: DuaReaderArgs.real(featured[index]),
+                      )
+                    else
+                      SizedBox(
+                        height: 150.h,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: featured.length,
+                          separatorBuilder: (_, _) => SizedBox(width: 12.w),
+                          itemBuilder: (context, index) => SizedBox(
+                            width: 250.w,
+                            child: DuaFeaturedCard(
+                              featured: featured[index],
+                              onExplore: () => Navigator.of(context).pushNamed(
+                                RouteNames.duaReader,
+                                arguments: DuaReaderArgs.real(featured[index]),
+                              ),
                             ),
                           ),
                         ),
                       ),
+                    SizedBox(height: 22.h),
+                    _SectionHeader(
+                      title: appText.duaCategoryTitle,
+                      onSeeAll: () => Navigator.of(
+                        context,
+                      ).pushNamed(RouteNames.duaAllCategory),
                     ),
-                  SizedBox(height: 22.h),
-                  _SectionHeader(
-                    title: appText.duaCategoryTitle,
-                    onSeeAll: () => Navigator.of(
-                      context,
-                    ).pushNamed(RouteNames.duaAllCategory),
-                  ),
-                  SizedBox(height: 12.h),
-                  if (dashboardCategories.isEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      child: Text(
-                        appText.noResultsFound,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: context.inkColor(Color(0xFF5D6B44)),
+                    SizedBox(height: 12.h),
+                    if (dashboardCategories.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Text(
+                          appText.noResultsFound,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(Color(0xFF5D6B44)),
+                          ),
+                        ),
+                      )
+                    else
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: dashboardCategories.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisExtent: 116.h,
+                          crossAxisSpacing: 10.w,
+                          mainAxisSpacing: 10.h,
+                        ),
+                        itemBuilder: (context, index) => DuaCategoryTile(
+                          category: dashboardCategories[index],
                         ),
                       ),
-                    )
-                  else
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: dashboardCategories.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        mainAxisExtent: 96.h,
-                        crossAxisSpacing: 10.w,
-                        mainAxisSpacing: 10.h,
-                      ),
-                      itemBuilder: (context, index) =>
-                          DuaCategoryTile(category: dashboardCategories[index]),
-                    ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
           const SafeArea(
             top: false,

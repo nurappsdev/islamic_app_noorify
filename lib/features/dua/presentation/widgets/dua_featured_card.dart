@@ -92,8 +92,8 @@ class DuaFeaturedCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
                   color: context.inkColor(Color(0xFF3C4A28)),
                 ),
               ),

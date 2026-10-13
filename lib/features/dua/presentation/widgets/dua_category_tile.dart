@@ -16,7 +16,7 @@ class DuaCategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 10.h),
+      padding: EdgeInsets.symmetric(vertical: 14.h),
       decoration: BoxDecoration(
         color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(14.r),
@@ -26,14 +26,15 @@ class DuaCategoryTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _CategoryIcon(iconUrl: category.iconUrl, slug: category.slug),
-          SizedBox(height: 8.h),
+          SizedBox(height: 10.h),
           Text(
             context.localized(category.name),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11.sp,
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
               color: context.inkColor(Color(0xFF5D6B44)),
             ),
           ),
@@ -52,7 +53,7 @@ class _CategoryIcon extends StatelessWidget {
   final String slug;
 
   static const Color _color = Color(0xFF9BA85B);
-  static const double _size = 26;
+  static const double _size = 34;
 
   IconData get _fallback => switch (slug) {
     'sleep' => Icons.nightlight_round,
