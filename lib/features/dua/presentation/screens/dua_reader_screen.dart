@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -164,6 +165,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
   void _showSettingsModal() {
     final appText = AppText.of(context);
     final settingsBloc = context.read<DuaSettingsBloc>();
+    final pageContext = context;
 
     showModalBottomSheet(
       context: context,
@@ -233,6 +235,20 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                             context.read<DuaSettingsBloc>().add(
                               ToggleDuaTransliteration(val),
                             );
+                          },
+                        ),
+                        SizedBox(height: 16.h),
+                        const Divider(),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.settings_outlined),
+                          title: Text(appText.settingsTitle),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(
+                              pageContext,
+                            ).pushNamed(RouteNames.settings);
                           },
                         ),
                       ],
