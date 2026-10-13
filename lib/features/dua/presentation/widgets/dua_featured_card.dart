@@ -20,7 +20,6 @@ class DuaFeaturedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final totalDuas = featured.category?.totalDuasCount ?? 0;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
@@ -84,30 +83,15 @@ class DuaFeaturedCard extends StatelessWidget {
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.localized(featured.title),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: context.inkColor(Color(0xFF3C4A28)),
-                ),
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                context.localizedDigits(
-                  '${appText.duaTotalDuaLabel} : $totalDuas',
-                ),
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: context.inkColor(Color(0xFF5D6B44)),
-                ),
-              ),
-            ],
+          Text(
+            context.localized(featured.title),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: context.inkColor(Color(0xFF3C4A28)),
+            ),
           ),
         ],
       ),

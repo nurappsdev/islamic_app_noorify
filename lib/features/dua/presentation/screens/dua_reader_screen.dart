@@ -457,21 +457,6 @@ class _ReaderControlBar extends StatelessWidget {
                 size: 20.sp,
               ),
             ),
-            SizedBox(width: 4.w),
-            Container(
-              width: 40.r,
-              height: 40.r,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.surfaceColor(Colors.white),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.play_arrow_rounded,
-                color: AppColor.primary,
-                size: 22.sp,
-              ),
-            ),
           ],
         ),
       ),
