@@ -218,20 +218,60 @@ class UserTasbihProfile {
 class TasbihChartPoint {
   const TasbihChartPoint({
     required this.label,
+    required this.startDate,
+    required this.endDate,
     required this.myPosition,
     required this.competitor,
   });
 
   final String label;
+
+  /// The ISO (`yyyy-MM-dd`) date(s) this point covers — independent of
+  /// [label], which may be abbreviated or blank (e.g. a monthly point not
+  /// on a label gridline). A single-day point (the usual shape) sends just
+  /// `date`, so [startDate] and [endDate] are both that value; a custom
+  /// weekly/monthly range can instead come back grouped into multi-day
+  /// buckets (`startDate`/`endDate` spanning several days, no `date` at
+  /// all) — [coveredDates] expands either shape into the individual days
+  /// it represents, for merging onto a fixed calendar range.
+  final String startDate;
+  final String endDate;
   final double myPosition;
   final double competitor;
 
-  factory TasbihChartPoint.fromJson(Map<String, dynamic> json) =>
-      TasbihChartPoint(
-        label: json['label']?.toString() ?? '',
-        myPosition: _asDouble(json['myPosition']),
-        competitor: _asDouble(json['competitor']),
-      );
+  factory TasbihChartPoint.fromJson(Map<String, dynamic> json) {
+    final date = json['date']?.toString();
+    final start = json['startDate']?.toString() ?? date ?? '';
+    final end = json['endDate']?.toString() ?? date ?? start;
+    return TasbihChartPoint(
+      label: json['label']?.toString() ?? '',
+      startDate: start,
+      endDate: end,
+      myPosition: _asDouble(json['myPosition']),
+      competitor: _asDouble(json['competitor']),
+    );
+  }
+
+  /// Every calendar date from [startDate] to [endDate] inclusive, as ISO
+  /// (`yyyy-MM-dd`) strings — just `[startDate]` when either can't be
+  /// parsed or the point only ever covers one day.
+  List<String> get coveredDates {
+    final start = DateTime.tryParse(startDate);
+    final end = DateTime.tryParse(endDate);
+    if (start == null || end == null) {
+      return startDate.isEmpty ? const [] : [startDate];
+    }
+    final dayCount = end.difference(start).inDays;
+    if (dayCount <= 0) return [startDate];
+    return [
+      for (var i = 0; i <= dayCount; i++) _isoDate(start.add(Duration(days: i))),
+    ];
+  }
+}
+
+String _isoDate(DateTime date) {
+  String pad2(int n) => n.toString().padLeft(2, '0');
+  return '${date.year}-${pad2(date.month)}-${pad2(date.day)}';
 }
 
 class ZikrSessionHistory {

@@ -47,12 +47,8 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   late final ZikrAnalyticsCubit _cubit = ZikrAnalyticsCubit(zikrRepository);
   late bool _hasAccessToken;
 
-  static const _weekly = <double>[490, 690, 880, 240, 250, 760, 180];
-  static const _weeklyCompetitor = <double>[420, 610, 790, 300, 180, 820, 260];
   static const _dailyMock = <double>[0, 900, 0];
   static const _dailyCompetitorMock = <double>[0, 640, 0];
-  // Saturday first, as an index counted from Sunday.
-  static const _weekDayIndexes = [6, 0, 1, 2, 3, 4, 5];
 
   static const _history = <(String, String)>[
     ('Subhan Allah', '450'),
@@ -93,7 +89,13 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
-  List<_MonthlyPoint> get _monthlyPoints {
+  /// Every calendar day the selected monthly window should show — the full
+  /// month when a chip is picked, or the rolling last-30-days range by
+  /// default — independent of which days the server's `chartData` actually
+  /// includes. [_mergedMonthlyPoints] fills in whatever this range has that
+  /// the response doesn't, so every date renders (future/no-activity days
+  /// included), never skipping one just because nothing happened that day.
+  List<DateTime> get _monthlyDayRange {
     final today = _today;
     final selected = _selectedMonth;
     final start = selected == null
@@ -101,31 +103,80 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
         : DateTime(selected.year, selected.month);
     final end = selected == null
         ? today
-        : DateTime(selected.year, selected.month + 1);
-    final dayCount = end.difference(start).inDays + (selected == null ? 1 : 0);
+        : DateTime(selected.year, selected.month + 1).subtract(
+            const Duration(days: 1),
+          );
+    final dayCount = end.difference(start).inDays + 1;
+    return [for (var i = 0; i < dayCount; i++) start.add(Duration(days: i))];
+  }
 
-    return List.generate(dayCount, (index) {
-      final date = start.add(Duration(days: index));
-      // Deterministic placeholders shown only before the real monthly
-      // analytics response lands.
-      const samples = [500.0, 960.0, 190.0, 220.0, 840.0, 420.0, 180.0];
-      const competitorSamples = [
-        430.0,
-        760.0,
-        260.0,
-        150.0,
-        690.0,
-        340.0,
-        90.0,
-      ];
-      return _MonthlyPoint(
-        date: date,
-        value: samples[(date.day + date.month * 2) % samples.length],
-        competitorValue:
-            competitorSamples[(date.day + date.month * 3) %
-                competitorSamples.length],
-      );
-    });
+  /// Indexes `chartData` by every individual calendar date each point
+  /// covers (see [TasbihChartPoint.coveredDates]) rather than assuming one
+  /// point per day. The server doesn't always return that shape: a custom
+  /// weekly/monthly range can come back grouped into multi-day buckets
+  /// (`startDate`/`endDate` spanning several days, sharing one aggregate
+  /// value) instead — expanding those buckets here means every day they
+  /// span still resolves to real data, not a false zero.
+  static Map<String, TasbihChartPoint> _chartDataByDate(
+    TasbihAnalyticsResponse? analytics,
+  ) {
+    final byDate = <String, TasbihChartPoint>{};
+    for (final point in analytics?.chartData ?? const <TasbihChartPoint>[]) {
+      for (final date in point.coveredDates) {
+        byDate[date] = point;
+      }
+    }
+    return byDate;
+  }
+
+  /// Merges the server's `chartData` (see [_chartDataByDate]) onto every day
+  /// in [_monthlyDayRange]. A day the response doesn't cover — no activity
+  /// recorded, or a future date — gets zero rather than being dropped or
+  /// filled with a placeholder; real API data only, never mock curves.
+  List<_ChartDayPoint> _mergedMonthlyPoints(TasbihAnalyticsResponse? analytics) {
+    final byDate = _chartDataByDate(analytics);
+    return [
+      for (final date in _monthlyDayRange)
+        _ChartDayPoint(
+          date: date,
+          value: byDate[_isoDate(date)]?.myPosition ?? 0,
+          competitorValue: byDate[_isoDate(date)]?.competitor ?? 0,
+        ),
+    ];
+  }
+
+  static String _isoDate(DateTime date) {
+    String pad2(int n) => n.toString().padLeft(2, '0');
+    return '${date.year}-${pad2(date.month)}-${pad2(date.day)}';
+  }
+
+  /// The 7 calendar days of the selected week, oldest to newest — the same
+  /// window [ZikrAnalyticsCubit]'s `offset` resolves to (end = today minus
+  /// `offset` weeks; start = 6 days before that).
+  List<DateTime> _weeklyDayRange(int offset) {
+    final end = _today.subtract(Duration(days: offset * 7));
+    final start = end.subtract(const Duration(days: 6));
+    return [for (var i = 0; i < 7; i++) start.add(Duration(days: i))];
+  }
+
+  /// Merges the server's `chartData` (see [_chartDataByDate]) onto all 7
+  /// days of [_weeklyDayRange], the same way [_mergedMonthlyPoints] does
+  /// for the month: a day the response doesn't cover gets zero, in
+  /// chronological order, so the chart always shows exactly 7 days
+  /// regardless of which ones actually had activity.
+  List<_ChartDayPoint> _mergedWeeklyPoints(
+    TasbihAnalyticsResponse? analytics,
+    int offset,
+  ) {
+    final byDate = _chartDataByDate(analytics);
+    return [
+      for (final date in _weeklyDayRange(offset))
+        _ChartDayPoint(
+          date: date,
+          value: byDate[_isoDate(date)]?.myPosition ?? 0,
+          competitorValue: byDate[_isoDate(date)]?.competitor ?? 0,
+        ),
+    ];
   }
 
   void _selectPeriod(int period) {
@@ -205,7 +256,6 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
     final appText = AppText.of(context);
     final isDaily = _period == 0;
     final isMonthly = _period == 2;
-    final monthlyPoints = _monthlyPoints;
 
     return BlocProvider.value(
       value: _cubit,
@@ -235,6 +285,26 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
             // of a month.
             final monthlyAnalyticsReady =
                 isMonthly && analytics?.period == 'monthly';
+            // Every day of the selected window, real API values merged in
+            // where the response has them, zero elsewhere (future days,
+            // days with no recorded activity) — never a dropped date or a
+            // mock/placeholder curve.
+            final mergedMonthlyPoints = isMonthly
+                ? _mergedMonthlyPoints(monthlyAnalyticsReady ? analytics : null)
+                : const <_ChartDayPoint>[];
+            final isWeekly = !isDaily && !isMonthly;
+            final weeklyAnalyticsReady =
+                isWeekly && analytics?.period == 'weekly';
+            // Same merge as monthly, but for the week's fixed 7 days — the
+            // chart always shows Sat..Fri (or whichever 7 the window
+            // covers), in order, never fewer just because some had no
+            // activity.
+            final mergedWeeklyPoints = isWeekly
+                ? _mergedWeeklyPoints(
+                    weeklyAnalyticsReady ? analytics : null,
+                    analyticsState.offset,
+                  )
+                : const <_ChartDayPoint>[];
             return Scaffold(
               backgroundColor: context.pageColor(Colors.white),
               body: SafeArea(
@@ -306,51 +376,51 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                           height: 250.h,
                           child: isMonthly
                               ? _ScrollableMonthlyChart(
-                                  values: monthlyAnalyticsReady
-                                      ? [
-                                          for (final point
-                                              in analytics!.chartData)
-                                            point.myPosition,
-                                        ]
-                                      : [
-                                          for (final point in monthlyPoints)
-                                            point.value,
-                                        ],
-                                  competitorValues: monthlyAnalyticsReady
-                                      ? [
-                                          for (final point
-                                              in analytics!.chartData)
-                                            point.competitor,
-                                        ]
-                                      : [
-                                          for (final point in monthlyPoints)
-                                            point.competitorValue,
-                                        ],
-                                  labels: monthlyAnalyticsReady
-                                      ? [
-                                          for (final point
-                                              in analytics!.chartData)
-                                            point.label,
-                                        ]
-                                      : [
-                                          for (final point in monthlyPoints)
-                                            point.date.day.toString(),
-                                        ],
+                                  values: [
+                                    for (final point in mergedMonthlyPoints)
+                                      point.value,
+                                  ],
+                                  competitorValues: [
+                                    for (final point in mergedMonthlyPoints)
+                                      point.competitorValue,
+                                  ],
+                                  // Every 5th day (plus the final one) gets
+                                  // an axis label; the rest stay blank so a
+                                  // full month doesn't crowd the axis.
+                                  labels: [
+                                    for (final (i, point)
+                                        in mergedMonthlyPoints.indexed)
+                                      i % 5 == 0 ||
+                                              i ==
+                                                  mergedMonthlyPoints.length -
+                                                      1
+                                          ? '${point.date.day}'
+                                          : '',
+                                  ],
+                                  // Every day's full date, independent of
+                                  // the (sparse) axis labels above — the
+                                  // tap/hover tooltip always shows it.
+                                  dates: [
+                                    for (final point in mergedMonthlyPoints)
+                                      context.localizedDates.gregorian(
+                                        point.date,
+                                        shortMonth: true,
+                                      ),
+                                  ],
                                   myInitials: myInitials,
                                   competitorInitials: competitorInitials,
                                 )
-                              : _StatsChart(
+                              : isDaily
+                              ? _StatsChart(
                                   values: analytics == null
-                                      ? (isDaily ? _dailyMock : _weekly)
+                                      ? _dailyMock
                                       : [
                                           for (final point
                                               in analytics.chartData)
                                             point.myPosition,
                                         ],
                                   competitorValues: analytics == null
-                                      ? (isDaily
-                                            ? _dailyCompetitorMock
-                                            : _weeklyCompetitor)
+                                      ? _dailyCompetitorMock
                                       : [
                                           for (final point
                                               in analytics.chartData)
@@ -362,18 +432,59 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                                               in analytics.chartData)
                                             point.label,
                                         ]
-                                      : isDaily
-                                      ? ['', appText.zikrTodaysValueGraph, '']
-                                      : [
-                                          for (final i in _weekDayIndexes)
-                                            context.localizedDates.weekdayShort(
-                                              i,
-                                            ),
-                                        ],
-                                  bubbleAll: !isDaily,
+                                      : ['', appText.zikrTodaysValueGraph, ''],
+                                  dates: analytics != null
+                                      ? [
+                                          for (final point
+                                              in analytics.chartData)
+                                            DateTime.tryParse(
+                                                      point.startDate,
+                                                    ) ==
+                                                    null
+                                                ? point.label
+                                                : context.localizedDates
+                                                      .gregorian(
+                                                        DateTime.parse(
+                                                          point.startDate,
+                                                        ),
+                                                        shortMonth: true,
+                                                      ),
+                                        ]
+                                      : const [],
+                                  bubbleAll: false,
                                   myInitials: myInitials,
                                   competitorInitials: competitorInitials,
-                                  daily: isDaily,
+                                  daily: true,
+                                )
+                              // Weekly: always exactly 7 days, oldest to
+                              // newest, real API values merged onto that
+                              // fixed range — see [_mergedWeeklyPoints].
+                              : _StatsChart(
+                                  values: [
+                                    for (final point in mergedWeeklyPoints)
+                                      point.value,
+                                  ],
+                                  competitorValues: [
+                                    for (final point in mergedWeeklyPoints)
+                                      point.competitorValue,
+                                  ],
+                                  labels: [
+                                    for (final point in mergedWeeklyPoints)
+                                      context.localizedDates.weekdayShort(
+                                        point.date.weekday % 7,
+                                      ),
+                                  ],
+                                  dates: [
+                                    for (final point in mergedWeeklyPoints)
+                                      context.localizedDates.gregorian(
+                                        point.date,
+                                        shortMonth: true,
+                                      ),
+                                  ],
+                                  bubbleAll: true,
+                                  myInitials: myInitials,
+                                  competitorInitials: competitorInitials,
+                                  daily: false,
                                 ),
                         ),
                         SizedBox(height: 22.h),
@@ -701,8 +812,8 @@ class _ZikrDateNavArrow extends StatelessWidget {
   }
 }
 
-class _MonthlyPoint {
-  const _MonthlyPoint({
+class _ChartDayPoint {
+  const _ChartDayPoint({
     required this.date,
     required this.value,
     required this.competitorValue,
@@ -786,6 +897,7 @@ class _ScrollableMonthlyChart extends StatefulWidget {
     required this.values,
     required this.competitorValues,
     required this.labels,
+    required this.dates,
     required this.myInitials,
     required this.competitorInitials,
   });
@@ -793,6 +905,10 @@ class _ScrollableMonthlyChart extends StatefulWidget {
   final List<double> values;
   final List<double> competitorValues;
   final List<String> labels;
+
+  /// Every point's full display date, for the tap/hover tooltip — parallel
+  /// to [values], independent of [labels]' sparser 5-day gridline text.
+  final List<String> dates;
   final String myInitials;
   final String competitorInitials;
 
@@ -841,6 +957,7 @@ class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
                   values: widget.values,
                   competitorValues: widget.competitorValues,
                   labels: widget.labels,
+                  dates: widget.dates,
                   bubbleAll: true,
                   myInitials: widget.myInitials,
                   competitorInitials: widget.competitorInitials,
@@ -1041,11 +1158,17 @@ class _HistoryRow extends StatelessWidget {
 /// as a second line in the legend's olive color, each with its own dots.
 /// "Weekly" shows an "Ab" bubble with the competitor's initials over every
 /// one of their points; "Daily" shows it only where they have activity.
-class _StatsChart extends StatelessWidget {
+///
+/// Tapping (any platform) or hovering (desktop/web) the nearest point to
+/// the pointer shows a tooltip with that point's date and my/competitor
+/// values — tapping the same point again, or moving the pointer off the
+/// chart, dismisses it.
+class _StatsChart extends StatefulWidget {
   const _StatsChart({
     required this.values,
     required this.competitorValues,
     required this.labels,
+    required this.dates,
     required this.bubbleAll,
     required this.myInitials,
     required this.competitorInitials,
@@ -1056,6 +1179,11 @@ class _StatsChart extends StatelessWidget {
   final List<double> values;
   final List<double> competitorValues;
   final List<String> labels;
+
+  /// Every point's full display date, for the tooltip — parallel to
+  /// [values], independent of [labels] (which may be blank for a point
+  /// that isn't on an axis gridline, e.g. monthly's 5-day spacing).
+  final List<String> dates;
   final bool bubbleAll;
   final String myInitials;
   final String competitorInitials;
@@ -1063,21 +1191,271 @@ class _StatsChart extends StatelessWidget {
   final double bottomPadding;
 
   @override
+  State<_StatsChart> createState() => _StatsChartState();
+}
+
+class _StatsChartState extends State<_StatsChart> {
+  int? _selectedIndex;
+
+  void _setSelected(int? index) {
+    if (index == _selectedIndex) return;
+    setState(() => _selectedIndex = index);
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatsChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // New data (a different day/week/month navigated to) always means a
+    // freshly-built `values` list — dismiss a tooltip left open from
+    // whatever was shown before, rather than pointing it at the wrong day.
+    if (oldWidget.values != widget.values && _selectedIndex != null) {
+      _selectedIndex = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size.infinite,
-      painter: _StatsChartPainter(
-        values: values,
-        competitorValues: competitorValues,
-        labels: labels,
-        bubbleAll: bubbleAll,
-        myInitials: myInitials,
-        competitorInitials: competitorInitials,
-        daily: daily,
-        bottomPadding: bottomPadding,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+        final geometry = _ChartGeometry(size, widget.bottomPadding);
+        final count = widget.values.length;
+        final selected = _selectedIndex;
+
+        return MouseRegion(
+          onHover: (event) =>
+              _setSelected(geometry.nearestIndex(event.localPosition.dx, count)),
+          onExit: (_) => _setSelected(null),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (details) {
+              final index = geometry.nearestIndex(
+                details.localPosition.dx,
+                count,
+              );
+              _setSelected(_selectedIndex == index ? null : index);
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CustomPaint(
+                  size: size,
+                  painter: _StatsChartPainter(
+                    values: widget.values,
+                    competitorValues: widget.competitorValues,
+                    labels: widget.labels,
+                    bubbleAll: widget.bubbleAll,
+                    myInitials: widget.myInitials,
+                    competitorInitials: widget.competitorInitials,
+                    daily: widget.daily,
+                    bottomPadding: widget.bottomPadding,
+                  ),
+                ),
+                if (selected != null && selected < count)
+                  _buildTooltip(geometry, size, selected),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTooltip(_ChartGeometry geometry, Size size, int index) {
+    final maxY = _niceMaxY(widget.values, widget.competitorValues);
+    final count = widget.values.length;
+    final hasCompetitor = index < widget.competitorValues.length;
+    final myY = geometry.yAt(widget.values[index], maxY);
+    final competitorY = hasCompetitor
+        ? geometry.yAt(widget.competitorValues[index], maxY)
+        : myY;
+    final topY = myY < competitorY ? myY : competitorY;
+    final x = geometry
+        .xAt(index, count)
+        .clamp(50.w, (size.width - 50.w).clamp(50.w, double.infinity));
+    final top = (topY - 78.h).clamp(0.0, size.height);
+    final date = index < widget.dates.length ? widget.dates[index] : '';
+
+    return Positioned(
+      left: x,
+      top: top,
+      child: FractionalTranslation(
+        translation: const Offset(-0.5, 0),
+        child: _ChartTooltip(
+          date: date,
+          myLabel: widget.myInitials,
+          myValue: widget.values[index],
+          competitorLabel: widget.competitorInitials,
+          competitorValue: hasCompetitor
+              ? widget.competitorValues[index]
+              : null,
+        ),
       ),
     );
   }
+}
+
+/// The date + my/competitor values shown when [_StatsChart] is tapped or
+/// hovered at a point.
+class _ChartTooltip extends StatelessWidget {
+  const _ChartTooltip({
+    required this.date,
+    required this.myLabel,
+    required this.myValue,
+    required this.competitorLabel,
+    required this.competitorValue,
+  });
+
+  final String date;
+  final String myLabel;
+  final double myValue;
+  final String competitorLabel;
+  final double? competitorValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: const Color(0xFFDDE8C1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .12),
+            blurRadius: 10,
+            offset: Offset(0, 3.h),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (date.isNotEmpty) ...[
+            Text(
+              date,
+              style: TextStyle(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF3E4A2A),
+              ),
+            ),
+            SizedBox(height: 6.h),
+          ],
+          _row(context, myLabel, myValue, const Color(0xFF3F6B4E)),
+          if (competitorValue != null) ...[
+            SizedBox(height: 4.h),
+            _row(
+              context,
+              competitorLabel,
+              competitorValue!,
+              const Color(0xFF6C7A3C),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, String label, double value, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8.r,
+          height: 8.r,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        SizedBox(width: 6.w),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+        SizedBox(width: 6.w),
+        Text(
+          context.localizedDigits('${value.round()}'),
+          style: TextStyle(
+            fontSize: 11.sp,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF2C3320),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Pixel geometry of [_StatsChartPainter]'s plot area — mirrors its local
+/// `xAt`/`yAt` exactly, so [_StatsChart]'s tap/hover hit-testing and tooltip
+/// placement land on precisely the point the painter actually drew, not a
+/// second copy of the same formula that could drift out of sync with it.
+class _ChartGeometry {
+  _ChartGeometry(Size size, double bottomPadding)
+    : chartLeft = _leftPad,
+      chartRight = size.width - _rightPad,
+      chartTop = _topPad,
+      chartBottom = size.height - bottomPadding;
+
+  static const _leftPad = 34.0;
+  static const _topPad = 44.0;
+  static const _rightPad = 6.0;
+
+  final double chartLeft;
+  final double chartRight;
+  final double chartTop;
+  final double chartBottom;
+
+  double get _width => chartRight - chartLeft;
+  double get _height => chartBottom - chartTop;
+
+  double xAt(int i, int count) =>
+      count < 2 ? chartLeft + _width / 2 : chartLeft + _width * (i / (count - 1));
+
+  double yAt(double v, double maxY) => chartBottom - _height * (v / maxY);
+
+  /// The closest point index to a tapped/hovered x position.
+  int nearestIndex(double dx, int count) {
+    if (count <= 1) return 0;
+    final stepX = _width / (count - 1);
+    return ((dx - chartLeft) / stepX).round().clamp(0, count - 1);
+  }
+}
+
+/// Candidate top-of-chart values, each a multiple of 4 so the four gridlines
+/// below land on clean numbers. Real zikr counts (tens to a few hundred) are
+/// tiny next to a fixed 0–1000 scale — every day's line hugs the bottom and
+/// looks the same no matter how the count changes. Scaling to the data's
+/// own range makes day-to-day/week-to-week changes actually visible. Shared
+/// by [_StatsChartPainter] (drawing the gridlines) and [_StatsChartState]
+/// (positioning the tooltip), so both agree on the same scale.
+double _niceMaxY(List<double> values, List<double> competitorValues) {
+  const niceMaxCandidates = [
+    20,
+    40,
+    100,
+    200,
+    400,
+    1000,
+    2000,
+    4000,
+    10000,
+    20000,
+    40000,
+    100000,
+  ];
+  final rawMax = [
+    ...values,
+    ...competitorValues,
+  ].fold<double>(0, (max, v) => v > max ? v : max);
+  for (final step in niceMaxCandidates) {
+    if (rawMax <= step) return step.toDouble();
+  }
+  return ((rawMax / 20000).ceil() * 20000).toDouble();
 }
 
 class _StatsChartPainter extends CustomPainter {
@@ -1101,37 +1479,7 @@ class _StatsChartPainter extends CustomPainter {
   final bool daily;
   final double bottomPadding;
 
-  /// Candidate top-of-chart values, each a multiple of 4 so the four
-  /// gridlines below land on clean numbers. Real zikr counts (tens to a
-  /// few hundred) are tiny next to a fixed 0–1000 scale — every day's line
-  /// hugs the bottom and looks the same no matter how the count changes.
-  /// Scaling to the data's own range makes day-to-day/week-to-week changes
-  /// actually visible.
-  static const _niceMaxCandidates = [
-    20,
-    40,
-    100,
-    200,
-    400,
-    1000,
-    2000,
-    4000,
-    10000,
-    20000,
-    40000,
-    100000,
-  ];
-
-  double get _maxY {
-    final rawMax = [
-      ...values,
-      ...competitorValues,
-    ].fold<double>(0, (max, v) => v > max ? v : max);
-    for (final step in _niceMaxCandidates) {
-      if (rawMax <= step) return step.toDouble();
-    }
-    return ((rawMax / 20000).ceil() * 20000).toDouble();
-  }
+  double get _maxY => _niceMaxY(values, competitorValues);
 
   List<int> get _steps {
     final max = _maxY;
