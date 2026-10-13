@@ -10,4 +10,10 @@ class DuaRepositoryImpl implements DuaRepository {
   Future<List<DuaFeaturedModel>> getFeatured() => _remote.getFeatured();
   @override
   Future<List<DuaCategoryModel>> getCategories() => _remote.getCategories();
+  @override
+  Future<DuaPage> getByCategory(
+    String categoryId, {
+    int page = 1,
+    int limit = 20,
+  }) => _remote.getByCategory(categoryId, page: page, limit: limit);
 }

@@ -5,9 +5,17 @@ import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 
+int _asInt(Object? value) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+
 abstract interface class DuaRemoteDataSource {
   Future<List<DuaFeaturedModel>> getFeatured();
   Future<List<DuaCategoryModel>> getCategories();
+  Future<DuaPage> getByCategory(
+    String categoryId, {
+    int page = 1,
+    int limit = 20,
+  });
 }
 
 /// Public, read-only content endpoints — same host as the rest of the app's
@@ -48,8 +56,35 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     await _get('/duas/categories'),
   ).map(DuaCategoryModel.fromJson).toList(growable: false);
 
-  Future<Response<dynamic>> _get(String path) =>
-      _call(() => _dio.get<dynamic>(path));
+  @override
+  Future<DuaPage> getByCategory(
+    String categoryId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _get(
+      '/duas',
+      queryParameters: {'categoryId': categoryId, 'page': page, 'limit': limit},
+    );
+    final body = _body(response);
+    final meta = body['meta'] is Map
+        ? Map<String, dynamic>.from(body['meta'] as Map)
+        : const <String, dynamic>{};
+    return DuaPage(
+      items: _dataList(
+        response,
+      ).map(DuaFeaturedModel.fromJson).toList(growable: false),
+      page: _asInt(meta['page']) == 0 ? page : _asInt(meta['page']),
+      limit: _asInt(meta['limit']) == 0 ? limit : _asInt(meta['limit']),
+      total: _asInt(meta['total']),
+      totalPage: _asInt(meta['totalPage']),
+    );
+  }
+
+  Future<Response<dynamic>> _get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) => _call(() => _dio.get<dynamic>(path, queryParameters: queryParameters));
 
   Future<Response<dynamic>> _call(
     Future<Response<dynamic>> Function() request,

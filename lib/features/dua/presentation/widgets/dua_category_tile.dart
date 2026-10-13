@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 
 /// The bordered icon-and-label tile for a [DuaCategoryModel], shown on both
 /// the dashboard's category preview grid and the full "All Category" grid
@@ -15,30 +17,39 @@ class DuaCategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 14.h),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(Colors.white),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _CategoryIcon(iconUrl: category.iconUrl, slug: category.slug),
-          SizedBox(height: 10.h),
-          Text(
-            context.localized(category.name),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w500,
-              color: context.inkColor(Color(0xFF5D6B44)),
+    return InkWell(
+      onTap: category.id.isEmpty
+          ? null
+          : () => Navigator.of(context).pushNamed(
+              RouteNames.duaCategoryDuas,
+              arguments: DuaCategoryDuasArgs(category),
             ),
-          ),
-        ],
+      borderRadius: BorderRadius.circular(14.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14.h),
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(color: context.lineColor(Color(0xFFE3E7D3))),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _CategoryIcon(iconUrl: category.iconUrl, slug: category.slug),
+            SizedBox(height: 10.h),
+            Text(
+              context.localized(category.name),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

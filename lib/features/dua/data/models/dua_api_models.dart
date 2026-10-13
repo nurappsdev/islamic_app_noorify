@@ -148,3 +148,21 @@ class DuaFeaturedModel {
     );
   }
 }
+
+/// One page from `GET /duas`. The category endpoint returns the same dua
+/// shape as `/duas/featured`, plus pagination metadata in `meta`.
+class DuaPage {
+  const DuaPage({
+    required this.items,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPage,
+  });
+
+  final List<DuaFeaturedModel> items;
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPage;
+}

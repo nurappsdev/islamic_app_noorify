@@ -22,3 +22,10 @@ class DuaReaderArgs {
     detail: DuaCatalog.groupDuas.first,
   );
 }
+
+/// Arguments for the real API-backed list opened from a Dua category tile.
+class DuaCategoryDuasArgs {
+  const DuaCategoryDuasArgs(this.category);
+
+  final DuaCategoryModel category;
+}
