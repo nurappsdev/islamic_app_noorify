@@ -102,11 +102,11 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           PopupMenuItem<String>(
             value: ZikrCatalog.dropdownItems[i].name,
             child: Text(
-              ZikrCatalog.dropdownItems[i].name,
+              localizedZikrItemName(_appText, ZikrCatalog.dropdownItems[i]),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF2C3320)),
-                
+
               ),
             ),
           ),
@@ -367,7 +367,13 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          _zikrName ?? appText.zikrSelectZikr,
+                          _zikrName == null
+                              ? appText.zikrSelectZikr
+                              : localizedZikrNameFromKey(
+                                  appText,
+                                  zikrKey: zikrKeyFromName(_zikrName!),
+                                  fallback: _zikrName!,
+                                ),
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontStyle: _zikrName == null
@@ -595,6 +601,7 @@ class _PlanEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
@@ -623,7 +630,11 @@ class _PlanEntryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  entry.name,
+                  localizedZikrNameFromKey(
+                    appText,
+                    zikrKey: zikrKeyFromName(entry.name),
+                    fallback: entry.name,
+                  ),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,

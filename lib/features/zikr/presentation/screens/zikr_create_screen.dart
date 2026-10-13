@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
@@ -135,7 +136,11 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
           PopupMenuItem<String>(
             value: catalog[i].id,
             child: Text(
-              catalog[i].zikrName,
+              localizedZikrNameFromKey(
+                appText,
+                zikrKey: zikrKeyFromName(catalog[i].zikrName),
+                fallback: catalog[i].zikrName,
+              ),
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF2C3320)),
@@ -297,7 +302,13 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                 SizedBox(height: 10.h),
                 _SelectField(
                   key: _fieldKey,
-                  text: _zikrName,
+                  text: _zikrName == null
+                      ? null
+                      : localizedZikrNameFromKey(
+                          appText,
+                          zikrKey: _zikrKey,
+                          fallback: _zikrName!,
+                        ),
                   hint: appText.zikrSelectZikr,
                   onTap: _openDropdown,
                 ),

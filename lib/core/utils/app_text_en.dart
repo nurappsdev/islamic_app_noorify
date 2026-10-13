@@ -349,6 +349,11 @@ const Map<String, String> appTextEn = <String, String>{
   'zikrNameAllahuAkbar': 'Allahu Akbar',
   'zikrNameFinalZikr':
       "La ilaha illallahu wahdahu la sharika lah, lahul mulku wa lahul hamdu wa huwa 'ala kulli shay'in qadir",
+  'zikrNameLaIlahaIllallah': 'La ilaha illallah',
+  'zikrNameAstaghfirullah': 'Astaghfirullah',
+  'zikrNameLaHawla': 'La hawla wa la quwwata illa billah',
+  'zikrNameSalawat': 'Salawat',
+  'zikrNameSubhanAllahiWaBihamdihi': 'Subhan Allahi wa bihamdihi',
   'duaIntroTitle': 'Dua',
   'duaIntroSubtitle': 'Strengthen your faith through daily supplication',
   'duaIntroStartButton': "Let's Get Start",

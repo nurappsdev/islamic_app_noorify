@@ -8,6 +8,7 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 
 /// Plan detail — reached by tapping a plan on [ZikrPlannerScreen] ("My Plan",
@@ -203,7 +204,11 @@ class _PlanDetailEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = entry.zikrName;
+    final name = localizedZikrNameFromKey(
+      appText,
+      zikrKey: entry.zikrKey,
+      fallback: entry.zikrName,
+    );
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18.r),

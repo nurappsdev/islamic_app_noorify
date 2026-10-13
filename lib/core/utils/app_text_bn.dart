@@ -348,6 +348,11 @@ const Map<String, String> appTextBn = <String, String>{
   'zikrNameAllahuAkbar': 'আল্লাহু আকবার',
   'zikrNameFinalZikr':
       'লা ইলাহা ইল্লাল্লাহু ওয়াহদাহু লা শারীকা লাহু, লাহুল মুলকু ওয়া লাহুল হামদু ওয়া হুওয়া আলা কুল্লি শাইয়িন ক্বাদীর',
+  'zikrNameLaIlahaIllallah': 'লা ইলাহা ইল্লাল্লাহ',
+  'zikrNameAstaghfirullah': 'আস্তাগফিরুল্লাহ',
+  'zikrNameLaHawla': 'লা হাওলা ওয়ালা কুওয়াতা ইল্লা বিল্লাহ',
+  'zikrNameSalawat': 'সালাওয়াত',
+  'zikrNameSubhanAllahiWaBihamdihi': 'সুবহানাল্লাহি ওয়া বিহামদিহী',
   'duaIntroTitle': 'দোয়া',
   'duaIntroSubtitle': 'প্রতিদিনের দোয়ার মাধ্যমে আপনার ঈমান মজবুত করুন',
   'duaIntroStartButton': 'শুরু করুন',

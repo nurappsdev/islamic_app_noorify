@@ -325,6 +325,11 @@ class AppText {
     required this.zikrNameAlhamdulillah,
     required this.zikrNameAllahuAkbar,
     required this.zikrNameFinalZikr,
+    required this.zikrNameLaIlahaIllallah,
+    required this.zikrNameAstaghfirullah,
+    required this.zikrNameLaHawla,
+    required this.zikrNameSalawat,
+    required this.zikrNameSubhanAllahiWaBihamdihi,
     required this.duaIntroTitle,
     required this.duaIntroSubtitle,
     required this.duaIntroStartButton,
@@ -1220,6 +1225,11 @@ class AppText {
   final String zikrNameAlhamdulillah;
   final String zikrNameAllahuAkbar;
   final String zikrNameFinalZikr;
+  final String zikrNameLaIlahaIllallah;
+  final String zikrNameAstaghfirullah;
+  final String zikrNameLaHawla;
+  final String zikrNameSalawat;
+  final String zikrNameSubhanAllahiWaBihamdihi;
 
   // Dua feature
   final String duaIntroTitle;
@@ -2928,6 +2938,31 @@ class AppText {
         map,
         'zikrNameFinalZikr',
         fallback?.zikrNameFinalZikr ?? '',
+      ),
+      zikrNameLaIlahaIllallah: _read(
+        map,
+        'zikrNameLaIlahaIllallah',
+        fallback?.zikrNameLaIlahaIllallah ?? '',
+      ),
+      zikrNameAstaghfirullah: _read(
+        map,
+        'zikrNameAstaghfirullah',
+        fallback?.zikrNameAstaghfirullah ?? '',
+      ),
+      zikrNameLaHawla: _read(
+        map,
+        'zikrNameLaHawla',
+        fallback?.zikrNameLaHawla ?? '',
+      ),
+      zikrNameSalawat: _read(
+        map,
+        'zikrNameSalawat',
+        fallback?.zikrNameSalawat ?? '',
+      ),
+      zikrNameSubhanAllahiWaBihamdihi: _read(
+        map,
+        'zikrNameSubhanAllahiWaBihamdihi',
+        fallback?.zikrNameSubhanAllahiWaBihamdihi ?? '',
       ),
       duaIntroTitle: _read(map, 'duaIntroTitle', fallback?.duaIntroTitle ?? ''),
       duaIntroSubtitle: _read(

@@ -43,21 +43,37 @@ String? localizedSeedZikrName(AppText appText, String? nameKey) {
 
 /// Resolves the known API keys to the app language. User-created names stay
 /// exactly as entered because the API does not provide a Bangla translation.
+///
+/// Matched after stripping everything but letters/digits, so both the
+/// catalog's own hyphenated keys (e.g. `la-ilaha-illallah`) and a key
+/// derived from a name via `zikrKeyFromName` (e.g. `subhan-allah`, from
+/// `"Subhan Allah"`) resolve to the same case.
 String localizedZikrNameFromKey(
   AppText appText, {
   required String zikrKey,
   required String fallback,
 }) {
-  switch (zikrKey.trim().toLowerCase()) {
+  final normalized = zikrKey
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]'), '');
+  switch (normalized) {
     case 'subhanallah':
       return appText.zikrNameSubhanAllah;
     case 'alhamdulillah':
       return appText.zikrNameAlhamdulillah;
-    case 'allahu-akbar':
     case 'allahuakbar':
       return appText.zikrNameAllahuAkbar;
-    case 'la-ilaha-illallah':
-      return appText.zikrNameFinalZikr;
+    case 'lailahaillallah':
+      return appText.zikrNameLaIlahaIllallah;
+    case 'astaghfirullah':
+      return appText.zikrNameAstaghfirullah;
+    case 'lahawlawalaquwwataillabillah':
+      return appText.zikrNameLaHawla;
+    case 'salawat':
+      return appText.zikrNameSalawat;
+    case 'subhanallahiwabihamdihi':
+      return appText.zikrNameSubhanAllahiWaBihamdihi;
     default:
       return fallback;
   }
