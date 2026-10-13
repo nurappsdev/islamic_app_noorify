@@ -35,6 +35,12 @@ class HiveService {
   /// its id.
   static const String zikrPlannerBox = 'zikr_planner_box';
 
+  /// Box that holds the Dua feature's bookmark folders and saved duas
+  /// (one entry per dua-in-folder, keyed by `<duaId>::<folder>`, plus one
+  /// entry holding the list of user-created empty folders). Device-local
+  /// only, never synced to the backend.
+  static const String duaBookmarksBox = 'dua_bookmarks_box';
+
   static bool _initialized = false;
 
   static Future<void> init() async {
@@ -47,6 +53,7 @@ class HiveService {
     await Hive.openBox<dynamic>(zikrBox);
     await Hive.openBox<dynamic>(customZikrBox);
     await Hive.openBox<dynamic>(zikrPlannerBox);
+    await Hive.openBox<dynamic>(duaBookmarksBox);
     _initialized = true;
   }
 
@@ -70,4 +77,7 @@ class HiveService {
 
   /// Already-opened Zikr planner box. Safe to call after [init].
   static Box<dynamic> get zikrPlanner => Hive.box<dynamic>(zikrPlannerBox);
+
+  /// Already-opened Dua bookmarks box. Safe to call after [init].
+  static Box<dynamic> get duaBookmarks => Hive.box<dynamic>(duaBookmarksBox);
 }

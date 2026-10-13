@@ -76,7 +76,10 @@ class DuaAllDuaScreen extends StatelessWidget {
                 name: duas[i].name,
                 onTap: () => Navigator.of(context).pushNamed(
                   RouteNames.duaReader,
-                  arguments: DuaReaderArgs(featured: featured, detail: duas[i]),
+                  arguments: DuaReaderArgs.mock(
+                    featured: featured,
+                    detail: duas[i],
+                  ),
                 ),
               ),
               if (i != duas.length - 1) SizedBox(height: 10.h),

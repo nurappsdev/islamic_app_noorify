@@ -3,19 +3,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
-/// The pastel-green "Duas for help" card shown on the dashboard's Featured
-/// Dua row and on the full Featured Dua list (design `img_1.png` /
-/// `img_3.png`).
+/// The pastel-green dua card shown on the dashboard's Featured Dua row and on
+/// the full Featured Dua list (design `img_1.png` / `img_3.png`).
 class DuaFeaturedCard extends StatelessWidget {
   const DuaFeaturedCard({super.key, required this.featured, this.onExplore});
 
-  final DuaFeatured featured;
+  final DuaFeaturedModel featured;
 
-  /// Called when the "Explore" pill is tapped — opens the group's detail
-  /// screen ([DuaGroupScreen], design `img_4.png`).
+  /// Called when the "Explore" pill is tapped — opens this dua on
+  /// [DuaReaderScreen].
   final VoidCallback? onExplore;
 
   @override
@@ -47,8 +46,8 @@ class DuaFeaturedCard extends StatelessWidget {
                     color: context.lineColor(Color(0xFFC7D6A6)),
                   ),
                 ),
-                child: Icon(
-                  Icons.badge_outlined,
+                child: _FeaturedIcon(
+                  iconUrl: featured.iconUrl ?? featured.category?.iconUrl,
                   color: context.inkColor(Color(0xFF6B7A4A)),
                   size: 18.sp,
                 ),
@@ -84,31 +83,47 @@ class DuaFeaturedCard extends StatelessWidget {
               ),
             ],
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                featured.title,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                  color: context.inkColor(Color(0xFF3C4A28)),
-                ),
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                context.localizedDigits(
-                  '${appText.duaTotalDuaLabel} : ${featured.totalDua}',
-                ),
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: context.inkColor(Color(0xFF5D6B44)),
-                ),
-              ),
-            ],
+          Text(
+            context.localized(featured.title),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: context.inkColor(Color(0xFF3C4A28)),
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The dua's `iconUrl` (falling back to its category's), or a generic badge
+/// icon when there is none or it fails to load.
+class _FeaturedIcon extends StatelessWidget {
+  const _FeaturedIcon({
+    required this.iconUrl,
+    required this.color,
+    required this.size,
+  });
+
+  final String? iconUrl;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(Icons.badge_outlined, color: color, size: size);
+    final url = iconUrl;
+    final uri = url == null ? null : Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return icon;
+    return Image.network(
+      uri.toString(),
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => icon,
     );
   }
 }

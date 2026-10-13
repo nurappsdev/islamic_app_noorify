@@ -128,10 +128,11 @@ import '../../features/asma_husna/presentation/screens/asma_husna_list_screen.da
 import '../../features/dua/data/dua_catalog.dart';
 import '../../features/dua/presentation/screens/dua_all_category_screen.dart';
 import '../../features/dua/presentation/screens/dua_all_dua_screen.dart';
+import '../../features/dua/presentation/screens/dua_category_duas_screen.dart';
 import '../../features/dua/presentation/screens/dua_dashboard_screen.dart';
 import '../../features/dua/presentation/screens/dua_featured_screen.dart';
 import '../../features/dua/presentation/screens/dua_group_screen.dart';
-import '../../features/dua/presentation/screens/dua_intro_screen.dart';
+import '../../features/dua/presentation/screens/dua_entry_screen.dart';
 import '../../features/dua/presentation/screens/dua_reader_screen.dart';
 import '../../features/dua/presentation/screens/dua_saved_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
@@ -634,11 +635,19 @@ class AppRoutes {
           settings,
         );
       case RouteNames.dua:
-        return _page(const DuaIntroScreen(), settings);
+        return _page(const DuaEntryScreen(), settings);
       case RouteNames.duaDashboard:
         return _page(const DuaDashboardScreen(), settings);
       case RouteNames.duaAllCategory:
         return _page(const DuaAllCategoryScreen(), settings);
+      case RouteNames.duaCategoryDuas:
+        final args = settings.arguments as DuaCategoryDuasArgs?;
+        return _page(
+          args == null
+              ? const DuaAllCategoryScreen()
+              : DuaCategoryDuasScreen(category: args.category),
+          settings,
+        );
       case RouteNames.duaFeatured:
         return _page(const DuaFeaturedScreen(), settings);
       case RouteNames.duaGroup:

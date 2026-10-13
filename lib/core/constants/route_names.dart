@@ -57,6 +57,7 @@ class RouteNames {
   static const dua = '/dua';
   static const duaDashboard = '/dua/dashboard';
   static const duaAllCategory = '/dua/category/all';
+  static const duaCategoryDuas = '/dua/category/duas';
   static const duaFeatured = '/dua/featured';
   static const duaGroup = '/dua/group';
   static const duaGroupAllDua = '/dua/group/all-dua';

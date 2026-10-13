@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_saved_folder_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
+/// "Saved" — the Dua feature's bookmark folders (design `devImg/img_9.png`),
+/// backed by [DuaBookmarkStore] (Hive): folders and their dua counts persist
+/// on-device and update live as bookmarks are added from [DuaReaderScreen].
 class DuaSavedScreen extends StatefulWidget {
   const DuaSavedScreen({super.key});
 
@@ -15,8 +20,7 @@ class DuaSavedScreen extends StatefulWidget {
 
 class _DuaSavedScreenState extends State<DuaSavedScreen> {
   final _search = TextEditingController();
-  final _folders = <String>['New folder', 'Prayer', 'Eat', 'Society'];
-  final _counts = <int>[7, 20, 17, 11];
+  final _store = DuaBookmarkStore.instance;
 
   @override
   void dispose() {
@@ -24,10 +28,14 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
     super.dispose();
   }
 
-  Future<void> _menu(int index) async {
+  String _labelFor(String folder) => folder == DuaBookmarkStore.defaultFolder
+      ? AppText.of(context).favoriteFolder
+      : folder;
+
+  Future<void> _menu(String folder) async {
     final action = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(190.w, 120.h + index * 78.h, 12.w, 0),
+      position: const RelativeRect.fromLTRB(400, 200, 12, 0),
       items: [
         PopupMenuItem(
           value: 'edit',
@@ -44,20 +52,16 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
     );
     if (!mounted || action == null) return;
     if (action == 'edit') {
-      final value = await _editFolder(_folders[index]);
-      if (value != null && value.trim().isNotEmpty)
-        setState(() => _folders[index] = value.trim());
+      final value = await _editFolder(_labelFor(folder));
+      final trimmed = value?.trim() ?? '';
+      if (trimmed.isNotEmpty) _store.renameFolder(folder, trimmed);
     } else {
       final yes = await _confirmDelete();
-      if (yes == true)
-        setState(() {
-          _folders.removeAt(index);
-          _counts.removeAt(index);
-        });
+      if (yes == true) _store.deleteFolder(folder);
     }
   }
 
-  Future<String?> _editFolder(String value) async {
+  Future<String?> _editFolder(String value) {
     return showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -74,11 +78,6 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final query = _search.text.toLowerCase();
-    final indexes = List<int>.generate(
-      _folders.length,
-      (i) => i,
-    ).where((i) => _folders[i].toLowerCase().contains(query)).toList();
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -116,16 +115,45 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                   ),
                 ),
                 Expanded(
-                  child: ListView.separated(
-                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 90.h),
-                    itemCount: indexes.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 8.h),
-                    itemBuilder: (_, n) {
-                      final i = indexes[n];
-                      return _FolderCard(
-                        name: _folders[i],
-                        count: _counts[i],
-                        onMenu: () => _menu(i),
+                  child: ListenableBuilder(
+                    listenable: _store,
+                    builder: (context, _) {
+                      final query = _search.text.trim().toLowerCase();
+                      final folders = [
+                        for (final folder in _store.folders)
+                          if (query.isEmpty ||
+                              _labelFor(folder).toLowerCase().contains(query))
+                            folder,
+                      ];
+                      if (folders.isEmpty) {
+                        return Center(
+                          child: Text(
+                            AppText.of(context).noResultsFound,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: context.inkColor(Color(0xFF5D6B44)),
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 90.h),
+                        itemCount: folders.length,
+                        separatorBuilder: (_, _) => SizedBox(height: 8.h),
+                        itemBuilder: (context, index) {
+                          final folder = folders[index];
+                          return _FolderCard(
+                            name: _labelFor(folder),
+                            count: _store.countIn(folder),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    DuaSavedFolderScreen(folder: folder),
+                              ),
+                            ),
+                            onMenu: () => _menu(folder),
+                          );
+                        },
                       );
                     },
                   ),
@@ -178,46 +206,50 @@ class _FolderCard extends StatelessWidget {
   const _FolderCard({
     required this.name,
     required this.count,
+    required this.onTap,
     required this.onMenu,
   });
   final String name;
   final int count;
+  final VoidCallback onTap;
   final VoidCallback onMenu;
   @override
-  Widget build(BuildContext context) => Container(
-    height: 72.h,
-    padding: EdgeInsets.symmetric(horizontal: 10.w),
-    decoration: BoxDecoration(
-      border: Border.all(color: context.lineColor(Color(0xFFD5E59B))),
-      borderRadius: BorderRadius.circular(20.r),
-    ),
-    child: Row(
-      children: [
-        CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFA5B657)),
-        SizedBox(width: 10.w),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: TextStyle(fontSize: 14.sp)),
-            SizedBox(height: 5.h),
-            Text(
-              name == 'New folder'
-                  ? AppText.of(context).duaTotalSaved.replaceAll(
-                      '{n}',
-                      context.localizedDigits('07'),
-                    )
-                  : AppText.of(context).duaSavedCount.replaceAll(
-                      '{n}',
-                      context.localizedDigits('$count'),
-                    ),
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA5B657)),
-            ),
-          ],
-        ),
-        const Spacer(),
-        IconButton(onPressed: onMenu, icon: const Icon(Icons.more_vert)),
-      ],
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20.r),
+    child: Container(
+      height: 72.h,
+      padding: EdgeInsets.symmetric(horizontal: 10.w),
+      decoration: BoxDecoration(
+        border: Border.all(color: context.lineColor(Color(0xFFD5E59B))),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFA5B657)),
+          SizedBox(width: 10.w),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: TextStyle(fontSize: 14.sp)),
+              SizedBox(height: 5.h),
+              Text(
+                AppText.of(context).duaSavedCount.replaceAll(
+                  '{n}',
+                  context.localizedDigits('$count'),
+                ),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: const Color(0xFFA5B657),
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          IconButton(onPressed: onMenu, icon: const Icon(Icons.more_vert)),
+        ],
+      ),
     ),
   );
 }

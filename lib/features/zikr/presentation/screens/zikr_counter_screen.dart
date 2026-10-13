@@ -181,11 +181,11 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
                   title: widget.args.title.isEmpty
                       ? appText.zikrTitle
                       : (widget.args.items.length == 1
-                          ? localizedZikrItemName(
-                              appText,
-                              widget.args.items.first,
-                            )
-                          : localizedRoutineName(context, widget.args.title)),
+                            ? localizedZikrItemName(
+                                appText,
+                                widget.args.items.first,
+                              )
+                            : localizedRoutineName(context, widget.args.title)),
                   total: _total,
                 ),
                 Transform.translate(
@@ -359,29 +359,13 @@ class _CurrentZikrCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10.w),
-          SizedBox(
-            width: 44.r,
-            height: 44.r,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: item.target > 0
-                      ? (done / item.target).clamp(0.0, 1.0)
-                      : 0.0,
-                  strokeWidth: 3,
-                  backgroundColor: context.surfaceColor(Color(0xFFC4D6A0)),
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF6E8B3D)),
-                ),
-                Text(
-                  context.localizedDigits('$done/${item.target}'),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: context.inkColor(Color(0xFF4C5A34)),
-                  ),
-                ),
-              ],
+          Text(
+            context.localizedDigits('$done/${item.target}'),
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+              color: context.inkColor(Color(0xFF4C5A34)),
             ),
           ),
         ],

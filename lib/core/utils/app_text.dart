@@ -313,6 +313,8 @@ class AppText {
     required this.zikrPlanName,
     required this.zikrPlanCompletionDays,
     required this.zikrPlanWriteHere,
+    required this.zikrPlanDefaultName,
+    required this.zikrPlanValidationMessage,
     required this.zikrPlanComplete,
     required this.zikrPlanDays,
     required this.zikrTodaysValueGraph,
@@ -451,6 +453,7 @@ class AppText {
     required this.completePlan,
     required this.noCompletedPlansMessage,
     required this.noPlansYetMessage,
+    required this.planStartedSuccess,
     required this.planStatusComplete,
     required this.getStart,
     required this.createPlanHeader,
@@ -1213,6 +1216,8 @@ class AppText {
   final String zikrPlanName;
   final String zikrPlanCompletionDays;
   final String zikrPlanWriteHere;
+  final String zikrPlanDefaultName;
+  final String zikrPlanValidationMessage;
   final String zikrPlanComplete;
   final String zikrPlanDays;
   final String zikrTodaysValueGraph;
@@ -1357,6 +1362,7 @@ class AppText {
   final String completePlan;
   final String noCompletedPlansMessage;
   final String noPlansYetMessage;
+  final String planStartedSuccess;
   final String planStatusComplete;
   final String getStart;
   final String createPlanHeader;
@@ -2895,6 +2901,16 @@ class AppText {
         'zikrPlanWriteHere',
         fallback?.zikrPlanWriteHere ?? '',
       ),
+      zikrPlanDefaultName: _read(
+        map,
+        'zikrPlanDefaultName',
+        fallback?.zikrPlanDefaultName ?? '',
+      ),
+      zikrPlanValidationMessage: _read(
+        map,
+        'zikrPlanValidationMessage',
+        fallback?.zikrPlanValidationMessage ?? '',
+      ),
       zikrPlanComplete: _read(
         map,
         'zikrPlanComplete',
@@ -3428,6 +3444,11 @@ class AppText {
         map,
         'noPlansYetMessage',
         fallback?.noPlansYetMessage ?? '',
+      ),
+      planStartedSuccess: _read(
+        map,
+        'planStartedSuccess',
+        fallback?.planStartedSuccess ?? '',
       ),
       planStatusComplete: _read(
         map,

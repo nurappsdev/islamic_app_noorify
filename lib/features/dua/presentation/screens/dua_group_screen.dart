@@ -75,7 +75,7 @@ class DuaGroupScreen extends StatelessWidget {
                         name: duas[i].name,
                         onTap: () => Navigator.of(context).pushNamed(
                           RouteNames.duaReader,
-                          arguments: DuaReaderArgs(
+                          arguments: DuaReaderArgs.mock(
                             featured: featured,
                             detail: duas[i],
                           ),
