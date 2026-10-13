@@ -801,7 +801,7 @@ const Map<String, String> appTextBn = <String, String>{
   // Dua saved bookmarks and Amol confirmation
   'duaSavedEdit': 'সম্পাদনা',
   'duaSavedDelete': 'মুছে ফেলুন',
-  'duaSavedTitle': 'সংরক্ষিত হাদিস',
+  'duaSavedTitle': 'সংরক্ষিত দোয়া',
   'duaEditBookmarkTitle': 'বুকমার্ক সম্পাদনা',
   'duaFolderName': 'ফোল্ডারের নাম',
   'duaFolderNameHint': 'এখানে ফোল্ডারের নাম লিখুন।',

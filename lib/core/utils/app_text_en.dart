@@ -800,7 +800,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   // Dua saved bookmarks and Amol confirmation
   'duaSavedEdit': 'Edit',
   'duaSavedDelete': 'Delete',
-  'duaSavedTitle': 'Saved Hadith',
+  'duaSavedTitle': 'Saved Dua',
   'duaEditBookmarkTitle': 'Edit Book Mark',
   'duaFolderName': 'Folder name',
   'duaFolderNameHint': 'Write Folder Name Here.',
