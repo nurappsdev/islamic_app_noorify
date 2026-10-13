@@ -166,7 +166,12 @@ class _ZikrDashboardView extends StatelessWidget {
                       Padding(
                         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
                         child: _CreatedZikrCard(
-                          title: localizedRoutineName(context, routine.name),
+                          title: routine.items.length == 1
+                              ? localizedZikrItemName(
+                                  appText,
+                                  routine.items.first,
+                                )
+                              : localizedRoutineName(context, routine.name),
                           items: routine.items,
                           onOpenItem: (item) => _openCounter(
                             context,
