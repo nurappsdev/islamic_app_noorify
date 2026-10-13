@@ -47,8 +47,8 @@ class DuaFeaturedCard extends StatelessWidget {
                     color: context.lineColor(Color(0xFFC7D6A6)),
                   ),
                 ),
-                child: Icon(
-                  Icons.badge_outlined,
+                child: _FeaturedIcon(
+                  iconUrl: featured.iconUrl ?? featured.category?.iconUrl,
                   color: context.inkColor(Color(0xFF6B7A4A)),
                   size: 18.sp,
                 ),
@@ -111,6 +111,35 @@ class DuaFeaturedCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The dua's `iconUrl` (falling back to its category's), or a generic badge
+/// icon when there is none or it fails to load.
+class _FeaturedIcon extends StatelessWidget {
+  const _FeaturedIcon({
+    required this.iconUrl,
+    required this.color,
+    required this.size,
+  });
+
+  final String? iconUrl;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(Icons.badge_outlined, color: color, size: size);
+    final url = iconUrl;
+    final uri = url == null ? null : Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) return icon;
+    return Image.network(
+      uri.toString(),
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => icon,
     );
   }
 }

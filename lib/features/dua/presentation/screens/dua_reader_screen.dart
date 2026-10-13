@@ -68,6 +68,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
         repeatCount: model.recommendedRepeatCount > 0
             ? model.recommendedRepeatCount
             : null,
+        reference: context.localized(model.reference),
       );
     }
     final detail = widget.args.detail!;
@@ -77,6 +78,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
       segments: detail.segments,
       transliteration: detail.transliteration,
       repeatCount: detail.repeatCount,
+      reference: '',
     );
   }
 
@@ -295,6 +297,17 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                       ),
                     ),
                   ],
+                  if (readable.reference.isNotEmpty) ...[
+                    SizedBox(height: 18.h),
+                    Text(
+                      '${appText.hadithBookReference}: ${readable.reference}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: context.inkColor(Color(0xFF7C8A63)),
+                      ),
+                    ),
+                  ],
                 ],
               );
             },
@@ -327,6 +340,7 @@ class _DuaReadable {
     required this.segments,
     required this.transliteration,
     required this.repeatCount,
+    required this.reference,
   });
 
   final String headerTitle;
@@ -334,6 +348,7 @@ class _DuaReadable {
   final List<DuaSegment> segments;
   final String transliteration;
   final int? repeatCount;
+  final String reference;
 }
 
 class _VisibilityToggle extends StatelessWidget {
