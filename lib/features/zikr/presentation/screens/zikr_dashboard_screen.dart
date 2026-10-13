@@ -165,24 +165,29 @@ class _ZikrDashboardView extends StatelessWidget {
                     for (final routine in customRoutines)
                       Padding(
                         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-                        child: _CreatedZikrCard(
-                          title: routine.items.length == 1
-                              ? localizedZikrItemName(
-                                  appText,
-                                  routine.items.first,
-                                )
-                              : localizedRoutineName(context, routine.name),
-                          items: routine.items,
-                          onOpenItem: (item) => _openCounter(
-                            context,
-                            ZikrCounterArgs.fromItem(item),
-                          ),
-                          // Home routines are recitation sequences, not Planner
-                          // challenges. Guests go straight to the counter and
-                          // this never calls the plan-enrol endpoint.
-                          onGetStart: () => _openCounter(
-                            context,
-                            ZikrCounterArgs.fromPreset(routine),
+                        child: _SwipeToDeleteRoutine(
+                          key: ValueKey(routine.id ?? routine.name),
+                          routineId: routine.id,
+                          child: _CreatedZikrCard(
+                            title: routine.items.length == 1
+                                ? localizedZikrItemName(
+                                    appText,
+                                    routine.items.first,
+                                  )
+                                : localizedRoutineName(context, routine.name),
+                            items: routine.items,
+                            onOpenItem: (item) => _openCounter(
+                              context,
+                              ZikrCounterArgs.fromItem(item),
+                            ),
+                            // Home routines are recitation sequences, not
+                            // Planner challenges. Guests go straight to the
+                            // counter and this never calls the plan-enrol
+                            // endpoint.
+                            onGetStart: () => _openCounter(
+                              context,
+                              ZikrCounterArgs.fromPreset(routine),
+                            ),
                           ),
                         ),
                       ),
@@ -533,6 +538,68 @@ class _CreatedZikrCard extends StatelessWidget {
 
   String _doneFor(ZikrItem item) => '0';
 }
+
+/// Wraps a "My Created Zikr" card with swipe-to-delete (either direction).
+/// A light red background shows behind the card as it's dragged away;
+/// past the 50% threshold, releasing deletes the routine via the API and
+/// the card animates out. A failed request snaps the card back and shows
+/// the error instead of removing anything.
+class _SwipeToDeleteRoutine extends StatelessWidget {
+  const _SwipeToDeleteRoutine({
+    super.key,
+    required this.routineId,
+    required this.child,
+  });
+
+  final String? routineId;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final id = routineId;
+    if (id == null) return child;
+
+    return Dismissible(
+      key: ValueKey(id),
+      direction: DismissDirection.horizontal,
+      dismissThresholds: const {
+        DismissDirection.startToEnd: 0.5,
+        DismissDirection.endToStart: 0.5,
+      },
+      background: _swipeDeleteBackground(Alignment.centerLeft),
+      secondaryBackground: _swipeDeleteBackground(Alignment.centerRight),
+      confirmDismiss: (_) async {
+        final error = await context.read<ZikrHomeCubit>().deleteRoutineRemote(
+          id,
+        );
+        if (error == null) return true;
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error)));
+        }
+        return false;
+      },
+      onDismissed: (_) =>
+          context.read<ZikrHomeCubit>().removeRoutineLocally(id),
+      child: child,
+    );
+  }
+}
+
+Widget _swipeDeleteBackground(Alignment alignment) => Container(
+  decoration: BoxDecoration(
+    color: const Color(0xFFFFCDD2),
+    borderRadius: BorderRadius.circular(18.r),
+  ),
+  alignment: alignment,
+  padding: EdgeInsets.symmetric(horizontal: 22.w),
+  child: Icon(
+    Icons.delete_outline_rounded,
+    color: const Color(0xFFC0392B),
+    size: 22.sp,
+  ),
+);
 
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.onTap});
