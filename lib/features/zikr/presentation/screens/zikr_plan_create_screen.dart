@@ -58,7 +58,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
   }
 
   String get _planName => _nameController.text.trim().isEmpty
-      ? 'Plan 1'
+      ? _appText.zikrPlanDefaultName
       : _nameController.text.trim();
   int get _planDays => int.tryParse(_daysController.text.trim()) ?? 30;
 
@@ -106,7 +106,6 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
               style: TextStyle(
                 fontSize: 13.sp,
                 color: context.inkColor(Color(0xFF2C3320)),
-
               ),
             ),
           ),
@@ -206,7 +205,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
       return;
     }
     if (_nameController.text.trim().isEmpty || _planDays < 1) {
-      _toast('Plan name and completion days are required.');
+      _toast(_appText.zikrPlanValidationMessage);
       return;
     }
     HapticFeedback.selectionClick();

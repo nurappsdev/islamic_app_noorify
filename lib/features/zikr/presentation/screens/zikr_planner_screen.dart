@@ -53,7 +53,7 @@ class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
         await _cubit.enroll(plan.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Plan started successfully.')),
+            SnackBar(content: Text(AppText.of(context).planStartedSuccess)),
           );
         }
       } catch (error) {
