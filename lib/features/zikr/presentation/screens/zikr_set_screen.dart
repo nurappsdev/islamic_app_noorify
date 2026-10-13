@@ -8,6 +8,7 @@ import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
@@ -197,7 +198,7 @@ class _ZikrRow extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              item.name,
+              localizedZikrItemName(AppText.of(context), item),
               style: TextStyle(
                 fontSize: 15.sp,
                 color: context.inkColor(Color(0xFF6B7358)),

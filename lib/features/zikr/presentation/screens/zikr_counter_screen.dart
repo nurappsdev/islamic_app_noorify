@@ -179,8 +179,13 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
               children: [
                 ZikrGradientHeader(
                   title: widget.args.title.isEmpty
-                      ? AppText.of(context).zikrTitle
-                      : localizedRoutineName(context, widget.args.title),
+                      ? appText.zikrTitle
+                      : (widget.args.items.length == 1
+                          ? localizedZikrItemName(
+                              appText,
+                              widget.args.items.first,
+                            )
+                          : localizedRoutineName(context, widget.args.title)),
                   total: _total,
                 ),
                 Transform.translate(

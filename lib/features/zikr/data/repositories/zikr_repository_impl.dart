@@ -48,7 +48,9 @@ class ZikrRepositoryImpl implements ZikrRepository {
   Future<TasbihAnalyticsResponse> getAnalytics(
     String period, {
     int offset = 0,
-  }) => _remote.getAnalytics(period, offset: offset);
+    String? from,
+    String? to,
+  }) => _remote.getAnalytics(period, offset: offset, from: from, to: to);
   @override
   Future<PaginatedHistory> getHistory({
     required int page,

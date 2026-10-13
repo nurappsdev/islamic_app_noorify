@@ -86,4 +86,29 @@ class ZikrHomeCubit extends Cubit<ZikrHomeState> {
   void recordLastRead(ZikrItem item, int count) {
     emit(state.copyWith(lastReadItem: item, lastReadCount: count));
   }
+
+  /// Deletes routine [id] on the backend. Returns the error message on
+  /// failure, or `null` on success — [state.routines] is left untouched
+  /// here; the caller removes it (via [removeRoutineLocally]) only once its
+  /// swipe-to-delete exit animation finishes, so the card's own
+  /// [Dismissible] drives when the entry actually leaves the list.
+  Future<String?> deleteRoutineRemote(String id) async {
+    try {
+      await _repository.deleteRoutine(id);
+      return null;
+    } catch (error) {
+      return '$error';
+    }
+  }
+
+  void removeRoutineLocally(String id) {
+    emit(
+      state.copyWith(
+        routines: [
+          for (final routine in state.routines)
+            if (routine.id != id) routine,
+        ],
+      ),
+    );
+  }
 }
