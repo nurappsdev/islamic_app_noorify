@@ -86,7 +86,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
             Column(
               children: [
                 SizedBox(height: 8.h),
-                _Header(onBack: () => Navigator.maybePop(context)),
+                const _Header(),
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
                   child: TextField(
@@ -172,32 +172,18 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
-  final VoidCallback onBack;
+  const _Header();
   @override
   Widget build(BuildContext context) => SizedBox(
     height: 44.h,
-    child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            onPressed: onBack,
-            icon: const Icon(Icons.chevron_left),
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFE1E56A),
-            ),
-          ),
+    child: Center(
+      child: Text(
+        AppText.of(context).duaSavedTitle,
+        style: TextStyle(
+          fontSize: 17.sp,
+          color: context.inkColor(Color(0xFF7D8E54)),
         ),
-        Text(
-          AppText.of(context).duaSavedTitle,
-          style: TextStyle(
-            fontSize: 17.sp,
-            color: context.inkColor(Color(0xFF7D8E54)),
-          ),
-        ),
-      ],
+      ),
     ),
   );
 }

@@ -5,10 +5,20 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 /// Category, and Featured Dua screens (design `img_1.png` / `img_2.png` /
 /// `img_3.png`).
 class DuaPageHeader extends StatelessWidget {
-  const DuaPageHeader({super.key, required this.title, this.action});
+  const DuaPageHeader({
+    super.key,
+    required this.title,
+    this.action,
+    this.onBack,
+  });
 
   final String title;
   final Widget? action;
+
+  /// Called instead of the default `Navigator.maybePop` — e.g. the Dua
+  /// dashboard sends the user to the app's main Home screen instead of
+  /// popping within the Dua feature's own stack.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +30,7 @@ class DuaPageHeader extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
-              onPressed: () => Navigator.maybePop(context),
+              onPressed: onBack ?? () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
                 foregroundColor: Color(0xFF303629),

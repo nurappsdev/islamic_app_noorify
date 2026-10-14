@@ -460,6 +460,13 @@ class AppText {
     required this.planNameLabel,
     required this.planTargetDaysLabel,
     required this.planTargetDaysHint,
+    required this.duaPlanSlotLabel,
+    required this.duaPlanStatusLabel,
+    required this.duaSlotMorning,
+    required this.duaSlotAfternoon,
+    required this.duaSlotEvening,
+    required this.duaSlotNight,
+    required this.duaSlotAnytime,
     required this.planEdit,
     required this.planDelete,
     required this.planComplete,
@@ -478,6 +485,8 @@ class AppText {
     required this.hadithCreatePlanTitle,
     required this.selectHadithBook,
     required this.selectCategory,
+    required this.selectDua,
+    required this.duaSelectedCount,
     required this.egSahihBukhariHint,
     required this.egHadithCategoryHint,
     required this.hadithCategorySample,
@@ -581,6 +590,7 @@ class AppText {
     required this.planNameRequired,
     required this.addAtLeastOneQuiz,
     required this.selectCategoryFirst,
+    required this.selectDuaFirst,
     required this.planCreated,
     required this.planUpdated,
     required this.planAbandoned,
@@ -759,6 +769,9 @@ class AppText {
     required this.duaSavedDelete,
     required this.duaSavedTitle,
     required this.duaEditBookmarkTitle,
+    required this.duaEditPlanTitle,
+    required this.duaDeletePlanTitle,
+    required this.duaDeletePlanMessage,
     required this.duaFolderName,
     required this.duaFolderNameHint,
     required this.duaSaveChanges,
@@ -1369,6 +1382,13 @@ class AppText {
   final String planNameLabel;
   final String planTargetDaysLabel;
   final String planTargetDaysHint;
+  final String duaPlanSlotLabel;
+  final String duaPlanStatusLabel;
+  final String duaSlotMorning;
+  final String duaSlotAfternoon;
+  final String duaSlotEvening;
+  final String duaSlotNight;
+  final String duaSlotAnytime;
   final String planEdit;
   final String planDelete;
   final String planComplete;
@@ -1387,6 +1407,8 @@ class AppText {
   final String hadithCreatePlanTitle;
   final String selectHadithBook;
   final String selectCategory;
+  final String selectDua;
+  final String duaSelectedCount;
   final String egSahihBukhariHint;
   final String egHadithCategoryHint;
   final String hadithCategorySample;
@@ -1492,6 +1514,7 @@ class AppText {
   final String planNameRequired;
   final String addAtLeastOneQuiz;
   final String selectCategoryFirst;
+  final String selectDuaFirst;
   final String planCreated;
   final String planUpdated;
   final String planAbandoned;
@@ -1672,6 +1695,9 @@ class AppText {
   final String duaSavedDelete;
   final String duaSavedTitle;
   final String duaEditBookmarkTitle;
+  final String duaEditPlanTitle;
+  final String duaDeletePlanTitle;
+  final String duaDeletePlanMessage;
   final String duaFolderName;
   final String duaFolderNameHint;
   final String duaSaveChanges;
@@ -3472,6 +3498,37 @@ class AppText {
         'planTargetDaysHint',
         fallback?.planTargetDaysHint ?? '',
       ),
+      duaPlanSlotLabel: _read(
+        map,
+        'duaPlanSlotLabel',
+        fallback?.duaPlanSlotLabel ?? '',
+      ),
+      duaPlanStatusLabel: _read(
+        map,
+        'duaPlanStatusLabel',
+        fallback?.duaPlanStatusLabel ?? '',
+      ),
+      duaSlotMorning: _read(
+        map,
+        'duaSlotMorning',
+        fallback?.duaSlotMorning ?? '',
+      ),
+      duaSlotAfternoon: _read(
+        map,
+        'duaSlotAfternoon',
+        fallback?.duaSlotAfternoon ?? '',
+      ),
+      duaSlotEvening: _read(
+        map,
+        'duaSlotEvening',
+        fallback?.duaSlotEvening ?? '',
+      ),
+      duaSlotNight: _read(map, 'duaSlotNight', fallback?.duaSlotNight ?? ''),
+      duaSlotAnytime: _read(
+        map,
+        'duaSlotAnytime',
+        fallback?.duaSlotAnytime ?? '',
+      ),
       planEdit: _read(map, 'planEdit', fallback?.planEdit ?? ''),
       planDelete: _read(map, 'planDelete', fallback?.planDelete ?? ''),
       planComplete: _read(map, 'planComplete', fallback?.planComplete ?? ''),
@@ -3517,6 +3574,12 @@ class AppText {
         map,
         'selectCategory',
         fallback?.selectCategory ?? '',
+      ),
+      selectDua: _read(map, 'selectDua', fallback?.selectDua ?? ''),
+      duaSelectedCount: _read(
+        map,
+        'duaSelectedCount',
+        fallback?.duaSelectedCount ?? '',
       ),
       egSahihBukhariHint: _read(
         map,
@@ -3952,6 +4015,11 @@ class AppText {
         map,
         'selectCategoryFirst',
         fallback?.selectCategoryFirst ?? '',
+      ),
+      selectDuaFirst: _read(
+        map,
+        'selectDuaFirst',
+        fallback?.selectDuaFirst ?? '',
       ),
       planCreated: _read(map, 'planCreated', fallback?.planCreated ?? ''),
       planUpdated: _read(map, 'planUpdated', fallback?.planUpdated ?? ''),
@@ -4666,6 +4734,21 @@ class AppText {
         map,
         'duaEditBookmarkTitle',
         fallback?.duaEditBookmarkTitle ?? '',
+      ),
+      duaEditPlanTitle: _read(
+        map,
+        'duaEditPlanTitle',
+        fallback?.duaEditPlanTitle ?? '',
+      ),
+      duaDeletePlanTitle: _read(
+        map,
+        'duaDeletePlanTitle',
+        fallback?.duaDeletePlanTitle ?? '',
+      ),
+      duaDeletePlanMessage: _read(
+        map,
+        'duaDeletePlanMessage',
+        fallback?.duaDeletePlanMessage ?? '',
       ),
       duaFolderName: _read(map, 'duaFolderName', fallback?.duaFolderName ?? ''),
       duaFolderNameHint: _read(
