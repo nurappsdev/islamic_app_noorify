@@ -1,5 +1,6 @@
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
 
 /// Arguments for [RouteNames.duaReader] — which dua to show.
 ///
@@ -28,4 +29,11 @@ class DuaCategoryDuasArgs {
   const DuaCategoryDuasArgs(this.category);
 
   final DuaCategoryModel category;
+}
+
+/// Arguments for [RouteNames.duaPlanDetail] — which plan to open.
+class DuaPlanDetailArgs {
+  const DuaPlanDetailArgs(this.plan);
+
+  final DuaPlan plan;
 }

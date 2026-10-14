@@ -135,6 +135,9 @@ import '../../features/dua/presentation/screens/dua_group_screen.dart';
 import '../../features/dua/presentation/screens/dua_entry_screen.dart';
 import '../../features/dua/presentation/screens/dua_reader_screen.dart';
 import '../../features/dua/presentation/screens/dua_saved_screen.dart';
+import '../../features/dua/presentation/screens/dua_planner_screen.dart';
+import '../../features/dua/presentation/screens/dua_plan_create_screen.dart';
+import '../../features/dua/presentation/screens/dua_plan_detail_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_onboarding_screen.dart';
@@ -664,6 +667,21 @@ class AppRoutes {
         return _page(DuaReaderScreen(args: args), settings);
       case RouteNames.duaSaved:
         return _page(const DuaSavedScreen(), settings);
+      case RouteNames.duaPlanner:
+        return _page(const DuaPlannerScreen(), settings);
+      case RouteNames.duaPlanCreate:
+        return _page(const DuaPlanCreateScreen(), settings);
+      case RouteNames.duaPlanDetail:
+        final planArgs = settings.arguments;
+        return _page(
+          planArgs is DuaPlanDetailArgs
+              ? DuaPlanDetailScreen(
+                  planId: planArgs.plan.id,
+                  initialName: planArgs.plan.name,
+                )
+              : const DuaPlannerScreen(),
+          settings,
+        );
       case RouteNames.zikr:
         return _page(const ZikrEntryScreen(), settings);
       case RouteNames.zikrDashboard:

@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
 
 int _asInt(Object? value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
@@ -16,16 +18,28 @@ abstract interface class DuaRemoteDataSource {
     int page = 1,
     int limit = 20,
   });
+
+  /// One dua's full content (`GET /duas/{id}`) — used to show a plan's duas
+  /// for reading, since the plan endpoints only guarantee `duaId`.
+  Future<DuaFeaturedModel> getDuaById(String id);
+
+  /// Dua planner — needs the signed-in user's access token.
+  Future<List<DuaPlan>> getPlans({String? status});
+  Future<DuaPlan> createPlan(DuaPlanDraft draft);
+  Future<DuaPlanDetail> getPlanDetail(String id);
 }
 
-/// Public, read-only content endpoints — same host as the rest of the app's
-/// API, no access token required (same pattern as the Zikr catalog/routines
-/// GETs in `ZikrRemoteDataSourceImpl`).
+/// Content endpoints are public/read-only; the Dua planner endpoints need the
+/// signed-in user's access token (same split as `ZikrRemoteDataSourceImpl`'s
+/// public catalog/routines GETs vs. its authenticated plan endpoints).
 class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
-  DuaRemoteDataSourceImpl({Dio? dio}) : _dio = dio ?? _buildDio();
+  DuaRemoteDataSourceImpl({Dio? dio, AuthLocalDataSource? local})
+    : _local = local ?? AuthLocalDataSourceImpl(),
+      _dio = dio ?? _buildDio();
 
   static const baseUrl = ApiConstants.baseUrl;
   final Dio _dio;
+  final AuthLocalDataSource _local;
 
   static Dio _buildDio() {
     final options = BaseOptions(
@@ -81,10 +95,59 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     );
   }
 
+  @override
+  Future<DuaFeaturedModel> getDuaById(String id) async =>
+      DuaFeaturedModel.fromJson(_dataMap(await _get('/duas/$id')));
+
+  @override
+  Future<List<DuaPlan>> getPlans({String? status}) async => _dataList(
+    await _get(
+      '/duas/planner/plans',
+      queryParameters: {'status': ?status},
+      requiresAuth: true,
+    ),
+  ).map(DuaPlan.fromJson).toList(growable: false);
+
+  @override
+  Future<DuaPlan> createPlan(DuaPlanDraft draft) async => DuaPlan.fromJson(
+    _dataMap(
+      await _call(
+        () => _dio.post<dynamic>(
+          '/duas/planner/plans',
+          data: draft.toJson(),
+          options: _options(requiresAuth: true),
+        ),
+      ),
+    ),
+  );
+
+  @override
+  Future<DuaPlanDetail> getPlanDetail(String id) async =>
+      DuaPlanDetail.fromJson(
+        _dataMap(await _get('/duas/planner/plans/$id', requiresAuth: true)),
+      );
+
   Future<Response<dynamic>> _get(
     String path, {
     Map<String, dynamic>? queryParameters,
-  }) => _call(() => _dio.get<dynamic>(path, queryParameters: queryParameters));
+    bool requiresAuth = false,
+  }) => _call(
+    () => _dio.get<dynamic>(
+      path,
+      queryParameters: queryParameters,
+      options: _options(requiresAuth: requiresAuth),
+    ),
+  );
+
+  Options _options({required bool requiresAuth}) {
+    final token = _local.getToken();
+    if (requiresAuth && (token == null || token.trim().isEmpty)) {
+      throw AuthenticationRequiredException();
+    }
+    return Options(
+      headers: token == null ? null : {'Authorization': 'Bearer $token'},
+    );
+  }
 
   Future<Response<dynamic>> _call(
     Future<Response<dynamic>> Function() request,
@@ -106,6 +169,7 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
         response.statusCode! < 300 &&
         body['success'] != false;
     if (success) return;
+    if (response.statusCode == 401) throw AuthenticationRequiredException();
     throw ServerException(
       body['message']?.toString() ?? 'Request failed.',
       statusCode: response.statusCode,
@@ -115,6 +179,12 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   Map<String, dynamic> _body(Response<dynamic> response) => response.data is Map
       ? Map<String, dynamic>.from(response.data as Map)
       : const {};
+
+  Map<String, dynamic> _dataMap(Response<dynamic> response) {
+    final data = _body(response)['data'];
+    if (data is! Map) throw ParsingException('Dua response data is invalid.');
+    return Map<String, dynamic>.from(data);
+  }
 
   List<Map<String, dynamic>> _dataList(Response<dynamic> response) {
     final data = _body(response)['data'];
