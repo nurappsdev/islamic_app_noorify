@@ -22,8 +22,11 @@ class DuaRepositoryImpl implements DuaRepository {
   Future<DuaFeaturedModel> getDuaById(String id) => _remote.getDuaById(id);
 
   @override
-  Future<List<DuaPlan>> getPlans({String? status}) =>
-      _remote.getPlans(status: status);
+  Future<DuaPlanPage> getPlans({
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) => _remote.getPlans(status: status, page: page, limit: limit);
   @override
   Future<DuaPlan> createPlan(DuaPlanDraft draft) => _remote.createPlan(draft);
   @override

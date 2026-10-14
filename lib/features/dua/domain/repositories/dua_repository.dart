@@ -12,7 +12,7 @@ abstract interface class DuaRepository {
 
   Future<DuaFeaturedModel> getDuaById(String id);
 
-  Future<List<DuaPlan>> getPlans({String? status});
+  Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
   Future<DuaPlanDetail> getPlanDetail(String id);
 }

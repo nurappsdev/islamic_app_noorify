@@ -10,6 +10,9 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dar
 int _asInt(Object? value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
 
+Map<String, dynamic> _mapOf(Object? value) =>
+    value is Map ? Map<String, dynamic>.from(value) : const {};
+
 abstract interface class DuaRemoteDataSource {
   Future<List<DuaFeaturedModel>> getFeatured();
   Future<List<DuaCategoryModel>> getCategories();
@@ -24,7 +27,7 @@ abstract interface class DuaRemoteDataSource {
   Future<DuaFeaturedModel> getDuaById(String id);
 
   /// Dua planner — needs the signed-in user's access token.
-  Future<List<DuaPlan>> getPlans({String? status});
+  Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
   Future<DuaPlanDetail> getPlanDetail(String id);
 }
@@ -100,13 +103,25 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
       DuaFeaturedModel.fromJson(_dataMap(await _get('/duas/$id')));
 
   @override
-  Future<List<DuaPlan>> getPlans({String? status}) async => _dataList(
-    await _get(
+  Future<DuaPlanPage> getPlans({
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final response = await _get(
       '/duas/planner/plans',
-      queryParameters: {'status': ?status},
+      queryParameters: {'status': ?status, 'page': page, 'limit': limit},
       requiresAuth: true,
-    ),
-  ).map(DuaPlan.fromJson).toList(growable: false);
+    );
+    final meta = _mapOf(_body(response)['meta']);
+    return DuaPlanPage(
+      plans: _dataList(response).map(DuaPlan.fromJson).toList(growable: false),
+      page: _asInt(meta['page']) == 0 ? page : _asInt(meta['page']),
+      limit: _asInt(meta['limit']) == 0 ? limit : _asInt(meta['limit']),
+      total: _asInt(meta['total']),
+      totalPage: _asInt(meta['totalPage']),
+    );
+  }
 
   @override
   Future<DuaPlan> createPlan(DuaPlanDraft draft) async => DuaPlan.fromJson(

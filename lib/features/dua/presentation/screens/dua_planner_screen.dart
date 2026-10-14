@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_planner_cubit
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
 /// Dua planner (design `devImg/img_7.png`), reached from index 2 ("Planner")
 /// of [DuaBottomNav].
@@ -27,18 +28,31 @@ class DuaPlannerScreen extends StatefulWidget {
 }
 
 class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
+  static const _loadMoreThreshold = 200.0;
+
   late final DuaPlannerCubit _cubit = DuaPlannerCubit(duaRepository);
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _cubit.load();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _cubit.close();
     super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      _cubit.loadMore();
+    }
   }
 
   Future<void> _createPlan() async {
@@ -76,7 +90,12 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                         selected: state.tab,
                         onChanged: _cubit.selectTab,
                       ),
-                      Expanded(child: _buildBody(appText, state)),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: _cubit.load,
+                          child: _buildBody(appText, state),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -126,18 +145,46 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.plans.isEmpty) {
-      return Center(
-        child: Transform.translate(
-          offset: Offset(0, -20.h),
-          child: _EmptyPlans(message: appText.noPlansYetMessage),
+      // A scrollable empty state, not a bare Center, so the RefreshIndicator
+      // above still has something to pull against.
+      return LayoutBuilder(
+        builder: (context, constraints) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: constraints.maxHeight,
+              child: Center(
+                child: Transform.translate(
+                  offset: Offset(0, -20.h),
+                  child: _EmptyPlans(message: appText.noPlansYetMessage),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
+    final showLoadingMore = state.loadingMore;
     return ListView.separated(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 96.h),
-      itemCount: state.plans.length,
+      itemCount: state.plans.length + (showLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => SizedBox(height: 12.h),
-      itemBuilder: (context, index) => _PlanCard(plan: state.plans[index]),
+      itemBuilder: (context, index) {
+        if (index >= state.plans.length) {
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h),
+            child: const Center(
+              child: SizedBox.square(
+                dimension: 22,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            ),
+          );
+        }
+        return _PlanCard(plan: state.plans[index]);
+      },
     );
   }
 }
@@ -171,13 +218,23 @@ class _PlanCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    plan.name,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: context.inkColor(const Color(0xFF2C3320)),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          plan.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: context.inkColor(const Color(0xFF2C3320)),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      DuaPlanStatusBadge(status: plan.status),
+                    ],
                   ),
                   SizedBox(height: 3.h),
                   Text(

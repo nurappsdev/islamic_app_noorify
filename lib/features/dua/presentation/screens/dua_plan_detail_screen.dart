@@ -10,13 +10,15 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_plan_detail_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// One plan's duas (design `devImg/img_7.png`'s "My Plan" entry, opened for
 /// reading), reached by tapping a plan card on [DuaPlannerScreen].
 ///
-/// Loads `GET /duas/planner/plans/{id}` for progress plus `GET /duas/{id}`
-/// for each dua's content, then opens the usual [DuaReaderScreen] on tap.
+/// Loads `GET /duas/planner/plans/{id}` (which embeds each dua's full
+/// content), shows the plan's status, then opens the usual
+/// [DuaReaderScreen] on tap.
 class DuaPlanDetailScreen extends StatelessWidget {
   const DuaPlanDetailScreen({
     super.key,
@@ -49,9 +51,14 @@ class _DuaPlanDetailView extends StatelessWidget {
             SizedBox(height: 6.h),
             BlocBuilder<DuaPlanDetailCubit, DuaPlanDetailState>(
               buildWhen: (previous, current) =>
-                  previous.planName != current.planName,
+                  previous.planName != current.planName ||
+                  previous.planStatus != current.planStatus ||
+                  previous.status != current.status,
               builder: (context, state) => _Header(
                 title: state.planName.isEmpty ? initialName : state.planName,
+                status: state.status == DuaPlanDetailStatus.success
+                    ? state.planStatus
+                    : null,
               ),
             ),
             Expanded(
@@ -165,8 +172,12 @@ class _DuaEntryTile extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.title});
+  const _Header({required this.title, this.status});
   final String title;
+
+  /// `in_progress` / `completed` / `abandoned` — shown as a pill on the
+  /// right once the plan has loaded. Null while still loading.
+  final String? status;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -200,6 +211,14 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
+        if (status != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(right: 12.w),
+              child: DuaPlanStatusBadge(status: status!),
+            ),
+          ),
       ],
     ),
   );

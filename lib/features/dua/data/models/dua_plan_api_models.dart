@@ -6,6 +6,15 @@ int _asInt(Object? value) =>
 double _asDouble(Object? value) =>
     value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
 
+Map<String, dynamic> _mapOf(Object? value) =>
+    value is Map ? Map<String, dynamic>.from(value) : const {};
+
+/// A Mongo `_id`/`id` read off a *map* — unlike [readId], which only reads a
+/// single already-extracted value and must not be handed a whole map (its
+/// `toString()` would come back as a non-empty, garbage "id").
+String _idOf(Map<String, dynamic> json) =>
+    readId(json['_id']) ?? readId(json['id']) ?? '';
+
 /// One dua inside a [DuaPlanDraft] (`items[]` of `POST /duas/planner/plans`
 /// and `POST /duas/planner/plans/{id}/items`).
 ///
@@ -57,12 +66,10 @@ class DuaPlanDraft {
   };
 }
 
-/// One of the user's dua plans, as `GET /duas/planner/plans` lists them and
-/// `POST /duas/planner/plans` returns on success.
-///
-/// The API's published spec documents these fields only by description (no
-/// example response body), so this is parsed defensively, same as the rest
-/// of this app's API models.
+/// One of the user's dua plans, as `GET /duas/planner/plans` lists them —
+/// CONFIRMED real response (2026-10-14): `totalDuas` is top-level, today's
+/// progress (`completedDuas`/`percentage`/`isCompleted`) is nested under
+/// `today`, and streak stats are nested under `stats`.
 class DuaPlan {
   const DuaPlan({
     required this.id,
@@ -82,6 +89,8 @@ class DuaPlan {
   /// `in_progress`, `completed` or `abandoned`.
   final String status;
   final int totalDuas;
+
+  /// Today's progress: how many of [totalDuas] are done so far.
   final int completedDuas;
 
   /// Today's progress share, `0..100`.
@@ -90,29 +99,56 @@ class DuaPlan {
   final int currentStreak;
   final int longestStreak;
 
-  factory DuaPlan.fromJson(Map<String, dynamic> json) => DuaPlan(
-    id: readId(json) ?? '',
-    name: json['name']?.toString() ?? '',
-    status: json['status']?.toString() ?? 'in_progress',
-    totalDuas: _asInt(json['totalDuas']),
-    completedDuas: _asInt(json['completedDuas']),
-    percentage: _asDouble(json['percentage']),
-    isCompleted: json['isCompleted'] == true,
-    currentStreak: _asInt(json['currentStreak']),
-    longestStreak: _asInt(json['longestStreak']),
-  );
+  factory DuaPlan.fromJson(Map<String, dynamic> json) {
+    final today = _mapOf(json['today']);
+    final stats = _mapOf(json['stats']);
+    return DuaPlan(
+      id: _idOf(json),
+      name: json['name']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'in_progress',
+      totalDuas: _asInt(json['totalDuas']),
+      completedDuas: _asInt(today['completedDuas']),
+      percentage: _asDouble(today['percentage']),
+      isCompleted: today['isCompleted'] == true,
+      currentStreak: _asInt(stats['currentStreak']),
+      longestStreak: _asInt(stats['longestStreak']),
+    );
+  }
+}
+
+/// One page of `GET /duas/planner/plans`, plus its pagination `meta`.
+class DuaPlanPage {
+  const DuaPlanPage({
+    required this.plans,
+    required this.page,
+    required this.limit,
+    required this.total,
+    required this.totalPage,
+  });
+
+  final List<DuaPlan> plans;
+  final int page;
+  final int limit;
+  final int total;
+  final int totalPage;
+
+  bool get hasMore => page < totalPage;
 }
 
 /// One dua inside a plan, as `GET /duas/planner/plans/{id}` lists them —
-/// today's target/count/slot for that dua. The dua's own content (title,
-/// arabic, ...) isn't guaranteed to be embedded here, so the plan detail
-/// screen fetches it separately via `GET /duas/{id}`.
+/// CONFIRMED real response (2026-10-14): each item embeds the dua's full
+/// content under `dua` (same shape `GET /duas/{id}` returns), so no extra
+/// request is needed to show it for reading.
 class DuaPlanItem {
   const DuaPlanItem({
     required this.duaId,
     required this.targetCount,
     required this.count,
+    required this.remaining,
     required this.slot,
+    required this.order,
+    required this.isCompleted,
+    this.dua,
   });
 
   final String duaId;
@@ -120,26 +156,30 @@ class DuaPlanItem {
 
   /// Today's recitation count so far.
   final int count;
+  final int remaining;
   final String slot;
+  final int order;
+  final bool isCompleted;
 
-  bool get isDone => targetCount > 0 && count >= targetCount;
+  /// The dua's full content, embedded by the plan detail endpoint. Null only
+  /// if a future response leaves it out, in which case the detail screen
+  /// falls back to `GET /duas/{id}`.
+  final DuaFeaturedModel? dua;
 
   factory DuaPlanItem.fromJson(Map<String, dynamic> json) {
-    final nestedDua = json['dua'];
-    final duaId =
-        readId(json['duaId']) ??
-        (nestedDua is Map
-            ? readId(Map<String, dynamic>.from(nestedDua))
-            : null) ??
-        readId(json) ??
-        '';
+    final duaJson = json['dua'];
+    final duaModel = duaJson is Map
+        ? DuaFeaturedModel.fromJson(Map<String, dynamic>.from(duaJson))
+        : null;
     return DuaPlanItem(
-      duaId: duaId,
+      duaId: readId(json['duaId']) ?? duaModel?.id ?? _idOf(json),
       targetCount: _asInt(json['targetCount']),
-      count: _asInt(
-        json['count'] ?? json['currentCount'] ?? json['todayCount'],
-      ),
+      count: _asInt(json['count']),
+      remaining: _asInt(json['remaining']),
       slot: json['slot']?.toString() ?? 'anytime',
+      order: _asInt(json['order']),
+      isCompleted: json['isCompleted'] == true,
+      dua: duaModel,
     );
   }
 }
@@ -150,19 +190,24 @@ class DuaPlanDetail {
   const DuaPlanDetail({
     required this.id,
     required this.name,
+    required this.status,
     required this.items,
   });
 
   final String id;
   final String name;
+
+  /// `in_progress`, `completed` or `abandoned`.
+  final String status;
   final List<DuaPlanItem> items;
 
   factory DuaPlanDetail.fromJson(Map<String, dynamic> json) => DuaPlanDetail(
-    id: readId(json) ?? '',
+    id: _idOf(json),
     name: json['name']?.toString() ?? '',
+    status: json['status']?.toString() ?? 'in_progress',
     items: [
       for (final item in json['items'] as List? ?? const [])
         if (item is Map) DuaPlanItem.fromJson(Map<String, dynamic>.from(item)),
-    ],
+    ]..sort((a, b) => a.order.compareTo(b.order)),
   );
 }
