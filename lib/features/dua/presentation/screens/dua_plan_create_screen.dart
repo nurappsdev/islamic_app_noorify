@@ -13,6 +13,10 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_pickers.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
+
+/// `in_progress`, `completed` or `abandoned`, in display order.
+const List<String> _duaPlanStatuses = ['in_progress', 'completed', 'abandoned'];
 
 /// One dua added to the plan being built, before "Create" sends it.
 ///
@@ -28,21 +32,29 @@ class _PlanItemEntry {
 }
 
 /// "Create plan" screen (design `devImg/img_8.png`), reached from the
-/// "Create Plan" action on [DuaPlannerScreen].
+/// "Create Plan" action on [DuaPlannerScreen] — or, with [editPlan] set, the
+/// "Edit" action on one of its plan cards' 3-dot menu.
 ///
 /// Names the plan, adds one or more duas ("Add" / "Add More" — each with its
 /// own time slot), picks which days of the week it repeats on, then sends
-/// `POST /duas/planner/plans`. On success the screen pops with the created
-/// [DuaPlan], so the planner can show it right away without a full reload.
+/// `POST /duas/planner/plans` (create) or `PATCH /duas/planner/plans/{id}`
+/// (edit, [editPlan] non-null — pre-fills the form from it, and adds a
+/// status selector since `PATCH` can also move the plan between
+/// in-progress/completed/abandoned). The screen pops `true` on success, so
+/// the planner knows to reload.
 class DuaPlanCreateScreen extends StatefulWidget {
-  const DuaPlanCreateScreen({super.key});
+  const DuaPlanCreateScreen({super.key, this.editPlan});
+
+  final DuaPlanDetail? editPlan;
 
   @override
   State<DuaPlanCreateScreen> createState() => _DuaPlanCreateScreenState();
 }
 
 class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
-  final _nameController = TextEditingController();
+  late final _nameController = TextEditingController(
+    text: widget.editPlan?.name ?? '',
+  );
 
   DuaCategoryModel? _category;
 
@@ -52,14 +64,27 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   List<DuaFeaturedModel> _pendingDuas = const [];
   String _slot = 'anytime';
 
-  final List<_PlanItemEntry> _entries = [];
+  late final List<_PlanItemEntry> _entries = [
+    for (final item in widget.editPlan?.items ?? const [])
+      if (item.dua != null) _PlanItemEntry(dua: item.dua!, slot: item.slot),
+  ];
 
   /// Whether the "added" list is showing instead of the form.
-  bool _adding = true;
+  late bool _adding = _entries.isEmpty;
 
   /// 0 = Sunday ... 6 = Saturday; every day by default (the API's own
   /// default when `daysOfWeek` is left out).
-  final Set<int> _days = {0, 1, 2, 3, 4, 5, 6};
+  late final Set<int> _days = {
+    ...(widget.editPlan?.daysOfWeek.isNotEmpty ?? false)
+        ? widget.editPlan!.daysOfWeek
+        : [0, 1, 2, 3, 4, 5, 6],
+  };
+
+  /// `in_progress` / `completed` / `abandoned` — only edited (and shown) in
+  /// edit mode.
+  late String _status = widget.editPlan?.status ?? 'in_progress';
+
+  bool get _isEditing => widget.editPlan != null;
 
   bool _submitting = false;
 
@@ -166,7 +191,12 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     });
   }
 
-  Future<void> _create() async {
+  void _setStatus(String status) {
+    HapticFeedback.selectionClick();
+    setState(() => _status = status);
+  }
+
+  Future<void> _submit() async {
     final appText = AppText.readOf(context);
     final entries = _resolvedEntries();
     if (entries.isEmpty) {
@@ -180,14 +210,19 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     HapticFeedback.selectionClick();
     setState(() => _submitting = true);
     try {
-      final plan = await duaRepository.createPlan(
-        DuaPlanDraft(
-          name: _planName,
-          items: [for (final entry in entries) entry.toDraft()],
-          daysOfWeek: _days.toList()..sort(),
-        ),
+      final draft = DuaPlanDraft(
+        name: _planName,
+        items: [for (final entry in entries) entry.toDraft()],
+        daysOfWeek: _days.toList()..sort(),
+        status: _isEditing ? _status : null,
       );
-      if (mounted) Navigator.of(context).pop(plan);
+      final editId = widget.editPlan?.id;
+      if (editId != null) {
+        await duaRepository.editPlan(editId, draft);
+      } else {
+        await duaRepository.createPlan(draft);
+      }
+      if (mounted) Navigator.of(context).pop(true);
     } catch (error) {
       if (error is AuthenticationRequiredException) {
         if (mounted) await showDuaLoginRequiredDialog(context);
@@ -209,7 +244,11 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
         child: Column(
           children: [
             SizedBox(height: 6.h),
-            _Header(title: appText.createPlanHeader),
+            _Header(
+              title: _isEditing
+                  ? appText.duaEditPlanTitle
+                  : appText.createPlanHeader,
+            ),
             Expanded(
               child: _adding ? _buildForm(appText) : _buildAddedList(appText),
             ),
@@ -221,7 +260,7 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                   width: double.infinity,
                   height: 54.h,
                   child: FilledButton(
-                    onPressed: _submitting ? null : _create,
+                    onPressed: _submitting ? null : _submit,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColor.primary,
                       foregroundColor: Colors.white,
@@ -240,7 +279,9 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                             ),
                           )
                         : Text(
-                            appText.create,
+                            _isEditing
+                                ? appText.duaSaveChanges
+                                : appText.create,
                             style: TextStyle(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
@@ -374,6 +415,7 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
         ),
         SizedBox(height: 12.h),
         _DaysOfWeekRow(selected: _days, onToggle: _toggleDay),
+        if (_isEditing) ..._statusSection(appText),
       ],
     );
   }
@@ -420,9 +462,31 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
         ),
         SizedBox(height: 12.h),
         _DaysOfWeekRow(selected: _days, onToggle: _toggleDay),
+        if (_isEditing) ..._statusSection(appText),
       ],
     );
   }
+
+  List<Widget> _statusSection(AppText appText) => [
+    SizedBox(height: 22.h),
+    Text(
+      appText.duaPlanStatusLabel,
+      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+    ),
+    SizedBox(height: 12.h),
+    Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: [
+        for (final status in _duaPlanStatuses)
+          _SlotChip(
+            label: duaPlanStatusLabel(appText, status),
+            selected: _status == status,
+            onTap: () => _setStatus(status),
+          ),
+      ],
+    ),
+  ];
 
   OutlineInputBorder _fieldBorder(BuildContext context) => OutlineInputBorder(
     borderRadius: BorderRadius.circular(26.r),

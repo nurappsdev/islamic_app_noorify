@@ -108,4 +108,10 @@ class DuaPlannerCubit extends Cubit<DuaPlannerState> {
       emit(state.copyWith(loadingMore: false));
     }
   }
+
+  /// Deletes a plan, then reloads the current tab's first page.
+  Future<void> delete(String id) async {
+    await _repository.deletePlan(id);
+    await load();
+  }
 }

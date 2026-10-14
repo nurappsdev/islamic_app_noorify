@@ -31,4 +31,9 @@ class DuaRepositoryImpl implements DuaRepository {
   Future<DuaPlan> createPlan(DuaPlanDraft draft) => _remote.createPlan(draft);
   @override
   Future<DuaPlanDetail> getPlanDetail(String id) => _remote.getPlanDetail(id);
+  @override
+  Future<void> editPlan(String id, DuaPlanDraft draft) =>
+      _remote.editPlan(id, draft);
+  @override
+  Future<void> deletePlan(String id) => _remote.deletePlan(id);
 }

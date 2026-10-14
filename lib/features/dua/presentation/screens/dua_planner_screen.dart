@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -12,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_planner_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_create_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
@@ -193,6 +195,72 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({required this.plan});
   final DuaPlan plan;
 
+  Future<void> _menu(BuildContext context) async {
+    final appText = AppText.readOf(context);
+    final action = await showMenu<String>(
+      context: context,
+      position: const RelativeRect.fromLTRB(400, 200, 12, 0),
+      items: [
+        PopupMenuItem(value: 'edit', child: Text(appText.duaSavedEdit)),
+        PopupMenuItem(
+          value: 'delete',
+          child: Text(
+            appText.duaSavedDelete,
+            style: TextStyle(color: context.inkColor(Colors.red)),
+          ),
+        ),
+      ],
+    );
+    if (!context.mounted || action == null) return;
+    final cubit = context.read<DuaPlannerCubit>();
+    if (action == 'edit') {
+      await _openEdit(context, cubit);
+    } else {
+      final yes = await _confirmDelete(context);
+      if (yes == true) await cubit.delete(plan.id);
+    }
+  }
+
+  /// Loads the plan's full detail (duas, days, status) so the edit screen
+  /// can be pre-filled, then opens it.
+  Future<void> _openEdit(BuildContext context, DuaPlannerCubit cubit) async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    DuaPlanDetail? detail;
+    Object? error;
+    try {
+      detail = await duaRepository.getPlanDetail(plan.id);
+    } catch (e) {
+      error = e;
+    }
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // close the spinner
+    if (error is AuthenticationRequiredException) {
+      await showDuaLoginRequiredDialog(context);
+      return;
+    }
+    if (detail == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+      return;
+    }
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => DuaPlanCreateScreen(editPlan: detail)),
+    );
+    await cubit.load();
+  }
+
+  Future<bool?> _confirmDelete(BuildContext context) =>
+      showModalBottomSheet<bool>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const _DeletePlanSheet(),
+      );
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -218,23 +286,15 @@ class _PlanCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          plan.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: context.inkColor(const Color(0xFF2C3320)),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      DuaPlanStatusBadge(status: plan.status),
-                    ],
+                  Text(
+                    plan.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: context.inkColor(const Color(0xFF2C3320)),
+                    ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
@@ -250,16 +310,118 @@ class _PlanCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20.sp,
-              color: context.inkColor(const Color(0xFFA5B657)),
+            // Its own middle column, between the name/progress and the
+            // 3-dot menu — not squeezed next to the title.
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w),
+              child: DuaPlanStatusBadge(status: plan.status),
+            ),
+            IconButton(
+              onPressed: () => _menu(context),
+              icon: Icon(
+                Icons.more_vert,
+                size: 20.sp,
+                color: context.inkColor(const Color(0xFFA5B657)),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _DeletePlanSheet extends StatelessWidget {
+  const _DeletePlanSheet();
+  @override
+  Widget build(BuildContext context) => _SheetShell(
+    title: AppText.of(context).duaDeletePlanTitle,
+    child: Column(
+      children: [
+        Icon(
+          Icons.delete_outline,
+          color: context.inkColor(Colors.red),
+          size: 45.sp,
+        ),
+        SizedBox(height: 20.h),
+        Text(
+          AppText.of(context).duaDeletePlanMessage,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Color(0xFF8B956D)),
+        ),
+        SizedBox(height: 90.h),
+        _SheetButtons(
+          cancel: () => Navigator.pop(context, false),
+          confirm: () => Navigator.pop(context, true),
+          confirmText: AppText.of(context).duaYesDelete,
+          danger: true,
+        ),
+      ],
+    ),
+  );
+}
+
+class _SheetShell extends StatelessWidget {
+  const _SheetShell({required this.title, required this.child});
+  final String title;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: context.surfaceColor(const Color(0xFFDCE6BE)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+    ),
+    padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 24.h),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 17.sp,
+            color: context.inkColor(const Color(0xFF879260)),
+          ),
+        ),
+        SizedBox(height: 20.h),
+        child,
+      ],
+    ),
+  );
+}
+
+class _SheetButtons extends StatelessWidget {
+  const _SheetButtons({
+    required this.cancel,
+    required this.confirm,
+    required this.confirmText,
+    this.danger = false,
+  });
+  final VoidCallback cancel, confirm;
+  final String confirmText;
+  final bool danger;
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: OutlinedButton(
+          onPressed: cancel,
+          child: Text(AppText.of(context).duaCancel),
+        ),
+      ),
+      SizedBox(width: 8.w),
+      Expanded(
+        child: FilledButton(
+          onPressed: confirm,
+          style: FilledButton.styleFrom(
+            backgroundColor: context.surfaceColor(
+              danger ? Colors.red.shade700 : const Color(0xFFA5B657),
+            ),
+          ),
+          child: Text(confirmText),
+        ),
+      ),
+    ],
+  );
 }
 
 class _PlannerTabs extends StatelessWidget {

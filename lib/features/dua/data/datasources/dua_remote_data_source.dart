@@ -30,6 +30,8 @@ abstract interface class DuaRemoteDataSource {
   Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
   Future<DuaPlanDetail> getPlanDetail(String id);
+  Future<void> editPlan(String id, DuaPlanDraft draft);
+  Future<void> deletePlan(String id);
 }
 
 /// Content endpoints are public/read-only; the Dua planner endpoints need the
@@ -141,6 +143,23 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
       DuaPlanDetail.fromJson(
         _dataMap(await _get('/duas/planner/plans/$id', requiresAuth: true)),
       );
+
+  @override
+  Future<void> editPlan(String id, DuaPlanDraft draft) => _call(
+    () => _dio.patch<dynamic>(
+      '/duas/planner/plans/$id',
+      data: draft.toJson(),
+      options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<void> deletePlan(String id) => _call(
+    () => _dio.delete<dynamic>(
+      '/duas/planner/plans/$id',
+      options: _options(requiresAuth: true),
+    ),
+  );
 
   Future<Response<dynamic>> _get(
     String path, {

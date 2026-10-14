@@ -40,17 +40,21 @@ class DuaPlanItemDraft {
   };
 }
 
-/// What the user filled in to create a dua plan (`POST /duas/planner/plans`),
-/// design `devImg/img_8.png` — one or more duas (design's "Add"/"Add More"),
-/// each with its own target count and time slot.
+/// What the user filled in to create or edit a dua plan
+/// (`POST /duas/planner/plans`, `PATCH /duas/planner/plans/{id}`), design
+/// `devImg/img_8.png` — one or more duas (design's "Add"/"Add More"), each
+/// with its own target count and time slot.
 ///
-/// `startDate`/`endDate`/reminder fields are left out so the plan simply
-/// starts today and has no end date.
+/// `startDate`/`endDate`/reminder fields are left out so a created plan
+/// simply starts today and has no end date; [status] is only set when
+/// editing (confirmed working: `PATCH` with `status` moves the plan between
+/// `in_progress`/`completed`/`abandoned`).
 class DuaPlanDraft {
   const DuaPlanDraft({
     required this.name,
     required this.items,
     this.daysOfWeek = const [0, 1, 2, 3, 4, 5, 6],
+    this.status,
   });
 
   final String name;
@@ -59,10 +63,14 @@ class DuaPlanDraft {
   /// 0 = Sunday ... 6 = Saturday.
   final List<int> daysOfWeek;
 
+  /// `in_progress`, `completed` or `abandoned` — omitted on create.
+  final String? status;
+
   Map<String, dynamic> toJson() => {
     'name': name,
     'items': [for (final item in items) item.toJson()],
     'daysOfWeek': daysOfWeek,
+    if (status != null) 'status': status,
   };
 }
 
@@ -191,6 +199,7 @@ class DuaPlanDetail {
     required this.id,
     required this.name,
     required this.status,
+    required this.daysOfWeek,
     required this.items,
   });
 
@@ -199,12 +208,18 @@ class DuaPlanDetail {
 
   /// `in_progress`, `completed` or `abandoned`.
   final String status;
+
+  /// 0 = Sunday ... 6 = Saturday.
+  final List<int> daysOfWeek;
   final List<DuaPlanItem> items;
 
   factory DuaPlanDetail.fromJson(Map<String, dynamic> json) => DuaPlanDetail(
     id: _idOf(json),
     name: json['name']?.toString() ?? '',
     status: json['status']?.toString() ?? 'in_progress',
+    daysOfWeek: [
+      for (final day in json['daysOfWeek'] as List? ?? const []) _asInt(day),
+    ],
     items: [
       for (final item in json['items'] as List? ?? const [])
         if (item is Map) DuaPlanItem.fromJson(Map<String, dynamic>.from(item)),

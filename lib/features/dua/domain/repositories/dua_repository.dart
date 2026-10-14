@@ -15,4 +15,6 @@ abstract interface class DuaRepository {
   Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
   Future<DuaPlanDetail> getPlanDetail(String id);
+  Future<void> editPlan(String id, DuaPlanDraft draft);
+  Future<void> deletePlan(String id);
 }

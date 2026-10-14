@@ -461,6 +461,7 @@ class AppText {
     required this.planTargetDaysLabel,
     required this.planTargetDaysHint,
     required this.duaPlanSlotLabel,
+    required this.duaPlanStatusLabel,
     required this.duaSlotMorning,
     required this.duaSlotAfternoon,
     required this.duaSlotEvening,
@@ -768,6 +769,9 @@ class AppText {
     required this.duaSavedDelete,
     required this.duaSavedTitle,
     required this.duaEditBookmarkTitle,
+    required this.duaEditPlanTitle,
+    required this.duaDeletePlanTitle,
+    required this.duaDeletePlanMessage,
     required this.duaFolderName,
     required this.duaFolderNameHint,
     required this.duaSaveChanges,
@@ -1379,6 +1383,7 @@ class AppText {
   final String planTargetDaysLabel;
   final String planTargetDaysHint;
   final String duaPlanSlotLabel;
+  final String duaPlanStatusLabel;
   final String duaSlotMorning;
   final String duaSlotAfternoon;
   final String duaSlotEvening;
@@ -1690,6 +1695,9 @@ class AppText {
   final String duaSavedDelete;
   final String duaSavedTitle;
   final String duaEditBookmarkTitle;
+  final String duaEditPlanTitle;
+  final String duaDeletePlanTitle;
+  final String duaDeletePlanMessage;
   final String duaFolderName;
   final String duaFolderNameHint;
   final String duaSaveChanges;
@@ -3495,6 +3503,11 @@ class AppText {
         'duaPlanSlotLabel',
         fallback?.duaPlanSlotLabel ?? '',
       ),
+      duaPlanStatusLabel: _read(
+        map,
+        'duaPlanStatusLabel',
+        fallback?.duaPlanStatusLabel ?? '',
+      ),
       duaSlotMorning: _read(
         map,
         'duaSlotMorning',
@@ -4721,6 +4734,21 @@ class AppText {
         map,
         'duaEditBookmarkTitle',
         fallback?.duaEditBookmarkTitle ?? '',
+      ),
+      duaEditPlanTitle: _read(
+        map,
+        'duaEditPlanTitle',
+        fallback?.duaEditPlanTitle ?? '',
+      ),
+      duaDeletePlanTitle: _read(
+        map,
+        'duaDeletePlanTitle',
+        fallback?.duaDeletePlanTitle ?? '',
+      ),
+      duaDeletePlanMessage: _read(
+        map,
+        'duaDeletePlanMessage',
+        fallback?.duaDeletePlanMessage ?? '',
       ),
       duaFolderName: _read(map, 'duaFolderName', fallback?.duaFolderName ?? ''),
       duaFolderNameHint: _read(
