@@ -5,6 +5,7 @@ class AmolPillarModel extends AmolPillar {
   const AmolPillarModel({
     required super.pillarKey,
     required super.title,
+    required super.titleBn,
     required super.earnedPoints,
     required super.maxPoints,
     required super.percentage,
@@ -25,6 +26,7 @@ class AmolPillarModel extends AmolPillar {
     return AmolPillarModel(
       pillarKey: pillarKey,
       title: json['title']?.toString() ?? '',
+      titleBn: json['titleBn']?.toString() ?? '',
       earnedPoints: (json['earnedPoints'] as num?) ?? 0,
       maxPoints: (json['maxPoints'] as num?) ?? 0,
       percentage: (json['percentage'] as num?) ?? 0,

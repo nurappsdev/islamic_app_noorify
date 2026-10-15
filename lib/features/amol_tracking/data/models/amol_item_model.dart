@@ -4,6 +4,7 @@ class AmolItemModel extends AmolItem {
   const AmolItemModel({
     required super.itemKey,
     required super.title,
+    required super.titleBn,
     required super.points,
     required super.maxPoints,
     required super.isCompleted,
@@ -13,6 +14,7 @@ class AmolItemModel extends AmolItem {
     return AmolItemModel(
       itemKey: json['itemKey']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      titleBn: json['titleBn']?.toString() ?? '',
       points: (json['points'] as num?) ?? 0,
       maxPoints: (json['maxPoints'] as num?) ?? 0,
       isCompleted: json['isCompleted'] == true,

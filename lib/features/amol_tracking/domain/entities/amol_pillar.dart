@@ -6,6 +6,7 @@ class AmolPillar {
   const AmolPillar({
     required this.pillarKey,
     required this.title,
+    required this.titleBn,
     required this.earnedPoints,
     required this.maxPoints,
     required this.percentage,
@@ -15,6 +16,7 @@ class AmolPillar {
 
   final String pillarKey;
   final String title;
+  final String titleBn;
   final num earnedPoints;
   final num maxPoints;
   final num percentage;

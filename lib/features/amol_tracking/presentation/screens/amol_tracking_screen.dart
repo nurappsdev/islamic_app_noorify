@@ -30,6 +30,7 @@ import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart'
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
@@ -53,19 +54,6 @@ const _pillarKeyByTitle = {
   'Quiz': 'quiz',
   'Zikr': 'zikr',
   'Nafl & more': 'nafl_and_more',
-};
-
-/// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
-/// already knows how to localize.
-const _pillarTitleKeyByKey = {
-  'fardh_prayer': 'Fardh Prayer',
-  'sunnah_witr': 'Sunnah and Witr',
-  'nafl_salat': 'Nafl Salat',
-  'quran': 'Quran',
-  'hadith': 'Hadith',
-  'quiz': 'Quiz',
-  'zikr': 'Zikr',
-  'nafl_and_more': 'Nafl & more',
 };
 
 /// The sections [AmolTrackingScreen] can bring into focus.
@@ -527,7 +515,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   Future<bool> _confirmUntrack(AmolItem item) async {
     final appText = AppText.readOf(context);
-    final name = _localizedItemName(appText, item);
+    final name = _localizedItemName(context, item);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -550,7 +538,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   void _showPrayerNotStartedAlert(AmolItem item) {
     final appText = AppText.readOf(context);
-    final name = _localizedItemName(appText, item);
+    final name = _localizedItemName(context, item);
     showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .45),
@@ -734,61 +722,22 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   }
 }
 
-/// `itemKey` -> the localized display name the app already ships. Falls
-/// back to the server's own (English) [AmolItem.title] for anything new.
-String _localizedItemName(AppText appText, AmolItem item) {
-  switch (item.itemKey) {
-    case 'fajr':
-      return appText.salahFajr;
-    case 'dhuhr':
-      return appText.salahDuhr;
-    case 'asr':
-      return appText.salahAsr;
-    case 'maghrib':
-      return appText.salahMagrib;
-    case 'isha':
-      return appText.salahEsa;
-    case 'fajr_sunnah':
-      return appText.salahFajrSunnah;
-    case 'dhuhr_sunnah':
-      return appText.salahDuhrSunnah;
-    case 'asr_sunnah':
-      return appText.salahAsrSunnah;
-    case 'maghrib_sunnah':
-      return appText.salahMagribSunnah;
-    case 'isha_sunnah':
-      return appText.salahEsaSunnah;
-    case 'witr':
-      return appText.salahWitr;
-    case 'tahajjud':
-      return appText.naflTahajjud;
-    case 'ishraq':
-      return appText.naflIshraq;
-    case 'chasht':
-      return appText.naflChast;
-    case 'awabin':
-      return appText.naflAwabin;
-    case 'quran_tilawat':
-      return appText.infoQuranTilawat;
-    case 'hadith_reading':
-      return appText.infoHadithReading;
-    case 'daily_quiz':
-      return appText.infoGivingQuiz;
-    case 'sadaqah':
-      return appText.moreSadaqah;
-    case 'roza_kaffarah':
-      return appText.moreKarzeHasanah;
-    case 'nafl_fasting':
-      return appText.moreNaflFasting;
-    case 'physical_exercise':
-      return appText.morePhysicalExercise;
-    case 'good_advice':
-      return appText.moreGivenGoodAdvice;
-    case 'skill_development':
-      return appText.moreSkillDevelopment;
-    default:
-      return item.title;
-  }
+/// The item's display name straight from the API: [AmolItem.titleBn] in
+/// Bangla, [AmolItem.title] (English) otherwise — falling back to the other
+/// field when the chosen one is empty, so a sparse response never shows a
+/// blank row.
+String _localizedItemName(BuildContext context, AmolItem item) =>
+    _localizedOf(context, item.title, item.titleBn);
+
+/// Same choice as [_localizedItemName], for a pillar's own title.
+String _localizedPillarTitle(BuildContext context, AmolPillar pillar) =>
+    _localizedOf(context, pillar.title, pillar.titleBn);
+
+String _localizedOf(BuildContext context, String english, String bangla) {
+  final isBangla = languageOf(context) == AppLanguage.bangla;
+  final primary = isBangla ? bangla : english;
+  final fallback = isBangla ? english : bangla;
+  return primary.isNotEmpty ? primary : fallback;
 }
 
 class _ItemIcon {
@@ -1139,14 +1088,12 @@ class _PillarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final titleKey = _pillarTitleKeyByKey[pillar.pillarKey] ?? pillar.title;
     return _AccordionCard(
       expanded: expanded,
       child: Column(
         children: [
           _AccordionHeader(
-            title: appText.categoryLabel(titleKey),
+            title: _localizedPillarTitle(context, pillar),
             progress: (pillar.percentage / 100).clamp(0.0, 1.0).toDouble(),
             fractionLabel: context.localizedDigits(pillar.formattedSubtext),
             expanded: expanded,
@@ -1258,7 +1205,7 @@ class _AmolItemRow extends StatelessWidget {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                _localizedItemName(AppText.of(context), item),
+                _localizedItemName(context, item),
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: context.inkColor(Colors.black),
