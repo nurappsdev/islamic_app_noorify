@@ -152,12 +152,11 @@ class _AmolDashboardView extends StatelessWidget {
                         // line chart.
                         columnLayout: vm.isColumnLayout,
                         verticalLabels: vm.showMonthlyPillars,
-                        // Weekly's fixed 7-category list (including Nafl
-                        // Salat and Nafl And More, the last two) can run off
-                        // the screen edge with diagonal labels on a narrow
-                        // device — scrollable horizontally, same as monthly,
-                        // so every category stays reachable by swiping.
-                        scrollable: vm.isColumnLayout,
+                        // Daily now includes the server's Zikr and Dua
+                        // pillars too. Scroll whenever all categories cannot
+                        // fit at a readable width, so labels and tap targets
+                        // never overlap or get clipped.
+                        scrollable: vm.isChartScrollable,
                       ),
                     if (period == AmolPeriod.weekly) ...[
                       SizedBox(height: 14.h),
