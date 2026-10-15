@@ -67,8 +67,10 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
     );
   }
 
-  String _formattedTime(bool bangla) => localizeClockText(
-    formatPrayerTime(PrayerClockTime(hour: _now().hour, minute: _now().minute)),
+  String _formattedTime(AppText appText, bool bangla) => localizedPeriodClock(
+    PrayerClockTime(hour: _now().hour, minute: _now().minute),
+    times: _times,
+    appText: appText,
     bangla: bangla,
   );
 
@@ -140,8 +142,12 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bangla = _isBangla(context);
-    String clock(PrayerClockTime t) =>
-        localizeClockText(formatPrayerTime(t), bangla: bangla);
+    String clock(PrayerClockTime t) => localizedPeriodClock(
+      t,
+      times: _times,
+      appText: appText,
+      bangla: bangla,
+    );
     final isNight = isNightPrayerTheme(now: _now(), fajr: _fajr);
     final topDateColor = isNight ? Colors.white : Colors.black;
     return SizedBox(
@@ -247,7 +253,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                             ),
 
                             Text(
-                              _formattedTime(bangla),
+                              _formattedTime(appText, bangla),
                               style: homeSansStyle(
                                 fontSize: 22.sp,
                                 fontWeight: FontWeight.w700,

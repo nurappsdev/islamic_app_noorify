@@ -10,9 +10,13 @@ class _CurrentPrayerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bangla = _isBangla(context);
-    String clock(PrayerClockTime t) =>
-        localizeClockText(formatPrayerTime(t), bangla: bangla);
     final times = this.times;
+    String clock(PrayerClockTime t) => localizedPeriodClock(
+      t,
+      times: times,
+      appText: appText,
+      bangla: bangla,
+    );
     final period = times == null ? null : currentPrayerPeriod(now, times);
     final label = times == null
         ? '—'

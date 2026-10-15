@@ -396,6 +396,12 @@ class AppText {
     required this.dhuhrPrayerTime,
     required this.prohibitedPrayerTimes,
     required this.jawaal,
+    required this.periodSubheSadik,
+    required this.periodSokal,
+    required this.periodDupur,
+    required this.periodBikel,
+    required this.periodSondhya,
+    required this.periodRaat,
     required this.prayerTimesTitle,
     required this.hijriDateUnavailable,
     required this.nextPrefix,
@@ -1314,6 +1320,12 @@ class AppText {
   final String dhuhrPrayerTime;
   final String prohibitedPrayerTimes;
   final String jawaal;
+  final String periodSubheSadik;
+  final String periodSokal;
+  final String periodDupur;
+  final String periodBikel;
+  final String periodSondhya;
+  final String periodRaat;
   final String prayerTimesTitle;
   final String hijriDateUnavailable;
   final String nextPrefix;
@@ -3278,6 +3290,20 @@ class AppText {
         fallback?.prohibitedPrayerTimes ?? '',
       ),
       jawaal: _read(map, 'jawaal', fallback?.jawaal ?? ''),
+      periodSubheSadik: _read(
+        map,
+        'periodSubheSadik',
+        fallback?.periodSubheSadik ?? '',
+      ),
+      periodSokal: _read(map, 'periodSokal', fallback?.periodSokal ?? ''),
+      periodDupur: _read(map, 'periodDupur', fallback?.periodDupur ?? ''),
+      periodBikel: _read(map, 'periodBikel', fallback?.periodBikel ?? ''),
+      periodSondhya: _read(
+        map,
+        'periodSondhya',
+        fallback?.periodSondhya ?? '',
+      ),
+      periodRaat: _read(map, 'periodRaat', fallback?.periodRaat ?? ''),
       prayerTimesTitle: _read(
         map,
         'prayerTimesTitle',

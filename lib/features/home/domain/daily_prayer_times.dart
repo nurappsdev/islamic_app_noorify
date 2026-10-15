@@ -143,9 +143,6 @@ class ProhibitedPrayerWindow {
 
   final PrayerClockTime start;
   final PrayerClockTime end;
-
-  String get formatted =>
-      '${formatPrayerTime(start)} – ${formatPrayerTime(end)}';
 }
 
 /// The three daily windows during which prayer is disliked/prohibited:
