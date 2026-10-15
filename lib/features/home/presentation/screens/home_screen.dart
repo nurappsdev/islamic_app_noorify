@@ -590,9 +590,9 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
     AmolItem item,
   ) {
     final chartKey = switch (item.itemKey) {
-      'sadaqah' => 'sadaqah',
-      'roza_kaffarah' || 'nafl_fasting' => 'fasting',
-      'good_advice' => 'advice',
+      'sadaqah_hadia' => 'sadaqah',
+      'nafl_fasting' => 'fasting',
+      'given_good_advice' => 'advice',
       'physical_exercise' => 'exercise',
       _ => null,
     };
@@ -603,13 +603,13 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 
     final appText = AppText.of(context);
     return switch (item.itemKey) {
-      'sadaqah' => appText.moreSadaqah,
-      'roza_kaffarah' => appText.moreKarzeHasanah,
+      'sadaqah_hadia' => appText.moreSadaqah,
+      'karje_hasanah' => appText.moreKarzeHasanah,
       'nafl_fasting' => appText.moreNaflFasting,
       'physical_exercise' => appText.morePhysicalExercise,
-      'good_advice' => appText.moreGivenGoodAdvice,
+      'given_good_advice' => appText.moreGivenGoodAdvice,
       'skill_development' => appText.moreSkillDevelopment,
-      _ => item.title,
+      _ => context.localized(LocalizedText(en: item.title, bn: item.titleBn)),
     };
   }
 
