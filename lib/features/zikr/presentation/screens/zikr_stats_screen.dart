@@ -384,18 +384,13 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
                                     for (final point in mergedMonthlyPoints)
                                       point.competitorValue,
                                   ],
-                                  // Every 5th day (plus the final one) gets
-                                  // an axis label; the rest stay blank so a
-                                  // full month doesn't crowd the axis.
+                                  // The month covers every day, so label
+                                  // each one with its day-of-month number
+                                  // (1, 2, 3, ...) instead of thinning them
+                                  // out.
                                   labels: [
-                                    for (final (i, point)
-                                        in mergedMonthlyPoints.indexed)
-                                      i % 5 == 0 ||
-                                              i ==
-                                                  mergedMonthlyPoints.length -
-                                                      1
-                                          ? '${point.date.day}'
-                                          : '',
+                                    for (final point in mergedMonthlyPoints)
+                                      '${point.date.day}',
                                   ],
                                   // Every day's full date, independent of
                                   // the (sparse) axis labels above — the
