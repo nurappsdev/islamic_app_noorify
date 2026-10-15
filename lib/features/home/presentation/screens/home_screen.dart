@@ -652,8 +652,9 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 }
 
 /// Zikr card: [ZikrCardContent] over [HomeGradientShape], fed from the
-/// `zikr` pillar of the home dashboard when it has loaded. The tracker has no
-/// Zikr section, so it opens the Zikr feature instead.
+/// `tasbih` pillar (the server's pillarKey for Zikr) of the home dashboard
+/// when it has loaded. The tracker has no Zikr section, so it opens the Zikr
+/// feature instead.
 class _ZikrCard extends StatefulWidget {
   const _ZikrCard();
 
@@ -676,8 +677,13 @@ class _ZikrCardState extends State<_ZikrCard> {
     );
     if (apiLabel.isNotEmpty) return apiLabel;
 
-    return localizedTrackedZikrName(AppText.of(context), item.itemKey) ??
-        item.title;
+    final staticName = localizedTrackedZikrName(
+      AppText.of(context),
+      item.itemKey,
+    );
+    if (staticName != null) return staticName;
+
+    return context.localized(LocalizedText(en: item.title, bn: item.titleBn));
   }
 
   @override
@@ -704,12 +710,13 @@ class _ZikrCardState extends State<_ZikrCard> {
     final dashboard = state.hasData ? state.dashboard : null;
     PillarCard? zikr;
     for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
-      if (p.pillarKey == 'zikr') zikr = p;
+      if (p.pillarKey == 'tasbih') zikr = p;
     }
-    // The tracker's `zikr` pillar (when the server sends one) supplies the
-    // list and each zikr's tracked state; without it the card keeps its five
-    // numbered placeholders and the Home dashboard's numbers.
-    final tracked = AmolDailyStore.instance.pillar('zikr');
+    // The tracker's `tasbih` pillar (the server's pillarKey for Zikr; when
+    // it sends one) supplies the list and each zikr's tracked state; without
+    // it the card keeps its five numbered placeholders and the Home
+    // dashboard's numbers.
+    final tracked = AmolDailyStore.instance.pillar('tasbih');
     final items = tracked == null || tracked.items.isEmpty
         ? [
             for (var index = 1; index <= 5; index++)

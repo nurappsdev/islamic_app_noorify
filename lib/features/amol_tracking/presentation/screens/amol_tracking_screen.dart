@@ -52,7 +52,7 @@ const _pillarKeyByTitle = {
   'Quran': 'quran',
   'Hadith': 'hadith',
   'Quiz': 'quiz',
-  'Zikr': 'zikr',
+  'Zikr': 'tasbih',
   'Nafl & more': 'nafl_and_more',
 };
 
@@ -64,7 +64,9 @@ enum AmalSection {
   quran('quran'),
   hadith('hadith'),
   quiz('quiz'),
-  zikr('zikr'),
+
+  /// The server's pillarKey for Zikr is `tasbih`, not `zikr`.
+  zikr('tasbih'),
   naflAndMore('nafl_and_more');
 
   const AmalSection(this.pillarKey);
