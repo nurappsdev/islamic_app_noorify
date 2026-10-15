@@ -418,7 +418,7 @@ const Map<String, String> appTextEn = <String, String>{
   'prayerFajr': 'Fajr',
   'prayerDhuhr': 'Dhuhr',
   'prayerAsr': 'Asr',
-  'prayerMaghribAndIftar': 'Maghrib & Iftar',
+  'prayerMaghrib': 'Maghrib',
   'prayerIsha': 'Isha',
 
   // Learning feature

@@ -10,7 +10,7 @@ extension PrayerPeriodLabel on PrayerPeriod {
     PrayerPeriod.fajr => appText.prayerFajr,
     PrayerPeriod.dhuhr => appText.prayerDhuhr,
     PrayerPeriod.asr => appText.prayerAsr,
-    PrayerPeriod.maghrib => appText.prayerMaghribAndIftar,
+    PrayerPeriod.maghrib => appText.prayerMaghrib,
     PrayerPeriod.isha => appText.prayerIsha,
   };
 }

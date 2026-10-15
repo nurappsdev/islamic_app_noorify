@@ -229,7 +229,7 @@ String _localizedPrayerName(AppText appText, String key) => switch (key) {
   'Fajr' => appText.prayerFajr,
   'Duhr' => appText.prayerDhuhr,
   'Asr' => appText.prayerAsr,
-  'Magrib' => appText.prayerMaghribAndIftar,
+  'Magrib' => appText.prayerMaghrib,
   'Esa' => appText.prayerIsha,
   _ => key,
 };
