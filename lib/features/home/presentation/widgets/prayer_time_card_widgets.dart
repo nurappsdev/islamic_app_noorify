@@ -43,19 +43,12 @@ class _CurrentPrayerBadge extends StatelessWidget {
             width: 39.r,
             height: 39.r,
             decoration: BoxDecoration(
-              // The robe in the image is white, so it needs a coloured tile
-              // to stand out.
-              color: const Color(0xFF9E9E9E),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Padding(
-              padding: EdgeInsets.all(4.r),
-              child: Image.asset(
-                'assets/salatImg.png',
-                fit: BoxFit.contain,
-                // The source is ~1600px wide; decode it at icon size.
-                cacheWidth: 160,
-              ),
+              padding: EdgeInsets.all(6.r),
+              child: Image.asset('assets/sejdaIcon.png', fit: BoxFit.contain),
             ),
           ),
           SizedBox(width: 14.w),

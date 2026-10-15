@@ -79,10 +79,10 @@ DayPeriodName dayPeriodNameFor(PrayerClockTime time, DailyPrayerTimes times) {
   return DayPeriodName.raat;
 }
 
-/// `৫:২৩ সুবহে সাদিক` / `5:23 Morning` — [time]'s digits plus its
-/// [DayPeriodName] in place of AM/PM. Falls back to the digits alone when
-/// [times] (today's prayer times) hasn't loaded yet, since the day-part
-/// can't be determined without it.
+/// `সুবহে সাদিক ৫:২৩` / `Morning 5:23` — [time]'s [DayPeriodName] in place of
+/// AM/PM, before its digits. Falls back to the digits alone when [times]
+/// (today's prayer times) hasn't loaded yet, since the day-part can't be
+/// determined without it.
 String localizedPeriodClock(
   PrayerClockTime time, {
   required DailyPrayerTimes? times,
@@ -95,5 +95,5 @@ String localizedPeriodClock(
     bangla: bangla,
   );
   if (times == null) return digits;
-  return '$digits ${dayPeriodNameFor(time, times).displayName(appText)}';
+  return '${dayPeriodNameFor(time, times).displayName(appText)} $digits';
 }
