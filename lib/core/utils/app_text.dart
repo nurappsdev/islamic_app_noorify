@@ -411,6 +411,7 @@ class AppText {
     required this.prayerAsr,
     required this.prayerMaghribAndIftar,
     required this.prayerIsha,
+    required this.namazWord,
     required this.learning,
     required this.explore,
     required this.exploreQuranicSciences,
@@ -1335,6 +1336,7 @@ class AppText {
   final String prayerAsr;
   final String prayerMaghribAndIftar;
   final String prayerIsha;
+  final String namazWord;
 
   // Learning feature
   final String learning;
@@ -3329,6 +3331,7 @@ class AppText {
         fallback?.prayerMaghribAndIftar ?? '',
       ),
       prayerIsha: _read(map, 'prayerIsha', fallback?.prayerIsha ?? ''),
+      namazWord: _read(map, 'namazWord', fallback?.namazWord ?? ''),
       learning: _read(map, 'learning', fallback?.learning ?? ''),
       explore: _read(map, 'explore', fallback?.explore ?? ''),
       exploreQuranicSciences: _read(

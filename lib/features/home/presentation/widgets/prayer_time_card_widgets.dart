@@ -18,9 +18,12 @@ class _CurrentPrayerBadge extends StatelessWidget {
       bangla: bangla,
     );
     final period = times == null ? null : currentPrayerPeriod(now, times);
-    final label = times == null
+    final periodName = times == null
         ? '—'
         : (period?.displayName(appText) ?? appText.naflIshraq);
+    final label = times == null
+        ? periodName
+        : '$periodName ${appText.namazWord}';
     final rangeText = times == null
         ? '—'
         : period != null
