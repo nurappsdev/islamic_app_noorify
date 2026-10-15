@@ -558,10 +558,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         backgroundColor: Colors.transparent,
         insetPadding: EdgeInsets.symmetric(horizontal: 28.w),
         child: _PrayerNotStartedCard(
-          message: appText.amolPrayerTimeNotStarted.replaceAll(
-            '{name}',
-            name,
-          ),
+          message: appText.amolPrayerTimeNotStarted.replaceAll('{name}', name),
           okLabel: appText.ok,
         ),
       ),
@@ -575,6 +572,19 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   }
 
   void _reload() => _bloc.add(LoadAmolDaily(_isoDate(_today)));
+
+  /// Pull-to-refresh: reloads the day. When a dashboard is already showing,
+  /// the reload is silent (no shimmer flash) — the [RefreshIndicator]'s own
+  /// spinner is the only loading feedback.
+  Future<void> _onRefresh() async {
+    final future = _bloc.stream.firstWhere(
+      (s) =>
+          s.status == AmolDailyStatus.success ||
+          s.status == AmolDailyStatus.failure,
+    );
+    _bloc.add(LoadAmolDaily(_isoDate(_today), silent: _bloc.state.hasData));
+    await future;
+  }
 
   @override
   void dispose() {
@@ -635,73 +645,78 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                   Expanded(
                     // Every section is laid out (not lazily built) so the slide
                     // can measure one that starts off screen.
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AmolSummaryCard(
-                            pointLabel: pointLabel,
-                            progressLabel: progressLabel,
-                            progress: progress,
-                          ),
-                          SizedBox(height: 18.h),
-                          Text(
-                            context.localizedDigits(
-                              formatAmolDate(_today, appText),
+                    child: RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            AmolSummaryCard(
+                              pointLabel: pointLabel,
+                              progressLabel: progressLabel,
+                              progress: progress,
                             ),
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              color: context.inkColor(Colors.black),
+                            SizedBox(height: 18.h),
+                            Text(
+                              context.localizedDigits(
+                                formatAmolDate(_today, appText),
+                              ),
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: context.inkColor(Colors.black),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          if (dashboard != null)
-                            for (final pillar in _displayOrder(
-                              dashboard.pillars,
-                            ))
-                              _ReorderSlot(
-                                key: _slotKey(pillar.pillarKey),
-                                animation: _reorder,
-                                slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
-                                isMover: pillar.pillarKey == _movedToTop,
-                                child: _FocusableSection(
-                                  key: pillar.pillarKey == focusedKey
-                                      ? _focusedAnchor
-                                      : null,
-                                  mode: focusedKey == null || !_focusActive
-                                      ? _FocusMode.none
-                                      : pillar.pillarKey == focusedKey
-                                      ? _FocusMode.focused
-                                      : _FocusMode.dimmed,
-                                  onTapWhenDimmed: () =>
-                                      _focusSection(pillar.pillarKey),
-                                  child: _PillarRow(
-                                    pillar: pillar,
-                                    expanded:
-                                        _expandedPillarKey == pillar.pillarKey,
-                                    onToggleExpanded: () =>
-                                        _toggleCategory(pillar.pillarKey),
-                                    loggingItemKey: state.loggingItemKey,
-                                    completionOverrides:
-                                        state.completionOverrides,
-                                    anchorItemKey:
-                                        pillar.pillarKey == _anchorPillarKey
-                                        ? _selectedItemKey
+                            SizedBox(height: 12.h),
+                            if (dashboard != null)
+                              for (final pillar in _displayOrder(
+                                dashboard.pillars,
+                              ))
+                                _ReorderSlot(
+                                  key: _slotKey(pillar.pillarKey),
+                                  animation: _reorder,
+                                  slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
+                                  isMover: pillar.pillarKey == _movedToTop,
+                                  child: _FocusableSection(
+                                    key: pillar.pillarKey == focusedKey
+                                        ? _focusedAnchor
                                         : null,
-                                    anchorKey: _selectedItemAnchor,
-                                    highlightAnchor: _focusActive,
-                                    onItemTap: (item) =>
-                                        _onItemTap(pillar.pillarKey, item),
+                                    mode: focusedKey == null || !_focusActive
+                                        ? _FocusMode.none
+                                        : pillar.pillarKey == focusedKey
+                                        ? _FocusMode.focused
+                                        : _FocusMode.dimmed,
+                                    onTapWhenDimmed: () =>
+                                        _focusSection(pillar.pillarKey),
+                                    child: _PillarRow(
+                                      pillar: pillar,
+                                      expanded:
+                                          _expandedPillarKey ==
+                                          pillar.pillarKey,
+                                      onToggleExpanded: () =>
+                                          _toggleCategory(pillar.pillarKey),
+                                      loggingItemKey: state.loggingItemKey,
+                                      completionOverrides:
+                                          state.completionOverrides,
+                                      anchorItemKey:
+                                          pillar.pillarKey == _anchorPillarKey
+                                          ? _selectedItemKey
+                                          : null,
+                                      anchorKey: _selectedItemAnchor,
+                                      highlightAnchor: _focusActive,
+                                      onItemTap: (item) =>
+                                          _onItemTap(pillar.pillarKey, item),
+                                    ),
                                   ),
-                                ),
-                              )
-                          else if (state.status == AmolDailyStatus.failure)
-                            _LoadFailedNotice(onRetry: _reload)
-                          else
-                            const _PillarListShimmer(),
-                        ],
+                                )
+                            else if (state.status == AmolDailyStatus.failure)
+                              _LoadFailedNotice(onRetry: _reload)
+                            else
+                              const _PillarListShimmer(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
