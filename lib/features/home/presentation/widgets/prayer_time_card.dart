@@ -209,7 +209,7 @@ class _PrayerTimeCardState extends State<PrayerTimeCard> {
                       Positioned(
                         top: 17.h,
                         left: 20.w,
-                        right: 20.w,
+                        right: 10.w,
                         child: _CardDateRow(
                           start: hijriDateLabel(
                             _now(),
