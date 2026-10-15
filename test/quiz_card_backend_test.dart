@@ -35,7 +35,9 @@ Future<void> _pump(
             body: SizedBox(
               width: 340,
               height: 380,
-              child: QuizCardContent(firstQuiz: firstQuiz),
+              child: QuizCardContent(
+                tiles: firstQuiz == null ? null : [firstQuiz],
+              ),
             ),
           ),
         ),

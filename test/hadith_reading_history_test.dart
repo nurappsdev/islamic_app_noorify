@@ -59,9 +59,9 @@ void main() {
       expect(r.to, DateTime(2026, 9, 21));
     });
 
-    test('weekly is 7 days back to today', () {
+    test('weekly is today and the 6 days before it (7 days total)', () {
       final r = hadithHistoryRange(HadithHistoryPeriod.weekly, now: now);
-      expect(r.from, DateTime(2026, 9, 14));
+      expect(r.from, DateTime(2026, 9, 15));
       expect(r.to, DateTime(2026, 9, 21));
     });
 

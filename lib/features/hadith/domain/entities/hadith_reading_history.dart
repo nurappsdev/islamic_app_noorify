@@ -2,8 +2,8 @@
 enum HadithHistoryPeriod { daily, weekly, monthly }
 
 /// The `from` / `to` dates (date-only, inclusive) requested for [period]:
-/// daily is today alone, weekly is the 7 days before today up to today, and
-/// monthly is the 30 days before today up to today.
+/// daily is today alone, weekly is today and the 6 days before it (7 days
+/// total), and monthly is the 30 days before today up to today.
 ({DateTime from, DateTime to}) hadithHistoryRange(
   HadithHistoryPeriod period, {
   DateTime? now,
@@ -12,7 +12,7 @@ enum HadithHistoryPeriod { daily, weekly, monthly }
   final today = DateTime(n.year, n.month, n.day);
   final daysBack = switch (period) {
     HadithHistoryPeriod.daily => 0,
-    HadithHistoryPeriod.weekly => 7,
+    HadithHistoryPeriod.weekly => 6,
     HadithHistoryPeriod.monthly => 30,
   };
   return (
