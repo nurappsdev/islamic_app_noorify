@@ -1198,6 +1198,14 @@ class _AmolItemRow extends StatelessWidget {
               ? context
                     .surfaceColor(const Color(0xFFDDEBB5))
                     .withValues(alpha: .55)
+              // A navigable item (Quran, Hadith, Quiz, Zikr, Dua) shows a
+              // chevron instead of a checkmark circle, so a done one gets a
+              // faint tint here instead - otherwise it would look identical
+              // to one still unplayed.
+              : isNavigable && isChecked
+              ? context
+                    .surfaceColor(const Color(0xFFDDEBB5))
+                    .withValues(alpha: .25)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12.r),
         ),
