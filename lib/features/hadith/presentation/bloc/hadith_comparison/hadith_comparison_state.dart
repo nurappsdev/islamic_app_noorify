@@ -9,6 +9,7 @@ class HadithComparisonState {
     this.status = HadithComparisonStatus.initial,
     this.period,
     this.month,
+    this.endDate,
     this.competitor,
     this.myName = '',
     this.failure,
@@ -20,6 +21,10 @@ class HadithComparisonState {
   /// a stale result is never drawn under other dates.
   final HadithHistoryPeriod? period;
   final DateTime? month;
+
+  /// The daily/weekly window's end date [competitor] was loaded for; part of
+  /// the same staleness check as [period] and [month].
+  final DateTime? endDate;
 
   /// Null while loading, on failure, or when nobody else was returned.
   final HadithCompetitor? competitor;

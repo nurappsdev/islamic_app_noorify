@@ -95,24 +95,54 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     if (value) {
       final dashboard = context.read<HadithDashboardBloc>().state;
       context.read<HadithComparisonBloc>().add(
-        LoadHadithComparison(dashboard.period, month: dashboard.month),
+        LoadHadithComparison(
+          dashboard.period,
+          month: dashboard.month,
+          endDate: dashboard.endDate,
+        ),
       );
     }
   }
 
-  /// A choice in the filter dropdown: a rolling [period] (Monthly is the last
-  /// 30 days), or, with [month], that calendar month (grouped like Monthly).
-  /// The competitor's dates follow when they are shown.
-  void _selectFilter(HadithHistoryPeriod period, {DateTime? month}) {
+  /// A choice in the filter: a rolling [period] (Monthly is the last 30
+  /// days), or, with [month], that calendar month (grouped like Monthly).
+  /// With [endDate], a daily/weekly window ends there instead of today - how
+  /// the back/forward arrows step through it. The competitor's dates follow
+  /// when they are shown.
+  void _selectFilter(
+    HadithHistoryPeriod period, {
+    DateTime? month,
+    DateTime? endDate,
+  }) {
     setState(() => _selectedPoint = null);
     context.read<HadithDashboardBloc>().add(
-      LoadHadithDashboard(period, month: month),
+      LoadHadithDashboard(period, month: month, endDate: endDate),
     );
     if (_showCompetitor) {
       context.read<HadithComparisonBloc>().add(
-        LoadHadithComparison(period, month: month),
+        LoadHadithComparison(period, month: month, endDate: endDate),
       );
     }
+  }
+
+  /// Steps a daily/weekly window by one unit: a day for Daily, 7 days for
+  /// Weekly. [direction] is -1 (back) or 1 (forward, never past today).
+  void _shiftDate(HadithDashboardState state, int direction) {
+    final to = state.to;
+    if (to == null) return;
+    final step = state.period == HadithHistoryPeriod.weekly ? 7 : 1;
+    final newEnd = DateTime(to.year, to.month, to.day + step * direction);
+    _selectFilter(state.period, endDate: newEnd);
+  }
+
+  /// False once the window already ends today - nothing can be read in the
+  /// future.
+  bool _canShiftForward(HadithDashboardState state) {
+    final to = state.to;
+    if (to == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return to.isBefore(today);
   }
 
   @override
@@ -128,7 +158,8 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
         _showCompetitor &&
             comparison.status == HadithComparisonStatus.success &&
             comparison.period == state.period &&
-            comparison.month == state.month
+            comparison.month == state.month &&
+            comparison.endDate == state.endDate
         ? comparison.competitor
         : null;
     final series = _buildSeries(
@@ -137,7 +168,13 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
       // My initials come with the comparison, so only while it is shown.
       rival == null ? '' : hadithInitials(comparison.myName),
       comparison.myName,
-      appText.zikrTodaysValueGraph,
+      // "Today" only while the daily window actually is today - a day
+      // stepped back to with the navigator gets its own date instead.
+      _isToday(state.to)
+          ? appText.zikrTodaysValueGraph
+          : state.to == null
+          ? ''
+          : _dateRangeLabel(context, appText, state.to!, state.to!),
     );
 
     return BlocListener<HadithComparisonBloc, HadithComparisonState>(
@@ -208,11 +245,7 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                 // period tabs.
                 _PeriodTabs(
                   period: state.period,
-                  labelFor: (period) => switch (period) {
-                    HadithHistoryPeriod.daily => appText.daily,
-                    HadithHistoryPeriod.weekly => appText.weekly,
-                    HadithHistoryPeriod.monthly => appText.monthly,
-                  },
+                  labelFor: _periodLabel(appText),
                   onChanged: (period) => _selectFilter(period),
                 ),
                 if (state.period == HadithHistoryPeriod.monthly)
@@ -221,6 +254,23 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                     onSelect: (month) => _selectFilter(
                       HadithHistoryPeriod.monthly,
                       month: month,
+                    ),
+                  )
+                else if (state.from != null && state.to != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 10.h),
+                    child: _DateNavigator(
+                      label: _dateRangeLabel(
+                        context,
+                        appText,
+                        state.from!,
+                        state.to!,
+                      ),
+                      subtitle: _periodLabel(appText)(state.period),
+                      onPrevious: () => _shiftDate(state, -1),
+                      onNext: _canShiftForward(state)
+                          ? () => _shiftDate(state, 1)
+                          : null,
                     ),
                   ),
                 SizedBox(height: 18.h),
@@ -325,6 +375,42 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
         ),
       ),
     );
+  }
+
+  /// Whether [date] is the current calendar day.
+  static bool _isToday(DateTime? date) {
+    if (date == null) return false;
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  /// "Daily" / "Weekly" / "Monthly", for the tabs and the navigator's
+  /// subtitle.
+  static String Function(HadithHistoryPeriod) _periodLabel(AppText appText) =>
+      (period) => switch (period) {
+        HadithHistoryPeriod.daily => appText.daily,
+        HadithHistoryPeriod.weekly => appText.weekly,
+        HadithHistoryPeriod.monthly => appText.monthly,
+      };
+
+  /// The navigator's label for a daily/weekly window: `15 Oct, 2026` for a
+  /// single day, `9 - 15 Oct, 2026` within one month, or `28 Sep - 4 Oct,
+  /// 2026` across a month boundary.
+  static String _dateRangeLabel(
+    BuildContext context,
+    AppText appText,
+    DateTime from,
+    DateTime to,
+  ) {
+    String month(DateTime d) => appText.monthNames[d.month - 1];
+    final text = from == to
+        ? '${to.day} ${month(to)}, ${to.year}'
+        : from.year == to.year && from.month == to.month
+        ? '${from.day} - ${to.day} ${month(to)}, ${to.year}'
+        : '${from.day} ${month(from)} - ${to.day} ${month(to)}, ${to.year}';
+    return context.localizedDigits(text);
   }
 
   /// One point per calendar day of the requested range (days the backend
@@ -804,6 +890,97 @@ class _MonthChip extends StatelessWidget {
                 : context.inkColor(
                     enabled ? const Color(0xFF2C3320) : const Color(0xFFB4B9A6),
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Steps a daily/weekly window back or forward one day (or 7 for weekly),
+/// styled like the Amol tracker dashboard's own date navigator: a pill with
+/// a chevron on each side around the current window's label and the active
+/// period's name.
+class _DateNavigator extends StatelessWidget {
+  const _DateNavigator({
+    required this.label,
+    required this.subtitle,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final String label;
+  final String subtitle;
+
+  /// `null` disables the arrow - [onNext] going past today, [onPrevious]
+  /// never (there's no known earliest date to stop at).
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFDCE9B8))),
+      ),
+      child: Row(
+        children: [
+          _NavArrow(icon: Icons.chevron_left, onTap: onPrevious),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: context.inkColor(Colors.black),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: context.inkColor(Colors.black54),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _NavArrow(icon: Icons.chevron_right, onTap: onNext),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  const _NavArrow({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return SizedBox.square(
+      dimension: 32.r,
+      child: IconButton(
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: context.surfaceColor(
+            enabled ? Colors.white : const Color(0xFFF2F3EA),
+          ),
+          side: BorderSide(color: context.lineColor(const Color(0xFFDCE9B8))),
+        ),
+        icon: Icon(
+          icon,
+          size: 16.sp,
+          color: context.inkColor(
+            enabled ? const Color(0xFF7E8C61) : const Color(0xFFC5CAB8),
           ),
         ),
       ),
