@@ -662,6 +662,24 @@ class _ZikrCard extends StatefulWidget {
 }
 
 class _ZikrCardState extends State<_ZikrCard> {
+  /// The name for one tracked zikr item: the dashboard's own API label for
+  /// this `itemKey` when the server sends one (same source the Nafl & more
+  /// and Sunnah/Witr cards use), else the local Prayer-Zikr translation, else
+  /// the tracker's own `title` as-is.
+  String _localizedZikrItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final apiLabel = context.localized(
+      pillar?.localizedChartLabels[item.itemKey],
+    );
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    return localizedTrackedZikrName(AppText.of(context), item.itemKey) ??
+        item.title;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -704,12 +722,7 @@ class _ZikrCardState extends State<_ZikrCard> {
         : [
             for (final item in tracked.items)
               ZikrItemData(
-                name:
-                    localizedTrackedZikrName(
-                      AppText.of(context),
-                      item.itemKey,
-                    ) ??
-                    item.title,
+                name: _localizedZikrItemName(context, zikr, item),
                 completed: item.isCompleted,
                 itemKey: item.itemKey,
               ),
@@ -857,9 +870,47 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
 }
 
 /// Quiz card: [QuizCardContent] over [HomeGradientShape], fed from the `quiz`
-/// pillar of the home dashboard when it has loaded.
-class _QuizCard extends StatelessWidget {
+/// pillar of the home dashboard (title/percentage/counter) and the two
+/// glass tiles from the tracker's own `quiz` pillar items (the same
+/// `AmolDailyStore` source the Zikr card reads for its items), when the
+/// server sends them.
+class _QuizCard extends StatefulWidget {
   const _QuizCard();
+
+  @override
+  State<_QuizCard> createState() => _QuizCardState();
+}
+
+class _QuizCardState extends State<_QuizCard> {
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// One diamond tile from a tracked quiz item: its own localized title, and
+  /// its earned points once played, otherwise the worth it shows before
+  /// being played.
+  QuizTileData _tileFromItem(BuildContext context, AmolItem item) =>
+      QuizTileData(
+        title: context.localized(
+          LocalizedText(en: item.title, bn: item.titleBn),
+        ),
+        points: item.isCompleted ? item.points : item.maxPoints,
+        completed: item.isCompleted,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -876,6 +927,20 @@ class _QuizCard extends StatelessWidget {
       (pillar) => pillar.localizedTitle,
       AppText.of(context).categoryLabel('Quiz'),
     );
+
+    // The tracker's `quiz` pillar supplies the two Daily Quiz tiles; without
+    // it the first tile falls back to the Home dashboard's own quiz summary
+    // and the second keeps its default label.
+    final trackedItems =
+        AmolDailyStore.instance.pillar('quiz')?.items ?? const [];
+    final firstTile = trackedItems.isNotEmpty
+        ? _tileFromItem(context, trackedItems[0])
+        : quizTileFromPillar(quiz, title: title);
+    final secondTile = trackedItems.length > 1
+        ? _tileFromItem(context, trackedItems[1])
+        : null;
+    final quizTiles = [?firstTile, ?secondTile];
+
     return HomeGradientShape(
       child: QuizCardContent(
         percentage: quiz?.percentage ?? 0,
@@ -887,9 +952,7 @@ class _QuizCard extends StatelessWidget {
         ),
         title: title,
         counter: _pillarCounter(context, quiz, '0/7'),
-        // The first glass tile is the backend's quiz: its title and points,
-        // selected once it has been played.
-        firstQuiz: quizTileFromPillar(quiz, title: title),
+        tiles: quizTiles,
         onOpenTracker: () => _openTracker(context, AmalSection.quiz),
       ),
       onTap: () => _openTracker(context, AmalSection.quiz),
