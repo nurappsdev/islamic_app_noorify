@@ -7,6 +7,7 @@ class AmolItem {
   const AmolItem({
     required this.itemKey,
     required this.title,
+    required this.titleBn,
     required this.points,
     required this.maxPoints,
     required this.isCompleted,
@@ -14,6 +15,7 @@ class AmolItem {
 
   final String itemKey;
   final String title;
+  final String titleBn;
   final num points;
   final num maxPoints;
   final bool isCompleted;

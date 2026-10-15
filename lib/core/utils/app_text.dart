@@ -396,6 +396,12 @@ class AppText {
     required this.dhuhrPrayerTime,
     required this.prohibitedPrayerTimes,
     required this.jawaal,
+    required this.periodSubheSadik,
+    required this.periodSokal,
+    required this.periodDupur,
+    required this.periodBikel,
+    required this.periodSondhya,
+    required this.periodRaat,
     required this.prayerTimesTitle,
     required this.hijriDateUnavailable,
     required this.nextPrefix,
@@ -403,8 +409,9 @@ class AppText {
     required this.prayerFajr,
     required this.prayerDhuhr,
     required this.prayerAsr,
-    required this.prayerMaghribAndIftar,
+    required this.prayerMaghrib,
     required this.prayerIsha,
+    required this.namazWord,
     required this.learning,
     required this.explore,
     required this.exploreQuranicSciences,
@@ -1314,6 +1321,12 @@ class AppText {
   final String dhuhrPrayerTime;
   final String prohibitedPrayerTimes;
   final String jawaal;
+  final String periodSubheSadik;
+  final String periodSokal;
+  final String periodDupur;
+  final String periodBikel;
+  final String periodSondhya;
+  final String periodRaat;
   final String prayerTimesTitle;
   final String hijriDateUnavailable;
   final String nextPrefix;
@@ -1321,8 +1334,9 @@ class AppText {
   final String prayerFajr;
   final String prayerDhuhr;
   final String prayerAsr;
-  final String prayerMaghribAndIftar;
+  final String prayerMaghrib;
   final String prayerIsha;
+  final String namazWord;
 
   // Learning feature
   final String learning;
@@ -3278,6 +3292,16 @@ class AppText {
         fallback?.prohibitedPrayerTimes ?? '',
       ),
       jawaal: _read(map, 'jawaal', fallback?.jawaal ?? ''),
+      periodSubheSadik: _read(
+        map,
+        'periodSubheSadik',
+        fallback?.periodSubheSadik ?? '',
+      ),
+      periodSokal: _read(map, 'periodSokal', fallback?.periodSokal ?? ''),
+      periodDupur: _read(map, 'periodDupur', fallback?.periodDupur ?? ''),
+      periodBikel: _read(map, 'periodBikel', fallback?.periodBikel ?? ''),
+      periodSondhya: _read(map, 'periodSondhya', fallback?.periodSondhya ?? ''),
+      periodRaat: _read(map, 'periodRaat', fallback?.periodRaat ?? ''),
       prayerTimesTitle: _read(
         map,
         'prayerTimesTitle',
@@ -3297,12 +3321,9 @@ class AppText {
       prayerFajr: _read(map, 'prayerFajr', fallback?.prayerFajr ?? ''),
       prayerDhuhr: _read(map, 'prayerDhuhr', fallback?.prayerDhuhr ?? ''),
       prayerAsr: _read(map, 'prayerAsr', fallback?.prayerAsr ?? ''),
-      prayerMaghribAndIftar: _read(
-        map,
-        'prayerMaghribAndIftar',
-        fallback?.prayerMaghribAndIftar ?? '',
-      ),
+      prayerMaghrib: _read(map, 'prayerMaghrib', fallback?.prayerMaghrib ?? ''),
       prayerIsha: _read(map, 'prayerIsha', fallback?.prayerIsha ?? ''),
+      namazWord: _read(map, 'namazWord', fallback?.namazWord ?? ''),
       learning: _read(map, 'learning', fallback?.learning ?? ''),
       explore: _read(map, 'explore', fallback?.explore ?? ''),
       exploreQuranicSciences: _read(

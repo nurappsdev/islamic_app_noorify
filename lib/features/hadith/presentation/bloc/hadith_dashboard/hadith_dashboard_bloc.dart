@@ -27,8 +27,9 @@ class HadithDashboardBloc
   ) async {
     final generation = ++_generation;
     final month = event.month;
+    final endDate = event.endDate;
     final range = month == null
-        ? hadithHistoryRange(event.period)
+        ? hadithHistoryRange(event.period, endDate: endDate)
         : hadithMonthRange(month);
     // Cleared while loading, so a different period's data is never shown
     // under the newly selected filter.
@@ -36,6 +37,7 @@ class HadithDashboardBloc
       HadithDashboardState(
         period: event.period,
         month: month,
+        endDate: endDate,
         status: HadithDashboardStatus.loading,
         from: range.from,
         to: range.to,
@@ -48,6 +50,7 @@ class HadithDashboardBloc
         HadithDashboardState(
           period: event.period,
           month: month,
+          endDate: endDate,
           status: HadithDashboardStatus.failure,
           from: range.from,
           to: range.to,
@@ -58,6 +61,7 @@ class HadithDashboardBloc
         HadithDashboardState(
           period: event.period,
           month: month,
+          endDate: endDate,
           status: HadithDashboardStatus.success,
           from: range.from,
           to: range.to,

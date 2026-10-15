@@ -2,23 +2,27 @@
 enum HadithHistoryPeriod { daily, weekly, monthly }
 
 /// The `from` / `to` dates (date-only, inclusive) requested for [period]:
-/// daily is today alone, weekly is the 7 days before today up to today, and
-/// monthly is the 30 days before today up to today.
+/// daily is [endDate] alone, weekly is [endDate] and the 6 days before it (7
+/// days total), and monthly is the 30 days before [endDate] up to it.
+/// [endDate] defaults to today, so the daily/weekly arrows can step the
+/// window back (and forward, up to today) without changing [now].
 ({DateTime from, DateTime to}) hadithHistoryRange(
   HadithHistoryPeriod period, {
   DateTime? now,
+  DateTime? endDate,
 }) {
   final n = now ?? DateTime.now();
   final today = DateTime(n.year, n.month, n.day);
+  final end = endDate ?? today;
   final daysBack = switch (period) {
     HadithHistoryPeriod.daily => 0,
-    HadithHistoryPeriod.weekly => 7,
+    HadithHistoryPeriod.weekly => 6,
     HadithHistoryPeriod.monthly => 30,
   };
   return (
     // Calendar arithmetic (not a Duration), so daylight saving can't shift it.
-    from: DateTime(today.year, today.month, today.day - daysBack),
-    to: today,
+    from: DateTime(end.year, end.month, end.day - daysBack),
+    to: end,
   );
 }
 

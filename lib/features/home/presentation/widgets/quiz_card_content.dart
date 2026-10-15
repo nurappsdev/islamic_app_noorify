@@ -60,7 +60,7 @@ class QuizCardContent extends StatelessWidget {
     this.counter = '0/7',
     this.title = 'Quiz',
     this.percentageLabel,
-    this.firstQuiz,
+    this.tiles,
     this.onOpenTracker,
   });
 
@@ -72,16 +72,19 @@ class QuizCardContent extends StatelessWidget {
   final String title;
   final String? percentageLabel;
 
-  /// The first of the two overlapping glass tiles, from the backend. When
-  /// `null` it shows its default label. The second tile is always the default.
-  final QuizTileData? firstQuiz;
+  /// The two overlapping glass tiles, from the backend. A missing or short
+  /// list keeps its default label for the tile(s) it doesn't cover.
+  final List<QuizTileData>? tiles;
   final VoidCallback? onOpenTracker;
 
   @override
   Widget build(BuildContext context) {
-    final tiles = [
-      firstQuiz ?? _defaultTile(context, 1),
-      _defaultTile(context, 2),
+    final resolvedTiles = [
+      for (var i = 0; i < 2; i++)
+        if (tiles != null && i < tiles!.length)
+          tiles![i]
+        else
+          _defaultTile(context, i + 1),
     ];
     return Padding(
       padding: EdgeInsets.fromLTRB(18.w, 22.h, 18.w, 18.h),
@@ -113,7 +116,7 @@ class QuizCardContent extends StatelessWidget {
                 // (so neighbouring corners overlap a little).
                 final extent = math.min(w * 0.41, h);
                 final side = extent / QuizGlassCard.extentFactor;
-                final count = tiles.length;
+                final count = resolvedTiles.length;
                 final span = w * 0.33 * (count - 1);
                 final firstCentre = (w - span) / 2;
                 return Stack(
@@ -125,9 +128,9 @@ class QuizCardContent extends StatelessWidget {
                         left: firstCentre + i * w * 0.33 - extent / 2,
                         top: (h - extent) / 2,
                         child: QuizGlassCard(
-                          title: tiles[i].title,
-                          points: tiles[i].points,
-                          completed: tiles[i].completed,
+                          title: resolvedTiles[i].title,
+                          points: resolvedTiles[i].points,
+                          completed: resolvedTiles[i].completed,
                           side: side,
                         ),
                       ),

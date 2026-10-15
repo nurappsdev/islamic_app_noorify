@@ -8,11 +8,13 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/bloc/prayer_times_bloc.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
@@ -100,15 +102,18 @@ class _PrayerSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final clock = context.localizedTimes;
+    final bangla = context.appLanguage == AppLanguage.bangla;
+    String clockText(PrayerClockTime? t) => t == null
+        ? LocalizedTimeFormatter.placeholder
+        : localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final dates = context.localizedDates;
     final summaryPeriod = active ?? PrayerPeriod.dhuhr;
     final summaryStart = times == null
         ? LocalizedTimeFormatter.placeholder
-        : clock.clock(prayerStart(summaryPeriod, times!));
+        : clockText(prayerStart(summaryPeriod, times!));
     final summaryEnd = times == null
         ? LocalizedTimeFormatter.placeholder
-        : clock.clock(prayerEnd(summaryPeriod, times!));
+        : clockText(prayerEnd(summaryPeriod, times!));
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -222,7 +227,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                 style: TextStyle(color: Colors.white70, fontSize: 10.sp),
               ),
               Text(
-                clock.clockOf(now),
+                clockText(PrayerClockTime(hour: now.hour, minute: now.minute)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 21.sp,
@@ -279,14 +284,14 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   Expanded(
                     child: _EdgeLabel(
                       title: edgeLabel(appText.sunrise),
-                      value: clock.clockOrPlaceholder(times?.sunrise),
+                      value: clockText(times?.sunrise),
                     ),
                   ),
                   SizedBox(width: 20.w),
                   Expanded(
                     child: _EdgeLabel(
                       title: edgeLabel(appText.sunset),
-                      value: clock.clockOrPlaceholder(times?.sunset),
+                      value: clockText(times?.sunset),
                     ),
                   ),
                 ],
@@ -367,13 +372,15 @@ class _PrayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final clock = context.localizedTimes;
+    final bangla = context.appLanguage == AppLanguage.bangla;
+    String clockText(PrayerClockTime t) =>
+        localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final start = times == null
         ? LocalizedTimeFormatter.placeholder
-        : clock.clock(prayerStart(period, times!));
+        : clockText(prayerStart(period, times!));
     final end = times == null
         ? LocalizedTimeFormatter.placeholder
-        : clock.clock(prayerEnd(period, times!));
+        : clockText(prayerEnd(period, times!));
     final titleColor = active
         ? Colors.white
         : context.inkColor(const Color(0xFF2F3A22));

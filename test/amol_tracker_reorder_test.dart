@@ -68,6 +68,7 @@ AmolDailyDashboard _dashboard() => AmolDailyDashboard(
       AmolPillar(
         pillarKey: key,
         title: _titles[key]!,
+        titleBn: _titles[key]!,
         earnedPoints: 0,
         maxPoints: 2,
         percentage: 0,
@@ -76,6 +77,7 @@ AmolDailyDashboard _dashboard() => AmolDailyDashboard(
           AmolItem(
             itemKey: '${key}_item',
             title: '${_titles[key]} item',
+            titleBn: '${_titles[key]} item',
             points: 0,
             maxPoints: 1,
             isCompleted: false,
@@ -127,9 +129,6 @@ Future<AmolDailyBloc> _pump(
   return bloc;
 }
 
-String _label(String title) =>
-    AppText.forLanguage(AppLanguage.english).categoryLabel(title);
-
 /// Lets the arrival, the slide and the focus pause all finish.
 Future<void> _settle(WidgetTester tester) async {
   await tester.pumpAndSettle();
@@ -141,7 +140,7 @@ Future<void> _settle(WidgetTester tester) async {
 List<String> _order(WidgetTester tester) {
   final found = <String, double>{};
   for (final title in _titles.values) {
-    final finder = find.text(_label(title), skipOffstage: false);
+    final finder = find.text(title, skipOffstage: false);
     if (finder.evaluate().isNotEmpty) {
       found[title] = tester.getTopLeft(finder.first).dy;
     }
@@ -187,7 +186,7 @@ void main() {
 
   testWidgets('the move is animated, not an instant jump', (tester) async {
     await _pump(tester, section: AmalSection.naflAndMore);
-    final title = find.text(_label('Nafl & more'), skipOffstage: false);
+    final title = find.text('Nafl & more', skipOffstage: false);
     final ys = <double>[];
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 40));

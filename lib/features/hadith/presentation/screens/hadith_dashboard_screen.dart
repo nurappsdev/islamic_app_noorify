@@ -95,24 +95,54 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
     if (value) {
       final dashboard = context.read<HadithDashboardBloc>().state;
       context.read<HadithComparisonBloc>().add(
-        LoadHadithComparison(dashboard.period, month: dashboard.month),
+        LoadHadithComparison(
+          dashboard.period,
+          month: dashboard.month,
+          endDate: dashboard.endDate,
+        ),
       );
     }
   }
 
-  /// A choice in the filter dropdown: a rolling [period] (Monthly is the last
-  /// 30 days), or, with [month], that calendar month (grouped like Monthly).
-  /// The competitor's dates follow when they are shown.
-  void _selectFilter(HadithHistoryPeriod period, {DateTime? month}) {
+  /// A choice in the filter: a rolling [period] (Monthly is the last 30
+  /// days), or, with [month], that calendar month (grouped like Monthly).
+  /// With [endDate], a daily/weekly window ends there instead of today - how
+  /// the back/forward arrows step through it. The competitor's dates follow
+  /// when they are shown.
+  void _selectFilter(
+    HadithHistoryPeriod period, {
+    DateTime? month,
+    DateTime? endDate,
+  }) {
     setState(() => _selectedPoint = null);
     context.read<HadithDashboardBloc>().add(
-      LoadHadithDashboard(period, month: month),
+      LoadHadithDashboard(period, month: month, endDate: endDate),
     );
     if (_showCompetitor) {
       context.read<HadithComparisonBloc>().add(
-        LoadHadithComparison(period, month: month),
+        LoadHadithComparison(period, month: month, endDate: endDate),
       );
     }
+  }
+
+  /// Steps a daily/weekly window by one unit: a day for Daily, 7 days for
+  /// Weekly. [direction] is -1 (back) or 1 (forward, never past today).
+  void _shiftDate(HadithDashboardState state, int direction) {
+    final to = state.to;
+    if (to == null) return;
+    final step = state.period == HadithHistoryPeriod.weekly ? 7 : 1;
+    final newEnd = DateTime(to.year, to.month, to.day + step * direction);
+    _selectFilter(state.period, endDate: newEnd);
+  }
+
+  /// False once the window already ends today - nothing can be read in the
+  /// future.
+  bool _canShiftForward(HadithDashboardState state) {
+    final to = state.to;
+    if (to == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return to.isBefore(today);
   }
 
   @override
@@ -128,7 +158,8 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
         _showCompetitor &&
             comparison.status == HadithComparisonStatus.success &&
             comparison.period == state.period &&
-            comparison.month == state.month
+            comparison.month == state.month &&
+            comparison.endDate == state.endDate
         ? comparison.competitor
         : null;
     final series = _buildSeries(
@@ -137,7 +168,13 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
       // My initials come with the comparison, so only while it is shown.
       rival == null ? '' : hadithInitials(comparison.myName),
       comparison.myName,
-      appText.zikrTodaysValueGraph,
+      // "Today" only while the daily window actually is today - a day
+      // stepped back to with the navigator gets its own date instead.
+      _isToday(state.to)
+          ? appText.zikrTodaysValueGraph
+          : state.to == null
+          ? ''
+          : _dateRangeLabel(context, appText, state.to!, state.to!),
     );
 
     return BlocListener<HadithComparisonBloc, HadithComparisonState>(
@@ -183,42 +220,59 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                 SizedBox(height: 6.h),
                 _Header(title: appText.dashboard),
                 SizedBox(height: 18.h),
-                Row(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Dark = my minutes read; light = the other reader's,
-                          // loaded and drawn only while its toggle is on.
-                          _LegendDot(
-                            color: const Color(0xFF7A9A3A),
-                            label: appText.myPosition,
-                          ),
-                          SizedBox(height: 6.h),
-                          _LegendToggle(
-                            color: const Color(0xFFA9B96A),
-                            label: appText.myNearestOrCompetitor,
-                            value: _showCompetitor,
-                            loading: _showCompetitor && comparison.isLoading,
-                            onChanged: _setCompetitor,
-                          ),
-                        ],
-                      ),
+                    // Dark = my minutes read; light = the other reader's,
+                    // loaded and drawn only while its toggle is on.
+                    _LegendDot(
+                      color: const Color(0xFF7A9A3A),
+                      label: appText.myPosition,
                     ),
-                    _PeriodDropdown(
-                      period: state.period,
-                      month: state.month,
-                      labelFor: (period) => switch (period) {
-                        HadithHistoryPeriod.daily => appText.daily,
-                        HadithHistoryPeriod.weekly => appText.weekly,
-                        HadithHistoryPeriod.monthly => appText.monthly,
-                      },
-                      onChanged: _selectFilter,
+                    SizedBox(height: 6.h),
+                    _LegendToggle(
+                      color: const Color(0xFFA9B96A),
+                      label: appText.myNearestOrCompetitor,
+                      value: _showCompetitor,
+                      loading: _showCompetitor && comparison.isLoading,
+                      onChanged: _setCompetitor,
                     ),
                   ],
                 ),
+                SizedBox(height: 16.h),
+                // Day-wise filter, right above the chart: Daily / Weekly /
+                // Monthly, styled like the Amol tracker dashboard's own
+                // period tabs.
+                _PeriodTabs(
+                  period: state.period,
+                  labelFor: _periodLabel(appText),
+                  onChanged: (period) => _selectFilter(period),
+                ),
+                if (state.period == HadithHistoryPeriod.monthly)
+                  _MonthChips(
+                    month: state.month,
+                    onSelect: (month) => _selectFilter(
+                      HadithHistoryPeriod.monthly,
+                      month: month,
+                    ),
+                  )
+                else if (state.from != null && state.to != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 10.h),
+                    child: _DateNavigator(
+                      label: _dateRangeLabel(
+                        context,
+                        appText,
+                        state.from!,
+                        state.to!,
+                      ),
+                      subtitle: _periodLabel(appText)(state.period),
+                      onPrevious: () => _shiftDate(state, -1),
+                      onNext: _canShiftForward(state)
+                          ? () => _shiftDate(state, 1)
+                          : null,
+                    ),
+                  ),
                 SizedBox(height: 18.h),
                 SizedBox(
                   height: 250.h,
@@ -321,6 +375,42 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
         ),
       ),
     );
+  }
+
+  /// Whether [date] is the current calendar day.
+  static bool _isToday(DateTime? date) {
+    if (date == null) return false;
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  /// "Daily" / "Weekly" / "Monthly", for the tabs and the navigator's
+  /// subtitle.
+  static String Function(HadithHistoryPeriod) _periodLabel(AppText appText) =>
+      (period) => switch (period) {
+        HadithHistoryPeriod.daily => appText.daily,
+        HadithHistoryPeriod.weekly => appText.weekly,
+        HadithHistoryPeriod.monthly => appText.monthly,
+      };
+
+  /// The navigator's label for a daily/weekly window: `15 Oct, 2026` for a
+  /// single day, `9 - 15 Oct, 2026` within one month, or `28 Sep - 4 Oct,
+  /// 2026` across a month boundary.
+  static String _dateRangeLabel(
+    BuildContext context,
+    AppText appText,
+    DateTime from,
+    DateTime to,
+  ) {
+    String month(DateTime d) => appText.monthNames[d.month - 1];
+    final text = from == to
+        ? '${to.day} ${month(to)}, ${to.year}'
+        : from.year == to.year && from.month == to.month
+        ? '${from.day} - ${to.day} ${month(to)}, ${to.year}'
+        : '${from.day} ${month(from)} - ${to.day} ${month(to)}, ${to.year}';
+    return context.localizedDigits(text);
   }
 
   /// One point per calendar day of the requested range (days the backend
@@ -654,201 +744,63 @@ class _LegendToggle extends StatelessWidget {
   }
 }
 
-/// The filter button: Daily / Weekly / Monthly, and inside Monthly the 12
-/// months. The button shows the picked month's name when there is one.
-class _PeriodDropdown extends StatelessWidget {
-  const _PeriodDropdown({
+/// Day-wise filter shown right above the chart: Daily / Weekly / Monthly as
+/// equal-width segments in a pill, styled like the Amol tracker dashboard's
+/// own period tabs (`AmolPeriodTabs`). The active segment is highlighted;
+/// tapping one loads it straight away (Monthly starts as the rolling last 30
+/// days - [_MonthChips] narrows it to a calendar month).
+class _PeriodTabs extends StatelessWidget {
+  const _PeriodTabs({
     required this.period,
-    required this.month,
     required this.labelFor,
     required this.onChanged,
   });
 
   final HadithHistoryPeriod period;
-
-  /// The picked month (first day), or null for the rolling periods.
-  final DateTime? month;
   final String Function(HadithHistoryPeriod) labelFor;
-  final void Function(HadithHistoryPeriod period, {DateTime? month}) onChanged;
+  final ValueChanged<HadithHistoryPeriod> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final picked = month;
-    return PopupMenuButton<void>(
-      color: Colors.white,
-      padding: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      // One custom item: the menu handles its own taps, as choosing Monthly
-      // must keep it open to show the months.
-      itemBuilder: (_) => [
-        PopupMenuItem<void>(
-          enabled: false,
-          padding: EdgeInsets.zero,
-          child: _PeriodMenu(
-            period: period,
-            month: month,
-            labelFor: labelFor,
-            onChanged: onChanged,
-          ),
-        ),
-      ],
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: context.surfaceColor(Color(0xFFDDE8BA)),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              picked == null
-                  ? labelFor(period)
-                  : AppText.of(context).monthNames[picked.month - 1],
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                color: context.inkColor(Color(0xFF3E4A2A)),
-              ),
-            ),
-            SizedBox(width: 6.w),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 18.sp,
-              color: context.inkColor(Color(0xFF3E4A2A)),
-            ),
-          ],
-        ),
+    return Container(
+      padding: EdgeInsets.all(4.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFF3F4EA)),
+        borderRadius: BorderRadius.circular(24.r),
       ),
-    );
-  }
-}
-
-/// The content of the filter menu. Daily and Weekly load and close it.
-/// Monthly loads the last 30 days right away and stays open, expanding the 12
-/// months of this year; a month loads and closes it.
-class _PeriodMenu extends StatefulWidget {
-  const _PeriodMenu({
-    required this.period,
-    required this.month,
-    required this.labelFor,
-    required this.onChanged,
-  });
-
-  final HadithHistoryPeriod period;
-  final DateTime? month;
-  final String Function(HadithHistoryPeriod) labelFor;
-  final void Function(HadithHistoryPeriod period, {DateTime? month}) onChanged;
-
-  @override
-  State<_PeriodMenu> createState() => _PeriodMenuState();
-}
-
-class _PeriodMenuState extends State<_PeriodMenu> {
-  // The menu route is separate from the screen, so it keeps its own copy of
-  // the selection to stay right while it is open.
-  late HadithHistoryPeriod _period = widget.period;
-  late DateTime? _month = widget.month;
-
-  /// Opens on the months when Monthly is already the active filter.
-  late bool _monthsOpen = widget.period == HadithHistoryPeriod.monthly;
-
-  void _pick(HadithHistoryPeriod period, {DateTime? month, bool close = true}) {
-    setState(() {
-      _period = period;
-      _month = month;
-    });
-    widget.onChanged(period, month: month);
-    if (close) Navigator.of(context).pop();
-  }
-
-  void _onMonthly() {
-    final rollingMonthly =
-        _period == HadithHistoryPeriod.monthly && _month == null;
-    if (rollingMonthly) {
-      // Already showing the last 30 days: just open or close the months.
-      setState(() => _monthsOpen = !_monthsOpen);
-    } else {
-      // Monthly first (today back 30 days), then the months to narrow it.
-      _pick(HadithHistoryPeriod.monthly, close: false);
-      setState(() => _monthsOpen = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    return SizedBox(
-      width: 220.w,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          _MenuRow(
-            label: widget.labelFor(HadithHistoryPeriod.daily),
-            active: _period == HadithHistoryPeriod.daily,
-            onTap: () => _pick(HadithHistoryPeriod.daily),
-          ),
-          _MenuRow(
-            label: widget.labelFor(HadithHistoryPeriod.weekly),
-            active: _period == HadithHistoryPeriod.weekly,
-            onTap: () => _pick(HadithHistoryPeriod.weekly),
-          ),
-          _MenuRow(
-            label: widget.labelFor(HadithHistoryPeriod.monthly),
-            active: _period == HadithHistoryPeriod.monthly,
-            trailing: Icon(
-              _monthsOpen
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
-              size: 20.sp,
-              color: context.inkColor(const Color(0xFF3E4A2A)),
-            ),
-            onTap: _onMonthly,
-          ),
-          if (_monthsOpen)
-            Padding(
-              padding: EdgeInsets.fromLTRB(12.w, 2.h, 12.w, 12.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8.h),
-                    child: Text(
-                      context.localizedDigits('${now.year}'),
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: context.inkColor(const Color(0xFF6A7350)),
+          for (final value in HadithHistoryPeriod.values)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(value),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: EdgeInsets.symmetric(vertical: 9.h),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(
+                      value == period
+                          ? const Color(0xFFCBD79A)
+                          : Colors.transparent,
+                    ),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    labelFor(value),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: value == period
+                          ? FontWeight.w700
+                          : FontWeight.w400,
+                      color: context.inkColor(
+                        value == period
+                            ? const Color(0xFF3F4A32)
+                            : const Color(0xFF9AA48A),
                       ),
                     ),
                   ),
-                  Wrap(
-                    spacing: 8.w,
-                    runSpacing: 8.h,
-                    children: [
-                      for (var m = 1; m <= 12; m++)
-                        SizedBox(
-                          width: 58.w,
-                          height: 32.h,
-                          child: _MonthChip(
-                            name: abbreviateLocalizedMonth(
-                              AppText.of(context).monthNames[m - 1],
-                              context.appLanguage,
-                            ),
-                            // Months that haven't started have no data.
-                            enabled: m <= now.month,
-                            selected:
-                                _month?.year == now.year && _month?.month == m,
-                            onTap: () => _pick(
-                              HadithHistoryPeriod.monthly,
-                              month: DateTime(now.year, m),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
         ],
@@ -857,48 +809,40 @@ class _PeriodMenuState extends State<_PeriodMenu> {
   }
 }
 
-class _MenuRow extends StatelessWidget {
-  const _MenuRow({
-    required this.label,
-    required this.active,
-    required this.onTap,
-    this.trailing,
-  });
+/// The 12 months of this year, shown under [_PeriodTabs] once Monthly is
+/// active, to narrow the rolling last-30-days view to one calendar month.
+class _MonthChips extends StatelessWidget {
+  const _MonthChips({required this.month, required this.onSelect});
 
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  final Widget? trailing;
+  /// The picked month (first day), or null while still the rolling 30 days.
+  final DateTime? month;
+  final ValueChanged<DateTime> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: 44.h,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        color: active ? const Color(0xFFEDF3D6) : Colors.transparent,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                  color: context.inkColor(const Color(0xFF2C3320)),
+    final now = DateTime.now();
+    return Padding(
+      padding: EdgeInsets.only(top: 10.h),
+      child: Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: [
+          for (var m = 1; m <= 12; m++)
+            SizedBox(
+              width: 58.w,
+              height: 32.h,
+              child: _MonthChip(
+                name: abbreviateLocalizedMonth(
+                  AppText.of(context).monthNames[m - 1],
+                  context.appLanguage,
                 ),
+                // Months that haven't started have no data.
+                enabled: m <= now.month,
+                selected: month?.year == now.year && month?.month == m,
+                onTap: () => onSelect(DateTime(now.year, m)),
               ),
             ),
-            // The menu item is "disabled" (it handles its own taps), which
-            // would dim icons; keep this one fully visible.
-            if (trailing != null)
-              IconTheme.merge(
-                data: const IconThemeData(opacity: 1),
-                child: trailing!,
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -946,6 +890,97 @@ class _MonthChip extends StatelessWidget {
                 : context.inkColor(
                     enabled ? const Color(0xFF2C3320) : const Color(0xFFB4B9A6),
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Steps a daily/weekly window back or forward one day (or 7 for weekly),
+/// styled like the Amol tracker dashboard's own date navigator: a pill with
+/// a chevron on each side around the current window's label and the active
+/// period's name.
+class _DateNavigator extends StatelessWidget {
+  const _DateNavigator({
+    required this.label,
+    required this.subtitle,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final String label;
+  final String subtitle;
+
+  /// `null` disables the arrow - [onNext] going past today, [onPrevious]
+  /// never (there's no known earliest date to stop at).
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFDCE9B8))),
+      ),
+      child: Row(
+        children: [
+          _NavArrow(icon: Icons.chevron_left, onTap: onPrevious),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: context.inkColor(Colors.black),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: context.inkColor(Colors.black54),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _NavArrow(icon: Icons.chevron_right, onTap: onNext),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  const _NavArrow({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return SizedBox.square(
+      dimension: 32.r,
+      child: IconButton(
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: context.surfaceColor(
+            enabled ? Colors.white : const Color(0xFFF2F3EA),
+          ),
+          side: BorderSide(color: context.lineColor(const Color(0xFFDCE9B8))),
+        ),
+        icon: Icon(
+          icon,
+          size: 16.sp,
+          color: context.inkColor(
+            enabled ? const Color(0xFF7E8C61) : const Color(0xFFC5CAB8),
           ),
         ),
       ),

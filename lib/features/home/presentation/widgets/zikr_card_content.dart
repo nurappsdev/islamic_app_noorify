@@ -181,7 +181,9 @@ class _ZikrPill extends StatelessWidget {
         return Container(
           padding: EdgeInsets.only(left: h * 0.42, right: h * 0.08),
           decoration: BoxDecoration(
-            color: item.completed ? _lineGreen : _pillGreen,
+            color: item.completed
+                ? _lineGreen.withValues(alpha: 0.75)
+                : _pillGreen,
             borderRadius: BorderRadius.circular(h),
             boxShadow: [
               BoxShadow(

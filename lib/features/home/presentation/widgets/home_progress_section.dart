@@ -39,7 +39,7 @@ const _pillarTitleKeyByKey = {
   'fardh_prayer': 'Fardh Prayer',
   'sunnah_witr': 'Sunnah and Witr',
   'quran': 'Quran',
-  'zikr': 'Zikr',
+  'tasbih': 'Zikr',
   'hadith': 'Hadith',
   'quiz': 'Quiz',
 };

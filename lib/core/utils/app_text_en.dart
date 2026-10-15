@@ -405,6 +405,12 @@ const Map<String, String> appTextEn = <String, String>{
   'dhuhrPrayerTime': 'Dhuhr Prayer Time',
   'prohibitedPrayerTimes': 'Prohibited Prayer Times',
   'jawaal': 'Jawaal',
+  'periodSubheSadik': 'Subhe Sadik',
+  'periodSokal': 'Morning',
+  'periodDupur': 'Noon',
+  'periodBikel': 'Afternoon',
+  'periodSondhya': 'Evening',
+  'periodRaat': 'Night',
   'prayerTimesTitle': 'Prayer Times',
   'hijriDateUnavailable': 'Hijri Date Unavailable',
   'nextPrefix': 'Next:',
@@ -412,7 +418,7 @@ const Map<String, String> appTextEn = <String, String>{
   'prayerFajr': 'Fajr',
   'prayerDhuhr': 'Dhuhr',
   'prayerAsr': 'Asr',
-  'prayerMaghribAndIftar': 'Maghrib & Iftar',
+  'prayerMaghrib': 'Maghrib',
   'prayerIsha': 'Isha',
 
   // Learning feature

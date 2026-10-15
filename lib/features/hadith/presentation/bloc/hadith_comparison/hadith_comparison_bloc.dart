@@ -28,14 +28,16 @@ class HadithComparisonBloc
   ) async {
     final generation = ++_generation;
     final month = event.month;
+    final endDate = event.endDate;
     final range = month == null
-        ? hadithHistoryRange(event.period)
+        ? hadithHistoryRange(event.period, endDate: endDate)
         : hadithMonthRange(month);
     emit(
       HadithComparisonState(
         status: HadithComparisonStatus.loading,
         period: event.period,
         month: month,
+        endDate: endDate,
       ),
     );
     final result = await _getComparison(from: range.from, to: range.to);
@@ -46,6 +48,7 @@ class HadithComparisonBloc
           status: HadithComparisonStatus.failure,
           period: event.period,
           month: month,
+          endDate: endDate,
           failure: failure,
         ),
       ),
@@ -54,6 +57,7 @@ class HadithComparisonBloc
           status: HadithComparisonStatus.success,
           period: event.period,
           month: month,
+          endDate: endDate,
           competitor: comparison.competitor,
           myName: comparison.myName,
         ),

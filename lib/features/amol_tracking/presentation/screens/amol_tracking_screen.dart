@@ -30,6 +30,7 @@ import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart'
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 
 /// `pillarKey`s whose items may only be logged once their prayer window has
 /// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
@@ -39,7 +40,7 @@ const _timeGatedPillarKeys = {'fardh_prayer', 'sunnah_witr', 'nafl_salat'};
 /// `pillarKey`s whose items open another feature screen instead of being
 /// ticked here (see [_AmolTrackingScreenState._onItemTap]) — their rows show
 /// a navigation arrow instead of a checkbox.
-const _navigablePillarKeys = {'quran', 'hadith', 'quiz'};
+const _navigablePillarKeys = {'quran', 'hadith', 'quiz', 'tasbih', 'dua'};
 
 /// English title -> the pillar key `GET /amol/tracker/daily` uses, so a
 /// caller (e.g. [HomeProgressSection]'s tiles) can still ask for a category
@@ -51,21 +52,8 @@ const _pillarKeyByTitle = {
   'Quran': 'quran',
   'Hadith': 'hadith',
   'Quiz': 'quiz',
-  'Zikr': 'zikr',
+  'Zikr': 'tasbih',
   'Nafl & more': 'nafl_and_more',
-};
-
-/// Server `pillarKey` -> the (English) title key [AppText.categoryLabel]
-/// already knows how to localize.
-const _pillarTitleKeyByKey = {
-  'fardh_prayer': 'Fardh Prayer',
-  'sunnah_witr': 'Sunnah and Witr',
-  'nafl_salat': 'Nafl Salat',
-  'quran': 'Quran',
-  'hadith': 'Hadith',
-  'quiz': 'Quiz',
-  'zikr': 'Zikr',
-  'nafl_and_more': 'Nafl & more',
 };
 
 /// The sections [AmolTrackingScreen] can bring into focus.
@@ -76,7 +64,9 @@ enum AmalSection {
   quran('quran'),
   hadith('hadith'),
   quiz('quiz'),
-  zikr('zikr'),
+
+  /// The server's pillarKey for Zikr is `tasbih`, not `zikr`.
+  zikr('tasbih'),
   naflAndMore('nafl_and_more');
 
   const AmalSection(this.pillarKey);
@@ -472,6 +462,18 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       if (mounted) _reload();
       return;
     }
+    // Zikr (`tasbih`) and Dua are logged by adding an entry (e.g. "100
+    // zikr", "5 minutes") inside those features, not by a plain tick here -
+    // there's no generic "add an entry" UI in this tracker. Tapping opens the
+    // feature's main screen directly, and the day is reloaded on return so
+    // entries logged meanwhile show up checked.
+    if (pillarKey == 'tasbih' || pillarKey == 'dua') {
+      await Navigator.of(
+        context,
+      ).pushNamed(pillarKey == 'tasbih' ? RouteNames.zikr : RouteNames.dua);
+      if (mounted) _reload();
+      return;
+    }
 
     // Viewing is public, but logging / unchecking (POST / DELETE) needs the
     // login token.
@@ -527,7 +529,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   Future<bool> _confirmUntrack(AmolItem item) async {
     final appText = AppText.readOf(context);
-    final name = _localizedItemName(appText, item);
+    final name = _localizedItemName(context, item);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -550,7 +552,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   void _showPrayerNotStartedAlert(AmolItem item) {
     final appText = AppText.readOf(context);
-    final name = _localizedItemName(appText, item);
+    final name = _localizedItemName(context, item);
     showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .45),
@@ -558,10 +560,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         backgroundColor: Colors.transparent,
         insetPadding: EdgeInsets.symmetric(horizontal: 28.w),
         child: _PrayerNotStartedCard(
-          message: appText.amolPrayerTimeNotStarted.replaceAll(
-            '{name}',
-            name,
-          ),
+          message: appText.amolPrayerTimeNotStarted.replaceAll('{name}', name),
           okLabel: appText.ok,
         ),
       ),
@@ -575,6 +574,19 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   }
 
   void _reload() => _bloc.add(LoadAmolDaily(_isoDate(_today)));
+
+  /// Pull-to-refresh: reloads the day. When a dashboard is already showing,
+  /// the reload is silent (no shimmer flash) — the [RefreshIndicator]'s own
+  /// spinner is the only loading feedback.
+  Future<void> _onRefresh() async {
+    final future = _bloc.stream.firstWhere(
+      (s) =>
+          s.status == AmolDailyStatus.success ||
+          s.status == AmolDailyStatus.failure,
+    );
+    _bloc.add(LoadAmolDaily(_isoDate(_today), silent: _bloc.state.hasData));
+    await future;
+  }
 
   @override
   void dispose() {
@@ -635,73 +647,78 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                   Expanded(
                     // Every section is laid out (not lazily built) so the slide
                     // can measure one that starts off screen.
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AmolSummaryCard(
-                            pointLabel: pointLabel,
-                            progressLabel: progressLabel,
-                            progress: progress,
-                          ),
-                          SizedBox(height: 18.h),
-                          Text(
-                            context.localizedDigits(
-                              formatAmolDate(_today, appText),
+                    child: RefreshIndicator(
+                      onRefresh: _onRefresh,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            AmolSummaryCard(
+                              pointLabel: pointLabel,
+                              progressLabel: progressLabel,
+                              progress: progress,
                             ),
-                            style: TextStyle(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
-                              color: context.inkColor(Colors.black),
+                            SizedBox(height: 18.h),
+                            Text(
+                              context.localizedDigits(
+                                formatAmolDate(_today, appText),
+                              ),
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: context.inkColor(Colors.black),
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12.h),
-                          if (dashboard != null)
-                            for (final pillar in _displayOrder(
-                              dashboard.pillars,
-                            ))
-                              _ReorderSlot(
-                                key: _slotKey(pillar.pillarKey),
-                                animation: _reorder,
-                                slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
-                                isMover: pillar.pillarKey == _movedToTop,
-                                child: _FocusableSection(
-                                  key: pillar.pillarKey == focusedKey
-                                      ? _focusedAnchor
-                                      : null,
-                                  mode: focusedKey == null || !_focusActive
-                                      ? _FocusMode.none
-                                      : pillar.pillarKey == focusedKey
-                                      ? _FocusMode.focused
-                                      : _FocusMode.dimmed,
-                                  onTapWhenDimmed: () =>
-                                      _focusSection(pillar.pillarKey),
-                                  child: _PillarRow(
-                                    pillar: pillar,
-                                    expanded:
-                                        _expandedPillarKey == pillar.pillarKey,
-                                    onToggleExpanded: () =>
-                                        _toggleCategory(pillar.pillarKey),
-                                    loggingItemKey: state.loggingItemKey,
-                                    completionOverrides:
-                                        state.completionOverrides,
-                                    anchorItemKey:
-                                        pillar.pillarKey == _anchorPillarKey
-                                        ? _selectedItemKey
+                            SizedBox(height: 12.h),
+                            if (dashboard != null)
+                              for (final pillar in _displayOrder(
+                                dashboard.pillars,
+                              ))
+                                _ReorderSlot(
+                                  key: _slotKey(pillar.pillarKey),
+                                  animation: _reorder,
+                                  slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
+                                  isMover: pillar.pillarKey == _movedToTop,
+                                  child: _FocusableSection(
+                                    key: pillar.pillarKey == focusedKey
+                                        ? _focusedAnchor
                                         : null,
-                                    anchorKey: _selectedItemAnchor,
-                                    highlightAnchor: _focusActive,
-                                    onItemTap: (item) =>
-                                        _onItemTap(pillar.pillarKey, item),
+                                    mode: focusedKey == null || !_focusActive
+                                        ? _FocusMode.none
+                                        : pillar.pillarKey == focusedKey
+                                        ? _FocusMode.focused
+                                        : _FocusMode.dimmed,
+                                    onTapWhenDimmed: () =>
+                                        _focusSection(pillar.pillarKey),
+                                    child: _PillarRow(
+                                      pillar: pillar,
+                                      expanded:
+                                          _expandedPillarKey ==
+                                          pillar.pillarKey,
+                                      onToggleExpanded: () =>
+                                          _toggleCategory(pillar.pillarKey),
+                                      loggingItemKey: state.loggingItemKey,
+                                      completionOverrides:
+                                          state.completionOverrides,
+                                      anchorItemKey:
+                                          pillar.pillarKey == _anchorPillarKey
+                                          ? _selectedItemKey
+                                          : null,
+                                      anchorKey: _selectedItemAnchor,
+                                      highlightAnchor: _focusActive,
+                                      onItemTap: (item) =>
+                                          _onItemTap(pillar.pillarKey, item),
+                                    ),
                                   ),
-                                ),
-                              )
-                          else if (state.status == AmolDailyStatus.failure)
-                            _LoadFailedNotice(onRetry: _reload)
-                          else
-                            const _PillarListShimmer(),
-                        ],
+                                )
+                            else if (state.status == AmolDailyStatus.failure)
+                              _LoadFailedNotice(onRetry: _reload)
+                            else
+                              const _PillarListShimmer(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -719,61 +736,22 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   }
 }
 
-/// `itemKey` -> the localized display name the app already ships. Falls
-/// back to the server's own (English) [AmolItem.title] for anything new.
-String _localizedItemName(AppText appText, AmolItem item) {
-  switch (item.itemKey) {
-    case 'fajr':
-      return appText.salahFajr;
-    case 'dhuhr':
-      return appText.salahDuhr;
-    case 'asr':
-      return appText.salahAsr;
-    case 'maghrib':
-      return appText.salahMagrib;
-    case 'isha':
-      return appText.salahEsa;
-    case 'fajr_sunnah':
-      return appText.salahFajrSunnah;
-    case 'dhuhr_sunnah':
-      return appText.salahDuhrSunnah;
-    case 'asr_sunnah':
-      return appText.salahAsrSunnah;
-    case 'maghrib_sunnah':
-      return appText.salahMagribSunnah;
-    case 'isha_sunnah':
-      return appText.salahEsaSunnah;
-    case 'witr':
-      return appText.salahWitr;
-    case 'tahajjud':
-      return appText.naflTahajjud;
-    case 'ishraq':
-      return appText.naflIshraq;
-    case 'chasht':
-      return appText.naflChast;
-    case 'awabin':
-      return appText.naflAwabin;
-    case 'quran_tilawat':
-      return appText.infoQuranTilawat;
-    case 'hadith_reading':
-      return appText.infoHadithReading;
-    case 'daily_quiz':
-      return appText.infoGivingQuiz;
-    case 'sadaqah':
-      return appText.moreSadaqah;
-    case 'roza_kaffarah':
-      return appText.moreKarzeHasanah;
-    case 'nafl_fasting':
-      return appText.moreNaflFasting;
-    case 'physical_exercise':
-      return appText.morePhysicalExercise;
-    case 'good_advice':
-      return appText.moreGivenGoodAdvice;
-    case 'skill_development':
-      return appText.moreSkillDevelopment;
-    default:
-      return item.title;
-  }
+/// The item's display name straight from the API: [AmolItem.titleBn] in
+/// Bangla, [AmolItem.title] (English) otherwise — falling back to the other
+/// field when the chosen one is empty, so a sparse response never shows a
+/// blank row.
+String _localizedItemName(BuildContext context, AmolItem item) =>
+    _localizedOf(context, item.title, item.titleBn);
+
+/// Same choice as [_localizedItemName], for a pillar's own title.
+String _localizedPillarTitle(BuildContext context, AmolPillar pillar) =>
+    _localizedOf(context, pillar.title, pillar.titleBn);
+
+String _localizedOf(BuildContext context, String english, String bangla) {
+  final isBangla = languageOf(context) == AppLanguage.bangla;
+  final primary = isBangla ? bangla : english;
+  final fallback = isBangla ? english : bangla;
+  return primary.isNotEmpty ? primary : fallback;
 }
 
 class _ItemIcon {
@@ -1124,14 +1102,12 @@ class _PillarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final titleKey = _pillarTitleKeyByKey[pillar.pillarKey] ?? pillar.title;
     return _AccordionCard(
       expanded: expanded,
       child: Column(
         children: [
           _AccordionHeader(
-            title: appText.categoryLabel(titleKey),
+            title: _localizedPillarTitle(context, pillar),
             progress: (pillar.percentage / 100).clamp(0.0, 1.0).toDouble(),
             fractionLabel: context.localizedDigits(pillar.formattedSubtext),
             expanded: expanded,
@@ -1222,6 +1198,14 @@ class _AmolItemRow extends StatelessWidget {
               ? context
                     .surfaceColor(const Color(0xFFDDEBB5))
                     .withValues(alpha: .55)
+              // A navigable item (Quran, Hadith, Quiz, Zikr, Dua) shows a
+              // chevron instead of a checkmark circle, so a done one gets a
+              // faint tint here instead - otherwise it would look identical
+              // to one still unplayed.
+              : isNavigable && isChecked
+              ? context
+                    .surfaceColor(const Color(0xFFDDEBB5))
+                    .withValues(alpha: .25)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12.r),
         ),
@@ -1243,7 +1227,7 @@ class _AmolItemRow extends StatelessWidget {
             SizedBox(width: 10.w),
             Expanded(
               child: Text(
-                _localizedItemName(AppText.of(context), item),
+                _localizedItemName(context, item),
                 style: TextStyle(
                   fontSize: 13.sp,
                   color: context.inkColor(Colors.black),

@@ -5,8 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
-import 'package:tuhfatul_muslim/features/home/domain/calendar/date_labels.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
@@ -62,12 +62,18 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
     final windows = times == null
         ? null
         : ProhibitedPrayerWindows.fromDailyTimes(times);
+    String rangeText(ProhibitedPrayerWindow? window) => window == null
+        ? '--:-- – --:--'
+        : '${localizedPeriodClock(window.start, times: times, appText: appText, bangla: bangla)}'
+              ' – '
+              '${localizedPeriodClock(window.end, times: times, appText: appText, bangla: bangla)}';
     return InkWell(
       onTap: () => showDialog<void>(
         context: context,
         builder: (_) => _ProhibitedTimesDialog(
           appText: appText,
           bangla: bangla,
+          times: times,
           windows: windows,
         ),
       ),
@@ -87,24 +93,15 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
               children: [
                 _ForbiddenTime(
                   title: appText.sunrise,
-                  value: localizeClockText(
-                    windows?.sunrise.formatted ?? '--:-- – --:--',
-                    bangla: bangla,
-                  ),
+                  value: rangeText(windows?.sunrise),
                 ),
                 _ForbiddenTime(
                   title: appText.jawaal,
-                  value: localizeClockText(
-                    windows?.zawal.formatted ?? '--:-- – --:--',
-                    bangla: bangla,
-                  ),
+                  value: rangeText(windows?.zawal),
                 ),
                 _ForbiddenTime(
                   title: appText.sunset,
-                  value: localizeClockText(
-                    windows?.sunset.formatted ?? '--:-- – --:--',
-                    bangla: bangla,
-                  ),
+                  value: rangeText(windows?.sunset),
                 ),
               ],
             ),
@@ -162,15 +159,20 @@ class _ProhibitedTimesDialog extends StatelessWidget {
   const _ProhibitedTimesDialog({
     required this.appText,
     required this.bangla,
+    required this.times,
     required this.windows,
   });
 
   final AppText appText;
   final bool bangla;
+  final DailyPrayerTimes? times;
   final ProhibitedPrayerWindows? windows;
 
-  String _rangeFor(ProhibitedPrayerWindow? window) =>
-      localizeClockText(window?.formatted ?? '--:-- – --:--', bangla: bangla);
+  String _rangeFor(ProhibitedPrayerWindow? window) => window == null
+      ? '--:-- – --:--'
+      : '${localizedPeriodClock(window.start, times: times, appText: appText, bangla: bangla)}'
+            ' – '
+            '${localizedPeriodClock(window.end, times: times, appText: appText, bangla: bangla)}';
 
   @override
   Widget build(BuildContext context) {

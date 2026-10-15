@@ -590,9 +590,9 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
     AmolItem item,
   ) {
     final chartKey = switch (item.itemKey) {
-      'sadaqah' => 'sadaqah',
-      'roza_kaffarah' || 'nafl_fasting' => 'fasting',
-      'good_advice' => 'advice',
+      'sadaqah_hadia' => 'sadaqah',
+      'nafl_fasting' => 'fasting',
+      'given_good_advice' => 'advice',
       'physical_exercise' => 'exercise',
       _ => null,
     };
@@ -603,13 +603,13 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 
     final appText = AppText.of(context);
     return switch (item.itemKey) {
-      'sadaqah' => appText.moreSadaqah,
-      'roza_kaffarah' => appText.moreKarzeHasanah,
+      'sadaqah_hadia' => appText.moreSadaqah,
+      'karje_hasanah' => appText.moreKarzeHasanah,
       'nafl_fasting' => appText.moreNaflFasting,
       'physical_exercise' => appText.morePhysicalExercise,
-      'good_advice' => appText.moreGivenGoodAdvice,
+      'given_good_advice' => appText.moreGivenGoodAdvice,
       'skill_development' => appText.moreSkillDevelopment,
-      _ => item.title,
+      _ => context.localized(LocalizedText(en: item.title, bn: item.titleBn)),
     };
   }
 
@@ -652,8 +652,9 @@ class _NaflMoreCardState extends State<_NaflMoreCard> {
 }
 
 /// Zikr card: [ZikrCardContent] over [HomeGradientShape], fed from the
-/// `zikr` pillar of the home dashboard when it has loaded. The tracker has no
-/// Zikr section, so it opens the Zikr feature instead.
+/// `tasbih` pillar (the server's pillarKey for Zikr) of the home dashboard
+/// when it has loaded. The tracker has no Zikr section, so it opens the Zikr
+/// feature instead.
 class _ZikrCard extends StatefulWidget {
   const _ZikrCard();
 
@@ -662,6 +663,29 @@ class _ZikrCard extends StatefulWidget {
 }
 
 class _ZikrCardState extends State<_ZikrCard> {
+  /// The name for one tracked zikr item: the dashboard's own API label for
+  /// this `itemKey` when the server sends one (same source the Nafl & more
+  /// and Sunnah/Witr cards use), else the local Prayer-Zikr translation, else
+  /// the tracker's own `title` as-is.
+  String _localizedZikrItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final apiLabel = context.localized(
+      pillar?.localizedChartLabels[item.itemKey],
+    );
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    final staticName = localizedTrackedZikrName(
+      AppText.of(context),
+      item.itemKey,
+    );
+    if (staticName != null) return staticName;
+
+    return context.localized(LocalizedText(en: item.title, bn: item.titleBn));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -686,12 +710,13 @@ class _ZikrCardState extends State<_ZikrCard> {
     final dashboard = state.hasData ? state.dashboard : null;
     PillarCard? zikr;
     for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
-      if (p.pillarKey == 'zikr') zikr = p;
+      if (p.pillarKey == 'tasbih') zikr = p;
     }
-    // The tracker's `zikr` pillar (when the server sends one) supplies the
-    // list and each zikr's tracked state; without it the card keeps its five
-    // numbered placeholders and the Home dashboard's numbers.
-    final tracked = AmolDailyStore.instance.pillar('zikr');
+    // The tracker's `tasbih` pillar (the server's pillarKey for Zikr; when
+    // it sends one) supplies the list and each zikr's tracked state; without
+    // it the card keeps its five numbered placeholders and the Home
+    // dashboard's numbers.
+    final tracked = AmolDailyStore.instance.pillar('tasbih');
     final items = tracked == null || tracked.items.isEmpty
         ? [
             for (var index = 1; index <= 5; index++)
@@ -704,12 +729,7 @@ class _ZikrCardState extends State<_ZikrCard> {
         : [
             for (final item in tracked.items)
               ZikrItemData(
-                name:
-                    localizedTrackedZikrName(
-                      AppText.of(context),
-                      item.itemKey,
-                    ) ??
-                    item.title,
+                name: _localizedZikrItemName(context, zikr, item),
                 completed: item.isCompleted,
                 itemKey: item.itemKey,
               ),
@@ -857,9 +877,47 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
 }
 
 /// Quiz card: [QuizCardContent] over [HomeGradientShape], fed from the `quiz`
-/// pillar of the home dashboard when it has loaded.
-class _QuizCard extends StatelessWidget {
+/// pillar of the home dashboard (title/percentage/counter) and the two
+/// glass tiles from the tracker's own `quiz` pillar items (the same
+/// `AmolDailyStore` source the Zikr card reads for its items), when the
+/// server sends them.
+class _QuizCard extends StatefulWidget {
   const _QuizCard();
+
+  @override
+  State<_QuizCard> createState() => _QuizCardState();
+}
+
+class _QuizCardState extends State<_QuizCard> {
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// One diamond tile from a tracked quiz item: its own localized title, and
+  /// its earned points once played, otherwise the worth it shows before
+  /// being played.
+  QuizTileData _tileFromItem(BuildContext context, AmolItem item) =>
+      QuizTileData(
+        title: context.localized(
+          LocalizedText(en: item.title, bn: item.titleBn),
+        ),
+        points: item.isCompleted ? item.points : item.maxPoints,
+        completed: item.isCompleted,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -876,6 +934,20 @@ class _QuizCard extends StatelessWidget {
       (pillar) => pillar.localizedTitle,
       AppText.of(context).categoryLabel('Quiz'),
     );
+
+    // The tracker's `quiz` pillar supplies the two Daily Quiz tiles; without
+    // it the first tile falls back to the Home dashboard's own quiz summary
+    // and the second keeps its default label.
+    final trackedItems =
+        AmolDailyStore.instance.pillar('quiz')?.items ?? const [];
+    final firstTile = trackedItems.isNotEmpty
+        ? _tileFromItem(context, trackedItems[0])
+        : quizTileFromPillar(quiz, title: title);
+    final secondTile = trackedItems.length > 1
+        ? _tileFromItem(context, trackedItems[1])
+        : null;
+    final quizTiles = [?firstTile, ?secondTile];
+
     return HomeGradientShape(
       child: QuizCardContent(
         percentage: quiz?.percentage ?? 0,
@@ -887,9 +959,7 @@ class _QuizCard extends StatelessWidget {
         ),
         title: title,
         counter: _pillarCounter(context, quiz, '0/7'),
-        // The first glass tile is the backend's quiz: its title and points,
-        // selected once it has been played.
-        firstQuiz: quizTileFromPillar(quiz, title: title),
+        tiles: quizTiles,
         onOpenTracker: () => _openTracker(context, AmalSection.quiz),
       ),
       onTap: () => _openTracker(context, AmalSection.quiz),

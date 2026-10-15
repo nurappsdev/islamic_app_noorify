@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/bloc/quiz_question_bloc.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
@@ -50,6 +51,10 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen>
       case QuizSubmissionStatus.submitted:
         final result = state.result;
         if (result == null) return;
+        // The server marks today's quiz tracker item done as a side effect
+        // of this submission; refetch so the Home Quiz card (and the Amol
+        // tracker) stop showing it unplayed once the user is back.
+        AmolDailyStore.instance.load();
         Navigator.of(context).pushReplacementNamed(
           RouteNames.quizComplete,
           arguments: QuizCompletionArgs(

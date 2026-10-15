@@ -42,6 +42,19 @@ class AmolDashboardScreen extends StatelessWidget {
 class _AmolDashboardView extends StatelessWidget {
   const _AmolDashboardView();
 
+  /// Pull-to-refresh: re-fetches the current window (same period/date/month)
+  /// via [LoadGraph] and awaits the next success/failure state so the
+  /// indicator's spinner stays up until the data actually lands.
+  Future<void> _onRefresh(AmolDashboardBloc bloc) async {
+    final future = bloc.stream.firstWhere(
+      (s) =>
+          s.status == AmolDashboardStatus.success ||
+          s.status == AmolDashboardStatus.failure,
+    );
+    bloc.add(const LoadGraph());
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AmolDashboardBloc>().state;
@@ -65,94 +78,98 @@ class _AmolDashboardView extends StatelessWidget {
           children: [
             AmolHeader(title: appText.amolTracking),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 20.h),
-                children: [
-                  AmolPeriodTabs(
-                    period: period,
-                    onChanged: (value) => bloc.add(SelectPeriod(value.index)),
-                  ),
-                  SizedBox(height: 16.h),
-                  AmolSummaryCard(
-                    title: period.summaryCardTitle(appText),
-                    pointLabel: vm.pointLabel,
-                    progressLabel: vm.progressLabel,
-                    progress: vm.progress,
-                  ),
-                  // Weekly shows its navigator below the chart instead (see
-                  // the one placed after it further down); every other tab
-                  // keeps it here, above the chart.
-                  if (period != AmolPeriod.weekly) ...[
-                    SizedBox(height: 14.h),
-                    dateNavigator,
-                  ],
-                  if (period == AmolPeriod.monthly) ...[
-                    SizedBox(height: 10.h),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: AmolMonthDropdown(
-                        selectedMonth: DateTime(
-                          state.date.year,
-                          state.date.month,
-                        ),
-                        months: lastTwelveAmolMonths(state.today),
-                        appText: appText,
-                        onChanged: (month) => bloc.add(SelectMonth(month)),
-                      ),
+              child: RefreshIndicator(
+                onRefresh: () => _onRefresh(bloc),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 20.h),
+                  children: [
+                    AmolPeriodTabs(
+                      period: period,
+                      onChanged: (value) => bloc.add(SelectPeriod(value.index)),
                     ),
-                  ],
-                  SizedBox(height: 18.h),
-                  AmolAverageCaption(period: period),
-                  SizedBox(height: 12.h),
-                  const AmolLegend(),
-                  SizedBox(height: 10.h),
-                  if (vm.showMonthlyPillars && !vm.hasMonthlyPillars)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24.h),
-                      child: Center(
-                        child: Text(
-                          appText.noResultsFound,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: context.inkColor(const Color(0xFF5D6B44)),
+                    SizedBox(height: 16.h),
+                    AmolSummaryCard(
+                      title: period.summaryCardTitle(appText),
+                      pointLabel: vm.pointLabel,
+                      progressLabel: vm.progressLabel,
+                      progress: vm.progress,
+                    ),
+                    // Weekly shows its navigator below the chart instead (see
+                    // the one placed after it further down); every other tab
+                    // keeps it here, above the chart.
+                    if (period != AmolPeriod.weekly) ...[
+                      SizedBox(height: 14.h),
+                      dateNavigator,
+                    ],
+                    if (period == AmolPeriod.monthly) ...[
+                      SizedBox(height: 10.h),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: AmolMonthDropdown(
+                          selectedMonth: DateTime(
+                            state.date.year,
+                            state.date.month,
+                          ),
+                          months: lastTwelveAmolMonths(state.today),
+                          appText: appText,
+                          onChanged: (month) => bloc.add(SelectMonth(month)),
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 18.h),
+                    AmolAverageCaption(period: period),
+                    SizedBox(height: 12.h),
+                    const AmolLegend(),
+                    SizedBox(height: 10.h),
+                    if (vm.showMonthlyPillars && !vm.hasMonthlyPillars)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.h),
+                        child: Center(
+                          child: Text(
+                            appText.noResultsFound,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: context.inkColor(const Color(0xFF5D6B44)),
+                            ),
                           ),
                         ),
+                      )
+                    else
+                      AmolLineChart(
+                        categories: vm.chartCategories,
+                        values: vm.chartValues,
+                        myLabel: vm.myLabel,
+                        competitorValues: vm.chartCompetitorValues,
+                        competitorLabel: vm.competitorLabel,
+                        maxY: vm.maxY,
+                        // Weekly mirrors the Hadith dashboard's weekly tab:
+                        // the same per-pillar data, drawn as columns instead
+                        // of a line. Monthly uses every real category (not
+                        // just the fixed list above) with vertical, scrollable
+                        // labels; tapping a column shows the same my/competitor
+                        // points tooltip weekly uses. Daily keeps the existing
+                        // line chart.
+                        columnLayout: vm.isColumnLayout,
+                        verticalLabels: vm.showMonthlyPillars,
+                        // Weekly's fixed 7-category list (including Nafl
+                        // Salat and Nafl And More, the last two) can run off
+                        // the screen edge with diagonal labels on a narrow
+                        // device — scrollable horizontally, same as monthly,
+                        // so every category stays reachable by swiping.
+                        scrollable: vm.isColumnLayout,
                       ),
-                    )
-                  else
-                    AmolLineChart(
-                      categories: vm.chartCategories,
-                      values: vm.chartValues,
-                      myLabel: vm.myLabel,
-                      competitorValues: vm.chartCompetitorValues,
-                      competitorLabel: vm.competitorLabel,
-                      maxY: vm.maxY,
-                      // Weekly mirrors the Hadith dashboard's weekly tab:
-                      // the same per-pillar data, drawn as columns instead
-                      // of a line. Monthly uses every real category (not
-                      // just the fixed list above) with vertical, scrollable
-                      // labels; tapping a column shows the same my/competitor
-                      // points tooltip weekly uses. Daily keeps the existing
-                      // line chart.
-                      columnLayout: vm.isColumnLayout,
-                      verticalLabels: vm.showMonthlyPillars,
-                      // Weekly's fixed 7-category list (including Nafl
-                      // Salat and Nafl And More, the last two) can run off
-                      // the screen edge with diagonal labels on a narrow
-                      // device — scrollable horizontally, same as monthly,
-                      // so every category stays reachable by swiping.
-                      scrollable: vm.isColumnLayout,
+                    if (period == AmolPeriod.weekly) ...[
+                      SizedBox(height: 14.h),
+                      dateNavigator,
+                    ],
+                    SizedBox(height: 18.h),
+                    AmolMyPointsBar(
+                      myPoints: vm.myPoints,
+                      totalPoints: vm.totalPoints,
                     ),
-                  if (period == AmolPeriod.weekly) ...[
-                    SizedBox(height: 14.h),
-                    dateNavigator,
                   ],
-                  SizedBox(height: 18.h),
-                  AmolMyPointsBar(
-                    myPoints: vm.myPoints,
-                    totalPoints: vm.totalPoints,
-                  ),
-                ],
+                ),
               ),
             ),
           ],

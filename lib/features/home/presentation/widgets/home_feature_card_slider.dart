@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 /// One fixed slot on the home screen that cycles through [children] with a
-/// vertical, Reels-style transition.
+/// horizontal, right-to-left transition.
 ///
-/// * A vertical swipe inside the slot moves exactly one card and never
+/// * A horizontal swipe inside the slot moves exactly one card and never
 ///   scrolls the enclosing page (a [PageView] wins the gesture arena).
 /// * The pages travel only a fraction of the slot height, so it reads as one
 ///   card area whose content changes: the leaving card scales down and fades,
@@ -49,9 +49,9 @@ class HomeFeatureCardSlider extends StatefulWidget {
 
   final bool showIndicator;
 
-  /// Optional externally owned controller. It must be a vertical-friendly
-  /// controller created with `viewportFraction: 1`; its page is an unbounded
-  /// looping counter, so use `page % children.length` for the real index.
+  /// Optional externally owned controller. It must be created with
+  /// `viewportFraction: 1`; its page is an unbounded looping counter, so use
+  /// `page % children.length` for the real index.
   /// When omitted the slider creates and disposes its own.
   final PageController? controller;
 
@@ -192,14 +192,13 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
                   behavior: const _NoOverscrollIndicatorBehavior(),
                   child: PageView.builder(
                     controller: _controller,
-                    scrollDirection: Axis.vertical,
+                    scrollDirection: Axis.horizontal,
                     physics: const PageScrollPhysics(),
                     onPageChanged: _onPageChanged,
                     itemBuilder: (context, page) => _Page(
                       controller: _controller,
                       page: page,
                       fallbackPage: _page,
-                      height: widget.height,
                       minScale: _minScale,
                       travel: _travel,
                       padding: widget.padding,
@@ -211,9 +210,9 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
             ),
             if (widget.showIndicator && _count > 1)
               Positioned(
-                right: 4,
-                top: 0,
-                bottom: 0,
+                bottom: 4,
+                left: 0,
+                right: 0,
                 child: IgnorePointer(
                   child: Center(
                     child: _Dots(count: _count, index: _index),
@@ -248,7 +247,6 @@ class _Page extends StatelessWidget {
     required this.controller,
     required this.page,
     required this.fallbackPage,
-    required this.height,
     required this.minScale,
     required this.travel,
     required this.padding,
@@ -258,7 +256,6 @@ class _Page extends StatelessWidget {
   final PageController controller;
   final int page;
   final double fallbackPage;
-  final double height;
   final double minScale;
   final double travel;
   final EdgeInsets padding;
@@ -275,38 +272,43 @@ class _Page extends StatelessWidget {
         child: _ScaleToFitHeight(child: child),
       ),
     );
-    return AnimatedBuilder(
-      animation: controller,
-      child: card,
-      builder: (context, child) {
-        final current =
-            controller.hasClients &&
-                controller.position.haveDimensions &&
-                controller.page != null
-            ? controller.page!
-            : fallbackPage;
-        // -1 = the card that just left upwards, +1 = the one about to arrive
-        // from below.
-        final delta = (page - current).clamp(-1.0, 1.0);
-        final t = delta.abs();
-        final eased = Curves.easeOut.transform(t);
-        return Opacity(
-          opacity: (1 - eased * 1.15).clamp(0.0, 1.0),
-          child: Transform.translate(
-            // Cancel most of the page's own travel: the cards swap in place.
-            offset: Offset(0, -delta * height * travel),
-            child: Transform.scale(
-              scale: 1 - (1 - minScale) * eased,
-              child: child,
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return AnimatedBuilder(
+          animation: controller,
+          child: card,
+          builder: (context, child) {
+            final current =
+                controller.hasClients &&
+                    controller.position.haveDimensions &&
+                    controller.page != null
+                ? controller.page!
+                : fallbackPage;
+            // -1 = the card that just left to the left, +1 = the one about to
+            // arrive from the right.
+            final delta = (page - current).clamp(-1.0, 1.0);
+            final t = delta.abs();
+            final eased = Curves.easeOut.transform(t);
+            return Opacity(
+              opacity: (1 - eased * 1.15).clamp(0.0, 1.0),
+              child: Transform.translate(
+                // Cancel most of the page's own travel: the cards swap in place.
+                offset: Offset(-delta * width * travel, 0),
+                child: Transform.scale(
+                  scale: 1 - (1 - minScale) * eased,
+                  child: child,
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
 }
 
-/// Minimal vertical position dots.
+/// Minimal horizontal position dots.
 class _Dots extends StatelessWidget {
   const _Dots({required this.count, required this.index});
 
@@ -318,16 +320,16 @@ class _Dots extends StatelessWidget {
     final color = Theme.of(context).colorScheme.primary;
     return ValueListenableBuilder<int>(
       valueListenable: index,
-      builder: (context, current, _) => Column(
+      builder: (context, current, _) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < count; i++)
             AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
-              margin: const EdgeInsets.symmetric(vertical: 2),
-              width: 4,
-              height: i == current ? 14 : 4,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              height: 4,
+              width: i == current ? 14 : 4,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: i == current ? 0.8 : 0.25),
                 borderRadius: BorderRadius.circular(2),

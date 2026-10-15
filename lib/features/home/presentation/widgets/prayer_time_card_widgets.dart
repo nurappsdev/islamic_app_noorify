@@ -10,13 +10,20 @@ class _CurrentPrayerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bangla = _isBangla(context);
-    String clock(PrayerClockTime t) =>
-        localizeClockText(formatPrayerTime(t), bangla: bangla);
     final times = this.times;
+    String clock(PrayerClockTime t) => localizedPeriodClock(
+      t,
+      times: times,
+      appText: appText,
+      bangla: bangla,
+    );
     final period = times == null ? null : currentPrayerPeriod(now, times);
-    final label = times == null
+    final periodName = times == null
         ? '—'
         : (period?.displayName(appText) ?? appText.naflIshraq);
+    final label = times == null
+        ? periodName
+        : '$periodName ${appText.namazWord}';
     final rangeText = times == null
         ? '—'
         : period != null
@@ -39,19 +46,12 @@ class _CurrentPrayerBadge extends StatelessWidget {
             width: 39.r,
             height: 39.r,
             decoration: BoxDecoration(
-              // The robe in the image is white, so it needs a coloured tile
-              // to stand out.
-              color: const Color(0xFF9E9E9E),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Padding(
-              padding: EdgeInsets.all(4.r),
-              child: Image.asset(
-                'assets/salatImg.png',
-                fit: BoxFit.contain,
-                // The source is ~1600px wide; decode it at icon size.
-                cacheWidth: 160,
-              ),
+              padding: EdgeInsets.all(6.r),
+              child: Image.asset('assets/sejdaIcon.png', fit: BoxFit.contain),
             ),
           ),
           SizedBox(width: 14.w),
@@ -112,8 +112,6 @@ class _CardDateRow extends StatelessWidget {
   final String end;
   final Color color;
 
-  static const _minScale = .6;
-
   @override
   Widget build(BuildContext context) {
     final base = _calendarDateStyle(color: color);
@@ -132,17 +130,34 @@ class _CardDateRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final textWidth = widthOf(start) + widthOf(end);
+        final startWidth = widthOf(start);
+        final endWidth = widthOf(end);
+        final textWidth = startWidth + endWidth;
         final room = constraints.maxWidth - gap;
         // A little under the exact fit, so rounding never overflows the row.
+        // No lower floor: a longer Hijri month name (e.g. "রবিউস সানি" vs.
+        // "সফর") must still be free to shrink as far as it needs to.
         final scale = textWidth <= room || textWidth == 0
             ? 1.0
-            : (room / textWidth * .98).clamp(_minScale, 1.0);
+            : (room / textWidth * .98).clamp(0.0001, 1.0);
         final style = _calendarDateStyle(
           color: color,
           fontSize: base.fontSize! * scale,
         );
-        Widget date(String text) => Flexible(
+        // Each box gets its proportional share of the available `room`
+        // rather than its own measured width — Bengali text shaping makes
+        // TextPainter.width an underestimate of what the real Text widget
+        // renders, so sizing the box to the raw measurement clipped the tail
+        // of both dates (fading out mid-word) even though there was unused
+        // space on the other side. Splitting proportionally keeps the same
+        // "longer date gets more room" balance while leaving slack on both
+        // sides to absorb that measurement error.
+        final startShare = textWidth == 0
+            ? room / 2
+            : room * startWidth / textWidth;
+        final endShare = room - startShare;
+        Widget date(String text, double width) => SizedBox(
+          width: width,
           child: Text(
             text,
             style: style,
@@ -154,9 +169,9 @@ class _CardDateRow extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            date(start),
+            date(start, startShare),
             SizedBox(width: gap),
-            date(end),
+            date(end, endShare),
           ],
         );
       },
