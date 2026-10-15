@@ -40,7 +40,7 @@ const _timeGatedPillarKeys = {'fardh_prayer', 'sunnah_witr', 'nafl_salat'};
 /// `pillarKey`s whose items open another feature screen instead of being
 /// ticked here (see [_AmolTrackingScreenState._onItemTap]) — their rows show
 /// a navigation arrow instead of a checkbox.
-const _navigablePillarKeys = {'quran', 'hadith', 'quiz'};
+const _navigablePillarKeys = {'quran', 'hadith', 'quiz', 'tasbih', 'dua'};
 
 /// English title -> the pillar key `GET /amol/tracker/daily` uses, so a
 /// caller (e.g. [HomeProgressSection]'s tiles) can still ask for a category
@@ -459,6 +459,18 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       await Navigator.of(
         context,
       ).pushNamed(pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith);
+      if (mounted) _reload();
+      return;
+    }
+    // Zikr (`tasbih`) and Dua are logged by adding an entry (e.g. "100
+    // zikr", "5 minutes") inside those features, not by a plain tick here -
+    // there's no generic "add an entry" UI in this tracker. Tapping opens the
+    // feature's main screen directly, and the day is reloaded on return so
+    // entries logged meanwhile show up checked.
+    if (pillarKey == 'tasbih' || pillarKey == 'dua') {
+      await Navigator.of(
+        context,
+      ).pushNamed(pillarKey == 'tasbih' ? RouteNames.zikr : RouteNames.dua);
       if (mounted) _reload();
       return;
     }
