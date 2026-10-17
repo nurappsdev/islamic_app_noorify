@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_rounded_mask"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/widget_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        tools:src="@drawable/prayer_theme_1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp">
+
+        <!-- Hijri date (start) · Bengali calendar date (end) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/large_hijri"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="10sp"
+                android:textStyle="italic"
+                android:textColor="#FFFFFF"
+                android:shadowColor="#66000000"
+                android:shadowDx="0"
+                android:shadowDy="1"
+                android:shadowRadius="2"
+                android:singleLine="true"
+                tools:text="৭ সফর ১৪৪৪ হিজরি" />
+
+            <TextView
+                android:id="@+id/large_calendar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textSize="10sp"
+                android:textStyle="italic"
+                android:textColor="#FFFFFF"
+                android:shadowColor="#66000000"
+                android:shadowDx="0"
+                android:shadowDy="1"
+                android:shadowRadius="2"
+                android:singleLine="true"
+                tools:text="৭ শ্রাবণ ১৪৩৩" />
+        </LinearLayout>
+
+        <!-- Centre block: date, period-labelled time, location -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/widget_center_pill"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingHorizontal="18dp"
+            android:paddingVertical="6dp">
+
+            <TextView
+                android:id="@+id/large_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="#5B856F"
+                android:singleLine="true"
+                tools:text="২৪ জুলাই ২০২৬" />
+
+            <TextView
+                android:id="@+id/large_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#3F5A4A"
+                android:singleLine="true"
+                tools:text="সুবহে সাদিক ৫:৪৪" />
+
+            <TextView
+                android:id="@+id/large_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="11sp"
+                android:textColor="#5B856F"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="ময়মনসিংহ, বাংলাদেশ" />
+        </LinearLayout>
+
+        <!-- Current/next prayer badge -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/widget_badge_pill"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="11dp"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/widget_icon_tile"
+                android:padding="6dp"
+                android:src="@drawable/prayer_sejda_icon" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/large_badge_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="জোহরের নামাজ" />
+
+                <TextView
+                    android:id="@+id/large_badge_range"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="১২:০৪ – ৪:২২" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Sunrise (start) · Sunset (end) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/large_sunrise_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10sp"
+                    android:textColor="#FFFFFF"
+                    android:shadowColor="#66000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="true"
+                    tools:text="সূর্যোদয়, ত্রিশাল" />
+
+                <TextView
+                    android:id="@+id/large_sunrise_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:shadowColor="#66000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="true"
+                    tools:text="সকাল ৫:২৩-এ" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/large_sunset_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10sp"
+                    android:textColor="#FFFFFF"
+                    android:shadowColor="#66000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="true"
+                    tools:text="সূর্যাস্ত, ত্রিশাল" />
+
+                <TextView
+                    android:id="@+id/large_sunset_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:shadowColor="#66000000"
+                    android:shadowDx="0"
+                    android:shadowDy="1"
+                    android:shadowRadius="2"
+                    android:singleLine="true"
+                    tools:text="সন্ধ্যা ৬:৫৪ মিনিটে" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- A plain View isn't in RemoteViews' supported view allowlist and
+         fails to inflate on the widget host ("Can't load widget"); an
+         ImageView with no src is. -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_border_overlay" />
+</FrameLayout>

@@ -31,6 +31,7 @@ import '../../features/notifications/domain/usecases/mark_notification_read.dart
 import '../../features/notifications/presentation/bloc/notification_bloc.dart';
 import '../../features/notifications/presentation/screens/notification_list_screen.dart';
 import '../../features/home/presentation/screens/prayer_times_screen.dart';
+import '../../features/prayer_widget/presentation/screens/add_prayer_widget_screen.dart';
 import '../../features/qiblah_compass/presentation/screens/qiblah_compass_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/profile_edit_screen.dart';
@@ -516,6 +517,8 @@ class AppRoutes {
         return _quranPage(const QuranDashboardScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
+      case RouteNames.addPrayerWidget:
+        return _page(const AddPrayerWidgetScreen(), settings);
       case RouteNames.prayerCompass:
         final qiblahAngle = settings.arguments as double? ?? 270;
         return _page(QiblahCompassScreen(qiblahAngle: qiblahAngle), settings);

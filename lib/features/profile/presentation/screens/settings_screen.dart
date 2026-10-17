@@ -68,6 +68,11 @@ class SettingsScreen extends StatelessWidget {
       onTap: () => Navigator.of(context).pushNamed(RouteNames.appLanguage),
     ),
     _SettingsItem(
+      appText.addPrayerWidgetTitle,
+      Icons.widgets_outlined,
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.addPrayerWidget),
+    ),
+    _SettingsItem(
       isDark ? appText.themeSwitchToLight : appText.themeSwitchToDark,
       isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
       onTap: () =>
