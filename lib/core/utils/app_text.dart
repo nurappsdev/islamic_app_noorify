@@ -860,6 +860,7 @@ class AppText {
     required this.widgetSizeSmall,
     required this.widgetSizeMedium,
     required this.widgetSizeLarge,
+    required this.widgetAmolTagline,
     required this.adminSupport,
     required this.feedback,
     required this.appLanguage,
@@ -1803,6 +1804,7 @@ class AppText {
   final String widgetSizeSmall;
   final String widgetSizeMedium;
   final String widgetSizeLarge;
+  final String widgetAmolTagline;
   final String adminSupport;
   final String feedback;
   final String appLanguage;
@@ -5139,6 +5141,11 @@ class AppText {
         map,
         'widgetSizeLarge',
         fallback?.widgetSizeLarge ?? '',
+      ),
+      widgetAmolTagline: _read(
+        map,
+        'widgetAmolTagline',
+        fallback?.widgetAmolTagline ?? '',
       ),
       adminSupport: _read(map, 'adminSupport', fallback?.adminSupport ?? ''),
       feedback: _read(map, 'feedback', fallback?.feedback ?? ''),

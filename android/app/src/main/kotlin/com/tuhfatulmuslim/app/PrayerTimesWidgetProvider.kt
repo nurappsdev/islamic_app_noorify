@@ -11,11 +11,12 @@ import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetProvider
 
 /**
- * Native Home Screen widget for the app's prayer times - visually built to
- * match the same design `PrayerTimeCard` renders: the time-of-day background
- * art (`theme1..4.png`), a Hijri/Bengali date row, a centre block with the
- * day-period-labelled clock and verified location, the current/next-prayer
- * badge with the sejda icon, and (space permitting) the sunrise/sunset row.
+ * Native Home Screen widget for the app's prayer times: the time-of-day
+ * background art (`theme1..4.png`) under a white veil for legible black
+ * text, a Hijri/Bengali date row, the current Gregorian date/clock, a
+ * "track your Amol" nudge back into the app, and all five daily prayers in
+ * one row with whichever is current highlighted (space permitting, plus the
+ * sunrise/sunset row).
  *
  * All text comes from `widgetData` - the `SharedPreferences` that
  * `PrayerWidgetService` (Dart) fills via `HomeWidget.saveWidgetData` - which
@@ -23,7 +24,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * so this never shows a fabricated schedule. Which prayer is "current" is
  * recomputed here from the stored minutes-of-day every time the widget
  * renders (mirroring `currentPrayerPeriod`), so a widget that hasn't synced
- * in a while never shows a prayer that has already passed as active.
+ * in a while never shows a prayer that has already passed as the active one.
  */
 class PrayerTimesWidgetProvider : HomeWidgetProvider() {
 
@@ -68,8 +69,8 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         widgetId: Int,
         widgetData: SharedPreferences,
     ) {
-        val size = sizeOf(appWidgetManager, widgetId)
-        val views = when (size) {
+        val options = appWidgetManager.getAppWidgetOptions(widgetId)
+        val views = when (sizeOf(options)) {
             WidgetSize.SMALL -> buildSmall(context, widgetData)
             WidgetSize.MEDIUM -> buildMedium(context, widgetData)
             WidgetSize.LARGE -> buildLarge(context, widgetData)
@@ -86,8 +87,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
     }
 
     /** Buckets the widget's current cell size into one of the three designs. */
-    private fun sizeOf(appWidgetManager: AppWidgetManager, widgetId: Int): WidgetSize {
-        val options = appWidgetManager.getAppWidgetOptions(widgetId)
+    private fun sizeOf(options: Bundle): WidgetSize {
         val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
         val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
         return when {
@@ -160,6 +160,9 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
 
     private data class Badge(val label: String, val range: String)
 
+    /** Small-size summary: just the current (or, during the Ishraq gap,
+     * "Ishraq") period's name and start–end range - there's no room for all
+     * five prayers at that size. */
     private fun buildBadge(
         widgetData: SharedPreferences,
         schedule: Schedule?,
@@ -201,6 +204,35 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
     private fun text(widgetData: SharedPreferences, key: String): String =
         widgetData.getString(key, null) ?: ""
 
+    private data class PrayerCellIds(val cell: Int, val name: Int, val time: Int)
+
+    /** Fills the five-prayer row and highlights whichever cell is current
+     * (none, during the Ishraq gap - none of the five obligatory prayers is
+     * "now"). */
+    private fun applyPrayerRow(
+        views: RemoteViews,
+        schedule: Schedule?,
+        nowMinutes: Int,
+        cellIds: Map<Period, PrayerCellIds>,
+    ) {
+        val current = schedule?.let { currentPeriod(it, nowMinutes) }
+        for (meta in prayers) {
+            val ids = cellIds.getValue(meta.period)
+            val entry = schedule?.entries?.get(meta.period)
+            views.setTextViewText(ids.name, entry?.label ?: meta.fallbackLabel)
+            views.setTextViewText(ids.time, entry?.time ?: "--:--")
+            val isActive = meta.period == current
+            views.setInt(
+                ids.cell,
+                "setBackgroundResource",
+                if (isActive) R.drawable.widget_prayer_cell_active else 0,
+            )
+            val textColor = if (isActive) 0xFFFFFFFF.toInt() else 0xFF000000.toInt()
+            views.setTextColor(ids.name, textColor)
+            views.setTextColor(ids.time, textColor)
+        }
+    }
+
     // --- Layouts --------------------------------------------------------------
 
     private fun buildSmall(context: Context, widgetData: SharedPreferences): RemoteViews {
@@ -209,6 +241,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         val badge = buildBadge(widgetData, readSchedule(widgetData), nowMinutes())
         views.setTextViewText(R.id.small_badge_label, badge.label)
         views.setTextViewText(R.id.small_badge_range, badge.range)
+        views.setTextViewText(R.id.small_tagline, text(widgetData, "widget_amol_tagline"))
         return views
     }
 
@@ -217,12 +250,26 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         views.setImageViewResource(R.id.widget_bg, themeDrawable(widgetData))
         views.setTextViewText(R.id.medium_hijri, text(widgetData, "widget_hijri_date"))
         views.setTextViewText(R.id.medium_calendar, text(widgetData, "widget_calendar_date"))
-        views.setTextViewText(R.id.medium_date, text(widgetData, "widget_greg_date"))
+        views.setTextViewText(R.id.medium_date_chip, text(widgetData, "widget_greg_date"))
         views.setTextViewText(R.id.medium_time, text(widgetData, "widget_period_time"))
         views.setTextViewText(R.id.medium_location, text(widgetData, "widget_location"))
-        val badge = buildBadge(widgetData, readSchedule(widgetData), nowMinutes())
-        views.setTextViewText(R.id.medium_badge_label, badge.label)
-        views.setTextViewText(R.id.medium_badge_range, badge.range)
+        views.setTextViewText(R.id.medium_tagline, text(widgetData, "widget_amol_tagline"))
+        applyPrayerRow(
+            views,
+            readSchedule(widgetData),
+            nowMinutes(),
+            mapOf(
+                Period.FAJR to PrayerCellIds(R.id.medium_cell_fajr, R.id.medium_fajr_name, R.id.medium_fajr_time),
+                Period.DHUHR to PrayerCellIds(R.id.medium_cell_dhuhr, R.id.medium_dhuhr_name, R.id.medium_dhuhr_time),
+                Period.ASR to PrayerCellIds(R.id.medium_cell_asr, R.id.medium_asr_name, R.id.medium_asr_time),
+                Period.MAGHRIB to PrayerCellIds(
+                    R.id.medium_cell_maghrib,
+                    R.id.medium_maghrib_name,
+                    R.id.medium_maghrib_time,
+                ),
+                Period.ISHA to PrayerCellIds(R.id.medium_cell_isha, R.id.medium_isha_name, R.id.medium_isha_time),
+            ),
+        )
         return views
     }
 
@@ -231,12 +278,26 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         views.setImageViewResource(R.id.widget_bg, themeDrawable(widgetData))
         views.setTextViewText(R.id.large_hijri, text(widgetData, "widget_hijri_date"))
         views.setTextViewText(R.id.large_calendar, text(widgetData, "widget_calendar_date"))
-        views.setTextViewText(R.id.large_date, text(widgetData, "widget_greg_date"))
+        views.setTextViewText(R.id.large_date_chip, text(widgetData, "widget_greg_date"))
         views.setTextViewText(R.id.large_time, text(widgetData, "widget_period_time"))
         views.setTextViewText(R.id.large_location, text(widgetData, "widget_location"))
-        val badge = buildBadge(widgetData, readSchedule(widgetData), nowMinutes())
-        views.setTextViewText(R.id.large_badge_label, badge.label)
-        views.setTextViewText(R.id.large_badge_range, badge.range)
+        views.setTextViewText(R.id.large_tagline, text(widgetData, "widget_amol_tagline"))
+        applyPrayerRow(
+            views,
+            readSchedule(widgetData),
+            nowMinutes(),
+            mapOf(
+                Period.FAJR to PrayerCellIds(R.id.large_cell_fajr, R.id.large_fajr_name, R.id.large_fajr_time),
+                Period.DHUHR to PrayerCellIds(R.id.large_cell_dhuhr, R.id.large_dhuhr_name, R.id.large_dhuhr_time),
+                Period.ASR to PrayerCellIds(R.id.large_cell_asr, R.id.large_asr_name, R.id.large_asr_time),
+                Period.MAGHRIB to PrayerCellIds(
+                    R.id.large_cell_maghrib,
+                    R.id.large_maghrib_name,
+                    R.id.large_maghrib_time,
+                ),
+                Period.ISHA to PrayerCellIds(R.id.large_cell_isha, R.id.large_isha_name, R.id.large_isha_time),
+            ),
+        )
         views.setTextViewText(R.id.large_sunrise_label, text(widgetData, "widget_sunrise_label"))
         views.setTextViewText(R.id.large_sunrise_time, text(widgetData, "widget_sunrise_time"))
         views.setTextViewText(R.id.large_sunset_label, text(widgetData, "widget_sunset_label"))
