@@ -10,6 +10,7 @@ import '../../domain/repositories/quran_plan_repository.dart';
 import '../bloc/quran_plan/quran_plan_bloc.dart';
 import '../quran_route_args.dart';
 import '../quran_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 
 class QuranPlanAyahsScreen extends StatefulWidget {
   const QuranPlanAyahsScreen({
@@ -368,7 +369,8 @@ class _QuranPlanAyahsScreenState extends State<QuranPlanAyahsScreen> {
                                                 ayah.surahNameArabic,
                                                 style: TextStyle(
                                                   fontSize: 14.sp,
-                                                  fontFamily: 'Amiri',
+                                                  fontFamily:
+                                                      kQuranArabicFontFamily,
                                                   color: const Color(
                                                     0xFF5D7133,
                                                   ),

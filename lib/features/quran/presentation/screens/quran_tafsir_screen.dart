@@ -95,7 +95,7 @@ class _QuranTafsirScreenState extends State<QuranTafsirScreen> {
                   ayahs: ayahs,
                   active: int.parse(widget.verseKey.split(':').last),
                   scale: 1,
-                  font: arabicFontById('noorehuda'),
+                  font: arabicFontById(kDefaultArabicFontId),
                 ),
               ),
               Center(

@@ -31,7 +31,7 @@ void main() {
   test('keeps the bundled Quran Arabic font separate from the app font', () {
     final style = arabicFontById(kDefaultArabicFontId).apply(const TextStyle());
 
-    expect(style.fontFamily, 'Noorehuda');
+    expect(style.fontFamily, 'AlQalam Quran Majeed');
     expect(style.fontFamily, isNot(appFontFamily));
   });
 }

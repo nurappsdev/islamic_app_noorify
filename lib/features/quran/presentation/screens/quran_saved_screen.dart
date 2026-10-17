@@ -19,6 +19,7 @@ import 'create_quran_playlist_screen.dart';
 import 'quran_playlist_detail_screen.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart';
 import '../widgets/quran_segmented_tabs.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
 
 class QuranSavedScreen extends StatefulWidget {
   const QuranSavedScreen({
@@ -109,7 +110,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
 
   void _openPlaylist(QuranPlaylist playlist) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => QuranPlaylistDetailScreen(
           playlist: playlist,
           repository: widget.playlistRepository,
@@ -121,7 +122,7 @@ class _QuranSavedScreenState extends State<QuranSavedScreen> with RouteAware {
   Future<void> _openCreatePlaylist() async {
     final t = QuranText.read(context);
     final created = await Navigator.of(context).push<QuranPlaylist>(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) =>
             CreateQuranPlaylistScreen(repository: widget.playlistRepository),
       ),

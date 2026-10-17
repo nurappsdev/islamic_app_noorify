@@ -12,6 +12,8 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import 'create_quran_plan_screen.dart';
 import 'quran_plan_ayahs_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
 
 class QuranPlanDetailsScreen extends StatefulWidget {
   const QuranPlanDetailsScreen({
@@ -54,7 +56,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
 
   Future<void> _openEditPlan(QuranPlan plan) async {
     final updated = await Navigator.of(context).push<QuranPlan>(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => CreateQuranPlanScreen(
           repository: widget.repository,
           initialPlan: plan,
@@ -145,7 +147,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
   void _openPlanAyahs(QuranPlan plan) {
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
+          QuranPageRoute(
             builder: (_) => QuranPlanAyahsScreen(
               planId: plan.id,
               planName: plan.name,
@@ -748,7 +750,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
                   nextAyah.surahNameArabic,
                   style: TextStyle(
                     fontSize: 16.sp,
-                    fontFamily: 'Amiri',
+                    fontFamily: kQuranArabicFontFamily,
                     color: const Color(0xFF5D7133),
                   ),
                 ),
@@ -891,7 +893,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
                               s.nameArabic,
                               style: TextStyle(
                                 fontSize: 14.sp,
-                                fontFamily: 'Amiri',
+                                fontFamily: kQuranArabicFontFamily,
                                 color: const Color(0xFF5D7133),
                               ),
                             ),

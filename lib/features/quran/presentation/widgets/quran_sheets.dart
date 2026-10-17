@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reciter/reciter
 import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_zoom_control.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
 
 /// Opens a bottom sheet listing reciters from [reciterBloc], letting the
 /// user pick one. Pass the ancestor's [ReciterBloc] explicitly since a
@@ -113,7 +114,7 @@ void openTafsirSheet(
   String? surahName,
 }) {
   Navigator.of(context).push(
-    MaterialPageRoute<void>(
+    QuranPageRoute<void>(
       builder: (_) => QuranTafsirScreen(
         verseKey: verseKey,
         isBangla: isBangla,

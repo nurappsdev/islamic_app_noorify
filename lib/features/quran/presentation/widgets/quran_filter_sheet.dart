@@ -16,6 +16,7 @@ import 'quran_design.dart';
 import 'quran_modal.dart';
 
 import '../quran_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 
 const _sectionTitle = TextStyle(fontSize: 18, fontWeight: FontWeight.w700);
 
@@ -531,7 +532,7 @@ class _SurahRow extends StatelessWidget {
                     surah.nameArabic,
                     textDirection: TextDirection.rtl,
                     style: const TextStyle(
-                      fontFamily: 'Noorehuda',
+                      fontFamily: kQuranArabicFontFamily,
                       fontSize: 18,
                       color: quranInk,
                     ),

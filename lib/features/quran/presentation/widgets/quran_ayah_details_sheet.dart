@@ -118,7 +118,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                     ayahs: [a],
                     active: 0,
                     scale: 1.2,
-                    font: arabicFontById('noorehuda'),
+                    font: arabicFontById(kDefaultArabicFontId),
                   ),
                   const SizedBox(height: 16),
                   FutureBuilder<List<TranslationEdition>>(

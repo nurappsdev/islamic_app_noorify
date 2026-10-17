@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 
 /// Draw the ornament inside explicit bounds: Quran-font bracket glyphs can
 /// paint outside their advance width and overlap adjacent Arabic words.
@@ -31,7 +32,7 @@ class QuranAyahMarker extends StatelessWidget {
               textDirection: TextDirection.ltr,
               textScaler: TextScaler.noScaling,
               style: TextStyle(
-                fontFamily: 'Noorehuda',
+                fontFamily: kQuranArabicFontFamily,
                 fontSize: 20 * scale,
                 height: 1,
                 color: color,

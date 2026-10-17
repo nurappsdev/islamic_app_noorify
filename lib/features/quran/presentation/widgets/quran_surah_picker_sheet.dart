@@ -4,6 +4,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/surah_summary.dart';
 import '../quran_text.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 
 class QuranSurahPickerSheet extends StatefulWidget {
   const QuranSurahPickerSheet({
@@ -232,7 +233,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                         trailing: Text(
                           surah.nameArabic,
                           style: TextStyle(
-                            fontFamily: 'Noorehuda',
+                            fontFamily: kQuranArabicFontFamily,
                             fontSize: 16.sp,
                             color: const Color(0xFF4A5A38),
                           ),
