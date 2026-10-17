@@ -188,6 +188,10 @@ class PrayerWidgetService {
         'widget_sunrise_label': edgeLabel(appText.sunrise),
         'widget_sunrise_time': clock(times.sunrise),
         'widget_sunrise_minutes': times.sunrise.totalMinutes.toString(),
+        // Bare "৫:৫৭", no period-name prefix - Fajr's end in the
+        // five-prayer row's "start – end" range, kept consistent with the
+        // other four cells' bare `shortClock` times.
+        'widget_sunrise_short_time': shortClock(times.sunrise),
         'widget_sunset_label': edgeLabel(appText.sunset),
         'widget_sunset_time': clock(times.sunset),
       };

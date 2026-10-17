@@ -422,7 +422,9 @@ class _PrayerRow extends StatelessWidget {
     Widget cell(PrayerPeriod p) {
       final active = period == p;
       final label = p.displayName(appText);
-      final time = times == null ? '--:--' : shortClock(prayerStart(p, times));
+      final range = times == null
+          ? '--:--'
+          : '${shortClock(prayerStart(p, times))} - ${shortClock(prayerEnd(p, times))}';
       final textColor = active ? Colors.white : Colors.black;
       return Expanded(
         child: Container(
@@ -442,9 +444,10 @@ class _PrayerRow extends StatelessWidget {
                 style: TextStyle(fontSize: fontSize, color: textColor),
               ),
               Text(
-                time,
-                maxLines: 1,
-                style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, color: textColor),
+                range,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: TextStyle(fontSize: fontSize - 1, fontWeight: FontWeight.w700, color: textColor),
               ),
             ],
           ),

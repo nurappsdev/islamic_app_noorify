@@ -164,10 +164,11 @@
                     android:id="@+id/large_fajr_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:singleLine="true"
+                    android:gravity="center"
+                    android:maxLines="2"
                     tools:text="৪:৪১" />
             </LinearLayout>
 
@@ -194,10 +195,11 @@
                     android:id="@+id/large_dhuhr_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:singleLine="true"
+                    android:gravity="center"
+                    android:maxLines="2"
                     tools:text="১১:৪৪" />
             </LinearLayout>
 
@@ -224,10 +226,11 @@
                     android:id="@+id/large_asr_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:singleLine="true"
+                    android:gravity="center"
+                    android:maxLines="2"
                     tools:text="৩:৫৩" />
             </LinearLayout>
 
@@ -254,10 +257,11 @@
                     android:id="@+id/large_maghrib_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:singleLine="true"
+                    android:gravity="center"
+                    android:maxLines="2"
                     tools:text="৫:৩০" />
             </LinearLayout>
 
@@ -283,10 +287,11 @@
                     android:id="@+id/large_isha_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold"
                     android:textColor="#000000"
-                    android:singleLine="true"
+                    android:gravity="center"
+                    android:maxLines="2"
                     tools:text="৬:৪৬" />
             </LinearLayout>
         </LinearLayout>
