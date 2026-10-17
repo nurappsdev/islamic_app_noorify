@@ -696,6 +696,7 @@ const Map<String, String> appTextBn = <String, String>{
   'widgetSizeSmall': 'ছোট',
   'widgetSizeMedium': 'মাঝারি',
   'widgetSizeLarge': 'বড়',
+  'widgetAmolTagline': 'আজকের আমল ট্র্যাক করুন',
   'adminSupport': 'অ্যাডমিন সাপোর্ট',
   'feedback': 'মতামত',
   'appLanguage': 'অ্যাপের ভাষা',

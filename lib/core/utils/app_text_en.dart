@@ -696,6 +696,7 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'widgetSizeSmall': 'Small',
   'widgetSizeMedium': 'Medium',
   'widgetSizeLarge': 'Large',
+  'widgetAmolTagline': 'Track your Amol today',
   'adminSupport': 'Admin Support',
   'feedback': 'Feedback',
   'appLanguage': 'App Language',

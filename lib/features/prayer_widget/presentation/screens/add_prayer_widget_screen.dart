@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.
 import 'package:tuhfatul_muslim/features/home/domain/calendar/date_labels.dart';
 import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/features/prayer_widget/data/services/prayer_widget_service.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
@@ -240,6 +241,9 @@ class _WidgetSurface extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset(prayerThemeAsset(now: now, fajr: fajr), fit: BoxFit.cover),
+          // A soft white veil so the black text below stays legible over
+          // any photo, the same way the native widget does it.
+          Container(color: Colors.white.withValues(alpha: .72)),
           Padding(padding: EdgeInsets.all(10.r), child: child),
         ],
       ),
@@ -247,13 +251,24 @@ class _WidgetSurface extends StatelessWidget {
   }
 }
 
-/// White text with a soft shadow, for labels sitting directly on the photo.
-TextStyle _onPhotoStyle(double fontSize, {bool italic = false}) => TextStyle(
-  fontSize: fontSize,
-  color: Colors.white,
-  fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-  shadows: const [Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1))],
-);
+/// Mirrors `PrayerLocationText._label` exactly, so the preview's centre
+/// block shows the same "finding your location…"/"permission denied"/etc.
+/// placeholder the home card shows instead of going blank.
+String _locationLabel(AppText appText) {
+  final state = PrayerLocationService.instance.state;
+  final location = state.location?.districtCountryDisplayName ?? '';
+  if (location.isNotEmpty) return location;
+  return switch (state.status) {
+    PrayerLocationStatus.idle ||
+    PrayerLocationStatus.locating => appText.locationFinding,
+    PrayerLocationStatus.serviceDisabled => appText.locationServiceDisabled,
+    PrayerLocationStatus.permissionDenied ||
+    PrayerLocationStatus.permissionDeniedForever =>
+      appText.locationPermissionDenied,
+    PrayerLocationStatus.unavailable => appText.locationUnavailable,
+    PrayerLocationStatus.ready => appText.locationUnavailable,
+  };
+}
 
 class _DateRow extends StatelessWidget {
   const _DateRow({required this.now, required this.times, required this.bangla, this.fontSize = 9});
@@ -265,6 +280,11 @@ class _DateRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: fontSize.sp,
+      fontStyle: FontStyle.italic,
+      color: Colors.black,
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -273,7 +293,7 @@ class _DateRow extends StatelessWidget {
             hijriDateLabel(now, bangla: bangla, maghrib: times?.maghrib),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: _onPhotoStyle(fontSize.sp, italic: true),
+            style: style,
           ),
         ),
         SizedBox(width: 8.w),
@@ -283,7 +303,7 @@ class _DateRow extends StatelessWidget {
             textAlign: TextAlign.right,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: _onPhotoStyle(fontSize.sp, italic: true),
+            style: style,
           ),
         ),
       ],
@@ -291,6 +311,9 @@ class _DateRow extends StatelessWidget {
   }
 }
 
+/// Gregorian-date chip, current time, verified location and a small
+/// "track your Amol" nudge back into the app — all in black, over the white
+/// veil [_WidgetSurface] draws.
 class _CenterBlock extends StatelessWidget {
   const _CenterBlock({
     required this.now,
@@ -318,43 +341,60 @@ class _CenterBlock extends StatelessWidget {
       appText: appText,
       bangla: bangla,
     );
-    final location =
-        PrayerLocationService.instance.state.location?.districtCountryDisplayName ?? '';
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .8),
-        borderRadius: BorderRadius.circular(14.r),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(dateText, style: TextStyle(fontSize: 9.sp, color: const Color(0xFF5B856F))),
-          Text(
-            periodTime,
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: timeFontSize.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF3F5A4A),
+    final location = _locationLabel(appText);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: const Color(0xFFD9DEA8)),
+          ),
+          child: Text(dateText, style: TextStyle(fontSize: 9.sp, color: Colors.black)),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          periodTime,
+          maxLines: 1,
+          style: TextStyle(
+            fontSize: timeFontSize.sp,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          location,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 9.sp, color: const Color(0xFF3F4A38)),
+        ),
+        SizedBox(height: 2.h),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/sejdaIcon.png', width: 12.r, height: 12.r),
+            SizedBox(width: 4.w),
+            Text(
+              appText.widgetAmolTagline,
+              style: TextStyle(
+                fontSize: 9.sp,
+                fontStyle: FontStyle.italic,
+                color: const Color(0xFF6F7F52),
+              ),
             ),
-          ),
-          Text(
-            location,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 9.sp, color: const Color(0xFF5B856F)),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 }
 
-/// Mirrors `_CurrentPrayerBadge` on the home card exactly, since this runs
-/// in Dart too — no reason to approximate it the way the native widgets do.
-class _PrayerBadge extends StatelessWidget {
-  const _PrayerBadge({
+/// All five daily prayers in one row, the current one marked - what the
+/// native widget shows instead of a single current-prayer badge.
+class _PrayerRow extends StatelessWidget {
+  const _PrayerRow({
     required this.now,
     required this.times,
     required this.appText,
@@ -371,58 +411,49 @@ class _PrayerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final times = this.times;
-    String clock(PrayerClockTime t) =>
-        localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final period = times == null ? null : currentPrayerPeriod(now, times);
-    final periodName = times == null
-        ? '—'
-        : (period?.displayName(appText) ?? appText.naflIshraq);
-    final label = times == null ? periodName : '$periodName ${appText.namazWord}';
-    final rangeText = times == null
-        ? '—'
-        : period != null
-        ? '${clock(prayerStart(period, times))} – ${clock(prayerEnd(period, times))}'
-        : '${clock(times.sunrise)} – ${clock(times.dhuhr)}';
-    final iconSize = compact ? 26.r : 34.r;
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8.w : 11.w, vertical: compact ? 6.h : 8.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE4EDB6),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFA2B253)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: iconSize,
-            height: iconSize,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10.r)),
-            padding: EdgeInsets.all(compact ? 4.r : 6.r),
-            child: Image.asset('assets/sejdaIcon.png', fit: BoxFit.contain),
+    final fontSize = compact ? 8.sp : 10.sp;
+    String shortClock(PrayerClockTime t) {
+      final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+      final minute = t.minute.toString().padLeft(2, '0');
+      return localizeDigits('$hour:$minute', bangla: bangla);
+    }
+
+    Widget cell(PrayerPeriod p) {
+      final active = period == p;
+      final label = p.displayName(appText);
+      final time = times == null ? '--:--' : shortClock(prayerStart(p, times));
+      final textColor = active ? Colors.white : Colors.black;
+      return Expanded(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 1.w),
+          padding: EdgeInsets.symmetric(vertical: compact ? 4.h : 6.h),
+          decoration: BoxDecoration(
+            color: active ? const Color(0xFF6F7F52) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10.r),
           ),
-          SizedBox(width: compact ? 8.w : 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: compact ? 11.sp : 13.sp, color: Colors.black),
-                ),
-                Text(
-                  rangeText,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: compact ? 10.sp : 12.sp, color: Colors.black),
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: fontSize, color: textColor),
+              ),
+              Text(
+                time,
+                maxLines: 1,
+                style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700, color: textColor),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    return Row(
+      children: PrayerPeriod.values.map(cell).toList(),
     );
   }
 }
@@ -447,20 +478,26 @@ class _SunEdgeRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(edgeLabel(appText.sunrise), style: _onPhotoStyle(10)),
+            Text(
+              edgeLabel(appText.sunrise),
+              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+            ),
             Text(
               times == null ? '--:--' : clock(times.sunrise),
-              style: _onPhotoStyle(12).copyWith(fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
             ),
           ],
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(edgeLabel(appText.sunset), style: _onPhotoStyle(10)),
+            Text(
+              edgeLabel(appText.sunset),
+              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+            ),
             Text(
               times == null ? '--:--' : clock(times.sunset),
-              style: _onPhotoStyle(12).copyWith(fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
             ),
           ],
         ),
@@ -484,12 +521,49 @@ class _SmallPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final period = times == null ? null : currentPrayerPeriod(now, times!);
+    final periodName = times == null
+        ? '—'
+        : (period?.displayName(appText) ?? appText.naflIshraq);
+    final label = times == null ? periodName : '$periodName ${appText.namazWord}';
+    final time = localizedPeriodClock(
+      PrayerClockTime(hour: now.hour, minute: now.minute),
+      times: times,
+      appText: appText,
+      bangla: bangla,
+    );
     return _WidgetSurface(
       height: 92.h,
       now: now,
       fajr: times?.fajr ?? const PrayerClockTime(hour: 5, minute: 0),
       child: Center(
-        child: _PrayerBadge(now: now, times: times, appText: appText, bangla: bangla, compact: true),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+            ),
+            Text(time, maxLines: 1, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700)),
+            SizedBox(height: 4.h),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/sejdaIcon.png', width: 11.r, height: 11.r),
+                SizedBox(width: 3.w),
+                Text(
+                  appText.widgetAmolTagline,
+                  style: TextStyle(
+                    fontSize: 8.sp,
+                    fontStyle: FontStyle.italic,
+                    color: const Color(0xFF6F7F52),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -519,8 +593,8 @@ class _MediumPreview extends StatelessWidget {
           _DateRow(now: now, times: times, bangla: bangla),
           const Spacer(),
           _CenterBlock(now: now, times: times, appText: appText, bangla: bangla, timeFontSize: 15),
-          SizedBox(height: 6.h),
-          _PrayerBadge(now: now, times: times, appText: appText, bangla: bangla, compact: true),
+          const Spacer(),
+          _PrayerRow(now: now, times: times, appText: appText, bangla: bangla, compact: true),
         ],
       ),
     );
@@ -551,8 +625,8 @@ class _LargePreview extends StatelessWidget {
           _DateRow(now: now, times: times, bangla: bangla, fontSize: 10),
           const Spacer(),
           _CenterBlock(now: now, times: times, appText: appText, bangla: bangla, timeFontSize: 18),
-          SizedBox(height: 8.h),
-          _PrayerBadge(now: now, times: times, appText: appText, bangla: bangla, compact: false),
+          const Spacer(),
+          _PrayerRow(now: now, times: times, appText: appText, bangla: bangla, compact: false),
           SizedBox(height: 8.h),
           _SunEdgeRow(times: times, appText: appText, bangla: bangla),
         ],

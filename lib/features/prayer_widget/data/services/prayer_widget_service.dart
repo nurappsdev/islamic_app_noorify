@@ -9,8 +9,29 @@ import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.
 import 'package:tuhfatul_muslim/features/home/domain/calendar/date_labels.dart';
 import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+
+/// Mirrors `PrayerLocationText._label` exactly, so the widget's centre-block
+/// location line shows the same "finding your location…"/"permission
+/// denied"/etc. placeholder the home card shows while [PrayerLocationService]
+/// hasn't resolved a location yet, instead of going blank.
+String _locationLabel(AppText appText) {
+  final state = PrayerLocationService.instance.state;
+  final location = state.location?.districtCountryDisplayName ?? '';
+  if (location.isNotEmpty) return location;
+  return switch (state.status) {
+    PrayerLocationStatus.idle ||
+    PrayerLocationStatus.locating => appText.locationFinding,
+    PrayerLocationStatus.serviceDisabled => appText.locationServiceDisabled,
+    PrayerLocationStatus.permissionDenied ||
+    PrayerLocationStatus.permissionDeniedForever =>
+      appText.locationPermissionDenied,
+    PrayerLocationStatus.unavailable => appText.locationUnavailable,
+    PrayerLocationStatus.ready => appText.locationUnavailable,
+  };
+}
 
 /// Keeps the native Home Screen prayer widget (Android `AppWidgetProvider`
 /// + iOS WidgetKit extension) filled with the same prayer schedule the
@@ -23,10 +44,11 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 /// plain strings, since the native widget code has no access to the Dart
 /// localization/theme system. Each of the five daily prayers is written as a
 /// `<period>_label` (already localized through [AppText]), `<period>_time`
-/// (12-hour clock) and `<period>_minutes` (minutes since midnight) triple;
-/// the native side works out which one is current itself at render time
-/// (mirroring `currentPrayerPeriod`), so a stale sync never shows a prayer
-/// that has already passed as the active one.
+/// (a bare localized clock, e.g. "৪:৪১") and `<period>_minutes` (minutes
+/// since midnight) triple; the native side works out which one is current
+/// itself at render time (mirroring `currentPrayerPeriod`) and highlights
+/// that cell, so a stale sync never shows a prayer that has already passed
+/// as the active one.
 class PrayerWidgetService {
   PrayerWidgetService._();
 
@@ -105,6 +127,14 @@ class PrayerWidgetService {
       String edgeLabel(String label) => area.isEmpty ? label : '$label, $area';
       String clock(PrayerClockTime t) =>
           localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
+      // A bare "৪:৪১"-style clock (no period-name prefix) for the five-prayer
+      // row, where each cell already carries its own prayer name - repeating
+      // it in the time too would just make the cell too wide for its space.
+      String shortClock(PrayerClockTime t) {
+        final hour = t.hour % 12 == 0 ? 12 : t.hour % 12;
+        final minute = t.minute.toString().padLeft(2, '0');
+        return localizeDigits('$hour:$minute', bangla: bangla);
+      }
 
       // Same background art PrayerTimeCard shows for this time of day
       // (`prayerThemeAsset`), reduced to the "1".."4" suffix the native
@@ -134,12 +164,16 @@ class PrayerWidgetService {
         'widget_period_time': clock(
           PrayerClockTime(hour: current.hour, minute: current.minute),
         ),
-        'widget_location': location?.districtCountryDisplayName ?? '',
-        // The two fixed strings `_CurrentPrayerBadge` builds its label from -
-        // native recomputes *which* period is current from the minutes
-        // below, then assembles "<name> <namazWord>" itself, exactly as the
-        // card does, so a widget that hasn't synced in a while never shows a
-        // period that has already passed.
+        'widget_location': _locationLabel(appText),
+        // Short, friendly call-to-action under the clock - native highlights
+        // whichever of the five cells below is current, so this just invites
+        // tapping through to the app rather than restating it.
+        'widget_amol_tagline': appText.widgetAmolTagline,
+        // The current-prayer cell still needs these to build its own label -
+        // native recomputes *which* of the five below is current from their
+        // minutes, then assembles "<name> <namazWord>" itself, exactly as
+        // the card does, so a widget that hasn't synced in a while never
+        // shows a period that has already passed.
         'widget_namaz_word': appText.namazWord,
         'widget_ishraq_label': appText.naflIshraq,
         // Sunrise/sunset edge row, each with its own local area. Sunrise's
@@ -155,10 +189,10 @@ class PrayerWidgetService {
         final key = period.name;
         final time = prayerStart(period, times);
         data['${key}_label'] = period.displayName(appText);
-        // The badge composes its range from these - `clock()` (day-period
-        // name + localized digits), matching `_CurrentPrayerBadge` exactly,
-        // not the plain-English `formatPrayerTime`.
-        data['${key}_time'] = clock(time);
+        // The five-prayer row shows a bare clock per cell - `shortClock()`,
+        // not the period-prefixed `clock()` the old single badge used, which
+        // would overflow a narrow cell.
+        data['${key}_time'] = shortClock(time);
         data['${key}_minutes'] = time.totalMinutes.toString();
       }
 
