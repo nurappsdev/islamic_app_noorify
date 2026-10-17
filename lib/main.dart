@@ -23,10 +23,14 @@ import 'features/alarm/data/services/alarm_migration.dart';
 import 'features/alarm/data/services/alarm_sync.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
+import 'features/home/data/services/prayer_location_service.dart';
+import 'features/home/domain/prayer_location.dart';
+import 'features/prayer_widget/data/services/prayer_widget_service.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:home_widget/home_widget.dart';
 import 'firebase_options.dart';
 import 'shared/services/firebase/firebase_service.dart';
 import 'shared/services/firebase/firebase_token_service.dart';
@@ -94,6 +98,24 @@ Future<void> main() async {
         ),
       ),
     );
+  });
+  // Keeps the native Home Screen prayer widget filled with the same prayer
+  // schedule as the in-app card: once now, again whenever the resolved
+  // location changes (its displayed area text), and whenever the Home
+  // Screen widget itself is tapped (opens straight to Prayer Times).
+  unawaited(PrayerWidgetService.init());
+  unawaited(PrayerWidgetService.syncPrayerWidget(language: savedLanguage));
+  // Lets the widget's manual refresh button re-run the sync above from a
+  // background isolate without opening the app.
+  unawaited(HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback));
+  PrayerLocationService.instance.addListener(() {
+    if (PrayerLocationService.instance.state.status ==
+        PrayerLocationStatus.ready) {
+      unawaited(PrayerWidgetService.syncPrayerWidget());
+    }
+  });
+  HomeWidget.widgetClicked.listen((uri) {
+    appNavigatorKey.currentState?.pushNamed(RouteNames.prayerTimes);
   });
   final launchDetails = await AlarmScheduler.launchDetails();
   final launchPayload = launchDetails?.didNotificationLaunchApp == true

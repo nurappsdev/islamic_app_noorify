@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A soft white veil over the full-bleed background photo so black text
+     stays legible regardless of how bright/busy that photo is. The outer
+     FrameLayout already clips everything to its rounded corners via
+     clipToOutline, so this stays a plain rectangle. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#B8FFFFFF" />
+</shape>

@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_rounded_mask"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/widget_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        tools:src="@drawable/prayer_theme_1" />
+
+    <!-- Soft white veil so the black text below stays legible over any
+         photo. -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_full_scrim" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp">
+
+        <!-- Hijri date (start) · Bengali calendar date (end); the end
+             padding keeps the calendar date clear of the refresh button. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingEnd="28dp">
+
+            <TextView
+                android:id="@+id/medium_hijri"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="9sp"
+                android:textStyle="italic"
+                android:textColor="#000000"
+                android:singleLine="true"
+                tools:text="৭ সফর ১৪৪৪ হিজরি" />
+
+            <TextView
+                android:id="@+id/medium_calendar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:textSize="9sp"
+                android:textStyle="italic"
+                android:textColor="#000000"
+                android:singleLine="true"
+                tools:text="৭ শ্রাবণ ১৪৩৩" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="2" />
+
+        <!-- Gregorian date chip -->
+        <TextView
+            android:id="@+id/medium_date_chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/widget_date_chip"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="2dp"
+            android:textSize="9sp"
+            android:textColor="#000000"
+            android:singleLine="true"
+            tools:text="২৪ জুলাই ২০২৬" />
+
+        <!-- Current time -->
+        <TextView
+            android:id="@+id/medium_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="2dp"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:singleLine="true"
+            tools:text="সুবহে সাদিক ৫:৪৪" />
+
+        <!-- Verified location -->
+        <TextView
+            android:id="@+id/medium_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="9sp"
+            android:textColor="#3F4A38"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="ময়মনসিংহ, বাংলাদেশ" />
+
+        <!-- "Track your Amol" call to action -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/prayer_sejda_icon" />
+
+            <TextView
+                android:id="@+id/medium_tagline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textSize="9sp"
+                android:textStyle="italic"
+                android:textColor="#6F7F52"
+                android:singleLine="true"
+                tools:text="আজকের আমল ট্র্যাক করুন" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="3" />
+
+        <!-- Five daily prayers, the current one highlighted -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/medium_cell_fajr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:id="@+id/medium_fajr_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="8sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="ফজর" />
+
+                <TextView
+                    android:id="@+id/medium_fajr_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    tools:text="৪:৪১" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/medium_cell_dhuhr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:id="@+id/medium_dhuhr_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="8sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="যোহর" />
+
+                <TextView
+                    android:id="@+id/medium_dhuhr_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    tools:text="১১:৪৪" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/medium_cell_asr"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:id="@+id/medium_asr_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="8sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="আসর" />
+
+                <TextView
+                    android:id="@+id/medium_asr_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    tools:text="৩:৫৩" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/medium_cell_maghrib"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="2dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:id="@+id/medium_maghrib_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="8sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="মাগরিব" />
+
+                <TextView
+                    android:id="@+id/medium_maghrib_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    tools:text="৫:৩০" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/medium_cell_isha"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingVertical="4dp">
+
+                <TextView
+                    android:id="@+id/medium_isha_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="8sp"
+                    android:textColor="#000000"
+                    android:singleLine="true"
+                    tools:text="এশা" />
+
+                <TextView
+                    android:id="@+id/medium_isha_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="7sp"
+                    android:textStyle="bold"
+                    android:textColor="#000000"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    tools:text="৬:৪৬" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Manual refresh button, top-right corner. -->
+    <ImageView
+        android:id="@+id/medium_refresh"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="6dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_widget_refresh" />
+
+    <!-- A plain View isn't in RemoteViews' supported view allowlist and
+         fails to inflate on the widget host ("Can't load widget"); an
+         ImageView with no src is. -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_border_overlay" />
+</FrameLayout>

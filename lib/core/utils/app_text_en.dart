@@ -685,6 +685,18 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'themeSwitchToLight': 'Switch to light mode',
   'aboutUs': 'About Us',
   'ourProducts': 'Our Products',
+  'addPrayerWidgetTitle': 'Add Prayer Widget',
+  'addPrayerWidgetSubtitle':
+      "Keep today's prayer times and the countdown to the next prayer right on your Home Screen.",
+  'addPrayerWidgetButton': 'Add to Home Screen',
+  'addPrayerWidgetAndroidInstructions':
+      'Long-press an empty spot on your Home Screen, tap Widgets, then find Tuhfatul Muslim.',
+  'addPrayerWidgetIosInstructions':
+      'Touch and hold your Home Screen, tap the + in the top corner, then search for Tuhfatul Muslim.',
+  'widgetSizeSmall': 'Small',
+  'widgetSizeMedium': 'Medium',
+  'widgetSizeLarge': 'Large',
+  'widgetAmolTagline': 'Track your Amol today',
   'adminSupport': 'Admin Support',
   'feedback': 'Feedback',
   'appLanguage': 'App Language',
