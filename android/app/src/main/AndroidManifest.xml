@@ -58,6 +58,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Lets the prayer widget's tap PendingIntent (built with
+                 home_widget's HomeWidgetLaunchIntent) resolve back to this
+                 Activity with the tap's deep-link Uri attached. -->
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
@@ -104,6 +110,35 @@
             android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false"/>
+
+        <!-- Native Home Screen prayer widget: shows today's prayer times and
+             the countdown to the next prayer, filled via home_widget from the
+             same data PrayerTimeCard uses. -->
+        <receiver
+            android:name=".PrayerTimesWidgetProvider"
+            android:exported="true"
+            android:label="@string/prayer_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/prayer_times_widget_info"/>
+        </receiver>
+
+        <!-- Delivers the native updates PrayerWidgetService arms for each
+             remaining prayer boundary today (home_widget's
+             `scheduleWidgetUpdates`), and re-arms them after a reboot or app
+             update, since the system drops AlarmManager alarms then. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetScheduledUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

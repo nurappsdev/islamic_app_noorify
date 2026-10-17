@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A soft, translucent scrim behind the centre date/time/location block -
+     stands in for the pale dome shape behind that text on the home card, so
+     the olive ink stays legible over a photo background of any brightness. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#CCFFFFFF" />
+    <corners android:radius="14dp" />
+</shape>

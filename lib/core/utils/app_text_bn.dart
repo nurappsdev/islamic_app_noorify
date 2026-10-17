@@ -685,6 +685,17 @@ const Map<String, String> appTextBn = <String, String>{
   'themeSwitchToLight': 'লাইট মোডে যান',
   'aboutUs': 'আমাদের সম্পর্কে',
   'ourProducts': 'আমাদের পণ্য',
+  'addPrayerWidgetTitle': 'নামাজের সময় উইজেট যুক্ত করুন',
+  'addPrayerWidgetSubtitle':
+      'আজকের নামাজের সময় এবং পরবর্তী নামাজের সময়সীমা সরাসরি আপনার হোম স্ক্রিনে রাখুন।',
+  'addPrayerWidgetButton': 'হোম স্ক্রিনে যুক্ত করুন',
+  'addPrayerWidgetAndroidInstructions':
+      'হোম স্ক্রিনের খালি জায়গায় কিছুক্ষণ চেপে ধরুন, Widgets-এ ট্যাপ করুন, তারপর Tuhfatul Muslim খুঁজুন।',
+  'addPrayerWidgetIosInstructions':
+      'হোম স্ক্রিনে কিছুক্ষণ চেপে ধরুন, উপরের কোণের + বোতামে ট্যাপ করুন, তারপর Tuhfatul Muslim সার্চ করুন।',
+  'widgetSizeSmall': 'ছোট',
+  'widgetSizeMedium': 'মাঝারি',
+  'widgetSizeLarge': 'বড়',
   'adminSupport': 'অ্যাডমিন সাপোর্ট',
   'feedback': 'মতামত',
   'appLanguage': 'অ্যাপের ভাষা',

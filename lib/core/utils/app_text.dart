@@ -852,6 +852,14 @@ class AppText {
     required this.settingsTitle,
     required this.aboutUs,
     required this.ourProducts,
+    required this.addPrayerWidgetTitle,
+    required this.addPrayerWidgetSubtitle,
+    required this.addPrayerWidgetButton,
+    required this.addPrayerWidgetAndroidInstructions,
+    required this.addPrayerWidgetIosInstructions,
+    required this.widgetSizeSmall,
+    required this.widgetSizeMedium,
+    required this.widgetSizeLarge,
     required this.adminSupport,
     required this.feedback,
     required this.appLanguage,
@@ -1787,6 +1795,14 @@ class AppText {
   final String settingsTitle;
   final String aboutUs;
   final String ourProducts;
+  final String addPrayerWidgetTitle;
+  final String addPrayerWidgetSubtitle;
+  final String addPrayerWidgetButton;
+  final String addPrayerWidgetAndroidInstructions;
+  final String addPrayerWidgetIosInstructions;
+  final String widgetSizeSmall;
+  final String widgetSizeMedium;
+  final String widgetSizeLarge;
   final String adminSupport;
   final String feedback;
   final String appLanguage;
@@ -5084,6 +5100,46 @@ class AppText {
       settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
       ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),
+      addPrayerWidgetTitle: _read(
+        map,
+        'addPrayerWidgetTitle',
+        fallback?.addPrayerWidgetTitle ?? '',
+      ),
+      addPrayerWidgetSubtitle: _read(
+        map,
+        'addPrayerWidgetSubtitle',
+        fallback?.addPrayerWidgetSubtitle ?? '',
+      ),
+      addPrayerWidgetButton: _read(
+        map,
+        'addPrayerWidgetButton',
+        fallback?.addPrayerWidgetButton ?? '',
+      ),
+      addPrayerWidgetAndroidInstructions: _read(
+        map,
+        'addPrayerWidgetAndroidInstructions',
+        fallback?.addPrayerWidgetAndroidInstructions ?? '',
+      ),
+      addPrayerWidgetIosInstructions: _read(
+        map,
+        'addPrayerWidgetIosInstructions',
+        fallback?.addPrayerWidgetIosInstructions ?? '',
+      ),
+      widgetSizeSmall: _read(
+        map,
+        'widgetSizeSmall',
+        fallback?.widgetSizeSmall ?? '',
+      ),
+      widgetSizeMedium: _read(
+        map,
+        'widgetSizeMedium',
+        fallback?.widgetSizeMedium ?? '',
+      ),
+      widgetSizeLarge: _read(
+        map,
+        'widgetSizeLarge',
+        fallback?.widgetSizeLarge ?? '',
+      ),
       adminSupport: _read(map, 'adminSupport', fallback?.adminSupport ?? ''),
       feedback: _read(map, 'feedback', fallback?.feedback ?? ''),
       appLanguage: _read(map, 'appLanguage', fallback?.appLanguage ?? ''),
