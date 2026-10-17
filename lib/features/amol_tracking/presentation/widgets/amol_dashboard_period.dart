@@ -4,8 +4,9 @@ enum AmolPeriod { daily, weekly, monthly }
 
 /// `pillarKey` order the chart's x-axis renders in for daily/weekly —
 /// matches `GET /amol/tracker/daily`'s pillars and the fixed category
-/// label list. Monthly ignores this and uses the server's own `pillars`
-/// list instead (see `AmolDashboardViewModel`).
+/// label list. `tasbih` is the server key for the Zikr pillar (not `zikr`).
+/// Monthly ignores this and uses the server's own `pillars` list instead
+/// (see `AmolDashboardViewModel`).
 const kAmolPillarOrder = [
   'fardh_prayer',
   'sunnah_witr',
@@ -13,6 +14,8 @@ const kAmolPillarOrder = [
   'nafl_salat',
   'hadith',
   'quiz',
+  'tasbih',
+  'dua',
   'nafl_and_more',
 ];
 

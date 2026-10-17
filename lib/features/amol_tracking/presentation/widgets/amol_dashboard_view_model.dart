@@ -36,12 +36,23 @@ class AmolDashboardViewModel {
     required this.chartValues,
     required this.chartCompetitorValues,
     required this.isColumnLayout,
+    required this.isChartScrollable,
     required this.hasPrevious,
     required this.hasNext,
   });
 
   // Shown before the first `GET /amol/analytics/graph` response lands.
-  static const _fallbackMyPosition = [6.0, 10.0, 2.0, 9.0, 2.0, 10.0, 3.0];
+  static const _fallbackMyPosition = [
+    6.0,
+    10.0,
+    2.0,
+    9.0,
+    2.0,
+    10.0,
+    3.0,
+    1.0,
+    3.0,
+  ];
   static const _fallbackCompetitorValues = [
     6.0,
     9.0,
@@ -50,6 +61,8 @@ class AmolDashboardViewModel {
     null,
     11.0,
     null,
+    null,
+    2.0,
   ];
   static const _fallbackPoints = 27;
   static const _fallbackTotalPoints = 40;
@@ -68,6 +81,8 @@ class AmolDashboardViewModel {
       appText.categoryNaflSalat,
       appText.categoryHadith,
       appText.categoryQuiz,
+      appText.categoryZikr,
+      appText.duaIntroTitle,
       appText.categoryNaflAndMore,
     ];
     final graph = state.graph;
@@ -118,7 +133,20 @@ class AmolDashboardViewModel {
               .toDouble();
     final progress = (percentValue / 100).clamp(0.0, 1.0);
     final progressLabel = context.localizedDigits('${percentValue.round()} %');
-    final maxY = graph == null ? 12.0 : graph.yAxisMax.toDouble();
+    // A zero/missing yAxisMax used to produce invalid daily point offsets
+    // (0 / 0) and leave the graph blank. Keep the server scale when valid;
+    // otherwise derive a safe ceiling from the displayed pillars.
+    final maximumValue = values.fold<double>(
+      0,
+      (maximum, value) => value > maximum ? value : maximum,
+    );
+    final maxY = graph == null
+        ? 12.0
+        : graph.yAxisMax > 0
+        ? graph.yAxisMax.toDouble()
+        : maximumValue > 0
+        ? maximumValue
+        : 1.0;
     // Prefer the server's own resolved range (it's the ground truth for
     // exactly which days the response covers) over a locally-guessed
     // label; only fall back to local formatting before the first response
@@ -169,6 +197,11 @@ class AmolDashboardViewModel {
     // `niceAmolAxisTicks`) instead of using the server's `maxY`. Daily
     // keeps the server's `maxY` as-is.
     final isColumnLayout = period == AmolPeriod.weekly || showMonthlyPillars;
+    // There are now nine daily/weekly pillars, including Zikr and Dua.
+    // Keep every point and its label reachable on narrow screens instead of
+    // squeezing the additional two categories into the old seven-column
+    // width.
+    final isChartScrollable = isColumnLayout || chartCategories.length > 7;
     final navigation = graph?.navigation;
     final hasPrevious = navigation == null || navigation.hasPrevious;
     // Whether stepping "next" would go anywhere: computed locally rather
@@ -198,6 +231,7 @@ class AmolDashboardViewModel {
       chartValues: chartValues,
       chartCompetitorValues: chartCompetitorValues,
       isColumnLayout: isColumnLayout,
+      isChartScrollable: isChartScrollable,
       hasPrevious: hasPrevious,
       hasNext: hasNext,
     );
@@ -230,6 +264,9 @@ class AmolDashboardViewModel {
 
   /// True for weekly and monthly — drawn as bar columns instead of a line.
   final bool isColumnLayout;
+
+  /// Lets daily fit newly added pillars without overlapping/cutting labels.
+  final bool isChartScrollable;
 
   final bool hasPrevious;
   final bool hasNext;
