@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_location_service.dart';
@@ -60,6 +61,11 @@ class PrayerWidgetService {
   // the package prefix and the provider fails to resolve at runtime.
   static const _androidProviderName = 'PrayerTimesWidgetProvider';
   static const _iosWidgetName = 'PrayerTimesWidget';
+
+  /// The URI the widget's manual refresh button broadcasts - matched by
+  /// [refreshPrayerWidgetCallback] and built into the native refresh icon's
+  /// `HomeWidgetBackgroundIntent` (Android) / `AppIntent` (iOS).
+  static const refreshUriHost = 'refresh-widget';
 
   static const _periods = [
     PrayerPeriod.fajr,
@@ -276,5 +282,31 @@ class PrayerWidgetService {
     } catch (e) {
       debugPrint('[PrayerWidget] requestPinWidget failed: $e');
     }
+  }
+}
+
+/// Entry point for the widget's manual refresh button
+/// (`HomeWidget.registerInteractivityCallback`, registered once in `main()`).
+///
+/// Runs in a fresh background isolate with none of `main()`'s startup state
+/// (no Hive, no [LanguagePreference.current] already set from the saved
+/// preference), so it reads the saved language itself rather than trusting
+/// that default, and otherwise reuses the exact same [PrayerWidgetService]
+/// sync path app-launch and boundary-alarm updates already go through.
+///
+/// Must stay a plain top-level function (not a class member) - the
+/// `home_widget` plugin looks it up by callback handle via
+/// `PluginUtilities.getCallbackHandle`, which only resolves top-level and
+/// static functions.
+@pragma('vm:entry-point')
+Future<void> refreshPrayerWidgetCallback(Uri? uri) async {
+  if (uri?.host != PrayerWidgetService.refreshUriHost) return;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await PrayerWidgetService.syncPrayerWidget(
+      language: LanguagePreference.read(prefs),
+    );
+  } catch (e) {
+    debugPrint('[PrayerWidget] manual refresh failed: $e');
   }
 }

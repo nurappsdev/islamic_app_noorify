@@ -139,6 +139,19 @@
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
             </intent-filter>
         </receiver>
+
+        <!-- Lets the widget's manual refresh button re-run
+             PrayerWidgetService.syncPrayerWidget() in a background Dart
+             isolate (home_widget's interactivity callback), without opening
+             the app, so the shown clock never sits stale until the next
+             scheduled boundary. -->
+        <receiver
+            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

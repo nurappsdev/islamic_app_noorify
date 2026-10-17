@@ -105,6 +105,9 @@ Future<void> main() async {
   // Screen widget itself is tapped (opens straight to Prayer Times).
   unawaited(PrayerWidgetService.init());
   unawaited(PrayerWidgetService.syncPrayerWidget(language: savedLanguage));
+  // Lets the widget's manual refresh button re-run the sync above from a
+  // background isolate without opening the app.
+  unawaited(HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback));
   PrayerLocationService.instance.addListener(() {
     if (PrayerLocationService.instance.state.status ==
         PrayerLocationStatus.ready) {
