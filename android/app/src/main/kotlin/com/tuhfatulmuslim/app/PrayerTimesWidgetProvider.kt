@@ -105,7 +105,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
     private class Schedule(
         val entries: Map<Period, PrayerEntry>,
         val sunriseMinutes: Int,
-        val sunriseTime: String,
+        val sunriseShortTime: String,
         val dhuhrTime: String,
     )
 
@@ -126,7 +126,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         return Schedule(
             entries = entries,
             sunriseMinutes = sunriseMinutes,
-            sunriseTime = widgetData.getString("widget_sunrise_time", null) ?: "--:--",
+            sunriseShortTime = widgetData.getString("widget_sunrise_short_time", null) ?: "--:--",
             dhuhrTime = entries[Period.DHUHR]?.time ?: "--:--",
         )
     }
@@ -150,9 +150,10 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         }
     }
 
-    /** Mirrors `prayerEnd` (Dart). */
+    /** Mirrors `prayerEnd` (Dart) - the bare compact time each period's cell
+     * ends at, matching the bare `shortClock` times the five cells show. */
     private fun periodEndTime(schedule: Schedule, period: Period): String = when (period) {
-        Period.FAJR -> schedule.sunriseTime
+        Period.FAJR -> schedule.sunriseShortTime
         Period.DHUHR -> schedule.entries.getValue(Period.ASR).time
         Period.ASR -> schedule.entries.getValue(Period.MAGHRIB).time
         Period.MAGHRIB -> schedule.entries.getValue(Period.ISHA).time
@@ -180,7 +181,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
             schedule.entries.getValue(period).label
         }
         val range = if (period == null) {
-            "${schedule.sunriseTime} – ${schedule.dhuhrTime}"
+            "${schedule.sunriseShortTime} – ${schedule.dhuhrTime}"
         } else {
             "${schedule.entries.getValue(period).time} – ${periodEndTime(schedule, period)}"
         }
@@ -233,7 +234,12 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
             val ids = cellIds.getValue(meta.period)
             val entry = schedule?.entries?.get(meta.period)
             views.setTextViewText(ids.name, entry?.label ?: meta.fallbackLabel)
-            views.setTextViewText(ids.time, entry?.time ?: "--:--")
+            val range = if (entry != null && schedule != null) {
+                "${entry.time} - ${periodEndTime(schedule, meta.period)}"
+            } else {
+                "--:--"
+            }
+            views.setTextViewText(ids.time, range)
             val isActive = meta.period == current
             views.setInt(
                 ids.cell,
