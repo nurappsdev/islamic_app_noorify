@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetProvider
@@ -204,6 +205,18 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
     private fun text(widgetData: SharedPreferences, key: String): String =
         widgetData.getString(key, null) ?: ""
 
+    /** Matches `PrayerWidgetService.refreshUriHost` (Dart): tapping this
+     * button broadcasts to `home_widget`'s `HomeWidgetBackgroundReceiver`,
+     * which runs `refreshPrayerWidgetCallback` in a background Dart isolate
+     * to re-sync and re-render, without opening the app. */
+    private fun attachRefreshButton(context: Context, views: RemoteViews, refreshViewId: Int) {
+        val intent = HomeWidgetBackgroundIntent.getBroadcast(
+            context,
+            Uri.parse("tuhfatulmuslim://refresh-widget"),
+        )
+        views.setOnClickPendingIntent(refreshViewId, intent)
+    }
+
     private data class PrayerCellIds(val cell: Int, val name: Int, val time: Int)
 
     /** Fills the five-prayer row and highlights whichever cell is current
@@ -270,6 +283,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
                 Period.ISHA to PrayerCellIds(R.id.medium_cell_isha, R.id.medium_isha_name, R.id.medium_isha_time),
             ),
         )
+        attachRefreshButton(context, views, R.id.medium_refresh)
         return views
     }
 
@@ -302,6 +316,7 @@ class PrayerTimesWidgetProvider : HomeWidgetProvider() {
         views.setTextViewText(R.id.large_sunrise_time, text(widgetData, "widget_sunrise_time"))
         views.setTextViewText(R.id.large_sunset_label, text(widgetData, "widget_sunset_label"))
         views.setTextViewText(R.id.large_sunset_time, text(widgetData, "widget_sunset_time"))
+        attachRefreshButton(context, views, R.id.large_refresh)
         return views
     }
 }
