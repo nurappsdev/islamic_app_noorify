@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
-/// The bundled Bangla typeface for the Quran module
-/// (assets/fonts/bangla/LiNiladriNodia-Unicode.ttf, Lipighor Font Foundry).
-const quranBanglaFontFamily = 'Li Niladri Nodia';
-
-/// Gives every Quran screen Li Niladri Nodia for Bangla text and the app
-/// typeface (Ubuntu) for English, whatever the app language.
-///
-/// Ubuntu stays the family and Li Niladri Nodia is its fallback: Ubuntu has no
-/// Bengali glyphs, so Bangla text (labels, translations, Tafsir, Bengali
-/// digits) is drawn in Li Niladri Nodia and Latin text in Ubuntu. Arabic text
-/// keeps the font it sets explicitly.
+/// Gives every Quran screen the same typeface the rest of the app uses —
+/// Ubuntu for English, Noto Sans Bengali for Bangla — instead of whatever
+/// font the pusher's route happened to leave in the theme.
 ///
 /// Wrap each Quran route's page in this: a pushed route doesn't inherit the
 /// pusher's theme, while dialogs and bottom sheets capture it themselves.
@@ -23,22 +17,16 @@ class QuranFontScope extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const family = appFontFamily;
-    const fallback = [quranBanglaFontFamily];
+    final language = context.watch<LanguageBloc>().state.language;
+    final family = appFontFamilyFor(language);
     final theme = Theme.of(context);
     return Theme(
       data: theme.copyWith(
-        textTheme: theme.textTheme.apply(
-          fontFamily: family,
-          fontFamilyFallback: fallback,
-        ),
-        primaryTextTheme: theme.primaryTextTheme.apply(
-          fontFamily: family,
-          fontFamilyFallback: fallback,
-        ),
+        textTheme: theme.textTheme.apply(fontFamily: family),
+        primaryTextTheme: theme.primaryTextTheme.apply(fontFamily: family),
       ),
       child: DefaultTextStyle.merge(
-        style: const TextStyle(fontFamily: family, fontFamilyFallback: fallback),
+        style: TextStyle(fontFamily: family),
         child: child,
       ),
     );
