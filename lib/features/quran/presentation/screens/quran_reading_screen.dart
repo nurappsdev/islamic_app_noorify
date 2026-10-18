@@ -801,9 +801,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         header: opening && surah != null
                             ? QuranSurahHeading(
                                 surah: surah,
-                                showBismillah:
-                                    state.bismillahPre ||
-                                    widget.args.surahNo == 1,
+                                showBismillah: state.bismillahPre,
                               )
                             : null,
                         busy: state.loading || _crossingSurah,

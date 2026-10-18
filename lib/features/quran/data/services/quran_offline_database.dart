@@ -48,7 +48,10 @@ class QuranOfflineDatabase {
   /// ayahs and their translations). Bump it when the server's Quran content
   /// changes in a way old copies must not survive: the next launch drops the
   /// cached reading content and it is fetched again on demand.
-  static const contentVersion = 1;
+  ///
+  /// 3: the server's Arabic text was replaced (to Uthmani, then to IndoPak
+  /// text for AlQalam), so cached surahs would show an older text.
+  static const contentVersion = 3;
   static const _expectedAyahCount = 6236;
   static const surahCount = 114;
 

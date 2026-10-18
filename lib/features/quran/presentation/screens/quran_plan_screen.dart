@@ -17,6 +17,7 @@ import 'quran_plan_details_screen.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart';
 import '../widgets/quran_segmented_tabs.dart';
 import '../../data/services/quran_content_service.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
 
 class QuranPlanScreen extends StatefulWidget {
   const QuranPlanScreen({super.key, this.onBack, this.repository, this.bloc});
@@ -83,7 +84,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
 
   Future<void> _openCreatePlan() async {
     final result = await Navigator.of(context).push<QuranPlan>(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => CreateQuranPlanScreen(repository: widget.repository),
       ),
     );
@@ -160,7 +161,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
   void _openPlanDetails(QuranPlan plan) {
     Navigator.of(context)
         .push(
-          MaterialPageRoute(
+          QuranPageRoute(
             builder: (_) => QuranPlanDetailsScreen(
               planId: plan.id,
               initialPlan: plan,
@@ -177,7 +178,7 @@ class _QuranPlanScreenState extends State<QuranPlanScreen> {
 
   Future<void> _openEditPlan(QuranPlan plan) async {
     final updated = await Navigator.of(context).push<QuranPlan>(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => CreateQuranPlanScreen(
           repository: widget.repository,
           initialPlan: plan,

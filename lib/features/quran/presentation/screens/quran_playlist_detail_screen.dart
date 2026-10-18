@@ -16,6 +16,8 @@ import '../quran_route_args.dart';
 import '../quran_text.dart';
 import 'create_quran_playlist_screen.dart';
 import 'quran_audio_player_screen.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
 
 class QuranPlaylistDetailScreen extends StatefulWidget {
   const QuranPlaylistDetailScreen({
@@ -66,7 +68,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
     int trackIndex = 0,
   ]) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => QuranAudioPlayerScreen(
           playlist: playlist,
           initialTrackIndex: trackIndex,
@@ -78,7 +80,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
   Future<void> _openEditPlaylist(QuranPlaylist playlist) async {
     final t = QuranText.read(context);
     final updated = await Navigator.of(context).push<QuranPlaylist>(
-      MaterialPageRoute(
+      QuranPageRoute(
         builder: (_) => CreateQuranPlaylistScreen(
           repository: widget.repository,
           initialPlaylist: playlist,
@@ -784,7 +786,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
                   item.arabicName,
                   textDirection: TextDirection.rtl,
                   style: TextStyle(
-                    fontFamily: 'Noorehuda',
+                    fontFamily: kQuranArabicFontFamily,
                     fontSize: 17.sp,
                     color: const Color(0xFF7A8D49),
                   ),

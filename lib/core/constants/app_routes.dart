@@ -105,6 +105,7 @@ import '../../features/learning/presentation/screens/article_details_screen.dart
 import '../../features/learning/presentation/screens/learning_test_screen.dart';
 import '../../features/learning/presentation/screens/learning_test_result_screen.dart';
 import '../../features/quran/presentation/quran_route_args.dart';
+import '../../features/quran/presentation/quran_font_scope.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/quran_reading_screen.dart';
 import '../../features/quran/presentation/screens/para_detail_screen.dart';
@@ -436,7 +437,10 @@ class AppRoutes {
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
       case RouteNames.quranSurahs:
-        return _instantPage(_surahListWithBlocs(), settings);
+        return _instantPage(
+          QuranFontScope(child: _surahListWithBlocs()),
+          settings,
+        );
       case RouteNames.quranSurahDetail:
       case RouteNames.quranFullSurah:
         final rawArgs = settings.arguments;
@@ -444,25 +448,27 @@ class AppRoutes {
             ? rawArgs
             : SurahRouteArgs(surahNo: rawArgs as int? ?? 1, surahName: '');
         final downloader = QuranAudioDownloader();
-        final reader = MultiBlocProvider(
-          providers: [
-            BlocProvider(
-              create: (_) => ReciterBloc()..add(const LoadReciters()),
-            ),
-            BlocProvider(
-              create: (_) => SurahPlaybackBloc(
-                downloader: downloader,
-                startAyah: args.paraNumber == null
-                    ? 1
-                    : (args.paraStartAyah ?? args.ayahNo),
-                endAyah: args.endAyah,
+        final reader = QuranFontScope(
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => ReciterBloc()..add(const LoadReciters()),
               ),
-            ),
-            BlocProvider(
-              create: (_) => SurahAudioDownloadBloc(downloader: downloader),
-            ),
-          ],
-          child: QuranReadingScreen(args: args),
+              BlocProvider(
+                create: (_) => SurahPlaybackBloc(
+                  downloader: downloader,
+                  startAyah: args.paraNumber == null
+                      ? 1
+                      : (args.paraStartAyah ?? args.ayahNo),
+                  endAyah: args.endAyah,
+                ),
+              ),
+              BlocProvider(
+                create: (_) => SurahAudioDownloadBloc(downloader: downloader),
+              ),
+            ],
+            child: QuranReadingScreen(args: args),
+          ),
         );
         if (args.swipeForward == null) return _page(reader, settings);
         return PageRouteBuilder<void>(
@@ -486,12 +492,12 @@ class AppRoutes {
           ),
         );
       case RouteNames.quranJuzReader:
-        return _page(
+        return _quranPage(
           ParaDetailScreen(number: settings.arguments as int? ?? 1),
           settings,
         );
       case RouteNames.quranBookmarks:
-        return _page(
+        return _quranPage(
           BlocProvider(
             create: (_) => BookmarksBloc()..add(const LoadBookmarks()),
             child: const BookmarksScreen(),
@@ -499,7 +505,7 @@ class AppRoutes {
           settings,
         );
       case RouteNames.quranReadingHistory:
-        return _page(
+        return _quranPage(
           BlocProvider(
             create: (_) =>
                 ReadingHistoryBloc()..add(const LoadReadingHistory()),
@@ -508,7 +514,7 @@ class AppRoutes {
           settings,
         );
       case RouteNames.quranDashboard:
-        return _page(const QuranDashboardScreen(), settings);
+        return _quranPage(const QuranDashboardScreen(), settings);
       case RouteNames.prayerTimes:
         return _page(const PrayerTimesScreen(), settings);
       case RouteNames.addPrayerWidget:
@@ -755,6 +761,14 @@ class AppRoutes {
     RouteSettings settings,
   ) {
     return MaterialPageRoute<void>(builder: (_) => child, settings: settings);
+  }
+
+  /// Like [_page], with the Quran module's typography.
+  static MaterialPageRoute<dynamic> _quranPage(
+    Widget child,
+    RouteSettings settings,
+  ) {
+    return QuranPageRoute<void>(builder: (_) => child, settings: settings);
   }
 
   /// Like [_page], but swaps in [child] immediately instead of animating —

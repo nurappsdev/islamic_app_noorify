@@ -163,6 +163,14 @@ flutter:
       fonts:
         - asset: assets/fonts/quran/Noorehuda.ttf
 
+    - family: AlQalam Quran Majeed
+      fonts:
+        - asset: assets/fonts/quran/AlQalamQuranMajeed.otf
+
+    - family: Li Niladri Nodia
+      fonts:
+        - asset: assets/fonts/bangla/LiNiladriNodia-Unicode.ttf
+
     - family: Ubuntu Medium
       fonts:
         - asset: assets/fonts/Ubuntu-Medium.ttf

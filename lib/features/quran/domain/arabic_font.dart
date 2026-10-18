@@ -18,7 +18,11 @@ class ArabicFont {
   TextStyle apply(TextStyle base) => styleBuilder(base);
 }
 
-const kDefaultArabicFontId = 'noorehuda';
+const kDefaultArabicFontId = 'alqalam_quran_majeed';
+
+/// The bundled Quranic typeface (assets/fonts/quran/AlQalamQuranMajeed.otf)
+/// used across the Quran module wherever Arabic text has a fixed font.
+const kQuranArabicFontFamily = 'AlQalam Quran Majeed';
 
 /// Arabic text zoom: the default (120%) and the range the slider and the
 /// reader's pinch gesture allow.
@@ -27,11 +31,16 @@ const kMinArabicFontScale = 0.8;
 const kMaxArabicFontScale = 2.5;
 
 final List<ArabicFont> kArabicFonts = [
+  ArabicFont(
+    id: kDefaultArabicFontId,
+    label: 'AlQalam Quran Majeed',
+    styleBuilder: (s) => s.copyWith(fontFamily: kQuranArabicFontFamily),
+  ),
   // Bundled asset (assets/fonts/quran/Noorehuda.ttf), not Google Fonts:
   // freely licensed by its author at noorehidayat.org ("no copyright
   // notice, use freely").
   ArabicFont(
-    id: kDefaultArabicFontId,
+    id: 'noorehuda',
     label: 'Noorehuda',
     styleBuilder: (s) => s.copyWith(fontFamily: 'Noorehuda'),
   ),

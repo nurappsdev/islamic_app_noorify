@@ -8,6 +8,7 @@ import '../quran_text.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 
 const quranOlive = Color(0xffa1ae57);
 const quranInk = Color(0xff889569);
@@ -123,7 +124,7 @@ class QuranListRow extends StatelessWidget {
                   arabic!,
                   textDirection: TextDirection.rtl,
                   style: const TextStyle(
-                    fontFamily: 'Noorehuda',
+                    fontFamily: kQuranArabicFontFamily,
                     fontSize: 20,
                     color: quranInk,
                   ),
