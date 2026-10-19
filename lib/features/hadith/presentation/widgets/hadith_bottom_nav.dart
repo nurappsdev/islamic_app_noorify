@@ -8,8 +8,9 @@ import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
 
 /// Navigation bar dedicated to the Hadith flow.
 ///
-/// The Hadith Library is this flow's Home destination at index 0; the Hadith
-/// Planner sits at index 1 and is shown with its "Planner" label.
+/// The Hadith Library is this flow's main destination at index 0, shown with
+/// a Hadith icon/label; the Hadith Planner sits at index 1 and is shown with
+/// its "Planner" label.
 class HadithBottomNav extends StatelessWidget {
   const HadithBottomNav({super.key, this.selectedIndex = 0});
 
@@ -36,8 +37,8 @@ class HadithBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       items: [
         AppBottomNavItem(
-          icon: Icons.home_outlined,
-          label: appText.home,
+          icon: Icons.import_contacts_outlined,
+          label: appText.categoryHadith,
           onTap: go(0, RouteNames.hadithLibrary),
         ),
         AppBottomNavItem(

@@ -181,7 +181,7 @@ void main() {
     );
     await tester.tap(find.text('Open Quran'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Home'));
+    await tester.tap(find.byTooltip('Quran'));
     await tester.pumpAndSettle();
     expect(navigator.currentState!.canPop(), isTrue);
     await tester.enterText(find.byType(TextField), 'Saved search');
