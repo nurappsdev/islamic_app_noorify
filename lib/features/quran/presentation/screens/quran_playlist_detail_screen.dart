@@ -89,10 +89,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
     );
     if (updated != null && mounted) {
       _bloc.add(
-        LoadQuranPlaylistDetails(
-          playlistId: playlist.id,
-          forceRefresh: true,
-        ),
+        LoadQuranPlaylistDetails(playlistId: playlist.id, forceRefresh: true),
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -179,8 +176,9 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
     const titleColor = Color(0xFF7A8D49);
     const borderColor = Color(0xFFD2E3A8);
     final t = QuranText.of(context);
-    final langCode =
-        LanguagePreference.current == AppLanguage.bangla ? 'bn' : 'en';
+    final langCode = LanguagePreference.current == AppLanguage.bangla
+        ? 'bn'
+        : 'en';
 
     return BlocProvider.value(
       value: _bloc,
@@ -216,8 +214,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
           }
         },
         builder: (context, state) {
-          final playlist =
-              state.selectedPlaylistDetails ?? widget.playlist;
+          final playlist = state.selectedPlaylistDetails ?? widget.playlist;
 
           return Scaffold(
             backgroundColor: context.pageColor(Colors.white),
@@ -391,17 +388,15 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
                             _buildProgressCard(playlist, t),
 
                           // Next Ayah Card ("Continue Reading")
-                          if (playlist.nextAyah != null && !playlist.isCompleted)
+                          if (playlist.nextAyah != null &&
+                              !playlist.isCompleted)
                             _buildNextAyahCard(playlist.nextAyah!, t, langCode),
 
                           // Playlist Description if present
                           if (playlist.description != null &&
                               playlist.description!.isNotEmpty)
                             Padding(
-                              padding: EdgeInsets.only(
-                                bottom: 12.h,
-                                top: 4.h,
-                              ),
+                              padding: EdgeInsets.only(bottom: 12.h, top: 4.h),
                               child: Text(
                                 playlist.description!,
                                 style: TextStyle(
@@ -590,12 +585,11 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
     QuranText t,
     String langCode,
   ) {
-    final surahTitle =
-        langCode == 'bn' && nextAyah.surahNameBangla.isNotEmpty
-            ? nextAyah.surahNameBangla
-            : (langCode == 'ar' && nextAyah.surahNameArabic.isNotEmpty
-                ? nextAyah.surahNameArabic
-                : nextAyah.surahNameEnglish);
+    final surahTitle = langCode == 'bn' && nextAyah.surahNameBangla.isNotEmpty
+        ? nextAyah.surahNameBangla
+        : (langCode == 'ar' && nextAyah.surahNameArabic.isNotEmpty
+              ? nextAyah.surahNameArabic
+              : nextAyah.surahNameEnglish);
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -738,9 +732,9 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
                     item.type == 'para'
                         ? '${t.juz} ${t.n(item.paraNumber ?? 1)}'
                         : (item.type == 'ayahs'
-                            ? '${t.ayah} ${t.n(item.fromAyah)}-${t.n(item.toAyah)} • ${t.revelationPlace(item.revelationPlace)}'
-                            : '${t.revelationPlace(item.revelationPlace)} • '
-                                '${t.ayahCount(item.endAyah - item.startAyah + 1)}'),
+                              ? '${t.ayah} ${t.n(item.fromAyah)}-${t.n(item.toAyah)} • ${t.revelationPlace(item.revelationPlace)}'
+                              : '${t.revelationPlace(item.revelationPlace)} • '
+                                    '${t.ayahCount(item.endAyah - item.startAyah + 1)}'),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: const Color(0xFF9090AC),

@@ -313,15 +313,17 @@ void main() {
         ),
       ),
     );
-    // Translation settings read SQLite, also real I/O.
-    for (var i = 0; i < 10; i++) {
+    // Translation settings read SQLite, also real I/O: give it real time
+    // until the page is up (or the expectations below fail).
+    final verse = arabic['2:255']!;
+    final shown = find.byKey(const ValueKey('quran-translation-retry'));
+    for (var i = 0; i < 100 && shown.evaluate().isEmpty; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    final verse = arabic['2:255']!;
     expect(
       find.textContaining(verse.substring(0, 12), findRichText: true),
       findsWidgets,

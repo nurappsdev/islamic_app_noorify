@@ -114,9 +114,7 @@ class QuranPlaylistBloc extends Bloc<QuranPlaylistEvent, QuranPlaylistState> {
     LoadQuranPlaylistDetails event,
     Emitter<QuranPlaylistState> emit,
   ) async {
-    emit(
-      state.copyWith(isLoadingDetails: true, clearDetailsFailure: true),
-    );
+    emit(state.copyWith(isLoadingDetails: true, clearDetailsFailure: true));
 
     final result = await _repository.getPlaylistDetails(
       event.playlistId,
@@ -213,8 +211,9 @@ class QuranPlaylistBloc extends Bloc<QuranPlaylistEvent, QuranPlaylistState> {
       (failure) =>
           emit(state.copyWith(isDeleting: false, deleteFailure: failure)),
       (_) {
-        final remaining =
-            state.playlists.where((p) => p.id != event.playlistId).toList();
+        final remaining = state.playlists
+            .where((p) => p.id != event.playlistId)
+            .toList();
         emit(
           state.copyWith(
             isDeleting: false,
