@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/core/storage/latest_json_cache.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/home/data/models/home_dashboard_model.dart';
 
@@ -19,6 +22,10 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
   final Dio _dio;
   final AuthLocalDataSource _local;
+
+  /// The latest successfully-fetched dashboard, read back by
+  /// [HomeRepositoryImpl] when a later request fails.
+  static final cache = LatestJsonCache('home_dashboard');
 
   @override
   Future<HomeDashboardModel> getDashboard() async {
@@ -52,6 +59,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     if (data is! Map<String, dynamic>) {
       throw ParsingException('Dashboard response is missing "data".');
     }
+    unawaited(cache.save(data));
     return HomeDashboardModel.fromJson(data);
   }
 
