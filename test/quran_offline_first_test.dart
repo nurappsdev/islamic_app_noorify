@@ -5,12 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_bundle.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_content_service.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_database.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_design.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
-import 'quran_content_test.dart' show Adapter, ok;
+import 'quran_content_test.dart' show Adapter, missingBundle, ok;
 
 /// A small surah (7 ayahs) served the way the Quran API serves them.
 const _ayahCount = 7;
@@ -74,7 +75,11 @@ QuranContentService _service(Adapter adapter) {
   final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
     ..httpClientAdapter = adapter;
   // A fresh service has an empty memory cache, as after an app restart.
-  return QuranContentService(client: DioClient(dio: dio));
+  return QuranContentService(
+    client: DioClient(dio: dio),
+    arabicText: _ServerArabic(),
+    bundle: missingBundle(),
+  );
 }
 
 /// A server that cannot be reached.
@@ -138,48 +143,54 @@ void main() {
     );
   });
 
-  test('another translation is fetched once, then kept with the ayahs', () async {
-    final server = Adapter(_serve);
-    final service = _service(server);
-    await service.loadAyahs(1, from: 1, to: 7);
-    await service.cacheSurah(1, const [161]);
-    final english = await service.loadAyahs(
-      1,
-      from: 1,
-      to: 7,
-      translations: const [20],
-    );
-    await service.cacheSurah(1, const [20]);
-    expect(english.ayahs.first.translations[20]?.text, contains('1:1'));
-
-    // Both editions are now stored for every ayah.
-    final offline = _service(_offline());
-    for (final resource in [161, 20]) {
-      final page = await offline.loadAyahs(
+  test(
+    'another translation is fetched once, then kept with the ayahs',
+    () async {
+      final server = Adapter(_serve);
+      final service = _service(server);
+      await service.loadAyahs(1, from: 1, to: 7);
+      await service.cacheSurah(1, const [161]);
+      final english = await service.loadAyahs(
         1,
         from: 1,
         to: 7,
-        translations: [resource],
+        translations: const [20],
       );
-      expect(page.ayahs, hasLength(_ayahCount));
-      expect(page.ayahs.last.translations[resource], isNotNull);
-    }
-  });
+      await service.cacheSurah(1, const [20]);
+      expect(english.ayahs.first.translations[20]?.text, contains('1:1'));
 
-  test('stale metadata shows at once and refreshes in the background', () async {
-    await _service(Adapter(_serve)).loadSurah(1);
-    final db = await QuranOfflineDatabase().open();
-    await db.update('internal_quran_meta', {'cached_at': 0});
+      // Both editions are now stored for every ayah.
+      final offline = _service(_offline());
+      for (final resource in [161, 20]) {
+        final page = await offline.loadAyahs(
+          1,
+          from: 1,
+          to: 7,
+          translations: [resource],
+        );
+        expect(page.ayahs, hasLength(_ayahCount));
+        expect(page.ayahs.last.translations[resource], isNotNull);
+      }
+    },
+  );
 
-    final server = Adapter(_serve);
-    final meta = await _service(server).loadSurah(1);
-    expect(meta.number, 1);
-    // Returned from storage first; the refresh follows without being awaited.
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-    expect(server.requests.map((r) => r.path), ['/quran/surahs/1']);
-    final at = await QuranOfflineDatabase().internalCachedAt('surahs/1');
-    expect(DateTime.now().difference(at!).inMinutes, 0);
-  });
+  test(
+    'stale metadata shows at once and refreshes in the background',
+    () async {
+      await _service(Adapter(_serve)).loadSurah(1);
+      final db = await QuranOfflineDatabase().open();
+      await db.update('internal_quran_meta', {'cached_at': 0});
+
+      final server = Adapter(_serve);
+      final meta = await _service(server).loadSurah(1);
+      expect(meta.number, 1);
+      // Returned from storage first; the refresh follows without being awaited.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(server.requests.map((r) => r.path), ['/quran/surahs/1']);
+      final at = await QuranOfflineDatabase().internalCachedAt('surahs/1');
+      expect(DateTime.now().difference(at!).inMinutes, 0);
+    },
+  );
 
   test('a new content version drops the old reading cache', () async {
     final service = _service(Adapter(_serve));
@@ -230,4 +241,10 @@ void main() {
     expect(find.byKey(const ValueKey('quran-offline-message')), findsOneWidget);
     expect(find.textContaining("You're offline"), findsOneWidget);
   });
+}
+
+/// Keeps the fake server's Arabic: not the bundled text.
+class _ServerArabic implements QuranArabicTextSource {
+  @override
+  Future<Map<String, String>> surah(int number) async => const {};
 }

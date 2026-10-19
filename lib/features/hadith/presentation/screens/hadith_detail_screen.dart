@@ -173,6 +173,15 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   String _query = '';
   HadithContentSettings _settings = const HadithContentSettings();
 
+  /// Live pointer positions during a two-finger pinch (by pointer id), for
+  /// [_onPointerMove] below. A [Listener] (not a [GestureDetector]) tracks
+  /// these passively, so it never competes with the list's own scroll
+  /// gesture for a single-finger drag.
+  final _pinchPointers = <int, Offset>{};
+  double? _pinchStartSpan;
+  HadithContentSettings? _pinchStartSettings;
+  bool _pinching = false;
+
   /// Measures the user's active reading time and reports it (see
   /// [HadithReadingTracker]).
   late final HadithReadingTracker _tracker = HadithReadingTracker(
@@ -517,6 +526,60 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _settingsStore.save(value);
   }
 
+  // --- Two-finger pinch to zoom the Arabic / translation text -----------------
+
+  double _clampScale(double value) {
+    if (value < HadithContentSettings.minScale) {
+      return HadithContentSettings.minScale;
+    }
+    if (value > HadithContentSettings.maxScale) {
+      return HadithContentSettings.maxScale;
+    }
+    return value;
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    _pinchPointers[event.pointer] = event.position;
+    if (_pinchPointers.length != 2) _pinchStartSpan = null;
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    if (!_pinchPointers.containsKey(event.pointer)) return;
+    _pinchPointers[event.pointer] = event.position;
+    if (_pinchPointers.length != 2) return;
+
+    final positions = _pinchPointers.values.toList();
+    final span = (positions[0] - positions[1]).distance;
+    if (span <= 0) return;
+
+    final startSpan = _pinchStartSpan;
+    if (startSpan == null) {
+      _pinchStartSpan = span;
+      _pinchStartSettings = _settings;
+      setState(() => _pinching = true);
+      return;
+    }
+
+    final start = _pinchStartSettings!;
+    final factor = span / startSpan;
+    setState(
+      () => _settings = _settings.copyWith(
+        arabicScale: _clampScale(start.arabicScale * factor),
+        translationScale: _clampScale(start.translationScale * factor),
+      ),
+    );
+  }
+
+  void _onPointerEnd(PointerEvent event) {
+    _pinchPointers.remove(event.pointer);
+    if (_pinchPointers.length < 2 && _pinchStartSpan != null) {
+      _pinchStartSpan = null;
+      _pinchStartSettings = null;
+      setState(() => _pinching = false);
+      _settingsStore.save(_settings);
+    }
+  }
+
   // --- Scrolling to the initial hadith ----------------------------------------
 
   /// The hadith to open on: by id, else by hadith number.
@@ -656,29 +719,36 @@ class _HadithDetailViewState extends State<_HadithDetailView>
       );
     }
 
-    return ListView.builder(
-      key: _listKey,
+    return Scrollbar(
       controller: _scrollController,
-      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
-      itemCount: hadiths.length + (footer == null ? 0 : 1),
-      itemBuilder: (context, index) {
-        if (index >= hadiths.length) return footer!;
-        final hadith = hadiths[index];
-        return Padding(
-          padding: EdgeInsets.only(bottom: 14.h),
-          child: HadithDetailCard(
-            key: hadith.id.isEmpty
-                ? null
-                : _cardKeys.putIfAbsent(hadith.id, GlobalKey.new),
-            hadith: hadith,
-            bookName: title,
-            settings: _settings,
-            tracker: _tracker,
-            focusedId: _focusedId,
-            clock: _clock,
-          ),
-        );
-      },
+      thumbVisibility: true,
+      trackVisibility: true,
+      radius: Radius.circular(8.r),
+      thickness: 5.w,
+      child: ListView.builder(
+        key: _listKey,
+        controller: _scrollController,
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 20.w, 28.h),
+        itemCount: hadiths.length + (footer == null ? 0 : 1),
+        itemBuilder: (context, index) {
+          if (index >= hadiths.length) return footer!;
+          final hadith = hadiths[index];
+          return Padding(
+            padding: EdgeInsets.only(bottom: 14.h),
+            child: HadithDetailCard(
+              key: hadith.id.isEmpty
+                  ? null
+                  : _cardKeys.putIfAbsent(hadith.id, GlobalKey.new),
+              hadith: hadith,
+              bookName: title,
+              settings: _settings,
+              tracker: _tracker,
+              focusedId: _focusedId,
+              clock: _clock,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -775,25 +845,48 @@ class _HadithDetailViewState extends State<_HadithDetailView>
           },
         ),
         body: SafeArea(
-          child: Column(
-            children: [
-              SizedBox(height: 6.h),
-              _Header(
-                title: title,
-                onContentSettings: () =>
-                    _scaffoldKey.currentState?.openEndDrawer(),
-              ),
-              SizedBox(height: 12.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: HadithSearchField(
-                  hint: appText.searchHere,
-                  onChanged: (value) => setState(() => _query = value),
+          child: Listener(
+            onPointerDown: _onPointerDown,
+            onPointerMove: _onPointerMove,
+            onPointerUp: _onPointerEnd,
+            onPointerCancel: _onPointerEnd,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(height: 6.h),
+                    _Header(
+                      title: title,
+                      onContentSettings: () =>
+                          _scaffoldKey.currentState?.openEndDrawer(),
+                    ),
+                    SizedBox(height: 12.h),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: HadithSearchField(
+                        hint: appText.searchHere,
+                        onChanged: (value) => setState(() => _query = value),
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    Expanded(child: listBody),
+                  ],
                 ),
-              ),
-              SizedBox(height: 14.h),
-              Expanded(child: listBody),
-            ],
+                if (_pinching)
+                  Positioned(
+                    top: 8.h,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: _ZoomBadge(
+                        percent: context.localizedDigits(
+                          '${((_settings.arabicScale + _settings.translationScale) / 2 * 100).round()}%',
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -856,6 +949,33 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Transient "120%" pill shown over the list while a two-finger pinch is
+/// in progress, so the zoom has visible feedback as it happens.
+class _ZoomBadge extends StatelessWidget {
+  const _ZoomBadge({required this.percent});
+
+  final String percent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xDD2C3320)),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Text(
+        percent,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

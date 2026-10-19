@@ -1,3 +1,5 @@
+import 'quran_text_cleanup.dart';
+
 class SurahDetail {
   const SurahDetail({
     required this.number,
@@ -34,7 +36,7 @@ class SurahDetail {
       translation: json['surahNameTranslation'] as String? ?? '',
       revelationPlace: json['revelationPlace'] as String? ?? '',
       totalAyah: (json['totalAyah'] as num?)?.toInt() ?? 0,
-      arabicAyahs: stringList(json['arabic1']),
+      arabicAyahs: stringList(json['arabic1']).map(cleanQuranArabic).toList(),
       englishAyahs: stringList(json['english']),
       bengaliAyahs: stringList(json['bengali']),
     );

@@ -18,11 +18,11 @@ class ArabicFont {
   TextStyle apply(TextStyle base) => styleBuilder(base);
 }
 
-const kDefaultArabicFontId = 'alqalam_quran_majeed';
+const kDefaultArabicFontId = 'indopak_nastaleeq';
 
-/// The bundled Quranic typeface (assets/fonts/quran/AlQalamQuranMajeed.otf)
+/// The bundled Quranic typeface (assets/fonts/quran/IndopakNastaleeq.ttf)
 /// used across the Quran module wherever Arabic text has a fixed font.
-const kQuranArabicFontFamily = 'AlQalam Quran Majeed';
+const kQuranArabicFontFamily = 'IndoPak Nastaleeq';
 
 /// Arabic text zoom: the default (120%) and the range the slider and the
 /// reader's pinch gesture allow.
@@ -31,10 +31,17 @@ const kMinArabicFontScale = 0.8;
 const kMaxArabicFontScale = 2.5;
 
 final List<ArabicFont> kArabicFonts = [
+  // QuranWBW's IndoPak Nastaleeq (waqf lazim build), made for the Indo-Pak
+  // script the server's Arabic text is written in.
   ArabicFont(
     id: kDefaultArabicFontId,
-    label: 'AlQalam Quran Majeed',
+    label: 'IndoPak Nastaleeq',
     styleBuilder: (s) => s.copyWith(fontFamily: kQuranArabicFontFamily),
+  ),
+  ArabicFont(
+    id: 'alqalam_quran_majeed',
+    label: 'AlQalam Quran Majeed',
+    styleBuilder: (s) => s.copyWith(fontFamily: 'AlQalam Quran Majeed'),
   ),
   // Bundled asset (assets/fonts/quran/Noorehuda.ttf), not Google Fonts:
   // freely licensed by its author at noorehidayat.org ("no copyright

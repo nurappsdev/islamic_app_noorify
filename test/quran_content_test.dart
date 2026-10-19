@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show FlutterError;
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_bundle.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_content_service.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/bloc/quran_reading_cubit.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/quran_reading_navigation.dart';
@@ -86,10 +89,20 @@ Map<String, Object?> page(
   },
   meta: {'page': number, 'limit': ayahs.length, 'total': 6, 'totalPage': pages},
 );
-QuranContentService service(Adapter adapter) {
+
+/// A bundled Quran whose assets cannot be read: the reader then uses the
+/// fake server alone, as these tests expect.
+QuranBundle missingBundle() => QuranBundle(bundle: _MissingAssets());
+
+QuranContentService service(Adapter adapter, {QuranBundle? bundle}) {
   final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
     ..httpClientAdapter = adapter;
-  return QuranContentService(client: DioClient(dio: dio), persistCache: false);
+  return QuranContentService(
+    client: DioClient(dio: dio),
+    persistCache: false,
+    arabicText: _ServerArabic(),
+    bundle: bundle ?? missingBundle(),
+  );
 }
 
 void main() {
@@ -443,4 +456,22 @@ void main() {
     expect(adapter.requests.single.queryParameters['translations'], 161);
     expect(result.ayahNumber, 255);
   });
+}
+
+/// Keeps the fake server's Arabic: not the bundled text.
+class _ServerArabic implements QuranArabicTextSource {
+  @override
+  Future<Map<String, String>> surah(int number) async => const {};
+}
+
+class _MissingAssets extends AssetBundle {
+  @override
+  Future<ByteData> load(String key) async =>
+      throw FlutterError('No asset $key');
+
+  @override
+  Future<T> loadStructuredData<T>(
+    String key,
+    Future<T> Function(String value) parser,
+  ) async => throw FlutterError('No asset $key');
 }
