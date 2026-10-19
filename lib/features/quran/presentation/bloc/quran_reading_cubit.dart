@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/quran_ayah.dart';
@@ -16,6 +18,8 @@ class QuranReadingState {
     this.bismillahPre = false,
     this.pagination,
     this.pages = const [],
+    this.translationsPending = false,
+    this.translationsFailed = false,
   });
   int? get pageNumber => ayahs.isEmpty ? null : ayahs.first.pageNumber;
 
@@ -28,11 +32,24 @@ class QuranReadingState {
   final int translation, from, to;
   final QuranPagination? pagination;
   final List<int> pages;
+
+  /// The Arabic is showing; its translations are still on their way.
+  final bool translationsPending;
+
+  /// The Arabic is showing but its translations could not be loaded
+  /// ([offline] says whether for lack of a connection).
+  final bool translationsFailed;
 }
 
-/// Download batches are independent of Mushaf pages. Only ayahs sharing the
-/// requested ayah's pageNumber are displayed, including when that page spans
-/// several cached batches or starts before a deep-linked ayah.
+/// Shows the Mushaf page holding the requested ayah: its Arabic, pages and
+/// paras straight from the bundled Quran (no network, even for a surah never
+/// opened), then its translations from the device or the server. A page
+/// whose translations fail keeps its Arabic.
+///
+/// Without the bundle, pages come from the server in download batches,
+/// which are independent of Mushaf pages. Only ayahs sharing the requested
+/// ayah's pageNumber are displayed, including when that page spans several
+/// cached batches or starts before a deep-linked ayah.
 class QuranReadingCubit extends Cubit<QuranReadingState> {
   QuranReadingCubit({
     required this.surahNo,
@@ -46,6 +63,10 @@ class QuranReadingCubit extends Cubit<QuranReadingState> {
   final QuranContentService _api;
   QuranContentService get contentService => _api;
   static const rangeSize = 16;
+
+  /// How long the Arabic waits for translations before showing without
+  /// them; stored ones arrive well within it, so the page appears whole.
+  static const translationGrace = Duration(milliseconds: 250);
   int _generation = 0;
   int? _requestedAyah;
   int get lastAyah => endAyah ?? state.surah?.totalAyah ?? startAyah;
@@ -100,6 +121,120 @@ class QuranReadingCubit extends Cubit<QuranReadingState> {
         pages: state.pages,
       ),
     );
+    final QuranAyahPage surah;
+    try {
+      surah = await _api.loadBundledAyahs(surahNo);
+    } catch (_) {
+      return _loadFromServer(generation, first, resource);
+    }
+    if (isClosed || generation != _generation) return;
+    final meta = state.surah ?? surah.surah;
+    final limit = (endAyah ?? meta.totalAyah).clamp(startAyah, meta.totalAyah);
+    final target = first.clamp(startAyah, limit);
+    final pageNumber = surah.ayahs[target - 1].pageNumber;
+    final arabic = [
+      for (final ayah in surah.ayahs)
+        if (ayah.ayahNumber >= startAyah &&
+            ayah.ayahNumber <= limit &&
+            ayah.pageNumber == pageNumber)
+          ayah,
+    ];
+    QuranReadingState page(
+      List<QuranAyah> ayahs, {
+      QuranAyahPage? server,
+      bool pending = false,
+      bool failed = false,
+      bool offline = false,
+    }) => QuranReadingState(
+      surah: server?.surah ?? meta,
+      ayahs: ayahs,
+      loading: false,
+      offline: offline,
+      translation: resource,
+      from: ayahs.first.ayahNumber,
+      to: ayahs.last.ayahNumber,
+      bismillahPre: server?.bismillahPre ?? surah.bismillahPre,
+      pagination: server?.pagination ?? surah.pagination,
+      pages: server?.pages ?? surah.pages,
+      translationsPending: pending,
+      translationsFailed: failed,
+    );
+
+    (QuranAyahPage, List<QuranAyah>)? translated;
+    Object? failure;
+    // Completes either way; the outcome lands in translated or failure.
+    final translating =
+        _translated(
+          arabic.first.ayahNumber,
+          arabic.last.ayahNumber,
+          resource,
+        ).then<void>(
+          (result) => translated = result,
+          onError: (Object e) => failure = e,
+        );
+    final grace = Completer<void>();
+    final timer = Timer(translationGrace, grace.complete);
+    await Future.any([translating, grace.future]);
+    timer.cancel();
+    if (isClosed || generation != _generation) return;
+    if (translated == null && failure == null) {
+      emit(page(arabic, pending: true));
+      await translating;
+      if (isClosed || generation != _generation) return;
+    }
+    if (translated case (final server, final ayahs)) {
+      final byKey = {for (final a in ayahs) a.verseKey: a.translations};
+      emit(
+        page([
+          for (final a in arabic)
+            QuranAyah(
+              surahNumber: a.surahNumber,
+              ayahNumber: a.ayahNumber,
+              verseKey: a.verseKey,
+              ayahIndex: a.ayahIndex,
+              paraNumber: a.paraNumber,
+              pageNumber: a.pageNumber,
+              textArabic: a.textArabic,
+              sajdahNumber: a.sajdahNumber,
+              translations: byKey[a.verseKey] ?? const {},
+            ),
+        ], server: server),
+      );
+    } else {
+      emit(
+        page(arabic, failed: true, offline: failure is QuranOfflineException),
+      );
+    }
+  }
+
+  /// [from] to [to] with translation [resource], from the device or the
+  /// server; its Arabic is the bundled text too.
+  Future<(QuranAyahPage, List<QuranAyah>)> _translated(
+    int from,
+    int to,
+    int resource,
+  ) async {
+    final response = await _api.loadAyahs(
+      surahNo,
+      from: from,
+      to: to,
+      translations: [resource],
+    );
+    return (
+      response,
+      response.pagination.hasNext
+          ? await _api.loadRange(
+              surahNo,
+              from: from,
+              to: to,
+              translations: [resource],
+            )
+          : response.ayahs,
+    );
+  }
+
+  /// The page from the server alone, for when the bundle cannot be read.
+  Future<void> _loadFromServer(int generation, int first, int resource) async {
     try {
       final meta = state.surah ?? await _api.loadSurah(surahNo);
       final limit = (endAyah ?? meta.totalAyah).clamp(

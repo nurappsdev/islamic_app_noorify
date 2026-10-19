@@ -514,7 +514,9 @@ class _ReaderBodyState extends State<_ReaderBody> {
           },
         ),
         BlocListener<QuranReadingCubit, QuranReadingState>(
-          listenWhen: (p, c) => !c.loading && !c.error,
+          // Once per page shown: not again when its translations arrive.
+          listenWhen: (p, c) =>
+              !c.loading && !c.error && (p.loading || p.error),
           listener: (context, state) {
             if (state.ayahs.isNotEmpty) {
               _tracker.show(
@@ -772,7 +774,11 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 2,
-                      child: state.loading && state.ayahs.isNotEmpty
+                      child:
+                          (state.loading ||
+                                  (state.translationsPending &&
+                                      prefs.showTranslation)) &&
+                              state.ayahs.isNotEmpty
                           ? const LinearProgressIndicator(minHeight: 2)
                           : null,
                     ),
@@ -782,6 +788,20 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         icon: const Icon(Icons.refresh),
                         label: Text(
                           AppText.of(context).quranPageLoadFailedRetry,
+                        ),
+                      )
+                    // The Arabic is here; only its translations failed.
+                    else if (state.translationsFailed &&
+                        prefs.showTranslation &&
+                        state.ayahs.isNotEmpty)
+                      TextButton.icon(
+                        key: const ValueKey('quran-translation-retry'),
+                        onPressed: () => reader.load(),
+                        icon: const Icon(Icons.refresh),
+                        label: Text(
+                          QuranText.of(context).isBangla
+                              ? 'অনুবাদ লোড করা যায়নি। আবার চেষ্টা করুন'
+                              : 'Could not load translation. Retry',
                         ),
                       ),
                   ],
@@ -874,6 +894,11 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                             fontScale:
                                                 prefs.translationFontScale,
                                           )
+                                        else if (state.translationsPending &&
+                                            !ayah.translations.containsKey(
+                                              state.translation,
+                                            ))
+                                          const SizedBox.shrink()
                                         else
                                           Text(
                                             ayah

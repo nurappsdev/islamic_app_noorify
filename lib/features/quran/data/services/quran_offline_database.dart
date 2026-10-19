@@ -51,7 +51,9 @@ class QuranOfflineDatabase {
   ///
   /// 3: the server's Arabic text was replaced (to Uthmani, then to IndoPak
   /// text for AlQalam), so cached surahs would show an older text.
-  static const contentVersion = 3;
+  /// 4: the Arabic is now quran.com's IndoPak Nastaleeq text, for the
+  /// bundled IndoPak Nastaleeq font, bundled as QuranBundle.
+  static const contentVersion = 4;
   static const _expectedAyahCount = 6236;
   static const surahCount = 114;
 
