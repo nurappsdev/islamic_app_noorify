@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 /// Set once in `main()` via [AudioService.init], before any ayah/surah bloc
@@ -11,14 +13,28 @@ late QuranAudioHandler quranAudioHandler;
 /// [QuranAudioHandler._stopControl] for why Stop uses this instead.
 const _stopActionName = 'quran_stop';
 
+/// A play/pause/stop/skip request from outside the app's own buttons: the
+/// notification, the lock screen, a headset or car, or the system (a call,
+/// unplugged headphones). Playback blocs follow these so their state always
+/// matches what is heard.
+enum QuranAudioCommand { play, pause, stop, next, previous }
+
 /// The app's single audio engine for Quran recitation (both single-ayah
 /// preview and continuous full-surah playback share this one player).
 /// Registering it with `audio_service` gives it a real Android foreground
 /// service + notification and an iOS background-audio session, so playback
 /// keeps going when the app is minimized, backgrounded, or the screen is
 /// locked, with play/pause reachable from the lock screen/notification.
+///
+/// The audio session is configured for music (on iOS: plays with the silent
+/// switch on and the screen locked), and interruptions are handled here
+/// rather than inside the player, so they go through [play]/[pause] and are
+/// announced on [commands] like any other request: a call or another app's
+/// audio pauses recitation (resuming after a temporary one), a notification
+/// ducks it, and unplugging headphones pauses it.
 class QuranAudioHandler extends BaseAudioHandler {
   QuranAudioHandler() {
+    unawaited(_configureSession());
     _player.playbackEventStream.listen(
       _broadcastState,
       onError: (Object error, StackTrace stackTrace) {},
@@ -36,8 +52,60 @@ class QuranAudioHandler extends BaseAudioHandler {
     });
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  // Interruptions are handled in [_onInterruption] instead.
+  final AudioPlayer _player = AudioPlayer(handleInterruptions: false);
   final _onCompleted = StreamController<void>.broadcast();
+  final _commands = StreamController<QuranAudioCommand>.broadcast();
+  bool _queueControls = false;
+  // Paused by a temporary interruption (a call), to resume after it.
+  bool _resumeAfterInterruption = false;
+
+  Future<void> _configureSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration.music());
+      session.interruptionEventStream.listen(_onInterruption);
+      session.becomingNoisyEventStream.listen((_) => pause());
+    } catch (error) {
+      debugPrint('Quran audio session not configured: $error');
+    }
+  }
+
+  void _onInterruption(AudioInterruptionEvent event) {
+    if (event.begin) {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          unawaited(_player.setVolume(.5));
+        case AudioInterruptionType.pause:
+        case AudioInterruptionType.unknown:
+          if (!_player.playing) return;
+          _resumeAfterInterruption = event.type == AudioInterruptionType.pause;
+          unawaited(pause());
+      }
+    } else {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          unawaited(_player.setVolume(1));
+        case AudioInterruptionType.pause:
+          if (_resumeAfterInterruption) unawaited(play());
+          _resumeAfterInterruption = false;
+        case AudioInterruptionType.unknown:
+          _resumeAfterInterruption = false;
+      }
+    }
+  }
+
+  /// Requests from outside the app's own buttons (see [QuranAudioCommand]),
+  /// after this handler has acted on them.
+  Stream<QuranAudioCommand> get commands => _commands.stream;
+
+  /// Whether the notification and lock screen offer Previous/Next (to the
+  /// previous/next Surah of a playlist), announced on [commands].
+  set showQueueControls(bool value) {
+    if (_queueControls == value) return;
+    _queueControls = value;
+    _broadcastState(_player.playbackEvent);
+  }
 
   /// A plain custom control rather than the built-in [MediaControl.stop]:
   /// on Android 13+, `audio_service`'s native side maps `MediaControl.stop`
@@ -74,7 +142,12 @@ class QuranAudioHandler extends BaseAudioHandler {
   Future<void> stopCurrent() => _player.stop();
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() {
+    // just_audio's play() completes only once playback stops again.
+    final playing = _player.play();
+    _commands.add(QuranAudioCommand.play);
+    return playing;
+  }
 
   Stream<Duration> get positionStream => _player.positionStream;
   Duration? get duration => _player.duration;
@@ -83,7 +156,18 @@ class QuranAudioHandler extends BaseAudioHandler {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() async {
+    _resumeAfterInterruption = false;
+    await _player.pause();
+    _commands.add(QuranAudioCommand.pause);
+  }
+
+  @override
+  Future<void> skipToNext() async => _commands.add(QuranAudioCommand.next);
+
+  @override
+  Future<void> skipToPrevious() async =>
+      _commands.add(QuranAudioCommand.previous);
 
   /// Stops playback and tears the background session down: `super.stop()`
   /// sets [AudioProcessingState.idle], which `audio_service`'s native side
@@ -93,8 +177,10 @@ class QuranAudioHandler extends BaseAudioHandler {
   /// calls this same method.
   @override
   Future<void> stop() async {
+    _resumeAfterInterruption = false;
     await _player.stop();
     await super.stop();
+    _commands.add(QuranAudioCommand.stop);
   }
 
   /// Called by `audio_service` when the user swipes the media notification
@@ -117,14 +203,27 @@ class QuranAudioHandler extends BaseAudioHandler {
 
   void _broadcastState(PlaybackEvent event) {
     final playing = _player.playing;
+    final playPause = playing ? MediaControl.pause : MediaControl.play;
     playbackState.add(
       playbackState.value.copyWith(
-        controls: [
-          playing ? MediaControl.pause : MediaControl.play,
-          _stopControl,
-        ],
-        systemActions: const {MediaAction.seek},
-        androidCompactActionIndices: const [0, 1],
+        controls: _queueControls
+            ? [
+                MediaControl.skipToPrevious,
+                playPause,
+                MediaControl.skipToNext,
+                _stopControl,
+              ]
+            : [playPause, _stopControl],
+        systemActions: {
+          MediaAction.seek,
+          if (_queueControls) ...{
+            MediaAction.skipToNext,
+            MediaAction.skipToPrevious,
+          },
+        },
+        androidCompactActionIndices: _queueControls
+            ? const [0, 1, 2]
+            : const [0, 1],
         processingState: const {
           ProcessingState.idle: AudioProcessingState.idle,
           ProcessingState.loading: AudioProcessingState.loading,

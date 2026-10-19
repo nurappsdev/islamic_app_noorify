@@ -22,10 +22,19 @@ class _AdvanceAyah extends SurahPlaybackEvent {
   const _AdvanceAyah();
 }
 
+class _AudioCommand extends SurahPlaybackEvent {
+  const _AudioCommand(this.command);
+  final QuranAudioCommand command;
+}
+
 /// Plays a surah continuously from downloaded files: the opening Bismillah
 /// clip (where the surah has one) followed by every ayah, auto-advancing as
 /// each file finishes. If the surah's audio is not on the device the bloc
 /// reports [SurahPlaybackState.needsDownload] instead of streaming.
+///
+/// Play, pause and stop from the notification, lock screen, a headset or an
+/// interruption ([QuranAudioCommand]) update its state while it is the one
+/// playing, so it keeps advancing (or stays stopped) in the background.
 class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
   // The audio notification has no BuildContext: it is written in the language
   // the app is showing right now.
@@ -37,10 +46,13 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
     QuranAudioHandler? audio,
     this.startAyah = 1,
     this.endAyah,
+    this.stopAudioOnClose = true,
   }) : _downloader = downloader ?? QuranAudioDownloader(),
        _audio = audio ?? quranAudioHandler,
        super(SurahPlaybackState(currentAyahNo: startAyah)) {
     _completedSub = _audio.onCompleted.listen((_) => add(const _AdvanceAyah()));
+    _commandSub = _audio.commands.listen((c) => add(_AudioCommand(c)));
+    on<_AudioCommand>(_onCommand);
     on<PlaySurah>(_onPlay);
     on<PauseSurah>(_onPause);
     on<SetActiveAyah>((event, emit) async {
@@ -71,6 +83,12 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
 
   final int startAyah;
   final int? endAyah;
+
+  /// Whether closing while playing ends the background session; a playlist
+  /// moving to its next Surah keeps it, so it never has to start again from
+  /// the background.
+  final bool stopAudioOnClose;
+  late final StreamSubscription<QuranAudioCommand> _commandSub;
   final QuranAudioDownloader _downloader;
   final QuranAudioHandler _audio;
   late final StreamSubscription<void> _completedSub;
@@ -124,6 +142,39 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
         ? 0
         : state.currentAyahNo;
     await _playAyah(startAt, emit);
+  }
+
+  /// Whether the clip loaded in the engine is this bloc's current ayah.
+  bool get _ownsAudio =>
+      _surahNo != 0 &&
+      _audio.mediaItem.value?.id == '$_surahNo:${state.currentAyahNo}';
+
+  Future<void> _onCommand(
+    _AudioCommand event,
+    Emitter<SurahPlaybackState> emit,
+  ) async {
+    if (!_ownsAudio) return;
+    switch (event.command) {
+      case QuranAudioCommand.pause:
+      case QuranAudioCommand.stop:
+        if (state.isPlaying || state.isBuffering) {
+          emit(state.copyWith(isPlaying: false, isBuffering: false));
+        }
+      case QuranAudioCommand.play:
+        if (state.isPlaying || state.finished) return;
+        if (_audio.playbackState.value.processingState ==
+            AudioProcessingState.ready) {
+          // The engine resumed the paused clip itself.
+          emit(state.copyWith(isPlaying: true, isBuffering: false));
+        } else {
+          // Stopped: load the ayah again.
+          await _playAyah(state.currentAyahNo, emit);
+        }
+      case QuranAudioCommand.next:
+      case QuranAudioCommand.previous:
+        // Surah to Surah: up to a playlist, if one is playing.
+        break;
+    }
   }
 
   Future<void> _onPause(
@@ -205,10 +256,11 @@ class SurahPlaybackBloc extends Bloc<SurahPlaybackEvent, SurahPlaybackState> {
   @override
   Future<void> close() {
     _completedSub.cancel();
+    _commandSub.cancel();
     // Only tear down the shared engine if this bloc was the one driving it —
     // another screen (e.g. a single-ayah preview) may have taken it over
     // since, and its playback shouldn't be cut off by this bloc closing.
-    if (state.isPlaying) _audio.stop();
+    if (state.isPlaying && stopAudioOnClose) _audio.stop();
     return super.close();
   }
 }
