@@ -1,25 +1,35 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 /// How much of the page's bottom edge the floating player covers right now,
-/// so the page can keep its own bottom controls (the Tafsir button) above it.
+/// so the page can keep its own bottom controls (the Tafsir button) above it,
+/// and how far the header and bottom bar are shown, so the page can keep
+/// those controls out of the way while they are.
 class QuranReadingInsets extends InheritedWidget {
   const QuranReadingInsets({
     super.key,
     required this.bottom,
+    required this.chrome,
     required super.child,
   });
   final ValueListenable<double> bottom;
 
+  /// 0 with the header and bottom bar hidden, 1 with either fully shown.
+  final ValueListenable<double> chrome;
+
   static ValueListenable<double>? bottomOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<QuranReadingInsets>()?.bottom;
 
+  static ValueListenable<double>? chromeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<QuranReadingInsets>()?.chrome;
+
   @override
   bool updateShouldNotify(QuranReadingInsets oldWidget) =>
-      bottom != oldWidget.bottom;
+      bottom != oldWidget.bottom || chrome != oldWidget.chrome;
 }
 
 /// Keeps controls mounted (including audio listeners) and floats them over
@@ -57,9 +67,14 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
   // The player's height, and how much of the page it covers as it slides.
   double _bottomHeight = 0;
   final _bottomCover = ValueNotifier<double>(0);
+  // How far the header or the bottom bar is shown, whichever is more.
+  final _chromeShown = ValueNotifier<double>(1);
 
   void _updateCover() =>
       _bottomCover.value = _bottomHeight * _bottomCurve.value;
+
+  void _updateChrome() =>
+      _chromeShown.value = math.max(_topCurve.value, _bottomCurve.value);
 
   AnimationController _chromeController() => AnimationController(
     vsync: this,
@@ -78,6 +93,8 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
   void initState() {
     super.initState();
     _bottomCurve.addListener(_updateCover);
+    _topCurve.addListener(_updateChrome);
+    _bottomCurve.addListener(_updateChrome);
     _scheduleHide();
   }
 
@@ -110,6 +127,7 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
     _idle?.cancel();
     _scroll.dispose();
     _bottomCover.dispose();
+    _chromeShown.dispose();
     _topCurve.dispose();
     _bottomCurve.dispose();
     _top.dispose();
@@ -202,6 +220,7 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
                     Positioned.fill(
                       child: QuranReadingInsets(
                         bottom: _bottomCover,
+                        chrome: _chromeShown,
                         child: widget.page,
                       ),
                     ),

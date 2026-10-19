@@ -14,9 +14,16 @@ class ServerException implements Exception {
 
 /// Thrown when the request cannot reach the server (socket / timeout).
 class NetworkException implements Exception {
-  NetworkException([this.message = 'No internet connection.']);
+  NetworkException([
+    this.message = 'No internet connection.',
+    this.mayHaveArrived = false,
+  ]);
 
   final String message;
+
+  /// The request may have reached the server before failing (it was sent
+  /// but no answer came back), so sending it again could repeat it.
+  final bool mayHaveArrived;
 
   @override
   String toString() => 'NetworkException: $message';

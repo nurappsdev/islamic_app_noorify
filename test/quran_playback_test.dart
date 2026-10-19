@@ -7,6 +7,15 @@ import 'package:tuhfatul_muslim/features/quran/presentation/bloc/surah_playback/
 
 class TestAudio extends BaseAudioHandler implements QuranAudioHandler {
   final completed = StreamController<void>.broadcast();
+
+  /// Requests "from the notification": add to send one.
+  final remote = StreamController<QuranAudioCommand>.broadcast();
+  bool queueControls = false;
+  int stops = 0;
+  @override
+  Stream<QuranAudioCommand> get commands => remote.stream;
+  @override
+  set showQueueControls(bool value) => queueControls = value;
   final played = <String>[];
   int resumes = 0, pauses = 0;
   @override
@@ -42,7 +51,9 @@ class TestAudio extends BaseAudioHandler implements QuranAudioHandler {
   }
 
   @override
-  Future<void> stop() async {}
+  Future<void> stop() async {
+    stops++;
+  }
 }
 
 class TestDownloader extends QuranAudioDownloader {

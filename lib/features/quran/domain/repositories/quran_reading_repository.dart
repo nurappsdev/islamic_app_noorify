@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dartz/dartz.dart';
 
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
@@ -20,13 +22,40 @@ abstract interface class QuranReadingRepository {
 
   /// Reports [seconds] spent reading ayahs [fromAyah]-[toAyah] of
   /// [surahNumber] on [date] (the local calendar day).
+  ///
+  /// The report is kept on the device until the server accepts it, so one
+  /// made offline is sent later by [syncPendingReadings]. [sessionId] names
+  /// the reading session (unique, never reused), replacing its draft from
+  /// [saveReadingDraft].
   Future<Either<Failure, QuranReadingTrackResult>> trackReading({
     required int surahNumber,
     required int fromAyah,
     required int toAyah,
     required int seconds,
     required DateTime date,
+    String? sessionId,
   });
+
+  /// Keeps the session [sessionId] read so far on the device, replacing its
+  /// previous draft, so it is not lost if the app is closed before
+  /// [trackReading] reports it. A draft left by an earlier launch is sent by
+  /// [syncPendingReadings]. Never throws.
+  Future<void> saveReadingDraft({
+    required String sessionId,
+    required int surahNumber,
+    required int fromAyah,
+    required int toAyah,
+    required int seconds,
+    required DateTime date,
+  });
+
+  /// Drops the draft of [sessionId], a session that will not be reported.
+  Future<void> discardReadingDraft(String sessionId);
+
+  /// Sends the reports kept on the device, oldest first, one at a time;
+  /// stops at the first one the network fails. Concurrent calls share one
+  /// run. Never throws.
+  Future<({int sent, int pending})> syncPendingReadings();
 
   Future<Either<Failure, QuranReadingDashboard>> getDashboard();
 
@@ -46,3 +75,10 @@ abstract interface class QuranReadingRepository {
 
   Future<Either<Failure, QuranLastRead>> getLastRead();
 }
+
+final _random = Random();
+
+/// A new id for a reading report or session, unique across launches.
+String newQuranReadingId() =>
+    '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-'
+    '${_random.nextInt(1 << 32).toRadixString(36)}';

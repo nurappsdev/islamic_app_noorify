@@ -27,6 +27,8 @@ class SessionCleaner {
     'quran_last_read',
     'quran_reading_history',
     'quran_bookmarks',
+    // Unsent Quran reading time: it must not be credited to the next account.
+    'quran_reading_pending',
   };
 
   /// SharedPreferences key prefixes holding per-user progress.

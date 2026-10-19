@@ -12,6 +12,10 @@ abstract final class QuranReadingTrackerConfig {
 
   /// The most one report may carry (the API's limit).
   static const maxSeconds = 3600;
+
+  /// How often the session read so far is saved on the device, so closing
+  /// the app loses at most this much.
+  static const saveEvery = Duration(seconds: 30);
 }
 
 /// Measures Quran reading and reports it to the backend
@@ -26,19 +30,29 @@ abstract final class QuranReadingTrackerConfig {
 /// Time comes from timestamps, not a ticking timer. Each report takes the
 /// session's seconds and clears them *before* the request goes out, so no
 /// second of reading is ever sent twice — however often, or concurrently,
-/// [flush], [pause] and [dispose] run. A failed report is dropped quietly:
-/// tracking never gets in the way of reading.
+/// [flush], [pause] and [dispose] run. A report that fails (offline, say)
+/// stays with the repository, which sends it later: tracking never gets in
+/// the way of reading.
+///
+/// Every [saveEvery] while the clock runs, the session so far is saved as a
+/// draft, so an app closed without [pause] or [dispose] still has it sent on
+/// its next launch.
 class QuranReadingTracker {
   QuranReadingTracker(
     this._repository, {
     DateTime Function()? now,
     this.minSeconds = QuranReadingTrackerConfig.minSeconds,
     this.maxSeconds = QuranReadingTrackerConfig.maxSeconds,
+    this.saveEvery = QuranReadingTrackerConfig.saveEvery,
   }) : _now = now ?? DateTime.now;
 
   final QuranReadingRepository _repository;
   final DateTime Function() _now;
   final int minSeconds, maxSeconds;
+
+  /// Null: no drafts.
+  final Duration? saveEvery;
+  Timer? _saver;
 
   _Session? _session;
 
@@ -64,6 +78,7 @@ class QuranReadingTracker {
     unawaited(flush());
     _session = _Session(surahNumber, fromAyah, toAyah, _now())
       ..start(_paused ? null : _now());
+    _startSaving();
   }
 
   /// Stops the clock (the app went to the background) and reports the
@@ -72,6 +87,7 @@ class QuranReadingTracker {
     if (_paused || _disposed) return Future.value();
     _paused = true;
     _session?.stop(_now());
+    _saver?.cancel();
     return flush();
   }
 
@@ -80,6 +96,31 @@ class QuranReadingTracker {
     if (!_paused || _disposed) return;
     _paused = false;
     _session?.start(_now());
+    _startSaving();
+  }
+
+  void _startSaving() {
+    final every = saveEvery;
+    if (every == null || _paused || _disposed || _saver?.isActive == true) {
+      return;
+    }
+    _saver = Timer.periodic(every, (_) => saveDraft());
+  }
+
+  /// Saves the session read so far on the device (see [saveEvery]).
+  Future<void> saveDraft() async {
+    final session = _session;
+    if (session == null) return;
+    final seconds = session.peek(_now());
+    if (seconds < minSeconds || !_repository.isSignedIn) return;
+    await _repository.saveReadingDraft(
+      sessionId: session.id,
+      surahNumber: session.surah,
+      fromAyah: session.from,
+      toAyah: session.to,
+      seconds: math.min(seconds, maxSeconds),
+      date: session.startedAt,
+    );
   }
 
   /// Reports the current session, if long enough, and starts a fresh one on
@@ -94,7 +135,11 @@ class QuranReadingTracker {
         ? null
         : (_Session(page.surah, page.from, page.to, now)
             ..start(_paused ? null : now));
-    if (seconds < minSeconds || !_repository.isSignedIn) return;
+    if (seconds < minSeconds || !_repository.isSignedIn) {
+      // Nothing to report, so no draft of it may be sent either.
+      unawaited(_repository.discardReadingDraft(session.id));
+      return;
+    }
     try {
       await _repository.trackReading(
         surahNumber: session.surah,
@@ -102,6 +147,7 @@ class QuranReadingTracker {
         toAyah: session.to,
         seconds: math.min(seconds, maxSeconds),
         date: session.startedAt,
+        sessionId: session.id,
       );
     } catch (error) {
       // Reading goes on whatever happens to the report.
@@ -113,6 +159,7 @@ class QuranReadingTracker {
   Future<void> dispose() {
     if (_disposed) return Future.value();
     _disposed = true;
+    _saver?.cancel();
     _session?.stop(_now());
     return flush();
   }
@@ -132,8 +179,12 @@ class QuranReadingTracker {
 
 /// One run of ayahs and the foreground time spent on it.
 class _Session {
-  _Session(this.surah, this.from, this.to, this.startedAt);
+  _Session(this.surah, this.from, this.to, this.startedAt)
+    : id = newQuranReadingId();
 
+  /// Names its report and drafts, so each draft replaces the last and the
+  /// report replaces them all.
+  final String id;
   final int surah;
   int from, to;
 

@@ -27,6 +27,7 @@ import 'features/home/data/services/prayer_location_service.dart';
 import 'features/home/domain/prayer_location.dart';
 import 'features/prayer_widget/data/services/prayer_widget_service.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
+import 'features/quran/presentation/controllers/quran_reading_sync.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -117,6 +118,9 @@ Future<void> main() async {
   HomeWidget.widgetClicked.listen((uri) {
     appNavigatorKey.currentState?.pushNamed(RouteNames.prayerTimes);
   });
+  // Sends Quran reading done offline (or cut off by the app closing) once
+  // the server is reachable, now and whenever the app comes back.
+  QuranReadingSync.shared.start();
   final launchDetails = await AlarmScheduler.launchDetails();
   final launchPayload = launchDetails?.didNotificationLaunchApp == true
       ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)

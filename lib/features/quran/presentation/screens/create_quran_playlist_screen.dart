@@ -205,7 +205,8 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
               onPressed: () {
                 final f = int.tryParse(fromController.text.trim()) ?? 1;
                 final to =
-                    int.tryParse(toController.text.trim()) ?? selected.totalAyah;
+                    int.tryParse(toController.text.trim()) ??
+                    selected.totalAyah;
                 Navigator.pop(dialogCtx, (f, to));
               },
               style: FilledButton.styleFrom(
@@ -282,7 +283,9 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
       result.fold(
         (failure) {
           final message = (failure.statusCode == 409)
-              ? localizeFailureMessage('you already have a playlist with this name')
+              ? localizeFailureMessage(
+                  'you already have a playlist with this name',
+                )
               : localizeFailureMessage(failure.message);
           setState(() => _errorMessage = message);
         },
@@ -302,7 +305,9 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
       result.fold(
         (failure) {
           final message = (failure.statusCode == 409)
-              ? localizeFailureMessage('you already have a playlist with this name')
+              ? localizeFailureMessage(
+                  'you already have a playlist with this name',
+                )
               : localizeFailureMessage(failure.message);
           setState(() => _errorMessage = message);
         },
@@ -319,8 +324,9 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
     const borderColor = Color(0xFFD2E3A8);
     const oliveColor = Color(0xFF9EAA52);
     final t = QuranText.of(context);
-    final langCode =
-        LanguagePreference.current == AppLanguage.bangla ? 'bn' : 'en';
+    final langCode = LanguagePreference.current == AppLanguage.bangla
+        ? 'bn'
+        : 'en';
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -632,7 +638,9 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
                       itemBuilder: (context, index) {
                         final item = _items[index];
                         return Container(
-                          key: ValueKey('${item.type}_${item.surahNumber}_${item.fromAyah}_$index'),
+                          key: ValueKey(
+                            '${item.type}_${item.surahNumber}_${item.fromAyah}_$index',
+                          ),
                           margin: EdgeInsets.only(bottom: 8.h),
                           padding: EdgeInsets.symmetric(
                             horizontal: 12.w,
@@ -672,8 +680,8 @@ class _CreateQuranPlaylistScreenState extends State<CreateQuranPlaylistScreen> {
                                       item.type == 'para'
                                           ? '${t.juz} ${t.n(item.paraNumber ?? 1)}'
                                           : (item.type == 'ayahs'
-                                              ? '${t.ayah} ${t.n(item.fromAyah)}-${t.n(item.toAyah)}'
-                                              : '${t.revelationPlace(item.revelationPlace)} • ${t.ayahCount(item.totalAyah)}'),
+                                                ? '${t.ayah} ${t.n(item.fromAyah)}-${t.n(item.toAyah)}'
+                                                : '${t.revelationPlace(item.revelationPlace)} • ${t.ayahCount(item.totalAyah)}'),
                                       style: TextStyle(
                                         fontSize: 11.sp,
                                         color: const Color(0xFF9090AC),

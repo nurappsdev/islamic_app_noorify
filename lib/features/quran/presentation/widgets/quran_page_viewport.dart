@@ -224,7 +224,8 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                   ),
                 ),
               ),
-              // Kept clear of the reader's floating player while it shows.
+              // Kept clear of the reader's floating player while it shows,
+              // and shown only while the header and bottom bar are hidden.
               ValueListenableBuilder<double>(
                 valueListenable:
                     QuranReadingInsets.bottomOf(context) ?? _noInset,
@@ -234,7 +235,15 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                   right: 0,
                   child: footer!,
                 ),
-                child: Center(child: widget.footer),
+                child: ValueListenableBuilder<double>(
+                  valueListenable:
+                      QuranReadingInsets.chromeOf(context) ?? _noInset,
+                  builder: (context, chrome, footer) => IgnorePointer(
+                    ignoring: chrome > 0,
+                    child: Opacity(opacity: 1 - chrome, child: footer),
+                  ),
+                  child: Center(child: widget.footer),
+                ),
               ),
             ],
           ),

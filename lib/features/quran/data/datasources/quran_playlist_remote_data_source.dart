@@ -86,8 +86,7 @@ class QuranPlaylistRemoteDataSourceImpl
     int limit = 10,
   }) async {
     final json = await _getEnvelope(ApiConstants.quranPlaylistsEndPoint, {
-      if (searchTerm != null && searchTerm.isNotEmpty)
-        'searchTerm': searchTerm,
+      if (searchTerm != null && searchTerm.isNotEmpty) 'searchTerm': searchTerm,
       'page': page,
       'limit': limit,
     }, 'Quran playlists');
@@ -147,12 +146,7 @@ class QuranPlaylistRemoteDataSourceImpl
   }) async {
     final json = await _getEnvelope(
       ApiConstants.quranPlaylistAyahsEndPoint(playlistId),
-      {
-        'filter': filter,
-        'withText': withText,
-        'page': page,
-        'limit': limit,
-      },
+      {'filter': filter, 'withText': withText, 'page': page, 'limit': limit},
       'Quran playlist ayahs',
     );
     return PaginatedQuranPlaylistAyahs.fromJson(json);

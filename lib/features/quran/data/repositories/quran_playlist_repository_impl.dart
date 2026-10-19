@@ -24,8 +24,9 @@ class QuranPlaylistRepositoryImpl implements QuranPlaylistRepository {
         .listen((_) => _onReadingTracked());
   }
 
-  static final QuranPlaylistRepositoryImpl shared =
-      QuranPlaylistRepositoryImpl(QuranPlaylistRemoteDataSourceImpl());
+  static final QuranPlaylistRepositoryImpl shared = QuranPlaylistRepositoryImpl(
+    QuranPlaylistRemoteDataSourceImpl(),
+  );
 
   final QuranPlaylistRemoteDataSource _remote;
   final bool Function() _isSignedIn;
