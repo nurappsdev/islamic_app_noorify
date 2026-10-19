@@ -5,6 +5,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../data/services/quran_audio_downloader.dart';
 import '../../domain/quran_playlist.dart';
 import '../../domain/surah_detail.dart';
+import '../bloc/quran_playlist_playback/quran_playlist_playback_cubit.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
 import '../bloc/surah_playback/surah_playback_bloc.dart';
@@ -12,9 +13,10 @@ import '../quran_text.dart';
 import '../widgets/quran_player_widgets.dart';
 
 /// Plays a playlist's Surahs one after another through the shared Quran
-/// audio engine. Each track gets its own [SurahPlaybackBloc] limited to the
-/// item's ayah range; when one finishes the next starts on its own. A Surah
-/// whose audio is not on the device prompts for its download first.
+/// audio engine ([QuranPlaylistPlaybackCubit]): on into the next Surah with
+/// the screen off or the app in the background, with Previous/Next on the
+/// notification and lock screen. A Surah whose audio is not on the device
+/// prompts for its download first. Leaving the screen stops the playlist.
 class QuranAudioPlayerScreen extends StatefulWidget {
   const QuranAudioPlayerScreen({
     super.key,
@@ -34,30 +36,26 @@ class QuranAudioPlayerScreen extends StatefulWidget {
 class _QuranAudioPlayerScreenState extends State<QuranAudioPlayerScreen> {
   late final QuranAudioDownloader _downloader =
       widget.downloader ?? QuranAudioDownloader();
-  late int _currentIndex;
-  // Bumped to restart the current track from its first ayah.
-  int _generation = 0;
+  late final ReciterBloc _reciter = ReciterBloc()..add(const LoadReciters());
+  late final SurahAudioDownloadBloc _downloads = SurahAudioDownloadBloc(
+    downloader: _downloader,
+  );
+  late final QuranPlaylistPlaybackCubit _playlist = QuranPlaylistPlaybackCubit(
+    items: _items,
+    initialIndex: widget.initialTrackIndex,
+    downloader: _downloader,
+    recitationId: () => _reciter.state.selectedId ?? defaultRecitationId,
+  );
 
   List<QuranPlaylistItem> get _items => widget.playlist.items;
 
   @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialTrackIndex.clamp(
-      0,
-      _items.isEmpty ? 0 : _items.length - 1,
-    );
+  void dispose() {
+    _playlist.close();
+    _downloads.close();
+    _reciter.close();
+    super.dispose();
   }
-
-  void _selectTrack(int index) {
-    if (index < 0 || index >= _items.length) return;
-    setState(() {
-      _currentIndex = index;
-      _generation++;
-    });
-  }
-
-  void _restartTrack() => setState(() => _generation++);
 
   SurahDetail _detailFor(QuranPlaylistItem item) => SurahDetail(
     number: item.surahNo,
@@ -75,59 +73,33 @@ class _QuranAudioPlayerScreenState extends State<QuranAudioPlayerScreen> {
   Widget build(BuildContext context) {
     final body = MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => ReciterBloc()..add(const LoadReciters())),
-        BlocProvider(
-          create: (_) => SurahAudioDownloadBloc(downloader: _downloader),
-        ),
+        BlocProvider.value(value: _reciter),
+        BlocProvider.value(value: _downloads),
       ],
       child: _items.isEmpty
           ? _PlayerView(
               playlist: widget.playlist,
               currentIndex: 0,
-              onSelect: _selectTrack,
-              onRestart: _restartTrack,
+              onSelect: _playlist.select,
+              onRestart: _playlist.restart,
             )
-          : Builder(
-              builder: (context) {
-                final item = _items[_currentIndex];
-                final detail = _detailFor(item);
-                // A fresh bloc per track (and per restart) so each plays
-                // exactly its own ayah range, starting as soon as it opens.
-                return BlocProvider(
-                  key: ValueKey('track-$_currentIndex-$_generation'),
-                  create: (context) =>
-                      SurahPlaybackBloc(
-                        downloader: _downloader,
-                        startAyah: item.startAyah,
-                        endAyah: item.endAyah,
-                      )..add(
-                        PlaySurah(
-                          surahNo: item.surahNo,
-                          totalAyah: item.totalAyah,
-                          recitationId:
-                              context.read<ReciterBloc>().state.selectedId ??
-                              defaultRecitationId,
-                        ),
-                      ),
-                  child: QuranPlaybackAudioGate(
-                    detail: detail,
-                    child: BlocListener<SurahPlaybackBloc, SurahPlaybackState>(
-                      listenWhen: (p, c) => !p.finished && c.finished,
-                      listener: (context, _) {
-                        if (_currentIndex < _items.length - 1) {
-                          _selectTrack(_currentIndex + 1);
-                        }
-                      },
-                      child: _PlayerView(
-                        playlist: widget.playlist,
-                        currentIndex: _currentIndex,
-                        onSelect: _selectTrack,
-                        onRestart: _restartTrack,
-                      ),
-                    ),
+          : BlocBuilder<QuranPlaylistPlaybackCubit, QuranPlaylistPlaybackState>(
+              bloc: _playlist,
+              builder: (context, playing) => BlocProvider.value(
+                // A fresh subtree per track (and per restart), so the
+                // download prompt follows that track's bloc.
+                key: ObjectKey(playing.track),
+                value: playing.track,
+                child: QuranPlaybackAudioGate(
+                  detail: _detailFor(_items[playing.index]),
+                  child: _PlayerView(
+                    playlist: widget.playlist,
+                    currentIndex: playing.index,
+                    onSelect: _playlist.select,
+                    onRestart: _playlist.restart,
                   ),
-                );
-              },
+                ),
+              ),
             ),
     );
     return Scaffold(
