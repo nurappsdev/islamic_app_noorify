@@ -6,6 +6,8 @@
 /// so existing player widgets and screens remain fully compatible.
 library;
 
+import 'quran_text_cleanup.dart';
+
 class QuranPlaylistItem {
   const QuranPlaylistItem({
     this.id = '',
@@ -662,11 +664,12 @@ class QuranPlaylistAyahText {
     }
 
     return QuranPlaylistAyahText(
-      arabic:
-          json['arabic'] as String? ??
-          json['textArabic'] as String? ??
-          json['textIndopak'] as String? ??
-          '',
+      arabic: cleanQuranArabic(
+        json['arabic'] as String? ??
+            json['textArabic'] as String? ??
+            json['textIndopak'] as String? ??
+            '',
+      ),
       english: json['english'] as String? ?? translation('en'),
       bangla: json['bangla'] as String? ?? translation('bn'),
     );

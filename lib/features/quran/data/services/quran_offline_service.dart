@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/quran/domain/verse_item.dart';
 
 import 'quran_api_service.dart';
 import 'quran_offline_database.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_text_cleanup.dart';
 
 /// Offline Quran source: reads Arabic text and the English + Bengali
 /// translations from the on-device SQLite database built by
@@ -63,7 +64,11 @@ class QuranOfflineService implements QuranApiService {
       translation: metaRow?['translation'] as String? ?? '',
       revelationPlace: metaRow?['revelation_place'] as String? ?? '',
       totalAyah: (metaRow?['total_ayah'] as num?)?.toInt() ?? rows.length,
-      arabicAyahs: [for (final row in rows) row['text_ar'] as String? ?? ''],
+      // Rows saved before the text was cleaned on parse.
+      arabicAyahs: [
+        for (final row in rows)
+          cleanQuranArabic(row['text_ar'] as String? ?? ''),
+      ],
       englishAyahs: [for (final row in rows) row['text_en'] as String? ?? ''],
       bengaliAyahs: [for (final row in rows) row['text_bn'] as String? ?? ''],
     );
@@ -104,7 +109,7 @@ class QuranOfflineService implements QuranApiService {
           VerseItem(
             surahNo: surahNo,
             ayahNo: ayahNo,
-            arabic: row['text_ar'] as String? ?? '',
+            arabic: cleanQuranArabic(row['text_ar'] as String? ?? ''),
             translation: row['text_en'] as String? ?? '',
           ),
         );

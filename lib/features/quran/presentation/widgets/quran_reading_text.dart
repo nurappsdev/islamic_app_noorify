@@ -278,6 +278,10 @@ class _QuranReadingTextState extends State<QuranReadingText>
   );
 
   Widget _text(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    // The marker sizes itself with the Arabic as it is actually rendered,
+    // including the system text scale, so its margin keeps pace on zoom.
+    final markerScale = scaler.scale(20 * widget.scale) / 20;
     bool pressed(QuranAyah a) => _pressed == a.ayahNumber;
     // The playing ayah keeps its tint; a press shows over it, taking priority.
     Color? tint(QuranAyah a) {
@@ -317,7 +321,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
                 child: QuranAyahMarker(
                   key: ValueKey('ayah-marker-${a.verseKey}'),
                   number: a.ayahNumber,
-                  scale: widget.scale,
+                  scale: markerScale,
                 ),
               ),
             ),
@@ -325,21 +329,86 @@ class _QuranReadingTextState extends State<QuranReadingText>
         ],
       ],
     );
-    final scaler = MediaQuery.textScalerOf(context);
     return CustomPaint(
       painter: _ReadingRules(
         _textKey,
         widget.ayahs.fold<int>(0, (length, a) => length + _segmentLength(a)),
         context.lineColor(const Color(0xffe9e9e9)),
       ),
-      child: RichText(
+      child: _AyahRichText(
         key: _textKey,
         text: span,
         textScaler: scaler,
         textDirection: TextDirection.rtl,
-        textAlign: TextAlign.justify,
+        // Zoomed in, a line holds only a few words and justifying it
+        // stretches the gaps between them; keep the edge ragged instead.
+        textAlign: widget.scale <= kDefaultArabicFontScale
+            ? TextAlign.justify
+            : TextAlign.start,
       ),
     );
+  }
+}
+
+/// [RichText] whose ayah markers land beside their own ayahs. The engine
+/// reports inline-widget boxes line by line in visual (left-to-right) order,
+/// but [RenderParagraph] hands them to the markers in text order; in RTL text
+/// any line with two markers had them swapped.
+class _AyahRichText extends RichText {
+  _AyahRichText({
+    super.key,
+    required super.text,
+    super.textScaler,
+    super.textDirection,
+    super.textAlign,
+  });
+
+  @override
+  RenderParagraph createRenderObject(BuildContext context) =>
+      _AyahRenderParagraph(
+        text,
+        textAlign: textAlign,
+        textDirection: textDirection ?? Directionality.of(context),
+        textScaler: textScaler,
+        locale: Localizations.maybeLocaleOf(context),
+        devicePixelRatio: MediaQuery.maybeDevicePixelRatioOf(context) ?? 1.0,
+      );
+}
+
+class _AyahRenderParagraph extends RenderParagraph {
+  _AyahRenderParagraph(
+    super.text, {
+    required super.textDirection,
+    super.textAlign,
+    super.textScaler,
+    super.locale,
+    super.devicePixelRatio,
+  });
+
+  @override
+  void positionInlineChildren(List<ui.TextBox> boxes) =>
+      super.positionInlineChildren(
+        textDirection == TextDirection.rtl ? _rightToLeft(boxes) : boxes,
+      );
+
+  /// [boxes] in reading order: each line's boxes from the right edge.
+  static List<ui.TextBox> _rightToLeft(List<ui.TextBox> boxes) {
+    final ordered = <ui.TextBox>[];
+    var line = <ui.TextBox>[];
+    void endLine() {
+      ordered.addAll(line..sort((a, b) => b.right.compareTo(a.right)));
+      line = [];
+    }
+
+    for (final box in boxes) {
+      final sameLine = line.any(
+        (b) => box.top < b.bottom && box.bottom > b.top,
+      );
+      if (line.isNotEmpty && !sameLine) endLine();
+      line.add(box);
+    }
+    endLine();
+    return ordered;
   }
 }
 

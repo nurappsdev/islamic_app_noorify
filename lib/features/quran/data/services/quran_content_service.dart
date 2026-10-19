@@ -1,3 +1,4 @@
+import 'quran_bundle.dart';
 import 'quran_offline_database.dart';
 import 'dart:async';
 import 'dart:io';
@@ -48,10 +49,22 @@ class QuranContentService {
     DioClient? client,
     this.persistCache = true,
     QuranOfflineDatabase? database,
+    QuranArabicTextSource? arabicText,
+    QuranBundle? bundle,
   }) : _client = client ?? DioClient(),
+       _bundle = bundle ?? QuranBundle.shared,
+       _arabicText = arabicText ?? bundle ?? QuranBundle.shared,
        _databaseOverride = database;
   static final shared = QuranContentService();
   final DioClient _client;
+
+  /// The ayahs' Arabic text, swapped into the server's responses: the
+  /// server's own Arabic is never shown.
+  final QuranArabicTextSource _arabicText;
+
+  /// The Quran bundled with the app: what is read when neither the device
+  /// nor the server has it.
+  final QuranBundle _bundle;
   final bool persistCache;
   final QuranOfflineDatabase? _databaseOverride;
   QuranOfflineDatabase get _database =>
@@ -175,6 +188,7 @@ class QuranContentService {
         body['data'] == null) {
       throw const FormatException('Unable to load Quran content');
     }
+    if (path.contains('ayahs')) await _useIndoPakText(body);
     if (persistCache) {
       try {
         await _database.cacheInternalResponse(path, body);
@@ -184,6 +198,28 @@ class QuranContentService {
     }
     _remember(key, body);
     return body;
+  }
+
+  /// Replaces the server's Arabic with the bundled IndoPak text before the
+  /// response is kept, so every reader and the stored copy show only that.
+  /// An ayah the bundle does not have, or every ayah when the bundle cannot
+  /// be read, keeps the server's text.
+  Future<void> _useIndoPakText(Map<String, dynamic> body) async {
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) return;
+    final ayahs = data['ayahs'] is List
+        ? (data['ayahs'] as List).whereType<Map<String, dynamic>>()
+        : [if (data['verseKey'] is String) data];
+    final surahs = <int, Map<String, String>>{};
+    for (final ayah in ayahs) {
+      final surah = (ayah['surahNumber'] as num?)?.toInt();
+      if (surah == null) continue;
+      final texts = surahs[surah] ??= await _arabicText
+          .surah(surah)
+          .catchError((Object _) => const <String, String>{});
+      final text = texts[ayah['verseKey']];
+      if (text != null) ayah['textArabic'] = text;
+    }
   }
 
   /// Refreshes stored metadata older than [refreshAfter], in the background.
@@ -205,12 +241,10 @@ class QuranContentService {
     final key = '$surah:${translations.join(',')}';
     // A block body: returning the removed future would make it wait on
     // itself.
-    return _surahDownloads[key] ??= _cacheSurah(
-      surah,
-      translations,
-    ).whenComplete(() {
-      _surahDownloads.remove(key);
-    });
+    return _surahDownloads[key] ??= _cacheSurah(surah, translations)
+        .whenComplete(() {
+          _surahDownloads.remove(key);
+        });
   }
 
   Future<void> _cacheSurah(int surah, List<int> translations) async {
@@ -254,18 +288,49 @@ class QuranContentService {
     }
   }
 
-  Future<List<SurahSummary>> loadSurahs() async {
-    final body = await _get('surahs');
-    return [
-      for (final raw in body['data'] as List)
-        SurahSummary.fromInternalJson(raw as Map<String, dynamic>),
-    ];
+  /// Surah metadata from the device or the server, or else the bundled
+  /// snapshot; the original error when even that fails.
+  Future<T> _orBundled<T>(
+    Future<T> Function() stored,
+    Future<T> Function() bundled,
+  ) async {
+    try {
+      return await stored();
+    } catch (_) {
+      try {
+        return await bundled();
+      } catch (_) {
+        /* Report why the device and server failed. */
+      }
+      rethrow;
+    }
   }
 
-  Future<SurahSummary> loadSurah(int number) async =>
-      SurahSummary.fromInternalJson(
-        (await _get('surahs/$number'))['data'] as Map<String, dynamic>,
-      );
+  Future<List<SurahSummary>> loadSurahs() => _orBundled(
+    () async => [
+      for (final raw in (await _get('surahs'))['data'] as List)
+        SurahSummary.fromInternalJson(raw as Map<String, dynamic>),
+    ],
+    () async => [
+      for (final raw in await _bundle.surahs())
+        SurahSummary.fromInternalJson(raw),
+    ],
+  );
+
+  Future<SurahSummary> loadSurah(int number) => _orBundled(
+    () async => SurahSummary.fromInternalJson(
+      (await _get('surahs/$number'))['data'] as Map<String, dynamic>,
+    ),
+    () async => SurahSummary.fromInternalJson(await _bundle.surahInfo(number)),
+  );
+
+  /// Ayahs [from] to [to] (default: the last) of [surah] from the bundle:
+  /// Arabic, pages and paras, no network and no translations.
+  Future<QuranAyahPage> loadBundledAyahs(
+    int surah, {
+    int from = 1,
+    int? to,
+  }) async => _ayahPage(await _bundle.ayahs(surah, from: from, to: to));
   Future<List<JuzSummary>> loadParas() async => [
     for (final raw in (await _get('paras'))['data'] as List)
       JuzSummary.fromInternalJson(raw as Map<String, dynamic>),
@@ -318,6 +383,10 @@ class QuranContentService {
     });
     // Once reading starts, keep the whole surah on the device.
     unawaited(cacheSurah(surah, translations));
+    return _ayahPage(body);
+  }
+
+  static QuranAyahPage _ayahPage(Map<String, dynamic> body) {
     final data = body['data'] as Map<String, dynamic>;
     final meta = data['surah'] as Map<String, dynamic>;
     return QuranAyahPage(
