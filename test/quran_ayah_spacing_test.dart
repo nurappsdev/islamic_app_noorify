@@ -5,6 +5,11 @@ import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_ayah.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_reading_text.dart';
 
+/// The Arabic paragraph; the markers' digits are left-to-right text.
+final _arabicText = find.byWidgetPredicate(
+  (w) => w is RichText && w.textDirection == TextDirection.rtl,
+);
+
 void main() {
   testWidgets(
     'ayah markers reserve both side gaps at normal and enlarged sizes',
@@ -55,7 +60,7 @@ void main() {
               ayah.ayahNumber
                   .toString()
                   .split('')
-                  .map((n) => String.fromCharCode(0x660 + int.parse(n)))
+                  .map((n) => String.fromCharCode(0x9E6 + int.parse(n)))
                   .join(),
             ),
           );
@@ -69,14 +74,48 @@ void main() {
           );
           expect(outer.left, greaterThanOrEqualTo(0));
         }
-        await tester.ensureVisible(find.text('٣'));
-        await tester.longPress(find.text('٣'));
+        await tester.ensureVisible(find.text('৩'));
+        await tester.longPress(find.text('৩'));
         await tester.pump(kAyahHoldDuration);
         expect(tapped, 3);
         expect(tester.takeException(), isNull);
       }
     },
   );
+
+  testWidgets('ayah markers sharing a line stay in reading order', (
+    tester,
+  ) async {
+    final ayahs = [
+      for (final n in [1, 2, 3])
+        QuranAyah(
+          surahNumber: 1,
+          ayahNumber: n,
+          verseKey: '1:$n',
+          ayahIndex: n,
+          paraNumber: 1,
+          pageNumber: 1,
+          textArabic: 'رَبِّ الْعٰلَمِيْنَ',
+        ),
+    ];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingText(
+            ayahs: ayahs,
+            active: 0,
+            scale: 1,
+            font: arabicFontById('noorehuda'),
+          ),
+        ),
+      ),
+    );
+    double right(int n) =>
+        tester.getRect(find.byKey(ValueKey('ayah-marker-1:$n'))).right;
+    // Right to left: ayah 1's marker first.
+    expect(right(1), greaterThan(right(2)));
+    expect(right(2), greaterThan(right(3)));
+  });
 
   testWidgets('ayah details open only after a held press, with visible feedback', (
     tester,
@@ -180,7 +219,7 @@ void main() {
     }
 
     Color? ayahTint(WidgetTester tester) {
-      final root = tester.widget<RichText>(find.byType(RichText).first).text;
+      final root = tester.widget<RichText>(_arabicText).text;
       return ((root as TextSpan).children!.first as TextSpan)
           .style
           ?.backgroundColor;
@@ -260,7 +299,7 @@ void main() {
           ),
         ),
       );
-      final text = tester.getRect(find.byType(RichText).first);
+      final text = tester.getRect(_arabicText);
       final press = await tester.startGesture(
         Offset(text.right - 20, text.center.dy),
       );
@@ -294,7 +333,7 @@ void main() {
         ),
       );
       await tester.pumpWidget(reader());
-      final text = tester.getRect(find.byType(RichText).first);
+      final text = tester.getRect(_arabicText);
       final press = await tester.startGesture(
         Offset(text.right - 20, text.center.dy),
       );

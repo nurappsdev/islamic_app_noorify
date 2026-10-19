@@ -163,6 +163,12 @@ flutter:
       fonts:
         - asset: assets/fonts/quran/Noorehuda.ttf
 
+    # Converted from public/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2
+    # (QuranWBW); Flutter cannot load WOFF2.
+    - family: IndoPak Nastaleeq
+      fonts:
+        - asset: assets/fonts/quran/IndopakNastaleeq.ttf
+
     - family: AlQalam Quran Majeed
       fonts:
         - asset: assets/fonts/quran/AlQalamQuranMajeed.otf
