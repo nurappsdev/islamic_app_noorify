@@ -112,27 +112,32 @@ class QuranPlaylistState {
     isPaginating: isPaginating ?? this.isPaginating,
     searchTerm: searchTerm ?? this.searchTerm,
     isLoadingDetails: isLoadingDetails ?? this.isLoadingDetails,
-    detailsFailure:
-        clearDetailsFailure ? null : (detailsFailure ?? this.detailsFailure),
+    detailsFailure: clearDetailsFailure
+        ? null
+        : (detailsFailure ?? this.detailsFailure),
     selectedPlaylistDetails:
         selectedPlaylistDetails ?? this.selectedPlaylistDetails,
     isCreating: isCreating ?? this.isCreating,
     createSuccess: createSuccess ?? this.createSuccess,
-    createFailure:
-        clearCreateFailure ? null : (createFailure ?? this.createFailure),
+    createFailure: clearCreateFailure
+        ? null
+        : (createFailure ?? this.createFailure),
     createdPlaylist: createdPlaylist ?? this.createdPlaylist,
     isUpdating: isUpdating ?? this.isUpdating,
     updateSuccess: updateSuccess ?? this.updateSuccess,
-    updateFailure:
-        clearUpdateFailure ? null : (updateFailure ?? this.updateFailure),
+    updateFailure: clearUpdateFailure
+        ? null
+        : (updateFailure ?? this.updateFailure),
     isDeleting: isDeleting ?? this.isDeleting,
     deleteSuccess: deleteSuccess ?? this.deleteSuccess,
-    deleteFailure:
-        clearDeleteFailure ? null : (deleteFailure ?? this.deleteFailure),
+    deleteFailure: clearDeleteFailure
+        ? null
+        : (deleteFailure ?? this.deleteFailure),
     isLoadingAyahs: isLoadingAyahs ?? this.isLoadingAyahs,
     isPaginatingAyahs: isPaginatingAyahs ?? this.isPaginatingAyahs,
-    ayahsFailure:
-        clearAyahsFailure ? null : (ayahsFailure ?? this.ayahsFailure),
+    ayahsFailure: clearAyahsFailure
+        ? null
+        : (ayahsFailure ?? this.ayahsFailure),
     ayahs: ayahs ?? this.ayahs,
     ayahsMeta: ayahsMeta ?? this.ayahsMeta,
     ayahsFilter: ayahsFilter ?? this.ayahsFilter,

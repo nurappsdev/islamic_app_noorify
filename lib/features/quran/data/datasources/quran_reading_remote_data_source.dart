@@ -16,13 +16,16 @@ import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_progress.dar
 abstract interface class QuranReadingRemoteDataSource {
   /// `POST /quran/reading/track`: [seconds] spent reading ayahs
   /// [fromAyah]-[toAyah] of [surahNumber] on the local calendar day [date]
-  /// (`YYYY-MM-DD`).
+  /// (`YYYY-MM-DD`). [requestId], the same on every retry of one report,
+  /// goes out as the `Idempotency-Key` header so the server can tell a
+  /// repeat from new reading.
   Future<QuranReadingTrackResult> trackReading({
     required int surahNumber,
     required int fromAyah,
     required int toAyah,
     required int seconds,
     required String date,
+    String? requestId,
   });
 
   /// `GET /quran/reading/dashboard`.
@@ -69,10 +72,12 @@ class QuranReadingRemoteDataSourceImpl implements QuranReadingRemoteDataSource {
     required int toAyah,
     required int seconds,
     required String date,
+    String? requestId,
   }) async => QuranReadingTrackResult.fromJson(
     await _send(
       'POST',
       ApiConstants.quranReadingTrackEndPoint,
+      headers: {'Idempotency-Key': ?requestId},
       body: {
         'surahNumber': surahNumber,
         'fromAyah': fromAyah,
@@ -144,6 +149,7 @@ class QuranReadingRemoteDataSourceImpl implements QuranReadingRemoteDataSource {
     String path, {
     Map<String, Object>? query,
     Map<String, Object>? body,
+    Map<String, String> headers = const {},
     required String what,
   }) async {
     final token = _local.getToken();
@@ -155,7 +161,10 @@ class QuranReadingRemoteDataSourceImpl implements QuranReadingRemoteDataSource {
         queryParameters: query,
         options: Options(
           method: method,
-          headers: token == null ? null : {'Authorization': 'Bearer $token'},
+          headers: {
+            ...headers,
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
         ),
       );
     } on DioException catch (e) {
@@ -184,15 +193,20 @@ class QuranReadingRemoteDataSourceImpl implements QuranReadingRemoteDataSource {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
+        return NetworkException('The request timed out. Please try again.');
+      // Sent, but no answer: the server may have handled it.
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.transformTimeout:
-        return NetworkException('The request timed out. Please try again.');
+        return NetworkException(
+          'The request timed out. Please try again.',
+          true,
+        );
       case DioExceptionType.connectionError:
         return NetworkException();
       case DioExceptionType.badCertificate:
         return NetworkException('Could not establish a secure connection.');
       case DioExceptionType.cancel:
-        return NetworkException('The request was cancelled.');
+        return NetworkException('The request was cancelled.', true);
       case DioExceptionType.badResponse:
       case DioExceptionType.unknown:
         final data = e.response?.data;

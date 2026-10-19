@@ -51,6 +51,54 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('the Tafsir button shows only while the bars are hidden', (
+    tester,
+  ) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranReadingLayout(
+            top: const SizedBox(height: 60, child: Text('Header')),
+            bottom: const SizedBox(height: 60, child: Text('Player')),
+            page: QuranPageViewport(
+              pageNumber: 2,
+              footer: TextButton(
+                onPressed: () => taps++,
+                child: const Text('Read Tafsir'),
+              ),
+              child: const SizedBox(height: 400, child: Text('Ayahs')),
+            ),
+          ),
+        ),
+      ),
+    );
+    final button = find.text('Read Tafsir');
+    double opacity() => tester
+        .widget<Opacity>(
+          find.ancestor(of: button, matching: find.byType(Opacity)).first,
+        )
+        .opacity;
+
+    // The bars show on opening: the button is gone and takes no taps.
+    expect(opacity(), 0);
+    expect(button.hitTestable(), findsNothing);
+
+    // They hide after 5 idle seconds: now it shows.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(opacity(), 1);
+    await tester.tap(button);
+    expect(taps, 1);
+
+    // A touch brings the bars back, and the button goes again.
+    await tester.tapAt(tester.getCenter(find.text('Ayahs')));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(opacity(), 0);
+    expect(button.hitTestable(), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('idle controls hide, preserve player, and reveal on swipe', (
     tester,
   ) async {

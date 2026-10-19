@@ -327,6 +327,7 @@ class _FakeRepository implements QuranReadingRepository {
     required int toAyah,
     required int seconds,
     required DateTime date,
+    String? sessionId,
   }) async {
     tracks.add((
       surah: surahNumber,
@@ -340,6 +341,23 @@ class _FakeRepository implements QuranReadingRepository {
     _tracked.add(null);
     return Right(QuranReadingTrackResult.fromJson(_trackData));
   }
+
+  @override
+  Future<void> saveReadingDraft({
+    required String sessionId,
+    required int surahNumber,
+    required int fromAyah,
+    required int toAyah,
+    required int seconds,
+    required DateTime date,
+  }) async {}
+
+  @override
+  Future<void> discardReadingDraft(String sessionId) async {}
+
+  @override
+  Future<({int sent, int pending})> syncPendingReadings() async =>
+      (sent: 0, pending: 0);
 
   @override
   Future<Either<Failure, QuranReadingDashboard>> getDashboard() async =>
