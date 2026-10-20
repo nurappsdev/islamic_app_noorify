@@ -105,7 +105,12 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
       final artWidth = math.max(0.0, bounds.maxWidth - 2 * _artInset);
       final artHeight = artWidth / _artAspect;
       final side = _artInset + artWidth * _artSide + _gap;
-      final top = _headerTop + artHeight * _artBand + _gap;
+      // The page runs up behind the status bar and notch: a Surah's opening
+      // pattern fills that strip, while the framed page and its text start
+      // below it.
+      final notch = MediaQuery.paddingOf(context).top;
+      final headerTop = notch + _headerTop;
+      final top = headerTop + artHeight * _artBand + _gap;
       // The footer button sits over the bottom band; keep room for it too.
       final bottom = math.max(
         64.0,
@@ -203,7 +208,7 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
               ),
               if (widget.showHeader)
                 Positioned(
-                  top: _headerTop,
+                  top: headerTop,
                   left: _artInset,
                   right: _artInset,
                   child: IgnorePointer(
