@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../domain/arabic_font.dart';
+import '../../domain/ayah_end_sign.dart';
 import '../../domain/quran_ayah.dart';
 import 'quran_design.dart';
 
@@ -274,7 +275,8 @@ class _QuranReadingTextState extends State<QuranReadingText>
   }
 
   // A WidgetSpan occupies one object-replacement character in the paragraph.
-  int _segmentLength(QuranAyah a) => a.textArabic.length + 1;
+  int _segmentLength(QuranAyah a) =>
+      splitAyahEndSign(a.textArabic).text.length + 1;
   void _follow() {
     if (!mounted) return;
     final render = _textKey.currentContext?.findRenderObject();
@@ -338,18 +340,23 @@ class _QuranReadingTextState extends State<QuranReadingText>
       return pressed(a) ? pressTint(base) : base;
     }
 
-    final span = TextSpan(
-      style: widget.font.apply(
-        TextStyle(
-          fontSize: 20 * widget.scale,
-          height: 2.1,
-          color: context.inkColor(Colors.black),
-        ),
+    final arabic = widget.font.apply(
+      TextStyle(
+        fontSize: 20 * widget.scale,
+        height: 2.1,
+        color: context.inkColor(Colors.black),
       ),
+    );
+    // Each ayah's end marks are drawn over its marker, not on its last word.
+    final parts = [
+      for (final a in widget.ayahs) splitAyahEndSign(a.textArabic),
+    ];
+    final span = TextSpan(
+      style: arabic,
       children: [
         for (final (i, a) in widget.ayahs.indexed) ...[
           TextSpan(
-            text: a.textArabic,
+            text: parts[i].text,
             recognizer: widget._interactive ? _recognizers[i] : null,
             style: TextStyle(backgroundColor: tint(a)),
           ),
@@ -371,6 +378,8 @@ class _QuranReadingTextState extends State<QuranReadingText>
                   key: ValueKey('ayah-marker-${a.verseKey}'),
                   number: a.ayahNumber,
                   scale: markerScale,
+                  sign: parts[i].sign,
+                  signStyle: arabic,
                 ),
               ),
             ),
