@@ -367,6 +367,7 @@ const Map<String, String> appTextBn = <String, String>{
   'duaExplore': 'এক্সপ্লোর',
   'duaTotalDuaLabel': 'মোট দোয়া',
   'duaAllDuaTitle': 'সব দোয়া',
+  'duaSearchDuaHint': 'দোয়া খুঁজুন',
   'duaLastRead': 'সর্বশেষ পঠিত',
   'duaRecitePrefix': 'নিম্নোক্ত বাণীটি',
   'duaReciteSuffix': 'বার বলবে -',

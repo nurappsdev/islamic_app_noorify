@@ -344,6 +344,7 @@ class AppText {
     required this.duaExplore,
     required this.duaTotalDuaLabel,
     required this.duaAllDuaTitle,
+    required this.duaSearchDuaHint,
     required this.duaLastRead,
     required this.duaRecitePrefix,
     required this.duaReciteSuffix,
@@ -1278,6 +1279,7 @@ class AppText {
   final String duaExplore;
   final String duaTotalDuaLabel;
   final String duaAllDuaTitle;
+  final String duaSearchDuaHint;
   final String duaLastRead;
   final String duaRecitePrefix;
   final String duaReciteSuffix;
@@ -3089,6 +3091,11 @@ class AppText {
         map,
         'duaAllDuaTitle',
         fallback?.duaAllDuaTitle ?? '',
+      ),
+      duaSearchDuaHint: _read(
+        map,
+        'duaSearchDuaHint',
+        fallback?.duaSearchDuaHint ?? '',
       ),
       duaLastRead: _read(map, 'duaLastRead', fallback?.duaLastRead ?? ''),
       duaRecitePrefix: _read(

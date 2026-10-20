@@ -368,6 +368,7 @@ const Map<String, String> appTextEn = <String, String>{
   'duaExplore': 'Explore',
   'duaTotalDuaLabel': 'Total Dua',
   'duaAllDuaTitle': 'All Dua',
+  'duaSearchDuaHint': 'Search Dua',
   'duaLastRead': 'Last read',
   'duaRecitePrefix': 'Recite the following statement',
   'duaReciteSuffix': 'times -',
