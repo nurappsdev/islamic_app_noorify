@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
@@ -26,6 +27,9 @@ class QuizCompletionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final result = args?.result;
+    // Another of today's daily quizzes follows this one.
+    final daily = args?.daily;
+    final next = daily != null && daily.hasNext ? daily.sequence + 1 : null;
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -36,8 +40,34 @@ class QuizCompletionScreen extends StatelessWidget {
               children: [
                 _CompletionHero(
                   result: result,
+                  daily: daily,
                   onBack: () => Navigator.maybePop(context),
                 ),
+                if (next != null)
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(22.w, 18.h, 22.w, 0),
+                    child: FilledButton.icon(
+                      key: const ValueKey('quiz-next-daily'),
+                      // The result gives way to the next quiz; back from it
+                      // returns to where this one was opened.
+                      onPressed: () =>
+                          Navigator.of(context).pushReplacementNamed(
+                            RouteNames.quizQuestion,
+                            arguments: const QuizLaunchArgs.daily(),
+                          ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColor.primary,
+                        padding: EdgeInsets.symmetric(vertical: 13.h),
+                      ),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text(
+                        context.localizedDigits(
+                          appText.startDailyQuizNumber.fill({'n': next}),
+                        ),
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ),
+                  ),
                 if (result != null)
                   Padding(
                     padding: EdgeInsets.fromLTRB(13.w, 18.h, 13.w, 0),
@@ -85,9 +115,14 @@ class QuizCompletionScreen extends StatelessWidget {
 }
 
 class _CompletionHero extends StatelessWidget {
-  const _CompletionHero({required this.result, required this.onBack});
+  const _CompletionHero({
+    required this.result,
+    required this.onBack,
+    this.daily,
+  });
   final QuizAttemptResult? result;
   final VoidCallback onBack;
+  final DailyQuizProgress? daily;
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +161,15 @@ class _CompletionHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isDaily || result == null
+                  // One of the day's quizzes, with more to come.
+                  isDaily && daily != null && daily!.hasNext
+                      ? context.localizedDigits(
+                          appText.dailyQuizNumberCompleted.fill({
+                            'n': daily!.sequence,
+                            'total': daily!.quizzesPerDay,
+                          }),
+                        )
+                      : isDaily || result == null
                       ? appText.youCompletedTodaysChallenge
                       : appText.youCompletedTheQuiz,
                   style: TextStyle(

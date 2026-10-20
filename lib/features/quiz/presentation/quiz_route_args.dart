@@ -1,4 +1,5 @@
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_category.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
@@ -32,8 +33,16 @@ class QuizLaunchArgs {
 
 /// What the result screen shows: the server-scored attempt.
 class QuizCompletionArgs {
-  const QuizCompletionArgs({required this.result, required this.launch});
+  const QuizCompletionArgs({
+    required this.result,
+    required this.launch,
+    this.daily,
+  });
 
   final QuizAttemptResult result;
   final QuizLaunchArgs launch;
+
+  /// The played daily quiz's place in its day, so the result can offer the
+  /// next one.
+  final DailyQuizProgress? daily;
 }

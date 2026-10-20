@@ -2,7 +2,9 @@ import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_attempt.dart';
 import 'package:tuhfatul_muslim/features/quiz/domain/entities/quiz_enums.dart';
 
-enum QuizLoadStatus { initial, loading, success, empty, failure }
+/// [dayCompleted]: a daily quiz was asked for, but every one of the day's
+/// daily quizzes is done already.
+enum QuizLoadStatus { initial, loading, success, empty, failure, dayCompleted }
 
 class QuizQuestionState {
   const QuizQuestionState({

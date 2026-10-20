@@ -14,6 +14,9 @@ class DailyQuizStatus {
     this.bestScorePercentage = 0,
     this.latestAttemptId,
     this.completedAt,
+    this.quizzesPerDay = 1,
+    this.completedQuizzes = 0,
+    this.nextSequence,
   });
 
   /// The date of the quiz in `YYYY-MM-DD` format.
@@ -55,8 +58,21 @@ class DailyQuizStatus {
   /// When the quiz was completed.
   final DateTime? completedAt;
 
-  /// Whether the user has completed today's challenge.
+  /// How many daily quizzes a day has (the amol config's, two by default),
+  /// played one after the other.
+  final int quizzesPerDay;
+
+  /// How many of today's daily quizzes are done.
+  final int completedQuizzes;
+
+  /// Which of today's quizzes is next (1-based); null once all are done.
+  final int? nextSequence;
+
+  /// Whether the user has completed today's challenge: every daily quiz.
   bool get completed => isCompleted || hasCompleted;
+
+  /// Some of today's quizzes are done, but not all.
+  bool get partlyCompleted => !completed && completedQuizzes > 0;
 
   /// The points to display to the user.
   num get displayPoints => pointsEarned > 0 ? pointsEarned : pointsGained;

@@ -563,6 +563,11 @@ class AppText {
     required this.noQuizCategories,
     required this.quizSubmitFailed,
     required this.dailyQuiz,
+    required this.dailyQuizNumber,
+    required this.dailyQuizzesDone,
+    required this.startDailyQuizNumber,
+    required this.dailyQuizNumberCompleted,
+    required this.allDailyQuizzesCompleted,
     required this.youCompletedTheQuiz,
     required this.scoreLabel,
     required this.reviewAnswers,
@@ -652,6 +657,12 @@ class AppText {
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
+    required this.badgesTitle,
+    required this.badgePointsToNext,
+    required this.badgeTopReached,
+    required this.badgePointsRange,
+    required this.badgeUnlocked,
+    required this.badgeMorePoints,
     required this.position,
     required this.pointsWord,
     required this.familyMember,
@@ -1503,6 +1514,21 @@ class AppText {
   final String noQuizCategories;
   final String quizSubmitFailed;
   final String dailyQuiz;
+
+  /// The daily quiz's title when a day has more than one: `{n}` of `{total}`.
+  final String dailyQuizNumber;
+
+  /// How many of the day's daily quizzes are done.
+  final String dailyQuizzesDone;
+
+  /// Starts the next daily quiz `{n}`.
+  final String startDailyQuizNumber;
+
+  /// The result title after a daily quiz the day has more of.
+  final String dailyQuizNumberCompleted;
+
+  /// Shown instead of a quiz once every daily quiz of the day is done.
+  final String allDailyQuizzesCompleted;
   final String youCompletedTheQuiz;
   final String scoreLabel;
   final String reviewAnswers;
@@ -1594,6 +1620,24 @@ class AppText {
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
+
+  /// Title of the full badge list.
+  final String badgesTitle;
+
+  /// Points still needed for the next badge `{name}`.
+  final String badgePointsToNext;
+
+  /// Shown once the last badge is reached.
+  final String badgeTopReached;
+
+  /// A badge's points range.
+  final String badgePointsRange;
+
+  /// A badge the user has reached.
+  final String badgeUnlocked;
+
+  /// Points still needed for a locked badge.
+  final String badgeMorePoints;
   final String position;
   final String pointsWord;
   final String familyMember;
@@ -3937,6 +3981,31 @@ class AppText {
         fallback?.quizSubmitFailed ?? '',
       ),
       dailyQuiz: _read(map, 'dailyQuiz', fallback?.dailyQuiz ?? ''),
+      dailyQuizNumber: _read(
+        map,
+        'dailyQuizNumber',
+        fallback?.dailyQuizNumber ?? '',
+      ),
+      dailyQuizzesDone: _read(
+        map,
+        'dailyQuizzesDone',
+        fallback?.dailyQuizzesDone ?? '',
+      ),
+      startDailyQuizNumber: _read(
+        map,
+        'startDailyQuizNumber',
+        fallback?.startDailyQuizNumber ?? '',
+      ),
+      dailyQuizNumberCompleted: _read(
+        map,
+        'dailyQuizNumberCompleted',
+        fallback?.dailyQuizNumberCompleted ?? '',
+      ),
+      allDailyQuizzesCompleted: _read(
+        map,
+        'allDailyQuizzesCompleted',
+        fallback?.allDailyQuizzesCompleted ?? '',
+      ),
       youCompletedTheQuiz: _read(
         map,
         'youCompletedTheQuiz',
@@ -4242,6 +4311,28 @@ class AppText {
       ),
       mymensingh: _read(map, 'mymensingh', fallback?.mymensingh ?? ''),
       badgeLabel: _read(map, 'badgeLabel', fallback?.badgeLabel ?? ''),
+      badgesTitle: _read(map, 'badgesTitle', fallback?.badgesTitle ?? ''),
+      badgePointsToNext: _read(
+        map,
+        'badgePointsToNext',
+        fallback?.badgePointsToNext ?? '',
+      ),
+      badgeTopReached: _read(
+        map,
+        'badgeTopReached',
+        fallback?.badgeTopReached ?? '',
+      ),
+      badgePointsRange: _read(
+        map,
+        'badgePointsRange',
+        fallback?.badgePointsRange ?? '',
+      ),
+      badgeUnlocked: _read(map, 'badgeUnlocked', fallback?.badgeUnlocked ?? ''),
+      badgeMorePoints: _read(
+        map,
+        'badgeMorePoints',
+        fallback?.badgeMorePoints ?? '',
+      ),
       position: _read(map, 'position', fallback?.position ?? ''),
       pointsWord: _read(map, 'pointsWord', fallback?.pointsWord ?? ''),
       familyMember: _read(map, 'familyMember', fallback?.familyMember ?? ''),

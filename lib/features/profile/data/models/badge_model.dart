@@ -13,6 +13,8 @@ class BadgeModel extends BadgeEntity {
     super.level,
     super.isUnlocked,
     super.unlockedAt,
+    super.startPoints,
+    super.endPoints,
   });
 
   factory BadgeModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,8 @@ class BadgeModel extends BadgeEntity {
       level: (json['level'] as num?)?.toInt() ?? 0,
       isUnlocked: json['isUnlocked'] == true,
       unlockedAt: json['unlockedAt']?.toString(),
+      startPoints: json['startPoints'] as num? ?? 0,
+      endPoints: json['endPoints'] as num? ?? 0,
     );
   }
 
@@ -38,5 +42,7 @@ class BadgeModel extends BadgeEntity {
     'level': level,
     'isUnlocked': isUnlocked,
     'unlockedAt': unlockedAt,
+    'startPoints': startPoints,
+    'endPoints': endPoints,
   };
 }

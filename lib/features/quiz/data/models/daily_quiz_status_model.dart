@@ -15,6 +15,9 @@ class DailyQuizStatusModel extends DailyQuizStatus {
     super.bestScorePercentage,
     super.latestAttemptId,
     super.completedAt,
+    super.quizzesPerDay,
+    super.completedQuizzes,
+    super.nextSequence,
   });
 
   factory DailyQuizStatusModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +61,14 @@ class DailyQuizStatusModel extends DailyQuizStatus {
       bestScorePercentage: parseNum(json['bestScorePercentage']),
       latestAttemptId: json['latestAttemptId']?.toString(),
       completedAt: parseDate(json['completedAt']),
+      // A server without several daily quizzes sends none of these.
+      quizzesPerDay: json['quizzesPerDay'] == null
+          ? 1
+          : parseInt(json['quizzesPerDay']).clamp(1, 1 << 16),
+      completedQuizzes: parseInt(json['completedQuizzes']),
+      nextSequence: json['nextSequence'] == null
+          ? null
+          : parseInt(json['nextSequence']),
     );
   }
 }

@@ -3,16 +3,19 @@ abstract class SurahPlaybackEvent {
 }
 
 /// Starts (or resumes) sequential ayah-by-ayah playback of a surah.
+/// With [fromAyah], playback jumps to that ayah and plays on from it.
 class PlaySurah extends SurahPlaybackEvent {
   const PlaySurah({
     required this.surahNo,
     required this.totalAyah,
     required this.recitationId,
+    this.fromAyah,
   });
 
   final int surahNo;
   final int totalAyah;
   final int recitationId;
+  final int? fromAyah;
 }
 
 class PauseSurah extends SurahPlaybackEvent {
@@ -25,6 +28,14 @@ class SetActiveAyah extends SurahPlaybackEvent {
   const SetActiveAyah(this.ayahNo);
 
   final int ayahNo;
+}
+
+/// How many times [ayahNo] plays before playback moves on (1: once).
+class SetAyahRepeat extends SurahPlaybackEvent {
+  const SetAyahRepeat(this.ayahNo, this.count);
+
+  final int ayahNo;
+  final int count;
 }
 
 /// Updates how many times the surah should play.
