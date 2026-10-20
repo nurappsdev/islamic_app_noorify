@@ -37,7 +37,7 @@ class HadithBottomNav extends StatelessWidget {
       selectedIndex: selectedIndex,
       items: [
         AppBottomNavItem(
-          icon: Icons.import_contacts_outlined,
+          iconAsset: 'assets/homeImg/haditImg.png',
           label: appText.categoryHadith,
           onTap: go(0, RouteNames.hadithLibrary),
         ),
