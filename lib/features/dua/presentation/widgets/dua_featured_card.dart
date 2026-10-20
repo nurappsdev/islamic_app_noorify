@@ -37,7 +37,7 @@ class DuaFeaturedCard extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: SvgPicture.asset(
-                  'assets/svgs/duaF.svg',
+                  'assets/svgs/duafe.svg',
                   fit: BoxFit.cover,
                   height: 56.h,
                 ),

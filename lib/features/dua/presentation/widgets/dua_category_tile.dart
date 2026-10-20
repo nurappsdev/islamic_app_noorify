@@ -68,6 +68,7 @@ class DuaCategoryTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic,
                 color: context.inkColor(palette.accent),
               ),
             ),

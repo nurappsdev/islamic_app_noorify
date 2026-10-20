@@ -128,6 +128,7 @@ class _DuaDashboardView extends StatelessWidget {
                       SizedBox(height: 22.h),
                       _SectionHeader(
                         title: appText.duaCategoryTitle,
+                        italic: true,
                         onSeeAll: () => Navigator.of(
                           context,
                         ).pushNamed(RouteNames.duaAllCategory),
@@ -181,10 +182,19 @@ class _DuaDashboardView extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.onSeeAll});
+  const _SectionHeader({
+    required this.title,
+    required this.onSeeAll,
+    this.italic = false,
+  });
 
   final String title;
   final VoidCallback onSeeAll;
+
+  /// `true` for "Duas Category" — italic serif like the page title and the
+  /// featured card's heading (design `devImg/img_16.png`); "Featured Dua"
+  /// stays upright.
+  final bool italic;
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +203,11 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+          ),
         ),
         InkWell(
           onTap: onSeeAll,

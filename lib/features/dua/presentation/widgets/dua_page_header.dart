@@ -41,7 +41,11 @@ class DuaPageHeader extends StatelessWidget {
           ),
           Text(
             title,
-            style: TextStyle(fontSize: 19.sp, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w600,
+              fontStyle: FontStyle.italic,
+            ),
           ),
           if (action != null)
             Align(alignment: Alignment.centerRight, child: action!),
