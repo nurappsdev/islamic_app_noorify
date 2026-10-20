@@ -152,13 +152,15 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: filtered.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisExtent: 116.h,
-                      crossAxisSpacing: 10.w,
-                      mainAxisSpacing: 10.h,
+                      crossAxisCount: 2,
+                      mainAxisExtent: 150.h,
+                      crossAxisSpacing: 12.w,
+                      mainAxisSpacing: 12.h,
                     ),
-                    itemBuilder: (context, index) =>
-                        DuaCategoryTile(category: filtered[index]),
+                    itemBuilder: (context, index) => DuaCategoryTile(
+                      category: filtered[index],
+                      index: index,
+                    ),
                   ),
               ],
             );

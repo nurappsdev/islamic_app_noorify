@@ -54,6 +54,7 @@ class DuaSavedFolderScreen extends StatelessWidget {
                 else
                   for (var i = 0; i < items.length; i++) ...[
                     DuaItemTile(
+                      index: i,
                       name: context.localized(
                         LocalizedText(
                           bn: items[i].titleBn,
