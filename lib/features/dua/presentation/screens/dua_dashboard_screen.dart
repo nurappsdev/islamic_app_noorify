@@ -60,7 +60,7 @@ class _DuaDashboardView extends StatelessWidget {
                 }
 
                 final featured = state.featured;
-                final dashboardCategories = state.categories.take(9).toList();
+                final dashboardCategories = state.categories.take(4).toList();
 
                 return RefreshIndicator(
                   onRefresh: () => context.read<DuaHomeCubit>().load(),
@@ -151,13 +151,14 @@ class _DuaDashboardView extends StatelessWidget {
                           itemCount: dashboardCategories.length,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisExtent: 116.h,
-                                crossAxisSpacing: 10.w,
-                                mainAxisSpacing: 10.h,
+                                crossAxisCount: 2,
+                                mainAxisExtent: 150.h,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
                               ),
                           itemBuilder: (context, index) => DuaCategoryTile(
                             category: dashboardCategories[index],
+                            index: index,
                           ),
                         ),
                     ],
