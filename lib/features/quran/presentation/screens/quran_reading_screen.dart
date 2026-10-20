@@ -586,7 +586,11 @@ class _ReaderBodyState extends State<_ReaderBody> {
                     englishAyahs: const [],
                     bengaliAyahs: const [],
                   );
+            // Edge to edge at the top, like the Hadith screens: the page
+            // (a Surah's opening pattern) fills the strip behind the status
+            // bar and notch; the controls and text stay below it.
             return SafeArea(
+              top: false,
               child: QuranReadingLayout(
                 extension: _showTafsir
                     ? QuranTafsirContent(
@@ -599,241 +603,254 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         onClose: () => setState(() => _showTafsir = false),
                       )
                     : null,
-                top: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context
-                            .surfaceColor(quranPale)
-                            .withValues(alpha: .96),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: quranBorder.withValues(alpha: 0.6),
+                top: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            key: const ValueKey('quran-back-button'),
-                            tooltip: appText.back,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 32,
-                              height: 38,
-                            ),
-                            onPressed: () async {
-                              final popped = await Navigator.of(
-                                context,
-                              ).maybePop();
-                              if (!popped && context.mounted) {
-                                Navigator.of(
+                        decoration: BoxDecoration(
+                          color: context
+                              .surfaceColor(quranPale)
+                              .withValues(alpha: .96),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: quranBorder.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              key: const ValueKey('quran-back-button'),
+                              tooltip: appText.back,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints.tightFor(
+                                width: 32,
+                                height: 38,
+                              ),
+                              onPressed: () async {
+                                final popped = await Navigator.of(
                                   context,
-                                ).pushReplacementNamed(RouteNames.quranSurahs);
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              size: 16,
-                              color: quranInk,
-                            ),
-                          ),
-                          InkWell(
-                            onTap: _jump,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: context
-                                    .surfaceColor(Colors.white)
-                                    .withValues(alpha: 0.65),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: quranBorder.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    context.localizedDigits(
-                                      appText.quranPageLabel.fill({
-                                        'n': state.ayahs.isEmpty
-                                            ? '–'
-                                            : '${state.ayahs.first.pageNumber}',
-                                      }),
-                                    ),
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: quranInk,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 2),
-                                  const Icon(
-                                    Icons.arrow_drop_down_rounded,
-                                    size: 18,
-                                    color: quranInk,
-                                  ),
-                                ],
+                                ).maybePop();
+                                if (!popped && context.mounted) {
+                                  Navigator.of(context).pushReplacementNamed(
+                                    RouteNames.quranSurahs,
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 16,
+                                color: quranInk,
                               ),
                             ),
-                          ),
-                          Flexible(
-                            child: InkWell(
+                            InkWell(
                               onTap: _jump,
                               borderRadius: BorderRadius.circular(8),
-                              child: Padding(
+                              child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
+                                  horizontal: 7,
                                   vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context
+                                      .surfaceColor(Colors.white)
+                                      .withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: quranBorder.withValues(alpha: 0.7),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Flexible(
-                                      child: Text(
-                                        QuranText.of(context).surahName(
-                                          surah?.number ?? widget.args.surahNo,
-                                          surah?.name ?? widget.args.surahName,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          color: quranInk,
-                                        ),
+                                    Text(
+                                      context.localizedDigits(
+                                        appText.quranPageLabel.fill({
+                                          'n': state.ayahs.isEmpty
+                                              ? '–'
+                                              : '${state.ayahs.first.pageNumber}',
+                                        }),
+                                      ),
+                                      maxLines: 1,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: quranInk,
                                       ),
                                     ),
                                     const SizedBox(width: 2),
                                     const Icon(
-                                      Icons.keyboard_arrow_down_rounded,
-                                      size: 16,
+                                      Icons.arrow_drop_down_rounded,
+                                      size: 18,
                                       color: quranInk,
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                          ),
-                          _ReadingTimerPill(
-                            seconds: _seconds,
-                            label: appText.yourReadingTimeIs,
-                            compact: MediaQuery.sizeOf(context).width < 370,
-                          ),
-                          PopupMenuButton<String>(
-                            tooltip: appText.quranActions,
-                            padding: EdgeInsets.zero,
-                            style: IconButton.styleFrom(
-                              minimumSize: const Size(32, 38),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            icon: const Icon(
-                              Icons.more_vert_rounded,
-                              color: quranInk,
-                            ),
-                            onSelected: _menu,
-                            itemBuilder: (_) => [
-                              _AyatViewMenuEntry(
-                                value: ayatView,
-                                active: prefs.showTranslation,
-                              ),
-                              for (final item in [
-                                (
-                                  'bookmark',
-                                  Icons.bookmark_border,
-                                  AppText.of(context).quranBookmarkSurah,
-                                ),
-                                (
-                                  'text',
-                                  Icons.text_fields,
-                                  AppText.of(context).quranChangeText,
-                                ),
-                                (
-                                  'share',
-                                  Icons.share_outlined,
-                                  AppText.of(context).quranShare,
-                                ),
-                                (
-                                  'translate',
-                                  Icons.translate,
-                                  AppText.of(context).quranTranslateHeading,
-                                ),
-                                (
-                                  'download',
-                                  Icons.download_outlined,
-                                  AppText.of(context).quranTajweedDownload,
-                                ),
-                              ])
-                                PopupMenuItem(
-                                  value: item.$1,
+                            Flexible(
+                              child: InkWell(
+                                onTap: _jump,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 4,
+                                  ),
                                   child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(item.$2, size: 19, color: quranInk),
-                                      const SizedBox(width: 14),
-                                      Flexible(child: Text(item.$3)),
+                                      Flexible(
+                                        child: Text(
+                                          QuranText.of(context).surahName(
+                                            surah?.number ??
+                                                widget.args.surahNo,
+                                            surah?.name ??
+                                                widget.args.surahName,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: quranInk,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      const Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        size: 16,
+                                        color: quranInk,
+                                      ),
                                     ],
                                   ),
                                 ),
-                            ],
+                              ),
+                            ),
+                            _ReadingTimerPill(
+                              seconds: _seconds,
+                              label: appText.yourReadingTimeIs,
+                              compact: MediaQuery.sizeOf(context).width < 370,
+                            ),
+                            PopupMenuButton<String>(
+                              tooltip: appText.quranActions,
+                              padding: EdgeInsets.zero,
+                              style: IconButton.styleFrom(
+                                minimumSize: const Size(32, 38),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(
+                                Icons.more_vert_rounded,
+                                color: quranInk,
+                              ),
+                              onSelected: _menu,
+                              itemBuilder: (_) => [
+                                _AyatViewMenuEntry(
+                                  value: ayatView,
+                                  active: prefs.showTranslation,
+                                ),
+                                for (final item in [
+                                  (
+                                    'bookmark',
+                                    Icons.bookmark_border,
+                                    AppText.of(context).quranBookmarkSurah,
+                                  ),
+                                  (
+                                    'text',
+                                    Icons.text_fields,
+                                    AppText.of(context).quranChangeText,
+                                  ),
+                                  (
+                                    'share',
+                                    Icons.share_outlined,
+                                    AppText.of(context).quranShare,
+                                  ),
+                                  (
+                                    'translate',
+                                    Icons.translate,
+                                    AppText.of(context).quranTranslateHeading,
+                                  ),
+                                  (
+                                    'download',
+                                    Icons.download_outlined,
+                                    AppText.of(context).quranTajweedDownload,
+                                  ),
+                                ])
+                                  PopupMenuItem(
+                                    value: item.$1,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          item.$2,
+                                          size: 19,
+                                          color: quranInk,
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Flexible(child: Text(item.$3)),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 2,
+                        child:
+                            (state.loading ||
+                                    (state.translationsPending &&
+                                        prefs.showTranslation)) &&
+                                state.ayahs.isNotEmpty
+                            ? const LinearProgressIndicator(minHeight: 2)
+                            : null,
+                      ),
+                      if (state.error && state.ayahs.isNotEmpty)
+                        TextButton.icon(
+                          onPressed: () => reader.load(),
+                          icon: const Icon(Icons.refresh),
+                          label: Text(
+                            AppText.of(context).quranPageLoadFailedRetry,
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      height: 2,
-                      child:
-                          (state.loading ||
-                                  (state.translationsPending &&
-                                      prefs.showTranslation)) &&
-                              state.ayahs.isNotEmpty
-                          ? const LinearProgressIndicator(minHeight: 2)
-                          : null,
-                    ),
-                    if (state.error && state.ayahs.isNotEmpty)
-                      TextButton.icon(
-                        onPressed: () => reader.load(),
-                        icon: const Icon(Icons.refresh),
-                        label: Text(
-                          AppText.of(context).quranPageLoadFailedRetry,
+                        )
+                      // The Arabic is here; only its translations failed.
+                      else if (state.translationsFailed &&
+                          prefs.showTranslation &&
+                          state.ayahs.isNotEmpty)
+                        TextButton.icon(
+                          key: const ValueKey('quran-translation-retry'),
+                          onPressed: () => reader.load(),
+                          icon: const Icon(Icons.refresh),
+                          label: Text(
+                            QuranText.of(context).isBangla
+                                ? 'অনুবাদ লোড করা যায়নি। আবার চেষ্টা করুন'
+                                : 'Could not load translation. Retry',
+                          ),
                         ),
-                      )
-                    // The Arabic is here; only its translations failed.
-                    else if (state.translationsFailed &&
-                        prefs.showTranslation &&
-                        state.ayahs.isNotEmpty)
-                      TextButton.icon(
-                        key: const ValueKey('quran-translation-retry'),
-                        onPressed: () => reader.load(),
-                        icon: const Icon(Icons.refresh),
-                        label: Text(
-                          QuranText.of(context).isBangla
-                              ? 'অনুবাদ লোড করা যায়নি। আবার চেষ্টা করুন'
-                              : 'Could not load translation. Retry',
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
+                // Only the page itself runs behind the notch.
                 page: state.loading && state.ayahs.isEmpty
-                    ? const FullSurahShimmer()
+                    ? const SafeArea(bottom: false, child: FullSurahShimmer())
                     : state.error && state.ayahs.isEmpty
-                    ? QuranRetry(
-                        offline: state.offline,
-                        onRetry: () => reader.load(),
+                    ? SafeArea(
+                        bottom: false,
+                        child: QuranRetry(
+                          offline: state.offline,
+                          onRetry: () => reader.load(),
+                        ),
                       )
                     : state.ayahs.isEmpty
                     ? Center(child: Text(AppText.of(context).quranNoAyahs))
