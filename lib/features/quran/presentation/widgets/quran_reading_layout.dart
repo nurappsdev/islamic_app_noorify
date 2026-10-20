@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart' show kTouchSlop;
+import 'package:flutter/gestures.dart' show kPressTimeout, kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -55,15 +55,21 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
     with TickerProviderStateMixin {
   // The header and the bottom bar show and hide on their own: a touch in the
   // upper half of the screen brings back the header, one in the lower half
-  // the bottom bar. A drag (scroll or page swipe) brings back both.
+  // the bottom bar. Sliding the text up or down hides both, out of the
+  // reader's way; a sideways page swipe brings back both.
   late final AnimationController _top = _chromeController();
   late final AnimationController _bottom = _chromeController();
   late final CurvedAnimation _topCurve = _curve(_top);
   late final CurvedAnimation _bottomCurve = _curve(_bottom);
   final _scroll = ScrollController();
   Timer? _idle;
+  // A touch's reveal, held back briefly: if the touch turns into a slide,
+  // the bar it would show never flashes up.
+  Timer? _touchReveal;
   // Where each finger touching the reader landed.
   final Map<int, Offset> _pointers = {};
+  // Fingers that have moved past the touch slop: a slide, not a touch.
+  final Set<int> _dragging = {};
   // The player's height, and how much of the page it covers as it slides.
   double _bottomHeight = 0;
   final _bottomCover = ValueNotifier<double>(0);
@@ -115,6 +121,13 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
     if (bottom) _bottom.forward();
   }
 
+  void _hide() {
+    _idle?.cancel();
+    _touchReveal?.cancel();
+    _top.reverse();
+    _bottom.reverse();
+  }
+
   /// Reveals the header or the bottom bar, whichever half [dy] falls in.
   void _revealHalf(double dy) {
     final height = context.size?.height ?? 0;
@@ -125,6 +138,7 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
   @override
   void dispose() {
     _idle?.cancel();
+    _touchReveal?.cancel();
     _scroll.dispose();
     _bottomCover.dispose();
     _chromeShown.dispose();
@@ -161,30 +175,48 @@ class _QuranReadingLayoutState extends State<QuranReadingLayout>
   Widget build(BuildContext context) => Listener(
     behavior: HitTestBehavior.translucent,
     onPointerDown: (event) {
+      _idle?.cancel();
       _pointers[event.pointer] = event.localPosition;
-      _revealHalf(event.localPosition.dy);
+      final dy = event.localPosition.dy;
+      _touchReveal?.cancel();
+      _touchReveal = Timer(kPressTimeout, () {
+        if (mounted) _revealHalf(dy);
+      });
     },
     onPointerMove: (event) {
       // A finger resting on an ayah jitters a little; only a real drag counts.
       final landed = _pointers[event.pointer];
+      if (landed == null || _dragging.contains(event.pointer)) return;
       final slop =
           MediaQuery.maybeGestureSettingsOf(context)?.touchSlop ?? kTouchSlop;
-      if (landed == null || (event.localPosition - landed).distance > slop) {
+      final moved = event.localPosition - landed;
+      if (moved.distance <= slop) return;
+      _dragging.add(event.pointer);
+      _touchReveal?.cancel();
+      if (moved.dy.abs() >= moved.dx.abs()) {
+        _hide();
+      } else {
         _reveal();
       }
     },
     onPointerUp: (event) {
-      _pointers.remove(event.pointer);
+      final landed = _pointers.remove(event.pointer);
+      // A quick tap, lifted before its reveal came due.
+      if (landed != null &&
+          !_dragging.remove(event.pointer) &&
+          (_touchReveal?.isActive ?? false)) {
+        _touchReveal!.cancel();
+        _revealHalf(landed.dy);
+      }
       _scheduleHide();
     },
     onPointerCancel: (event) {
       _pointers.remove(event.pointer);
+      _dragging.remove(event.pointer);
       _scheduleHide();
     },
-    onPointerSignal: (_) {
-      _reveal();
-      _scheduleHide();
-    },
+    // A mouse wheel or trackpad scroll slides the text too.
+    onPointerSignal: (_) => _hide(),
     child: LayoutBuilder(
       builder: (context, bounds) => NotificationListener<OverscrollNotification>(
         onNotification: (notification) {
