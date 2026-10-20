@@ -92,36 +92,30 @@ class _AddPrayerWidgetScreenState extends State<AddPrayerWidgetScreen> {
                         _MediumPreview(times: times, now: now, appText: appText, bangla: bangla),
                   ),
                   SizedBox(height: 18.h),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _WidgetPreview(
-                          label: appText.widgetSizeSmall,
-                          times: _times,
-                          builder: (times, now, bangla) => _SmallPreview(
-                            times: times,
-                            now: now,
-                            appText: appText,
-                            bangla: bangla,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 14.w),
-                      Expanded(
-                        flex: 2,
-                        child: _WidgetPreview(
-                          label: appText.widgetSizeLarge,
-                          times: _times,
-                          builder: (times, now, bangla) => _LargePreview(
-                            times: times,
-                            now: now,
-                            appText: appText,
-                            bangla: bangla,
-                          ),
-                        ),
-                      ),
-                    ],
+                  // Stacked, not side-by-side: squeezing the small and large
+                  // previews into one Row left the large preview too narrow,
+                  // forcing its prayer-time cells to wrap and overflow their
+                  // fixed-height card. Full width each avoids that.
+                  _WidgetPreview(
+                    label: appText.widgetSizeSmall,
+                    times: _times,
+                    builder: (times, now, bangla) => _SmallPreview(
+                      times: times,
+                      now: now,
+                      appText: appText,
+                      bangla: bangla,
+                    ),
+                  ),
+                  SizedBox(height: 18.h),
+                  _WidgetPreview(
+                    label: appText.widgetSizeLarge,
+                    times: _times,
+                    builder: (times, now, bangla) => _LargePreview(
+                      times: times,
+                      now: now,
+                      appText: appText,
+                      bangla: bangla,
+                    ),
                   ),
                   SizedBox(height: 28.h),
                   _ActionCard(appText: appText, pinSupported: _pinSupported),
@@ -206,7 +200,14 @@ class _WidgetPreview extends StatelessWidget {
           ),
         ),
         SizedBox(height: 8.h),
-        builder(times, now, bangla),
+        // The native home-screen widget renders at a fixed size and never
+        // respects the app's in-app accessibility text scale, so neither
+        // should this preview of it - otherwise a larger system font size
+        // can make this tightly fitted card overflow.
+        MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+          child: builder(times, now, bangla),
+        ),
       ],
     );
   }
@@ -478,31 +479,43 @@ class _SunEdgeRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              edgeLabel(appText.sunrise),
-              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
-            ),
-            Text(
-              times == null ? '--:--' : clock(times.sunrise),
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                edgeLabel(appText.sunrise),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+              ),
+              Text(
+                times == null ? '--:--' : clock(times.sunrise),
+                maxLines: 1,
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+              ),
+            ],
+          ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              edgeLabel(appText.sunset),
-              style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
-            ),
-            Text(
-              times == null ? '--:--' : clock(times.sunset),
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
-            ),
-          ],
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                edgeLabel(appText.sunset),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+              ),
+              Text(
+                times == null ? '--:--' : clock(times.sunset),
+                maxLines: 1,
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -555,12 +568,16 @@ class _SmallPreview extends StatelessWidget {
               children: [
                 Image.asset('assets/sejdaIcon.png', width: 11.r, height: 11.r),
                 SizedBox(width: 3.w),
-                Text(
-                  appText.widgetAmolTagline,
-                  style: TextStyle(
-                    fontSize: 8.sp,
-                    fontStyle: FontStyle.italic,
-                    color: const Color(0xFF6F7F52),
+                Flexible(
+                  child: Text(
+                    appText.widgetAmolTagline,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 8.sp,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF6F7F52),
+                    ),
                   ),
                 ),
               ],

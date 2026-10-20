@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+import 'package:tuhfatul_muslim/core/storage/latest_json_cache.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_board_model.dart';
 import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_user_detail_model.dart';
@@ -34,15 +37,23 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
   final Dio _dio;
   final AuthLocalDataSource _local;
 
+  /// The latest successfully-fetched payload per leaderboard query, read back
+  /// by [LeaderboardRepositoryImpl] when a later request fails. Keyed per
+  /// period/user so an offline "daily" view never shows a cached "monthly"
+  /// board (or someone else's cached standing).
+  static LatestJsonCache cacheFor(String key) =>
+      LatestJsonCache('leaderboard_$key');
+
   @override
   Future<LeaderboardBoardModel> getTop({
     required String period,
     required int limit,
   }) async => LeaderboardBoardModel.fromJson(
-    await _getData(ApiConstants.leaderboardTopEndPoint, {
-      'period': period,
-      'limit': limit,
-    }),
+    await _getData(
+      ApiConstants.leaderboardTopEndPoint,
+      {'period': period, 'limit': limit},
+      cacheKey: 'top_$period',
+    ),
   );
 
   @override
@@ -51,17 +62,20 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
     required String period,
     String? date,
   }) async => LeaderboardUserDetailModel.fromJson(
-    await _getData(ApiConstants.leaderboardUserEndPoint(userId), {
-      'period': period,
-      if (date != null && date.isNotEmpty) 'date': date,
-    }),
+    await _getData(
+      ApiConstants.leaderboardUserEndPoint(userId),
+      {'period': period, if (date != null && date.isNotEmpty) 'date': date},
+      cacheKey: 'user_${userId}_$period',
+    ),
   );
 
-  /// GETs [path] and returns the envelope's `data` object.
+  /// GETs [path] and returns the envelope's `data` object, caching it under
+  /// [cacheKey] for [LeaderboardRepositoryImpl]'s offline fallback.
   Future<Map<String, dynamic>> _getData(
     String path,
-    Map<String, dynamic> query,
-  ) async {
+    Map<String, dynamic> query, {
+    required String cacheKey,
+  }) async {
     final Response<dynamic> response;
     try {
       response = await _dio.get<dynamic>(
@@ -90,6 +104,7 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
     if (data is! Map<String, dynamic>) {
       throw ParsingException('Leaderboard response is missing "data".');
     }
+    unawaited(cacheFor(cacheKey).save(data));
     return data;
   }
 
