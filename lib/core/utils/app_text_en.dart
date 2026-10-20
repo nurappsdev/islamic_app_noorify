@@ -380,6 +380,20 @@ const Map<String, String> appTextEn = <String, String>{
   'duaTranslationSectionTitle': 'Translation (Meaning)',
   'duaAuthenticTitle': 'Authentic Hadith',
   'duaChainVerifiedBadge': 'Chain Verified',
+  'duaDisplayReadingStyleSection': 'Display & Reading Style',
+  'duaTypographyStylingSection': 'Typography & Script Styling',
+  'duaNarrationToggleTitle': 'Hadith Background & Context',
+  'duaNarrationToggleSubtitle':
+      'Display historical context and narrator backgrounds',
+  'duaArabicToggleSubtitle': 'Display the dua\'s Arabic text',
+  'duaTranslationToggleSubtitle': 'Display the dua\'s translated meaning',
+  'duaTransliterationToggleSubtitle':
+      'Facilitates pronunciation clarity for non-Arabic speakers',
+  'duaReferenceToggleTitle': 'Reference & Chain (Sanad)',
+  'duaReferenceToggleSubtitle':
+      'Display the hadith reference and authenticity grade',
+  'duaArabicFontSizeLabel': 'Arabic Font Size',
+  'duaTranslationFontSizeLabel': 'Translation Font Size',
   'duaCreateFolderTitle': 'Create Folder',
   'duaFolderNameFieldHint': 'Write Folder Name Here.',
   'duaCancel': 'Cancel',

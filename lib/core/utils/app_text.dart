@@ -356,6 +356,17 @@ class AppText {
     required this.duaTranslationSectionTitle,
     required this.duaAuthenticTitle,
     required this.duaChainVerifiedBadge,
+    required this.duaDisplayReadingStyleSection,
+    required this.duaTypographyStylingSection,
+    required this.duaNarrationToggleTitle,
+    required this.duaNarrationToggleSubtitle,
+    required this.duaArabicToggleSubtitle,
+    required this.duaTranslationToggleSubtitle,
+    required this.duaTransliterationToggleSubtitle,
+    required this.duaReferenceToggleTitle,
+    required this.duaReferenceToggleSubtitle,
+    required this.duaArabicFontSizeLabel,
+    required this.duaTranslationFontSizeLabel,
     required this.duaSettingsTitle,
     required this.showArabicLabel,
     required this.showTranslationLabel,
@@ -1298,6 +1309,17 @@ class AppText {
   final String duaTranslationSectionTitle;
   final String duaAuthenticTitle;
   final String duaChainVerifiedBadge;
+  final String duaDisplayReadingStyleSection;
+  final String duaTypographyStylingSection;
+  final String duaNarrationToggleTitle;
+  final String duaNarrationToggleSubtitle;
+  final String duaArabicToggleSubtitle;
+  final String duaTranslationToggleSubtitle;
+  final String duaTransliterationToggleSubtitle;
+  final String duaReferenceToggleTitle;
+  final String duaReferenceToggleSubtitle;
+  final String duaArabicFontSizeLabel;
+  final String duaTranslationFontSizeLabel;
   final String duaSettingsTitle;
   final String showArabicLabel;
   final String showTranslationLabel;
@@ -3157,6 +3179,61 @@ class AppText {
         map,
         'duaChainVerifiedBadge',
         fallback?.duaChainVerifiedBadge ?? '',
+      ),
+      duaDisplayReadingStyleSection: _read(
+        map,
+        'duaDisplayReadingStyleSection',
+        fallback?.duaDisplayReadingStyleSection ?? '',
+      ),
+      duaTypographyStylingSection: _read(
+        map,
+        'duaTypographyStylingSection',
+        fallback?.duaTypographyStylingSection ?? '',
+      ),
+      duaNarrationToggleTitle: _read(
+        map,
+        'duaNarrationToggleTitle',
+        fallback?.duaNarrationToggleTitle ?? '',
+      ),
+      duaNarrationToggleSubtitle: _read(
+        map,
+        'duaNarrationToggleSubtitle',
+        fallback?.duaNarrationToggleSubtitle ?? '',
+      ),
+      duaArabicToggleSubtitle: _read(
+        map,
+        'duaArabicToggleSubtitle',
+        fallback?.duaArabicToggleSubtitle ?? '',
+      ),
+      duaTranslationToggleSubtitle: _read(
+        map,
+        'duaTranslationToggleSubtitle',
+        fallback?.duaTranslationToggleSubtitle ?? '',
+      ),
+      duaTransliterationToggleSubtitle: _read(
+        map,
+        'duaTransliterationToggleSubtitle',
+        fallback?.duaTransliterationToggleSubtitle ?? '',
+      ),
+      duaReferenceToggleTitle: _read(
+        map,
+        'duaReferenceToggleTitle',
+        fallback?.duaReferenceToggleTitle ?? '',
+      ),
+      duaReferenceToggleSubtitle: _read(
+        map,
+        'duaReferenceToggleSubtitle',
+        fallback?.duaReferenceToggleSubtitle ?? '',
+      ),
+      duaArabicFontSizeLabel: _read(
+        map,
+        'duaArabicFontSizeLabel',
+        fallback?.duaArabicFontSizeLabel ?? '',
+      ),
+      duaTranslationFontSizeLabel: _read(
+        map,
+        'duaTranslationFontSizeLabel',
+        fallback?.duaTranslationFontSizeLabel ?? '',
       ),
       duaSettingsTitle: _read(
         map,
