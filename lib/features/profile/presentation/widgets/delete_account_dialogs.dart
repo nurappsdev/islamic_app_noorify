@@ -62,8 +62,7 @@ class _PasswordConfirmDialog extends StatefulWidget {
   const _PasswordConfirmDialog();
 
   @override
-  State<_PasswordConfirmDialog> createState() =>
-      _PasswordConfirmDialogState();
+  State<_PasswordConfirmDialog> createState() => _PasswordConfirmDialogState();
 }
 
 class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
@@ -88,9 +87,7 @@ class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
       _loading = true;
       _error = null;
     });
-    final result = await DeleteAccountService.instance.verifyPassword(
-      password,
-    );
+    final result = await DeleteAccountService.instance.verifyPassword(password);
     if (!mounted) return;
     result.fold(
       (error) => setState(() {
@@ -177,9 +174,7 @@ class _PasswordConfirmDialogState extends State<_PasswordConfirmDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _loading
-              ? null
-              : () => Navigator.of(context).pop(false),
+          onPressed: _loading ? null : () => Navigator.of(context).pop(false),
           child: Text(appText.commonCancel),
         ),
         FilledButton(
@@ -276,9 +271,7 @@ class _FinalConfirmDialogState extends State<_FinalConfirmDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _loading
-              ? null
-              : () => Navigator.of(context).pop(false),
+          onPressed: _loading ? null : () => Navigator.of(context).pop(false),
           child: Text(appText.commonCancel),
         ),
         FilledButton(

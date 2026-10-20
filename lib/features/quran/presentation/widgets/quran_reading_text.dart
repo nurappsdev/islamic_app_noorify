@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import '../../domain/arabic_font.dart';
+import '../../domain/ayah_end_sign.dart';
 import '../../domain/quran_ayah.dart';
 import 'quran_design.dart';
 
@@ -14,12 +15,14 @@ import 'quran_design.dart';
 const kAyahHoldDuration = Duration(milliseconds: 800);
 
 /// A hold on one ayah: [onPress] as the finger lands, [onRelease] when it
-/// lifts or the press turns into a scroll, [onHold] once the hold completes.
+/// lifts or the press turns into a scroll, [onHold] once the hold completes,
+/// [onTap] when it lifts before that without having moved.
 _AyahHoldRecognizer _holdRecognizer({
   required VoidCallback onHold,
   required VoidCallback onPress,
   required VoidCallback onRelease,
-}) => _AyahHoldRecognizer(onRejected: onRelease)
+  VoidCallback? onTap,
+}) => _AyahHoldRecognizer(onRejected: onRelease, onTap: onTap)
   ..onLongPressDown = ((_) => onPress())
   ..onLongPressCancel = onRelease
   ..onLongPressEnd = ((_) => onRelease())
@@ -31,10 +34,41 @@ _AyahHoldRecognizer _holdRecognizer({
 /// A long press that also reports losing the arena. When a scroll claims the
 /// drag first, [LongPressGestureRecognizer] goes quiet without calling
 /// `onLongPressCancel`, which would leave the press tint on screen.
+///
+/// It reports a tap too ([onTap]): a press lifted before the hold completes.
+/// One that moved past the touch slop (a scroll or page swipe) is never
+/// lifted here, as it stops tracking the pointer first. A text span takes a
+/// single recognizer, so the hold and the tap share this one.
 class _AyahHoldRecognizer extends LongPressGestureRecognizer {
-  _AyahHoldRecognizer({required this.onRejected})
+  _AyahHoldRecognizer({required this.onRejected, this.onTap})
     : super(duration: kAyahHoldDuration);
   final VoidCallback onRejected;
+  final VoidCallback? onTap;
+
+  /// The hold completed for the press under way.
+  bool _held = false;
+
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    _held = false;
+    super.addAllowedPointer(event);
+  }
+
+  @override
+  void didExceedDeadline() {
+    _held = true;
+    super.didExceedDeadline();
+  }
+
+  @override
+  void handlePrimaryPointer(PointerEvent event) {
+    if (event is PointerUpEvent &&
+        !_held &&
+        state == GestureRecognizerState.possible) {
+      onTap?.call();
+    }
+    super.handlePrimaryPointer(event);
+  }
 
   @override
   void rejectGesture(int pointer) {
@@ -104,8 +138,16 @@ mixin _HoldFeedback<T extends StatefulWidget>
 /// Calls [onHold] once [child] has been pressed for [kAyahHoldDuration],
 /// tinting it as the press builds up.
 class QuranAyahHold extends StatefulWidget {
-  const QuranAyahHold({super.key, required this.onHold, required this.child});
+  const QuranAyahHold({
+    super.key,
+    required this.onHold,
+    required this.child,
+    this.onTap,
+  });
   final VoidCallback onHold;
+
+  /// A plain tap on [child].
+  final VoidCallback? onTap;
   final Widget child;
 
   @override
@@ -124,6 +166,7 @@ class _QuranAyahHoldState extends State<QuranAyahHold>
               onHold: () => widget.onHold(),
               onPress: startHold,
               onRelease: endHold,
+              onTap: () => widget.onTap?.call(),
             ),
             // The platform's touch slop, the same one scrolling uses.
             (recognizer) => recognizer.gestureSettings =
@@ -152,6 +195,7 @@ class QuranReadingText extends StatefulWidget {
     required this.scale,
     required this.font,
     this.onHold,
+    this.onTap,
   });
   final List<QuranAyah> ayahs;
   final int active;
@@ -160,6 +204,11 @@ class QuranReadingText extends StatefulWidget {
 
   /// An ayah held for [kAyahHoldDuration]; null leaves the text inert.
   final ValueChanged<QuranAyah>? onHold;
+
+  /// An ayah tapped (pressed and lifted before the hold completes).
+  final ValueChanged<QuranAyah>? onTap;
+
+  bool get _interactive => onHold != null || onTap != null;
   @override
   State<QuranReadingText> createState() => _QuranReadingTextState();
 }
@@ -176,6 +225,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
   // keeps its recognizers and a press in progress is not dropped.
   _AyahHoldRecognizer _recognizerFor(int index) => _holdRecognizer(
     onHold: () => widget.onHold?.call(widget.ayahs[index]),
+    onTap: () => widget.onTap?.call(widget.ayahs[index]),
     onPress: () {
       setState(() => _pressed = widget.ayahs[index].ayahNumber);
       startHold();
@@ -199,7 +249,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
       recognizer.dispose();
     }
     _recognizers.clear();
-    if (widget.onHold == null) return;
+    if (!widget._interactive) return;
     for (var i = 0; i < widget.ayahs.length; i++) {
       _recognizers.add(_recognizerFor(i));
     }
@@ -216,7 +266,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
   void didUpdateWidget(QuranReadingText oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_sameAyahs(oldWidget.ayahs, widget.ayahs) ||
-        (oldWidget.onHold == null) != (widget.onHold == null)) {
+        oldWidget._interactive != widget._interactive) {
       _bind();
     }
     if (oldWidget.active != widget.active) {
@@ -225,7 +275,8 @@ class _QuranReadingTextState extends State<QuranReadingText>
   }
 
   // A WidgetSpan occupies one object-replacement character in the paragraph.
-  int _segmentLength(QuranAyah a) => a.textArabic.length + 1;
+  int _segmentLength(QuranAyah a) =>
+      splitAyahEndSign(a.textArabic).text.length + 1;
   void _follow() {
     if (!mounted) return;
     final render = _textKey.currentContext?.findRenderObject();
@@ -289,26 +340,31 @@ class _QuranReadingTextState extends State<QuranReadingText>
       return pressed(a) ? pressTint(base) : base;
     }
 
-    final span = TextSpan(
-      style: widget.font.apply(
-        TextStyle(
-          fontSize: 20 * widget.scale,
-          height: 2.1,
-          color: context.inkColor(Colors.black),
-        ),
+    final arabic = widget.font.apply(
+      TextStyle(
+        fontSize: 20 * widget.scale,
+        height: 2.1,
+        color: context.inkColor(Colors.black),
       ),
+    );
+    // Each ayah's end marks are drawn over its marker, not on its last word.
+    final parts = [
+      for (final a in widget.ayahs) splitAyahEndSign(a.textArabic),
+    ];
+    final span = TextSpan(
+      style: arabic,
       children: [
         for (final (i, a) in widget.ayahs.indexed) ...[
           TextSpan(
-            text: a.textArabic,
-            recognizer: widget.onHold == null ? null : _recognizers[i],
+            text: parts[i].text,
+            recognizer: widget._interactive ? _recognizers[i] : null,
             style: TextStyle(backgroundColor: tint(a)),
           ),
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: RawGestureDetector(
               gestures: {
-                if (widget.onHold != null)
+                if (widget._interactive)
                   _AyahHoldRecognizer:
                       GestureRecognizerFactoryWithHandlers<_AyahHoldRecognizer>(
                         () => _recognizerFor(i),
@@ -322,6 +378,8 @@ class _QuranReadingTextState extends State<QuranReadingText>
                   key: ValueKey('ayah-marker-${a.verseKey}'),
                   number: a.ayahNumber,
                   scale: markerScale,
+                  sign: parts[i].sign,
+                  arabicStyle: arabic,
                 ),
               ),
             ),
@@ -340,11 +398,9 @@ class _QuranReadingTextState extends State<QuranReadingText>
         text: span,
         textScaler: scaler,
         textDirection: TextDirection.rtl,
-        // Zoomed in, a line holds only a few words and justifying it
-        // stretches the gaps between them; keep the edge ragged instead.
-        textAlign: widget.scale <= kDefaultArabicFontScale
-            ? TextAlign.justify
-            : TextAlign.start,
+        // Every line runs edge to edge, zoomed in too: a ragged edge left
+        // a gap at the end of the line.
+        textAlign: TextAlign.justify,
       ),
     );
   }

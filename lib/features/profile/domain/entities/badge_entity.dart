@@ -1,5 +1,6 @@
-/// A gamification badge, either one the user has unlocked (as returned in
-/// `badges`) or their showcased `currentBadge`.
+/// A badge: one of the point tiers an admin sets up, reached once the user's
+/// total points get to [startPoints]. As returned in `badges` (every tier,
+/// with [isUnlocked]), `currentBadge` (the highest reached) and `nextBadge`.
 class BadgeEntity {
   const BadgeEntity({
     required this.id,
@@ -10,6 +11,8 @@ class BadgeEntity {
     this.level = 0,
     this.isUnlocked = false,
     this.unlockedAt,
+    this.startPoints = 0,
+    this.endPoints = 0,
   });
 
   final String id;
@@ -20,4 +23,7 @@ class BadgeEntity {
   final int level;
   final bool isUnlocked;
   final String? unlockedAt;
+
+  /// The tier's points range.
+  final num startPoints, endPoints;
 }

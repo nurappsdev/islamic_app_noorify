@@ -9,8 +9,6 @@ import '../widgets/quran_reading_layout.dart';
 import '../widgets/quran_page_viewport.dart';
 import '../widgets/quran_reading_text.dart';
 import '../widgets/quran_ayah_details_sheet.dart';
-import '../../data/services/quran_audio_downloader.dart';
-import '../bloc/ayah_audio/ayah_audio_bloc.dart';
 import '../bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
@@ -411,9 +409,35 @@ class _ReaderBodyState extends State<_ReaderBody> {
   //   },
   // );
 
+  /// A tapped ayah becomes the one to play: playback jumps to it, or, when
+  /// paused, it is selected so Play starts there.
+  void _tapAyah(QuranAyah ayah) {
+    final playback = context.read<SurahPlaybackBloc>();
+    if (!playback.state.isPlaying) {
+      playback.add(SetActiveAyah(ayah.ayahNumber));
+      return;
+    }
+    if (playback.state.currentAyahNo == ayah.ayahNumber) return;
+    playback.add(
+      PlaySurah(
+        surahNo: ayah.surahNumber,
+        totalAyah:
+            context.read<QuranReadingCubit>().state.surah?.totalAyah ??
+            ayah.ayahNumber,
+        recitationId:
+            context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId,
+        fromAyah: ayah.ayahNumber,
+      ),
+    );
+  }
+
   Future<void> _showAyah(QuranAyah ayah) async {
     final state = context.read<QuranReadingCubit>().state;
-    context.read<SurahPlaybackBloc>().add(SetActiveAyah(ayah.ayahNumber));
+    final playback = context.read<SurahPlaybackBloc>();
+    // Selected for its sheet's Play; a recitation under way goes on.
+    if (!playback.state.isPlaying) {
+      playback.add(SetActiveAyah(ayah.ayahNumber));
+    }
     final reciter = context.read<ReciterBloc>();
     final download = context.read<SurahAudioDownloadBloc>();
     final preferences = context.read<QuranTranslationBloc>();
@@ -423,9 +447,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
         providers: [
           BlocProvider.value(value: reciter),
           BlocProvider.value(value: download),
-          BlocProvider(
-            create: (_) => AyahAudioBloc(downloader: QuranAudioDownloader()),
-          ),
+          BlocProvider.value(value: playback),
           BlocProvider(
             create: (_) => AyahBookmarkBloc(
               surahNo: ayah.surahNumber,
@@ -865,6 +887,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                               for (final ayah in state.ayahs)
                                 QuranAyahHold(
                                   onHold: () => _showAyah(ayah),
+                                  onTap: () => _tapAyah(ayah),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 16,
@@ -941,12 +964,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 active: active,
                                 scale: arabicScale,
                                 font: arabicFontById(prefs.arabicFontFamily),
-                                onHold: (ayah) {
-                                  context.read<SurahPlaybackBloc>().add(
-                                    SetActiveAyah(ayah.ayahNumber),
-                                  );
-                                  _showAyah(ayah);
-                                },
+                                onHold: _showAyah,
+                                onTap: _tapAyah,
                               ),
                             // if (widget.args.paraNumber == null)
                             //   _surahNavigation(),

@@ -279,6 +279,68 @@ void main() {
       expect(status.latestAttemptId, '6b0ffddb0f85723fd3e8d902');
     });
 
+    test('daily quiz: its place among the day\'s quizzes', () async {
+      final s = _setup({
+        'GET /quizzes/daily': (
+          200,
+          _ok({
+            ...(_dailyQuiz['data'] as Map<String, Object?>),
+            'sequence': 2,
+            'quizzesPerDay': 2,
+            'completedQuizzes': 1,
+            'isCompleted': false,
+          }),
+        ),
+      });
+      final daily = (await s.source.getDailyQuiz(now0)).daily!;
+      expect(daily.sequence, 2);
+      expect(daily.quizzesPerDay, 2);
+      expect(daily.completedQuizzes, 1);
+      expect(daily.dayCompleted, isFalse);
+      expect(daily.numbered, isTrue);
+      expect(daily.hasNext, isFalse, reason: 'quiz 2 of 2 is the last');
+    });
+
+    test('daily quiz from a server with one quiz a day: unnumbered', () async {
+      final s = _setup({'GET /quizzes/daily': (200, _dailyQuiz)});
+      expect((await s.source.getDailyQuiz(now0)).daily, isNull);
+    });
+
+    test('daily quiz status: how far the day has got', () async {
+      final s = _setup({
+        'GET /quizzes/daily/status': (
+          200,
+          _ok({
+            'date': '2026-09-26',
+            'isAvailable': true,
+            'isCompleted': false,
+            'quizzesPerDay': 2,
+            'completedQuizzes': 1,
+            'remainingQuizzes': 1,
+            'nextSequence': 2,
+            'pointsEarned': 1.5,
+          }),
+        ),
+      });
+      final status = await s.source.getDailyQuizStatus();
+      expect(status.quizzesPerDay, 2);
+      expect(status.completedQuizzes, 1);
+      expect(status.nextSequence, 2);
+      expect(status.completed, isFalse);
+      expect(status.partlyCompleted, isTrue);
+
+      // An older server: one quiz a day.
+      final old = _setup({
+        'GET /quizzes/daily/status': (
+          200,
+          _ok({'date': '2026-09-26', 'isCompleted': true}),
+        ),
+      });
+      final single = await old.source.getDailyQuizStatus();
+      expect(single.quizzesPerDay, 1);
+      expect(single.partlyCompleted, isFalse);
+    });
+
     test('category quiz: dynamic id, limit and difficulty', () async {
       final s = _setup({
         'GET /quizzes/categories/cat9/quiz': (
@@ -602,6 +664,32 @@ void main() {
       expect(body['attemptType'], 'category');
       expect(body['categoryId'], 'cat1');
       expect(body.containsKey('quizId'), isFalse);
+      await bloc.close();
+    });
+
+    test('once every daily quiz is done, the last is not replayed', () async {
+      final s = _setup({
+        'GET /quizzes/daily': (
+          200,
+          _ok({
+            ...(_dailyQuiz['data'] as Map<String, Object?>),
+            'sequence': 2,
+            'quizzesPerDay': 2,
+            'completedQuizzes': 2,
+            'isCompleted': true,
+          }),
+        ),
+        'POST /quizzes/attempts': (201, _attemptResult),
+      });
+      final bloc = _bloc(s.source, const QuizLaunchArgs.daily(), () => now0);
+      bloc.add(const LoadQuiz());
+      await _settle();
+      expect(bloc.state.loadStatus, QuizLoadStatus.dayCompleted);
+      expect(bloc.state.quiz?.daily?.sequence, 2);
+      // Nothing to answer, and nothing gets submitted.
+      bloc.add(const SubmitQuiz());
+      await _settle();
+      expect(s.http.requests.where((r) => r.method == 'POST'), isEmpty);
       await bloc.close();
     });
 
