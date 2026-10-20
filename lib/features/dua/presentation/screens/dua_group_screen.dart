@@ -72,6 +72,7 @@ class DuaGroupScreen extends StatelessWidget {
                   children: [
                     for (var i = 0; i < duas.length; i++) ...[
                       DuaItemTile(
+                        index: i,
                         name: duas[i].name,
                         onTap: () => Navigator.of(context).pushNamed(
                           RouteNames.duaReader,

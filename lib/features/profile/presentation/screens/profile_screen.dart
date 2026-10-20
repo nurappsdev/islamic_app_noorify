@@ -708,15 +708,57 @@ class _LogoutButtonView extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(
-          appText.logout,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
         ),
-        content: Text(appText.logoutConfirmMessage),
+        title: Row(
+          children: [
+            Container(
+              width: 34.r,
+              height: 34.r,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: dialogContext.surfaceColor(const Color(0xFFFBEAEA)),
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                size: 18.sp,
+                color: AppColor.forgotPassword,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                appText.logout,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          appText.logoutConfirmMessage,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: dialogContext.inkColor(Colors.black),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(appText.no),
+            style: TextButton.styleFrom(
+              backgroundColor: dialogContext.surfaceColor(
+                AppColor.lightTintSoft,
+              ),
+              foregroundColor: dialogContext.inkColor(Colors.black),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Text(
+              appText.no,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),

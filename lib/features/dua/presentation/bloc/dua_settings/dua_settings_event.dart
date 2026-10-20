@@ -6,9 +6,14 @@ class LoadDuaSettings extends DuaSettingsEvent {
   const LoadDuaSettings();
 }
 
-class SetDuaFontSize extends DuaSettingsEvent {
-  const SetDuaFontSize(this.multiplier);
-  final double multiplier;
+class SetDuaArabicFontSize extends DuaSettingsEvent {
+  const SetDuaArabicFontSize(this.size);
+  final double size;
+}
+
+class SetDuaTranslationFontSize extends DuaSettingsEvent {
+  const SetDuaTranslationFontSize(this.size);
+  final double size;
 }
 
 class ToggleDuaArabic extends DuaSettingsEvent {
@@ -23,5 +28,15 @@ class ToggleDuaTranslation extends DuaSettingsEvent {
 
 class ToggleDuaTransliteration extends DuaSettingsEvent {
   const ToggleDuaTransliteration(this.show);
+  final bool show;
+}
+
+class ToggleDuaNarration extends DuaSettingsEvent {
+  const ToggleDuaNarration(this.show);
+  final bool show;
+}
+
+class ToggleDuaReference extends DuaSettingsEvent {
+  const ToggleDuaReference(this.show);
   final bool show;
 }

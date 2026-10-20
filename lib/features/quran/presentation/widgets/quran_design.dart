@@ -245,7 +245,7 @@ class QuranBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = AppText.of(context);
     final items = [
-      ('home', text.home, Icons.home_outlined),
+      ('home', text.categoryQuran, Icons.menu_book_outlined),
       (
         'learn',
         text.learn.isNotEmpty ? text.learn : 'Learn',

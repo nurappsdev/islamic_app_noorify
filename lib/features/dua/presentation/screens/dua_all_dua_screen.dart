@@ -44,7 +44,7 @@ class DuaAllDuaScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             TextField(
               decoration: InputDecoration(
-                hintText: appText.searchHere,
+                hintText: appText.duaSearchDuaHint,
                 hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
                 filled: true,
                 fillColor: context.surfaceColor(Colors.white),
@@ -73,7 +73,11 @@ class DuaAllDuaScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             for (var i = 0; i < duas.length; i++) ...[
               DuaItemTile(
+                index: i,
                 name: duas[i].name,
+                subtitle: duas[i].segments.isEmpty
+                    ? null
+                    : duas[i].segments.first.translation,
                 onTap: () => Navigator.of(context).pushNamed(
                   RouteNames.duaReader,
                   arguments: DuaReaderArgs.mock(

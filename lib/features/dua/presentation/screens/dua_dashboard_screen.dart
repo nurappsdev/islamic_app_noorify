@@ -60,7 +60,7 @@ class _DuaDashboardView extends StatelessWidget {
                 }
 
                 final featured = state.featured;
-                final dashboardCategories = state.categories.take(9).toList();
+                final dashboardCategories = state.categories.take(4).toList();
 
                 return RefreshIndicator(
                   onRefresh: () => context.read<DuaHomeCubit>().load(),
@@ -128,6 +128,7 @@ class _DuaDashboardView extends StatelessWidget {
                       SizedBox(height: 22.h),
                       _SectionHeader(
                         title: appText.duaCategoryTitle,
+                        italic: true,
                         onSeeAll: () => Navigator.of(
                           context,
                         ).pushNamed(RouteNames.duaAllCategory),
@@ -151,13 +152,14 @@ class _DuaDashboardView extends StatelessWidget {
                           itemCount: dashboardCategories.length,
                           gridDelegate:
                               SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisExtent: 116.h,
-                                crossAxisSpacing: 10.w,
-                                mainAxisSpacing: 10.h,
+                                crossAxisCount: 2,
+                                mainAxisExtent: 150.h,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
                               ),
                           itemBuilder: (context, index) => DuaCategoryTile(
                             category: dashboardCategories[index],
+                            index: index,
                           ),
                         ),
                     ],
@@ -180,10 +182,19 @@ class _DuaDashboardView extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.onSeeAll});
+  const _SectionHeader({
+    required this.title,
+    required this.onSeeAll,
+    this.italic = false,
+  });
 
   final String title;
   final VoidCallback onSeeAll;
+
+  /// `true` for "Duas Category" — italic serif like the page title and the
+  /// featured card's heading (design `devImg/img_16.png`); "Featured Dua"
+  /// stays upright.
+  final bool italic;
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +203,11 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+            fontStyle: italic ? FontStyle.italic : FontStyle.normal,
+          ),
         ),
         InkWell(
           onTap: onSeeAll,
