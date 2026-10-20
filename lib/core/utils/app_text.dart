@@ -349,6 +349,13 @@ class AppText {
     required this.duaRecitePrefix,
     required this.duaReciteSuffix,
     required this.duaBookmarkAdded,
+    required this.duaCopied,
+    required this.duaShareFailed,
+    required this.duaNarrationTitle,
+    required this.duaArabicSectionTitle,
+    required this.duaTranslationSectionTitle,
+    required this.duaAuthenticTitle,
+    required this.duaChainVerifiedBadge,
     required this.duaSettingsTitle,
     required this.showArabicLabel,
     required this.showTranslationLabel,
@@ -1284,6 +1291,13 @@ class AppText {
   final String duaRecitePrefix;
   final String duaReciteSuffix;
   final String duaBookmarkAdded;
+  final String duaCopied;
+  final String duaShareFailed;
+  final String duaNarrationTitle;
+  final String duaArabicSectionTitle;
+  final String duaTranslationSectionTitle;
+  final String duaAuthenticTitle;
+  final String duaChainVerifiedBadge;
   final String duaSettingsTitle;
   final String showArabicLabel;
   final String showTranslationLabel;
@@ -3112,6 +3126,37 @@ class AppText {
         map,
         'duaBookmarkAdded',
         fallback?.duaBookmarkAdded ?? '',
+      ),
+      duaCopied: _read(map, 'duaCopied', fallback?.duaCopied ?? ''),
+      duaShareFailed: _read(
+        map,
+        'duaShareFailed',
+        fallback?.duaShareFailed ?? '',
+      ),
+      duaNarrationTitle: _read(
+        map,
+        'duaNarrationTitle',
+        fallback?.duaNarrationTitle ?? '',
+      ),
+      duaArabicSectionTitle: _read(
+        map,
+        'duaArabicSectionTitle',
+        fallback?.duaArabicSectionTitle ?? '',
+      ),
+      duaTranslationSectionTitle: _read(
+        map,
+        'duaTranslationSectionTitle',
+        fallback?.duaTranslationSectionTitle ?? '',
+      ),
+      duaAuthenticTitle: _read(
+        map,
+        'duaAuthenticTitle',
+        fallback?.duaAuthenticTitle ?? '',
+      ),
+      duaChainVerifiedBadge: _read(
+        map,
+        'duaChainVerifiedBadge',
+        fallback?.duaChainVerifiedBadge ?? '',
       ),
       duaSettingsTitle: _read(
         map,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
@@ -16,7 +18,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_zoom_contr
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
-/// Single-dua reader (design `devImg/img_6.png`), reached by tapping a dua
+/// Single-dua reader (design `devImg/img_19.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].
 ///
 /// UI only: the recitation counter is in-memory and resets when the screen is
@@ -46,6 +48,13 @@ class _DuaReaderView extends StatefulWidget {
 }
 
 class _DuaReaderViewState extends State<_DuaReaderView> {
+  /// How many times the dua has been recited this visit — the bottom bar's
+  /// counter pill (design `img_19.png`); resets when the screen is left.
+  int _count = 0;
+
+  void _incrementCount() => setState(() => _count++);
+  void _resetCount() => setState(() => _count = 0);
+
   /// Unifies a real `/duas/featured` item and the legacy mock [DuaDetail]
   /// into one shape the view below renders, resolving bilingual fields in
   /// the app's current language.
@@ -55,7 +64,9 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
       final categoryName = context.localized(model.category?.name);
       final title = context.localized(model.title);
       return _DuaReadable(
-        headerTitle: categoryName.isNotEmpty ? categoryName : title,
+        categoryLabel: categoryName.isNotEmpty
+            ? categoryName
+            : widget.args.featured?.groupLabel ?? '',
         name: title,
         segments: [
           DuaSegment(
@@ -68,16 +79,20 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
             ? model.recommendedRepeatCount
             : null,
         reference: context.localized(model.reference),
+        instruction: context.localized(model.instruction),
+        virtue: context.localized(model.virtue),
       );
     }
     final detail = widget.args.detail!;
     return _DuaReadable(
-      headerTitle: widget.args.featured!.groupLabel,
+      categoryLabel: widget.args.featured!.groupLabel,
       name: detail.name,
       segments: detail.segments,
       transliteration: detail.transliteration,
       repeatCount: detail.repeatCount,
       reference: '',
+      instruction: '',
+      virtue: '',
     );
   }
 
@@ -159,6 +174,75 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
           duration: const Duration(milliseconds: 1200),
         ),
       );
+    }
+  }
+
+  /// Title, Arabic, translation and reference as plain text — for the
+  /// header's copy and share actions.
+  String _plainText(BuildContext context) {
+    final readable = _readable(context);
+    final buffer = StringBuffer();
+    if (readable.name.isNotEmpty) buffer.writeln(readable.name);
+    final arabic = readable.segments
+        .map((s) => s.arabic)
+        .where((a) => a.isNotEmpty)
+        .join('\n');
+    if (arabic.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(arabic);
+    }
+    final translation = readable.segments
+        .map((s) => s.translation)
+        .where((t) => t.isNotEmpty)
+        .join('\n');
+    if (translation.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(translation);
+    }
+    if (readable.reference.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.reference);
+    }
+    return buffer.toString().trim();
+  }
+
+  Future<void> _copyFullText() async {
+    final appText = AppText.of(context);
+    final text = _plainText(context);
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(appText.duaCopied),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+
+  Future<void> _shareFullText() async {
+    final appText = AppText.of(context);
+    final text = _plainText(context);
+    if (text.isEmpty) return;
+    try {
+      final box = context.findRenderObject();
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: _readable(context).name,
+          sharePositionOrigin: box is RenderBox
+              ? box.localToGlobal(Offset.zero) & box.size
+              : null,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(appText.duaShareFailed)));
     }
   }
 
@@ -274,110 +358,272 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
       body: BlocBuilder<DuaSettingsBloc, DuaSettingsState>(
         builder: (context, settings) {
           final multiplier = settings.fontSizeMultiplier;
-          return ListView(
-            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h + bottomInset),
+          return Stack(
             children: [
-              SizedBox(height: 36.h),
-              DuaPageHeader(
-                title: readable.headerTitle,
-                action: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: _showSettingsModal,
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.surfaceColor(
-                          Color(0xFFDFDE68),
+              ListView(
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  0,
+                  16.w,
+                  96.h + bottomInset,
+                ),
+                children: [
+                  SizedBox(height: 36.h),
+                  DuaPageHeader(
+                    title: appText.duaIntroTitle,
+                    action: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _HeaderIconButton(
+                          icon: Icons.copy_rounded,
+                          onTap: _copyFullText,
                         ),
-                        foregroundColor: context.inkColor(Color(0xFF303629)),
-                        minimumSize: Size(38.r, 38.r),
-                      ),
-                      icon: const Icon(Icons.settings_rounded, size: 18),
+                        SizedBox(width: 8.w),
+                        _HeaderIconButton(
+                          icon: Icons.ios_share_rounded,
+                          onTap: _shareFullText,
+                        ),
+                        SizedBox(width: 8.w),
+                        _HeaderIconButton(
+                          icon: Icons.more_vert_rounded,
+                          onTap: _showSettingsModal,
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 8.w),
-                    IconButton(
-                      onPressed: _showBookmarkSheet,
-                      style: IconButton.styleFrom(
-                        backgroundColor: context.surfaceColor(
-                          Color(0xFFDFDE68),
-                        ),
-                        foregroundColor: context.inkColor(Color(0xFF303629)),
-                        minimumSize: Size(38.r, 38.r),
+                  ),
+                  if (readable.categoryLabel.isNotEmpty) ...[
+                    SizedBox(height: 18.h),
+                    _CategoryPill(label: readable.categoryLabel),
+                  ],
+                  SizedBox(height: 16.h),
+                  Text(
+                    readable.name,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      height: 1.4,
+                      fontWeight: FontWeight.w700,
+                      color: context.inkColor(const Color(0xFF2C3320)),
+                    ),
+                  ),
+                  if (readable.repeatCount != null) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      context.localizedDigits(
+                        '${appText.duaRecitePrefix} ${readable.repeatCount} '
+                        '${appText.duaReciteSuffix}',
                       ),
-                      icon: const Icon(Icons.bookmark_border_rounded, size: 18),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: context.inkColor(const Color(0xFF7C8A63)),
+                      ),
                     ),
                   ],
+                  if (readable.instruction.isNotEmpty) ...[
+                    SizedBox(height: 16.h),
+                    _SectionCard(
+                      icon: Icons.menu_book_rounded,
+                      accent: const Color(0xFF4C5A34),
+                      bg: Colors.white,
+                      border: const Color(0xFFE3E7D3),
+                      title: appText.duaNarrationTitle,
+                      child: Text(
+                        readable.instruction,
+                        style: TextStyle(
+                          fontSize: 12.5.sp,
+                          height: 1.6,
+                          color: context.inkColor(const Color(0xFF3B4430)),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (settings.showArabic &&
+                      readable.segments.any((s) => s.arabic.isNotEmpty)) ...[
+                    SizedBox(height: 14.h),
+                    _SectionCard(
+                      icon: Icons.auto_awesome_outlined,
+                      accent: const Color(0xFFB07A2E),
+                      bg: const Color(0xFFFBF3DD),
+                      border: const Color(0xFFEBDCA8),
+                      title: appText.duaArabicSectionTitle,
+                      child: Column(
+                        children: [
+                          for (final segment in readable.segments)
+                            if (segment.arabic.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.symmetric(vertical: 4.h),
+                                child: Text(
+                                  segment.arabic,
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.rtl,
+                                  style: TextStyle(
+                                    fontFamily: 'Noorehuda',
+                                    fontSize: 20.sp * multiplier,
+                                    height: 1.9,
+                                    color: context.inkColor(
+                                      const Color(0xFF283016),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (settings.showTransliteration &&
+                      readable.transliteration.isNotEmpty) ...[
+                    SizedBox(height: 10.h),
+                    Text(
+                      readable.transliteration,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5.sp * multiplier,
+                        height: 1.6,
+                        fontStyle: FontStyle.italic,
+                        color: context.inkColor(const Color(0xFF3B4430)),
+                      ),
+                    ),
+                  ],
+                  if (settings.showTranslation &&
+                      readable.segments.any(
+                        (s) => s.translation.isNotEmpty,
+                      )) ...[
+                    SizedBox(height: 14.h),
+                    _SectionCard(
+                      icon: Icons.translate_rounded,
+                      accent: const Color(0xFFB0527A),
+                      bg: const Color(0xFFFBDFE6),
+                      title: appText.duaTranslationSectionTitle,
+                      trailing: InkWell(
+                        onTap: () {
+                          final translation = readable.segments
+                              .map((s) => s.translation)
+                              .where((t) => t.isNotEmpty)
+                              .join('\n');
+                          if (translation.isEmpty) return;
+                          Clipboard.setData(ClipboardData(text: translation));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(appText.duaCopied),
+                              duration: const Duration(milliseconds: 1200),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12.r),
+                        child: Icon(
+                          Icons.copy_rounded,
+                          size: 15.sp,
+                          color: context.inkColor(const Color(0xFFB0527A)),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final segment in readable.segments)
+                            if (segment.translation.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.symmetric(vertical: 3.h),
+                                child: Text(
+                                  segment.translation,
+                                  style: TextStyle(
+                                    fontSize: 12.sp * multiplier,
+                                    height: 1.6,
+                                    color: context.inkColor(
+                                      const Color(0xFF5D4450),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (readable.reference.isNotEmpty) ...[
+                    SizedBox(height: 14.h),
+                    _SectionCard(
+                      icon: Icons.verified_rounded,
+                      accent: const Color(0xFF2F6B3C),
+                      bg: const Color(0xFFDCEEC0),
+                      title: appText.duaAuthenticTitle,
+                      trailing: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.surfaceColor(Colors.white),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Text(
+                          appText.duaChainVerifiedBadge,
+                          style: TextStyle(
+                            fontSize: 9.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: context.inkColor(const Color(0xFF2F6B3C)),
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        readable.reference,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          height: 1.6,
+                          color: context.inkColor(const Color(0xFF3B4430)),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (readable.virtue.isNotEmpty) ...[
+                    SizedBox(height: 14.h),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.r),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor(const Color(0xFFFBF3DD)),
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.watch_later_outlined,
+                            size: 15.sp,
+                            color: context.inkColor(const Color(0xFFB07A2E)),
+                          ),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              readable.virtue,
+                              style: TextStyle(
+                                fontSize: 11.5.sp,
+                                height: 1.6,
+                                color: context.inkColor(
+                                  const Color(0xFF7C6A3A),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  child: _ReciteBar(
+                    count: _count,
+                    onIncrement: _incrementCount,
+                    onReset: _resetCount,
+                    onBookmark: _showBookmarkSheet,
+                  ),
                 ),
               ),
-              SizedBox(height: 18.h),
-              Text(
-                readable.name,
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
-              ),
-              if (readable.repeatCount != null) ...[
-                SizedBox(height: 10.h),
-                Text(
-                  context.localizedDigits(
-                    '${appText.duaRecitePrefix} ${readable.repeatCount} '
-                    '${appText.duaReciteSuffix}',
-                  ),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: context.inkColor(Color(0xFF3B4430)),
-                  ),
-                ),
-              ],
-              SizedBox(height: 20.h),
-              for (final segment in readable.segments) ...[
-                if (settings.showArabic)
-                  Text(
-                    segment.arabic,
-                    textAlign: TextAlign.center,
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(
-                      fontFamily: 'Noorehuda',
-                      fontSize: 20.sp * multiplier,
-                      height: 1.9,
-                      color: context.inkColor(Color(0xFF283016)),
-                    ),
-                  ),
-                if (settings.showArabic && settings.showTranslation)
-                  SizedBox(height: 4.h),
-                if (settings.showTranslation)
-                  Text(
-                    segment.translation,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12.sp * multiplier,
-                      color: context.inkColor(Color(0xFF5D6B44)),
-                    ),
-                  ),
-                SizedBox(height: 14.h),
-              ],
-              if (settings.showTransliteration) ...[
-                SizedBox(height: 6.h),
-                Text(
-                  readable.transliteration,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.5.sp * multiplier,
-                    height: 1.6,
-                    fontStyle: FontStyle.italic,
-                    color: context.inkColor(Color(0xFF3B4430)),
-                  ),
-                ),
-              ],
-              if (readable.reference.isNotEmpty) ...[
-                SizedBox(height: 18.h),
-                Text(
-                  '${appText.hadithBookReference}: ${readable.reference}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: context.inkColor(Color(0xFF7C8A63)),
-                  ),
-                ),
-              ],
             ],
           );
         },
@@ -391,20 +637,233 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
 /// current language.
 class _DuaReadable {
   const _DuaReadable({
-    required this.headerTitle,
+    required this.categoryLabel,
     required this.name,
     required this.segments,
     required this.transliteration,
     required this.repeatCount,
     required this.reference,
+    required this.instruction,
+    required this.virtue,
   });
 
-  final String headerTitle;
+  final String categoryLabel;
   final String name;
   final List<DuaSegment> segments;
   final String transliteration;
   final int? repeatCount;
   final String reference;
+  final String instruction;
+  final String virtue;
+}
+
+/// A circular icon button in the header's action row (design `img_19.png`:
+/// copy, share, and the settings overflow).
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onTap,
+      style: IconButton.styleFrom(
+        backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
+        foregroundColor: context.inkColor(const Color(0xFF303629)),
+        minimumSize: Size(38.r, 38.r),
+      ),
+      icon: Icon(icon, size: 18),
+    );
+  }
+}
+
+/// The dua's category/group name pill under the header (design
+/// `img_19.png`).
+class _CategoryPill extends StatelessWidget {
+  const _CategoryPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFF3F1DE)),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.auto_awesome_rounded,
+            size: 15.sp,
+            color: context.inkColor(const Color(0xFF8B9A4B)),
+          ),
+          SizedBox(width: 8.w),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w600,
+                color: context.inkColor(const Color(0xFF5D6B44)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A labeled content card used for the reader's Narration / Arabic /
+/// Translation / Authentic-Hadith sections (design `img_19.png`).
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.accent,
+    required this.bg,
+    required this.title,
+    required this.child,
+    this.trailing,
+    this.border,
+  });
+
+  final IconData icon;
+  final Color accent;
+  final Color bg;
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+  final Color? border;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(bg),
+        borderRadius: BorderRadius.circular(16.r),
+        border: border == null
+            ? null
+            : Border.all(color: context.lineColor(border!)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 15.sp, color: context.inkColor(accent)),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: context.inkColor(accent),
+                  ),
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
+          SizedBox(height: 10.h),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Floating recite-counter bar (design `img_19.png`): tap the number to
+/// count a recitation, the loop icon resets it, the bookmark icon opens
+/// [DuaBookmarkSheet], and the play icon is disabled — no audio yet.
+class _ReciteBar extends StatelessWidget {
+  const _ReciteBar({
+    required this.count,
+    required this.onIncrement,
+    required this.onReset,
+    required this.onBookmark,
+  });
+
+  final int count;
+  final VoidCallback onIncrement;
+  final VoidCallback onReset;
+  final VoidCallback onBookmark;
+
+  static const _barColor = Color(0xFFA1AE57);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(_barColor),
+        borderRadius: BorderRadius.circular(32.r),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          InkWell(
+            onTap: onIncrement,
+            borderRadius: BorderRadius.circular(22.r),
+            child: Container(
+              width: 42.r,
+              height: 42.r,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                context.localizedDigits('$count'),
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.inkColor(const Color(0xFF3C4A28)),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onReset,
+            icon: const Icon(Icons.replay_rounded, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: onBookmark,
+            icon: const Icon(
+              Icons.bookmark_border_rounded,
+              color: Colors.white,
+            ),
+          ),
+          IconButton(
+            onPressed: null,
+            icon: Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white.withValues(alpha: .55),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _VisibilityToggle extends StatelessWidget {
@@ -434,8 +893,8 @@ class _VisibilityToggle extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColor.primary,
-          activeTrackColor: AppColor.primary.withOpacity(0.2),
+          activeThumbColor: AppColor.primary,
+          activeTrackColor: AppColor.primary.withValues(alpha: 0.2),
         ),
       ],
     );
