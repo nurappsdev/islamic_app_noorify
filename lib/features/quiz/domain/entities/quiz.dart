@@ -33,6 +33,34 @@ class QuizQuestion {
   final bool isActive;
 }
 
+/// Where a daily quiz stands in its day: a day has [quizzesPerDay] quizzes,
+/// played one after the other, the next drawn once the one before it is
+/// submitted.
+class DailyQuizProgress {
+  const DailyQuizProgress({
+    required this.sequence,
+    required this.quizzesPerDay,
+    required this.completedQuizzes,
+    required this.dayCompleted,
+  });
+
+  /// Which of the day's quizzes this is (1-based).
+  final int sequence;
+  final int quizzesPerDay;
+
+  /// How many of the day's quizzes were done before this one was served.
+  final int completedQuizzes;
+
+  /// Every quiz of the day is done: this one is the last, already played.
+  final bool dayCompleted;
+
+  /// More than one daily quiz a day, so they are numbered.
+  bool get numbered => quizzesPerDay > 1;
+
+  /// Another quiz of the day follows this one.
+  bool get hasNext => sequence < quizzesPerDay;
+}
+
 /// A playable quiz: the day's quiz (`GET /quizzes/daily`) or a practice quiz
 /// drawn from one category (`GET /quizzes/categories/{id}/quiz`).
 class Quiz {
@@ -45,6 +73,7 @@ class Quiz {
     required this.timeLimitSeconds,
     required this.totalQuestions,
     required this.questions,
+    this.daily,
   });
 
   /// Which kind of quiz this is, and so the `attemptType` it is submitted as.
@@ -62,4 +91,7 @@ class Quiz {
 
   /// Active questions only, in play order.
   final List<QuizQuestion> questions;
+
+  /// A daily quiz's place in its day; null for other quizzes.
+  final DailyQuizProgress? daily;
 }

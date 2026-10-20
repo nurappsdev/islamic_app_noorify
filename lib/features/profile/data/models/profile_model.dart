@@ -49,6 +49,8 @@ class ProfileModel extends ProfileEntity {
     super.globalRankPosition,
     super.badges,
     super.currentBadge,
+    super.nextBadge,
+    super.pointsToNextBadge,
     super.avatarUrl,
     super.dateOfBirth,
     super.profession,
@@ -62,7 +64,8 @@ class ProfileModel extends ProfileEntity {
       throw ParsingException('Profile response is missing "_id" / "email".');
     }
     final badgesJson = json['badges'];
-    final currentBadgeJson = json['currentBadge'];
+    BadgeModel? badgeOf(Object? raw) =>
+        raw is Map ? BadgeModel.fromJson(Map<String, dynamic>.from(raw)) : null;
     return ProfileModel(
       id: id,
       name: json['name']?.toString() ?? '',
@@ -86,9 +89,9 @@ class ProfileModel extends ProfileEntity {
                 .map((e) => BadgeModel.fromJson(Map<String, dynamic>.from(e)))
                 .toList()
           : const [],
-      currentBadge: currentBadgeJson is Map
-          ? BadgeModel.fromJson(Map<String, dynamic>.from(currentBadgeJson))
-          : null,
+      currentBadge: badgeOf(json['currentBadge']),
+      nextBadge: badgeOf(json['nextBadge']),
+      pointsToNextBadge: json['pointsToNextBadge'] as num? ?? 0,
       avatarUrl: json['avatarUrl']?.toString(),
       dateOfBirth: json['dateOfBirth']?.toString(),
       profession: json['profession']?.toString(),
@@ -117,17 +120,18 @@ class ProfileModel extends ProfileEntity {
     'badges': badges
         .map((b) => (b is BadgeModel ? b : _toBadgeModel(b)).toJson())
         .toList(),
-    'currentBadge': currentBadge == null
-        ? null
-        : (currentBadge is BadgeModel
-                  ? currentBadge as BadgeModel
-                  : _toBadgeModel(currentBadge!))
-              .toJson(),
+    'currentBadge': _badgeJson(currentBadge),
+    'nextBadge': _badgeJson(nextBadge),
+    'pointsToNextBadge': pointsToNextBadge,
     'avatarUrl': avatarUrl,
     'dateOfBirth': dateOfBirth,
     'profession': profession,
     'location': location,
   };
+
+  static Map<String, dynamic>? _badgeJson(BadgeEntity? badge) => badge == null
+      ? null
+      : (badge is BadgeModel ? badge : _toBadgeModel(badge)).toJson();
 
   static BadgeModel _toBadgeModel(BadgeEntity b) => BadgeModel(
     id: b.id,
@@ -138,5 +142,7 @@ class ProfileModel extends ProfileEntity {
     level: b.level,
     isUnlocked: b.isUnlocked,
     unlockedAt: b.unlockedAt,
+    startPoints: b.startPoints,
+    endPoints: b.endPoints,
   );
 }

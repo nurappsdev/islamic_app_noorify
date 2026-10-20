@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_ayah.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_ayah_marker.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_reading_text.dart';
 
 /// The Arabic paragraph; the markers' digits are left-to-right text.
@@ -56,13 +57,7 @@ void main() {
             find.byKey(ValueKey('ayah-marker-${ayah.verseKey}')),
           );
           final inner = tester.getRect(
-            find.text(
-              ayah.ayahNumber
-                  .toString()
-                  .split('')
-                  .map((n) => String.fromCharCode(0x9E6 + int.parse(n)))
-                  .join(),
-            ),
+            find.text(arabicDigits(ayah.ayahNumber)),
           );
           expect(
             inner.left - outer.left,
@@ -74,9 +69,13 @@ void main() {
           );
           expect(outer.left, greaterThanOrEqualTo(0));
         }
-        await tester.ensureVisible(find.text('৩'));
-        await tester.longPress(find.text('৩'));
+        await tester.ensureVisible(find.text('٣'));
+        // Held for the reader's full hold time (longPress is shorter).
+        final hold = await tester.startGesture(
+          tester.getCenter(find.text('٣')),
+        );
         await tester.pump(kAyahHoldDuration);
+        await hold.up();
         expect(tapped, 3);
         expect(tester.takeException(), isNull);
       }

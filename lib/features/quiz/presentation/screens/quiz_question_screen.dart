@@ -60,6 +60,7 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen>
           arguments: QuizCompletionArgs(
             result: result,
             launch: context.read<QuizQuestionBloc>().launch,
+            daily: state.quiz?.daily,
           ),
         );
       case QuizSubmissionStatus.failed:
@@ -85,15 +86,24 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen>
     final appText = AppText.of(context);
     final bloc = context.read<QuizQuestionBloc>();
     final launch = bloc.launch;
-    final title = launch.attemptType == QuizAttemptType.daily
-        ? appText.dailyQuiz
-        : context.localized(launch.categoryName);
 
     return BlocConsumer<QuizQuestionBloc, QuizQuestionState>(
       listenWhen: (previous, current) =>
           previous.submissionStatus != current.submissionStatus,
       listener: _onStateChanged,
       builder: (context, state) {
+        // A day of several daily quizzes numbers them: "Daily Quiz 1/2".
+        final daily = state.quiz?.daily;
+        final title = launch.attemptType != QuizAttemptType.daily
+            ? context.localized(launch.categoryName)
+            : daily != null && daily.numbered
+            ? context.localizedDigits(
+                appText.dailyQuizNumber.fill({
+                  'n': daily.sequence,
+                  'total': daily.quizzesPerDay,
+                }),
+              )
+            : appText.dailyQuiz;
         final Widget body;
         switch (state.loadStatus) {
           case QuizLoadStatus.initial:
@@ -106,6 +116,8 @@ class _QuizQuestionScreenState extends State<QuizQuestionScreen>
             );
           case QuizLoadStatus.empty:
             body = QuizStatusView(message: appText.noQuizAvailable);
+          case QuizLoadStatus.dayCompleted:
+            body = QuizStatusView(message: appText.allDailyQuizzesCompleted);
           case QuizLoadStatus.success:
             body = _QuizBody(state: state);
         }

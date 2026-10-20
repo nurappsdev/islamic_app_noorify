@@ -159,6 +159,10 @@ class _QuizHero extends StatelessWidget {
     final dailyState = context.watch<DailyQuizStatusCubit?>()?.state;
     final dailyStatus = dailyState?.dailyStatus;
     final isCompleted = dailyStatus?.completed ?? false;
+    // Some of the day's daily quizzes are done: say how many, and start the
+    // next one by its number.
+    final partly = dailyStatus != null && dailyStatus.partlyCompleted;
+    final next = partly ? dailyStatus.nextSequence : null;
 
     return Container(
       height: 250.h,
@@ -273,7 +277,24 @@ class _QuizHero extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(height: 18.h),
+                        if (partly) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            context.localizedDigits(
+                              appText.dailyQuizzesDone.fill({
+                                'done': dailyStatus.completedQuizzes,
+                                'total': dailyStatus.quizzesPerDay,
+                              }),
+                            ),
+                            key: const ValueKey('quiz-daily-progress'),
+                            style: TextStyle(
+                              color: context.inkColor(const Color(0xFF84945F)),
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: partly ? 12.h : 18.h),
                         FilledButton(
                           onPressed: () async {
                             await openDailyQuiz(context);
@@ -291,7 +312,13 @@ class _QuizHero extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            appText.letsGetStart,
+                            next == null
+                                ? appText.letsGetStart
+                                : context.localizedDigits(
+                                    appText.startDailyQuizNumber.fill({
+                                      'n': next,
+                                    }),
+                                  ),
                             style: TextStyle(fontSize: 11.sp),
                           ),
                         ),

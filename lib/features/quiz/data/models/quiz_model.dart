@@ -77,6 +77,7 @@ class QuizModel extends Quiz {
     required super.timeLimitSeconds,
     required super.totalQuestions,
     required super.questions,
+    super.daily,
   });
 
   factory QuizModel.fromJson(Map<String, dynamic> json) {
@@ -92,8 +93,10 @@ class QuizModel extends Quiz {
         .toList();
 
     final category = readMap(json['category']);
+    final source = QuizAttemptType.fromApi(json['source']);
+    final sequence = readNum(json['sequence'])?.toInt();
     return QuizModel(
-      source: QuizAttemptType.fromApi(json['source']),
+      source: source,
       id: readId(json['id']),
       quizDate: json['quizDate']?.toString(),
       category: category == null ? null : QuizCategoryModel.fromJson(category),
@@ -102,6 +105,16 @@ class QuizModel extends Quiz {
       totalQuestions:
           readNum(json['totalQuestions'])?.toInt() ?? questions.length,
       questions: List.unmodifiable(questions),
+      // Only a server with several daily quizzes a day numbers them.
+      daily: source != QuizAttemptType.daily || sequence == null
+          ? null
+          : DailyQuizProgress(
+              sequence: sequence,
+              quizzesPerDay: (readNum(json['quizzesPerDay'])?.toInt() ?? 1)
+                  .clamp(sequence, 1 << 16),
+              completedQuizzes: readNum(json['completedQuizzes'])?.toInt() ?? 0,
+              dayCompleted: json['isCompleted'] == true,
+            ),
     );
   }
 }
