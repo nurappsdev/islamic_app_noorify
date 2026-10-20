@@ -10,25 +10,22 @@ class QuranAyahMarker extends StatelessWidget {
     required this.number,
     required this.scale,
     this.sign = '',
-    this.signStyle,
+    this.arabicStyle,
   });
   final int number;
   final double scale;
 
-  /// The ayah's end marks (waqf signs, ruku), drawn centred above the ring,
-  /// in [signStyle]: the Arabic's own font, whose glyphs they are.
+  /// The ayah's end marks (waqf signs, ruku), drawn centred above the ring.
   final String sign;
-  final TextStyle? signStyle;
+
+  /// The Arabic text's style: its font draws [sign].
+  final TextStyle? arabicStyle;
 
   @override
   Widget build(BuildContext context) {
     final color = context.inkColor(Colors.black);
-    // Bangla digits (U+09E6 onwards), the readers' own numerals.
-    final digits = number
-        .toString()
-        .split('')
-        .map((digit) => String.fromCharCode(0x9E6 + int.parse(digit)))
-        .join();
+    final digits = arabicDigits(number);
+    final arabic = arabicStyle ?? const TextStyle();
     // A snug ring around the number: just wide enough for its digits, so
     // single-digit ayahs get the smallest marker.
     final size = (17.0 + 3 * digits.length) * scale;
@@ -36,8 +33,9 @@ class QuranAyahMarker extends StatelessWidget {
       dimension: size,
       child: CustomPaint(
         painter: _Ornament(color),
-        // The Quran font has no Bangla digits, so the app font draws them;
-        // scaled down if needed so three digits stay inside the ring.
+        // Arabic digits, in AlQalam whichever font the text is in: the
+        // IndoPak font's own (U+0660 on) are blank and Noorehuda's tiny.
+        // Scaled down if needed so three digits stay inside the ring.
         child: Padding(
           padding: EdgeInsets.all(size * .18),
           child: Center(
@@ -48,10 +46,10 @@ class QuranAyahMarker extends StatelessWidget {
                 textDirection: TextDirection.ltr,
                 textScaler: TextScaler.noScaling,
                 style: TextStyle(
+                  fontFamily: _digitFont,
                   fontSize: 12 * scale,
                   height: 1,
                   color: color,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -88,7 +86,7 @@ class QuranAyahMarker extends StatelessWidget {
                     textAlign: TextAlign.center,
                     textDirection: TextDirection.rtl,
                     textScaler: TextScaler.noScaling,
-                    style: (signStyle ?? const TextStyle()).copyWith(
+                    style: arabic.copyWith(
                       fontSize: 20 * scale,
                       height: 1,
                       color: color,
@@ -100,6 +98,13 @@ class QuranAyahMarker extends StatelessWidget {
     );
   }
 }
+
+const _digitFont = 'AlQalam Quran Majeed';
+
+/// [number] in Arabic-Indic digits (U+0660 onwards): ٢٥٥.
+String arabicDigits(int number) => String.fromCharCodes(
+  number.toString().codeUnits.map((c) => 0x0660 + c - 0x30),
+);
 
 class _Ornament extends CustomPainter {
   const _Ornament(this.color);

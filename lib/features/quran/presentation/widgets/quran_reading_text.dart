@@ -379,7 +379,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
                   number: a.ayahNumber,
                   scale: markerScale,
                   sign: parts[i].sign,
-                  signStyle: arabic,
+                  arabicStyle: arabic,
                 ),
               ),
             ),
@@ -398,11 +398,9 @@ class _QuranReadingTextState extends State<QuranReadingText>
         text: span,
         textScaler: scaler,
         textDirection: TextDirection.rtl,
-        // Zoomed in, a line holds only a few words and justifying it
-        // stretches the gaps between them; keep the edge ragged instead.
-        textAlign: widget.scale <= kDefaultArabicFontScale
-            ? TextAlign.justify
-            : TextAlign.start,
+        // Every line runs edge to edge, zoomed in too: a ragged edge left
+        // a gap at the end of the line.
+        textAlign: TextAlign.justify,
       ),
     );
   }
