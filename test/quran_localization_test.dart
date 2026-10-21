@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -187,9 +188,33 @@ void main() {
           }
         }
 
+        final bangla = language == AppLanguage.bangla;
+        // The title picks the section: Quran Majeed (here) or Hifzul Quran.
+        final majeed = bangla ? 'কুরআন মাজীদ' : 'Quran Majeed';
+        final hifz = bangla ? 'হিফজুল কুরআন' : 'Hifzul Quran';
+        expect(find.text(majeed), findsOneWidget);
+        expect(
+          tester
+              .renderObject<RenderParagraph>(find.text(majeed))
+              .didExceedMaxLines,
+          isFalse,
+          reason: 'the title is shown whole, never cut off with "..."',
+        );
+        await tester.tap(find.byKey(const ValueKey('quran-section-picker')));
+        await settle();
+        expect(find.text(majeed), findsNWidgets(2));
+        expect(find.text(hifz), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.text(hifz));
+        await settle();
+        expect(
+          find.text('$hifz: ${bangla ? 'শীঘ্রই আসছে' : 'Coming Soon'}'),
+          findsOneWidget,
+        );
+        expect(find.text(majeed), findsOneWidget, reason: 'still on Majeed');
+
         await tester.tap(find.byKey(const ValueKey('quran-home-tab-2')));
         await settle();
-        final bangla = language == AppLanguage.bangla;
         expect(find.text(bangla ? 'পৃষ্ঠা ১' : 'Page 1'), findsOneWidget);
         expect(tester.takeException(), isNull);
         // Tapping a page opens the reader at that page's first ayah.

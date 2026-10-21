@@ -1,4 +1,5 @@
 import 'quran_ayah_marker.dart';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -332,7 +333,7 @@ class _QuranReadingTextState extends State<QuranReadingText>
     final scaler = MediaQuery.textScalerOf(context);
     // The marker sizes itself with the Arabic as it is actually rendered,
     // including the system text scale, so its margin keeps pace on zoom.
-    final markerScale = scaler.scale(20 * widget.scale) / 20;
+    final markerScale = _markerScale(scaler, widget.scale);
     bool pressed(QuranAyah a) => _pressed == a.ayahNumber;
     // The playing ayah keeps its tint; a press shows over it, taking priority.
     Color? tint(QuranAyah a) {
@@ -340,12 +341,10 @@ class _QuranReadingTextState extends State<QuranReadingText>
       return pressed(a) ? pressTint(base) : base;
     }
 
-    final arabic = widget.font.apply(
-      TextStyle(
-        fontSize: 20 * widget.scale,
-        height: 2.1,
-        color: context.inkColor(Colors.black),
-      ),
+    final arabic = _arabicStyle(
+      widget.font,
+      widget.scale,
+      context.inkColor(Colors.black),
     );
     // Each ayah's end marks are drawn over its marker, not on its last word.
     final parts = [
@@ -403,6 +402,91 @@ class _QuranReadingTextState extends State<QuranReadingText>
         textAlign: TextAlign.justify,
       ),
     );
+  }
+}
+
+/// The Arabic text's style at [scale] (1 for 100%).
+TextStyle _arabicStyle(ArabicFont font, double scale, Color color) =>
+    font.apply(TextStyle(fontSize: 20 * scale, height: 2.1, color: color));
+
+/// The ayah markers' scale for text at [scale], with the system text scale:
+/// they size themselves with the Arabic as it is drawn.
+double _markerScale(TextScaler scaler, double scale) =>
+    scaler.scale(20 * scale) / 20;
+
+/// How far a justified line's word gaps may widen and still read evenly, as
+/// a share of the font size.
+const _comfortableStretch = .35;
+
+/// How unevenly [ayahs] justify at [scale] in [width], as
+/// [QuranReadingText] draws them: 0 when every line's word gaps widen only
+/// a little to reach the edge, more the wider some lines' gaps must grow
+/// (a line of a word or two that cannot fill the width counts heavily).
+/// Lets a zoom settle on a nearby size whose lines fit well.
+double quranJustifyFit({
+  required List<QuranAyah> ayahs,
+  required double scale,
+  required ArabicFont font,
+  required TextScaler textScaler,
+  required double width,
+}) {
+  final markerScale = _markerScale(textScaler, scale);
+  final style = _arabicStyle(font, scale, const Color(0xff000000));
+  final texts = [for (final a in ayahs) splitAyahEndSign(a.textArabic).text];
+  final painter = TextPainter(
+    text: TextSpan(
+      style: style,
+      children: [
+        for (final text in texts) ...[
+          TextSpan(text: text),
+          const WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: SizedBox.shrink(),
+          ),
+        ],
+      ],
+    ),
+    textDirection: TextDirection.rtl,
+    textScaler: textScaler,
+  );
+  try {
+    painter
+      ..setPlaceholderDimensions([
+        for (final a in ayahs)
+          PlaceholderDimensions(
+            size: QuranAyahMarker.layoutSize(a.ayahNumber, markerScale),
+            alignment: PlaceholderAlignment.middle,
+          ),
+      ])
+      ..layout(maxWidth: width);
+    final plain = painter.plainText;
+    final lines = painter.computeLineMetrics();
+    final comfortable =
+        _comfortableStretch * textScaler.scale(style.fontSize ?? 14);
+    var total = 0.0;
+    var offset = 0;
+    // The last line is not justified.
+    for (var i = 0; i < lines.length - 1 && offset < plain.length; i++) {
+      final end = math.max(
+        painter.getLineBoundary(TextPosition(offset: offset)).end,
+        offset + 1,
+      );
+      final gaps = ' '
+          .allMatches(
+            plain.substring(offset, math.min(end, plain.length)).trimRight(),
+          )
+          .length;
+      final free = math.max(0.0, width - lines[i].width);
+      final r = gaps == 0 ? free / comfortable : free / gaps / comfortable;
+      total += r * r;
+      offset = end;
+      while (offset < plain.length && plain.codeUnitAt(offset) == 0x20) {
+        offset++;
+      }
+    }
+    return total / math.max(1, lines.length - 1);
+  } finally {
+    painter.dispose();
   }
 }
 

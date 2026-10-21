@@ -47,7 +47,8 @@ class QuranSurahHeading extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 width * .12,
-                width * .57,
+                // The name sits inside the arch, clear of its outline.
+                width * .64,
                 width * .12,
                 24,
               ),

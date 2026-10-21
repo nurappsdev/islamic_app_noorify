@@ -912,7 +912,8 @@ class AppText {
     required this.surahMeaningWomen,
     required this.quranIntroSubtitle,
     required this.quranLoadError,
-    required this.hifjoQuranTitle,
+    required this.quranMajeedTitle,
+    required this.hifzulQuranTitle,
     required this.lastReadLabel,
     required this.viewReadingHistory,
     required this.ayahNoLabel,
@@ -1912,7 +1913,10 @@ class AppText {
   final String surahMeaningWomen;
   final String quranIntroSubtitle;
   final String quranLoadError;
-  final String hifjoQuranTitle;
+
+  /// The Quran home's section picker: reading (this screen) and Hifz.
+  final String quranMajeedTitle;
+  final String hifzulQuranTitle;
   final String lastReadLabel;
   final String viewReadingHistory;
   final String ayahNoLabel;
@@ -5428,10 +5432,15 @@ class AppText {
         'quranLoadError',
         fallback?.quranLoadError ?? '',
       ),
-      hifjoQuranTitle: _read(
+      quranMajeedTitle: _read(
         map,
-        'hifjoQuranTitle',
-        fallback?.hifjoQuranTitle ?? '',
+        'quranMajeedTitle',
+        fallback?.quranMajeedTitle ?? '',
+      ),
+      hifzulQuranTitle: _read(
+        map,
+        'hifzulQuranTitle',
+        fallback?.hifzulQuranTitle ?? '',
       ),
       lastReadLabel: _read(map, 'lastReadLabel', fallback?.lastReadLabel ?? ''),
       viewReadingHistory: _read(
