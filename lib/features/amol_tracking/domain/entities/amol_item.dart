@@ -19,4 +19,13 @@ class AmolItem {
   final num points;
   final num maxPoints;
   final bool isCompleted;
+
+  AmolItem copyWith({num? points, bool? isCompleted}) => AmolItem(
+    itemKey: itemKey,
+    title: title,
+    titleBn: titleBn,
+    points: points ?? this.points,
+    maxPoints: maxPoints,
+    isCompleted: isCompleted ?? this.isCompleted,
+  );
 }

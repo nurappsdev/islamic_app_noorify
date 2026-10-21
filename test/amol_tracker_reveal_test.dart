@@ -52,6 +52,10 @@ class _FakeRepository implements AmolTrackingRepository {
     required String pillarKey,
     required String itemKey,
   }) async => Right(dashboard);
+  @override
+  Future<({int sent, int pending})> syncPending({
+    AmolDailyDashboard? known,
+  }) async => (sent: 0, pending: 0);
 }
 
 AmolDailyDashboard _dashboard() => AmolDailyDashboard(

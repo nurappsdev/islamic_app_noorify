@@ -185,6 +185,10 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   }
 
   DailyPrayerTimes? _prayerTimes;
+
+  /// The most recent times this device has, even from an earlier day. Used
+  /// only to resolve the Fajr-to-Fajr date, never to gate a tick.
+  DailyPrayerTimes? _lastKnownTimes;
   late final StreamSubscription<String> _logFailureSub;
 
   /// The item to centre and highlight, if the caller named one. Cleared when
@@ -239,9 +243,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     final now = _now();
     final times = await _loadPrayerTimes(_calendarDate(now));
     if (!mounted) return;
-    final trackingDate = times == null
+    // The gate below only trusts times fetched for this very day; the date
+    // itself may fall back to the last Fajr this device knows, so a tick made
+    // before Fajr while offline still lands on the day the user is living.
+    final dateTimes = times ?? _lastKnownTimes;
+    final trackingDate = dateTimes == null
         ? _calendarDate(now)
-        : amolTrackingDate(now, times);
+        : amolTrackingDate(now, dateTimes);
     final changed = trackingDate != _today;
     if (changed) setState(() => _today = trackingDate);
     if (changed || load) {
@@ -411,6 +419,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
       final fresh = await service.loadPrayerTimes(civilDate);
       if (mounted && fresh != null) setState(() => _prayerTimes = fresh);
+      _lastKnownTimes = fresh ?? cached ?? service.lastCachedPrayerTimes();
       return fresh ?? cached;
     } catch (_) {
       // Times stay null; the gate below allows tracking when they're
@@ -429,7 +438,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   };
 
   Future<void> _onItemTap(String pillarKey, AmolItem item) async {
-    if (_bloc.state.loggingItemKey != null) return;
+    // Only a repeat tap on this very item is ignored; every other row stays
+    // live, so ticking several things offline keeps all of them.
+    if (_bloc.state.loggingItemKeys.contains(item.itemKey)) return;
     // Quiz is never ticked here: its check comes from the server once a quiz
     // is completed. Tapping it just opens the Quiz section (no login check,
     // no dialog, no tracking); on return the day is reloaded so a quiz
@@ -681,7 +692,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                                           pillar.pillarKey,
                                       onToggleExpanded: () =>
                                           _toggleCategory(pillar.pillarKey),
-                                      loggingItemKey: state.loggingItemKey,
+                                      loggingItemKeys: state.loggingItemKeys,
                                       completionOverrides:
                                           state.completionOverrides,
                                       anchorItemKey:
@@ -1075,7 +1086,7 @@ class _PillarRow extends StatelessWidget {
     required this.pillar,
     required this.expanded,
     required this.onToggleExpanded,
-    required this.loggingItemKey,
+    required this.loggingItemKeys,
     required this.completionOverrides,
     required this.onItemTap,
     this.anchorItemKey,
@@ -1086,7 +1097,10 @@ class _PillarRow extends StatelessWidget {
   final AmolPillar pillar;
   final bool expanded;
   final VoidCallback onToggleExpanded;
-  final String? loggingItemKey;
+
+  /// Items with a request in flight. Nothing is drawn for them — it only
+  /// stops the same row being tapped twice.
+  final Set<String> loggingItemKeys;
   final Map<String, bool> completionOverrides;
   final ValueChanged<AmolItem> onItemTap;
 
@@ -1131,7 +1145,9 @@ class _PillarRow extends StatelessWidget {
                             highlightAnchor &&
                             anchorItemKey != null &&
                             pillar.items[i].itemKey == anchorItemKey,
-                        isLogging: loggingItemKey == pillar.items[i].itemKey,
+                        isLogging: loggingItemKeys.contains(
+                          pillar.items[i].itemKey,
+                        ),
                         isChecked:
                             completionOverrides[pillar.items[i].itemKey] ??
                             pillar.items[i].isCompleted,
@@ -1173,6 +1189,9 @@ class _AmolItemRow extends StatelessWidget {
   final bool highlighted;
 
   final AmolItem item;
+
+  /// A request for this item is in flight. It changes nothing on screen: the
+  /// row already shows the state the user chose, and it stays that way.
   final bool isLogging;
   final bool isChecked;
   final VoidCallback onTap;
@@ -1258,7 +1277,7 @@ class _AmolItemRow extends StatelessWidget {
                 color: context.inkColor(const Color(0xFFB7BBA0)),
               )
             else
-              _CompletionCircle(isCompleted: isChecked, isLogging: isLogging),
+              _CompletionCircle(isCompleted: isChecked),
           ],
         ),
       ),
@@ -1266,27 +1285,20 @@ class _AmolItemRow extends StatelessWidget {
   }
 }
 
+/// The mark at the end of a checklist row: ticked, or not.
+///
+/// There is deliberately nothing in between — no spinner, no second shade of
+/// tick, no "waiting to sync" badge. A tick the server has already recorded,
+/// one still on its way, and one saved on the device while offline all look
+/// exactly the same, because to the user they are the same: it is done. The
+/// only thing that ever changes this mark is the user tapping it.
 class _CompletionCircle extends StatelessWidget {
-  const _CompletionCircle({required this.isCompleted, this.isLogging = false});
+  const _CompletionCircle({required this.isCompleted});
 
   final bool isCompleted;
-  final bool isLogging;
 
   @override
   Widget build(BuildContext context) {
-    if (isLogging) {
-      return SizedBox(
-        width: 26.r,
-        height: 26.r,
-        child: Padding(
-          padding: EdgeInsets.all(5),
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: context.inkColor(amolOlive),
-          ),
-        ),
-      );
-    }
     if (isCompleted) {
       return Container(
         width: 26.r,

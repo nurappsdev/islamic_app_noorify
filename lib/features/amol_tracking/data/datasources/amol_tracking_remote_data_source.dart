@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
-import 'package:tuhfatul_muslim/core/storage/latest_json_cache.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_day_snapshot_store.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_daily_dashboard_model.dart';
 
@@ -40,10 +40,11 @@ class AmolTrackingRemoteDataSourceImpl implements AmolTrackingRemoteDataSource {
   final Dio _dio;
   final AuthLocalDataSource _local;
 
-  /// The latest successfully-fetched daily checklist (from `getDaily`,
-  /// `logItem` or `deleteItem` alike — same response shape), read back by
-  /// [AmolTrackingRepositoryImpl] when a later request fails.
-  static final cache = LatestJsonCache('amol_daily');
+  /// Every successfully-fetched checklist (from `getDaily`, `logItem` or
+  /// `deleteItem` alike — same response shape), stored under its own
+  /// `dateIso` and read back by [AmolTrackingRepositoryImpl] whenever the
+  /// network can't be reached.
+  static final cache = AmolDaySnapshotStore.shared;
 
   @override
   Future<AmolDailyDashboardModel> getDaily({required String date}) async {
@@ -122,7 +123,7 @@ class AmolTrackingRemoteDataSourceImpl implements AmolTrackingRemoteDataSource {
     if (data is! Map<String, dynamic>) {
       throw ParsingException('Amol response is missing "data".');
     }
-    unawaited(cache.save(data));
+    unawaited(cache.write(data));
     return AmolDailyDashboardModel.fromJson(data);
   }
 

@@ -88,8 +88,13 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     final now = DateTime.now();
     try {
       final service = await AladhanPrayerTimeService.create();
+      // Offline past the day the times were cached for, the last known Fajr
+      // is still a far better answer than the civil date, which would move
+      // the pre-Fajr hours onto the wrong record.
       final times =
-          service.cachedPrayerTimes(now) ?? await service.loadPrayerTimes(now);
+          service.cachedPrayerTimes(now) ??
+          await service.loadPrayerTimes(now) ??
+          service.lastCachedPrayerTimes();
       if (times != null) return amolTrackingDateIso(now, times);
     } catch (_) {}
     return isoDate(now);
@@ -123,7 +128,9 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     try {
       final service = await AladhanPrayerTimeService.create();
       final times =
-          service.cachedPrayerTimes(now) ?? await service.loadPrayerTimes(now);
+          service.cachedPrayerTimes(now) ??
+          await service.loadPrayerTimes(now) ??
+          service.lastCachedPrayerTimes();
       if (times != null) next = nextAmolTrackingCheck(now, times);
     } catch (_) {}
     _boundaryTimer = Timer(next.difference(now), () {

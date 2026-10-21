@@ -91,8 +91,13 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     LogAmolDailyItem event,
     Emitter<AmolDailyState> emit,
   ) async {
-    // One in flight at a time.
-    if (state.loggingItemKey != null || _activeDate != event.logDate) return;
+    // Only this item's own request is awaited; ticking other items
+    // meanwhile is allowed, so nothing done offline is dropped while a
+    // request sits waiting for a network that isn't there.
+    if (state.loggingItemKeys.contains(event.itemKey) ||
+        _activeDate != event.logDate) {
+      return;
+    }
 
     // Check it immediately and keep it checked no matter what `log-item`
     // comes back with — see [AmolDailyState.completionOverrides].
@@ -107,12 +112,13 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     result.fold(
       (failure) {
         _logFailures.add(failure.message);
-        emit(state.withLoggingItemKey(null));
+        emit(state.withoutLoggingItem(event.itemKey));
       },
       (dashboard) => emit(
         AmolDailyState.success(
           dashboard,
           completionOverrides: completionOverrides,
+          loggingItemKeys: state.loggingItemKeys.difference({event.itemKey}),
         ),
       ),
     );
@@ -122,8 +128,12 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     UncheckAmolDailyItem event,
     Emitter<AmolDailyState> emit,
   ) async {
-    // One in flight at a time.
-    if (state.loggingItemKey != null || _activeDate != event.logDate) return;
+    // As in [_onLogItem]: only this item is held, so a run of unticks made
+    // offline is all kept.
+    if (state.loggingItemKeys.contains(event.itemKey) ||
+        _activeDate != event.logDate) {
+      return;
+    }
 
     // Uncheck it immediately and keep it unchecked no matter what
     // `delete-item` comes back with — see
@@ -139,12 +149,13 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     result.fold(
       (failure) {
         _logFailures.add(failure.message);
-        emit(state.withLoggingItemKey(null));
+        emit(state.withoutLoggingItem(event.itemKey));
       },
       (dashboard) => emit(
         AmolDailyState.success(
           dashboard,
           completionOverrides: completionOverrides,
+          loggingItemKeys: state.loggingItemKeys.difference({event.itemKey}),
         ),
       ),
     );
