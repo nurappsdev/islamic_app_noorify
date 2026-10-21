@@ -36,6 +36,11 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
   final LogAmolItem _logAmolItem;
   final DeleteAmolItem _deleteAmolItem;
 
+  /// Every load owns a generation. This prevents a slow response for the
+  /// previous civil day from restoring yesterday's checklist after midnight.
+  int _loadGeneration = 0;
+  String? _activeDate;
+
   /// One-off notifications for a failed `log-item`/`delete-item` call (the
   /// main [state]/dashboard is left untouched on that failure, so this is
   /// the only signal the screen gets — typically surfaced as a SnackBar).
@@ -50,12 +55,19 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     // to stay consistent between calls, so once the user has checked or
     // unchecked an item this session it stays that way regardless of what
     // this `GET` reports.
-    final completionOverrides = state.completionOverrides;
+    final loadGeneration = ++_loadGeneration;
+    final isNewDay = _activeDate != event.date;
+    _activeDate = event.date;
+    // A locally-toggled item must never be carried into a new civil day.
+    final completionOverrides = isNewDay
+        ? const <String, bool>{}
+        : state.completionOverrides;
     final refreshInPlace = event.silent && state.hasData;
     if (!refreshInPlace) {
       emit(AmolDailyState.loading(completionOverrides: completionOverrides));
     }
     final result = await _getAmolDaily(date: event.date);
+    if (loadGeneration != _loadGeneration) return;
     result.fold(
       // A silent refresh that fails keeps the checklist that is showing.
       (failure) => refreshInPlace
@@ -80,7 +92,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     Emitter<AmolDailyState> emit,
   ) async {
     // One in flight at a time.
-    if (state.loggingItemKey != null) return;
+    if (state.loggingItemKey != null || _activeDate != event.logDate) return;
 
     // Check it immediately and keep it checked no matter what `log-item`
     // comes back with — see [AmolDailyState.completionOverrides].
@@ -91,6 +103,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
       pillarKey: event.pillarKey,
       itemKey: event.itemKey,
     );
+    if (_activeDate != event.logDate) return;
     result.fold(
       (failure) {
         _logFailures.add(failure.message);
@@ -110,7 +123,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     Emitter<AmolDailyState> emit,
   ) async {
     // One in flight at a time.
-    if (state.loggingItemKey != null) return;
+    if (state.loggingItemKey != null || _activeDate != event.logDate) return;
 
     // Uncheck it immediately and keep it unchecked no matter what
     // `delete-item` comes back with — see
@@ -122,6 +135,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
       pillarKey: event.pillarKey,
       itemKey: event.itemKey,
     );
+    if (_activeDate != event.logDate) return;
     result.fold(
       (failure) {
         _logFailures.add(failure.message);

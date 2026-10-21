@@ -397,10 +397,9 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
     final minuteNow = _now.hour * 60 + _now.minute;
     // Tracked prayers, from the shared daily checklist (updates when the user
     // ticks one in the tracker).
+    final trackedFardh = AmolDailyStore.instance.pillar('fardh_prayer');
     final completedKeys = {
-      for (final item
-          in AmolDailyStore.instance.pillar('fardh_prayer')?.items ??
-              const <AmolItem>[])
+      for (final item in trackedFardh?.items ?? const <AmolItem>[])
         if (item.isCompleted) item.itemKey,
     };
     final prayers = [
@@ -421,25 +420,29 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
 
     return HomeGradientShape(
       child: AmalTrackerCardContent(
-        percentage: fardh?.percentage ?? 0,
-        percentageLabel: _pillarText(
-          context,
-          fardh,
-          (pillar) => pillar.localizedPercentage,
-          '',
-        ),
+        percentage: trackedFardh?.percentage ?? fardh?.percentage ?? 0,
+        percentageLabel: trackedFardh == null
+            ? _pillarText(
+                context,
+                fardh,
+                (pillar) => pillar.localizedPercentage,
+                '',
+              )
+            : context.localizedDigits('${trackedFardh.percentage}%'),
         title: _pillarText(
           context,
           fardh,
           (pillar) => pillar.localizedTitle,
           AppText.of(context).categoryLabel('Fardh Prayer'),
         ),
-        completedLabel: _pillarText(
-          context,
-          fardh,
-          (pillar) => pillar.localizedFormattedSubtext,
-          fardh?.formattedSubtext ?? '',
-        ),
+        completedLabel:
+            trackedFardh?.formattedSubtext ??
+            _pillarText(
+              context,
+              fardh,
+              (pillar) => pillar.localizedFormattedSubtext,
+              fardh?.formattedSubtext ?? '',
+            ),
         prayers: prayers,
         onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
         onPrayerTap: (prayer) => _openTracker(
@@ -740,6 +743,7 @@ class _ZikrCardState extends State<_ZikrCard> {
         : _openTracker(context, AmalSection.zikr);
 
     return HomeGradientShape(
+      onTap: openZikr,
       child: ZikrCardContent(
         percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
         percentageLabel: _pillarText(
@@ -763,7 +767,6 @@ class _ZikrCardState extends State<_ZikrCard> {
             ? openZikr()
             : _openTracker(context, AmalSection.zikr, itemKey: item.itemKey),
       ),
-      onTap: openZikr,
     );
   }
 }

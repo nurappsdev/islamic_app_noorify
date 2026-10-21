@@ -13,9 +13,11 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_prayer_gate.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
@@ -26,16 +28,10 @@ import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
-import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
-
-/// `pillarKey`s whose items may only be logged once their prayer window has
-/// started — Fard, Sunnah, Witr and Nafl salat. Quran/Hadith/Quiz/Nafl & more
-/// have no time gate.
-const _timeGatedPillarKeys = {'fardh_prayer', 'sunnah_witr', 'nafl_salat'};
 
 /// `pillarKey`s whose items open another feature screen instead of being
 /// ticked here (see [_AmolTrackingScreenState._onItemTap]) — their rows show
@@ -128,7 +124,8 @@ class AmolTrackingScreen extends StatefulWidget {
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     with SingleTickerProviderStateMixin {
-  late final DateTime _today = (widget.now ?? DateTime.now)();
+  late DateTime _today;
+  Timer? _trackingBoundaryTimer;
   late String? _focusedPillarKey = widget.selectedSection?.pillarKey;
   late String? _expandedPillarKey =
       _focusedPillarKey ??
@@ -188,10 +185,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         DeleteAmolItem(
           AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
         ),
-        // Today's checklist is already loaded for the Home cards: show it at
-        // once, then refresh it quietly, instead of opening on placeholders.
+        // The Fajr-aware initial load below may reuse the shared checklist.
         initialDashboard: _sharedToday(),
-      )..add(LoadAmolDaily(_isoDate(_today), silent: true)));
+      ));
 
   AmolDailyDashboard? _sharedToday() {
     final shared = AmolDailyStore.instance.value;
@@ -232,13 +228,50 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   @override
   void initState() {
     super.initState();
+    _today = _calendarDate(_now());
     _logFailureSub = _bloc.logFailures.listen((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppText.of(context).failureUnknown)),
       );
     });
-    unawaited(_loadPrayerTimes());
+    unawaited(_refreshTrackingDay(load: true));
+  }
+
+  DateTime _now() => (widget.now ?? DateTime.now)();
+
+  static DateTime _calendarDate(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  /// Resolves this screen's API date from the current civil day's Fajr. The
+  /// pre-Fajr hours remain on the prior `YYYY-MM-DD` record.
+  Future<void> _refreshTrackingDay({bool load = false}) async {
+    final now = _now();
+    final times = await _loadPrayerTimes(_calendarDate(now));
+    if (!mounted) return;
+    final trackingDate = times == null
+        ? _calendarDate(now)
+        : amolTrackingDate(now, times);
+    final changed = trackingDate != _today;
+    if (changed) setState(() => _today = trackingDate);
+    if (changed || load) {
+      _bloc.add(LoadAmolDaily(_isoDate(_today), silent: !changed));
+      if (changed) unawaited(AmolDailyStore.instance.load());
+    }
+    _scheduleTrackingBoundary(times);
+  }
+
+  /// At midnight, re-read the new civil day's Fajr; at Fajr, rotate the
+  /// active tracker to that day. This keeps both boundaries location-aware.
+  void _scheduleTrackingBoundary(DailyPrayerTimes? times) {
+    _trackingBoundaryTimer?.cancel();
+    final now = _now();
+    final next = times == null
+        ? now.add(const Duration(minutes: 1))
+        : nextAmolTrackingCheck(now, times);
+    _trackingBoundaryTimer = Timer(next.difference(now), () {
+      if (mounted) unawaited(_refreshTrackingDay());
+    });
   }
 
   static const _reorderDuration = Duration(milliseconds: 620);
@@ -379,54 +412,19 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     });
   }
 
-  Future<void> _loadPrayerTimes() async {
+  Future<DailyPrayerTimes?> _loadPrayerTimes(DateTime civilDate) async {
     try {
       final service = await AladhanPrayerTimeService.create();
-      final cached = service.cachedPrayerTimes(_today);
+      final cached = service.cachedPrayerTimes(civilDate);
       if (mounted && cached != null) setState(() => _prayerTimes = cached);
 
-      final fresh = await service.loadPrayerTimes(_today);
+      final fresh = await service.loadPrayerTimes(civilDate);
       if (mounted && fresh != null) setState(() => _prayerTimes = fresh);
+      return fresh ?? cached;
     } catch (_) {
       // Times stay null; the gate below allows tracking when they're
       // unavailable rather than blocking the user on our own load failure.
-    }
-  }
-
-  /// The earliest clock time [pillarKey]/[itemKey] may be logged at, or
-  /// `null` when that item isn't time-gated. Sunnah prayers share their
-  /// Fard's start; Witr and Tahajjud open at Isha; Ishraq/Chasht open at
-  /// sunrise; Awabin opens at Maghrib.
-  PrayerClockTime? _gateStart(
-    String pillarKey,
-    String itemKey,
-    DailyPrayerTimes times,
-  ) {
-    if (!_timeGatedPillarKeys.contains(pillarKey)) return null;
-    switch (itemKey) {
-      case 'fajr':
-      case 'fajr_sunnah':
-        return times.fajr;
-      case 'dhuhr':
-      case 'dhuhr_sunnah':
-        return times.dhuhr;
-      case 'asr':
-      case 'asr_sunnah':
-        return times.asr;
-      case 'maghrib':
-      case 'maghrib_sunnah':
-      case 'awabin':
-        return times.maghrib;
-      case 'isha':
-      case 'isha_sunnah':
-      case 'witr':
-      case 'tahajjud':
-        return times.isha;
-      case 'ishraq':
-      case 'chasht':
-        return times.sunrise;
-      default:
-        return null;
+      return null;
     }
   }
 
@@ -500,20 +498,15 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
     final times = _prayerTimes;
     if (times != null) {
-      final gate = _gateStart(pillarKey, item.itemKey, times);
-      if (gate != null) {
-        final now = (widget.now ?? DateTime.now)();
-        final gateTime = DateTime(
-          _today.year,
-          _today.month,
-          _today.day,
-          gate.hour,
-          gate.minute,
-        );
-        if (now.isBefore(gateTime)) {
-          _showPrayerNotStartedAlert(item);
-          return;
-        }
+      if (!canLogAmolPrayerItem(
+        now: _now(),
+        trackingDate: _today,
+        pillarKey: pillarKey,
+        itemKey: item.itemKey,
+        times: times,
+      )) {
+        _showPrayerNotStartedAlert(item);
+        return;
       }
     }
 
@@ -590,6 +583,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   @override
   void dispose() {
+    _trackingBoundaryTimer?.cancel();
     _reorder.dispose();
     _logFailureSub.cancel();
     if (_ownsBloc) _bloc.close();
@@ -611,9 +605,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         builder: (context, state) {
           final dashboard = state.dashboard;
           final pointLabel = dashboard == null
-              ? widget.pointLabel == 'Point : 30/40'
-                    ? formatAmolPoints(30, 40, appText, languageOf(context))
-                    : context.localizedDigits(widget.pointLabel)
+              ? formatAmolPoints(0, 0, appText, languageOf(context))
               : formatAmolPoints(
                   dashboard.summary.totalEarnedPoints,
                   dashboard.summary.totalPossiblePoints,
@@ -621,11 +613,11 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                   languageOf(context),
                 );
           final progress = dashboard == null
-              ? widget.progress
+              ? 0.0
               : (dashboard.completionPercentage / 100).clamp(0, 1).toDouble();
           final progressLabel = context.localizedDigits(
             dashboard == null
-                ? widget.progressLabel
+                ? _formatPercentage(0)
                 : _formatPercentage(dashboard.completionPercentage),
           );
 
