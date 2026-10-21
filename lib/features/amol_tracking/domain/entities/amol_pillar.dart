@@ -24,4 +24,20 @@ class AmolPillar {
   /// Server-formatted progress text (e.g. `"2/7"`).
   final String formattedSubtext;
   final List<AmolItem> items;
+
+  AmolPillar copyWith({
+    num? earnedPoints,
+    num? percentage,
+    String? formattedSubtext,
+    List<AmolItem>? items,
+  }) => AmolPillar(
+    pillarKey: pillarKey,
+    title: title,
+    titleBn: titleBn,
+    earnedPoints: earnedPoints ?? this.earnedPoints,
+    maxPoints: maxPoints,
+    percentage: percentage ?? this.percentage,
+    formattedSubtext: formattedSubtext ?? this.formattedSubtext,
+    items: items ?? this.items,
+  );
 }

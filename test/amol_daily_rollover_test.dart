@@ -38,6 +38,10 @@ class _DailyRepository implements AmolTrackingRepository {
     required String pillarKey,
     required String itemKey,
   }) async => Right(_dailyByDate[logDate]!);
+  @override
+  Future<({int sent, int pending})> syncPending({
+    AmolDailyDashboard? known,
+  }) async => (sent: 0, pending: 0);
 }
 
 AmolDailyDashboard _daily(String date, {bool completed = false}) =>
@@ -103,7 +107,7 @@ void main() {
     final logged = bloc.stream.firstWhere(
       (state) =>
           state.hasData &&
-          state.loggingItemKey == null &&
+          state.loggingItemKeys.isEmpty &&
           state.isItemChecked('tahajjud', false),
     );
     bloc.add(

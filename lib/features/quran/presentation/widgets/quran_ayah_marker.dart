@@ -21,14 +21,24 @@ class QuranAyahMarker extends StatelessWidget {
   /// The Arabic text's style: its font draws [sign].
   final TextStyle? arabicStyle;
 
+  /// The ring's side for [number] at [scale]: just wide enough for its
+  /// digits, so single-digit ayahs get the smallest marker.
+  static double ringSize(int number, double scale) =>
+      (17.0 + 3 * number.toString().length) * scale;
+
+  /// The space the marker takes in a line of text: its ring and the room
+  /// either side of it.
+  static Size layoutSize(int number, double scale) {
+    final ring = ringSize(number, scale);
+    return Size(ring + 2 * _sideRoom * scale, ring);
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = context.inkColor(Colors.black);
     final digits = arabicDigits(number);
     final arabic = arabicStyle ?? const TextStyle();
-    // A snug ring around the number: just wide enough for its digits, so
-    // single-digit ayahs get the smallest marker.
-    final size = (17.0 + 3 * digits.length) * scale;
+    final size = ringSize(number, scale);
     final ring = SizedBox.square(
       dimension: size,
       child: CustomPaint(
@@ -60,7 +70,7 @@ class QuranAyahMarker extends StatelessWidget {
     // Room for the small marks (small alif/waw) that Quran fonts
     // hang past the last word's advance width, so they stay out of the ring.
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 6 * scale),
+      padding: EdgeInsets.symmetric(horizontal: _sideRoom * scale),
       child: sign.isEmpty
           ? ring
           : Stack(
@@ -100,6 +110,9 @@ class QuranAyahMarker extends StatelessWidget {
 }
 
 const _digitFont = 'AlQalam Quran Majeed';
+
+/// The room either side of the ring, at scale 1.
+const _sideRoom = 6.0;
 
 /// [number] in Arabic-Indic digits (U+0660 onwards): ٢٥٥.
 String arabicDigits(int number) => String.fromCharCodes(

@@ -121,23 +121,72 @@ class _ReaderBodyState extends State<_ReaderBody> {
   // What "View in ayat" shows under each ayah; null follows the surah's
   // translation language.
   _AyatView? _ayatView;
-  // Arabic zoom while a pinch is in progress (and until the bloc saves it).
-  double? _pinchBase, _pinchScale;
+  // Arabic zoom while a pinch is in progress (and until the bloc saves it):
+  // the scale the pinch started at, the one it shows (in 5% steps) and the
+  // one it is at, unrounded.
+  double? _pinchBase, _pinchScale, _pinchAt;
+
+  // The Arabic-only text and the ayahs it shows, to fit a zoom to its lines.
+  final _arabicTextKey = GlobalKey();
+  List<QuranAyah> _shownAyahs = const [];
 
   void _pinchUpdate(double factor) {
     _pinchBase ??= context.read<QuranTranslationBloc>().state.arabicFontScale;
-    // 5% steps keep the text from reflowing on every pixel of movement.
-    final scale = ((_pinchBase! * factor * 20).round() / 20).clamp(
+    final at = (_pinchBase! * factor).clamp(
       kMinArabicFontScale,
       kMaxArabicFontScale,
     );
-    if (scale != _pinchScale) setState(() => _pinchScale = scale);
+    setState(() {
+      _pinchAt = at;
+      _pinchScale = (at * 20).round() / 20;
+    });
+  }
+
+  /// The zoom near [target] (within 5%) at which the page's lines justify
+  /// most evenly, so a zoom settles where no line needs long gaps; [target]
+  /// itself when the Arabic is not shown on its own.
+  double _bestFit(double target) {
+    final text = _arabicTextKey.currentContext;
+    final width = text?.size?.width;
+    if (text == null || width == null || width <= 0 || _shownAyahs.isEmpty) {
+      return target;
+    }
+    final font = arabicFontById(
+      context.read<QuranTranslationBloc>().state.arabicFontFamily,
+    );
+    final textScaler = MediaQuery.textScalerOf(context);
+    var best = target, bestScore = double.infinity;
+    for (final step in const [0.0, -.025, .025, -.05, .05]) {
+      final scale = (target + step).clamp(
+        kMinArabicFontScale,
+        kMaxArabicFontScale,
+      );
+      // A little for every step away: of two sizes that fit alike, the one
+      // nearer the pinch wins.
+      final score =
+          quranJustifyFit(
+            ayahs: _shownAyahs,
+            scale: scale,
+            font: font,
+            textScaler: textScaler,
+            width: width,
+          ) +
+          .2 * (scale - target).abs() / .05;
+      if (score < bestScore) {
+        best = scale;
+        bestScore = score;
+      }
+    }
+    return best;
   }
 
   void _pinchEnd() {
     _pinchBase = null;
-    final scale = _pinchScale;
-    if (scale == null) return;
+    _pinchAt = null;
+    final target = _pinchScale;
+    if (target == null) return;
+    final scale = _bestFit(target);
+    if (scale != target) setState(() => _pinchScale = scale);
     final prefs = context.read<QuranTranslationBloc>();
     if (scale == prefs.state.arabicFontScale) {
       setState(() => _pinchScale = null);
@@ -571,7 +620,29 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 .currentAyahNo;
             final surah = state.surah;
             final opening = state.from == 1;
-            final arabicScale = _pinchScale ?? prefs.arabicFontScale;
+            // Al-Fatiha's first ayah is its Bismillah: on its opening page it
+            // is shown under the Surah's name, as other Surahs' Bismillah
+            // is, rather than as an ayah of the text.
+            final fatihaOpening = opening && surah?.number == 1;
+            final pageAyahs = fatihaOpening
+                ? [
+                    for (final a in state.ayahs)
+                      if (a.verseKey != '1:1') a,
+                  ]
+                : state.ayahs;
+            // While pinching, the text is laid out at the 5% step just above
+            // the pinch and drawn a little smaller, by what the pinch falls
+            // short of it: the zoom moves smoothly, and as it only ever
+            // shrinks the picture, no word is pushed out of the frame.
+            final pinchAt = _pinchBase == null ? null : _pinchAt;
+            final arabicScale = pinchAt != null
+                ? ((pinchAt * 20 - 1e-9).ceil() / 20).clamp(
+                    kMinArabicFontScale,
+                    kMaxArabicFontScale,
+                  )
+                : _pinchScale ?? prefs.arabicFontScale;
+            final magnify = pinchAt != null ? pinchAt / arabicScale : 1.0;
+            _shownAyahs = pageAyahs;
             final ayatView = _ayatViewFor(prefs);
             final detail = surah == null
                 ? null
@@ -860,12 +931,19 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         header: opening && surah != null
                             ? QuranSurahHeading(
                                 surah: surah,
-                                showBismillah: state.bismillahPre,
+                                showBismillah:
+                                    state.bismillahPre || fatihaOpening,
                               )
                             : null,
                         busy: state.loading || _crossingSurah,
                         onPinchUpdate: _pinchUpdate,
                         onPinchEnd: _pinchEnd,
+                        magnify: magnify,
+                        zoomLabel: _pinchScale == null
+                            ? null
+                            : context.localizedDigits(
+                                '${(_pinchScale! * 100).round()}%',
+                              ),
                         onNext:
                             state.to < reader.lastAyah ||
                                 (widget.args.paraNumber == null &&
@@ -901,7 +979,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (prefs.showTranslation)
-                              for (final ayah in state.ayahs)
+                              for (final ayah in pageAyahs)
                                 QuranAyahHold(
                                   onHold: () => _showAyah(ayah),
                                   onTap: () => _tapAyah(ayah),
@@ -977,7 +1055,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 )
                             else
                               QuranReadingText(
-                                ayahs: state.ayahs,
+                                key: _arabicTextKey,
+                                ayahs: pageAyahs,
                                 active: active,
                                 scale: arabicScale,
                                 font: arabicFontById(prefs.arabicFontFamily),
