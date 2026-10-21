@@ -1,10 +1,12 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
-import 'quran_design.dart' show quranOlive;
+import 'quran_design.dart' show quranBorder, quranInk, quranOlive;
 import 'quran_reading_layout.dart' show QuranReadingInsets;
 
 /// The ornaments stay still. Both vertical scrolling and the page-turn
@@ -26,6 +28,7 @@ class QuranPageViewport extends StatefulWidget {
     this.busy = false,
     this.showHeader = true,
     this.header,
+    this.zoomLabel,
   });
   final int pageNumber;
   final Widget? header;
@@ -34,6 +37,10 @@ class QuranPageViewport extends StatefulWidget {
   final ValueChanged<double>? onPinchUpdate;
   final VoidCallback? onPinchEnd;
   final bool busy, showHeader;
+
+  /// The Arabic zoom while a pinch changes it ("120%"), shown in a small
+  /// pill; null when no pinch is under way.
+  final String? zoomLabel;
   @override
   State<QuranPageViewport> createState() => _QuranPageViewportState();
 }
@@ -48,6 +55,10 @@ const _artInset = 4.0; // left/right offset of the artwork
 const _headerTop = 8.0;
 const _footerBottom = 16.0;
 const _gap = 6.0;
+
+/// How far a sideways swipe must go to turn the page (a quick flick turns
+/// it sooner).
+const _turnDistance = 48.0;
 const _scrollbarThickness = 4.0;
 const ValueListenable<double> _noInset = AlwaysStoppedAnimation(0);
 
@@ -60,9 +71,47 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
   // with it never turns the page.
   bool _pinched = false;
 
+  // How far the finger has dragged sideways, for the page-turn indicator.
+  final _swipe = ValueNotifier<double>(0);
+
+  // The zoom pill's label, kept a moment after the pinch so the final zoom
+  // can be read, and whether it shows.
+  String _zoomShown = '';
+  bool _zoomVisible = false;
+  Timer? _zoomHide;
+
+  @override
+  void initState() {
+    super.initState();
+    _showZoom(widget.zoomLabel);
+  }
+
+  void _showZoom(String? label) {
+    if (label != null) {
+      _zoomHide?.cancel();
+      _zoomShown = label;
+      _zoomVisible = true;
+    } else if (_zoomVisible) {
+      _zoomHide?.cancel();
+      _zoomHide = Timer(const Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _zoomVisible = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _zoomHide?.cancel();
+    _swipe.dispose();
+    super.dispose();
+  }
+
+  void _endSwipe() => _swipe.value = 0;
+
   @override
   void didUpdateWidget(QuranPageViewport oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.zoomLabel != widget.zoomLabel) _showZoom(widget.zoomLabel);
     if (oldWidget.pageNumber != widget.pageNumber) {
       _forward = widget.pageNumber > oldWidget.pageNumber;
     }
@@ -127,12 +176,26 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
           key: const ValueKey('quran-page-gesture'),
           behavior: HitTestBehavior.opaque,
           onHorizontalDragStart: (_) => _dragDistance = 0,
-          onHorizontalDragUpdate: (details) =>
-              _dragDistance += details.delta.dx,
+          onHorizontalDragUpdate: (details) {
+            _dragDistance += details.delta.dx;
+            final was = _swipe.value.abs() >= _turnDistance;
+            _swipe.value = widget.busy || _pinched ? 0 : _dragDistance;
+            // A light tick as the swipe becomes far enough to turn the page.
+            if (!was &&
+                _swipe.value.abs() >= _turnDistance &&
+                (_swipe.value > 0 ? widget.onNext : widget.onPrevious) !=
+                    null) {
+              HapticFeedback.selectionClick();
+            }
+          },
+          onHorizontalDragCancel: _endSwipe,
           onHorizontalDragEnd: (details) {
+            _endSwipe();
             if (widget.busy || _pinched) return;
             final velocity = details.primaryVelocity ?? 0;
-            if (_dragDistance.abs() < 48 && velocity.abs() < 350) return;
+            if (_dragDistance.abs() < _turnDistance && velocity.abs() < 350) {
+              return;
+            }
             final swipedRight = velocity.abs() >= 350
                 ? velocity > 0
                 : _dragDistance > 0;
@@ -228,6 +291,90 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                   child: Image.asset(
                     'assets/images/quran/footer.png',
                     fit: BoxFit.fitWidth,
+                  ),
+                ),
+              ),
+              // Which way the swipe turns the page, from the edge the new
+              // page comes in at.
+              ValueListenableBuilder<double>(
+                valueListenable: _swipe,
+                builder: (context, drag, _) {
+                  final forward = drag > 0;
+                  final turns = forward ? widget.onNext : widget.onPrevious;
+                  if (drag == 0 || turns == null) return const SizedBox();
+                  final progress = (drag.abs() / _turnDistance).clamp(0.0, 1.0);
+                  final ready = progress >= 1;
+                  return Align(
+                    alignment: forward
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    child: IgnorePointer(
+                      child: Transform.translate(
+                        offset: Offset((forward ? 1 : -1) * 18 * progress, 0),
+                        child: Opacity(
+                          opacity: progress,
+                          child: AnimatedContainer(
+                            key: const ValueKey('quran-swipe-indicator'),
+                            duration: const Duration(milliseconds: 120),
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: ready
+                                  ? quranOlive
+                                  : context.surfaceColor(Colors.white),
+                              border: Border.all(color: quranBorder),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x22000000),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              forward
+                                  ? Icons.chevron_right_rounded
+                                  : Icons.chevron_left_rounded,
+                              color: ready ? Colors.white : quranInk,
+                              size: 26,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // The zoom while pinching.
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 12,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: Center(
+                    child: AnimatedOpacity(
+                      opacity: _zoomVisible ? 1 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Container(
+                        key: const ValueKey('quran-zoom-pill'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: quranInk.withValues(alpha: .9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          _zoomShown,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
