@@ -109,24 +109,13 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
                             onBack: () => _goToGlobalHome(context),
                           ),
                           const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              text.hifjoQuranTitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: quranInk,
-                              ),
+                          // All the free space, so the title shows whole.
+                          Expanded(
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: _SectionPicker(text: text),
                             ),
                           ),
-                          const Icon(
-                            Icons.expand_more,
-                            color: Color(0xff385c46),
-                            size: 20,
-                          ),
-                          const Spacer(),
                           IconButton(
                             tooltip: text.bookmarksTitle,
                             onPressed: () => Navigator.pushNamed(
@@ -573,4 +562,77 @@ class _LastReadCard extends StatelessWidget {
       );
     },
   );
+}
+
+/// The Quran home's title, a picker between its sections: Quran Majeed (this
+/// screen) and Hifzul Quran, which is not built yet.
+class _SectionPicker extends StatelessWidget {
+  const _SectionPicker({required this.text});
+  final AppText text;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      color: quranInk,
+    );
+    PopupMenuItem<bool> item(String label, {required bool selected}) =>
+        PopupMenuItem(
+          value: selected,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: style.copyWith(
+                    fontSize: 15,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (selected)
+                const Icon(Icons.check_rounded, size: 18, color: quranOlive),
+            ],
+          ),
+        );
+    return PopupMenuButton<bool>(
+      key: const ValueKey('quran-section-picker'),
+      tooltip: text.quranMajeedTitle,
+      position: PopupMenuPosition.under,
+      color: context.surfaceColor(Colors.white),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: quranBorder),
+      ),
+      // true: Quran Majeed, already open.
+      onSelected: (current) {
+        if (current) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text('${text.hifzulQuranTitle}: ${text.comingSoon}'),
+            ),
+          );
+      },
+      itemBuilder: (_) => [
+        item(text.quranMajeedTitle, selected: true),
+        item(text.hifzulQuranTitle, selected: false),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Never cut off: on a narrow screen it shrinks a little instead.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(text.quranMajeedTitle, maxLines: 1, style: style),
+            ),
+          ),
+          const Icon(Icons.expand_more, color: Color(0xff385c46), size: 20),
+        ],
+      ),
+    );
+  }
 }
