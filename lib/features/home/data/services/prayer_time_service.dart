@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_location_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,17 +17,24 @@ class AladhanPrayerTimeService implements PrayerTimeService {
   factory AladhanPrayerTimeService({
     required http.Client client,
     required SharedPreferences preferences,
+    PrayerLocation? Function()? location,
   }) {
-    return AladhanPrayerTimeService._(client, preferences);
+    return AladhanPrayerTimeService._(
+      client,
+      preferences,
+      location ?? () => PrayerLocationService.instance.state.location,
+    );
   }
 
-  AladhanPrayerTimeService._(this._client, this._preferences);
+  AladhanPrayerTimeService._(this._client, this._preferences, this._location);
 
   static const _cacheDateKey = 'prayer_times_date';
+  static const _cacheLocationKey = 'prayer_times_location';
   static const _cacheJsonKey = 'prayer_times_json';
 
   final http.Client _client;
   final SharedPreferences _preferences;
+  final PrayerLocation? Function() _location;
 
   static Future<AladhanPrayerTimeService> create() async {
     return AladhanPrayerTimeService(
@@ -37,16 +46,8 @@ class AladhanPrayerTimeService implements PrayerTimeService {
   @override
   Future<DailyPrayerTimes?> loadPrayerTimes(DateTime date) async {
     try {
-      final uri = Uri.https(
-        'api.aladhan.com',
-        '/v1/timingsByCity/${_apiDate(date)}',
-        const {
-          'city': 'Mymensingh',
-          'country': 'Bangladesh',
-          'method': '1',
-          'school': '1',
-        },
-      );
+      final location = _location();
+      final uri = _uriFor(date, location);
       final response = await _client
           .get(uri)
           .timeout(const Duration(seconds: 10));
@@ -55,6 +56,7 @@ class AladhanPrayerTimeService implements PrayerTimeService {
       if (body['code'] != 200) throw const FormatException();
       final times = _parseResponse(body);
       await _preferences.setString(_cacheDateKey, times.dateKey);
+      await _preferences.setString(_cacheLocationKey, _locationKey(location));
       await _preferences.setString(_cacheJsonKey, jsonEncode(times.toJson()));
       return times;
     } catch (_) {
@@ -65,6 +67,14 @@ class AladhanPrayerTimeService implements PrayerTimeService {
   @override
   DailyPrayerTimes? cachedPrayerTimes(DateTime date) {
     if (_preferences.getString(_cacheDateKey) != _cacheDate(date)) return null;
+    final location = _location();
+    final cachedLocation = _preferences.getString(_cacheLocationKey);
+    // Legacy city-based cache entries predate the location key and remain
+    // valid only while no device location is available.
+    if (cachedLocation != _locationKey(location) &&
+        !(cachedLocation == null && location == null)) {
+      return null;
+    }
     final cachedJson = _preferences.getString(_cacheJsonKey);
     if (cachedJson == null) return null;
     try {
@@ -130,6 +140,30 @@ class AladhanPrayerTimeService implements PrayerTimeService {
         '${date.month.toString().padLeft(2, '0')}-${date.year}';
   }
 
+  static Uri _uriFor(DateTime date, PrayerLocation? location) {
+    if (location != null) {
+      return Uri.https('api.aladhan.com', '/v1/timings/${_apiDate(date)}', {
+        'latitude': location.latitude.toString(),
+        'longitude': location.longitude.toString(),
+        'method': '1',
+        'school': '1',
+      });
+    }
+    return Uri.https(
+      'api.aladhan.com',
+      '/v1/timingsByCity/${_apiDate(date)}',
+      const {
+        'city': 'Mymensingh',
+        'country': 'Bangladesh',
+        'method': '1',
+        'school': '1',
+      },
+    );
+  }
+
+  static String _locationKey(PrayerLocation? location) =>
+      location?.cacheKey ?? 'city:mymensingh,bangladesh';
+
   static String _cacheDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-'
         '${date.day.toString().padLeft(2, '0')}';
@@ -137,5 +171,9 @@ class AladhanPrayerTimeService implements PrayerTimeService {
 }
 
 DateTime bangladeshNow() {
-  return DateTime.now().toUtc().add(const Duration(hours: 6));
+  // Prayer times are now resolved from the device's GPS location, so their
+  // schedule must be compared against the device's local civil clock rather
+  // than a fixed Bangladesh offset. Kept under the existing name to avoid a
+  // broad API rename across the presentation layer.
+  return DateTime.now();
 }

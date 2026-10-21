@@ -2,8 +2,8 @@ abstract class AmolDailyEvent {
   const AmolDailyEvent();
 }
 
-/// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, the device's
-/// today by default — see the screen that dispatches this).
+/// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, selected by the
+/// frontend's location-aware Fajr-to-Fajr tracking cycle).
 class LoadAmolDaily extends AmolDailyEvent {
   const LoadAmolDaily(this.date, {this.silent = false});
 

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -63,6 +64,26 @@ void main() {
     expect(cached?.hijriDate, '7 Safar 1448 Hijri');
     expect(cached?.isha.totalMinutes, 1195);
     expect(loaded?.dhuhr.totalMinutes, 728);
+  });
+
+  test('uses the resolved GPS coordinates for dynamic prayer times', () async {
+    late Uri requestedUri;
+    final preferences = await SharedPreferences.getInstance();
+    final service = AladhanPrayerTimeService(
+      client: MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(jsonEncode(_validResponse), 200);
+      }),
+      preferences: preferences,
+      location: () =>
+          const PrayerLocation(latitude: 24.7471, longitude: 90.4203),
+    );
+
+    await service.loadPrayerTimes(DateTime(2026, 8, 20));
+
+    expect(requestedUri.path, '/v1/timings/20-08-2026');
+    expect(requestedUri.queryParameters['latitude'], '24.7471');
+    expect(requestedUri.queryParameters['longitude'], '90.4203');
   });
 
   test('rejects stale cached schedules', () async {
