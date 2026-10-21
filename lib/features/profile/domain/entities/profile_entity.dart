@@ -20,6 +20,8 @@ class ProfileEntity {
     this.globalRankPosition = 0,
     this.badges = const [],
     this.currentBadge,
+    this.nextBadge,
+    this.pointsToNextBadge = 0,
     this.avatarUrl,
     this.dateOfBirth,
     this.profession,
@@ -46,5 +48,13 @@ class ProfileEntity {
   final int currentStreakDays;
   final int globalRankPosition;
   final List<BadgeEntity> badges;
+
+  /// The highest badge reached; null below the first one.
   final BadgeEntity? currentBadge;
+
+  /// The badge to reach next; null once the highest is reached.
+  final BadgeEntity? nextBadge;
+
+  /// Points still needed for [nextBadge].
+  final num pointsToNextBadge;
 }

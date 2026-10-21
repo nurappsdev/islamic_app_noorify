@@ -95,6 +95,16 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
               ),
       ),
       (quiz) {
+        // The day's last quiz, already played: it takes no second attempt.
+        if (quiz.daily?.dayCompleted ?? false) {
+          emit(
+            QuizQuestionState(
+              loadStatus: QuizLoadStatus.dayCompleted,
+              quiz: quiz,
+            ),
+          );
+          return;
+        }
         if (quiz.questions.isEmpty) {
           emit(const QuizQuestionState(loadStatus: QuizLoadStatus.empty));
           return;
@@ -164,7 +174,9 @@ class QuizQuestionBloc extends Bloc<QuizQuestionEvent, QuizQuestionState> {
     Emitter<QuizQuestionState> emit,
   ) async {
     final quiz = state.quiz;
+    // Only a quiz being played (not the day's last, already played).
     if (quiz == null ||
+        state.loadStatus != QuizLoadStatus.success ||
         _submitInFlight ||
         state.submissionStatus == QuizSubmissionStatus.submitting ||
         state.submissionStatus == QuizSubmissionStatus.submitted) {

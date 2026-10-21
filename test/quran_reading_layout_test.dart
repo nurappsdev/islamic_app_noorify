@@ -151,12 +151,30 @@ void main() {
     expect(find.text('Player').hitTestable(), findsNothing);
     expect(find.text('Filters and timer').hitTestable(), findsNothing);
     expectPageFixed();
-    // Vertical scrolling reveals controls without triggering a page turn.
-    await tester.drag(page, const Offset(0, -150));
+    // Sliding the text up or down hides the controls, without a page turn.
+    await tester.drag(page, const Offset(150, 0));
     await tester.pumpAndSettle();
-    expect(next, 1);
+    expect(next, 2);
     expect(find.text('Player').hitTestable(), findsOneWidget);
-    expect(find.text('Filters and timer').hitTestable(), findsOneWidget);
+    for (final dy in [-150.0, 150.0]) {
+      await tester.tapAt(tester.getCenter(page));
+      await tester.pumpAndSettle();
+      await tester.drag(page, Offset(0, dy));
+      await tester.pumpAndSettle();
+      expect(next, 2);
+      expect(find.text('Player').hitTestable(), findsNothing);
+      expect(find.text('Filters and timer').hitTestable(), findsNothing);
+    }
+    // A slide shows no bar on its way, not even for a frame.
+    final slide = await tester.startGesture(tester.getCenter(page));
+    for (var i = 0; i < 6; i++) {
+      await slide.moveBy(const Offset(0, -12));
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(find.text('Player').hitTestable(), findsNothing);
+      expect(find.text('Filters and timer').hitTestable(), findsNothing);
+    }
+    await slide.up();
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
@@ -214,6 +232,7 @@ void main() {
       Offset(page.center.dx, page.top + page.height * .3),
     );
     await rest.moveBy(const Offset(3, 2));
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pumpAndSettle();
     expect(shown('Header'), isTrue);
     expect(shown('Player'), isFalse);

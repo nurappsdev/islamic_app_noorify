@@ -139,15 +139,17 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
                     ),
                   )
                 else
-                  for (final dua in duas) ...[
+                  for (var i = 0; i < duas.length; i++) ...[
                     DuaItemTile(
-                      name: context.localized(dua.title),
+                      index: i,
+                      name: context.localized(duas[i].title),
+                      subtitle: context.localized(duas[i].translation),
                       onTap: () => Navigator.of(context).pushNamed(
                         RouteNames.duaReader,
-                        arguments: DuaReaderArgs.real(dua),
+                        arguments: DuaReaderArgs.real(duas[i]),
                       ),
                     ),
-                    if (dua != duas.last) SizedBox(height: 10.h),
+                    if (i != duas.length - 1) SizedBox(height: 10.h),
                   ],
               ],
             );

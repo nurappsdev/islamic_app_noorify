@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../domain/quran_ayah.dart';
-import '../bloc/ayah_audio/ayah_audio_bloc.dart';
+import '../bloc/surah_playback/surah_playback_bloc.dart';
 import '../bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import '../bloc/reciter/reciter_bloc.dart';
 import '../bloc/surah_audio_download/surah_audio_download_bloc.dart';
@@ -53,7 +53,7 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
 
   Future<QuranAyah> _load() =>
       _api.loadAyah(widget.surah, widget.ayah, translation: _translation);
-  Future<void> _download(BuildContext context, String verseKey) async {
+  Future<void> _download(BuildContext context) async {
     final reciter =
         context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId;
     final saved = await showSurahAudioSheet(
@@ -63,22 +63,28 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
       surahNo: widget.surah,
       totalAyah: widget.totalAyah,
     );
-    if (saved && context.mounted) {
-      context.read<AyahAudioBloc>().add(
-        PlayAyahAudio(verseKey: verseKey, recitationId: reciter, restart: true),
-      );
-    }
+    if (saved && context.mounted) _play(context);
   }
+
+  /// Plays from this ayah on, through the reader's player: its loop, then
+  /// the rest of the Surah.
+  void _play(BuildContext context) => context.read<SurahPlaybackBloc>().add(
+    PlaySurah(
+      surahNo: widget.surah,
+      totalAyah: widget.totalAyah,
+      recitationId:
+          context.read<ReciterBloc>().state.selectedId ?? defaultRecitationId,
+      fromAyah: widget.ayah,
+    ),
+  );
 
   @override
   Widget build(
     BuildContext context,
-  ) => BlocListener<AyahAudioBloc, AyahAudioState>(
-    listenWhen: (p, c) =>
-        c.needsDownloadForVerseKey != null &&
-        p.needsDownloadForVerseKey != c.needsDownloadForVerseKey,
-    listener: (context, state) =>
-        _download(context, state.needsDownloadForVerseKey!),
+  ) => BlocListener<SurahPlaybackBloc, SurahPlaybackState>(
+    // The reader's own prompt waits while this sheet covers it.
+    listenWhen: (p, c) => !p.needsDownload && c.needsDownload,
+    listener: (context, _) => _download(context),
     child: SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -213,44 +219,41 @@ class _QuranAyahDetailsState extends State<QuranAyahDetails> {
                   ),
                   Row(
                     children: [
-                      BlocBuilder<AyahAudioBloc, AyahAudioState>(
-                        builder: (context, state) => IconButton(
-                          tooltip: AppText.of(context).quranPlayAyah,
-                          onPressed: () => context.read<AyahAudioBloc>().add(
-                            PlayAyahAudio(
-                              verseKey: a.verseKey,
-                              recitationId:
-                                  context
-                                      .read<ReciterBloc>()
-                                      .state
-                                      .selectedId ??
-                                  defaultRecitationId,
+                      BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
+                        builder: (context, state) {
+                          final playing =
+                              state.isPlaying &&
+                              state.currentAyahNo == a.ayahNumber;
+                          return IconButton(
+                            key: const ValueKey('quran-ayah-play'),
+                            tooltip: AppText.of(context).quranPlayAyah,
+                            onPressed: playing
+                                ? () => context.read<SurahPlaybackBloc>().add(
+                                    const PauseSurah(),
+                                  )
+                                : () => _play(context),
+                            icon: Icon(
+                              playing ? Icons.pause : Icons.play_arrow,
                             ),
-                          ),
-                          icon: Icon(
-                            state.playingVerseKey == a.verseKey
-                                ? Icons.stop
-                                : Icons.play_arrow,
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                      BlocBuilder<AyahAudioBloc, AyahAudioState>(
-                        builder: (context, state) => TextButton.icon(
-                          onPressed: () => context.read<AyahAudioBloc>().add(
-                            SetAyahRepeatCount(
-                              a.verseKey,
-                              state.repeatCountFor(a.verseKey) == 3
-                                  ? 1
-                                  : state.repeatCountFor(a.verseKey) + 1,
-                            ),
-                          ),
-                          icon: const Icon(Icons.repeat),
-                          label: Text(
-                            context.localizedDigits(
-                              '${state.repeatCountFor(a.verseKey)}',
-                            ),
-                          ),
-                        ),
+                      BlocBuilder<SurahPlaybackBloc, SurahPlaybackState>(
+                        builder: (context, state) {
+                          final count = state.repeatCountFor(a.ayahNumber);
+                          return TextButton.icon(
+                            key: const ValueKey('quran-ayah-repeat'),
+                            onPressed: () =>
+                                context.read<SurahPlaybackBloc>().add(
+                                  SetAyahRepeat(
+                                    a.ayahNumber,
+                                    nextAyahRepeatCount(count),
+                                  ),
+                                ),
+                            icon: const Icon(Icons.repeat),
+                            label: Text(context.localizedDigits('$count')),
+                          );
+                        },
                       ),
                       BlocBuilder<AyahBookmarkBloc, AyahBookmarkState>(
                         builder: (context, state) => IconButton(

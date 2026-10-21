@@ -15,7 +15,7 @@ import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bloc.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
-import 'package:tuhfatul_muslim/features/profile/domain/entities/badge_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/profile_badges.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -206,8 +206,6 @@ class _ProfileHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final progress = (profile?.profileCompletionPercentage ?? 0) / 100;
-    final badges = profile?.badges ?? const <BadgeEntity>[];
-    // final currentBadge = profile?.currentBadge;
     final card = Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18.w, 28.h, 18.w, 22.h),
@@ -273,20 +271,9 @@ class _ProfileHeroCard extends StatelessWidget {
               ],
             ),
           ),
-          // if (currentBadge != null) ...[
-          //   SizedBox(height: 18.h),
-          //   _CurrentBadge(badge: currentBadge),
-          // ],
-          if (badges.isNotEmpty) ...[
+          if (profile case final profile? when profile.badges.isNotEmpty) ...[
             SizedBox(height: 18.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                for (final badge in badges.take(4)) _BadgeCircle(badge: badge),
-                if (badges.length > 4)
-                  _MoreBadgesCircle(count: badges.length - 4),
-              ],
-            ),
+            ProfileBadges(profile: profile),
           ],
           SizedBox(height: 18.h),
           _PositionPointsPill(
@@ -325,112 +312,6 @@ class _EditProfileButton extends StatelessWidget {
         child: Icon(Icons.edit_rounded, size: 15.sp, color: Colors.white),
       ),
     );
-  }
-}
-
-class _CurrentBadge extends StatelessWidget {
-  const _CurrentBadge({required this.badge});
-
-  final BadgeEntity badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _BadgeAvatar(iconUrl: badge.iconUrl, dimension: 56.r),
-        SizedBox(height: 6.h),
-        Text(
-          badge.name,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 13.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _BadgeAvatar extends StatelessWidget {
-  const _BadgeAvatar({required this.iconUrl, required this.dimension});
-
-  final String? iconUrl;
-  final double dimension;
-
-  @override
-  Widget build(BuildContext context) {
-    final url = iconUrl;
-    return Container(
-      width: dimension,
-      height: dimension,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .28),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFF8B9B5A).withValues(alpha: .8),
-          width: 1,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Opacity(
-        opacity: .6,
-        child: (url == null || url.isEmpty)
-            ? _BadgePlaceholderIcon(size: dimension * .5)
-            : Image.network(
-                url,
-                width: dimension,
-                height: dimension,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    _BadgePlaceholderIcon(size: dimension * .5),
-              ),
-      ),
-    );
-  }
-}
-
-/// "+N" circle for the badges beyond the first four.
-class _MoreBadgesCircle extends StatelessWidget {
-  const _MoreBadgesCircle({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 46.r,
-      height: 46.r,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .28),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFF8B9B5A).withValues(alpha: .8),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        context.localizedDigits('+$count'),
-        style: TextStyle(
-          color: Colors.white.withValues(alpha: .8),
-          fontSize: 12.sp,
-        ),
-      ),
-    );
-  }
-}
-
-class _BadgePlaceholderIcon extends StatelessWidget {
-  const _BadgePlaceholderIcon({required this.size});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(Icons.emoji_events_rounded, size: size, color: Colors.white);
   }
 }
 
@@ -500,17 +381,6 @@ class _ProfileRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ProfileRingPainter oldDelegate) =>
       oldDelegate.progress != progress;
-}
-
-class _BadgeCircle extends StatelessWidget {
-  const _BadgeCircle({required this.badge});
-
-  final BadgeEntity badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return _BadgeAvatar(iconUrl: badge.iconUrl, dimension: 46.r);
-  }
 }
 
 class _PositionPointsPill extends StatelessWidget {
@@ -708,15 +578,57 @@ class _LogoutButtonView extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(
-          appText.logout,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
         ),
-        content: Text(appText.logoutConfirmMessage),
+        title: Row(
+          children: [
+            Container(
+              width: 34.r,
+              height: 34.r,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: dialogContext.surfaceColor(const Color(0xFFFBEAEA)),
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                size: 18.sp,
+                color: AppColor.forgotPassword,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                appText.logout,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          appText.logoutConfirmMessage,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: dialogContext.inkColor(Colors.black),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(appText.no),
+            style: TextButton.styleFrom(
+              backgroundColor: dialogContext.surfaceColor(
+                AppColor.lightTintSoft,
+              ),
+              foregroundColor: dialogContext.inkColor(Colors.black),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Text(
+              appText.no,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),

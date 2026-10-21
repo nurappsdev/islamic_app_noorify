@@ -191,23 +191,18 @@ class QuranNowPlayingBar extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 4.w),
+                      // Loops the ayah in the bar (playing or selected):
+                      // it plays that many times, then the Surah goes on.
                       InkWell(
-                        onTap: () {
-                          final current = context
-                              .read<SurahPlaybackBloc>()
-                              .state
-                              .repeatCount;
-                          final next = current == 1
-                              ? 2
-                              : current == 2
-                              ? 3
-                              : current == 3
-                              ? 5
-                              : 1;
-                          context.read<SurahPlaybackBloc>().add(
-                            SetRepeatCount(next),
-                          );
-                        },
+                        key: const ValueKey('quran-player-ayah-repeat'),
+                        onTap: () => context.read<SurahPlaybackBloc>().add(
+                          SetAyahRepeat(
+                            ayahNo,
+                            nextAyahRepeatCount(
+                              playState.repeatCountFor(ayahNo),
+                            ),
+                          ),
+                        ),
                         borderRadius: BorderRadius.circular(16.r),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
@@ -217,30 +212,23 @@ class QuranNowPlayingBar extends StatelessWidget {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.repeat_rounded,
+                                playState.repeatCountFor(ayahNo) > 1
+                                    ? Icons.repeat_one_rounded
+                                    : Icons.repeat_rounded,
                                 color: AppColor.primary,
                                 size: 18.sp,
                               ),
-                              BlocBuilder<
-                                SurahPlaybackBloc,
-                                SurahPlaybackState
-                              >(
-                                builder: (context, state) {
-                                  if (state.repeatCount <= 1) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return Text(
-                                    context.localizedDigits(
-                                      '${state.repeatCount}',
-                                    ),
-                                    style: TextStyle(
-                                      color: AppColor.primary,
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  );
-                                },
-                              ),
+                              if (playState.repeatCountFor(ayahNo) > 1)
+                                Text(
+                                  context.localizedDigits(
+                                    '${playState.repeatCountFor(ayahNo)}',
+                                  ),
+                                  style: TextStyle(
+                                    color: AppColor.primary,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                             ],
                           ),
                         ),

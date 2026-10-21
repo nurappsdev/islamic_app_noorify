@@ -245,7 +245,7 @@ class QuranBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = AppText.of(context);
     final items = [
-      ('home', text.home, Icons.home_outlined),
+      ('home', text.categoryQuran, Icons.menu_book_outlined),
       (
         'learn',
         text.learn.isNotEmpty ? text.learn : 'Learn',
@@ -270,10 +270,11 @@ class QuranBottomNav extends StatelessWidget {
     return AppBottomNavBar(
       selectedIndex: items.indexWhere((item) => item.$1 == selected),
       items: [
-        for (final item in items)
+        for (final (index, item) in items.indexed)
           AppBottomNavItem(
             key: ValueKey('quran-nav-${item.$1}'),
-            icon: item.$3,
+            icon: index == 0 ? null : item.$3,
+            iconAsset: index == 0 ? 'assets/homeImg/quranImg.png' : null,
             label: item.$2,
             onTap: () => onSelected?.call(item.$1),
           ),
