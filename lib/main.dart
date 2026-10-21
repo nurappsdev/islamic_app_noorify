@@ -27,6 +27,7 @@ import 'features/home/data/services/prayer_location_service.dart';
 import 'features/home/domain/prayer_location.dart';
 import 'features/prayer_widget/data/services/prayer_widget_service.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
+import 'features/amol_tracking/presentation/controllers/amol_sync.dart';
 import 'features/quran/presentation/controllers/quran_reading_sync.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
@@ -108,7 +109,9 @@ Future<void> main() async {
   unawaited(PrayerWidgetService.syncPrayerWidget(language: savedLanguage));
   // Lets the widget's manual refresh button re-run the sync above from a
   // background isolate without opening the app.
-  unawaited(HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback));
+  unawaited(
+    HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback),
+  );
   PrayerLocationService.instance.addListener(() {
     if (PrayerLocationService.instance.state.status ==
         PrayerLocationStatus.ready) {
@@ -121,6 +124,9 @@ Future<void> main() async {
   // Sends Quran reading done offline (or cut off by the app closing) once
   // the server is reachable, now and whenever the app comes back.
   QuranReadingSync.shared.start();
+  // Same for Amol ticks made offline: sent silently, by comparison with the
+  // server's own state so nothing is logged twice.
+  AmolSync.shared.start();
   final launchDetails = await AlarmScheduler.launchDetails();
   final launchPayload = launchDetails?.didNotificationLaunchApp == true
       ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)

@@ -37,7 +37,9 @@ class AmolPillarModel extends AmolPillar {
                 .map(
                   (e) => AmolItemModel.fromJson(Map<String, dynamic>.from(e)),
                 )
-                .where((item) => hidden == null || !hidden.contains(item.itemKey))
+                .where(
+                  (item) => hidden == null || !hidden.contains(item.itemKey),
+                )
                 .toList()
           : const [],
     );

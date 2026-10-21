@@ -27,4 +27,13 @@ abstract interface class AmolTrackingRepository {
     required String pillarKey,
     required String itemKey,
   });
+
+  /// Sends the ticks made on this device that haven't reached the server yet,
+  /// comparing each against the server's own state for its day first so
+  /// nothing is logged twice. Never throws.
+  ///
+  /// [known] is a day already fetched by the caller, reused instead of
+  /// fetching it again. Returns how many were sent and how many are still
+  /// waiting.
+  Future<({int sent, int pending})> syncPending({AmolDailyDashboard? known});
 }

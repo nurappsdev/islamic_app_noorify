@@ -13,4 +13,15 @@ class AmolDailySummary {
 
   /// Server-formatted text (e.g. `"Point : 2/40"`).
   final String pointsText;
+
+  AmolDailySummary copyWith({
+    num? totalEarnedPoints,
+    num? percentage,
+    String? pointsText,
+  }) => AmolDailySummary(
+    totalEarnedPoints: totalEarnedPoints ?? this.totalEarnedPoints,
+    totalPossiblePoints: totalPossiblePoints,
+    percentage: percentage ?? this.percentage,
+    pointsText: pointsText ?? this.pointsText,
+  );
 }
