@@ -4,19 +4,24 @@ import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_design
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_page_viewport.dart';
 
 void main() {
-  Widget page({String? zoom, VoidCallback? onNext, VoidCallback? onPrevious}) =>
-      MaterialApp(
-        home: Scaffold(
-          body: QuranPageViewport(
-            pageNumber: 2,
-            footer: const SizedBox(),
-            zoomLabel: zoom,
-            onNext: onNext,
-            onPrevious: onPrevious,
-            child: const SizedBox(height: 400, child: Text('Ayahs')),
-          ),
-        ),
-      );
+  Widget page({
+    String? zoom,
+    double magnify = 1,
+    VoidCallback? onNext,
+    VoidCallback? onPrevious,
+  }) => MaterialApp(
+    home: Scaffold(
+      body: QuranPageViewport(
+        pageNumber: 2,
+        footer: const SizedBox(),
+        zoomLabel: zoom,
+        magnify: magnify,
+        onNext: onNext,
+        onPrevious: onPrevious,
+        child: const SizedBox(height: 400, child: Text('Ayahs')),
+      ),
+    ),
+  );
 
   double opacityOf(WidgetTester tester, Finder finder) => tester
       .widget<AnimatedOpacity>(
@@ -78,5 +83,22 @@ void main() {
     expect(indicator, findsNothing);
     await back.up();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('a pinch magnifies the page as one picture', (tester) async {
+    double scaleOf() => tester
+        .widget<Transform>(find.byKey(const ValueKey('quran-page-magnify')))
+        .transform
+        .getMaxScaleOnAxis();
+    final text = find.text('Ayahs');
+    await tester.pumpWidget(page());
+    expect(scaleOf(), 1);
+    final laidOut = tester.getSize(text);
+    final drawn = tester.getRect(text).width;
+    await tester.pumpWidget(page(magnify: 1.3));
+    expect(scaleOf(), moreOrLessEquals(1.3));
+    // Laid out as before; only the picture of it grows.
+    expect(tester.getSize(text), laidOut);
+    expect(tester.getRect(text).width, moreOrLessEquals(drawn * 1.3));
   });
 }

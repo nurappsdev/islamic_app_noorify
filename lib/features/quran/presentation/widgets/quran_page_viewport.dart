@@ -29,6 +29,7 @@ class QuranPageViewport extends StatefulWidget {
     this.showHeader = true,
     this.header,
     this.zoomLabel,
+    this.magnify = 1,
   });
   final int pageNumber;
   final Widget? header;
@@ -41,6 +42,11 @@ class QuranPageViewport extends StatefulWidget {
   /// The Arabic zoom while a pinch changes it ("120%"), shown in a small
   /// pill; null when no pinch is under way.
   final String? zoomLabel;
+
+  /// How much a pinch in progress magnifies the page, about the point
+  /// between the fingers: it zooms smoothly as one picture, and the text is
+  /// laid out at its new size only once the pinch ends.
+  final double magnify;
   @override
   State<QuranPageViewport> createState() => _QuranPageViewportState();
 }
@@ -117,18 +123,36 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
     }
   }
 
+  /// The pinch's focal point as an alignment within the page's interior
+  /// (the viewport of [size] less [padding]).
+  Alignment _focalAlignment(Size size, EdgeInsets padding) {
+    final inner = padding.deflateRect(Offset.zero & size);
+    if (inner.width <= 0 || inner.height <= 0) return Alignment.center;
+    return Alignment(
+      ((_focal.dx - inner.left) / inner.width * 2 - 1).clamp(-1.0, 1.0),
+      ((_focal.dy - inner.top) / inner.height * 2 - 1).clamp(-1.0, 1.0),
+    );
+  }
+
   double get _span {
     final points = _pointers.values.take(2).toList();
     return (points[0] - points[1]).distance;
   }
 
+  // Where each finger is on the page, and the point a pinch zooms about.
+  final _local = <int, Offset>{};
+  Offset _focal = Offset.zero;
+
   void _pointerDown(PointerDownEvent event) {
     if (_pointers.isEmpty) _pinched = false;
     _pointers[event.pointer] = event.position;
+    _local[event.pointer] = event.localPosition;
     if (_pointers.length == 2 && widget.onPinchUpdate != null) {
+      final points = _local.values.take(2).toList();
       setState(() {
         _pinched = true;
         _pinchStartSpan = _span;
+        _focal = (points[0] + points[1]) / 2;
       });
     }
   }
@@ -144,6 +168,7 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
 
   void _pointerUp(PointerEvent event) {
     _pointers.remove(event.pointer);
+    _local.remove(event.pointer);
     if (_pinchStartSpan != null && _pointers.length < 2) {
       setState(() => _pinchStartSpan = null);
       widget.onPinchEnd?.call();
@@ -220,52 +245,63 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                   child: ClipRect(
                     key: const ValueKey('quran-frame-interior'),
                     clipBehavior: Clip.hardEdge,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 320),
-                      switchInCurve: Curves.easeInOutCubic,
-                      switchOutCurve: Curves.easeInOutCubic,
-                      layoutBuilder: (current, previous) => Stack(
-                        fit: StackFit.expand,
-                        children: [...previous, ?current],
+                    child: Transform.scale(
+                      key: const ValueKey('quran-page-magnify'),
+                      scale: widget.magnify,
+                      alignment: _focalAlignment(
+                        bounds.biggest,
+                        widget.header == null
+                            ? EdgeInsets.fromLTRB(side, top, side, bottom)
+                            : EdgeInsets.only(bottom: bottom),
                       ),
-                      transitionBuilder: (child, animation) {
-                        final incoming =
-                            child.key == ValueKey(widget.pageNumber);
-                        // A next page enters from the left, following the
-                        // right-swipe that turned it.
-                        final direction =
-                            (_forward ? -1.0 : 1.0) * (incoming ? 1 : -1);
-                        return SlideTransition(
-                          position: Tween<Offset>(
-                            begin: Offset(direction, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: FadeTransition(
-                            opacity: animation,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _PageScrollBody(
-                        key: ValueKey(widget.pageNumber),
-                        locked: _pinchStartSpan != null,
-                        child: widget.header == null
-                            ? widget.child
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  widget.header!,
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: side,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 320),
+                        switchInCurve: Curves.easeInOutCubic,
+                        switchOutCurve: Curves.easeInOutCubic,
+                        layoutBuilder: (current, previous) => Stack(
+                          fit: StackFit.expand,
+                          children: [...previous, ?current],
+                        ),
+                        transitionBuilder: (child, animation) {
+                          final incoming =
+                              child.key == ValueKey(widget.pageNumber);
+                          // A next page enters from the left, following the
+                          // right-swipe that turned it.
+                          final direction =
+                              (_forward ? -1.0 : 1.0) * (incoming ? 1 : -1);
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: Offset(direction, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _PageScrollBody(
+                          key: ValueKey(widget.pageNumber),
+                          locked: _pinchStartSpan != null,
+                          child: widget.header == null
+                              ? widget.child
+                              : Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    widget.header!,
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: side,
+                                      ),
+                                      child: ColoredBox(
+                                        color: context.pageColor(Colors.white),
+                                        child: ClipRect(child: widget.child),
+                                      ),
                                     ),
-                                    child: ColoredBox(
-                                      color: context.pageColor(Colors.white),
-                                      child: ClipRect(child: widget.child),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                        ),
                       ),
                     ),
                   ),
