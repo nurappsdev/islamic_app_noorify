@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_day_snapshot_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_pending_actions_store.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
 import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
@@ -22,13 +25,23 @@ class SessionCleaner {
   const SessionCleaner._();
 
   /// Exact SharedPreferences keys holding per-user progress.
-  static const _userPrefKeys = {
+  @visibleForTesting
+  static const userPrefKeys = {
     'hadith_completed_ids',
     'quran_last_read',
     'quran_reading_history',
     'quran_bookmarks',
     // Unsent Quran reading time: it must not be credited to the next account.
     'quran_reading_pending',
+    // Unsent Amol ticks, and the cached daily checklists they are shown
+    // against: both belong to the account that made them. Clearing them is
+    // what keeps one account's offline progress from being logged under the
+    // next one that signs in on this device.
+    AmolPendingActionsStore.key,
+    AmolDaySnapshotStore.key,
+    // The single-slot cache earlier builds wrote the checklist to.
+    'offline_cache_amol_daily_json',
+    'offline_cache_amol_daily_at_ms',
   };
 
   /// SharedPreferences key prefixes holding per-user progress.
@@ -45,7 +58,7 @@ class SessionCleaner {
     await _safe(() async {
       final prefs = await SharedPreferences.getInstance();
       for (final key in prefs.getKeys().toList()) {
-        if (_userPrefKeys.contains(key) ||
+        if (userPrefKeys.contains(key) ||
             _userPrefPrefixes.any(key.startsWith)) {
           await prefs.remove(key);
         }

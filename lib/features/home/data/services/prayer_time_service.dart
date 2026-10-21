@@ -67,6 +67,20 @@ class AladhanPrayerTimeService implements PrayerTimeService {
   @override
   DailyPrayerTimes? cachedPrayerTimes(DateTime date) {
     if (_preferences.getString(_cacheDateKey) != _cacheDate(date)) return null;
+    return _cachedForCurrentLocation();
+  }
+
+  /// The times still cached, whatever day they were fetched for.
+  ///
+  /// Only for deciding *which* Fajr-to-Fajr day it is while the device has
+  /// been offline past the day its times were cached for: Fajr moves by about
+  /// a minute a day, so an old Fajr still places "before Fajr" correctly,
+  /// whereas having no times at all falls back to the civil date and moves a
+  /// whole night's tracking onto the wrong day. Deliberately not used to gate
+  /// logging, where being a few minutes out would refuse a legitimate tick.
+  DailyPrayerTimes? lastCachedPrayerTimes() => _cachedForCurrentLocation();
+
+  DailyPrayerTimes? _cachedForCurrentLocation() {
     final location = _location();
     final cachedLocation = _preferences.getString(_cacheLocationKey);
     // Legacy city-based cache entries predate the location key and remain

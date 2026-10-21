@@ -8,7 +8,7 @@ class AmolDailyState {
     required this.status,
     this.dashboard,
     this.failure,
-    this.loggingItemKey,
+    this.loggingItemKeys = const <String>{},
     this.completionOverrides = const <String, bool>{},
   });
 
@@ -24,10 +24,12 @@ class AmolDailyState {
   const AmolDailyState.success(
     AmolDailyDashboard dashboard, {
     Map<String, bool> completionOverrides = const <String, bool>{},
+    Set<String> loggingItemKeys = const <String>{},
   }) : this._(
          status: AmolDailyStatus.success,
          dashboard: dashboard,
          completionOverrides: completionOverrides,
+         loggingItemKeys: loggingItemKeys,
        );
 
   const AmolDailyState.failure(
@@ -43,10 +45,14 @@ class AmolDailyState {
   final AmolDailyDashboard? dashboard;
   final Failure? failure;
 
-  /// The `itemKey` currently being posted to `log-item`/`delete-item`, or
-  /// `null` when nothing is in flight. Used to disable/spin just that one
-  /// row.
-  final String? loggingItemKey;
+  /// The `itemKey`s currently being posted to `log-item`/`delete-item`.
+  ///
+  /// Only used to ignore a second tap on the *same* row while its request is
+  /// in flight. It is deliberately not drawn: a tick looks the same whether
+  /// it has reached the server, is on its way, or is waiting offline. Other
+  /// rows stay tappable, so a run of ticks made offline — where a request can
+  /// sit until the connect timeout — is all kept, not just the first.
+  final Set<String> loggingItemKeys;
 
   /// `itemKey` -> the checked state the user last set locally this session.
   /// Once an item lands here it renders at that state regardless of what a
@@ -63,11 +69,12 @@ class AmolDailyState {
   bool isItemChecked(String itemKey, bool serverIsCompleted) =>
       completionOverrides[itemKey] ?? serverIsCompleted;
 
-  AmolDailyState withLoggingItemKey(String? itemKey) => AmolDailyState._(
+  /// Clears [itemKey]'s in-flight mark, leaving everything else as it is.
+  AmolDailyState withoutLoggingItem(String itemKey) => AmolDailyState._(
     status: status,
     dashboard: dashboard,
     failure: failure,
-    loggingItemKey: itemKey,
+    loggingItemKeys: loggingItemKeys.difference({itemKey}),
     completionOverrides: completionOverrides,
   );
 
@@ -79,7 +86,7 @@ class AmolDailyState {
         status: status,
         dashboard: dashboard,
         failure: failure,
-        loggingItemKey: itemKey,
+        loggingItemKeys: {...loggingItemKeys, itemKey},
         completionOverrides: {...completionOverrides, itemKey: checked},
       );
 }
