@@ -571,6 +571,16 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 .currentAyahNo;
             final surah = state.surah;
             final opening = state.from == 1;
+            // Al-Fatiha's first ayah is its Bismillah: on its opening page it
+            // is shown under the Surah's name, as other Surahs' Bismillah
+            // is, rather than as an ayah of the text.
+            final fatihaOpening = opening && surah?.number == 1;
+            final pageAyahs = fatihaOpening
+                ? [
+                    for (final a in state.ayahs)
+                      if (a.verseKey != '1:1') a,
+                  ]
+                : state.ayahs;
             final arabicScale = _pinchScale ?? prefs.arabicFontScale;
             final ayatView = _ayatViewFor(prefs);
             final detail = surah == null
@@ -860,7 +870,8 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         header: opening && surah != null
                             ? QuranSurahHeading(
                                 surah: surah,
-                                showBismillah: state.bismillahPre,
+                                showBismillah:
+                                    state.bismillahPre || fatihaOpening,
                               )
                             : null,
                         busy: state.loading || _crossingSurah,
@@ -901,7 +912,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (prefs.showTranslation)
-                              for (final ayah in state.ayahs)
+                              for (final ayah in pageAyahs)
                                 QuranAyahHold(
                                   onHold: () => _showAyah(ayah),
                                   onTap: () => _tapAyah(ayah),
@@ -977,7 +988,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 )
                             else
                               QuranReadingText(
-                                ayahs: state.ayahs,
+                                ayahs: pageAyahs,
                                 active: active,
                                 scale: arabicScale,
                                 font: arabicFontById(prefs.arabicFontFamily),
