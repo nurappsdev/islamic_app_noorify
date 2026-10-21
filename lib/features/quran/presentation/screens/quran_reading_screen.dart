@@ -877,6 +877,11 @@ class _ReaderBodyState extends State<_ReaderBody> {
                         busy: state.loading || _crossingSurah,
                         onPinchUpdate: _pinchUpdate,
                         onPinchEnd: _pinchEnd,
+                        zoomLabel: _pinchScale == null
+                            ? null
+                            : context.localizedDigits(
+                                '${(_pinchScale! * 100).round()}%',
+                              ),
                         onNext:
                             state.to < reader.lastAyah ||
                                 (widget.args.paraNumber == null &&
