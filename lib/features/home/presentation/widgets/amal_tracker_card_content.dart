@@ -137,112 +137,109 @@ class ProgressHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = (percentage / 100).clamp(0, 1).toDouble();
+    final isCompleted = value >= 1;
     final appText = AppText.of(context);
     final calculatedLabel = percentage % 1 == 0
         ? percentage.toStringAsFixed(0)
         : percentage.toStringAsFixed(1);
-    final label = percentageLabel?.trim().isNotEmpty == true
-        ? percentageLabel!.trim()
-        : context.localizedDigits(calculatedLabel);
+    // Some API responses already include `%`; the header owns that suffix so
+    // it remains exactly one percent sign for every feature card.
+    final label =
+        (percentageLabel?.trim().isNotEmpty == true
+                ? percentageLabel!.trim()
+                : context.localizedDigits(calculatedLabel))
+            .replaceAll('%', '')
+            .trim();
+    final remainingPercent = (100 - value * 100).ceil().clamp(0, 99);
+    final status = isCompleted
+        ? appText.planStatusCompleted
+        : value <= 0
+        ? appText.planStatusInProgress
+        : '${appText.planStatusInProgress} • '
+              '${context.localizedDigits('$remainingPercent')}% '
+              '${appText.remainingLabel}';
     final radius = BorderRadius.circular(24.r);
     final percentWidth = 56.w;
     return Row(
       children: [
         Expanded(
-          // At 100% the bar gives way to the same pill the Quran card uses.
-          child: percentage >= 100
-              ? Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    height: 46.h,
-                    padding: EdgeInsets.symmetric(horizontal: 26.w),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(24.r),
-                      border: Border.all(color: _softGreen, width: 1.2),
-                    ),
-                    child: Text(
-                      appText.percentCompleteSuffix,
-                      style: homeSerifStyle(
-                        fontSize: 18.sp,
-                        color: Colors.black,
+          child: Container(
+            height: 54.h,
+            decoration: BoxDecoration(
+              color: _progressPercent,
+              borderRadius: radius,
+              border: Border.all(color: Colors.white, width: 1.2),
+            ),
+            child: ClipRRect(
+              borderRadius: radius,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Keep a compact starter fill at 0%, then let it grow from
+                  // the true percentage all the way to the right edge.
+                  final minimumFill = (52.w).clamp(0.0, constraints.maxWidth);
+                  final targetWidth = isCompleted
+                      ? constraints.maxWidth
+                      : (value * constraints.maxWidth).clamp(
+                          minimumFill,
+                          constraints.maxWidth,
+                        );
+                  return Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedContainer(
+                          key: const ValueKey('feature-card-progress-fill'),
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                          width: targetWidth,
+                          height: double.infinity,
+                          decoration: BoxDecoration(
+                            color: isCompleted ? _darkGreen : _progressFill,
+                            borderRadius: radius,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                )
-              : Container(
-                  height: 54.h,
-                  decoration: BoxDecoration(
-                    color: _progressPercent,
-                    borderRadius: radius,
-                    border: Border.all(color: Colors.white, width: 1.2),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: radius,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // The fill grows with the percentage but stops where the
-                        // percentage segment begins.
-                        // It never shrinks below the title, so the two colours stay
-                        // separate even at 0%.
-                        final maxFill = constraints.maxWidth - percentWidth;
-                        final fillWidth = (value * constraints.maxWidth).clamp(
-                          (160.w).clamp(0.0, maxFill),
-                          maxFill,
-                        );
-                        return Stack(
-                          children: [
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              bottom: 0,
-                              width: fillWidth,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  color: _progressFill,
-                                  borderRadius: radius,
-                                ),
+                      Positioned.fill(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            left: 16.w,
+                            right: percentWidth + 8.w,
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              status,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: homeSerifStyle(
+                                fontSize: 14.sp,
+                                color: isCompleted ? Colors.white : _deepText,
                               ),
                             ),
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              bottom: 0,
-                              width: fillWidth,
-                              child: Center(
-                                child: Text(
-                                  appText.percentCompleteSuffix,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: homeSerifStyle(
-                                    fontSize: 16.sp,
-                                    color: Color(0xFF859065),
-                                  ),
-                                ),
-                              ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: percentWidth,
+                        child: Center(
+                          child: Text(
+                            '${context.localizedDigits(label)} %',
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              color: isCompleted ? Colors.white : _deepText,
                             ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              bottom: 0,
-                              width: percentWidth,
-                              child: Center(
-                                child: Text(
-                                  '${context.localizedDigits(label)} %',
-                                  style: TextStyle(
-                                    fontSize: 15.sp,
-                                    color: _deepText,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
         ),
         SizedBox(width: 34.w),
         Material(
