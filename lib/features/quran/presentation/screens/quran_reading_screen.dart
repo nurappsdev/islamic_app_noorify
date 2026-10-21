@@ -123,7 +123,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
   _AyatView? _ayatView;
   // Arabic zoom while a pinch is in progress (and until the bloc saves it):
   // the scale the pinch started at, the one it shows (in 5% steps) and the
-  // one it is at, unrounded, which magnifies the page as one picture.
+  // one it is at, unrounded.
   double? _pinchBase, _pinchScale, _pinchAt;
 
   // The Arabic-only text and the ayahs it shows, to fit a zoom to its lines.
@@ -630,15 +630,18 @@ class _ReaderBodyState extends State<_ReaderBody> {
                       if (a.verseKey != '1:1') a,
                   ]
                 : state.ayahs;
-            // While pinching the text keeps its size and the page is
-            // magnified; it is laid out at the new size once the pinch ends.
-            final pinching = _pinchBase != null;
-            final arabicScale = pinching
-                ? prefs.arabicFontScale
+            // While pinching, the text is laid out at the 5% step just above
+            // the pinch and drawn a little smaller, by what the pinch falls
+            // short of it: the zoom moves smoothly, and as it only ever
+            // shrinks the picture, no word is pushed out of the frame.
+            final pinchAt = _pinchBase == null ? null : _pinchAt;
+            final arabicScale = pinchAt != null
+                ? ((pinchAt * 20 - 1e-9).ceil() / 20).clamp(
+                    kMinArabicFontScale,
+                    kMaxArabicFontScale,
+                  )
                 : _pinchScale ?? prefs.arabicFontScale;
-            final magnify = pinching && _pinchAt != null
-                ? _pinchAt! / prefs.arabicFontScale
-                : 1.0;
+            final magnify = pinchAt != null ? pinchAt / arabicScale : 1.0;
             _shownAyahs = pageAyahs;
             final ayatView = _ayatViewFor(prefs);
             final detail = surah == null
