@@ -43,9 +43,9 @@ class QuranPageViewport extends StatefulWidget {
   /// pill; null when no pinch is under way.
   final String? zoomLabel;
 
-  /// How much a pinch in progress magnifies the page, about the point
-  /// between the fingers: it zooms smoothly as one picture, and the text is
-  /// laid out at its new size only once the pinch ends.
+  /// How much a pinch in progress scales the page as drawn, about the
+  /// point between the fingers, between the sizes its text is laid out at:
+  /// the zoom moves smoothly rather than in steps.
   final double magnify;
   @override
   State<QuranPageViewport> createState() => _QuranPageViewportState();
@@ -181,6 +181,11 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
       final artWidth = math.max(0.0, bounds.maxWidth - 2 * _artInset);
       final artHeight = artWidth / _artAspect;
       final side = _artInset + artWidth * _artSide + _gap;
+      // Nastaleeq letters ending a line (ی, ے, ن…) sweep past the line's
+      // edge, the further the larger the text: the text is laid out within
+      // [side] but may be drawn this far into the frame's empty margin, so
+      // no word's end is clipped.
+      final bleed = artWidth * _artSide * .75 + _gap;
       // The page runs up behind the status bar and notch: a Surah's opening
       // pattern fills that strip, while the framed page and its text start
       // below it.
@@ -240,7 +245,12 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                 // border.
                 child: Padding(
                   padding: widget.header == null
-                      ? EdgeInsets.fromLTRB(side, top, side, bottom)
+                      ? EdgeInsets.fromLTRB(
+                          side - bleed,
+                          top,
+                          side - bleed,
+                          bottom,
+                        )
                       : EdgeInsets.only(bottom: bottom),
                   child: ClipRect(
                     key: const ValueKey('quran-frame-interior'),
@@ -251,7 +261,12 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                       alignment: _focalAlignment(
                         bounds.biggest,
                         widget.header == null
-                            ? EdgeInsets.fromLTRB(side, top, side, bottom)
+                            ? EdgeInsets.fromLTRB(
+                                side - bleed,
+                                top,
+                                side - bleed,
+                                bottom,
+                              )
                             : EdgeInsets.only(bottom: bottom),
                       ),
                       child: AnimatedSwitcher(
@@ -284,7 +299,12 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                           key: ValueKey(widget.pageNumber),
                           locked: _pinchStartSpan != null,
                           child: widget.header == null
-                              ? widget.child
+                              ? Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: bleed,
+                                  ),
+                                  child: widget.child,
+                                )
                               : Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -292,11 +312,18 @@ class _QuranPageViewportState extends State<QuranPageViewport> {
                                     widget.header!,
                                     Padding(
                                       padding: EdgeInsets.symmetric(
-                                        horizontal: side,
+                                        horizontal: side - bleed,
                                       ),
                                       child: ColoredBox(
                                         color: context.pageColor(Colors.white),
-                                        child: ClipRect(child: widget.child),
+                                        child: ClipRect(
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: bleed,
+                                            ),
+                                            child: widget.child,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],

@@ -101,4 +101,59 @@ void main() {
     expect(tester.getSize(text), laidOut);
     expect(tester.getRect(text).width, moreOrLessEquals(drawn * 1.3));
   });
+
+  testWidgets('drawn smaller mid-pinch, every line stays in the frame', (
+    tester,
+  ) async {
+    Widget full(double magnify) => MaterialApp(
+      home: Scaffold(
+        body: QuranPageViewport(
+          pageNumber: 2,
+          footer: const SizedBox(),
+          magnify: magnify,
+          child: const SizedBox(
+            height: 400,
+            width: double.infinity,
+            child: ColoredBox(color: Colors.amber, key: ValueKey('text')),
+          ),
+        ),
+      ),
+    );
+    final frame = find.byKey(const ValueKey('quran-frame-interior'));
+    final text = find.byKey(const ValueKey('text'));
+    await tester.pumpWidget(full(1));
+    final inside = tester.getRect(frame);
+    await tester.pumpWidget(full(.96));
+    final drawn = tester.getRect(text);
+    expect(drawn.left, greaterThanOrEqualTo(inside.left));
+    expect(drawn.right, lessThanOrEqualTo(inside.right));
+  });
+
+  testWidgets('line ends may sweep past the text into the frame margin', (
+    tester,
+  ) async {
+    // Nastaleeq letters ending a line are drawn past its edge; the frame
+    // must not clip them, at any zoom.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuranPageViewport(
+            pageNumber: 2,
+            footer: const SizedBox(),
+            child: const SizedBox(
+              height: 400,
+              width: double.infinity,
+              child: ColoredBox(color: Colors.amber, key: ValueKey('text')),
+            ),
+          ),
+        ),
+      ),
+    );
+    final clip = tester.getRect(
+      find.byKey(const ValueKey('quran-frame-interior')),
+    );
+    final text = tester.getRect(find.byKey(const ValueKey('text')));
+    expect(text.left - clip.left, greaterThanOrEqualTo(20));
+    expect(clip.right - text.right, greaterThanOrEqualTo(20));
+  });
 }
