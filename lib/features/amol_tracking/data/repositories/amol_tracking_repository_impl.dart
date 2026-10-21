@@ -39,13 +39,16 @@ class AmolTrackingRepositoryImpl implements AmolTrackingRepository {
       }
       return Right(dashboard);
     } on ServerException catch (e) {
-      return _fallback(ServerFailure(e.message, statusCode: e.statusCode));
+      return _fallback(
+        ServerFailure(e.message, statusCode: e.statusCode),
+        requestedDate: date,
+      );
     } on NetworkException catch (e) {
-      return _fallback(NetworkFailure(e.message));
+      return _fallback(NetworkFailure(e.message), requestedDate: date);
     } on ParsingException catch (e) {
-      return _fallback(ParsingFailure(e.message));
+      return _fallback(ParsingFailure(e.message), requestedDate: date);
     } catch (_) {
-      return _fallback(const UnknownFailure());
+      return _fallback(const UnknownFailure(), requestedDate: date);
     }
   }
 
@@ -158,12 +161,16 @@ class AmolTrackingRepositoryImpl implements AmolTrackingRepository {
   /// empty/failure state. Only surfaces [failure] when nothing has ever been
   /// cached.
   Future<Either<Failure, AmolDailyDashboard>> _fallback(
-    Failure failure,
-  ) async {
+    Failure failure, {
+    required String requestedDate,
+  }) async {
     final cached = await AmolTrackingRemoteDataSourceImpl.cache.read();
     if (cached != null) {
       try {
-        return Right(AmolDailyDashboardModel.fromJson(cached));
+        final dashboard = AmolDailyDashboardModel.fromJson(cached);
+        // Offline data for yesterday must never masquerade as a fresh daily
+        // checklist after midnight.
+        if (dashboard.dateIso == requestedDate) return Right(dashboard);
       } catch (_) {
         // Cached payload no longer parses - fall through to the real failure.
       }
