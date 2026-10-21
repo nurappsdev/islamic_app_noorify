@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 
+import 'quran_design.dart' show quranOlive;
 import 'quran_reading_layout.dart' show QuranReadingInsets;
 
 /// The ornaments stay still. Both vertical scrolling and the page-turn
@@ -47,6 +48,7 @@ const _artInset = 4.0; // left/right offset of the artwork
 const _headerTop = 8.0;
 const _footerBottom = 16.0;
 const _gap = 6.0;
+const _scrollbarThickness = 4.0;
 const ValueListenable<double> _noInset = AlwaysStoppedAnimation(0);
 
 class _QuranPageViewportState extends State<QuranPageViewport> {
@@ -281,13 +283,35 @@ class _PageScrollBodyState extends State<_PageScrollBody> {
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: context.pageColor(Colors.white),
-    child: SingleChildScrollView(
+    // A slim olive thumb that shows while the page scrolls and fades once
+    // it stops; it can be dragged to move through a long page. Only a page
+    // longer than its frame gets one.
+    child: RawScrollbar(
+      key: const ValueKey('quran-page-scrollbar'),
       controller: _controller,
-      clipBehavior: Clip.hardEdge,
-      physics: widget.locked
-          ? const NeverScrollableScrollPhysics()
-          : const ClampingScrollPhysics(),
-      child: widget.child,
+      thumbColor: quranOlive.withValues(alpha: .7),
+      radius: const Radius.circular(4),
+      thickness: _scrollbarThickness,
+      minThumbLength: 40,
+      mainAxisMargin: 4,
+      fadeDuration: const Duration(milliseconds: 300),
+      timeToFade: const Duration(milliseconds: 900),
+      child: ScrollConfiguration(
+        // No second, platform scrollbar on desktop.
+        behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+        child: SingleChildScrollView(
+          controller: _controller,
+          clipBehavior: Clip.hardEdge,
+          physics: widget.locked
+              ? const NeverScrollableScrollPhysics()
+              : const ClampingScrollPhysics(),
+          // A gutter for the thumb, so it never covers the text.
+          padding: const EdgeInsetsDirectional.only(
+            end: _scrollbarThickness + 4,
+          ),
+          child: widget.child,
+        ),
+      ),
     ),
   );
 }
