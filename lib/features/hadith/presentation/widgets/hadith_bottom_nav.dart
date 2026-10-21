@@ -38,6 +38,7 @@ class HadithBottomNav extends StatelessWidget {
       items: [
         AppBottomNavItem(
           iconAsset: 'assets/homeImg/haditImg.png',
+          iconAssetColor: Colors.white,
           label: appText.categoryHadith,
           onTap: go(0, RouteNames.hadithLibrary),
         ),
