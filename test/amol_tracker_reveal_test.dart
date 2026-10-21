@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +17,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _titles = {
@@ -129,7 +132,7 @@ Future<AmolDailyBloc> _pump(
   return bloc;
 }
 
-/// Lets the arrival, the slide and the focus pause all finish.
+/// Lets the arrival, the scroll and the focus pause all finish.
 Future<void> _settle(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.pump(const Duration(seconds: 1));
@@ -137,18 +140,43 @@ Future<void> _settle(WidgetTester tester) async {
 }
 
 /// The section titles, top to bottom, among those laid out.
-List<String> _order(WidgetTester tester) {
+List<String> _order(WidgetTester tester) => _orderWithin(tester, null);
+
+/// The section titles that are inside the scrolling viewport, top to bottom.
+List<String> _visibleOrder(WidgetTester tester) =>
+    _orderWithin(tester, tester.getRect(find.byType(Scrollable).first));
+
+List<String> _orderWithin(WidgetTester tester, Rect? view) {
   final found = <String, double>{};
   for (final title in _titles.values) {
     final finder = find.text(title, skipOffstage: false);
-    if (finder.evaluate().isNotEmpty) {
-      found[title] = tester.getTopLeft(finder.first).dy;
+    if (finder.evaluate().isEmpty) continue;
+    final rect = tester.getRect(finder.first);
+    if (view != null &&
+        (rect.top < view.top - 1 || rect.bottom > view.bottom + 1)) {
+      continue;
     }
+    found[title] = rect.top;
   }
   return (found.entries.toList()..sort((a, b) => a.value.compareTo(b.value)))
       .map((e) => e.key)
       .toList();
 }
+
+ScrollableState _list(WidgetTester tester) =>
+    tester.state<ScrollableState>(find.byType(Scrollable).first);
+
+/// How far [title]'s section has faded in: the entrance wraps every slot in an
+/// [Opacity], and the focus effect's own one is still 1 while it plays.
+double _fade(WidgetTester tester, String title) => tester
+    .widgetList<Opacity>(
+      find.ancestor(
+        of: find.text(title, skipOffstage: false).first,
+        matching: find.byType(Opacity),
+      ),
+    )
+    .map((o) => o.opacity)
+    .reduce(math.min);
 
 void main() {
   testWidgets('Bangla checklist localizes points and progress', (tester) async {
@@ -166,34 +194,67 @@ void main() {
     expect(_order(tester), _titles.values.toList());
   });
 
+  testWidgets('today\'s Amol summary stays fixed while sections scroll', (
+    tester,
+  ) async {
+    await _pump(tester);
+    await _settle(tester);
+
+    final summary = find.byType(AmolSummaryCard);
+    final before = tester.getTopLeft(summary);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -250));
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(summary), before);
+  });
+
   for (final entry in {
     AmalSection.naflAndMore: 'Nafl & more',
     AmalSection.quiz: 'Quiz',
     AmalSection.quran: 'Quran',
   }.entries) {
-    testWidgets('${entry.value} moves to the top, others keep their order', (
+    testWidgets('${entry.value} is scrolled to the top, order untouched', (
       tester,
     ) async {
       await _pump(tester, section: entry.key);
       await _settle(tester);
-      final expected = [
-        entry.value,
-        ..._titles.values.where((t) => t != entry.value),
-      ];
-      expect(_order(tester), expected);
+
+      // Nothing is reordered: the list is scrolled instead.
+      expect(_order(tester), _titles.values.toList());
+      expect(_list(tester).position.pixels, greaterThan(0));
+
+      final view = tester.getRect(find.byType(Scrollable).first);
+      final target = tester.getRect(find.text(entry.value).first);
+      expect(target.top - view.top, inInclusiveRange(0, 60));
+      expect(_visibleOrder(tester).first, entry.value);
     });
   }
+
+  testWidgets('Quiz finishes below the fixed Amol summary card', (
+    tester,
+  ) async {
+    await _pump(tester, section: AmalSection.quiz);
+    await _settle(tester);
+
+    final summary = tester.getRect(find.byType(AmolSummaryCard));
+    final quiz = tester.getRect(find.text('Quiz').first);
+    expect(quiz.top, greaterThan(summary.bottom));
+    expect(quiz.bottom, lessThanOrEqualTo(812));
+  });
 
   testWidgets('the move is animated, not an instant jump', (tester) async {
     await _pump(tester, section: AmalSection.naflAndMore);
     final title = find.text('Nafl & more', skipOffstage: false);
     final ys = <double>[];
+    final offsets = <double>[];
     for (var i = 0; i < 24; i++) {
       await tester.pump(const Duration(milliseconds: 40));
       ys.add(tester.getTopLeft(title.first).dy);
+      offsets.add(_list(tester).position.pixels);
     }
     await _settle(tester);
     final end = tester.getTopLeft(title.first).dy;
+    final endOffset = _list(tester).position.pixels;
 
     // It travels a real distance, in several steps, and never moves back down.
     expect(ys.first, greaterThan(end + 100));
@@ -202,6 +263,66 @@ void main() {
     for (var i = 1; i < ys.length; i++) {
       expect(ys[i], lessThanOrEqualTo(ys[i - 1] + 0.5));
     }
+
+    // And the list itself scrolled there, rather than the card moving alone.
+    expect(endOffset, greaterThan(100));
+    final scrolled = offsets.toSet().where((o) => o > 0 && o < endOffset);
+    expect(scrolled.length, greaterThan(3));
+    for (var i = 1; i < offsets.length; i++) {
+      expect(offsets[i], greaterThanOrEqualTo(offsets[i - 1] - 0.5));
+    }
+  });
+
+  testWidgets('the sections enter one after another, from the top down', (
+    tester,
+  ) async {
+    await _pump(tester, section: AmalSection.quiz);
+    // Stop on a frame in the middle of the top section's own entrance.
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      final top = _fade(tester, 'Fardh Prayer');
+      if (top > 0 && top < 1) break;
+    }
+
+    final top = _fade(tester, 'Fardh Prayer');
+    expect(top, inExclusiveRange(0, 1));
+    // The last section hasn't begun arriving while the first still is.
+    expect(_fade(tester, 'Nafl & more'), lessThan(top));
+
+    await _settle(tester);
+    expect(_fade(tester, 'Fardh Prayer'), 1);
+    expect(_fade(tester, 'Nafl & more'), 1);
+  });
+
+  testWidgets('a target near the bottom still reaches the top', (tester) async {
+    await _pump(tester, section: AmalSection.naflAndMore);
+    await _settle(tester);
+
+    final view = tester.getRect(find.byType(Scrollable).first);
+    final target = tester.getRect(find.text('Nafl & more').first);
+    expect(target.top - view.top, inInclusiveRange(0, 60));
+    // It can only get there because the list keeps room below it.
+    expect(
+      _list(tester).position.pixels,
+      _list(tester).position.maxScrollExtent,
+    );
+  });
+
+  testWidgets('a section already first still has an entrance animation', (
+    tester,
+  ) async {
+    await _pump(tester, section: AmalSection.fardhPrayer);
+    final title = find.text('Fardh Prayer', skipOffstage: false);
+
+    final positions = <double>[];
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      positions.add(tester.getTopLeft(title.first).dy);
+    }
+    await _settle(tester);
+    final end = tester.getTopLeft(title.first).dy;
+
+    expect(positions.reduce(math.max), greaterThan(end + 20));
   });
 
   testWidgets('the selected section is focused once it is at the top', (
@@ -209,7 +330,7 @@ void main() {
   ) async {
     await _pump(tester, section: AmalSection.quiz);
     await _settle(tester);
-    expect(_order(tester).first, 'Quiz');
+    expect(_visibleOrder(tester).first, 'Quiz');
     // The tracker's own list is never rewritten.
     final bloc = BlocProvider.of<AmolDailyBloc>(
       tester.element(find.byType(Scaffold).first),

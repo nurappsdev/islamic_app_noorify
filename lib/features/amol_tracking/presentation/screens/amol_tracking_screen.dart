@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shimmer/shimmer.dart';
@@ -132,42 +133,31 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       _pillarKeyByTitle[widget.initialExpandedCategory] ??
       widget.initialExpandedCategory;
 
-  /// Flips true once the screen has arrived and the target is centred, so the
-  /// focus effect animates in on a settled screen instead of firing before the
-  /// data or the target is in place.
+  /// Flips true once the screen has arrived and the target has landed at the
+  /// top, so the focus effect animates in on a settled screen instead of
+  /// firing before the data or the target is in place.
   bool _focusActive = false;
-  final GlobalKey _focusedAnchor = GlobalKey();
   bool _revealStarted = false;
 
-  /// The section shown first for this visit only. A pure display choice: the
-  /// server's order, the store and Hive are never touched, and a screen opened
-  /// without a target keeps the original order.
-  String? _movedToTop;
+  /// The list's own controller, so the reveal can scroll it to the target.
+  final ScrollController _scroll = ScrollController();
 
-  /// Drives the slide of the sections when [_movedToTop] takes the first place.
-  late final AnimationController _reorder = AnimationController(
+  /// Drives the entrance of the sections - each one a beat after the one
+  /// above it - while the list travels down to the target.
+  late final AnimationController _stagger = AnimationController(
     vsync: this,
-    duration: _reorderDuration,
+    duration: _StaggerSlot.total,
   );
 
-  /// Where each section is drawn at the start of the slide, relative to its
-  /// final place (`0` = already there).
-  final Map<String, double> _slideFrom = {};
+  /// Blank space kept below the last section for this visit only, so a target
+  /// near the bottom can still come to rest at the very top of the viewport.
+  /// The server's order, the store and Hive are never touched.
+  double _tailSpace = 0;
+
   final Map<String, GlobalKey> _slotKeys = {};
 
   GlobalKey _slotKey(String pillarKey) =>
       _slotKeys.putIfAbsent(pillarKey, GlobalKey.new);
-
-  /// [pillars] with the section moved to the top first and the others left in
-  /// their relative order.
-  List<AmolPillar> _displayOrder(List<AmolPillar> pillars) {
-    final top = _movedToTop;
-    final index = top == null
-        ? -1
-        : pillars.indexWhere((p) => p.pillarKey == top);
-    if (index <= 0) return pillars;
-    return [pillars[index], ...pillars.take(index), ...pillars.skip(index + 1)];
-  }
 
   /// Set once the user ticks or unticks an item, so leaving the screen
   /// refreshes the Home cards that show the same data.
@@ -274,17 +264,30 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     });
   }
 
-  static const _reorderDuration = Duration(milliseconds: 620);
-  static const _centerDuration = Duration(milliseconds: 560);
+  /// Fast: short enough to feel immediate, long enough to read as a scroll
+  /// rather than a jump.
+  static const _scrollDuration = Duration(milliseconds: 420);
   static const _settlePause = Duration(milliseconds: 90);
 
+  /// What is left above the target once it lands, so the focused card's lift
+  /// and shadow aren't clipped by the top edge of the list.
+  double get _topGap => 10.h;
+
   /// Runs once, when the day's checklist first has data: waits for the screen
-  /// to finish arriving, centres the target, and only then lets the focus
-  /// effect play. Nothing here fires before the target is in place.
+  /// to finish arriving, then plays the staggered entrance while the list
+  /// scrolls down to the target, and only then lets the focus effect play.
+  /// Nothing here fires before the target is laid out.
   void _beginReveal() {
     if (_revealStarted) return;
     _revealStarted = true;
-    if (_focusedPillarKey == null && _selectedItemKey == null) return;
+    if (_focusedPillarKey == null && _selectedItemKey == null) {
+      // Opened without a target: the sections stagger in where they are and
+      // the list stays at the top.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _stagger.forward();
+      });
+      return;
+    }
     unawaited(_runReveal());
   }
 
@@ -294,15 +297,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     // The expanded section is laid out for good by the end of the next frame.
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
-    final focused = _focusedPillarKey;
-    if (focused != null) await _moveToTop(focused);
+    final slot = _revealSlotKey();
+    await _makeRoomAbove(slot);
     if (!mounted) return;
-    // At the top the target is normally on screen already; only an item deep in
-    // a long section may still need bringing into view.
-    final target = _targetContext();
-    if (target != null && target.mounted && !_isFullyVisible(target)) {
-      await _centerOn(target);
-    }
+    // Both start together, so the wave running down the list and the travel
+    // of the list itself read as one movement.
+    unawaited(_stagger.forward());
+    await _scrollToTop(slot);
     if (!mounted) return;
     await Future<void>.delayed(_settlePause);
     if (!mounted || _focusedPillarKey == null) return;
@@ -335,66 +336,53 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     }
   }
 
-  /// The selected item's row, or the focused section when there is no item (or
-  /// it isn't on screen).
-  BuildContext? _targetContext() =>
-      (_selectedItemKey == null ? null : _selectedItemAnchor.currentContext) ??
-      _focusedAnchor.currentContext;
-
-  /// Makes [pillarKey]'s section the first one, sliding it up while the
-  /// sections it passes slide down. The new order and the start of the slide
-  /// land in the same frame, so nothing jumps before it moves.
-  Future<void> _moveToTop(String pillarKey) async {
-    final pillars = _bloc.state.dashboard?.pillars;
-    if (pillars == null) return;
-    final index = pillars.indexWhere((p) => p.pillarKey == pillarKey);
-    if (index <= 0) return;
-
-    final targetBox = _slotBox(pillarKey);
-    final firstBox = _slotBox(pillars.first.pillarKey);
-    _slideFrom.clear();
-    if (targetBox != null && firstBox != null) {
-      final rise =
-          targetBox.localToGlobal(Offset.zero).dy -
-          firstBox.localToGlobal(Offset.zero).dy;
-      _slideFrom[pillarKey] = rise;
-      // Each section above it ends one target-height lower.
-      for (final passed in pillars.take(index)) {
-        _slideFrom[passed.pillarKey] = -targetBox.size.height;
-      }
-    }
-    _reorder.value = 0;
-    setState(() => _movedToTop = pillarKey);
-    if (_slideFrom.isEmpty) return;
-    try {
-      await _reorder.forward().orCancel;
-    } on TickerCanceled {
-      // The screen was closed mid-slide.
-    }
+  /// The section the reveal brings to the top: the focused one, or the one
+  /// holding the selected item. Its key sits on [_StaggerSlot]'s outer
+  /// padding, which the entrance never transforms, so it still measures
+  /// truthfully while that animation is playing.
+  GlobalKey? _revealSlotKey() {
+    final pillarKey =
+        _focusedPillarKey ??
+        (_selectedItemKey == null ? null : _anchorPillarKey);
+    return pillarKey == null ? null : _slotKeys[pillarKey];
   }
 
-  RenderBox? _slotBox(String pillarKey) {
-    final box = _slotKeys[pillarKey]?.currentContext?.findRenderObject();
-    return box is RenderBox && box.hasSize ? box : null;
+  /// The scroll offset that leaves [slot] at the top of the list, or `null`
+  /// while it isn't on screen to be measured.
+  double? _offsetToTop(GlobalKey? slot) {
+    final box = slot?.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !_scroll.hasClients) return null;
+    final viewport = RenderAbstractViewport.maybeOf(box);
+    if (viewport == null) return null;
+    return viewport.getOffsetToReveal(box, 0).offset - _topGap;
   }
 
-  bool _isFullyVisible(BuildContext target) {
-    final box = target.findRenderObject();
-    final viewport = Scrollable.maybeOf(target)?.context.findRenderObject();
-    if (box is! RenderBox || viewport is! RenderBox) return true;
-    final item = box.localToGlobal(Offset.zero) & box.size;
-    final view = viewport.localToGlobal(Offset.zero) & viewport.size;
-    return item.top >= view.top && item.bottom <= view.bottom;
+  /// One of the last sections can only reach the top if something follows it,
+  /// so the list grows by exactly what the scroll would fall short of.
+  Future<void> _makeRoomAbove(GlobalKey? slot) async {
+    final offset = _offsetToTop(slot);
+    if (offset == null) return;
+    final missing = offset - _scroll.position.maxScrollExtent;
+    if (missing <= 1) return;
+    setState(() => _tailSpace = missing);
+    // The spacer is in place, and measurable, by the end of the next frame.
+    await WidgetsBinding.instance.endOfFrame;
   }
 
-  /// Scrolls [target] to the middle of the visible list.
-  Future<void> _centerOn(BuildContext? target) async {
-    if (target == null || !target.mounted) return;
-    await Scrollable.ensureVisible(
+  /// Scrolls [slot] up to the top of the list - fast, and smoothly eased.
+  Future<void> _scrollToTop(GlobalKey? slot) async {
+    final offset = _offsetToTop(slot);
+    if (offset == null || !_scroll.hasClients) return;
+    final position = _scroll.position;
+    final target = offset.clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    if ((target - position.pixels).abs() < 1) return;
+    await _scroll.animateTo(
       target,
-      alignment: 0.5,
-      duration: _centerDuration,
-      curve: Curves.easeInOutCubic,
+      duration: _scrollDuration,
+      curve: Curves.easeOutCubic,
     );
   }
 
@@ -406,9 +394,12 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       // The item the caller named belonged to the section it named.
       if (pillarKey != _anchorPillarKey) _selectedItemKey = null;
     });
-    // After the frame, so the section is expanded and its anchor has moved.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_centerOn(_focusedAnchor.currentContext));
+    // After the frame, so the section is expanded and its slot has moved.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final slot = _slotKeys[pillarKey];
+      await _makeRoomAbove(slot);
+      if (mounted) await _scrollToTop(slot);
     });
   }
 
@@ -584,7 +575,8 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   @override
   void dispose() {
     _trackingBoundaryTimer?.cancel();
-    _reorder.dispose();
+    _stagger.dispose();
+    _scroll.dispose();
     _logFailureSub.cancel();
     if (_ownsBloc) _bloc.close();
     if (_didChangeTracking) {
@@ -636,23 +628,26 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
               child: Column(
                 children: [
                   AmolHeader(title: appText.amolTracking),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 0),
+                    child: AmolSummaryCard(
+                      pointLabel: pointLabel,
+                      progressLabel: progressLabel,
+                      progress: progress,
+                    ),
+                  ),
                   Expanded(
                     // Every section is laid out (not lazily built) so the slide
                     // can measure one that starts off screen.
                     child: RefreshIndicator(
                       onRefresh: _onRefresh,
                       child: SingleChildScrollView(
+                        controller: _scroll,
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(15.w, 14.h, 15.w, 14.h),
+                        padding: EdgeInsets.fromLTRB(15.w, 18.h, 15.w, 14.h),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            AmolSummaryCard(
-                              pointLabel: pointLabel,
-                              progressLabel: progressLabel,
-                              progress: progress,
-                            ),
-                            SizedBox(height: 18.h),
                             Text(
                               context.localizedDigits(
                                 formatAmolDate(_today, appText),
@@ -665,18 +660,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                             ),
                             SizedBox(height: 12.h),
                             if (dashboard != null)
-                              for (final pillar in _displayOrder(
-                                dashboard.pillars,
-                              ))
-                                _ReorderSlot(
+                              for (final (index, pillar)
+                                  in dashboard.pillars.indexed)
+                                _StaggerSlot(
                                   key: _slotKey(pillar.pillarKey),
-                                  animation: _reorder,
-                                  slideFrom: _slideFrom[pillar.pillarKey] ?? 0,
-                                  isMover: pillar.pillarKey == _movedToTop,
+                                  animation: _stagger,
+                                  index: index,
                                   child: _FocusableSection(
-                                    key: pillar.pillarKey == focusedKey
-                                        ? _focusedAnchor
-                                        : null,
                                     mode: focusedKey == null || !_focusActive
                                         ? _FocusMode.none
                                         : pillar.pillarKey == focusedKey
@@ -709,6 +699,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
                               _LoadFailedNotice(onRetry: _reload)
                             else
                               const _PillarListShimmer(),
+                            if (_tailSpace > 0) SizedBox(height: _tailSpace),
                           ],
                         ),
                       ),
@@ -880,45 +871,62 @@ class _AccordionHeader extends StatelessWidget {
 
 enum _FocusMode { none, focused, dimmed }
 
-/// One section in the list. While the section moved to the top slides into
-/// place it is drawn [slideFrom] pixels from where it now sits, easing to `0`;
-/// the sections it passes fade slightly so the two don't fight over the space.
-/// The bottom padding is the gap between sections.
-class _ReorderSlot extends StatelessWidget {
-  const _ReorderSlot({
+/// One section in the list. On arrival each slot fades, lifts and settles a
+/// beat after the one above it, so the list reads as one quick wave running
+/// from the top down to the target the screen is scrolling to.
+class _StaggerSlot extends StatelessWidget {
+  const _StaggerSlot({
     super.key,
     required this.animation,
-    required this.slideFrom,
-    required this.isMover,
+    required this.index,
     required this.child,
   });
 
   final Animation<double> animation;
-  final double slideFrom;
-  final bool isMover;
+
+  /// Place in the list, which is what delays this slot's own entrance.
+  final int index;
   final Widget child;
+
+  /// One slot's entrance, and the delay between two neighbours.
+  static const _span = Duration(milliseconds: 300);
+  static const _step = Duration(milliseconds: 45);
+
+  /// Long enough for the eight sections the API sends to enter in turn.
+  static const total = Duration(milliseconds: 300 + 45 * 7);
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      // The section itself is built once; only the transform changes per frame.
-      child: Padding(
-        padding: EdgeInsets.only(bottom: 12.h),
+    final span = _span.inMilliseconds / total.inMilliseconds;
+    final start = math.min(
+      index * _step.inMilliseconds / total.inMilliseconds,
+      1 - span,
+    );
+    // The padding stays outside the transform on purpose: the screen measures
+    // this slot through its key while the entrance is still playing.
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: AnimatedBuilder(
+        animation: animation,
+        // The section itself is built once; only the transform changes.
         child: child,
+        builder: (context, child) {
+          final t = Curves.easeOutCubic.transform(
+            ((animation.value - start) / span).clamp(0.0, 1.0),
+          );
+          return Opacity(
+            opacity: t,
+            child: Transform.translate(
+              offset: Offset(0, 24.h * (1 - t)),
+              child: Transform.scale(
+                alignment: Alignment.topCenter,
+                scale: .97 + .03 * t,
+                child: child,
+              ),
+            ),
+          );
+        },
       ),
-      builder: (context, child) {
-        final t = animation.value;
-        final dy = slideFrom * (1 - Curves.easeInOutCubic.transform(t));
-        final passed = !isMover && slideFrom != 0;
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: Opacity(
-            opacity: passed ? 1 - .4 * math.sin(math.pi * t) : 1,
-            child: child,
-          ),
-        );
-      },
     );
   }
 }
@@ -927,7 +935,6 @@ class _ReorderSlot extends StatelessWidget {
 /// behind a blur, fade and soft white gradient. Every change animates.
 class _FocusableSection extends StatelessWidget {
   const _FocusableSection({
-    super.key,
     required this.mode,
     required this.onTapWhenDimmed,
     required this.child,
