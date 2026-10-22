@@ -276,6 +276,7 @@ const Map<String, String> appTextEn = <String, String>{
   'weeklyQuizValue': 'Weekly Quiz Value',
   'monthlyQuizValue': 'Monthly Quiz Value',
   'competitorName': 'Abdullah Al-Aziz',
+  'guestUserName': 'Guest User',
   'quranicScience': 'Quranic Science',
   'questionsCountLabel': '20 Questions',
 
