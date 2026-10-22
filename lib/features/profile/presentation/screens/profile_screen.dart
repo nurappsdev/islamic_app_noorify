@@ -268,7 +268,7 @@ class _ProfileHeroCard extends StatelessWidget {
             ),
           ),
           if (profile case final profile? when profile.badges.isNotEmpty) ...[
-            SizedBox(height: 18.h),
+            SizedBox(height: 2.h),
             ProfileBadges(profile: profile),
           ],
           SizedBox(height: 18.h),
