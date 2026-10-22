@@ -140,7 +140,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               left: 16.w,
               right: 16.w,
               bottom: 12.h,
-              child: const _LogoutButton(),
+              child: isUserSignedIn
+                  ? const _LogoutButton()
+                  : const _LoginButton(),
             ),
           ],
         ),
@@ -614,6 +616,49 @@ class _LogoutButton extends StatelessWidget {
         LogoutUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
       ),
       child: const _LogoutButtonView(),
+    );
+  }
+}
+
+class _LoginButton extends StatelessWidget {
+  const _LoginButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return SizedBox(
+      height: 52.h,
+      child: OutlinedButton(
+        onPressed: () => Navigator.of(context).pushNamed(RouteNames.signIn),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: context.surfaceColor(Colors.white),
+          foregroundColor: context.inkColor(AppColor.primary),
+          side: const BorderSide(color: AppColor.primary),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26.r),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.login_rounded, size: 18),
+                SizedBox(width: 8.w),
+                Text(
+                  appText.login,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const Icon(Icons.chevron_right_rounded, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }
