@@ -5,7 +5,7 @@ import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Gives every Quran screen the same typeface the rest of the app uses —
-/// Ubuntu for English, Noto Sans Bengali for Bangla — instead of whatever
+/// Ubuntu for English, Hind Siliguri for Bangla — instead of whatever
 /// font the pusher's route happened to leave in the theme.
 ///
 /// Wrap each Quran route's page in this: a pushed route doesn't inherit the
