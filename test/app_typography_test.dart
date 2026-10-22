@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
@@ -13,7 +15,9 @@ void main() {
     expect(darkTheme().textTheme.titleLarge!.fontFamily, appFontFamily);
   });
 
-  test('uses Noto Sans Bengali Regular for the Bangla theme', () {
+  test('uses Hind Siliguri for the Bangla theme', () {
+    expect(appFontFamilyBangla, 'Hind Siliguri');
+
     expect(
       lightTheme(
         fontFamily: appFontFamilyBangla,
@@ -26,6 +30,25 @@ void main() {
       ).textTheme.titleLarge!.fontFamily,
       appFontFamilyBangla,
     );
+  });
+
+  test('registers every Bangla font weight the app can ask for', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(pubspec, contains('family: $appFontFamilyBangla'));
+    for (final weight in const [300, 400, 500, 600, 700]) {
+      expect(pubspec, contains('weight: $weight'));
+    }
+    for (final file in const [
+      'HindSiliguri-Light.ttf',
+      'HindSiliguri-Regular.ttf',
+      'HindSiliguri-Medium.ttf',
+      'HindSiliguri-SemiBold.ttf',
+      'HindSiliguri-Bold.ttf',
+    ]) {
+      expect(pubspec, contains(file));
+      expect(File('assets/fonts/hind_siliguri/$file').existsSync(), isTrue);
+    }
   });
 
   test('keeps the bundled Quran Arabic font separate from the app font', () {
