@@ -272,6 +272,7 @@ class AppText {
     required this.weeklyQuizValue,
     required this.monthlyQuizValue,
     required this.competitorName,
+    required this.guestUserName,
     required this.quranicScience,
     required this.questionsCountLabel,
     required this.greeting,
@@ -1227,6 +1228,7 @@ class AppText {
   final String weeklyQuizValue;
   final String monthlyQuizValue;
   final String competitorName;
+  final String guestUserName;
   final String quranicScience;
   final String questionsCountLabel;
 
@@ -2911,6 +2913,11 @@ class AppText {
         map,
         'competitorName',
         fallback?.competitorName ?? '',
+      ),
+      guestUserName: _read(
+        map,
+        'guestUserName',
+        fallback?.guestUserName ?? '',
       ),
       quranicScience: _read(
         map,

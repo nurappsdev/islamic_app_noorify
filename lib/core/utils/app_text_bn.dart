@@ -275,6 +275,7 @@ const Map<String, String> appTextBn = <String, String>{
   'weeklyQuizValue': 'সাপ্তাহিক কুইজ মান',
   'monthlyQuizValue': 'মাসিক কুইজ মান',
   'competitorName': 'আব্দুল্লাহ আল-আজিজ',
+  'guestUserName': 'অতিথি ব্যবহারকারী',
   'quranicScience': 'কুরআনিক বিজ্ঞান',
   'questionsCountLabel': '২০টি প্রশ্ন',
 

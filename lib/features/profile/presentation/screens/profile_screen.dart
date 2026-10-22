@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
@@ -78,6 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _ProfileHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 14.h),
                 _ProfileHeroCard(profile: profile),
+                SizedBox(height: 18.h),
+                const _FamilyMemberComingSoonCard(),
                 SizedBox(height: 24.h),
                 // Family Members: temporarily disabled (not needed for now).
                 // Kept so the feature can be restored later; see also the
@@ -246,10 +249,13 @@ class _ProfileHeroCard extends StatelessWidget {
                 ValueListenableBuilder<String?>(
                   valueListenable: profileNameNotifier,
                   builder: (context, name, _) {
+                    // A guest has no profile name to show, so label the card
+                    // "Guest User" instead of the signed-in placeholder.
+                    final fallbackName = isUserSignedIn
+                        ? appText.competitorName
+                        : appText.guestUserName;
                     return Text(
-                      (name == null || name.isEmpty)
-                          ? appText.competitorName
-                          : name,
+                      (name == null || name.isEmpty) ? fallbackName : name,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19.sp,
@@ -257,16 +263,6 @@ class _ProfileHeroCard extends StatelessWidget {
                       ),
                     );
                   },
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${appText.trishal}, ${appText.mymensingh}',
-                  style: TextStyle(
-                    color: context.inkColor(
-                      Colors.white.withValues(alpha: .85),
-                    ),
-                    fontSize: 12.sp,
-                  ),
                 ),
               ],
             ),
@@ -433,6 +429,68 @@ class _PositionPointsPill extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the Family Members section while the feature is disabled
+/// (see the commented-out block in [ProfileScreen]).
+class _FamilyMemberComingSoonCard extends StatelessWidget {
+  const _FamilyMemberComingSoonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFF3F5E4)),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFDCE7AC))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38.r,
+            height: 38.r,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.surfaceColor(const Color(0xFFDCE7AC)),
+            ),
+            child: Icon(
+              Icons.groups_rounded,
+              size: 20.sp,
+              color: context.inkColor(const Color(0xFF7F8F52)),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Text(
+              appText.familyMember,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFA7B462),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Text(
+              appText.comingSoon,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
