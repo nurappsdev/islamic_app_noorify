@@ -183,3 +183,17 @@ flutter:
     - family: Noto Sans Bengali Regular
       fonts:
         - asset: assets/fonts/NotoSansBengali-VariableFont_wdth,wght.ttf
+
+    # The Bangla typeface for the whole app (see appFontFamilyBangla).
+    - family: Hind Siliguri
+      fonts:
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Light.ttf
+          weight: 300
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Bold.ttf
+          weight: 700
