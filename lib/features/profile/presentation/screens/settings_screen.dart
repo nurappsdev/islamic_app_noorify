@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/delete_account_dialogs.dart';
 import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
@@ -31,6 +32,7 @@ class SettingsScreen extends StatelessWidget {
     BuildContext context,
     AppText appText,
     bool isDark,
+    bool isSignedIn,
   ) => [
     _SettingsItem(
       appText.aboutUs,
@@ -78,20 +80,22 @@ class SettingsScreen extends StatelessWidget {
       onTap: () =>
           context.read<AppPreferencesBloc>().add(const ToggleDarkTheme()),
     ),
-    _SettingsItem(
-      appText.changePassword,
-      Icons.sync_alt_rounded,
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen()),
+    if (isSignedIn)
+      _SettingsItem(
+        appText.changePassword,
+        Icons.sync_alt_rounded,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen()),
+        ),
       ),
-    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
-    final items = _items(context, appText, isDark);
+    final isSignedIn = isUserSignedIn;
+    final items = _items(context, appText, isDark, isSignedIn);
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -109,10 +113,11 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-              child: const _DeleteAccountButton(),
-            ),
+            if (isSignedIn)
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+                child: const _DeleteAccountButton(),
+              ),
           ],
         ),
       ),

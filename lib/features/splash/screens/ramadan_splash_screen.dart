@@ -16,9 +16,11 @@ class RamadanSplashScreen extends StatefulWidget {
 }
 
 class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
-  static const _splashDuration = Duration(milliseconds: 1800);
+  static const _splashDuration = Duration(seconds: 3);
   static const _backgroundImagePath = 'assets/splasImg.png';
   static const _logoImagePath = 'assets/appLogoFinal.png';
+  static const _splashVerse =
+      'তোমরা তোমাদের রবের অভিমুখী হও এবং তাঁর নিকট আত্মসমর্পণ কর তোমাদের নিকট শাস্তি আসার পূর্বে, অতঃপর তোমাদেরকে সাহায্য করা হবেনা।\n\n৩৯ : ৫৪';
 
   @override
   void initState() {
@@ -94,18 +96,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                     ),
                     SizedBox(height: 32.h),
                     Text(
-                      appText.splashTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: context.inkColor(const Color(0xFFA1AD59)),
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w400,
-                        height: 1.2,
-                      ),
-                    ),
-                    SizedBox(height: 28.h),
-                    Text(
-                      appText.splashQuote,
+                      _splashVerse,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: context.inkColor(Colors.black),

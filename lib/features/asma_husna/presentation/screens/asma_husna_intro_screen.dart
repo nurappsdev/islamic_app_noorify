@@ -18,8 +18,8 @@ import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_na
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
 
 /// Asmaul-Husna landing screen (design `img_26.png`): the "99 names" hadith,
-/// a link to the full list, and a preview of the first name. Tapping
-/// "See All" or the search field opens [AsmaHusnaListScreen].
+/// a link to the full list, and an audio-capable name preview. Tapping
+/// "See All" opens [AsmaHusnaListScreen].
 class AsmaHusnaIntroScreen extends StatelessWidget {
   const AsmaHusnaIntroScreen({super.key});
 
@@ -127,40 +127,6 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12.h),
-                    GestureDetector(
-                      onTap: () => _openAllNames(context),
-                      child: AbsorbPointer(
-                        child: TextField(
-                          style: TextStyle(fontSize: 13.sp),
-                          decoration: InputDecoration(
-                            hintText: appText.searchHere,
-                            hintStyle: TextStyle(
-                              color: AppColor.authHint,
-                              fontSize: 13.sp,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: AppColor.authIcon,
-                              size: 20.sp,
-                            ),
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 4.w,
-                              vertical: 14.h,
-                            ),
-                            filled: true,
-                            fillColor: context.surfaceColor(Colors.white),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(28.r),
-                              borderSide: BorderSide(
-                                color: context.lineColor(Color(0xFFE3E7D3)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                     SizedBox(height: 18.h),
                     BlocBuilder<AsmaHusnaBloc, AsmaHusnaState>(
                       builder: (context, state) {
@@ -172,19 +138,30 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                             state.names.isEmpty) {
                           return const SizedBox.shrink();
                         }
-                        final first = state.names.first;
-                        final audioUrl = first.audioUrl;
+                        // The API currently has no audio URL for the first
+                        // entry (Allah). Prefer the first playable name here
+                        // so the intro card's play button is usable.
+                        var preview = state.names.first;
+                        for (final name in state.names) {
+                          if ((name.audioUrl ?? '').isNotEmpty) {
+                            preview = name;
+                            break;
+                          }
+                        }
+                        final audioUrl = preview.audioUrl;
                         return AsmaNameCard(
-                          name: first,
+                          name: preview,
                           isPlaying:
-                              state.playingId == first.id && !state.isBuffering,
+                              state.playingId == preview.id &&
+                              !state.isBuffering,
                           isBuffering:
-                              state.playingId == first.id && state.isBuffering,
+                              state.playingId == preview.id &&
+                              state.isBuffering,
                           onTogglePlay: audioUrl == null || audioUrl.isEmpty
                               ? null
                               : () => context.read<AsmaHusnaBloc>().add(
                                   TogglePlayAsmaAudio(
-                                    nameId: first.id,
+                                    nameId: preview.id,
                                     audioUrl: audioUrl,
                                   ),
                                 ),
@@ -198,8 +175,8 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                                       AsmaHusnaLocalDataSourceImpl(),
                                     ),
                                   ),
-                                )..add(LoadAsmaNameDetail(first.id)),
-                                child: AsmaNameDetailScreen(name: first),
+                                )..add(LoadAsmaNameDetail(preview.id)),
+                                child: AsmaNameDetailScreen(name: preview),
                               ),
                             ),
                           ),
