@@ -4,7 +4,7 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 const appFontFamily = 'Ubuntu Medium';
 
 /// The bundled typeface for Bangla text.
-const appFontFamilyBangla = 'Noto Sans Bengali Regular';
+const appFontFamilyBangla = 'Hind Siliguri';
 
 /// Resolves the application typeface from the selected interface language.
 String appFontFamilyFor(AppLanguage language) => switch (language) {
