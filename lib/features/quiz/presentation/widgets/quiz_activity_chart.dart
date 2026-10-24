@@ -124,6 +124,7 @@ class _Bar extends StatelessWidget {
           Text(
             valueLabel!,
             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(fontSize: 8.sp, color: muted),
           ),
         SizedBox(height: 2.h),

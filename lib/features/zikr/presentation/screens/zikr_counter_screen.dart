@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.d
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
@@ -337,6 +338,7 @@ class _CurrentZikrCard extends StatelessWidget {
                       : TextDirection.ltr,
                   style: TextStyle(
                     fontFamily: item.arabic.isNotEmpty ? 'Noorehuda' : null,
+                    fontFamilyFallback: appFontFamilyFallback,
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
                     color: context.inkColor(Color(0xFF33421F)),
@@ -362,6 +364,7 @@ class _CurrentZikrCard extends StatelessWidget {
           Text(
             context.localizedDigits('$done/${item.target}'),
             maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,

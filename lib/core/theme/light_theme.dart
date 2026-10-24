@@ -10,6 +10,10 @@ ThemeData lightTheme({String fontFamily = appFontFamily}) => ThemeData(
   colorSchemeSeed: const Color.fromRGBO(30, 168, 184, 1),
   scaffoldBackgroundColor: BrandColors.screenBackground,
   fontFamily: fontFamily,
-  textTheme: ThemeData().textTheme.apply(fontFamily: fontFamily),
+  fontFamilyFallback: appFontFamilyFallback,
+  textTheme: ThemeData().textTheme.apply(
+    fontFamily: fontFamily,
+    fontFamilyFallback: appFontFamilyFallback,
+  ),
   extensions: const [AppPalette.light],
 );

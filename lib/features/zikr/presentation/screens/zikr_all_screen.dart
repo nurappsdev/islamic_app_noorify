@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Browse-all list for the Zikr flow, reached from the grid icon in
 /// [ZikrBottomNav]. Tapping a zikr opens [ZikrCounterScreen].
@@ -114,6 +115,7 @@ class _ZikrTile extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     style: TextStyle(
                       fontFamily: 'Noorehuda',
+                      fontFamilyFallback: appFontFamilyFallback,
                       fontSize: 18.sp,
                       color: context.inkColor(Color(0xFF283016)),
                     ),

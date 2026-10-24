@@ -199,7 +199,10 @@ class MyApp extends StatelessWidget {
               // font family themselves. Arabic/Quranic text opts into its own
               // font at the widget where it is rendered.
               child: DefaultTextStyle.merge(
-                style: TextStyle(fontFamily: fontFamily),
+                style: TextStyle(
+                  fontFamily: fontFamily,
+                  fontFamilyFallback: appFontFamilyFallback,
+                ),
                 child: child ?? const SizedBox.shrink(),
               ),
             );

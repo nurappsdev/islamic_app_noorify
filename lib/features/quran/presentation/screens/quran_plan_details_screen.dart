@@ -14,6 +14,7 @@ import 'create_quran_plan_screen.dart';
 import 'quran_plan_ayahs_screen.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class QuranPlanDetailsScreen extends StatefulWidget {
   const QuranPlanDetailsScreen({
@@ -751,6 +752,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontFamily: kQuranArabicFontFamily,
+                    fontFamilyFallback: appFontFamilyFallback,
                     color: const Color(0xFF5D7133),
                   ),
                 ),
@@ -894,6 +896,7 @@ class _QuranPlanDetailsScreenState extends State<QuranPlanDetailsScreen> {
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontFamily: kQuranArabicFontFamily,
+                                fontFamilyFallback: appFontFamilyFallback,
                                 color: const Color(0xFF5D7133),
                               ),
                             ),

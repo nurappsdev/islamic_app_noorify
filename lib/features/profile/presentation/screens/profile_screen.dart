@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
@@ -17,6 +18,7 @@ import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bl
 import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/profile_badges.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/settings_option_row.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -81,6 +83,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _ProfileHeroCard(profile: profile),
                 SizedBox(height: 18.h),
                 const _FamilyMemberComingSoonCard(),
+                SizedBox(height: 18.h),
+                const _QuickSettings(),
                 SizedBox(height: 24.h),
                 // Family Members: temporarily disabled (not needed for now).
                 // Kept so the feature can be restored later; see also the
@@ -147,6 +151,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The App Language and dark/light theme options, the very same rows the
+/// Settings screen lists - they stay there too. Both screens read and write
+/// the one [AppPreferencesBloc] and the one saved language, so a change made
+/// here shows up there and the other way round.
+class _QuickSettings extends StatelessWidget {
+  const _QuickSettings();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
+    return Column(
+      children: [
+        SettingsOptionRow(option: appLanguageOption(context, appText)),
+        SizedBox(height: 12.h),
+        SettingsOptionRow(option: themeToggleOption(context, appText, isDark)),
+      ],
     );
   }
 }
