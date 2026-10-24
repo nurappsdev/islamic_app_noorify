@@ -88,6 +88,9 @@ class AppText {
     required this.deleteRingtoneConfirm,
     required this.alarmNotSetForPrayer,
     required this.exactAlarmPermissionNeeded,
+    required this.exactAlarmPermissionTitle,
+    required this.exactAlarmPermissionExplanation,
+    required this.exactAlarmPermissionAllow,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -1036,6 +1039,9 @@ class AppText {
   final String deleteRingtoneConfirm;
   final String alarmNotSetForPrayer;
   final String exactAlarmPermissionNeeded;
+  final String exactAlarmPermissionTitle;
+  final String exactAlarmPermissionExplanation;
+  final String exactAlarmPermissionAllow;
 
   // Amol tracking feature
   final String amolTracking;
@@ -2237,6 +2243,21 @@ class AppText {
         map,
         'exactAlarmPermissionNeeded',
         fallback?.exactAlarmPermissionNeeded ?? '',
+      ),
+      exactAlarmPermissionTitle: _read(
+        map,
+        'exactAlarmPermissionTitle',
+        fallback?.exactAlarmPermissionTitle ?? '',
+      ),
+      exactAlarmPermissionExplanation: _read(
+        map,
+        'exactAlarmPermissionExplanation',
+        fallback?.exactAlarmPermissionExplanation ?? '',
+      ),
+      exactAlarmPermissionAllow: _read(
+        map,
+        'exactAlarmPermissionAllow',
+        fallback?.exactAlarmPermissionAllow ?? '',
       ),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),

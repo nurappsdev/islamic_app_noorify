@@ -13,10 +13,12 @@ import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_prayer_alarm_enabled.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/exact_alarm_permission_gate.dart';
 import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
@@ -42,6 +44,7 @@ class AllAlarmScreen extends StatelessWidget {
         getPrayerAlarms: GetPrayerAlarms(repository),
         addAlarm: AddAlarm(repository),
         setAlarmEnabled: SetAlarmEnabled(repository),
+        setPrayerAlarmEnabled: SetPrayerAlarmEnabled(repository),
         deleteAlarm: DeleteAlarm(repository),
       )..add(const LoadAlarms()),
       child: const _AllAlarmView(),
@@ -92,7 +95,17 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => SetAlarmScreen(
-                      onSetAlarm: (entry) => bloc.add(SaveAlarm(entry)),
+                      // A brand-new alarm is created switched on, so it needs
+                      // the same exact-alarm access as flipping a toggle on:
+                      // asked for here, and saved switched off (never
+                      // discarded) when it isn't granted, so the list never
+                      // shows an alarm as on that the OS can't ring.
+                      onSetAlarm: (entry) async {
+                        final granted = await ensureExactAlarmAccess(context);
+                        if (!context.mounted) return;
+                        bloc.add(SaveAlarm(entry.copyWith(enabled: granted)));
+                        if (!granted) _showPermissionNeeded(context);
+                      },
                     ),
                   ),
                 );
@@ -152,6 +165,14 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
     return '${appText.alarmWillRingIn} '
         '${times.duration(hours: diff.inHours, minutes: diff.inMinutes % 60)}';
   }
+}
+
+/// Tells the user why the alarm stayed off — shown wherever exact-alarm
+/// access was asked for and not granted.
+void _showPermissionNeeded(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(AppText.readOf(context).exactAlarmPermissionNeeded)),
+  );
 }
 
 class _AlarmTabs extends StatelessWidget {
@@ -275,6 +296,23 @@ class _AllAlarmListState extends State<_AllAlarmList> {
     }
   }
 
+  /// Flips [alarm]'s switch. Switching one ON is the moment exact-alarm
+  /// access is actually needed, so it is asked for here and the alarm is left
+  /// off when it isn't granted; switching OFF never needs it.
+  Future<void> _setEnabled(
+    BuildContext context,
+    AlarmEntry alarm,
+    bool enabled,
+  ) async {
+    final bloc = context.read<AlarmListBloc>();
+    if (enabled && !await ensureExactAlarmAccess(context)) {
+      if (context.mounted) _showPermissionNeeded(context);
+      return;
+    }
+    if (!context.mounted) return;
+    bloc.add(ToggleAlarmEnabled(alarm.id, enabled));
+  }
+
   Future<void> _confirmDelete(BuildContext context, AlarmEntry alarm) async {
     final appText = AppText.readOf(context);
     final confirmed = await showDialog<bool>(
@@ -335,6 +373,7 @@ class _AllAlarmListState extends State<_AllAlarmList> {
           isPlaying: _playingId == alarm.id,
           onPlayToggle: () => _togglePlay(alarm),
           onDelete: () => _confirmDelete(context, alarm),
+          onEnabledChanged: (enabled) => _setEnabled(context, alarm, enabled),
         );
       },
     );
@@ -347,12 +386,14 @@ class _AlarmListItem extends StatelessWidget {
     required this.isPlaying,
     required this.onPlayToggle,
     required this.onDelete,
+    required this.onEnabledChanged,
   });
 
   final AlarmEntry alarm;
   final bool isPlaying;
   final VoidCallback onPlayToggle;
   final VoidCallback onDelete;
+  final ValueChanged<bool> onEnabledChanged;
 
   String _subtitle(AppText appText) {
     if (alarm.vibrateAndRing || (alarm.vibrate && alarm.ring)) {
@@ -420,9 +461,7 @@ class _AlarmListItem extends StatelessWidget {
           ),
           Switch(
             value: alarm.enabled,
-            onChanged: (value) => context.read<AlarmListBloc>().add(
-              ToggleAlarmEnabled(alarm.id, value),
-            ),
+            onChanged: onEnabledChanged,
             activeThumbColor: _olive,
             activeTrackColor: _cardBorder,
             inactiveThumbColor: _mutedGrey,
@@ -558,6 +597,20 @@ class _PrayerAlarmRow extends StatelessWidget {
   final PrayerAlarm prayerAlarm;
   final bool highlighted;
 
+  /// Flips this prayer's alarm alone. Switching it ON is where exact-alarm
+  /// access is needed (same as a custom alarm's toggle), so it is asked for
+  /// here and the prayer is left off when it isn't granted; switching OFF
+  /// disables only this prayer and keeps its saved settings for next time.
+  Future<void> _setEnabled(BuildContext context, bool enabled) async {
+    final bloc = context.read<AlarmListBloc>();
+    if (enabled && !await ensureExactAlarmAccess(context)) {
+      if (context.mounted) _showPermissionNeeded(context);
+      return;
+    }
+    if (!context.mounted) return;
+    bloc.add(TogglePrayerAlarmEnabled(prayerAlarm.prayerType, enabled));
+  }
+
   IconData get _icon => switch (prayerAlarm.prayerType) {
     'fajr' => Icons.wb_twilight,
     'dhuhr' => Icons.wb_sunny,
@@ -583,7 +636,6 @@ class _PrayerAlarmRow extends StatelessWidget {
     final appText = AppText.of(context);
     final period = _periodFor(prayerAlarm.prayerType);
     final title = period?.displayName(appText) ?? appText.naflTahajjud;
-    final parsed = _parseClockTime(prayerAlarm.alarmTime);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
       decoration: BoxDecoration(
@@ -659,23 +711,15 @@ class _PrayerAlarmRow extends StatelessWidget {
                   ),
                 ],
               ),
-            )
-          else
-            IconButton(
-              tooltip: '${appText.setAlarmFor} $title',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => SetAlarmScreen(
-                    period: period,
-                    initialTime: parsed == null
-                        ? null
-                        : PrayerClockTime(hour: parsed.$1, minute: parsed.$2),
-                  ),
-                ),
-              ),
-              icon: Icon(Icons.access_alarm, size: 20.sp),
-              color: context.inkColor(Color(0xFF7E8C61)),
             ),
+          Switch(
+            value: prayerAlarm.isEnabled,
+            onChanged: (enabled) => _setEnabled(context, enabled),
+            activeThumbColor: _olive,
+            activeTrackColor: _cardBorder,
+            inactiveThumbColor: _mutedGrey,
+            inactiveTrackColor: context.surfaceColor(Color(0xFFE0E0E0)),
+          ),
         ],
       ),
     );
