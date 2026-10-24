@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_prayer_alarm_enabled.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
@@ -43,6 +44,7 @@ class AllAlarmScreen extends StatelessWidget {
         getPrayerAlarms: GetPrayerAlarms(repository),
         addAlarm: AddAlarm(repository),
         setAlarmEnabled: SetAlarmEnabled(repository),
+        setPrayerAlarmEnabled: SetPrayerAlarmEnabled(repository),
         deleteAlarm: DeleteAlarm(repository),
       )..add(const LoadAlarms()),
       child: const _AllAlarmView(),
@@ -595,6 +597,20 @@ class _PrayerAlarmRow extends StatelessWidget {
   final PrayerAlarm prayerAlarm;
   final bool highlighted;
 
+  /// Flips this prayer's alarm alone. Switching it ON is where exact-alarm
+  /// access is needed (same as a custom alarm's toggle), so it is asked for
+  /// here and the prayer is left off when it isn't granted; switching OFF
+  /// disables only this prayer and keeps its saved settings for next time.
+  Future<void> _setEnabled(BuildContext context, bool enabled) async {
+    final bloc = context.read<AlarmListBloc>();
+    if (enabled && !await ensureExactAlarmAccess(context)) {
+      if (context.mounted) _showPermissionNeeded(context);
+      return;
+    }
+    if (!context.mounted) return;
+    bloc.add(TogglePrayerAlarmEnabled(prayerAlarm.prayerType, enabled));
+  }
+
   IconData get _icon => switch (prayerAlarm.prayerType) {
     'fajr' => Icons.wb_twilight,
     'dhuhr' => Icons.wb_sunny,
@@ -620,7 +636,6 @@ class _PrayerAlarmRow extends StatelessWidget {
     final appText = AppText.of(context);
     final period = _periodFor(prayerAlarm.prayerType);
     final title = period?.displayName(appText) ?? appText.naflTahajjud;
-    final parsed = _parseClockTime(prayerAlarm.alarmTime);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
       decoration: BoxDecoration(
@@ -696,23 +711,15 @@ class _PrayerAlarmRow extends StatelessWidget {
                   ),
                 ],
               ),
-            )
-          else
-            IconButton(
-              tooltip: '${appText.setAlarmFor} $title',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => SetAlarmScreen(
-                    period: period,
-                    initialTime: parsed == null
-                        ? null
-                        : PrayerClockTime(hour: parsed.$1, minute: parsed.$2),
-                  ),
-                ),
-              ),
-              icon: Icon(Icons.access_alarm, size: 20.sp),
-              color: context.inkColor(Color(0xFF7E8C61)),
             ),
+          Switch(
+            value: prayerAlarm.isEnabled,
+            onChanged: (enabled) => _setEnabled(context, enabled),
+            activeThumbColor: _olive,
+            activeTrackColor: _cardBorder,
+            inactiveThumbColor: _mutedGrey,
+            inactiveTrackColor: context.surfaceColor(Color(0xFFE0E0E0)),
+          ),
         ],
       ),
     );

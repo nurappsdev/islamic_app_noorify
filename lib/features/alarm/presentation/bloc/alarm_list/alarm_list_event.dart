@@ -24,6 +24,16 @@ class ToggleAlarmEnabled extends AlarmListEvent {
   final bool enabled;
 }
 
+/// Flips one prayer alarm — [prayerType] is `fajr`, `dhuhr`, `asr`,
+/// `maghrib`, `isha` or `tahajjud` — on or off, leaving the other prayers and
+/// this one's saved settings alone.
+class TogglePrayerAlarmEnabled extends AlarmListEvent {
+  const TogglePrayerAlarmEnabled(this.prayerType, this.enabled);
+
+  final String prayerType;
+  final bool enabled;
+}
+
 /// Deletes the alarm identified by [id].
 class RemoveAlarm extends AlarmListEvent {
   const RemoveAlarm(this.id);

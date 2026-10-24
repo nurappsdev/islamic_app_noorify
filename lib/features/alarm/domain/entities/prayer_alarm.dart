@@ -34,4 +34,20 @@ class PrayerAlarm {
   /// The chosen ringtone's audio URL; empty for the bundled default.
   final String ringtoneUrl;
   final bool isEnabled;
+
+  /// Only the toggle changes per prayer; everything else comes from the saved
+  /// settings worked out against the day's prayer times.
+  PrayerAlarm copyWith({bool? isEnabled}) {
+    return PrayerAlarm(
+      prayerType: prayerType,
+      timeWindow: timeWindow,
+      alarmTime: alarmTime,
+      offsetMinutesBefore: offsetMinutesBefore,
+      soundMode: soundMode,
+      ringtoneId: ringtoneId,
+      ringtoneName: ringtoneName,
+      ringtoneUrl: ringtoneUrl,
+      isEnabled: isEnabled ?? this.isEnabled,
+    );
+  }
 }
