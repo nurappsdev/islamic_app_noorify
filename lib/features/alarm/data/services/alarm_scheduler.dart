@@ -177,7 +177,10 @@ class AlarmScheduler {
           AndroidFlutterLocalNotificationsPlugin
         >();
     await android?.requestNotificationsPermission();
-    await android?.requestExactAlarmsPermission();
+    // Exact-alarm ("Alarms & reminders") access is deliberately NOT asked for
+    // here: it is requested only when the user actually turns an alarm on, via
+    // `ensureExactAlarmAccess` (which explains why first). Startup only ever
+    // reads it — see [hasExactAlarmPermission], which `_applyPlan` gates on.
     await android?.createNotificationChannel(
       const AndroidNotificationChannel(
         _channelId,
@@ -220,20 +223,28 @@ class AlarmScheduler {
     }
   }
 
-  /// Checks exact-alarm access and, if it isn't granted, opens Android's
-  /// "Alarms & reminders" settings screen so the user can grant it — the
-  /// `SCHEDULE_EXACT_ALARM` permission's user-facing name since Android 13 made
-  /// it user-togglable rather than install-time. Returns whether it ends up
-  /// granted. Call this before scheduling so a newly enabled/created alarm is
-  /// only armed once access is actually available (see [_applyPlan], which
-  /// also gates on this as a safety net for every other caller).
-  static Future<bool> ensureExactAlarmPermission() async {
+  /// Opens Android's "Alarms & reminders" settings screen — the
+  /// `SCHEDULE_EXACT_ALARM` permission's user-facing name since Android 13
+  /// made it user-togglable rather than install-time — and returns whether the
+  /// permission is granted once the user comes back from it. Returns `true`
+  /// right away when it is already granted (or can't apply, as off Android).
+  ///
+  /// Don't call this straight from a tap: the user sees a bare settings screen
+  /// with no idea why. Go through `ensureExactAlarmAccess`, which explains
+  /// first and only then opens this, so an alarm is armed only once access is
+  /// actually available (see [_applyPlan], which gates on
+  /// [hasExactAlarmPermission] as a safety net for every other caller).
+  static Future<bool> openExactAlarmSettings() async {
     if (!Platform.isAndroid) return true;
     try {
       final android = _android;
       if (android == null) return true;
       if (await android.canScheduleExactNotifications() ?? false) return true;
-      return await android.requestExactAlarmsPermission() ?? false;
+      final granted = await android.requestExactAlarmsPermission() ?? false;
+      // The request resolves with the state the OS reports when the settings
+      // screen closes; re-read it in case it was left by another route (e.g.
+      // the back gesture) and that result came back stale.
+      return granted || await hasExactAlarmPermission();
     } catch (_) {
       return true;
     }

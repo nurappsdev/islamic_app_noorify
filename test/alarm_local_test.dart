@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_prayer_alarm_enabled.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_list/alarm_list_bloc.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
@@ -262,6 +263,7 @@ void main() {
           getPrayerAlarms: GetPrayerAlarms(repository),
           addAlarm: AddAlarm(repository),
           setAlarmEnabled: SetAlarmEnabled(repository),
+          setPrayerAlarmEnabled: SetPrayerAlarmEnabled(repository),
           deleteAlarm: DeleteAlarm(repository),
           syncAlarms: () async => events.add('sync'),
           cancelAlarm: (id, reason) async => events.add('cancel $id'),
@@ -310,6 +312,76 @@ void main() {
         expect(bloc.state.alarms.single.enabled, isFalse);
         expect(events, ['cancel a', 'sync']);
       });
+
+      test('switching one prayer off leaves the others on', () async {
+        await repository.setAllPrayerAlarms(
+          const PrayerAlarmBatch(
+            offsetMinutesBefore: 20,
+            soundMode: 'ring',
+            ringtoneId: 'r1',
+            ringtoneName: 'R1',
+            ringtoneUrl: 'https://x/r1.mp3',
+            selectedPrayers: ['fajr', 'dhuhr', 'asr'],
+          ),
+        );
+        bloc.add(const LoadAlarms());
+        await settle();
+        await settle();
+        events.clear();
+
+        bloc.add(const TogglePrayerAlarmEnabled('dhuhr', false));
+        await settle();
+        await settle();
+
+        final on = bloc.state.prayerAlarms
+            .where((a) => a.isEnabled)
+            .map((a) => a.prayerType);
+        expect(on, ['fajr', 'asr']);
+        expect(events, ['cancel prayer_dhuhr', 'sync']);
+
+        final saved = await PrayerAlarmLocalDataSourceImpl(
+          box: prayerBox,
+        ).getSettings();
+        expect(saved['dhuhr']!.enabled, isFalse);
+        expect(saved['fajr']!.enabled, isTrue);
+        expect(saved['asr']!.enabled, isTrue);
+      });
+
+      test(
+        'switching a prayer back on reactivates its saved settings',
+        () async {
+          await repository.setAllPrayerAlarms(
+            const PrayerAlarmBatch(
+              offsetMinutesBefore: 25,
+              soundMode: 'vibrate',
+              ringtoneId: 'r2',
+              ringtoneName: 'R2',
+              ringtoneUrl: 'https://x/r2.mp3',
+              selectedPrayers: ['isha'],
+            ),
+          );
+          bloc.add(const TogglePrayerAlarmEnabled('isha', false));
+          await settle();
+          await settle();
+          events.clear();
+
+          bloc.add(const TogglePrayerAlarmEnabled('isha', true));
+          await settle();
+          await settle();
+
+          // Switching off then on never needs the OS alarm cancelling again.
+          expect(events, ['sync']);
+          final saved = await PrayerAlarmLocalDataSourceImpl(
+            box: prayerBox,
+          ).getSettings();
+          final isha = saved['isha']!;
+          expect(isha.enabled, isTrue);
+          expect(isha.offsetMinutesBefore, 25);
+          expect(isha.soundMode, 'vibrate');
+          expect(isha.ringtoneId, 'r2');
+          expect(isha.ringtoneUrl, 'https://x/r2.mp3');
+        },
+      );
 
       test(
         'deleting an alarm removes it and cancels its OS alarm at once',

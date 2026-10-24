@@ -30,4 +30,12 @@ abstract interface class AlarmRepository {
   /// Applies [batch] to the prayer alarms: selected prayers are turned on
   /// with its settings, the rest are turned off.
   Future<Either<Failure, void>> setAllPrayerAlarms(PrayerAlarmBatch batch);
+
+  /// Turns the single prayer alarm [prayerType] on or off, leaving every
+  /// other prayer — and this one's own saved offset, sound mode and ringtone —
+  /// untouched, so turning it back on reactivates exactly what it had.
+  Future<Either<Failure, void>> setPrayerAlarmEnabled({
+    required String prayerType,
+    required bool enabled,
+  });
 }
