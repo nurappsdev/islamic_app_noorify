@@ -194,6 +194,7 @@ class _SunnahPill extends StatelessWidget {
             child: Text(
               name,
               maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: h * 0.4,
                 color: active ? Colors.white : _textGreen,

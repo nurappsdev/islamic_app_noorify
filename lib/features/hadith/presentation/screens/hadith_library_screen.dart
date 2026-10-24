@@ -571,6 +571,7 @@ class _CollectionCard extends StatelessWidget {
                     '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
                   ),
                   maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

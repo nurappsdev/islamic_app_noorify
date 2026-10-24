@@ -195,7 +195,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
         // Light status-bar icons on the dark background.
         value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         child: DefaultTextStyle.merge(
-          style: TextStyle(fontFamily: appFontFamilyFor(language)),
+          style: TextStyle(
+            fontFamily: appFontFamilyFor(language),
+            fontFamilyFallback: appFontFamilyFallback,
+          ),
           child: Scaffold(
             backgroundColor: context.appPalette.background,
             body: SafeArea(
@@ -1084,6 +1087,7 @@ TextStyle homeSerifStyle({
     color: color ?? (context?.appPalette ?? AppPalette.light).textStrong,
     fontSize: fontSize,
     fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
     fontStyle: FontStyle.italic,
     fontWeight: fontWeight,
   );
@@ -1099,6 +1103,7 @@ TextStyle homeSansStyle({
     color: color ?? (context?.appPalette ?? AppPalette.light).textPrimary,
     fontSize: fontSize,
     fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
     fontWeight: fontWeight,
   );
 }

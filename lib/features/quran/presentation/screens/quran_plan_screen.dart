@@ -18,6 +18,7 @@ import '../widgets/dashboard/quran_dashboard_header.dart';
 import '../widgets/quran_segmented_tabs.dart';
 import '../../data/services/quran_content_service.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class QuranPlanScreen extends StatefulWidget {
   const QuranPlanScreen({super.key, this.onBack, this.repository, this.bloc});
@@ -1133,6 +1134,7 @@ class _StatColumn extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: 11.sp,
             height: 1.2,
@@ -1577,6 +1579,7 @@ class _EmptyDocumentPainter extends CustomPainter {
           color: const Color(0xFF6B8042),
           fontSize: size.width * .16,
           fontWeight: FontWeight.bold,
+          fontFamilyFallback: appFontFamilyFallback,
         ),
       ),
       textDirection: TextDirection.ltr,

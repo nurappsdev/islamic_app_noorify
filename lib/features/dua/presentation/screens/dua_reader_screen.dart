@@ -17,6 +17,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_heade
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_zoom_control.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Single-dua reader (design `devImg/img_19.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].
@@ -312,9 +313,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                             color: context.surfaceColor(Colors.white),
                             borderRadius: BorderRadius.circular(16.r),
                             border: Border.all(
-                              color: context.lineColor(
-                                const Color(0xFFE3E7D3),
-                              ),
+                              color: context.lineColor(const Color(0xFFE3E7D3)),
                             ),
                           ),
                           child: Column(
@@ -409,9 +408,9 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () {
                         Navigator.of(context).pop();
-                        Navigator.of(pageContext).pushNamed(
-                          RouteNames.settings,
-                        );
+                        Navigator.of(
+                          pageContext,
+                        ).pushNamed(RouteNames.settings);
                       },
                     ),
                   ],
@@ -437,12 +436,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
           return Stack(
             children: [
               ListView(
-                padding: EdgeInsets.fromLTRB(
-                  16.w,
-                  0,
-                  16.w,
-                  96.h + bottomInset,
-                ),
+                padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h + bottomInset),
                 children: [
                   SizedBox(height: 36.h),
                   DuaPageHeader(
@@ -536,6 +530,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                                   textDirection: TextDirection.rtl,
                                   style: TextStyle(
                                     fontFamily: 'Noorehuda',
+                                    fontFamilyFallback: appFontFamilyFallback,
                                     fontSize: settings.arabicFontSize.sp,
                                     height: 1.9,
                                     color: context.inkColor(

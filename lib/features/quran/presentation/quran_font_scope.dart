@@ -22,11 +22,20 @@ class QuranFontScope extends StatelessWidget {
     final theme = Theme.of(context);
     return Theme(
       data: theme.copyWith(
-        textTheme: theme.textTheme.apply(fontFamily: family),
-        primaryTextTheme: theme.primaryTextTheme.apply(fontFamily: family),
+        textTheme: theme.textTheme.apply(
+          fontFamily: family,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
+        primaryTextTheme: theme.primaryTextTheme.apply(
+          fontFamily: family,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
       ),
       child: DefaultTextStyle.merge(
-        style: TextStyle(fontFamily: family),
+        style: TextStyle(
+          fontFamily: family,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
         child: child,
       ),
     );

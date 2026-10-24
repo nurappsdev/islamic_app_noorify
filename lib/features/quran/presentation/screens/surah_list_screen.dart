@@ -627,7 +627,12 @@ class _SectionPicker extends StatelessWidget {
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(text.quranMajeedTitle, maxLines: 1, style: style),
+              child: Text(
+                text.quranMajeedTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
             ),
           ),
           const Icon(Icons.expand_more, color: Color(0xff385c46), size: 20),

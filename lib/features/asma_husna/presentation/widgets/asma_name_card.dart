@@ -5,6 +5,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.dart';
 import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_scallop_badge.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class AsmaNameCard extends StatelessWidget {
   const AsmaNameCard({
@@ -71,6 +72,7 @@ class AsmaNameCard extends StatelessWidget {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Noorehuda',
+                                fontFamilyFallback: appFontFamilyFallback,
                                 fontSize: 26.sp,
                                 fontWeight: FontWeight.w700,
                                 color: context.inkColor(_arabicGreen),
