@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/bloc/ayah_bookmark/ayah_bookmark_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class AyahCard extends StatelessWidget {
   const AyahCard({
@@ -84,6 +85,7 @@ class AyahCard extends StatelessWidget {
               textDirection: TextDirection.rtl,
               style: TextStyle(
                 fontFamily: kQuranArabicFontFamily,
+                fontFamilyFallback: appFontFamilyFallback,
                 fontSize: 19.sp,
                 height: 1.8,
               ),

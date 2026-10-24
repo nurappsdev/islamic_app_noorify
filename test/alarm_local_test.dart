@@ -277,6 +277,15 @@ void main() {
       Future<void> settle() =>
           Future<void>.delayed(const Duration(milliseconds: 30));
 
+      /// Waits until the bloc has driven [count] scheduler calls, instead of
+      /// guessing how long its Hive write plus fire-and-forget re-sync take -
+      /// a fixed delay is too short on a machine running the whole suite.
+      Future<void> waitForEvents(int count) async {
+        for (var i = 0; i < 100 && events.length < count; i++) {
+          await settle();
+        }
+      }
+
       test('loads the saved alarms and the prayer alarms', () async {
         await repository.addAlarm(_alarm('a'));
         bloc.add(const LoadAlarms());
@@ -330,8 +339,7 @@ void main() {
         events.clear();
 
         bloc.add(const TogglePrayerAlarmEnabled('dhuhr', false));
-        await settle();
-        await settle();
+        await waitForEvents(2);
 
         final on = bloc.state.prayerAlarms
             .where((a) => a.isEnabled)
@@ -366,8 +374,7 @@ void main() {
           events.clear();
 
           bloc.add(const TogglePrayerAlarmEnabled('isha', true));
-          await settle();
-          await settle();
+          await waitForEvents(1);
 
           // Switching off then on never needs the OS alarm cancelling again.
           expect(events, ['sync']);

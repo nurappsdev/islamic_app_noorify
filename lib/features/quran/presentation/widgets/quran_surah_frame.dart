@@ -4,6 +4,7 @@ import 'quran_design.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Reuses the two supplied transparent ornaments around live content.
 class QuranSurahFrame extends StatelessWidget {
@@ -76,6 +77,7 @@ class QuranSurahComponent extends StatelessWidget {
               textDirection: TextDirection.rtl,
               style: const TextStyle(
                 fontFamily: kQuranArabicFontFamily,
+                fontFamilyFallback: appFontFamilyFallback,
                 fontSize: 25,
               ),
             ),

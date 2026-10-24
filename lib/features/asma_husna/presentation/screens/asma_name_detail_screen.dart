@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name.da
 import 'package:tuhfatul_muslim/features/asma_husna/domain/entities/asma_name_detail.dart';
 import 'package:tuhfatul_muslim/features/asma_husna/presentation/bloc/asma_name_detail_bloc.dart';
 import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Full-screen explanation for one name (design `img_29.png`), opened from
 /// its card's "Click to see details" button. Fetches
@@ -225,6 +226,7 @@ class _DetailCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Noorehuda',
+                    fontFamilyFallback: appFontFamilyFallback,
                     fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                     color: context.inkColor(Color(0xFF3F6B2C)),
@@ -283,6 +285,7 @@ class _DetailCard extends StatelessWidget {
                       style: paragraph.isArabic
                           ? TextStyle(
                               fontFamily: 'Noorehuda',
+                              fontFamilyFallback: appFontFamilyFallback,
                               fontSize: 17.sp,
                               fontWeight: FontWeight.w600,
                               height: 1.8,

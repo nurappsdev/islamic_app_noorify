@@ -24,6 +24,7 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card_utils.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// How many reading-history entries the dashboard previews.
 const _recentPreviewCount = 3;
@@ -1593,6 +1594,7 @@ class _ReadingChartPainter extends CustomPainter {
         color: color,
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
+        fontFamilyFallback: appFontFamilyFallback,
       ),
     ),
     textAlign: align,
@@ -1852,7 +1854,12 @@ class _WeeklyBarPainter extends CustomPainter {
   TextPainter _tp(String text, double size, FontWeight weight) => TextPainter(
     text: TextSpan(
       text: text,
-      style: TextStyle(color: _ink, fontSize: size, fontWeight: weight),
+      style: TextStyle(
+        color: _ink,
+        fontSize: size,
+        fontWeight: weight,
+        fontFamilyFallback: appFontFamilyFallback,
+      ),
     ),
     textDirection: TextDirection.ltr,
   )..layout();
@@ -1870,7 +1877,11 @@ class _WeeklyBarPainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(color: color, fontSize: size),
+        style: TextStyle(
+          color: color,
+          fontSize: size,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

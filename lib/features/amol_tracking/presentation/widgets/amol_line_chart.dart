@@ -11,6 +11,7 @@ import 'amol_chart_painters.dart';
 import 'amol_dashboard_utils.dart';
 import 'amol_score_bubble.dart';
 import 'amol_score_tooltip.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class AmolLineChart extends StatefulWidget {
   const AmolLineChart({
@@ -79,7 +80,10 @@ class _AmolLineChartState extends State<AmolLineChart> {
       final painter = TextPainter(
         text: TextSpan(
           text: category,
-          style: TextStyle(fontSize: 9.sp),
+          style: TextStyle(
+            fontSize: 9.sp,
+            fontFamilyFallback: appFontFamilyFallback,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
@@ -98,7 +102,10 @@ class _AmolLineChartState extends State<AmolLineChart> {
       final painter = TextPainter(
         text: TextSpan(
           text: localizeDigits(tick.round().toString(), language),
-          style: TextStyle(fontSize: 9.sp),
+          style: TextStyle(
+            fontSize: 9.sp,
+            fontFamilyFallback: appFontFamilyFallback,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();

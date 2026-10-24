@@ -57,6 +57,7 @@ class QuranSegmentedTabs extends StatelessWidget {
                       child: Text(
                         label,
                         maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: index == selected

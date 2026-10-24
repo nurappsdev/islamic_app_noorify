@@ -18,6 +18,7 @@ import 'create_quran_playlist_screen.dart';
 import 'quran_audio_player_screen.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/quran_font_scope.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class QuranPlaylistDetailScreen extends StatefulWidget {
   const QuranPlaylistDetailScreen({
@@ -781,6 +782,7 @@ class _QuranPlaylistDetailScreenState extends State<QuranPlaylistDetailScreen> {
                   textDirection: TextDirection.rtl,
                   style: TextStyle(
                     fontFamily: kQuranArabicFontFamily,
+                    fontFamilyFallback: appFontFamilyFallback,
                     fontSize: 17.sp,
                     color: const Color(0xFF7A8D49),
                   ),

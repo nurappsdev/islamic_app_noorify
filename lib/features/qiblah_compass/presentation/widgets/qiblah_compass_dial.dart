@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// A compass rose that points at the Kaaba (design `img_40.png` /
 /// `img_41.png`).
@@ -292,7 +293,12 @@ class _CompassFacePainter extends CustomPainter {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/delete_account_dialogs.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/settings_option_row.dart';
 import 'package:tuhfatul_muslim/features/legal/domain/entities/legal_document.dart';
 import 'package:tuhfatul_muslim/features/legal/presentation/screens/legal_document_screen.dart';
 
@@ -28,60 +29,51 @@ class SettingsScreen extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(appText.comingSoon)));
   }
 
-  static List<_SettingsItem> _items(
+  static List<SettingsOption> _items(
     BuildContext context,
     AppText appText,
     bool isDark,
     bool isSignedIn,
   ) => [
-    _SettingsItem(
+    SettingsOption(
       appText.aboutUs,
       Icons.person_outline,
       onTap: () => _openLegal(context, LegalDocumentType.aboutUs),
     ),
-    _SettingsItem(
+    SettingsOption(
       appText.ourProducts,
       Icons.eco_outlined,
       onTap: () => _comingSoon(context, appText),
     ),
-    _SettingsItem(
+    SettingsOption(
       appText.privacyPolicy,
       Icons.privacy_tip_outlined,
       onTap: () => _openLegal(context, LegalDocumentType.privacyPolicy),
     ),
-    _SettingsItem(
+    SettingsOption(
       appText.termsOfServices,
       Icons.description_outlined,
       onTap: () => _openLegal(context, LegalDocumentType.termsOfService),
     ),
-    _SettingsItem(
+    SettingsOption(
       appText.adminSupport,
       Icons.support_agent_outlined,
       onTap: () => _comingSoon(context, appText),
     ),
-    _SettingsItem(
+    SettingsOption(
       appText.feedback,
       Icons.feedback_outlined,
       onTap: () => _comingSoon(context, appText),
     ),
-    _SettingsItem(
-      appText.appLanguage,
-      Icons.translate_outlined,
-      onTap: () => Navigator.of(context).pushNamed(RouteNames.appLanguage),
-    ),
-    _SettingsItem(
+    appLanguageOption(context, appText),
+    SettingsOption(
       appText.addPrayerWidgetTitle,
       Icons.widgets_outlined,
       onTap: () => Navigator.of(context).pushNamed(RouteNames.addPrayerWidget),
     ),
-    _SettingsItem(
-      isDark ? appText.themeSwitchToLight : appText.themeSwitchToDark,
-      isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-      onTap: () =>
-          context.read<AppPreferencesBloc>().add(const ToggleDarkTheme()),
-    ),
+    themeToggleOption(context, appText, isDark),
     if (isSignedIn)
-      _SettingsItem(
+      SettingsOption(
         appText.changePassword,
         Icons.sync_alt_rounded,
         onTap: () => Navigator.of(context).push(
@@ -107,7 +99,7 @@ class SettingsScreen extends StatelessWidget {
                 padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
                 children: [
                   for (final item in items) ...[
-                    _SettingsRow(item: item),
+                    SettingsOptionRow(option: item),
                     SizedBox(height: 12.h),
                   ],
                 ],
@@ -159,57 +151,6 @@ class _SettingsHeader extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SettingsItem {
-  const _SettingsItem(this.label, this.icon, {this.onTap});
-
-  final String label;
-  final IconData icon;
-  final VoidCallback? onTap;
-}
-
-class _SettingsRow extends StatelessWidget {
-  const _SettingsRow({required this.item});
-
-  final _SettingsItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: context.surfaceColor(Colors.white),
-      borderRadius: BorderRadius.circular(20.r),
-      child: InkWell(
-        onTap: item.onTap ?? () {},
-        borderRadius: BorderRadius.circular(20.r),
-        child: Container(
-          height: 54.h,
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          decoration: BoxDecoration(
-            border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Row(
-            children: [
-              Icon(item.icon, color: AppColor.primary, size: 19.sp),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: TextStyle(color: AppColor.primary, fontSize: 14.sp),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColor.primary,
-                size: 18.sp,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

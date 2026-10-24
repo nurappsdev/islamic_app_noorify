@@ -390,6 +390,7 @@ class PrayerBarItemWidget extends StatelessWidget {
                     child: Text(
                       prayer.name,
                       maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       softWrap: false,
                       style: TextStyle(
                         fontSize: 14.sp,
