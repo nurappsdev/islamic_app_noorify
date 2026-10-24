@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/asma_husna/presentation/screens/asma_na
 import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_husna_shimmer.dart';
 import 'package:tuhfatul_muslim/features/asma_husna/presentation/widgets/asma_name_card.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Asmaul-Husna landing screen (design `img_26.png`): the "99 names" hadith,
 /// a link to the full list, and an audio-capable name preview. Tapping
@@ -66,6 +67,7 @@ class AsmaHusnaIntroScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: 'Noorehuda',
+                        fontFamilyFallback: appFontFamilyFallback,
                         fontSize: 19.sp,
                         fontWeight: FontWeight.w700,
                         color: context.inkColor(Color(0xFF3E6B2E)),

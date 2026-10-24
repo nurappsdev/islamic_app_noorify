@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/update/app_update_watcher.dart';
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
@@ -56,7 +57,9 @@ class HomeScreen extends StatelessWidget {
         create: (_) => HomeDashboardBloc(
           GetHomeDashboard(HomeRepositoryImpl(HomeRemoteDataSourceImpl())),
         )..add(const LoadHomeDashboard()),
-        child: const _HomeScreenView(),
+        // Home is the first screen of every launch, so the Google Play
+        // update check runs from here.
+        child: const AppUpdateWatcher(child: _HomeScreenView()),
       ),
     );
   }
@@ -192,7 +195,10 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
         // Light status-bar icons on the dark background.
         value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         child: DefaultTextStyle.merge(
-          style: TextStyle(fontFamily: appFontFamilyFor(language)),
+          style: TextStyle(
+            fontFamily: appFontFamilyFor(language),
+            fontFamilyFallback: appFontFamilyFallback,
+          ),
           child: Scaffold(
             backgroundColor: context.appPalette.background,
             body: SafeArea(
@@ -1081,6 +1087,7 @@ TextStyle homeSerifStyle({
     color: color ?? (context?.appPalette ?? AppPalette.light).textStrong,
     fontSize: fontSize,
     fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
     fontStyle: FontStyle.italic,
     fontWeight: fontWeight,
   );
@@ -1096,6 +1103,7 @@ TextStyle homeSansStyle({
     color: color ?? (context?.appPalette ?? AppPalette.light).textPrimary,
     fontSize: fontSize,
     fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
     fontWeight: fontWeight,
   );
 }

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../quran_text.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// What a reading chart plots: minutes read per day (oldest first), the
 /// user's and, optionally, the compared user's.
@@ -867,7 +868,12 @@ void drawChartText(
 }) {
   final span = TextSpan(
     text: text,
-    style: TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight),
+    style: TextStyle(
+      color: color,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      fontFamilyFallback: appFontFamilyFallback,
+    ),
   );
   final tp = TextPainter(
     text: span,

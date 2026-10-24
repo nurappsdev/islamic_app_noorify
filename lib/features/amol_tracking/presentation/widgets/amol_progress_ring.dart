@@ -66,6 +66,7 @@ class AmolProgressRing extends StatelessWidget {
                 child: Text(
                   label,
                   maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style:
                       labelStyle ??
                       homeSansStyle(fontSize: 11, fontWeight: FontWeight.w700),

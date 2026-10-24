@@ -202,6 +202,7 @@ class _ZikrPill extends StatelessWidget {
                   child: Text(
                     item.name,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: h * 0.42,
                       color: item.completed ? Colors.white : _textGreen,

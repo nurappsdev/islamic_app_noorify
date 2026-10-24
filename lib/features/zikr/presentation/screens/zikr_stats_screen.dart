@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.d
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// The chart's point bubbles are small pills, so a full name (e.g.
 /// "Abdullah Al Masud") is shortened to its first two characters ("Ab") —
@@ -103,9 +104,10 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
         : DateTime(selected.year, selected.month);
     final end = selected == null
         ? today
-        : DateTime(selected.year, selected.month + 1).subtract(
-            const Duration(days: 1),
-          );
+        : DateTime(
+            selected.year,
+            selected.month + 1,
+          ).subtract(const Duration(days: 1));
     final dayCount = end.difference(start).inDays + 1;
     return [for (var i = 0; i < dayCount; i++) start.add(Duration(days: i))];
   }
@@ -133,7 +135,9 @@ class _ZikrStatsScreenState extends State<ZikrStatsScreen> {
   /// in [_monthlyDayRange]. A day the response doesn't cover — no activity
   /// recorded, or a future date — gets zero rather than being dropped or
   /// filled with a placeholder; real API data only, never mock curves.
-  List<_ChartDayPoint> _mergedMonthlyPoints(TasbihAnalyticsResponse? analytics) {
+  List<_ChartDayPoint> _mergedMonthlyPoints(
+    TasbihAnalyticsResponse? analytics,
+  ) {
     final byDate = _chartDataByDate(analytics);
     return [
       for (final date in _monthlyDayRange)
@@ -1218,8 +1222,9 @@ class _StatsChartState extends State<_StatsChart> {
         final selected = _selectedIndex;
 
         return MouseRegion(
-          onHover: (event) =>
-              _setSelected(geometry.nearestIndex(event.localPosition.dx, count)),
+          onHover: (event) => _setSelected(
+            geometry.nearestIndex(event.localPosition.dx, count),
+          ),
           onExit: (_) => _setSelected(null),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -1408,8 +1413,9 @@ class _ChartGeometry {
   double get _width => chartRight - chartLeft;
   double get _height => chartBottom - chartTop;
 
-  double xAt(int i, int count) =>
-      count < 2 ? chartLeft + _width / 2 : chartLeft + _width * (i / (count - 1));
+  double xAt(int i, int count) => count < 2
+      ? chartLeft + _width / 2
+      : chartLeft + _width * (i / (count - 1));
 
   double yAt(double v, double maxY) => chartBottom - _height * (v / maxY);
 
@@ -1688,6 +1694,7 @@ class _StatsChartPainter extends CustomPainter {
           color: color,
           fontSize: fontSize,
           fontWeight: FontWeight.w600,
+          fontFamilyFallback: appFontFamilyFallback,
         ),
       ),
       textDirection: TextDirection.ltr,

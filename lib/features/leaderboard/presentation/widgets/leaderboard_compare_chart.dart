@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 const leaderboardMyColor = Color(0xFF5D896D);
 const leaderboardCompetitorColor = Color(0xFFA9B96A);
@@ -243,6 +244,7 @@ class _ComparePainter extends CustomPainter {
           color: color,
           fontSize: fontSize,
           fontWeight: FontWeight.w600,
+          fontFamilyFallback: appFontFamilyFallback,
         ),
       ),
       textDirection: TextDirection.ltr,

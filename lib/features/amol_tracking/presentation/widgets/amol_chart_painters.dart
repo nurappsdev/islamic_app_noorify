@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 class AmolLineChartPainter extends CustomPainter {
   const AmolLineChartPainter({
@@ -193,7 +194,11 @@ class AmolLineChartPainter extends CustomPainter {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(fontSize: 9.sp, color: _labelColor),
+        style: TextStyle(
+          fontSize: 9.sp,
+          color: _labelColor,
+          fontFamilyFallback: appFontFamilyFallback,
+        ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();

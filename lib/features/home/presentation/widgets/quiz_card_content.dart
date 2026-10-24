@@ -227,6 +227,7 @@ class QuizGlassCard extends StatelessWidget {
                   child: Text(
                     title,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: extent * 0.145,
                       height: 1.1,

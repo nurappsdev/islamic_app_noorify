@@ -31,9 +31,11 @@ ThemeData darkTheme({String fontFamily = appFontFamily}) {
       surfaceTintColor: Colors.transparent,
     ),
     fontFamily: fontFamily,
-    textTheme: ThemeData(
-      brightness: Brightness.dark,
-    ).textTheme.apply(fontFamily: fontFamily),
+    fontFamilyFallback: appFontFamilyFallback,
+    textTheme: ThemeData(brightness: Brightness.dark).textTheme.apply(
+      fontFamily: fontFamily,
+      fontFamilyFallback: appFontFamilyFallback,
+    ),
     extensions: const [AppPalette.dark],
   );
 }

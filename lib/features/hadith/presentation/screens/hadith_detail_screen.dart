@@ -37,6 +37,7 @@ import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Route arguments for [HadithDetailScreen].
 class HadithDetailArgs {
@@ -1472,6 +1473,7 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
                 textDirection: TextDirection.rtl,
                 style: TextStyle(
                   fontFamily: 'Noorehuda',
+                  fontFamilyFallback: appFontFamilyFallback,
                   fontSize: 20.sp * settings.arabicScale,
                   height: 2.0,
                   color: context.inkColor(_ink),
@@ -1780,6 +1782,7 @@ class _TimerCircle extends StatelessWidget {
                   child: Text(
                     _label,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 8.sp,
                       fontWeight: FontWeight.w700,

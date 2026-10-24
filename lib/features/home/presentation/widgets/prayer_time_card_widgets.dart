@@ -11,12 +11,8 @@ class _CurrentPrayerBadge extends StatelessWidget {
     final appText = AppText.of(context);
     final bangla = _isBangla(context);
     final times = this.times;
-    String clock(PrayerClockTime t) => localizedPeriodClock(
-      t,
-      times: times,
-      appText: appText,
-      bangla: bangla,
-    );
+    String clock(PrayerClockTime t) =>
+        localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final period = times == null ? null : currentPrayerPeriod(now, times);
     final periodName = times == null
         ? '—'
@@ -224,6 +220,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   child: Text(
                     displayLabel,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.white),
                   ),
                 ),
@@ -234,6 +231,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   child: Text(
                     displayTime,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
                   ),
                 ),

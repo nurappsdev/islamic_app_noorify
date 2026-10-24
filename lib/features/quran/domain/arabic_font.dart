@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
+
 /// A selectable Arabic typeface for rendering ayah text, backed by a Google
 /// Fonts family (fetched and cached on first use, no bundled font assets
 /// required).
@@ -15,7 +17,12 @@ class ArabicFont {
   final String label;
   final TextStyle Function(TextStyle textStyle) styleBuilder;
 
-  TextStyle apply(TextStyle base) => styleBuilder(base);
+  /// The chosen Arabic face with the app's Bangla faces behind it: an
+  /// Arabic typeface carries no Bengali glyph, so Bangla sharing this style
+  /// - a translation line, a Bangla digit - would otherwise be drawn in
+  /// whatever face the device happens to have, or not at all.
+  TextStyle apply(TextStyle base) =>
+      styleBuilder(base).copyWith(fontFamilyFallback: appFontFamilyFallback);
 }
 
 const kDefaultArabicFontId = 'indopak_nastaleeq';

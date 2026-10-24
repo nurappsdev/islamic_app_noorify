@@ -22,6 +22,7 @@ import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_book/ha
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_failure_message.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Route arguments for [HadithBookReaderScreen]: the book, and optionally the
 /// hadith to open at.
@@ -1038,6 +1039,7 @@ class _HadithCardState extends State<_HadithCard> {
                               textDirection: TextDirection.rtl,
                               style: TextStyle(
                                 fontFamily: 'Noorehuda',
+                                fontFamilyFallback: appFontFamilyFallback,
                                 fontSize: 17.sp,
                                 height: 1.9,
                                 color: context.inkColor(Color(0xFF283016)),

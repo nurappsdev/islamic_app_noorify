@@ -88,8 +88,12 @@ class _AddPrayerWidgetScreenState extends State<AddPrayerWidgetScreen> {
                   _WidgetPreview(
                     label: appText.widgetSizeMedium,
                     times: _times,
-                    builder: (times, now, bangla) =>
-                        _MediumPreview(times: times, now: now, appText: appText, bangla: bangla),
+                    builder: (times, now, bangla) => _MediumPreview(
+                      times: times,
+                      now: now,
+                      appText: appText,
+                      bangla: bangla,
+                    ),
                   ),
                   SizedBox(height: 18.h),
                   // Stacked, not side-by-side: squeezing the small and large
@@ -205,7 +209,9 @@ class _WidgetPreview extends StatelessWidget {
         // should this preview of it - otherwise a larger system font size
         // can make this tightly fitted card overflow.
         MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.noScaling),
           child: builder(times, now, bangla),
         ),
       ],
@@ -241,7 +247,10 @@ class _WidgetSurface extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(prayerThemeAsset(now: now, fajr: fajr), fit: BoxFit.cover),
+          Image.asset(
+            prayerThemeAsset(now: now, fajr: fajr),
+            fit: BoxFit.cover,
+          ),
           // A soft white veil so the black text below stays legible over
           // any photo, the same way the native widget does it.
           Container(color: Colors.white.withValues(alpha: .72)),
@@ -272,7 +281,12 @@ String _locationLabel(AppText appText) {
 }
 
 class _DateRow extends StatelessWidget {
-  const _DateRow({required this.now, required this.times, required this.bangla, this.fontSize = 9});
+  const _DateRow({
+    required this.now,
+    required this.times,
+    required this.bangla,
+    this.fontSize = 9,
+  });
 
   final DateTime now;
   final DailyPrayerTimes? times;
@@ -353,12 +367,16 @@ class _CenterBlock extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: const Color(0xFFD9DEA8)),
           ),
-          child: Text(dateText, style: TextStyle(fontSize: 9.sp, color: Colors.black)),
+          child: Text(
+            dateText,
+            style: TextStyle(fontSize: 9.sp, color: Colors.black),
+          ),
         ),
         SizedBox(height: 2.h),
         Text(
           periodTime,
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontSize: timeFontSize.sp,
             fontWeight: FontWeight.w800,
@@ -448,7 +466,12 @@ class _PrayerRow extends StatelessWidget {
                 range,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: TextStyle(fontSize: fontSize - 1, fontWeight: FontWeight.w700, color: textColor),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: fontSize - 1,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
               ),
             ],
           ),
@@ -456,14 +479,16 @@ class _PrayerRow extends StatelessWidget {
       );
     }
 
-    return Row(
-      children: PrayerPeriod.values.map(cell).toList(),
-    );
+    return Row(children: PrayerPeriod.values.map(cell).toList());
   }
 }
 
 class _SunEdgeRow extends StatelessWidget {
-  const _SunEdgeRow({required this.times, required this.appText, required this.bangla});
+  const _SunEdgeRow({
+    required this.times,
+    required this.appText,
+    required this.bangla,
+  });
 
   final DailyPrayerTimes? times;
   final AppText appText;
@@ -472,7 +497,8 @@ class _SunEdgeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final times = this.times;
-    final area = PrayerLocationService.instance.state.location?.shortDisplayName ?? '';
+    final area =
+        PrayerLocationService.instance.state.location?.shortDisplayName ?? '';
     String edgeLabel(String label) => area.isEmpty ? label : '$label, $area';
     String clock(PrayerClockTime t) =>
         localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
@@ -487,12 +513,20 @@ class _SunEdgeRow extends StatelessWidget {
                 edgeLabel(appText.sunrise),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: const Color(0xFF3F4A38),
+                ),
               ),
               Text(
                 times == null ? '--:--' : clock(times.sunrise),
                 maxLines: 1,
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
               ),
             ],
           ),
@@ -507,12 +541,20 @@ class _SunEdgeRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 10.sp, color: const Color(0xFF3F4A38)),
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: const Color(0xFF3F4A38),
+                ),
               ),
               Text(
                 times == null ? '--:--' : clock(times.sunset),
                 maxLines: 1,
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
               ),
             ],
           ),
@@ -541,7 +583,9 @@ class _SmallPreview extends StatelessWidget {
     final periodName = times == null
         ? '—'
         : (period?.displayName(appText) ?? appText.naflIshraq);
-    final label = times == null ? periodName : '$periodName ${appText.namazWord}';
+    final label = times == null
+        ? periodName
+        : '$periodName ${appText.namazWord}';
     final time = localizedPeriodClock(
       PrayerClockTime(hour: now.hour, minute: now.minute),
       times: times,
@@ -559,9 +603,19 @@ class _SmallPreview extends StatelessWidget {
             Text(
               label,
               maxLines: 1,
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
             ),
-            Text(time, maxLines: 1, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700)),
+            Text(
+              time,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+            ),
             SizedBox(height: 4.h),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -612,9 +666,21 @@ class _MediumPreview extends StatelessWidget {
         children: [
           _DateRow(now: now, times: times, bangla: bangla),
           const Spacer(),
-          _CenterBlock(now: now, times: times, appText: appText, bangla: bangla, timeFontSize: 15),
+          _CenterBlock(
+            now: now,
+            times: times,
+            appText: appText,
+            bangla: bangla,
+            timeFontSize: 15,
+          ),
           const Spacer(),
-          _PrayerRow(now: now, times: times, appText: appText, bangla: bangla, compact: true),
+          _PrayerRow(
+            now: now,
+            times: times,
+            appText: appText,
+            bangla: bangla,
+            compact: true,
+          ),
         ],
       ),
     );
@@ -644,9 +710,21 @@ class _LargePreview extends StatelessWidget {
         children: [
           _DateRow(now: now, times: times, bangla: bangla, fontSize: 10),
           const Spacer(),
-          _CenterBlock(now: now, times: times, appText: appText, bangla: bangla, timeFontSize: 18),
+          _CenterBlock(
+            now: now,
+            times: times,
+            appText: appText,
+            bangla: bangla,
+            timeFontSize: 18,
+          ),
           const Spacer(),
-          _PrayerRow(now: now, times: times, appText: appText, bangla: bangla, compact: false),
+          _PrayerRow(
+            now: now,
+            times: times,
+            appText: appText,
+            bangla: bangla,
+            compact: false,
+          ),
           SizedBox(height: 8.h),
           _SunEdgeRow(times: times, appText: appText, bangla: bangla),
         ],
