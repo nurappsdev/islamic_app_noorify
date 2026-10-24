@@ -75,6 +75,21 @@ class AlarmRepositoryImpl implements AlarmRepository {
     });
   }
 
+  @override
+  Future<Either<Failure, void>> setPrayerAlarmEnabled({
+    required String prayerType,
+    required bool enabled,
+  }) {
+    return _guard(() async {
+      final saved = await _prayerAlarms.getSettings();
+      // Only this prayer's entry is written back, so the others keep theirs.
+      // A prayer never set up yet starts from the defaults.
+      final setting =
+          saved[prayerType] ?? PrayerAlarmSetting(prayerType: prayerType);
+      await _prayerAlarms.saveSettings([setting.copyWith(enabled: enabled)]);
+    });
+  }
+
   /// A selected prayer takes the batch's settings and is turned on; any other
   /// is only turned off, keeping what it had.
   PrayerAlarmSetting _apply(

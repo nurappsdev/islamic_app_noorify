@@ -84,6 +84,12 @@ const Map<String, String> appTextEn = <String, String>{
   'exactAlarmPermissionNeeded':
       'Please allow alarms & reminders in Settings so your prayer alarms '
       'can ring on time.',
+  'exactAlarmPermissionTitle': 'Allow Alarms & Reminders',
+  'exactAlarmPermissionExplanation':
+      'To ring your alarm at the exact time, this app needs the '
+      '"Alarms & reminders" permission. We will open that settings screen '
+      'so you can turn it on.',
+  'exactAlarmPermissionAllow': 'Allow Permission',
 
   // Amol tracking feature
   'amolTracking': 'Amol Tracking',

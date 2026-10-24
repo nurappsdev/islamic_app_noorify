@@ -8,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/repositories/alarm_repository_impl.dart';
-import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/ringtone_cache.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/alarm_entry.dart';
@@ -21,6 +20,7 @@ import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_bloc.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/exact_alarm_permission_gate.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_number_formatter.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_time_formatter.dart';
@@ -181,12 +181,13 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
           messenger.showSnackBar(SnackBar(content: Text(failure.message))),
       (_) async {
         // Saved on the device first either way. Exact-alarm access is
-        // checked only now, right as the user turns these alarms on — if
-        // it isn't granted, this opens Android's "Alarms & reminders"
-        // settings screen so they can grant it; `sync` below arms nothing
-        // until it is (see AlarmScheduler._applyPlan), so this is also the
-        // single source of truth even for callers that skip this check.
-        final granted = await AlarmScheduler.ensureExactAlarmPermission();
+        // asked for only now, right as the user turns these alarms on: the
+        // dialog explains why and, on "Allow Permission", opens Android's
+        // "Alarms & reminders" settings screen so they can grant it. `sync`
+        // below arms nothing until it is (see AlarmScheduler._applyPlan), so
+        // the selection is never lost — the alarms start ringing as soon as
+        // the permission is granted.
+        final granted = await ensureExactAlarmAccess(context);
         if (!mounted) return;
         if (!granted) {
           messenger.showSnackBar(

@@ -4,11 +4,13 @@ import 'package:bloc/bloc.dart';
 
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync.dart';
+import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_sync_plan.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/add_alarm.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/delete_alarm.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_prayer_alarms.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_alarm_enabled.dart';
+import 'package:tuhfatul_muslim/features/alarm/domain/usecases/set_prayer_alarm_enabled.dart';
 
 import 'alarm_list_event.dart';
 import 'alarm_list_state.dart';
@@ -25,6 +27,7 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     required GetPrayerAlarms getPrayerAlarms,
     required AddAlarm addAlarm,
     required SetAlarmEnabled setAlarmEnabled,
+    required SetPrayerAlarmEnabled setPrayerAlarmEnabled,
     required DeleteAlarm deleteAlarm,
     Future<void> Function()? syncAlarms,
     Future<void> Function(String id, String reason)? cancelAlarm,
@@ -32,6 +35,7 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
        _getPrayerAlarms = getPrayerAlarms,
        _addAlarm = addAlarm,
        _setAlarmEnabled = setAlarmEnabled,
+       _setPrayerAlarmEnabled = setPrayerAlarmEnabled,
        _deleteAlarm = deleteAlarm,
        _syncAlarms = syncAlarms ?? syncLocalAlarms,
        _cancelAlarm =
@@ -41,6 +45,7 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
     on<LoadAlarms>(_onLoadAlarms);
     on<SaveAlarm>(_onSaveAlarm);
     on<ToggleAlarmEnabled>(_onToggleAlarmEnabled);
+    on<TogglePrayerAlarmEnabled>(_onTogglePrayerAlarmEnabled);
     on<RemoveAlarm>(_onRemoveAlarm);
   }
 
@@ -48,6 +53,7 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
   final GetPrayerAlarms _getPrayerAlarms;
   final AddAlarm _addAlarm;
   final SetAlarmEnabled _setAlarmEnabled;
+  final SetPrayerAlarmEnabled _setPrayerAlarmEnabled;
   final DeleteAlarm _deleteAlarm;
   final Future<void> Function() _syncAlarms;
   final Future<void> Function(String id, String reason) _cancelAlarm;
@@ -111,6 +117,43 @@ class AlarmListBloc extends Bloc<AlarmListEvent, AlarmListState> {
       (failure) => emit(state.copyWith(alarms: previous, failure: failure)),
       (_) {
         if (!event.enabled) unawaited(_cancelAlarm(event.id, 'switched off'));
+        unawaited(_syncAlarms());
+      },
+    );
+  }
+
+  /// Flips one prayer's own toggle the same way, without touching the other
+  /// prayers: only its `enabled` flag is saved, so turning it back on
+  /// reactivates the offset, sound mode and ringtone it already had.
+  Future<void> _onTogglePrayerAlarmEnabled(
+    TogglePrayerAlarmEnabled event,
+    Emitter<AlarmListState> emit,
+  ) async {
+    final previous = state.prayerAlarms;
+    final updated = [
+      for (final alarm in previous)
+        if (alarm.prayerType == event.prayerType)
+          alarm.copyWith(isEnabled: event.enabled)
+        else
+          alarm,
+    ];
+    emit(state.copyWith(prayerAlarms: updated));
+    final result = await _setPrayerAlarmEnabled(
+      prayerType: event.prayerType,
+      enabled: event.enabled,
+    );
+    result.fold(
+      (failure) =>
+          emit(state.copyWith(prayerAlarms: previous, failure: failure)),
+      (_) {
+        if (!event.enabled) {
+          unawaited(
+            _cancelAlarm(
+              AlarmSyncPlan.prayerAlarmId(event.prayerType),
+              'prayer alarm switched off',
+            ),
+          );
+        }
         unawaited(_syncAlarms());
       },
     );
