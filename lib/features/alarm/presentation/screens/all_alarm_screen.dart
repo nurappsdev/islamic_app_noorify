@@ -17,6 +17,7 @@ import 'package:tuhfatul_muslim/features/alarm/presentation/bloc/alarm_list/alar
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
 import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/alarm_settings_widgets.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/widgets/exact_alarm_permission_gate.dart';
 import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
 import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
@@ -92,7 +93,17 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => SetAlarmScreen(
-                      onSetAlarm: (entry) => bloc.add(SaveAlarm(entry)),
+                      // A brand-new alarm is created switched on, so it needs
+                      // the same exact-alarm access as flipping a toggle on:
+                      // asked for here, and saved switched off (never
+                      // discarded) when it isn't granted, so the list never
+                      // shows an alarm as on that the OS can't ring.
+                      onSetAlarm: (entry) async {
+                        final granted = await ensureExactAlarmAccess(context);
+                        if (!context.mounted) return;
+                        bloc.add(SaveAlarm(entry.copyWith(enabled: granted)));
+                        if (!granted) _showPermissionNeeded(context);
+                      },
                     ),
                   ),
                 );
@@ -152,6 +163,14 @@ class _AllAlarmViewState extends State<_AllAlarmView> {
     return '${appText.alarmWillRingIn} '
         '${times.duration(hours: diff.inHours, minutes: diff.inMinutes % 60)}';
   }
+}
+
+/// Tells the user why the alarm stayed off — shown wherever exact-alarm
+/// access was asked for and not granted.
+void _showPermissionNeeded(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(AppText.readOf(context).exactAlarmPermissionNeeded)),
+  );
 }
 
 class _AlarmTabs extends StatelessWidget {
@@ -275,6 +294,23 @@ class _AllAlarmListState extends State<_AllAlarmList> {
     }
   }
 
+  /// Flips [alarm]'s switch. Switching one ON is the moment exact-alarm
+  /// access is actually needed, so it is asked for here and the alarm is left
+  /// off when it isn't granted; switching OFF never needs it.
+  Future<void> _setEnabled(
+    BuildContext context,
+    AlarmEntry alarm,
+    bool enabled,
+  ) async {
+    final bloc = context.read<AlarmListBloc>();
+    if (enabled && !await ensureExactAlarmAccess(context)) {
+      if (context.mounted) _showPermissionNeeded(context);
+      return;
+    }
+    if (!context.mounted) return;
+    bloc.add(ToggleAlarmEnabled(alarm.id, enabled));
+  }
+
   Future<void> _confirmDelete(BuildContext context, AlarmEntry alarm) async {
     final appText = AppText.readOf(context);
     final confirmed = await showDialog<bool>(
@@ -335,6 +371,7 @@ class _AllAlarmListState extends State<_AllAlarmList> {
           isPlaying: _playingId == alarm.id,
           onPlayToggle: () => _togglePlay(alarm),
           onDelete: () => _confirmDelete(context, alarm),
+          onEnabledChanged: (enabled) => _setEnabled(context, alarm, enabled),
         );
       },
     );
@@ -347,12 +384,14 @@ class _AlarmListItem extends StatelessWidget {
     required this.isPlaying,
     required this.onPlayToggle,
     required this.onDelete,
+    required this.onEnabledChanged,
   });
 
   final AlarmEntry alarm;
   final bool isPlaying;
   final VoidCallback onPlayToggle;
   final VoidCallback onDelete;
+  final ValueChanged<bool> onEnabledChanged;
 
   String _subtitle(AppText appText) {
     if (alarm.vibrateAndRing || (alarm.vibrate && alarm.ring)) {
@@ -420,9 +459,7 @@ class _AlarmListItem extends StatelessWidget {
           ),
           Switch(
             value: alarm.enabled,
-            onChanged: (value) => context.read<AlarmListBloc>().add(
-              ToggleAlarmEnabled(alarm.id, value),
-            ),
+            onChanged: onEnabledChanged,
             activeThumbColor: _olive,
             activeTrackColor: _cardBorder,
             inactiveThumbColor: _mutedGrey,

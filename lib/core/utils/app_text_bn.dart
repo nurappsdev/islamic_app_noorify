@@ -83,6 +83,11 @@ const Map<String, String> appTextBn = <String, String>{
   'exactAlarmPermissionNeeded':
       'আপনার নামাজের অ্যালার্ম সময়মতো বাজানোর জন্য সেটিংসে '
       'অ্যালার্ম ও রিমাইন্ডার অনুমতি দিন।',
+  'exactAlarmPermissionTitle': 'অ্যালার্ম ও রিমাইন্ডার অনুমতি দিন',
+  'exactAlarmPermissionExplanation':
+      'সঠিক সময়ে অ্যালার্ম বাজানোর জন্য অ্যাপটির "অ্যালার্ম ও রিমাইন্ডার" '
+      'অনুমতি প্রয়োজন। অনুমতি চালু করতে আমরা সেটিংস স্ক্রিনটি খুলে দেব।',
+  'exactAlarmPermissionAllow': 'অনুমতি দিন',
 
   // Amol tracking feature
   'amolTracking': 'আমল ট্র্যাকিং',
