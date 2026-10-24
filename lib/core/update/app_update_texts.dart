@@ -16,10 +16,9 @@ class AppUpdateTexts {
         'সমস্যার সমাধান পেতে এখনই আপডেট করুন।',
   );
   static const later = LocalizedText(en: 'Later', bn: 'পরে');
-  static const updateNow = LocalizedText(
-    en: 'Update Now',
-    bn: 'এখনই আপডেট করুন',
-  );
+  // Kept short: these sit side by side in a half-width button, where a
+  // longer Bangla label wraps to three cramped lines.
+  static const updateNow = LocalizedText(en: 'Update Now', bn: 'এখনই আপডেট');
 
   static const downloadingTitle = LocalizedText(
     en: 'Downloading update',
@@ -47,7 +46,7 @@ class AppUpdateTexts {
   );
   static const restartAndInstall = LocalizedText(
     en: 'Restart & install',
-    bn: 'রিস্টার্ট করে ইনস্টল করুন',
+    bn: 'ইনস্টল করুন',
   );
 
   static const downloadFailed = LocalizedText(

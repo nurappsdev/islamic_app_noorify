@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_update/in_app_update.dart';
 
+import 'app_update_mock.dart';
 import 'app_update_reminder.dart';
+import 'app_update_source.dart';
 
 /// What the launch check found, and so which prompt (if any) to show.
 enum AppUpdatePrompt {
@@ -26,11 +28,26 @@ enum AppUpdatePrompt {
 /// Play only answers these calls for a build it installed itself, so on a
 /// debug or sideloaded build the check reports nothing (or fails) and the app
 /// behaves exactly as it did before. iOS has no equivalent API, so the whole
-/// flow is skipped there.
+/// flow is skipped there. To drive the flow anyway - from a local run or a
+/// test - stand Play in with [AppUpdateMock].
 class AppUpdateService {
   AppUpdateService._();
 
   static final AppUpdateService instance = AppUpdateService._();
+
+  /// The one door the mock can come through, and it is bolted shut at
+  /// compile time outside a debug build: [AppUpdateMock.debugOnly] is
+  /// [kDebugMode], so in a release build this is `return null` and
+  /// everything below it - the mock, and every class it drags in - is
+  /// unreachable code the compiler drops. Production always gets
+  /// [PlayUpdateSource]. Guarded by `app_update_release_safety_test.dart`.
+  AppUpdateSource? get _mockSource {
+    if (!AppUpdateMock.debugOnly) return null;
+    return AppUpdateMock.enabled ? AppUpdateMock.source : null;
+  }
+
+  /// Google Play - or, on a debug run only, the mock standing in for it.
+  AppUpdateSource get _source => _mockSource ?? const PlayUpdateSource();
 
   /// How often Play is re-asked about a download that was already running
   /// when the app started, and for how long - see [_followExistingDownload].
@@ -56,8 +73,9 @@ class AppUpdateService {
   /// Play's version code for the update on offer, as of the last check.
   int? get availableVersionCode => _info?.availableVersionCode;
 
-  /// Whether in-app updates exist on this platform at all.
-  bool get isSupported => Platform.isAndroid;
+  /// Whether in-app updates exist on this platform at all. A debug run with
+  /// the mock on acts as though they do, wherever it runs.
+  bool get isSupported => _mockSource != null || Platform.isAndroid;
 
   /// Whether a download is running right now.
   bool get isDownloading =>
@@ -69,6 +87,16 @@ class AppUpdateService {
     if (!isSupported || _checkedThisLaunch) return AppUpdatePrompt.none;
     _checkedThisLaunch = true;
 
+    final prompt = await _resolveLaunchPrompt();
+    if (kDebugMode) {
+      final scenario = AppUpdateMock.scenario;
+      final source = scenario == null ? 'play' : 'mock:${scenario.name}';
+      debugPrint('[AppUpdate] $source -> ${prompt.name}');
+    }
+    return prompt;
+  }
+
+  Future<AppUpdatePrompt> _resolveLaunchPrompt() async {
     final info = await _checkForUpdate();
     if (info == null) return AppUpdatePrompt.none;
 
@@ -122,7 +150,7 @@ class AppUpdateService {
     _listenForDownload();
     status.value = InstallStatus.pending;
     try {
-      final result = await InAppUpdate.startFlexibleUpdate();
+      final result = await _source.startFlexibleUpdate();
       switch (result) {
         // Play only resolves this once the download has finished, so the
         // update is ready to install even if no progress event arrived.
@@ -147,8 +175,10 @@ class AppUpdateService {
   /// `false` - Play refusing to install - is worth acting on.
   Future<bool> install() async {
     if (!isSupported) return false;
+    // Play reports the install through the same channel as the download.
+    _listenForDownload();
     try {
-      await InAppUpdate.completeFlexibleUpdate();
+      await _source.completeFlexibleUpdate();
       return true;
     } catch (error) {
       _log('completeFlexibleUpdate failed', error);
@@ -160,9 +190,23 @@ class AppUpdateService {
   /// Puts the prompt off for [AppUpdateReminder.reminderInterval].
   Future<void> remindLater() => AppUpdateReminder.snooze(availableVersionCode);
 
+  /// Forgets that the check has run (and any download it saw), so the next
+  /// [checkOnLaunch] asks again. For driving the flow repeatedly from a debug
+  /// run or a test; see [AppUpdateMock].
+  @visibleForTesting
+  void reset() {
+    _checkedThisLaunch = false;
+    _info = null;
+    _resumedPollTimer?.cancel();
+    _resumedPollTimer = null;
+    _statusSubscription?.cancel();
+    _statusSubscription = null;
+    status.value = InstallStatus.unknown;
+  }
+
   Future<AppUpdateInfo?> _checkForUpdate() async {
     try {
-      _info = await InAppUpdate.checkForUpdate();
+      _info = await _source.checkForUpdate();
       return _info;
     } catch (error) {
       // Expected off the Play track (debug builds, sideloaded APKs) and
@@ -173,7 +217,7 @@ class AppUpdateService {
   }
 
   void _listenForDownload() {
-    _statusSubscription ??= InAppUpdate.installUpdateListener.listen(
+    _statusSubscription ??= _source.installUpdateListener.listen(
       (value) => status.value = value,
       onError: (Object error) {
         _log('install status stream failed', error);

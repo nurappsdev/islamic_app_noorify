@@ -133,9 +133,13 @@ class _AppUpdateCardState extends State<_AppUpdateCard> {
           _step = _UpdateStep.available;
           _failed = _service.status.value == InstallStatus.failed;
         });
+      // Play has replaced the app by now on a real device, so this is only
+      // ever reached under AppUpdateMock - where closing the card is the
+      // visible end of the flow.
+      case InstallStatus.installed:
+        Navigator.of(context).maybePop();
       case InstallStatus.unknown:
       case InstallStatus.installing:
-      case InstallStatus.installed:
         break;
     }
   }

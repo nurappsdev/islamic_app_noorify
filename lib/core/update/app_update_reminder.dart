@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Remembers a "Later" on the update prompt, so the reminder comes back after
@@ -49,6 +50,26 @@ class AppUpdateReminder {
     // otherwise hide the prompt indefinitely.
     if (now.isBefore(snoozedOn)) return false;
     return now.isBefore(snoozedOn.add(reminderInterval));
+  }
+
+  /// Records a "Later" as though it had been chosen [daysAgo] days ago, so
+  /// the three-day rule can be driven from a debug run or a test without
+  /// waiting three days.
+  @visibleForTesting
+  static Future<void> snoozeDaysAgo(double daysAgo, {int? versionCode}) async {
+    final preferences = await SharedPreferences.getInstance();
+    final microseconds = (Duration.microsecondsPerDay * daysAgo).round();
+    await preferences.setInt(
+      _snoozedAtKey,
+      DateTime.now()
+          .subtract(Duration(microseconds: microseconds))
+          .millisecondsSinceEpoch,
+    );
+    if (versionCode == null) {
+      await preferences.remove(_snoozedVersionKey);
+    } else {
+      await preferences.setInt(_snoozedVersionKey, versionCode);
+    }
   }
 
   /// Forgets the postponement, so the next check prompts again.
