@@ -519,6 +519,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                       border: const Color(0xFFEBDCA8),
                       title: appText.duaArabicSectionTitle,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           for (final segment in readable.segments)
                             if (segment.arabic.isNotEmpty)
@@ -526,7 +527,7 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                                 padding: EdgeInsets.symmetric(vertical: 4.h),
                                 child: Text(
                                   segment.arabic,
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.right,
                                   textDirection: TextDirection.rtl,
                                   style: TextStyle(
                                     fontFamily: 'Noorehuda',
