@@ -9,10 +9,15 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/notifications/domain/entities/notification_entity.dart';
+import 'package:tuhfatul_muslim/features/notifications/presentation/widgets/notification_body_preview.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
-/// One row of the notification list: title, category/type tags, a read/unread
-/// badge, and the time it was sent, if known.
+/// One row of the notification list: title, a two-line body preview, a
+/// category tag, a read/unread badge, and the time it was sent, if known.
+///
+/// The body arrives as HTML; the card shows it as flattened plain text
+/// ([notificationBodyPreview]) so it can be clamped and ellipsised, while
+/// `NotificationDetailScreen` renders the real markup.
 class NotificationCard extends StatelessWidget {
   const NotificationCard({
     super.key,
@@ -35,6 +40,7 @@ class NotificationCard extends StatelessWidget {
     final language = context.watch<LanguageBloc>().state.language;
     final unread = !notification.isRead;
     final sentAt = notification.sentAt;
+    final bodyPreview = notificationBodyPreview(notification.body);
 
     return InkWell(
       onTap: isMarkingRead ? null : onTap,
@@ -86,10 +92,10 @@ class NotificationCard extends StatelessWidget {
                 ],
               ],
             ),
-            if (notification.body.isNotEmpty) ...[
+            if (bodyPreview.isNotEmpty) ...[
               SizedBox(height: 4.h),
               Text(
-                notification.body,
+                bodyPreview,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -106,8 +112,6 @@ class NotificationCard extends StatelessWidget {
               children: [
                 if (notification.category.isNotEmpty)
                   _Tag(text: notification.category, palette: palette),
-                if (notification.type.isNotEmpty)
-                  _Tag(text: notification.type, palette: palette),
                 _StatusChip(
                   unread: unread,
                   label: unread

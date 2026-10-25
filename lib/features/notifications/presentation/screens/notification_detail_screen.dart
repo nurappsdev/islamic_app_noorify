@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -11,7 +13,8 @@ import 'package:tuhfatul_muslim/features/notifications/domain/entities/notificat
 /// (marking it read in place first). [notification] therefore always arrives
 /// with `isRead == true`.
 ///
-/// TODO(future): the actual detail content/layout for this screen.
+/// The server sends `body` as HTML (`<div>`, `<br />`, entities), so it's
+/// rendered with [HtmlWidget] rather than a plain [Text].
 class NotificationDetailScreen extends StatelessWidget {
   const NotificationDetailScreen({
     super.key,
@@ -64,7 +67,23 @@ class NotificationDetailScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
             ),
             SizedBox(height: 12.h),
-            Text(notification.body, style: TextStyle(fontSize: 13.sp)),
+            HtmlWidget(
+              notification.body,
+              textStyle: TextStyle(
+                fontSize: 13.sp,
+                height: 1.6,
+                color: context.inkColor(const Color(0xFF3B4430)),
+              ),
+              onTapUrl: (url) {
+                final uri = Uri.tryParse(url);
+                if (uri == null ||
+                    !(uri.scheme == 'http' || uri.scheme == 'https')) {
+                  return true;
+                }
+                launchUrl(uri, mode: LaunchMode.externalApplication);
+                return true;
+              },
+            ),
           ],
         ),
       ),
