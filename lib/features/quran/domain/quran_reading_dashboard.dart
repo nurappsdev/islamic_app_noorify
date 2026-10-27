@@ -86,4 +86,16 @@ class QuranReadingDashboard {
   final QuranLastReadRecord? lastRead;
   final QuranAyahPosition? continueFrom;
   final QuranPlansSummary plans;
+
+  QuranReadingDashboard copyWith({
+    QuranDailyProgress? today,
+    QuranReadingHistory? week,
+  }) => QuranReadingDashboard(
+    today: today ?? this.today,
+    week: week ?? this.week,
+    completion: completion,
+    lastRead: lastRead,
+    continueFrom: continueFrom,
+    plans: plans,
+  );
 }

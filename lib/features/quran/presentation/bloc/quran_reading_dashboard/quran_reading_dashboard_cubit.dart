@@ -4,6 +4,10 @@ import 'dart:math' as math;
 import 'package:bloc/bloc.dart';
 
 import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_offline_reading_projection.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/quran/presentation/widgets/dashboard/quran_period_dropdown.dart';
 
 import 'quran_reading_dashboard_state.dart';
@@ -20,16 +24,27 @@ const kQuranMonthlyWindowDays = 30;
 /// one run, and the repository caches responses, so calling [load] whenever
 /// the tab is shown is cheap.
 class QuranReadingDashboardCubit extends Cubit<QuranReadingDashboardState> {
-  QuranReadingDashboardCubit(this._repository, {DateTime Function()? now})
-    : _now = now ?? DateTime.now,
-      super(const QuranReadingDashboardState()) {
+  QuranReadingDashboardCubit(
+    this._repository, {
+    DateTime Function()? now,
+    QuranOfflineReadingProgressStore? offlineProgress,
+  }) : _now = now ?? DateTime.now,
+       _offlineProgress =
+           offlineProgress ?? QuranOfflineReadingProgressStore.shared,
+       super(const QuranReadingDashboardState()) {
     _tracked = _repository.onReadingTracked.listen((_) => load());
+    _offlineProgress.addListener(_onOfflineProgressChanged);
   }
 
   final QuranReadingRepository _repository;
   final DateTime Function() _now;
+  final QuranOfflineReadingProgressStore _offlineProgress;
   late final StreamSubscription<void> _tracked;
   Future<void>? _loading;
+  QuranReadingDashboard? _serverDashboard;
+  QuranReadingHistory? _serverHistory;
+  final _dashboardAcknowledgedInServer = <String>{};
+  final _historyAcknowledgedInServer = <String>{};
 
   /// Loads (or refreshes) everything; data already shown stays on screen
   /// while it refreshes.
@@ -46,6 +61,8 @@ class QuranReadingDashboardCubit extends Cubit<QuranReadingDashboardState> {
         comparison: () => null,
       ),
     );
+    _serverHistory = null;
+    _historyAcknowledgedInServer.clear();
     // A load already running may be for the old period: chain another.
     final running = _loading;
     return running == null ? load() : running.then((_) => load());
@@ -95,17 +112,111 @@ class QuranReadingDashboardCubit extends Cubit<QuranReadingDashboardState> {
             // Keep what is on screen; a later refresh may succeed.
             : state.copyWith(status: QuranReadingDashboardStatus.loaded),
       ),
-      (data) => emit(
-        state.copyWith(
-          status: QuranReadingDashboardStatus.loaded,
-          dashboard: data,
-          history: () => history.fold((_) => state.history, (h) => h),
-          comparison: () => comparison.fold((_) => state.comparison, (c) => c),
-          failureMessage: () => null,
-        ),
-      ),
+      (data) {
+        _serverDashboard = data;
+        _rememberDashboardAcknowledgements(data);
+        history.fold((_) {}, (value) {
+          _serverHistory = value;
+          _rememberHistoryAcknowledgements(value);
+        });
+        emit(
+          state.copyWith(
+            status: QuranReadingDashboardStatus.loaded,
+            dashboard: _projectDashboard(data),
+            history: () => history.fold(
+              (_) => state.history,
+              (value) => _projectHistory(value),
+            ),
+            comparison: () =>
+                comparison.fold((_) => state.comparison, (c) => c),
+            failureMessage: () => null,
+          ),
+        );
+      },
     );
   }
+
+  void _onOfflineProgressChanged() {
+    if (isClosed) return;
+    final dashboard = _serverDashboard;
+    final history = _serverHistory;
+    if (dashboard == null && history == null) return;
+    emit(
+      state.copyWith(
+        dashboard: dashboard == null ? null : _projectDashboard(dashboard),
+        history: () =>
+            history == null ? state.history : _projectHistory(history),
+      ),
+    );
+    if (_hasUnacknowledgedServerProjection(dashboard, history)) {
+      unawaited(load());
+    }
+  }
+
+  QuranReadingDashboard _projectDashboard(QuranReadingDashboard dashboard) =>
+      projectQuranReadingDashboard(
+        dashboard,
+        (date) => _offlineProgress
+            .progressFor(
+              _dateKey(date),
+              acknowledgedInBaseline: _dashboardAcknowledgedInServer,
+            )
+            .seconds,
+      );
+
+  QuranReadingHistory _projectHistory(QuranReadingHistory history) =>
+      projectQuranReadingHistory(
+        history,
+        (date) => _offlineProgress
+            .progressFor(
+              _dateKey(date),
+              acknowledgedInBaseline: _historyAcknowledgedInServer,
+            )
+            .seconds,
+      );
+
+  void _rememberDashboardAcknowledgements(QuranReadingDashboard dashboard) {
+    final date = dashboard.today.date;
+    if (date != null) {
+      _dashboardAcknowledgedInServer.addAll(
+        _offlineProgress.acknowledgedIdsFor(_dateKey(date)),
+      );
+    }
+  }
+
+  void _rememberHistoryAcknowledgements(QuranReadingHistory history) {
+    for (final day in history.days) {
+      final date = day.date;
+      if (date == null) continue;
+      _historyAcknowledgedInServer.addAll(
+        _offlineProgress.acknowledgedIdsFor(_dateKey(date)),
+      );
+    }
+  }
+
+  bool _hasUnacknowledgedServerProjection(
+    QuranReadingDashboard? dashboard,
+    QuranReadingHistory? history,
+  ) {
+    bool missing(DateTime? date, Set<String> known) =>
+        date != null &&
+        _offlineProgress
+            .acknowledgedIdsFor(_dateKey(date))
+            .any((id) => !known.contains(id));
+    if (dashboard != null &&
+        missing(dashboard.today.date, _dashboardAcknowledgedInServer)) {
+      return true;
+    }
+    return history?.days.any(
+          (day) => missing(day.date, _historyAcknowledgedInServer),
+        ) ??
+        false;
+  }
+
+  static String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   /// The history window for [period]: the last day, the last week, the
   /// last [kQuranMonthlyWindowDays] days, or the picked calendar [month]
@@ -139,6 +250,7 @@ class QuranReadingDashboardCubit extends Cubit<QuranReadingDashboardState> {
   @override
   Future<void> close() {
     _tracked.cancel();
+    _offlineProgress.removeListener(_onOfflineProgressChanged);
     return super.close();
   }
 }

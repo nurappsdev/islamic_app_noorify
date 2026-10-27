@@ -622,7 +622,7 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFCBD16B),
-                foregroundColor: context.inkColor(Color(0xFF303629)),
+                foregroundColor: context.onLightInkColor(Color(0xFF303629)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -631,7 +631,7 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: context.inkColor(AppColor.authLogo),
+              color: context.textInkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -1171,6 +1171,11 @@ class _ReadingChart extends StatelessWidget {
           painter: _ReadingChartPainter(
             series: series,
             selectedIndex: selectedIndex,
+            // A painter has no context of its own, so the colors that have
+            // to follow the theme are resolved here and passed in.
+            axisInk: context.textInkColor(const Color(0xFF6A7350)),
+            valueInk: context.textInkColor(const Color(0xFF9AA279)),
+            gridColor: context.lineColor(const Color(0xFFECEFE1)),
           ),
         ),
       ),
@@ -1190,10 +1195,22 @@ class _Bubble {
 }
 
 class _ReadingChartPainter extends CustomPainter {
-  _ReadingChartPainter({required this.series, required this.selectedIndex});
+  _ReadingChartPainter({
+    required this.series,
+    required this.selectedIndex,
+    required this.axisInk,
+    required this.valueInk,
+    required this.gridColor,
+  });
 
   final _ChartSeries series;
   final int? selectedIndex;
+
+  /// The axis captions ("min", the day labels), the Y-axis numbers and the
+  /// grid lines, already resolved for the active theme by [_ReadingChart].
+  final Color axisInk;
+  final Color valueInk;
+  final Color gridColor;
 
   static const _leftPad = 34.0;
   static const _rightPad = 6.0;
@@ -1250,7 +1267,7 @@ class _ReadingChartPainter extends CustomPainter {
 
     // Grid lines + Y labels.
     final gridPaint = Paint()
-      ..color = const Color(0xFFECEFE1)
+      ..color = gridColor
       ..strokeWidth = 1;
     for (var i = 0; i <= _intervals; i++) {
       final value = step * i;
@@ -1262,7 +1279,7 @@ class _ReadingChartPainter extends CustomPainter {
             ? '${value.round()}'
             : value.toStringAsFixed(1),
         Offset(chartLeft - 8, y),
-        color: const Color(0xFF9AA279),
+        color: valueInk,
         fontSize: 9,
         align: TextAlign.right,
         anchorRight: true,
@@ -1274,7 +1291,7 @@ class _ReadingChartPainter extends CustomPainter {
       canvas,
       'min',
       Offset(chartLeft - 8, chartTop - 18),
-      color: const Color(0xFF6A7350),
+      color: axisInk,
       fontSize: 10,
       align: TextAlign.right,
       anchorRight: true,
@@ -1287,7 +1304,7 @@ class _ReadingChartPainter extends CustomPainter {
         canvas,
         series.labels[i],
         Offset(xAt(i), chartBottom + 6),
-        color: const Color(0xFF6A7350),
+        color: axisInk,
         fontSize: 10,
         anchorCenterX: true,
       );
@@ -1624,7 +1641,10 @@ class _ReadingChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ReadingChartPainter oldDelegate) =>
       oldDelegate.series != series ||
-      oldDelegate.selectedIndex != selectedIndex;
+      oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.axisInk != axisInk ||
+      oldDelegate.valueInk != valueInk ||
+      oldDelegate.gridColor != gridColor;
 }
 
 /// Weekly chart (img_47): one pair of overlapping rounded bars per day — my
@@ -1659,6 +1679,9 @@ class _WeeklyBarChart extends StatelessWidget {
           painter: _WeeklyBarPainter(
             series: series,
             selectedIndex: selectedIndex,
+            dayInk: context.textInkColor(const Color(0xFF2C3320)),
+            valueInk: context.textInkColor(const Color(0xFF9AA279)),
+            gridColor: context.lineColor(const Color(0xFFE3E7D6)),
           ),
         ),
       ),
@@ -1667,7 +1690,19 @@ class _WeeklyBarChart extends StatelessWidget {
 }
 
 class _WeeklyBarPainter extends CustomPainter {
-  _WeeklyBarPainter({required this.series, required this.selectedIndex});
+  _WeeklyBarPainter({
+    required this.series,
+    required this.selectedIndex,
+    required this.dayInk,
+    required this.valueInk,
+    required this.gridColor,
+  });
+
+  /// The day labels, the Y-axis numbers and the dashed grid, already
+  /// resolved for the active theme by [_WeeklyBarChart].
+  final Color dayInk;
+  final Color valueInk;
+  final Color gridColor;
 
   final _ChartSeries series;
   final int? selectedIndex;
@@ -1715,7 +1750,7 @@ class _WeeklyBarPainter extends CustomPainter {
 
     // Dashed grid + y labels.
     final grid = Paint()
-      ..color = const Color(0xFFE3E7D6)
+      ..color = gridColor
       ..strokeWidth = 1;
     for (var i = 0; i <= _ReadingChartPainter._intervals; i++) {
       final value = step * i;
@@ -1727,7 +1762,7 @@ class _WeeklyBarPainter extends CustomPainter {
         canvas,
         _number(value),
         Offset(left - 8, y),
-        const Color(0xFF9AA279),
+        valueInk,
         10,
         right: true,
         middleY: true,
@@ -1747,7 +1782,7 @@ class _WeeklyBarPainter extends CustomPainter {
         canvas,
         series.labels[i],
         Offset(cx, bottom + 8),
-        const Color(0xFF2C3320),
+        dayInk,
         13,
         centerX: true,
       );
@@ -1893,5 +1928,9 @@ class _WeeklyBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _WeeklyBarPainter old) =>
-      old.series != series || old.selectedIndex != selectedIndex;
+      old.series != series ||
+      old.selectedIndex != selectedIndex ||
+      old.dayInk != dayInk ||
+      old.valueInk != valueInk ||
+      old.gridColor != gridColor;
 }

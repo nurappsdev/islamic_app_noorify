@@ -23,19 +23,21 @@ class DuaFontSizeControls extends StatelessWidget {
           icon: Icons.menu_book_rounded,
           label: appText.duaArabicFontSizeLabel,
           value: state.arabicFontSize,
+          // 16-50px: the 20px default scaled down to 80% and up to 250%,
+          // the same reach the Quran and Hadith readers allow.
           min: 16,
-          max: 32,
-          onChanged: (value) => context.read<DuaSettingsBloc>().add(
-            SetDuaArabicFontSize(value),
-          ),
+          max: 50,
+          onChanged: (value) =>
+              context.read<DuaSettingsBloc>().add(SetDuaArabicFontSize(value)),
         ),
         SizedBox(height: 16.h),
         _FontSizeRow(
           icon: Icons.translate_rounded,
           label: appText.duaTranslationFontSizeLabel,
           value: state.translationFontSize,
+          // 10-30px, around the 12px default.
           min: 10,
-          max: 20,
+          max: 30,
           onChanged: (value) => context.read<DuaSettingsBloc>().add(
             SetDuaTranslationFontSize(value),
           ),

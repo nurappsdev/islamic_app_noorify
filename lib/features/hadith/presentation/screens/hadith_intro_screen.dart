@@ -19,7 +19,7 @@ class _HadithQuote extends StatelessWidget {
           '“$hadithIntroQuote”',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: context.inkColor(const Color(0xFF4C5346)),
+            color: context.onLightInkColor(const Color(0xFF4C5346)),
             fontSize: 15.sp,
             height: 1.7,
           ),
@@ -29,7 +29,7 @@ class _HadithQuote extends StatelessWidget {
           '— $hadithIntroQuoteSource',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: context.inkColor(const Color(0xFF7D8765)),
+            color: context.onLightInkColor(const Color(0xFF7D8765)),
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
           ),
@@ -58,6 +58,9 @@ class HadithIntroScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    // The gradient below is one fixed light design in both themes, so the
+    // text over it goes deep black in dark mode (see [onLightInkColor])
+    // rather than following the theme into light ink and vanishing.
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -99,7 +102,7 @@ class HadithIntroScreen extends StatelessWidget {
                         appText.hadithIntroTitle,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: context.inkColor(Color(0xFF7D8765)),
+                          color: context.onLightInkColor(Color(0xFF7D8765)),
                           fontSize: 26.sp,
                           fontWeight: FontWeight.w700,
                         ),
@@ -110,9 +113,7 @@ class HadithIntroScreen extends StatelessWidget {
                       Icon(
                         Icons.menu_book_rounded,
                         size: 190.sp,
-                        color: context.inkColor(
-                          Colors.white.withValues(alpha: .55),
-                        ),
+                        color: Colors.white.withValues(alpha: .55),
                       ),
                     ],
                   ),

@@ -592,7 +592,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'dailyQuizzesDone': '{done} of {total} quizzes done',
   'startDailyQuizNumber': 'Start quiz {n}',
   'dailyQuizNumberCompleted': 'You completed\nquiz {n} of {total}',
-  'allDailyQuizzesCompleted': "You've completed all of today's quizzes. Come back tomorrow!",
+  'allDailyQuizzesCompleted':
+      "You've completed all of today's quizzes. Come back tomorrow!",
   'youCompletedTheQuiz': 'You Completed\nThe Quiz',
   'scoreLabel': 'Score',
   'reviewAnswers': 'Review Answers',
@@ -808,6 +809,16 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'duaSettingsTitle': 'Dua Settings',
   'showArabicLabel': 'Show Arabic',
   'showTranslationLabel': 'Show Translation',
+  'hadithLanguageTitle': 'Reading Language',
+  'hadithLanguageSection': 'Hadith reading language',
+  'hadithLanguageArabicSubtitle':
+      'Show the original Arabic text of each hadith',
+  'hadithLanguageTranslationSection': 'Translation',
+  'hadithLanguageBanglaSubtitle': 'Bangla translation, narrator and grade',
+  'hadithLanguageEnglishSubtitle':
+      'English translation, for the hadiths that have one',
+  'hadithLanguageNote':
+      'Book pages you read offline are Arabic and Bangla only.',
   // Shared validators, time, dates and client-side errors
   'validatorRequired': 'This field is required',
   'validatorEmailEmpty': 'Please enter your email',

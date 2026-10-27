@@ -11,6 +11,11 @@ export 'notification_event.dart';
 export 'notification_state.dart';
 
 /// The signed-in user's notifications (`GET /notifications`), page by page.
+///
+/// Fetches with `unreadOnly: false`, so the list holds read and unread
+/// alike - a notification stays put after it's opened, shown in the
+/// card's read styling. [unreadCount] still tracks the unread total the
+/// server reports, which is what the Home badge shows.
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc(
     this._getNotifications,
@@ -32,7 +37,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     emit(state.copyWith(status: NotificationStatus.loading));
-    final result = await _getNotifications(page: 1, limit: pageSize);
+    final result = await _getNotifications(
+      page: 1,
+      limit: pageSize,
+      unreadOnly: false,
+    );
     result.fold(
       (failure) => emit(
         state.copyWith(status: NotificationStatus.failure, failure: failure),
@@ -68,6 +77,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     final result = await _getNotifications(
       page: state.page + 1,
       limit: pageSize,
+      unreadOnly: false,
     );
     result.fold(
       // The rows already shown stay; scrolling to the end again retries.
@@ -92,7 +102,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     RefreshNotifications event,
     Emitter<NotificationState> emit,
   ) async {
-    final result = await _getNotifications(page: 1, limit: pageSize);
+    final result = await _getNotifications(
+      page: 1,
+      limit: pageSize,
+      unreadOnly: false,
+    );
     result.fold(
       // Pull-to-refresh failing shouldn't replace an already-visible list
       // with an error screen; the gesture just settles without change. The

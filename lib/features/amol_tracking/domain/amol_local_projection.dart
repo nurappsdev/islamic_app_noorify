@@ -1,6 +1,7 @@
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pending_action.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_points.dart';
 
 /// The pillars whose items are a plain tick, and so may be queued offline and
 /// replayed safely.
@@ -77,6 +78,141 @@ AmolDailyDashboard projectAmolDay(
   );
 }
 
+/// Applies Quran reading still held on this device to the server's daily
+/// checklist. The Quran item awards one point for every completed five
+/// minutes, so the total is calculated from the duration the day already
+/// holds instead of rounding each offline session separately.
+///
+/// That duration comes from the item's own `entry` block (`amount`, in
+/// minutes) — the pillar's `formattedSubtext` is a points fraction such as
+/// `"5/9"`, not a duration. A payload with neither (an older response) still
+/// has its local minutes added, but keeps the points the server awarded:
+/// a duration this code cannot read is never treated as zero minutes.
+AmolDailyDashboard projectOfflineQuranReading(
+  AmolDailyDashboard dashboard, {
+  required int additionalSeconds,
+}) {
+  final index = dashboard.pillars.indexWhere((p) => p.pillarKey == 'quran');
+  if (index < 0) return dashboard;
+
+  final current = dashboard.pillars[index];
+  final entry = current.entry;
+  final isMinuteEntry = entry != null && entry.isMinutes;
+  final recordedSeconds = isMinuteEntry
+      ? (entry.amount * 60).round()
+      : _durationSeconds(current.formattedSubtext);
+  if (recordedSeconds == null) {
+    // The day's own duration is unknown here, so nothing can be verified
+    // against it: only add what this device has read, on top of the
+    // server's points.
+    return additionalSeconds <= 0
+        ? dashboard
+        : _withQuranPoints(
+            dashboard,
+            index,
+            earned: _cap(
+              current.earnedPoints +
+                  quranReadingPointsForSeconds(additionalSeconds),
+              current.maxPoints,
+            ),
+          );
+  }
+
+  final totalSeconds = recordedSeconds + additionalSeconds;
+  final totalMinutes = totalSeconds ~/ 60;
+  // Duration is the source of truth for Quran's five-minute rule. A stale
+  // response can otherwise say e.g. "14min" and "4 points" at the same
+  // time, even though four points require at least twenty minutes. Rebuild
+  // the shown point total from the same duration shown on the card, by the
+  // item's own rule when the server sent one.
+  final pointsForDuration = _cap(
+    isMinuteEntry
+        ? entry.pointsFor(totalMinutes)
+        : quranReadingPointsForSeconds(totalSeconds),
+    current.maxPoints,
+  );
+  // With no new local time, only repair an impossible over-award from a
+  // stale response. Do not invent points the server has not awarded yet.
+  final earned = additionalSeconds > 0
+      ? pointsForDuration
+      : (current.earnedPoints > pointsForDuration
+            ? pointsForDuration
+            : current.earnedPoints);
+  if (earned == current.earnedPoints && additionalSeconds <= 0) {
+    return dashboard;
+  }
+
+  return _withQuranPoints(
+    dashboard,
+    index,
+    earned: earned,
+    // The entry block carries the minutes the card shows; the subtext stays
+    // the points fraction the server writes there.
+    minutes: isMinuteEntry ? totalMinutes : null,
+    formattedSubtext: isMinuteEntry
+        ? _retextPoints(current.formattedSubtext, earned, current.maxPoints)
+        : _durationText(totalSeconds),
+  );
+}
+
+/// [dashboard] with the Quran pillar at [index] rewritten to [earned] points
+/// (and [minutes] read, when known), and the day's total recomputed.
+AmolDailyDashboard _withQuranPoints(
+  AmolDailyDashboard dashboard,
+  int index, {
+  required num earned,
+  int? minutes,
+  String? formattedSubtext,
+}) {
+  final current = dashboard.pillars[index];
+  final pillars = [...dashboard.pillars];
+  pillars[index] = current.copyWith(
+    earnedPoints: earned,
+    percentage: _percentage(earned, current.maxPoints),
+    formattedSubtext: formattedSubtext,
+    items: [
+      for (final item in current.items)
+        if (item.entry == null)
+          item
+        else
+          item.copyWith(
+            points: earned,
+            entry: minutes == null
+                ? item.entry
+                : item.entry!.withAmount(minutes),
+          ),
+    ],
+  );
+  return _recomputeDay(dashboard.copyWith(pillars: pillars));
+}
+
+num _cap(num value, num maxPoints) {
+  if (value < 0) return 0;
+  return maxPoints > 0 && value > maxPoints ? maxPoints : value;
+}
+
+/// `"1hr 37min"` -> seconds. `null` when [value] isn't a duration at all
+/// (the server writes a points fraction there), which must never be read as
+/// "nothing was read today".
+int? _durationSeconds(String value) {
+  final match = RegExp(
+    r'^\s*(?:(\d+)\s*hr)?\s*(?:(\d+)\s*min)?\s*$',
+    caseSensitive: false,
+  ).firstMatch(value);
+  if (match == null) return null;
+  final hours = int.tryParse(match.group(1) ?? '');
+  final minutes = int.tryParse(match.group(2) ?? '');
+  if (hours == null && minutes == null) return null;
+  return ((hours ?? 0) * 60 + (minutes ?? 0)) * 60;
+}
+
+String _durationText(int seconds) {
+  final minutes = seconds ~/ 60;
+  final hours = minutes ~/ 60;
+  final remainder = minutes % 60;
+  return hours == 0 ? '${remainder}min' : '${hours}hr ${remainder}min';
+}
+
 /// A fresh, untouched day built from the last day the server sent: the same
 /// pillars, items, titles and point values, nothing completed.
 ///
@@ -99,21 +235,31 @@ AmolDailyDashboard blankAmolDay(AmolDailyDashboard template, String dateIso) {
 
 /// A pillar with nothing done yet. Every pillar is emptied, entry pillars
 /// included: yesterday's minutes read or zikr counted must not be carried
-/// into a new day's template as if they had been earned again. Their subtext
-/// is a server-written phrase (`"1hr 37min"`) that can't be recomputed here,
-/// so it is cleared rather than left stale.
+/// into a new day's template as if they had been earned again — their
+/// amounts go back to zero along with their points. The subtext is a
+/// server-written phrase that can't be recomputed for an entry pillar, so it
+/// is cleared rather than left stale.
 AmolPillar _blankPillar(AmolPillar pillar) {
   final blanked = pillar.copyWith(
     items: [
       for (final item in pillar.items)
-        item.copyWith(isCompleted: false, points: 0),
+        item.copyWith(
+          isCompleted: false,
+          points: 0,
+          entry: item.entry?.withAmount(0),
+        ),
     ],
     earnedPoints: 0,
     percentage: 0,
   );
-  return isAmolQueueable(pillar.pillarKey)
-      ? _recomputePillar(blanked)
-      : blanked.copyWith(formattedSubtext: '');
+  if (isAmolQueueable(pillar.pillarKey)) return _recomputePillar(blanked);
+  // An entry pillar's subtext is a points fraction, so it can be emptied to
+  // `0/max`; anything else (an older duration phrase) is cleared.
+  return blanked.copyWith(
+    formattedSubtext: _isFraction(pillar.formattedSubtext)
+        ? _retextPoints(pillar.formattedSubtext, 0, pillar.maxPoints)
+        : '',
+  );
 }
 
 AmolPillar _recomputePillar(AmolPillar pillar) {
@@ -160,11 +306,14 @@ num _percentage(num earned, num possible) {
 }
 
 /// `"2/7"` -> `"3/7"`. Left alone when the server's subtext isn't a plain
-/// fraction (an entry pillar's is a duration like `"1hr 37min"`).
+/// fraction.
 String _retextFraction(String subtext, int done, int total) {
-  if (!RegExp(r'^\s*\d+\s*/\s*\d+\s*$').hasMatch(subtext)) return subtext;
+  if (!_isFraction(subtext)) return subtext;
   return '$done/$total';
 }
+
+bool _isFraction(String subtext) =>
+    RegExp(r'^\s*\d+(?:\.\d+)?\s*/\s*\d+(?:\.\d+)?\s*$').hasMatch(subtext);
 
 /// `"Point : 2/40"` -> `"Point : 3/40"`, keeping whatever label the server
 /// used. Left alone when it doesn't end in a fraction.

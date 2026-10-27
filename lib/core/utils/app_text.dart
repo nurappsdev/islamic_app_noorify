@@ -374,6 +374,13 @@ class AppText {
     required this.duaSettingsTitle,
     required this.showArabicLabel,
     required this.showTranslationLabel,
+    required this.hadithLanguageTitle,
+    required this.hadithLanguageSection,
+    required this.hadithLanguageArabicSubtitle,
+    required this.hadithLanguageTranslationSection,
+    required this.hadithLanguageBanglaSubtitle,
+    required this.hadithLanguageEnglishSubtitle,
+    required this.hadithLanguageNote,
     required this.duaCreateFolderTitle,
     required this.duaFolderNameFieldHint,
     required this.duaCancel,
@@ -1343,6 +1350,13 @@ class AppText {
   final String duaSettingsTitle;
   final String showArabicLabel;
   final String showTranslationLabel;
+  final String hadithLanguageTitle;
+  final String hadithLanguageSection;
+  final String hadithLanguageArabicSubtitle;
+  final String hadithLanguageTranslationSection;
+  final String hadithLanguageBanglaSubtitle;
+  final String hadithLanguageEnglishSubtitle;
+  final String hadithLanguageNote;
   final String duaCreateFolderTitle;
   final String duaFolderNameFieldHint;
   final String duaCancel;
@@ -2935,11 +2949,7 @@ class AppText {
         'competitorName',
         fallback?.competitorName ?? '',
       ),
-      guestUserName: _read(
-        map,
-        'guestUserName',
-        fallback?.guestUserName ?? '',
-      ),
+      guestUserName: _read(map, 'guestUserName', fallback?.guestUserName ?? ''),
       quranicScience: _read(
         map,
         'quranicScience',
@@ -3325,6 +3335,41 @@ class AppText {
         map,
         'showTranslationLabel',
         fallback?.showTranslationLabel ?? '',
+      ),
+      hadithLanguageTitle: _read(
+        map,
+        'hadithLanguageTitle',
+        fallback?.hadithLanguageTitle ?? '',
+      ),
+      hadithLanguageSection: _read(
+        map,
+        'hadithLanguageSection',
+        fallback?.hadithLanguageSection ?? '',
+      ),
+      hadithLanguageArabicSubtitle: _read(
+        map,
+        'hadithLanguageArabicSubtitle',
+        fallback?.hadithLanguageArabicSubtitle ?? '',
+      ),
+      hadithLanguageTranslationSection: _read(
+        map,
+        'hadithLanguageTranslationSection',
+        fallback?.hadithLanguageTranslationSection ?? '',
+      ),
+      hadithLanguageBanglaSubtitle: _read(
+        map,
+        'hadithLanguageBanglaSubtitle',
+        fallback?.hadithLanguageBanglaSubtitle ?? '',
+      ),
+      hadithLanguageEnglishSubtitle: _read(
+        map,
+        'hadithLanguageEnglishSubtitle',
+        fallback?.hadithLanguageEnglishSubtitle ?? '',
+      ),
+      hadithLanguageNote: _read(
+        map,
+        'hadithLanguageNote',
+        fallback?.hadithLanguageNote ?? '',
       ),
       duaCreateFolderTitle: _read(
         map,

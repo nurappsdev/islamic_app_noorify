@@ -388,12 +388,10 @@ const Map<String, String> appTextBn = <String, String>{
   'duaDisplayReadingStyleSection': 'প্রদর্শন ও পাঠশৈলী',
   'duaTypographyStylingSection': 'টাইপোগ্রাফি ও হরফ শৈলী',
   'duaNarrationToggleTitle': 'হাদিস পটভূমি ও প্রসঙ্গ',
-  'duaNarrationToggleSubtitle':
-      'ঐতিহাসিক প্রেক্ষাপট ও বর্ণনাকারীর তথ্য দেখান',
+  'duaNarrationToggleSubtitle': 'ঐতিহাসিক প্রেক্ষাপট ও বর্ণনাকারীর তথ্য দেখান',
   'duaArabicToggleSubtitle': 'দোআর আরবি লেখা দেখান',
   'duaTranslationToggleSubtitle': 'দোআর অনুবাদ অর্থ দেখান',
-  'duaTransliterationToggleSubtitle':
-      'অনারবি পাঠকদের উচ্চারণ সহজ করে',
+  'duaTransliterationToggleSubtitle': 'অনারবি পাঠকদের উচ্চারণ সহজ করে',
   'duaReferenceToggleTitle': 'রেফারেন্স ও সনদ',
   'duaReferenceToggleSubtitle': 'হাদিসের রেফারেন্স ও সনদের মান দেখান',
   'duaArabicFontSizeLabel': 'আরবি ফন্ট সাইজ',
@@ -587,8 +585,10 @@ const Map<String, String> appTextBn = <String, String>{
   'dailyQuizNumber': 'দৈনিক কুইজ {n}/{total}',
   'dailyQuizzesDone': '{total}টির মধ্যে {done}টি কুইজ সম্পন্ন',
   'startDailyQuizNumber': 'কুইজ {n} শুরু করুন',
-  'dailyQuizNumberCompleted': 'আপনি {total}টির মধ্যে\n{n} নম্বর কুইজ সম্পন্ন করেছেন',
-  'allDailyQuizzesCompleted': 'আজকের সব কুইজ সম্পন্ন হয়েছে। আগামীকাল আবার আসুন!',
+  'dailyQuizNumberCompleted':
+      'আপনি {total}টির মধ্যে\n{n} নম্বর কুইজ সম্পন্ন করেছেন',
+  'allDailyQuizzesCompleted':
+      'আজকের সব কুইজ সম্পন্ন হয়েছে। আগামীকাল আবার আসুন!',
   'youCompletedTheQuiz': 'আপনি কুইজটি\nসম্পন্ন করেছেন',
   'scoreLabel': 'স্কোর',
   'reviewAnswers': 'উত্তর পর্যালোচনা',
@@ -806,6 +806,13 @@ const Map<String, String> appTextBn = <String, String>{
   'duaSettingsTitle': 'দোয়া সেটিংস',
   'showArabicLabel': 'আরবি দেখান',
   'showTranslationLabel': 'অনুবাদ দেখান',
+  'hadithLanguageTitle': 'পড়ার ভাষা',
+  'hadithLanguageSection': 'হাদিস পড়ার ভাষা',
+  'hadithLanguageArabicSubtitle': 'প্রতিটি হাদিসের মূল আরবি পাঠ দেখান',
+  'hadithLanguageTranslationSection': 'অনুবাদ',
+  'hadithLanguageBanglaSubtitle': 'বাংলা অনুবাদ, বর্ণনাকারী ও মান',
+  'hadithLanguageEnglishSubtitle': 'ইংরেজি অনুবাদ, যেসব হাদিসে আছে',
+  'hadithLanguageNote': 'অফলাইনে পড়া বইয়ের পাতাগুলো কেবল আরবি ও বাংলায় আছে।',
   // Shared validators, time, dates and client-side errors
   'validatorRequired': 'এই ঘরটি পূরণ করা আবশ্যক',
   'validatorEmailEmpty': 'ইমেইল লিখুন',

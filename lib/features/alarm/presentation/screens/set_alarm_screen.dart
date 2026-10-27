@@ -326,7 +326,7 @@ class _TimeWheel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.w700,
-                    color: context.inkColor(Colors.black87),
+                    color: context.textInkColor(Colors.black87),
                   ),
                 ),
               ),
@@ -403,7 +403,9 @@ class _Wheel extends StatelessWidget {
                       ? 26.sp
                       : (distance == 1 ? 18.sp : 14.sp),
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  color: context.inkColor(
+                  // The faded tones stay the faded ones in dark mode: the
+                  // mapper dims by how light the design color is.
+                  color: context.textInkColor(
                     isSelected
                         ? _olive
                         : distance == 1

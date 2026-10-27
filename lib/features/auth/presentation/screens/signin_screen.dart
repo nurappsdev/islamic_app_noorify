@@ -58,6 +58,12 @@ class _SignInViewState extends State<_SignInView> {
 
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
+
+  /// Whether a sign-in is in flight. This *watches* [LoginBloc], so it may
+  /// only be read while building — [build] reads it once and hands the value
+  /// down, since a field callback that read it here crashed with provider's
+  /// "Tried to listen to a value exposed with provider, from outside of the
+  /// widget tree".
   bool get _isLoading =>
       _authState.isLoading || context.watch<LoginBloc>().state.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
@@ -176,11 +182,11 @@ class _SignInViewState extends State<_SignInView> {
     return BlocListener<LoginBloc, LoginState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: _onLoginState,
-      child: _buildScaffold(appText),
+      child: _buildScaffold(appText, _isLoading),
     );
   }
 
-  Widget _buildScaffold(AppText appText) {
+  Widget _buildScaffold(AppText appText, bool isLoading) {
     return Scaffold(
       backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
@@ -268,7 +274,7 @@ class _SignInViewState extends State<_SignInView> {
                             textInputAction: TextInputAction.done,
                             autofillHints: const [AutofillHints.password],
                             onFieldSubmitted: (_) {
-                              if (_isLoading) return;
+                              if (isLoading) return;
                               _signIn();
                             },
                             decoration: _fieldDecoration(
@@ -296,7 +302,7 @@ class _SignInViewState extends State<_SignInView> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: _isLoading ? null : _openEmailVerification,
+                      onPressed: isLoading ? null : _openEmailVerification,
                       style: TextButton.styleFrom(
                         foregroundColor: context.inkColor(
                           AppColor.forgotPassword,
@@ -314,7 +320,7 @@ class _SignInViewState extends State<_SignInView> {
                   SizedBox(height: 40.h),
                   AuthButton(
                     label: appText.login,
-                    isLoading: _isLoading,
+                    isLoading: isLoading,
                     onPressed: _signIn,
                   ),
                   SizedBox(height: 14.h),
@@ -346,7 +352,7 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   SizedBox(height: 14.h),
                   TextButton(
-                    onPressed: _isLoading ? null : _continueAsGuest,
+                    onPressed: isLoading ? null : _continueAsGuest,
                     style: TextButton.styleFrom(
                       foregroundColor: context.inkColor(AppColor.authLogo),
                       minimumSize: Size(0, 34.h),

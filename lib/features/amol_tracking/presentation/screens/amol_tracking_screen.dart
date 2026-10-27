@@ -223,6 +223,16 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   void initState() {
     super.initState();
     _today = _calendarDate(_now());
+    // Quran reading can change while this screen remains in the navigation
+    // stack. Its offline projection lives in the shared daily store, while
+    // this screen owns a separate bloc, so keep the two views connected
+    // instead of waiting for the user to leave and open this screen again.
+    // A caller-provided bloc is deliberately isolated (including widget
+    // tests), so it remains entirely under that caller's control.
+    if (_ownsBloc) {
+      AmolDailyStore.instance.addListener(_onSharedDailyChanged);
+      _onSharedDailyChanged();
+    }
     _logFailureSub = _bloc.logFailures.listen((_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -230,6 +240,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       );
     });
     unawaited(_refreshTrackingDay(load: true));
+  }
+
+  void _onSharedDailyChanged() {
+    if (!mounted) return;
+    final shared = AmolDailyStore.instance.value;
+    if (shared == null || shared.dateIso != _isoDate(_today)) return;
+    _bloc.add(UseAmolDailyDashboard(shared));
   }
 
   DateTime _now() => (widget.now ?? DateTime.now)();
@@ -459,7 +476,13 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       await Navigator.of(
         context,
       ).pushNamed(pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith);
-      if (mounted) _reload();
+      if (!mounted) return;
+      final shared = AmolDailyStore.instance.value;
+      if (shared != null && shared.dateIso == _isoDate(_today)) {
+        _bloc.add(UseAmolDailyDashboard(shared));
+      } else {
+        _reload();
+      }
       return;
     }
     // Zikr (`tasbih`) and Dua are logged by adding an entry (e.g. "100
@@ -589,6 +612,9 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     _stagger.dispose();
     _scroll.dispose();
     _logFailureSub.cancel();
+    if (_ownsBloc) {
+      AmolDailyStore.instance.removeListener(_onSharedDailyChanged);
+    }
     if (_ownsBloc) _bloc.close();
     if (_didChangeTracking) {
       // After the frame, so Home cards don't rebuild mid-teardown.
