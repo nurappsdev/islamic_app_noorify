@@ -1,3 +1,4 @@
+import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_entry_model.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 
 class AmolItemModel extends AmolItem {
@@ -8,6 +9,7 @@ class AmolItemModel extends AmolItem {
     required super.points,
     required super.maxPoints,
     required super.isCompleted,
+    super.entry,
   });
 
   factory AmolItemModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,7 @@ class AmolItemModel extends AmolItem {
       points: (json['points'] as num?) ?? 0,
       maxPoints: (json['maxPoints'] as num?) ?? 0,
       isCompleted: json['isCompleted'] == true,
+      entry: AmolEntryModel.tryParse(json['entry']),
     );
   }
 }

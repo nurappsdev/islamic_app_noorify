@@ -94,7 +94,7 @@ class _EbookDetailView extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13.sp,
-                          color: const Color(0xFF8B9A4B),
+                          color: context.textInkColor(const Color(0xFF8B9A4B)),
                         ),
                       ),
                     ],
@@ -199,7 +199,7 @@ class _DetailsCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF9BA85B),
+                      color: context.textInkColor(const Color(0xFF9BA85B)),
                     ),
                   ),
                   SizedBox(height: 3.h),

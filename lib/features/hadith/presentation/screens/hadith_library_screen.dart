@@ -155,6 +155,9 @@ class _HadithHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // This header keeps its green gradient in both themes, so everything on
+    // it keeps the light-mode design too: white text, and a back button that
+    // stays pale yellow with a black icon rather than being darkened.
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -180,10 +183,10 @@ class _HadithHeader extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: context.surfaceColor(
-                            Color(0xFFEDE7A6),
+                          backgroundColor: const Color(0xFFEDE7A6),
+                          foregroundColor: context.onLightInkColor(
+                            AppColor.authLogo,
                           ),
-                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -213,7 +216,7 @@ class _HadithHeader extends StatelessWidget {
               Text(
                 appText.hadithTotalHadith,
                 style: TextStyle(
-                  color: context.inkColor(Colors.white.withValues(alpha: .9)),
+                  color: Colors.white.withValues(alpha: .9),
                   fontSize: 14.sp,
                   fontStyle: FontStyle.italic,
                 ),
@@ -333,7 +336,7 @@ class _ShelfMessage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.sp,
-              color: context.inkColor(Color(0xFF5D6B44)),
+              color: context.textInkColor(Color(0xFF5D6B44)),
             ),
           ),
           if (onAction != null) ...[
@@ -363,9 +366,7 @@ class _LastReadPill extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(18.w, 8.h, 8.w, 8.h),
       decoration: BoxDecoration(
-        border: Border.all(
-          color: context.lineColor(Colors.white.withValues(alpha: .55)),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: .55)),
         borderRadius: BorderRadius.circular(30.r),
       ),
       child: Row(
@@ -396,9 +397,7 @@ class _LastReadPill extends StatelessWidget {
               height: 30.r,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: context.lineColor(Colors.white.withValues(alpha: .7)),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: .7)),
               ),
               child: Icon(
                 Icons.chevron_right_rounded,
@@ -480,6 +479,9 @@ class _CollectionCard extends StatelessWidget {
     return Container(
       width: 218.w,
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+      // The card's gradient is light in both themes, so its title, icon and
+      // Explore button keep the light-mode design and go black in dark mode
+      // instead of following the theme into light ink on a light card.
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -487,7 +489,7 @@ class _CollectionCard extends StatelessWidget {
           colors: [Color(0xFFE9F1C4), Color(0xFFD3E2A0)],
         ),
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: context.lineColor(Color(0xFFC4D68A))),
+        border: Border.all(color: const Color(0xFFC4D68A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,14 +499,14 @@ class _CollectionCard extends StatelessWidget {
               Container(
                 width: 32.r,
                 height: 32.r,
-                decoration: BoxDecoration(
-                  color: context.surfaceColor(Colors.white),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.menu_book_rounded,
                   size: 17.sp,
-                  color: context.inkColor(Color(0xFF5F7A43)),
+                  color: context.onLightInkColor(Color(0xFF5F7A43)),
                 ),
               ),
               const Spacer(),
@@ -514,8 +516,8 @@ class _CollectionCard extends StatelessWidget {
                 icon: Icon(Icons.north_east_rounded, size: 13.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: context.inkColor(Color(0xFF4C5A34)),
-                  side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
+                  foregroundColor: context.onLightInkColor(Color(0xFF4C5A34)),
+                  side: const BorderSide(color: Color(0xFF9BAE6C)),
                   padding: EdgeInsets.symmetric(horizontal: 10.w),
                   minimumSize: Size(0, 30.h),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -540,7 +542,7 @@ class _CollectionCard extends StatelessWidget {
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
-                  color: context.inkColor(Color(0xFF2C3320)),
+                  color: context.onLightInkColor(Color(0xFF2C3320)),
                 ),
               ),
             ),
@@ -720,7 +722,7 @@ class _EbookCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 10.sp,
-                  color: const Color(0xFF9BA85B),
+                  color: context.textInkColor(const Color(0xFF9BA85B)),
                 ),
               ),
             ],

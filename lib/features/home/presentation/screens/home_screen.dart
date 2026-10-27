@@ -7,7 +7,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_entry_label.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/update/app_update_watcher.dart';
 import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
@@ -462,8 +465,10 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
   }
 }
 
-/// Hadith-reading card: [HadithReadingCardContent] over [HomeGradientShape],
-/// fed from the `hadith` pillar of the home dashboard when it has loaded.
+/// Hadith-reading card: [HadithReadingCardContent] over [HomeGradientShape].
+/// Its numbers come from the tracker's own `hadith` pillar (the shared daily
+/// checklist, so they follow reading as it is tracked, offline included) and
+/// fall back to the `hadith` pillar of the home dashboard.
 class _HadithReadingCard extends StatelessWidget {
   const _HadithReadingCard();
 
@@ -476,31 +481,59 @@ class _HadithReadingCard extends StatelessWidget {
       if (p.pillarKey == 'hadith') hadith = p;
     }
 
-    return HomeGradientShape(
-      child: HadithReadingCardContent(
-        percentage: hadith?.percentage ?? 0,
-        percentageLabel: _pillarText(
-          context,
-          hadith,
-          (pillar) => pillar.localizedPercentage,
-          '',
-        ),
-        title: _pillarText(
-          context,
-          hadith,
-          (pillar) => pillar.localizedTitle,
-          AppText.of(context).categoryLabel('Hadith'),
-        ),
-        onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
-        counter: _pillarCounter(context, hadith, '0/7'),
-        readingTimeLabel: _pillarText(
-          context,
-          hadith,
-          (pillar) => pillar.localizedFormattedSubtext,
-          hadith?.formattedSubtext ?? '',
-        ),
-      ),
-      onTap: () => _openTracker(context, AmalSection.hadith),
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        AmolPillar? tracked;
+        for (final pillar in daily?.pillars ?? const <AmolPillar>[]) {
+          if (pillar.pillarKey == 'hadith') {
+            tracked = pillar;
+            break;
+          }
+        }
+        final entry = tracked?.entry;
+        String number(num value) => value == value.roundToDouble()
+            ? value.toInt().toString()
+            : '$value';
+        return HomeGradientShape(
+          child: HadithReadingCardContent(
+            percentage: tracked?.percentage ?? hadith?.percentage ?? 0,
+            percentageLabel: tracked == null
+                ? _pillarText(
+                    context,
+                    hadith,
+                    (pillar) => pillar.localizedPercentage,
+                    '',
+                  )
+                : context.localizedDigits('${tracked.percentage.round()}%'),
+            title: _pillarText(
+              context,
+              hadith,
+              (pillar) => pillar.localizedTitle,
+              AppText.of(context).categoryLabel('Hadith'),
+            ),
+            onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
+            counter: tracked == null
+                ? _pillarCounter(context, hadith, '0/7')
+                : context.localizedDigits(
+                    '${number(tracked.earnedPoints)}/'
+                    '${number(tracked.maxPoints)}',
+                  ),
+            // The footer is the time read, which the tracker reports in the
+            // item's entry block rather than in the pillar's subtext (a
+            // points fraction).
+            readingTimeLabel: entry != null && entry.isMinutes
+                ? context.amolEntryAmount(entry)
+                : _pillarText(
+                    context,
+                    hadith,
+                    (pillar) => pillar.localizedFormattedSubtext,
+                    hadith?.formattedSubtext ?? '',
+                  ),
+          ),
+          onTap: () => _openTracker(context, AmalSection.hadith),
+        );
+      },
     );
   }
 }
@@ -519,34 +552,60 @@ class _QuranCard extends StatelessWidget {
       if (p.pillarKey == 'quran') quran = p;
     }
 
-    final max = quran?.maxPoints ?? 0;
-    return HomeGradientShape(
-      child: QuranCardContent(
-        onOpenQuran: () => _openTracker(context, AmalSection.quran),
-        percentageLabel: _pillarText(
-          context,
-          quran,
-          (pillar) => pillar.localizedPercentage,
-          '',
-        ),
-        title: _pillarText(
-          context,
-          quran,
-          (pillar) => pillar.localizedTitle,
-          AppText.of(context).categoryLabel('Quran'),
-        ),
-        counter: _pillarCounter(context, quran, '0/11'),
-        progress: quran == null || max <= 0
-            ? 0
-            : (quran.points / max).toDouble(),
-        readingTimeLabel: _pillarText(
-          context,
-          quran,
-          (pillar) => pillar.localizedFormattedSubtext,
-          quran?.formattedSubtext ?? '',
-        ),
-      ),
-      onTap: () => _openTracker(context, AmalSection.quran),
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        AmolPillar? tracked;
+        for (final pillar in daily?.pillars ?? const <AmolPillar>[]) {
+          if (pillar.pillarKey == 'quran') {
+            tracked = pillar;
+            break;
+          }
+        }
+        final points = tracked?.earnedPoints ?? quran?.points ?? 0;
+        final max = tracked?.maxPoints ?? quran?.maxPoints ?? 0;
+        final entry = tracked?.entry;
+        String number(num value) => value == value.roundToDouble()
+            ? value.toInt().toString()
+            : '$value';
+        return HomeGradientShape(
+          child: QuranCardContent(
+            onOpenQuran: () => _openTracker(context, AmalSection.quran),
+            percentageLabel: tracked == null
+                ? _pillarText(
+                    context,
+                    quran,
+                    (pillar) => pillar.localizedPercentage,
+                    '',
+                  )
+                : context.localizedDigits('${tracked.percentage.round()}%'),
+            title: _pillarText(
+              context,
+              quran,
+              (pillar) => pillar.localizedTitle,
+              AppText.of(context).categoryLabel('Quran'),
+            ),
+            counter: tracked == null
+                ? _pillarCounter(context, quran, '0/11')
+                : context.localizedDigits('${number(points)}/${number(max)}'),
+            progress: max <= 0 ? 0 : (points / max).toDouble(),
+            // Inside the ring: how long the Quran has been read today. The
+            // tracker's own entry block holds those minutes (its pillar
+            // subtext is the points fraction already shown above), and it
+            // carries this device's unsent reading too. Without it, the Home
+            // dashboard's own duration is used.
+            readingTimeLabel: entry != null && entry.isMinutes
+                ? context.amolEntryAmount(entry)
+                : _pillarText(
+                    context,
+                    quran,
+                    (pillar) => pillar.localizedFormattedSubtext,
+                    quran?.formattedSubtext ?? '',
+                  ),
+          ),
+          onTap: () => _openTracker(context, AmalSection.quran),
+        );
+      },
     );
   }
 }

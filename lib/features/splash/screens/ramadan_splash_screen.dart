@@ -6,8 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../core/utils/app_text.dart';
 import '../utils/post_splash_route.dart';
 
-import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
-
 class RamadanSplashScreen extends StatefulWidget {
   const RamadanSplashScreen({super.key});
 
@@ -21,6 +19,10 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
   static const _logoImagePath = 'assets/appLogoFinal.png';
   static const _splashVerse =
       'তোমরা তোমাদের রবের অভিমুখী হও এবং তাঁর নিকট আত্মসমর্পণ কর তোমাদের নিকট শাস্তি আসার পূর্বে, অতঃপর তোমাদেরকে সাহায্য করা হবেনা।\n\n৩৯ : ৫৪';
+
+  /// The splash artwork's own light tone, behind the image while it decodes
+  /// and in its place if it ever fails to load.
+  static const _splashBackground = Color(0xFFF8F8F4);
 
   @override
   void initState() {
@@ -47,7 +49,12 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
+    // Dark mode is not followed here: `assets/splasImg.png` is one fixed
+    // light artwork in both themes, so the text over it keeps the dark
+    // colors it was designed in — mapped to dark mode's light ink it turned
+    // near-white on a light background and read as blank.
     return Scaffold(
+      backgroundColor: _splashBackground,
       body: SizedBox.expand(
         child: Stack(
           fit: StackFit.expand,
@@ -57,9 +64,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
               key: const Key('opening_splash_image'),
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return ColoredBox(
-                  color: context.surfaceColor(Color(0xFFF8F8F4)),
-                );
+                return const ColoredBox(color: _splashBackground);
               },
             ),
             SafeArea(
@@ -76,7 +81,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                         return Text(
                           appText.tuhfatulMuslim,
                           style: TextStyle(
-                            color: context.inkColor(Color(0xFF7D8765)),
+                            color: const Color(0xFF7D8765),
                             fontSize: 30.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -88,7 +93,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       appText.tuhfatulMuslim,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.inkColor(const Color(0xFF859065)),
+                        color: const Color(0xFF859065),
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w600,
                         height: 1.2,
@@ -99,7 +104,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
                       _splashVerse,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: context.inkColor(Colors.black),
+                        color: Colors.black,
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
                         height: 1.35,

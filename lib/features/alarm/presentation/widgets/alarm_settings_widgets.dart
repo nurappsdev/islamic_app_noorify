@@ -11,12 +11,16 @@ import 'package:tuhfatul_muslim/features/alarm/data/services/ringtone_cache.dart
 import 'package:tuhfatul_muslim/features/alarm/domain/entities/ringtone.dart';
 import 'package:tuhfatul_muslim/features/alarm/domain/usecases/get_ringtones.dart';
 
+/// The alarm screens' italic label style. [context] is required because the
+/// color is resolved against the theme: in dark mode [color] becomes the
+/// palette's light ink, so a label designed in black or a faded olive reads
+/// as text there instead of disappearing into the background.
 TextStyle alarmItalicStyle(
   double size, {
+  required BuildContext context,
   Color color = Colors.black,
-  BuildContext? context,
 }) => TextStyle(
-  color: context?.inkColor(color) ?? color,
+  color: context.textInkColor(color),
   fontSize: size,
   fontStyle: FontStyle.italic,
 );
@@ -60,6 +64,7 @@ class AlarmBackHeader extends StatelessWidget {
                   style: alarmItalicStyle(
                     11.sp,
                     color: const Color(0xFF9AA687),
+                    context: context,
                   ),
                 ),
               ],
@@ -88,7 +93,7 @@ class AlarmToggleRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: alarmItalicStyle(14.sp)),
+        Text(label, style: alarmItalicStyle(14.sp, context: context)),
         Switch(
           value: value,
           onChanged: onChanged,
@@ -202,9 +207,10 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                 hintStyle: alarmItalicStyle(
                   13.sp,
                   color: const Color(0xFF9AA687),
+                  context: context,
                 ),
               ),
-              style: alarmItalicStyle(13.sp),
+              style: alarmItalicStyle(13.sp, context: context),
             ),
           ),
         ),
@@ -242,7 +248,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                         dense: true,
                         title: Text(
                           ringtone.name,
-                          style: alarmItalicStyle(13.sp),
+                          style: alarmItalicStyle(13.sp, context: context),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -252,6 +258,7 @@ class _RingtoneSearchFieldState extends State<RingtoneSearchField> {
                               style: alarmItalicStyle(
                                 11.sp,
                                 color: const Color(0xFF9AA687),
+                                context: context,
                               ),
                             ),
                             SizedBox(width: 4.w),
