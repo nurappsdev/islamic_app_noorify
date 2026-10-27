@@ -16,7 +16,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
-import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
@@ -30,7 +29,7 @@ import 'package:tuhfatul_muslim/features/hadith/domain/usecases/track_hadith_rea
 import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_detail/hadith_detail_bloc.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/controllers/hadith_reading_tracker.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
-import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_content_settings_drawer.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_reader_settings_screen.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
@@ -167,7 +166,6 @@ class _HadithDetailViewState extends State<_HadithDetailView>
   /// starts loading.
   static const _loadMoreThreshold = 400.0;
 
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _listKey = GlobalKey();
   final _scrollController = ScrollController();
   final _settingsStore = HadithContentSettingsStore();
@@ -522,6 +520,20 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     );
   }
 
+  /// The "Tt" button in the header: the reader's settings, as their own
+  /// screen (design `devImg/img_20.png`) rather than the side drawer this
+  /// button used to open.
+  void _openReaderSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HadithReaderSettingsScreen(
+          settings: _settings,
+          onChanged: _updateSettings,
+        ),
+      ),
+    );
+  }
+
   void _updateSettings(HadithContentSettings value) {
     setState(() => _settings = value);
     _settingsStore.save(value);
@@ -743,6 +755,9 @@ class _HadithDetailViewState extends State<_HadithDetailView>
               hadith: hadith,
               bookName: title,
               settings: _settings,
+              onTranslationLanguageChanged: (language) => _updateSettings(
+                _settings.copyWith(translationLanguage: language),
+              ),
               tracker: _tracker,
               focusedId: _focusedId,
               clock: _clock,
@@ -835,16 +850,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
         if (!didPop) _handleExit();
       },
       child: Scaffold(
-        key: _scaffoldKey,
         backgroundColor: context.pageColor(Colors.white),
-        endDrawer: HadithContentSettingsDrawer(
-          settings: _settings,
-          onChanged: _updateSettings,
-          onOpenProfileSettings: () {
-            Navigator.of(context).pop(); // close the drawer
-            Navigator.of(context).pushNamed(RouteNames.settings);
-          },
-        ),
         body: SafeArea(
           child: Listener(
             onPointerDown: _onPointerDown,
@@ -858,8 +864,7 @@ class _HadithDetailViewState extends State<_HadithDetailView>
                     SizedBox(height: 6.h),
                     _Header(
                       title: title,
-                      onContentSettings: () =>
-                          _scaffoldKey.currentState?.openEndDrawer(),
+                      onContentSettings: _openReaderSettings,
                     ),
                     SizedBox(height: 12.h),
                     Padding(
@@ -1057,6 +1062,7 @@ class HadithDetailCard extends StatefulWidget {
     required this.hadith,
     required this.bookName,
     required this.settings,
+    required this.onTranslationLanguageChanged,
     this.tracker,
     this.focusedId,
     this.clock,
@@ -1064,6 +1070,12 @@ class HadithDetailCard extends StatefulWidget {
 
   final HadithDetail hadith;
   final HadithContentSettings settings;
+
+  /// Flipping the language button reports the new choice here, so it is
+  /// saved with the rest of the reading settings instead of being forgotten
+  /// when the card scrolls away. The reading-language screen sets the same
+  /// value.
+  final ValueChanged<HadithTranslationLanguage> onTranslationLanguageChanged;
 
   /// Name of the book / sub-category on screen, used in the report mail.
   final String bookName;
@@ -1092,8 +1104,10 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
 
   final GlobalKey _boundaryKey = GlobalKey();
 
-  /// Which language the card shows; the button next to the number flips it.
-  bool _showEnglish = false;
+  /// Which language the card shows: the saved reading-language setting,
+  /// which the button next to the number flips.
+  bool get _showEnglish =>
+      settings.translationLanguage == HadithTranslationLanguage.english;
 
   HadithDetail get hadith => widget.hadith;
   HadithContentSettings get settings => widget.settings;
@@ -1428,8 +1442,11 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
                 const Spacer(),
                 if (hadith.textEnglish.isNotEmpty)
                   OutlinedButton.icon(
-                    onPressed: () =>
-                        setState(() => _showEnglish = !_showEnglish),
+                    onPressed: () => widget.onTranslationLanguageChanged(
+                      _showEnglish
+                          ? HadithTranslationLanguage.bangla
+                          : HadithTranslationLanguage.english,
+                    ),
                     icon: Icon(Icons.translate_rounded, size: 16.sp),
                     // Names the language a tap switches to.
                     label: Text(_showEnglish ? 'বাংলা' : 'English'),

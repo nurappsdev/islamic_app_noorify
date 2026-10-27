@@ -121,6 +121,13 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
                         hadith: hadith,
                         bookName: source,
                         settings: _settings,
+                        onTranslationLanguageChanged: (language) {
+                          final value = _settings.copyWith(
+                            translationLanguage: language,
+                          );
+                          setState(() => _settings = value);
+                          HadithContentSettingsStore().save(value);
+                        },
                       ),
                     ),
             ),
