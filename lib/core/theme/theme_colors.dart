@@ -13,6 +13,8 @@ import '../utils/app_color.dart';
 ///   are kept.
 /// * [inkColor] – text and icons: dark ink becomes light; mid and light ink
 ///   (brand green, white on a colored button) is kept.
+/// * [textInkColor] – text only: every text color becomes the dark palette's
+///   own light ink, including the light ones [inkColor] keeps.
 /// * [lineColor] – borders and dividers.
 ///
 /// Colors that the palette already defines (see [AppPalette]) map to those
@@ -31,6 +33,19 @@ extension ThemeColors on BuildContext {
   /// A text, icon or other foreground color.
   Color inkColor(Color color) => _isDark ? DarkColorMapper.ink(color) : color;
 
+  /// A color for text that has to read as text in dark mode.
+  ///
+  /// [inkColor] leaves an already-light color alone, since for an icon or a
+  /// label on a colored button that is the point. For copy designed in a
+  /// light olive, grey or faded tone it is not: on a dark background that
+  /// text stays dull. This turns any text color into the dark palette's own
+  /// light ink instead, dimmed by how light the original was, so the
+  /// design's own order of emphasis survives — near-black and brand-colored
+  /// copy comes out at full strength, a faded label stays quieter than the
+  /// text it sits under.
+  Color textInkColor(Color color) =>
+      _isDark ? DarkColorMapper.textInk(color) : color;
+
   /// A border or divider color.
   Color lineColor(Color color) => _isDark ? DarkColorMapper.line(color) : color;
 }
@@ -41,6 +56,14 @@ abstract final class DarkColorMapper {
 
   /// Fills at least this colorful (max - min channel) are accents, kept as is.
   static const _vividChroma = 0.40;
+
+  /// Text up to this lightness carries the design's emphasis (near-black
+  /// body copy, the brand olive), so [textInk] keeps it at full strength.
+  static const _emphasisLightness = 0.55;
+
+  /// Text this light is the design's faded tone, dimmed to [_fadedAlpha].
+  static const _fadedLightness = 0.90;
+  static const _fadedAlpha = 0.50;
 
   static double _chroma(Color c) =>
       [c.r, c.g, c.b].reduce((a, b) => a > b ? a : b) -
@@ -79,6 +102,21 @@ abstract final class DarkColorMapper {
     final exact = _fillExact[opaque];
     if (exact != null) return exact.withValues(alpha: c.a);
     return _darken(hsl, floor: page ? 0.07 : 0.10, maxSaturation: 0.35);
+  }
+
+  /// See [ThemeColors.textInkColor]. Text at or below [_emphasisLightness]
+  /// keeps full strength; above it, the alpha falls off to [_fadedAlpha] at
+  /// [_fadedLightness] so faded design colors stay the quiet ones.
+  static Color textInk(Color c) {
+    if (c.a == 0) return c;
+    final lightness = HSLColor.fromColor(c).lightness;
+    final faded =
+        ((lightness - _emphasisLightness) /
+                (_fadedLightness - _emphasisLightness))
+            .clamp(0.0, 1.0);
+    return AppColor.darkTextPrimary.withValues(
+      alpha: c.a * (1 - (1 - _fadedAlpha) * faded),
+    );
   }
 
   static Color line(Color c) {

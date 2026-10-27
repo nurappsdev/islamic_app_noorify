@@ -227,7 +227,7 @@ class _SetAllAlarmViewState extends State<_SetAllAlarmView> {
     final selected = await showMenu<int>(
       context: context,
       position: position,
-      color: const Color(0xFFFCFDF8),
+      color: context.surfaceColor(Color(0xFFFCFDF8)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14.r),
         side: BorderSide(color: context.lineColor(Color(0xFFDCE9B8))),
@@ -522,7 +522,7 @@ class _AllAlarmRow extends StatelessWidget {
                                 fontStyle: selected
                                     ? FontStyle.normal
                                     : FontStyle.italic,
-                                color: context.inkColor(Colors.black54),
+                                color: context.textInkColor(Colors.black54),
                               ),
                             ),
                           ),
@@ -618,7 +618,7 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
               appText.setAlarmBeforePrayer,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: const Color(0xFFF15A24),
+                color: context.textInkColor(const Color(0xFFF15A24)),
                 fontSize: 19.sp,
                 fontWeight: FontWeight.w700,
               ),
@@ -649,7 +649,7 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
                       ),
                       style: TextStyle(
                         fontSize: 15.sp,
-                        color: context.inkColor(Colors.black87),
+                        color: context.textInkColor(Colors.black87),
                       ),
                     ),
                   ),
@@ -657,7 +657,7 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
                     appText.offsetMinutesUnit,
                     style: TextStyle(
                       fontSize: 13.sp,
-                      color: context.inkColor(Color(0xFF7E8C61)),
+                      color: context.textInkColor(Color(0xFF7E8C61)),
                     ),
                   ),
                 ],
@@ -675,7 +675,9 @@ class _CustomOffsetDialogState extends State<_CustomOffsetDialog> {
                         backgroundColor: context.surfaceColor(
                           Color(0xFFFBDCDC),
                         ),
-                        foregroundColor: const Color(0xFFD84A4A),
+                        foregroundColor: context.textInkColor(
+                          const Color(0xFFD84A4A),
+                        ),
                         elevation: 0,
                         shape: const StadiumBorder(),
                       ),

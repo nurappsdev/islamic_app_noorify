@@ -49,6 +49,12 @@ class _DuaReaderView extends StatefulWidget {
 }
 
 class _DuaReaderViewState extends State<_DuaReaderView> {
+  /// Whether the bottom recite bar (counter, reset, bookmark, play) shows.
+  /// It is off for now; set it to `true` to bring the bar back, which is why
+  /// its widget and the counter state below are kept. Not `const`, so the
+  /// bar's code stays referenced rather than reading as dead code.
+  final bool _showReciteBar = false;
+
   /// How many times the dua has been recited this visit — the bottom bar's
   /// counter pill (design `img_19.png`); resets when the screen is left.
   int _count = 0;
@@ -436,11 +442,26 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
           return Stack(
             children: [
               ListView(
-                padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h + bottomInset),
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  0,
+                  16.w,
+                  // Room for the floating recite bar while it shows; just
+                  // breathing space under the last card while it doesn't.
+                  (_showReciteBar ? 96.h : 24.h) + bottomInset,
+                ),
                 children: [
                   SizedBox(height: 36.h),
                   DuaPageHeader(
-                    title: appText.duaIntroTitle,
+                    // The dua's own name is the screen title, next to the
+                    // back icon and cut to 12 characters so it can never
+                    // reach the action icons; the heading below still spells
+                    // it out in full.
+                    title: readable.name.isNotEmpty
+                        ? readable.name
+                        : appText.duaIntroTitle,
+                    titleBesideBack: true,
+                    maxTitleChars: 12,
                     action: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -684,20 +705,21 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                   ],
                 ],
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: SafeArea(
-                  top: false,
-                  child: _ReciteBar(
-                    count: _count,
-                    onIncrement: _incrementCount,
-                    onReset: _resetCount,
-                    onBookmark: _showBookmarkSheet,
+              if (_showReciteBar)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: SafeArea(
+                    top: false,
+                    child: _ReciteBar(
+                      count: _count,
+                      onIncrement: _incrementCount,
+                      onReset: _resetCount,
+                      onBookmark: _showBookmarkSheet,
+                    ),
                   ),
                 ),
-              ),
             ],
           );
         },
@@ -744,8 +766,12 @@ class _HeaderIconButton extends StatelessWidget {
     return IconButton(
       onPressed: onTap,
       style: IconButton.styleFrom(
+        // The yellow badge is a vivid accent, so dark mode keeps it as it
+        // is — which means its icon has to stay dark as well. Mapped to
+        // light ink it was all but invisible on that badge. This is the
+        // same pair [DuaPageHeader]'s back button uses.
         backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
-        foregroundColor: context.inkColor(const Color(0xFF303629)),
+        foregroundColor: const Color(0xFF303629),
         minimumSize: Size(38.r, 38.r),
       ),
       icon: Icon(icon, size: 18),

@@ -10,6 +10,8 @@ class DuaPageHeader extends StatelessWidget {
     required this.title,
     this.action,
     this.onBack,
+    this.titleBesideBack = false,
+    this.maxTitleChars,
   });
 
   final String title;
@@ -20,37 +22,69 @@ class DuaPageHeader extends StatelessWidget {
   /// popping within the Dua feature's own stack.
   final VoidCallback? onBack;
 
+  /// Puts the title right next to the back button instead of centering it
+  /// in the row — for a screen whose action icons leave no room in the
+  /// middle (the Dua reader).
+  final bool titleBesideBack;
+
+  /// Caps the title at this many characters; the rest becomes an ellipsis.
+  /// Counted in grapheme clusters, so a Bangla conjunct is one character
+  /// and is never cut in half.
+  final int? maxTitleChars;
+
+  /// [title], cut to [maxTitleChars] when it is longer than that.
+  String get _displayTitle {
+    final limit = maxTitleChars;
+    if (limit == null) return title;
+    final letters = title.characters;
+    if (letters.length <= limit) return title;
+    return '${letters.take(limit).toString().trimRight()}…';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final titleStyle = TextStyle(
+      fontSize: 19.sp,
+      fontWeight: FontWeight.w600,
+      fontStyle: FontStyle.italic,
+    );
+    final backButton = IconButton(
+      onPressed: onBack ?? () => Navigator.maybePop(context),
+      style: IconButton.styleFrom(
+        backgroundColor: const Color(0xFFDFDE68),
+        foregroundColor: const Color(0xFF303629),
+        minimumSize: Size(38.r, 38.r),
+      ),
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
+    );
+
     return SizedBox(
       height: 44.h,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: onBack ?? () => Navigator.maybePop(context),
-              style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: Color(0xFF303629),
-                minimumSize: Size(38.r, 38.r),
-              ),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
+      child: titleBesideBack
+          ? Row(
+              children: [
+                backButton,
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    _displayTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: titleStyle,
+                  ),
+                ),
+                ?action,
+              ],
+            )
+          : Stack(
+              alignment: Alignment.center,
+              children: [
+                Align(alignment: Alignment.centerLeft, child: backButton),
+                Text(_displayTitle, style: titleStyle),
+                if (action != null)
+                  Align(alignment: Alignment.centerRight, child: action!),
+              ],
             ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 19.sp,
-              fontWeight: FontWeight.w600,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          if (action != null)
-            Align(alignment: Alignment.centerRight, child: action!),
-        ],
-      ),
     );
   }
 }

@@ -55,6 +55,10 @@ void main() {
       );
       expect(await _resolve(tester, Brightness.light, (x) => x.inkColor(c)), c);
       expect(
+        await _resolve(tester, Brightness.light, (x) => x.textInkColor(c)),
+        c,
+      );
+      expect(
         await _resolve(tester, Brightness.light, (x) => x.lineColor(c)),
         c,
       );
@@ -120,6 +124,54 @@ void main() {
         );
       }
     }
+  });
+
+  testWidgets('dark mode text ink reads as text on dark fills', (tester) async {
+    Future<Color> dark(Color Function(BuildContext) f) =>
+        _resolve(tester, Brightness.dark, f);
+    final page = await dark((c) => c.pageColor(Colors.white));
+    final card = await dark((c) => c.surfaceColor(Colors.white));
+    // The alarm screens' own text colors, from near-black copy to the time
+    // wheel's faded tones. [inkColor] keeps the light ones as they are,
+    // which is what [textInkColor] exists to fix.
+    for (final ink in const [
+      Colors.black,
+      Colors.black87,
+      Colors.black54,
+      Color(0xFF8D9B70),
+      Color(0xFF9AA687),
+      Color(0xFFBDBDBD),
+      Color(0xFFBFC79B),
+      Color(0xFFE3E6D3),
+    ]) {
+      final mapped = await dark((c) => c.textInkColor(ink));
+      for (final bg in [page, card]) {
+        expect(
+          _contrast(Color.alphaBlend(mapped, bg), bg),
+          greaterThan(4.5),
+          reason: '$ink -> $mapped on $bg',
+        );
+      }
+    }
+  });
+
+  testWidgets('dark mode text ink keeps the design\'s emphasis order', (
+    tester,
+  ) async {
+    Future<double> alpha(Color ink) async =>
+        (await _resolve(tester, Brightness.dark, (c) => c.textInkColor(ink))).a;
+    // Body copy and the brand olive come out at full strength...
+    expect(await alpha(Colors.black), 1);
+    expect(await alpha(const Color(0xFF8D9B70)), 1);
+    // ...while the time wheel's faded neighbours stay the quieter ones.
+    expect(
+      await alpha(const Color(0xFFBFC79B)),
+      lessThan(await alpha(const Color(0xFF8D9B70))),
+    );
+    expect(
+      await alpha(const Color(0xFFE3E6D3)),
+      lessThan(await alpha(const Color(0xFFBFC79B))),
+    );
   });
 
   testWidgets('alpha is preserved', (tester) async {
