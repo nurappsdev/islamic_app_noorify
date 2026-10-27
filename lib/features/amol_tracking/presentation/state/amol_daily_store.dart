@@ -8,10 +8,12 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_local_projection.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 
 /// Today's tracker checklist (`GET /amol/tracker/daily`), shared so the Home
 /// cards read one copy instead of each fetching their own.
@@ -29,6 +31,8 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     _token = _currentToken();
     _activeDate = isoDate(DateTime.now());
     unawaited(_refreshTrackingDay());
+    QuranOfflineReadingProgressStore.shared.addListener(_onOfflineQuranChanged);
+    unawaited(QuranOfflineReadingProgressStore.shared.restore());
     try {
       _tokenWatch = HiveService.auth.watch().listen((_) => _onAuthBoxChanged());
     } catch (_) {
@@ -42,6 +46,11 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     AmolTrackingRepositoryImpl(AmolTrackingRemoteDataSourceImpl()),
   );
   Future<void>? _inFlight;
+
+  /// The last server snapshot. [value] may have pending Quran reading
+  /// projected over it, so future local updates must always start here.
+  AmolDailyDashboard? _serverValue;
+  final _quranAcknowledgedInServer = <String>{};
 
   /// The token the current [value] (or in-flight fetch) belongs to.
   String? _token;
@@ -77,6 +86,9 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     _inFlight = null;
     // Nothing to show for a guest / signed-out user, and the old checklist must
     // not be shown to the next one while the fresh one loads.
+    _serverValue = null;
+    _quranAcknowledgedInServer.clear();
+    QuranOfflineReadingProgressStore.shared.clear();
     value = null;
     if (token != null) load();
   }
@@ -107,6 +119,8 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     _activeDate = date;
     _dayGeneration++;
     _inFlight = null;
+    _serverValue = null;
+    _quranAcknowledgedInServer.clear();
     value = null;
     return true;
   }
@@ -180,8 +194,38 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
       result.fold((_) {}, (daily) {
         // Never show a response for another day (including an old offline
         // cache) as today's checklist.
-        if (daily.dateIso == date) value = daily;
+        if (daily.dateIso != date) return;
+        _serverValue = daily;
+        // This response is the authoritative baseline for reports the server
+        // already accepted. Keep those reports in memory for other screens,
+        // but no longer add them over this fresh daily value.
+        _quranAcknowledgedInServer.addAll(
+          QuranOfflineReadingProgressStore.shared.acknowledgedIdsFor(date),
+        );
+        _applyOfflineQuranProjection();
       });
     } catch (_) {}
+  }
+
+  void _onOfflineQuranChanged() {
+    _applyOfflineQuranProjection();
+    final acknowledged = QuranOfflineReadingProgressStore.shared
+        .acknowledgedIdsFor(_activeDate);
+    if (acknowledged.any((id) => !_quranAcknowledgedInServer.contains(id))) {
+      unawaited(load());
+    }
+  }
+
+  void _applyOfflineQuranProjection() {
+    final server = _serverValue;
+    if (server == null || server.dateIso != _activeDate) return;
+    final progress = QuranOfflineReadingProgressStore.shared.progressFor(
+      _activeDate,
+      acknowledgedInBaseline: _quranAcknowledgedInServer,
+    );
+    value = projectOfflineQuranReading(
+      server,
+      additionalSeconds: progress.seconds,
+    );
   }
 }

@@ -1,5 +1,24 @@
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+
 abstract class AmolDailyEvent {
   const AmolDailyEvent();
+}
+
+/// Uses a fresh projected daily dashboard already held by the shared store.
+/// No network request is made; this lets a feature such as Quran update the
+/// Amol screen immediately when the user returns to it offline.
+class UseAmolDailyDashboard extends AmolDailyEvent {
+  const UseAmolDailyDashboard(this.dashboard);
+
+  final AmolDailyDashboard dashboard;
+}
+
+/// Reapplies Quran reading held locally over the last server checklist.
+///
+/// This contains no value because the Quran progress store is the one durable
+/// source of the current cumulative offline duration.
+class RefreshOfflineQuranProgress extends AmolDailyEvent {
+  const RefreshOfflineQuranProgress();
 }
 
 /// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, selected by the

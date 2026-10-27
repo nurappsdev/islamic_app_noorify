@@ -76,6 +76,22 @@ abstract interface class QuranReadingRepository {
   Future<Either<Failure, QuranLastRead>> getLastRead();
 }
 
+/// Optional live-projection capability for the Quran reader.
+///
+/// It never sends anything and never replaces [saveReadingDraft]'s durable
+/// queue. Implementations use it only to let already-open UI show the active
+/// session between local draft saves.
+abstract interface class QuranReadingProgressPublisher {
+  void publishReadingProgress({
+    required String sessionId,
+    required int surahNumber,
+    required int fromAyah,
+    required int toAyah,
+    required int seconds,
+    required DateTime date,
+  });
+}
+
 final _random = Random();
 
 /// A new id for a reading report or session, unique across launches.

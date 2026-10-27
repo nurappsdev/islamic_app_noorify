@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_reading_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_reading_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_last_read.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
@@ -83,13 +84,17 @@ class _Clock {
 Future<List<PendingQuranReading>> _saved() =>
     QuranReadingLocalDataSourceImpl().pending();
 
-QuranReadingRepositoryImpl _repository(_Remote remote, {String? launch}) =>
-    QuranReadingRepositoryImpl(
-      remote,
-      local: QuranReadingLocalDataSourceImpl(),
-      isSignedIn: () => true,
-      launch: launch,
-    );
+QuranReadingRepositoryImpl _repository(
+  _Remote remote, {
+  String? launch,
+  QuranOfflineReadingProgressStore? offlineProgress,
+}) => QuranReadingRepositoryImpl(
+  remote,
+  local: QuranReadingLocalDataSourceImpl(),
+  isSignedIn: () => true,
+  launch: launch,
+  offlineProgress: offlineProgress,
+);
 
 Future<Either<Failure, QuranReadingTrackResult>> _track(
   QuranReadingRepositoryImpl repository, {
@@ -138,6 +143,7 @@ void main() {
       final saved = await _saved();
       expect(saved, hasLength(1));
       expect(saved.single.seconds, 420);
+      expect(saved.single.points, 1);
       expect(saved.single.date, '2026-10-19');
 
       // Still offline: nothing is lost and nothing piles up.
@@ -160,6 +166,54 @@ void main() {
       // Every attempt carried the same report id.
       expect(remote.calls.map((c) => c.id).toSet(), hasLength(1));
       expect(remote.calls.last.seconds, 420);
+    },
+  );
+
+  test(
+    'offline points stay visible until the fresh server day acknowledges them',
+    () async {
+      final remote = _Remote()..goOffline();
+      final progress = QuranOfflineReadingProgressStore(
+        QuranReadingLocalDataSourceImpl(),
+      );
+      final repository = _repository(remote, offlineProgress: progress);
+
+      await _track(repository, seconds: 300);
+      expect(progress.progressFor('2026-10-19').seconds, 300);
+      expect(progress.progressFor('2026-10-19').points, 1);
+      expect(progress.progressFor('2026-10-19').hasAcknowledged, isFalse);
+
+      remote.goOnline();
+      await repository.syncPendingReadings();
+      expect(progress.progressFor('2026-10-19').seconds, 300);
+      expect(progress.progressFor('2026-10-19').hasAcknowledged, isTrue);
+      expect(
+        progress
+            .progressFor(
+              '2026-10-19',
+              acknowledgedInBaseline: progress.acknowledgedIdsFor('2026-10-19'),
+            )
+            .seconds,
+        0,
+      );
+    },
+  );
+
+  test(
+    'separate offline sessions accumulate their full reading duration',
+    () async {
+      final remote = _Remote()..goOffline();
+      final progress = QuranOfflineReadingProgressStore(
+        QuranReadingLocalDataSourceImpl(),
+      );
+      final repository = _repository(remote, offlineProgress: progress);
+
+      await _track(repository, seconds: 300);
+      await _track(repository, seconds: 300);
+
+      final today = progress.progressFor('2026-10-19');
+      expect(today.seconds, 600);
+      expect(today.points, 2);
     },
   );
 
@@ -302,6 +356,7 @@ void main() {
       clock.advance(40);
       await reader.saveDraft();
       expect((await _saved()).single.seconds, 80);
+      expect((await _saved()).single.points, 0);
       expect((await _saved()).single.draft, isTrue);
       // This launch's draft is a session still being read: not sent.
       await repository.syncPendingReadings();

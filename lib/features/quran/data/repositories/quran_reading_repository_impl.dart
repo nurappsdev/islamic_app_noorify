@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/errors/failures.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_reading_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_reading_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_last_read.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_dashboard.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_history.dart';
@@ -28,7 +29,8 @@ import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading
 /// rather than resent when the server may already have it (sent, but no
 /// answer) or will never take it (a 4xx other than 401, 408 and 429, or
 /// [maxAttempts] server errors).
-class QuranReadingRepositoryImpl implements QuranReadingRepository {
+class QuranReadingRepositoryImpl
+    implements QuranReadingRepository, QuranReadingProgressPublisher {
   QuranReadingRepositoryImpl(
     this._remote, {
     QuranReadingLocalDataSource? local,
@@ -37,6 +39,7 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
     this.maxAttempts = 5,
     DateTime Function()? now,
     String? launch,
+    this.offlineProgress,
   }) : _local = local ?? QuranReadingLocalDataSourceImpl(),
        _isSignedIn = isSignedIn ?? (() => AuthLocalDataSourceImpl().hasToken),
        _now = now ?? DateTime.now,
@@ -45,10 +48,12 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
   /// The app-wide instance, shared by the reader, Home and the dashboard.
   static final QuranReadingRepositoryImpl shared = QuranReadingRepositoryImpl(
     QuranReadingRemoteDataSourceImpl(),
+    offlineProgress: QuranOfflineReadingProgressStore.shared,
   );
 
   final QuranReadingRemoteDataSource _remote;
   final QuranReadingLocalDataSource _local;
+  final QuranOfflineReadingProgressStore? offlineProgress;
 
   /// This app launch: drafts saved under another were left by a launch that
   /// never got to report them.
@@ -108,6 +113,7 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
     }
     try {
       await _local.save(reading);
+      offlineProgress?.upsert(reading);
     } catch (_) {
       // Storage failed: still send it, it just can't wait for a retry.
     }
@@ -127,22 +133,46 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
     required DateTime date,
   }) async {
     if (_sending.contains(sessionId) || !isSignedIn) return;
+    final reading = PendingQuranReading(
+      id: sessionId,
+      surahNumber: surahNumber,
+      fromAyah: fromAyah,
+      toAyah: toAyah,
+      seconds: seconds,
+      date: _day(date),
+      draft: true,
+      launch: launch,
+    );
     try {
-      await _local.save(
-        PendingQuranReading(
-          id: sessionId,
-          surahNumber: surahNumber,
-          fromAyah: fromAyah,
-          toAyah: toAyah,
-          seconds: seconds,
-          date: _day(date),
-          draft: true,
-          launch: launch,
-        ),
-      );
+      await _local.save(reading);
+      offlineProgress?.upsert(reading);
     } catch (_) {
       // Only a safety copy: the session still reports when it ends.
     }
+  }
+
+  @override
+  void publishReadingProgress({
+    required String sessionId,
+    required int surahNumber,
+    required int fromAyah,
+    required int toAyah,
+    required int seconds,
+    required DateTime date,
+  }) {
+    if (!isSignedIn || seconds <= 0) return;
+    offlineProgress?.upsert(
+      PendingQuranReading(
+        id: sessionId,
+        surahNumber: surahNumber,
+        fromAyah: fromAyah,
+        toAyah: toAyah,
+        seconds: seconds,
+        date: _day(date),
+        draft: true,
+        launch: launch,
+      ),
+    );
   }
 
   @override
@@ -195,14 +225,16 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
         date: reading.date,
         requestId: reading.id,
       );
-      await _forget(reading.id);
+      await _forget(reading.id, acknowledged: reading);
       _generation++;
       _cache.clear();
       _inFlight.clear();
       _tracked.add(null);
       return Right(result);
     } on NetworkException catch (e) {
-      if (e.mayHaveArrived) await _forget(reading.id);
+      if (e.mayHaveArrived) {
+        await _forget(reading.id, acknowledged: reading);
+      }
       return Left(NetworkFailure(e.message));
     } on ServerException catch (e) {
       final status = e.statusCode;
@@ -223,7 +255,7 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
       return Left(ServerFailure(e.message, statusCode: status));
     } on ParsingException catch (e) {
       // Accepted (2xx), just answered oddly: it counted.
-      await _forget(reading.id);
+      await _forget(reading.id, acknowledged: reading);
       return Left(ParsingFailure(e.message));
     } catch (_) {
       return const Left(UnknownFailure());
@@ -235,14 +267,20 @@ class QuranReadingRepositoryImpl implements QuranReadingRepository {
   Future<void> _keep(PendingQuranReading reading) async {
     try {
       await _local.save(reading);
+      offlineProgress?.upsert(reading);
     } catch (_) {
       /* Kept as it was. */
     }
   }
 
-  Future<void> _forget(String id) async {
+  Future<void> _forget(String id, {PendingQuranReading? acknowledged}) async {
     try {
       await _local.remove(id);
+      if (acknowledged == null) {
+        offlineProgress?.remove(id);
+      } else {
+        offlineProgress?.markAcknowledged(acknowledged);
+      }
     } catch (_) {
       /* Storage failed: a later send settles it. */
     }
