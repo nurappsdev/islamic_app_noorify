@@ -15,6 +15,8 @@ import '../utils/app_color.dart';
 ///   (brand green, white on a colored button) is kept.
 /// * [textInkColor] – text only: every text color becomes the dark palette's
 ///   own light ink, including the light ones [inkColor] keeps.
+/// * [onLightInkColor] – text or an icon over a surface the design keeps
+///   light in both themes: deep black in dark mode instead of light ink.
 /// * [lineColor] – borders and dividers.
 ///
 /// Colors that the palette already defines (see [AppPalette]) map to those
@@ -45,6 +47,16 @@ extension ThemeColors on BuildContext {
   /// text it sits under.
   Color textInkColor(Color color) =>
       _isDark ? DarkColorMapper.textInk(color) : color;
+
+  /// Ink for text or an icon that sits on a surface which stays light in
+  /// dark mode: a fixed artwork, a hardcoded light gradient, a card whose
+  /// color the design never darkens.
+  ///
+  /// [inkColor] and [textInkColor] both assume the surface underneath went
+  /// dark, so they turn the ink light — over a surface that did not, that
+  /// leaves the text or icon all but invisible. This keeps the design color
+  /// in light mode and goes deep black in dark mode.
+  Color onLightInkColor(Color color) => _isDark ? Colors.black : color;
 
   /// A border or divider color.
   Color lineColor(Color color) => _isDark ? DarkColorMapper.line(color) : color;

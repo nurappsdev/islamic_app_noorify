@@ -231,7 +231,7 @@ class _ReaderHeader extends StatelessWidget {
             onPressed: () => Navigator.maybePop(context),
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFCBD16B),
-              foregroundColor: context.inkColor(Color(0xFF303629)),
+              foregroundColor: context.onLightInkColor(Color(0xFF303629)),
               minimumSize: Size(38.r, 38.r),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -247,7 +247,7 @@ class _ReaderHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: context.inkColor(AppColor.authLogo),
+                    color: context.textInkColor(AppColor.authLogo),
                     fontSize: 17.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -256,7 +256,7 @@ class _ReaderHeader extends StatelessWidget {
                   Text(
                     context.localizedDigits(counter!),
                     style: TextStyle(
-                      color: const Color(0xFF9BA85B),
+                      color: context.textInkColor(const Color(0xFF9BA85B)),
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -381,7 +381,7 @@ class _HadithIndexDrawer extends StatelessWidget {
                     ),
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFF9BA85B),
+                      color: context.textInkColor(const Color(0xFF9BA85B)),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -535,7 +535,7 @@ class _BookReferenceTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10.5.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF9BA85B),
+                      color: context.textInkColor(const Color(0xFF9BA85B)),
                     ),
                   ),
                   SizedBox(height: 2.h),
@@ -608,7 +608,7 @@ class _DownloadPrompt extends StatelessWidget {
             ),
             style: TextStyle(
               fontSize: 12.sp,
-              color: const Color(0xFF9BA85B),
+              color: context.textInkColor(const Color(0xFF9BA85B)),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -892,7 +892,7 @@ class _HadithCardState extends State<_HadithCard> {
   void _showActions(BuildContext buttonContext) {
     showModalBottomSheet<void>(
       context: buttonContext,
-      backgroundColor: Colors.white,
+      backgroundColor: context.surfaceColor(Colors.white),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -1138,7 +1138,7 @@ class _HadithCardState extends State<_HadithCard> {
                 appText.hadithSwipeNext,
                 style: TextStyle(
                   fontSize: 10.5.sp,
-                  color: const Color(0xFF9BA85B),
+                  color: context.textInkColor(const Color(0xFF9BA85B)),
                   fontWeight: FontWeight.w600,
                 ),
               ),

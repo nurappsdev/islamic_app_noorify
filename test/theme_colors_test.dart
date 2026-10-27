@@ -59,6 +59,10 @@ void main() {
         c,
       );
       expect(
+        await _resolve(tester, Brightness.light, (x) => x.onLightInkColor(c)),
+        c,
+      );
+      expect(
         await _resolve(tester, Brightness.light, (x) => x.lineColor(c)),
         c,
       );
@@ -172,6 +176,48 @@ void main() {
       await alpha(const Color(0xFFE3E6D3)),
       lessThan(await alpha(const Color(0xFFBFC79B))),
     );
+  });
+
+  testWidgets('dark mode ink over a surface that stays light goes black', (
+    tester,
+  ) async {
+    Future<Color> dark(Color Function(BuildContext) f) =>
+        _resolve(tester, Brightness.dark, f);
+    // Surfaces the designs keep light in both themes: the splash artwork,
+    // the Hadith intro gradient, the library's collection card and the back
+    // button badge the Hadith screens share.
+    const lightSurfaces = [
+      Color(0xFFF8F8F4),
+      Color(0xFFFDFEFB),
+      Color(0xFFD8E5BC),
+      Color(0xFFE9F1C4),
+      Color(0xFFD3E2A0),
+      Color(0xFFCBD16B),
+      Color(0xFFEDE7A6),
+      Color(0xFFDDE8BA),
+    ];
+    for (final ink in const [
+      Color(0xFF4C5346),
+      Color(0xFF7D8765),
+      Color(0xFF2C3320),
+      Color(0xFF303629),
+      Color(0xFF84945F),
+    ]) {
+      final mapped = await dark((c) => c.onLightInkColor(ink));
+      expect(mapped, Colors.black, reason: '$ink');
+      for (final bg in lightSurfaces) {
+        expect(_contrast(mapped, bg), greaterThan(4.5), reason: '$ink on $bg');
+      }
+    }
+    // The point of the helper: [inkColor] would have turned these light.
+    for (final ink in const [Color(0xFF7D8765), Color(0xFF84945F)]) {
+      final viaInk = await dark((c) => c.inkColor(ink));
+      expect(
+        _contrast(viaInk, const Color(0xFFD8E5BC)),
+        lessThan(4.5),
+        reason: 'inkColor is the wrong tool over a light surface',
+      );
+    }
   });
 
   testWidgets('alpha is preserved', (tester) async {

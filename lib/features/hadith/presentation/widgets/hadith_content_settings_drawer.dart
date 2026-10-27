@@ -153,7 +153,10 @@ class _SizeSlider extends StatelessWidget {
             ),
             Text(
               context.localizedDigits('${(value * 100).round()}%'),
-              style: TextStyle(fontSize: 11.sp, color: const Color(0xFF9BA85B)),
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: context.textInkColor(const Color(0xFF9BA85B)),
+              ),
             ),
           ],
         ),

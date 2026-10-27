@@ -419,7 +419,7 @@ class _EditPlanForm extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onAdd,
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFA1AD59),
+                foregroundColor: context.textInkColor(const Color(0xFFA1AD59)),
                 minimumSize: Size(69.w, 38.h),
                 padding: EdgeInsets.zero,
                 side: const BorderSide(color: Color(0xFFA1AD59)),
@@ -497,7 +497,7 @@ class _EditCategoryCard extends StatelessWidget {
                       '${appText.categoryHadith}',
                     ),
                     style: TextStyle(
-                      color: const Color(0xFFA1AD59),
+                      color: context.textInkColor(const Color(0xFFA1AD59)),
                       fontSize: 12.sp,
                     ),
                   ),
@@ -540,7 +540,7 @@ class _EditPlanHeader extends StatelessWidget {
                 onPressed: onBack,
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: context.inkColor(Color(0xFF303629)),
+                  foregroundColor: context.onLightInkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                   padding: EdgeInsets.zero,
                 ),
@@ -610,7 +610,7 @@ class _EditSelectionField extends StatelessWidget {
 InputDecoration _fieldDecoration(BuildContext context, String hint) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: Color(0xFFB8B8B8)),
+    hintStyle: TextStyle(color: context.textInkColor(const Color(0xFFB8B8B8))),
     contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
     enabledBorder: OutlineInputBorder(
       borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),

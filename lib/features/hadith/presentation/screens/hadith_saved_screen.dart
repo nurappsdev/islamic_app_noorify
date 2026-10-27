@@ -285,7 +285,7 @@ class _Header extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: context.inkColor(AppColor.authLogo),
+                color: context.textInkColor(AppColor.authLogo),
                 fontSize: 19.sp,
                 fontWeight: FontWeight.w600,
               ),
@@ -310,12 +310,15 @@ class _SearchField extends StatelessWidget {
       style: TextStyle(fontSize: 13.sp),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
+        hintStyle: TextStyle(
+          color: context.textInkColor(AppColor.authHint),
+          fontSize: 13.sp,
+        ),
         isDense: true,
         prefixIcon: Icon(
           Icons.search_rounded,
           size: 18.sp,
-          color: AppColor.authHint,
+          color: context.textInkColor(AppColor.authHint),
         ),
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
         filled: true,
@@ -433,7 +436,7 @@ class _FolderCard extends StatelessWidget {
                     Text(
                       context.localizedDigits('$count $hadithWord'),
                       style: TextStyle(
-                        color: const Color(0xFFA1AD59),
+                        color: context.textInkColor(const Color(0xFFA1AD59)),
                         fontSize: 12.sp,
                       ),
                     ),
@@ -536,7 +539,7 @@ class _SavedHadithCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFFA1AD59),
+                        color: context.textInkColor(const Color(0xFFA1AD59)),
                         fontSize: 12.sp,
                       ),
                     ),

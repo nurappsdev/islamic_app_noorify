@@ -76,7 +76,10 @@ class HadithReadRecordRow extends StatelessWidget {
               readAt,
               language: isBangla ? AppLanguage.bangla : AppLanguage.english,
             ),
-            style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: context.textInkColor(const Color(0xFFA1AD59)),
+            ),
           ),
         ],
       ],
