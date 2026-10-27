@@ -54,7 +54,7 @@ class ExactAlarmPermissionDialog extends StatelessWidget {
         appText.exactAlarmPermissionExplanation,
         style: TextStyle(
           fontSize: 13.sp,
-          color: context.inkColor(Colors.black87),
+          color: context.textInkColor(Colors.black87),
         ),
       ),
       actions: [
@@ -62,7 +62,7 @@ class ExactAlarmPermissionDialog extends StatelessWidget {
           onPressed: () => Navigator.pop(context, false),
           child: Text(
             appText.alarmCancel,
-            style: TextStyle(color: context.inkColor(Colors.black54)),
+            style: TextStyle(color: context.textInkColor(Colors.black54)),
           ),
         ),
         FilledButton(

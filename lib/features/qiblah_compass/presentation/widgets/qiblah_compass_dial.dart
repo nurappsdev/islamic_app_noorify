@@ -40,7 +40,12 @@ class QiblahCompassDial extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.appPalette;
+    // The rose is one printed compass card, so it keeps its light-mode look
+    // in both themes: its ticks, degree numbers and N/E/S/W letters are read
+    // from the light palette rather than the active one. Only what is around
+    // the dial (the card, the screen background) follows the theme.
+    const palette = AppPalette.light;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final headingRad = heading * math.pi / 180;
     final qiblahRad = qiblahAngle * math.pi / 180;
     final markerRadius = size / 2 * 0.76;
@@ -57,6 +62,21 @@ class QiblahCompassDial extends StatelessWidget {
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
+          // Only the asset's inner disc is opaque; its outer halo ring (which
+          // the N/E/S/W letters sit on) is half-transparent, so on a dark
+          // card it would take that card's color and swallow those labels.
+          // This disc underneath gives the ring the same white backing it has
+          // over the light-mode card, so the whole circle reads exactly as it
+          // does there.
+          if (isDark)
+            Container(
+              width: faceSize,
+              height: faceSize,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColor.lightSurface,
+              ),
+            ),
           // Layered glassy disc (halo + embossed rings baked into the
           // asset), matching the reference dial in img_1.png.
           Image.asset(

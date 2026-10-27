@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/quran/data/repositories/quran_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
 
 /// Sends the Quran reading kept on the device (read offline, or left by an
@@ -40,6 +41,9 @@ class QuranReadingSync {
 
   /// Starts syncing; call once, after local storage is ready.
   void start() {
+    // Restore the durable local projection before this launch starts sending
+    // reports left by the previous one.
+    unawaited(QuranOfflineReadingProgressStore.shared.restore());
     _lifecycle ??= AppLifecycleListener(
       onResume: () {
         _foreground = true;

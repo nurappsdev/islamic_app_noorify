@@ -217,7 +217,7 @@ class _Header extends StatelessWidget {
                 onPressed: () => Navigator.maybePop(context),
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: context.inkColor(Color(0xFF303629)),
+                  foregroundColor: context.onLightInkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -227,7 +227,7 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: context.inkColor(AppColor.authLogo),
+              color: context.textInkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),

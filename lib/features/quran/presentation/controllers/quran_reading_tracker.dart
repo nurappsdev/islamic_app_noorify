@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_points.dart';
 
 /// Tunables of the Quran reading tracker.
 abstract final class QuranReadingTrackerConfig {
@@ -53,6 +54,9 @@ class QuranReadingTracker {
   /// Null: no drafts.
   final Duration? saveEvery;
   Timer? _saver;
+  Timer? _progressTicker;
+  int? _lastPublishedMinute;
+  int? _lastPublishedPoints;
 
   _Session? _session;
 
@@ -78,7 +82,10 @@ class QuranReadingTracker {
     unawaited(flush());
     _session = _Session(surahNumber, fromAyah, toAyah, _now())
       ..start(_paused ? null : _now());
+    _lastPublishedMinute = null;
+    _lastPublishedPoints = null;
     _startSaving();
+    _startPublishing();
   }
 
   /// Stops the clock (the app went to the background) and reports the
@@ -88,6 +95,7 @@ class QuranReadingTracker {
     _paused = true;
     _session?.stop(_now());
     _saver?.cancel();
+    _progressTicker?.cancel();
     return flush();
   }
 
@@ -97,6 +105,7 @@ class QuranReadingTracker {
     _paused = false;
     _session?.start(_now());
     _startSaving();
+    _startPublishing();
   }
 
   void _startSaving() {
@@ -105,6 +114,53 @@ class QuranReadingTracker {
       return;
     }
     _saver = Timer.periodic(every, (_) => saveDraft());
+  }
+
+  /// Publishes only when a visible minute or point changes. The device copy
+  /// is also refreshed at each minute boundary, so everything the user can
+  /// see survives an app restart even while the reader remains open.
+  void _startPublishing() {
+    if (saveEvery == null ||
+        _paused ||
+        _disposed ||
+        _progressTicker?.isActive == true) {
+      return;
+    }
+    _progressTicker = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _publishLiveProgress(),
+    );
+  }
+
+  void _publishLiveProgress({bool force = false}) {
+    final session = _session;
+    if (session == null || _paused || _disposed || !_repository.isSignedIn) {
+      return;
+    }
+    final seconds = math.min(session.peek(_now()), maxSeconds);
+    if (seconds < minSeconds) return;
+    final minutes = seconds ~/ 60;
+    final points = quranReadingPointsForSeconds(seconds);
+    if (!force &&
+        minutes == _lastPublishedMinute &&
+        points == _lastPublishedPoints) {
+      return;
+    }
+    _lastPublishedMinute = minutes;
+    _lastPublishedPoints = points;
+    if (_repository case final QuranReadingProgressPublisher publisher) {
+      publisher.publishReadingProgress(
+        sessionId: session.id,
+        surahNumber: session.surah,
+        fromAyah: session.from,
+        toAyah: session.to,
+        seconds: seconds,
+        date: session.startedAt,
+      );
+    }
+    // The live projection has just advanced by a visible minute. Persist it
+    // now instead of waiting for the periodic safety draft.
+    if (minutes > 0) unawaited(saveDraft());
   }
 
   /// Saves the session read so far on the device (see [saveEvery]).
@@ -135,6 +191,8 @@ class QuranReadingTracker {
         ? null
         : (_Session(page.surah, page.from, page.to, now)
             ..start(_paused ? null : now));
+    _lastPublishedMinute = null;
+    _lastPublishedPoints = null;
     if (seconds < minSeconds || !_repository.isSignedIn) {
       // Nothing to report, so no draft of it may be sent either.
       unawaited(_repository.discardReadingDraft(session.id));
@@ -160,6 +218,7 @@ class QuranReadingTracker {
     if (_disposed) return Future.value();
     _disposed = true;
     _saver?.cancel();
+    _progressTicker?.cancel();
     _session?.stop(_now());
     return flush();
   }

@@ -40,6 +40,25 @@ class QuranReadingTotals {
   /// Consecutive days meeting the goal, counted back from the window's end.
   final int currentStreak;
   final double averageMinutesPerDay;
+
+  QuranReadingTotals copyWith({
+    int? totalSeconds,
+    double? totalMinutes,
+    double? totalPoints,
+    int? daysTracked,
+    int? daysGoalMet,
+    double? averageMinutesPerDay,
+  }) => QuranReadingTotals(
+    totalSeconds: totalSeconds ?? this.totalSeconds,
+    totalMinutes: totalMinutes ?? this.totalMinutes,
+    totalPoints: totalPoints ?? this.totalPoints,
+    maxPoints: maxPoints,
+    totalAyahs: totalAyahs,
+    daysTracked: daysTracked ?? this.daysTracked,
+    daysGoalMet: daysGoalMet ?? this.daysGoalMet,
+    currentStreak: currentStreak,
+    averageMinutesPerDay: averageMinutesPerDay ?? this.averageMinutesPerDay,
+  );
 }
 
 /// Day-by-day reading over a window — `GET /quran/reading/history` and the
@@ -69,6 +88,16 @@ class QuranReadingHistory {
   /// One entry per day of the window, oldest first.
   final List<QuranDailyProgress> days;
   final QuranReadingTotals totals;
+
+  QuranReadingHistory copyWith({
+    List<QuranDailyProgress>? days,
+    QuranReadingTotals? totals,
+  }) => QuranReadingHistory(
+    from: from,
+    to: to,
+    days: days ?? this.days,
+    totals: totals ?? this.totals,
+  );
 }
 
 /// One side of a reading comparison (`data.users[]`).

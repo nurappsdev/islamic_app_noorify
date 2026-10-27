@@ -329,7 +329,7 @@ class _PickerTile extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFF9BA85B),
+                      color: context.textInkColor(const Color(0xFF9BA85B)),
                     ),
                   ),
                 ],

@@ -478,7 +478,7 @@ class _CompletedPlans extends StatelessWidget {
           Text(
             appText.planStatusComplete,
             style: TextStyle(
-              color: const Color(0xFFA1AD59),
+              color: context.textInkColor(const Color(0xFFA1AD59)),
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
             ),
@@ -703,7 +703,7 @@ class _PlanMenu extends StatelessWidget {
     return PopupMenuButton<_PlanAction>(
       tooltip: '',
       padding: EdgeInsets.zero,
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       // A narrow, tall touch area instead of the default 48 x 48 icon button,
       // which would squeeze the plan name beside it.
@@ -729,7 +729,7 @@ class _PlanMenu extends StatelessWidget {
               Icon(
                 Icons.edit_outlined,
                 size: 18.sp,
-                color: const Color(0xFF4C5A34),
+                color: context.inkColor(const Color(0xFF4C5A34)),
               ),
               SizedBox(width: 10.w),
               Text(appText.planEdit),
@@ -743,12 +743,12 @@ class _PlanMenu extends StatelessWidget {
               Icon(
                 Icons.check_circle_outline_rounded,
                 size: 18.sp,
-                color: completeColor,
+                color: context.inkColor(completeColor),
               ),
               SizedBox(width: 10.w),
               Text(
                 appText.planComplete,
-                style: const TextStyle(color: completeColor),
+                style: TextStyle(color: context.inkColor(completeColor)),
               ),
             ],
           ),
@@ -760,12 +760,12 @@ class _PlanMenu extends StatelessWidget {
               Icon(
                 Icons.delete_outline_rounded,
                 size: 18.sp,
-                color: deleteColor,
+                color: context.inkColor(deleteColor),
               ),
               SizedBox(width: 10.w),
               Text(
                 appText.planDelete,
-                style: const TextStyle(color: deleteColor),
+                style: TextStyle(color: context.inkColor(deleteColor)),
               ),
             ],
           ),
@@ -879,6 +879,9 @@ class _EmptyPlans extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
+                // The note illustration keeps its pale green in both
+                // themes, so the marks on it go black in dark mode rather
+                // than light ink that would vanish into it.
                 Icon(
                   Icons.sticky_note_2_rounded,
                   color: const Color(0xFFDDE8BA),
@@ -889,7 +892,7 @@ class _EmptyPlans extends StatelessWidget {
                   child: Text(
                     '?',
                     style: TextStyle(
-                      color: context.inkColor(Color(0xFF84945F)),
+                      color: context.onLightInkColor(Color(0xFF84945F)),
                       fontSize: 31.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -900,7 +903,7 @@ class _EmptyPlans extends StatelessWidget {
                   left: 6.w,
                   child: Icon(
                     Icons.wb_sunny_outlined,
-                    color: context.inkColor(Color(0xFF84945F)),
+                    color: context.onLightInkColor(Color(0xFF84945F)),
                     size: 25.sp,
                   ),
                 ),
@@ -912,7 +915,7 @@ class _EmptyPlans extends StatelessWidget {
             AppText.of(context).noPlansYetMessage,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF989898),
+              color: context.textInkColor(const Color(0xFF989898)),
               fontSize: 13.sp,
               height: 1.35,
             ),
@@ -1002,7 +1005,7 @@ class _PlanCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: const Color(0xFF929BB6),
+                    color: context.textInkColor(const Color(0xFF929BB6)),
                     fontSize: 12.sp,
                   ),
                 ),

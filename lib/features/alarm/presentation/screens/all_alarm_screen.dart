@@ -232,7 +232,7 @@ class _AlarmTabLabel extends StatelessWidget {
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-              color: context.inkColor(selected ? _olive : _mutedGreen),
+              color: context.textInkColor(selected ? _olive : _mutedGreen),
             ),
           ),
           SizedBox(height: 4.h),
@@ -354,11 +354,7 @@ class _AllAlarmListState extends State<_AllAlarmList> {
       return Center(
         child: Text(
           AppText.of(context).noAlarmSet,
-          style: alarmItalicStyle(
-            13.sp,
-            color: context.inkColor(_mutedGreen),
-            context: context,
-          ),
+          style: alarmItalicStyle(13.sp, color: _mutedGreen, context: context),
         ),
       );
     }
@@ -427,7 +423,7 @@ class _AlarmListItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.inkColor(color),
+                    color: context.textInkColor(color),
                   ),
                 ),
                 SizedBox(height: 3.h),
@@ -435,9 +431,7 @@ class _AlarmListItem extends StatelessWidget {
                   _subtitle(appText),
                   style: alarmItalicStyle(
                     12.sp,
-                    color: context.inkColor(
-                      alarm.enabled ? _mutedGreen : _mutedGrey,
-                    ),
+                    color: alarm.enabled ? _mutedGreen : _mutedGrey,
                     context: context,
                   ),
                 ),
@@ -494,7 +488,7 @@ class _PrayerAlarmTab extends StatelessWidget {
                     appText.noAlarmSet,
                     style: alarmItalicStyle(
                       13.sp,
-                      color: context.inkColor(_mutedGreen),
+                      color: _mutedGreen,
                       context: context,
                     ),
                   ),
@@ -531,11 +525,7 @@ class _PrayerAlarmTab extends StatelessWidget {
               ),
               child: Text(
                 appText.setAllAlarm,
-                style: alarmItalicStyle(
-                  14.sp,
-                  color: context.inkColor(_olive),
-                  context: context,
-                ),
+                style: alarmItalicStyle(14.sp, color: _olive, context: context),
               ),
             ),
           ),
@@ -679,7 +669,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                     context.localizedTimes.localize(prayerAlarm.timeWindow),
                     style: TextStyle(
                       fontSize: 9.sp,
-                      color: context.inkColor(Colors.black54),
+                      color: context.textInkColor(Colors.black54),
                     ),
                   ),
                 ),
@@ -706,7 +696,7 @@ class _PrayerAlarmRow extends StatelessWidget {
                     context.localizedTimes.localize(prayerAlarm.alarmTime),
                     style: TextStyle(
                       fontSize: 11.sp,
-                      color: context.inkColor(_olive),
+                      color: context.textInkColor(_olive),
                     ),
                   ),
                 ],

@@ -298,7 +298,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                   appText.alarmIsRinging,
                   style: alarmItalicStyle(
                     16.sp,
-                    color: context.inkColor(_olive),
+                    color: _olive,
                     context: context,
                   ),
                 ),
@@ -310,7 +310,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                   style: TextStyle(
                     fontSize: 48.sp,
                     fontWeight: FontWeight.w700,
-                    color: context.inkColor(Colors.black87),
+                    color: context.textInkColor(Colors.black87),
                   ),
                 ),
                 if (payload.label.isNotEmpty) ...[
@@ -355,7 +355,7 @@ class _AlarmRingingScreenState extends State<AlarmRingingScreen> {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: context.inkColor(_olive),
+                        color: context.textInkColor(_olive),
                       ),
                     ),
                   ),

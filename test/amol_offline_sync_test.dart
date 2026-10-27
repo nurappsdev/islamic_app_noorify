@@ -11,15 +11,31 @@ import 'package:tuhfatul_muslim/features/amol_tracking/data/models/amol_daily_da
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_local_projection.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/controllers/amol_sync.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
+import 'package:tuhfatul_muslim/features/quran/data/datasources/quran_reading_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 
 /// `GET /amol/tracker/daily`'s payload for [date], with [done] ticked: two
-/// tick-mark items under Fardh Prayer plus one entry item under Quran, whose
-/// subtext is a duration the app can't recompute.
-Map<String, dynamic> dayJson(String date, {Set<String> done = const {}}) {
+/// tick-mark items under Fardh Prayer plus one entry item under Quran, which
+/// reports [quranMinutes] read in its own `entry` block (one point per five
+/// minutes, eight at most) and a points fraction as its subtext, exactly as
+/// the live API does.
+Map<String, dynamic> dayJson(
+  String date, {
+  Set<String> done = const {},
+  int quranMinutes = 0,
+}) {
   num pts(String key) => done.contains(key) ? 1 : 0;
+  final quranPoints = (quranMinutes ~/ 5).clamp(0, 8);
   final fardh = ['fajr', 'dhuhr'];
-  final earned = fardh.fold<num>(0, (sum, key) => sum + pts(key));
+  final fardhEarned = fardh.fold<num>(0, (sum, key) => sum + pts(key));
+  // The day's total counts every pillar, as the server's own does.
+  final earned = fardhEarned + quranPoints;
   return {
     'dateFormatted': '12 Ramadan',
     'dateIso': date,
@@ -37,9 +53,9 @@ Map<String, dynamic> dayJson(String date, {Set<String> done = const {}}) {
         'pillarKey': 'fardh_prayer',
         'title': 'Fardh Prayer',
         'titleBn': 'ফরজ নামাজ',
-        'earnedPoints': earned,
+        'earnedPoints': fardhEarned,
         'maxPoints': 2,
-        'percentage': earned / 2 * 100,
+        'percentage': fardhEarned / 2 * 100,
         'formattedSubtext': '${done.where(fardh.contains).length}/2',
         'items': [
           for (final key in fardh)
@@ -57,18 +73,27 @@ Map<String, dynamic> dayJson(String date, {Set<String> done = const {}}) {
         'pillarKey': 'quran',
         'title': 'Quran',
         'titleBn': 'কুরআন',
-        'earnedPoints': done.contains('quran_tilawat') ? 3 : 0,
+        'earnedPoints': quranPoints,
         'maxPoints': 8,
-        'percentage': done.contains('quran_tilawat') ? 37.5 : 0,
-        'formattedSubtext': '1hr 37min',
+        'percentage': quranPoints / 8 * 100,
+        'formattedSubtext': '$quranPoints/8',
         'items': [
           {
             'itemKey': 'quran_tilawat',
             'title': 'Quran',
             'titleBn': 'কুরআন',
-            'points': done.contains('quran_tilawat') ? 3 : 0,
+            'points': quranPoints,
             'maxPoints': 8,
             'isCompleted': done.contains('quran_tilawat'),
+            'entry': {
+              'unit': 'minutes',
+              'entrySize': 5,
+              'entryPoints': 1,
+              'maxEntries': 8,
+              'entries': quranPoints,
+              'amount': quranMinutes,
+              'targetAmount': 40,
+            },
           },
         ],
       },
@@ -76,8 +101,13 @@ Map<String, dynamic> dayJson(String date, {Set<String> done = const {}}) {
   };
 }
 
-AmolDailyDashboard day(String date, {Set<String> done = const {}}) =>
-    AmolDailyDashboardModel.fromJson(dayJson(date, done: done));
+AmolDailyDashboard day(
+  String date, {
+  Set<String> done = const {},
+  int quranMinutes = 0,
+}) => AmolDailyDashboardModel.fromJson(
+  dayJson(date, done: done, quranMinutes: quranMinutes),
+);
 
 /// A stand-in server: holds what is logged per date, can be switched offline,
 /// and counts every call so a test can prove nothing was sent twice.
@@ -224,13 +254,124 @@ void main() {
 
       final quran = projected.pillars.last;
       expect(quran.items.first.isCompleted, isFalse);
-      expect(quran.formattedSubtext, '1hr 37min');
+      expect(quran.formattedSubtext, '0/8');
       expect(projected.pendingItemKeys, isEmpty);
+    });
+
+    test('offline Quran time crosses a shared five-minute point boundary', () {
+      final base = day('2026-10-21', quranMinutes: 4);
+      final projected = projectOfflineQuranReading(base, additionalSeconds: 60);
+
+      final quran = projected.pillars.last;
+      expect(quran.earnedPoints, 1);
+      expect(quran.entry?.amount, 5);
+      expect(quran.formattedSubtext, '1/8');
+      expect(quran.percentage, 12.5);
+      expect(projected.earnedPoints, 1);
+      expect(projected.summary.pointsText, 'Point : 1/10');
+    });
+
+    test('two earned Quran points display the full ten offline minutes', () {
+      final projected = projectOfflineQuranReading(
+        day('2026-10-21'),
+        additionalSeconds: 10 * 60,
+      );
+
+      final quran = projected.pillars.last;
+      expect(quran.earnedPoints, 2);
+      expect(quran.entry?.amount, 10);
+      expect(quran.formattedSubtext, '2/8');
+    });
+
+    test('points the server has awarded are never dropped', () {
+      // The regression: the pillar's subtext is a points fraction, so
+      // reading it as a duration made five awarded points look like zero
+      // minutes read — and the card showed 0/8.
+      final base = day('2026-10-21', quranMinutes: 25);
+      expect(base.pillars.last.earnedPoints, 5);
+
+      final projected = projectOfflineQuranReading(base, additionalSeconds: 0);
+
+      final quran = projected.pillars.last;
+      expect(quran.earnedPoints, 5);
+      expect(quran.entry?.amount, 25);
+      expect(quran.formattedSubtext, '5/8');
+      expect(projected.summary.pointsText, 'Point : 5/10');
+    });
+
+    test('a response without an entry block keeps its points too', () {
+      // An older payload: a points fraction and no duration anywhere. There
+      // is nothing to verify against, so the server's points stand.
+      final base = day('2026-10-21', quranMinutes: 25);
+      final withoutEntry = base.copyWith(
+        pillars: [
+          base.pillars.first,
+          base.pillars.last.copyWith(
+            items: [
+              for (final item in base.pillars.last.items)
+                AmolItem(
+                  itemKey: item.itemKey,
+                  title: item.title,
+                  titleBn: item.titleBn,
+                  points: item.points,
+                  maxPoints: item.maxPoints,
+                  isCompleted: item.isCompleted,
+                ),
+            ],
+          ),
+        ],
+      );
+
+      expect(
+        projectOfflineQuranReading(
+          withoutEntry,
+          additionalSeconds: 0,
+        ).pillars.last.earnedPoints,
+        5,
+      );
+      // Local reading is still credited on top of what the server awarded.
+      expect(
+        projectOfflineQuranReading(
+          withoutEntry,
+          additionalSeconds: 5 * 60,
+        ).pillars.last.earnedPoints,
+        6,
+      );
+    });
+
+    test('Quran points always agree with the duration shown on the card', () {
+      final seeded = day('2026-10-21', quranMinutes: 14);
+      final base = seeded.copyWith(
+        pillars: [
+          seeded.pillars.first,
+          // An old response could contain inconsistent values: four points
+          // need twenty minutes. Reading one more local minute must repair
+          // the displayed pair, not retain the impossible total.
+          seeded.pillars.last.copyWith(earnedPoints: 4),
+        ],
+      );
+
+      final projected = projectOfflineQuranReading(base, additionalSeconds: 60);
+
+      final quran = projected.pillars.last;
+      expect(quran.earnedPoints, 3);
+      expect(quran.entry?.amount, 15);
+
+      final repairedWithoutNewReading = projectOfflineQuranReading(
+        base,
+        additionalSeconds: 0,
+      ).pillars.last;
+      expect(repairedWithoutNewReading.earnedPoints, 2);
+      expect(repairedWithoutNewReading.entry?.amount, 14);
     });
 
     test('a blank day keeps the checklist and drops every number', () {
       final blank = blankAmolDay(
-        day('2026-10-20', done: {'fajr', 'dhuhr', 'quran_tilawat'}),
+        day(
+          '2026-10-20',
+          done: {'fajr', 'dhuhr', 'quran_tilawat'},
+          quranMinutes: 25,
+        ),
         '2026-10-21',
       );
 
@@ -245,7 +386,8 @@ void main() {
       expect(blank.pillars.first.formattedSubtext, '0/2');
       // Yesterday's Quran minutes must not be credited to the new day.
       expect(blank.pillars.last.earnedPoints, 0);
-      expect(blank.pillars.last.formattedSubtext, '');
+      expect(blank.pillars.last.entry?.amount, 0);
+      expect(blank.pillars.last.formattedSubtext, '0/8');
       expect(blank.summary.totalEarnedPoints, 0);
       expect(blank.completionPercentage, 0);
     });
@@ -264,6 +406,44 @@ void main() {
       expect(projected.completionPercentage, 100);
     });
   });
+
+  test(
+    'Amol Quran row increments locally as offline reading reaches points',
+    () async {
+      const date = '2026-10-21';
+      final progress = QuranOfflineReadingProgressStore(
+        QuranReadingLocalDataSourceImpl(),
+      );
+      final bloc = AmolDailyBloc(
+        GetAmolDaily(repository),
+        LogAmolItem(repository),
+        DeleteAmolItem(repository),
+        offlineQuranProgress: progress,
+      );
+      addTearDown(bloc.close);
+
+      final loaded = bloc.stream.firstWhere((state) => state.hasData);
+      bloc.add(const LoadAmolDaily(date));
+      await loaded;
+
+      final updated = bloc.stream.firstWhere((state) {
+        final quran = state.dashboard?.pillars.last;
+        return quran?.earnedPoints == 2 && quran?.entry?.amount == 10;
+      });
+      progress.upsert(
+        PendingQuranReading(
+          id: 'offline-ten-minutes',
+          surahNumber: 2,
+          fromAyah: 1,
+          toAyah: 5,
+          seconds: 10 * 60,
+          date: date,
+          draft: true,
+        ),
+      );
+      await updated;
+    },
+  );
 
   group('queue', () {
     test('the same item on two days is two records, not one', () async {

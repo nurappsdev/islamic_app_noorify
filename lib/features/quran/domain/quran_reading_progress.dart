@@ -70,6 +70,36 @@ class QuranDailyProgress {
   /// All of today's points across the app (dashboard `today` only).
   final double? dailyTotalPoints;
   final double? dailyTotalMaxPoints;
+
+  QuranDailyProgress copyWith({
+    int? readSeconds,
+    double? readMinutes,
+    int? remainingSeconds,
+    double? remainingMinutes,
+    double? points,
+    int? percentage,
+    bool? isGoalMet,
+    String? pointsText,
+    String? progressText,
+    double? dailyTotalPoints,
+  }) => QuranDailyProgress(
+    date: date,
+    readSeconds: readSeconds ?? this.readSeconds,
+    readMinutes: readMinutes ?? this.readMinutes,
+    goalSeconds: goalSeconds,
+    goalMinutes: goalMinutes,
+    remainingSeconds: remainingSeconds ?? this.remainingSeconds,
+    remainingMinutes: remainingMinutes ?? this.remainingMinutes,
+    points: points ?? this.points,
+    maxPoints: maxPoints,
+    percentage: percentage ?? this.percentage,
+    isGoalMet: isGoalMet ?? this.isGoalMet,
+    ayahsRead: ayahsRead,
+    pointsText: pointsText ?? this.pointsText,
+    progressText: progressText ?? this.progressText,
+    dailyTotalPoints: dailyTotalPoints ?? this.dailyTotalPoints,
+    dailyTotalMaxPoints: dailyTotalMaxPoints,
+  );
 }
 
 /// An ayah with the names of its Surah — the API's `from`/`to` of a track,

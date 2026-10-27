@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_points.dart';
 
 /// One reading report not yet accepted by `POST /quran/reading/track`.
 ///
@@ -12,21 +13,26 @@ import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 /// next launch when the app never got to end it ([launch] is not the current
 /// one).
 class PendingQuranReading {
-  const PendingQuranReading({
+  PendingQuranReading({
     required this.id,
     required this.surahNumber,
     required this.fromAyah,
     required this.toAyah,
     required this.seconds,
     required this.date,
+    int? points,
     this.draft = false,
     this.launch = '',
     this.attempts = 0,
-  });
+  }) : points = points ?? quranReadingPointsForSeconds(seconds);
 
   /// Stable for the whole session, so saving it again replaces it.
   final String id;
   final int surahNumber, fromAyah, toAyah, seconds;
+
+  /// Stored with duration and ayah progress so an offline session can be
+  /// restored without recalculating its earned reading points.
+  final int points;
 
   /// The local calendar day it was read (`YYYY-MM-DD`).
   final String date;
@@ -47,6 +53,7 @@ class PendingQuranReading {
         toAyah: toAyah,
         seconds: seconds,
         date: date,
+        points: points,
         draft: draft ?? this.draft,
         launch: launch,
         attempts: attempts ?? this.attempts,
@@ -58,6 +65,7 @@ class PendingQuranReading {
     'fromAyah': fromAyah,
     'toAyah': toAyah,
     'seconds': seconds,
+    'points': points,
     'date': date,
     'draft': draft,
     'launch': launch,
@@ -83,6 +91,7 @@ class PendingQuranReading {
       toAyah: numbers[2] as int,
       seconds: numbers[3] as int,
       date: date,
+      points: raw['points'] is int ? raw['points'] as int : null,
       draft: raw['draft'] == true,
       launch: raw['launch'] is String ? raw['launch'] as String : '',
       attempts: raw['attempts'] is int ? raw['attempts'] as int : 0,

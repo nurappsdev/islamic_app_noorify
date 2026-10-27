@@ -95,7 +95,7 @@ class _EbookReaderScreenState extends State<EbookReaderScreen> {
                       builder: (_, page, _) => Text(
                         context.localizedDigits('$page / $_totalPages'),
                         style: TextStyle(
-                          color: const Color(0xFF9BA85B),
+                          color: context.textInkColor(const Color(0xFF9BA85B)),
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w600,
                         ),
