@@ -52,6 +52,11 @@ class DioClient {
 /// Colors console output by outcome: 2xx/3xx responses print green
 /// (success), 4xx responses print yellow (warning), and network/5xx
 /// failures print red (error).
+/// Test seam: exposes the log redaction used by the request logger, so a test
+/// can prove credentials never reach logcat.
+@visibleForTesting
+Object? debugRedactLogData(Object? data) => _ColorLogInterceptor.debugRedact(data);
+
 class _ColorLogInterceptor extends Interceptor {
   static final _logger = Logger(
     printer: PrettyPrinter(
@@ -71,8 +76,8 @@ class _ColorLogInterceptor extends Interceptor {
     _log(
       Level.debug,
       '→ ${options.method} ${options.uri}\n'
-      'Headers: ${options.headers}\n'
-      'Body: ${options.data}',
+      'Headers: ${_redact(options.headers)}\n'
+      'Body: ${_redact(options.data)}',
     );
     handler.next(options);
   }
@@ -84,7 +89,7 @@ class _ColorLogInterceptor extends Interceptor {
     _log(
       level,
       '← $status ${response.requestOptions.uri}\n'
-      'Body: ${response.data}',
+      'Body: ${_redact(response.data)}',
     );
     handler.next(response);
   }
@@ -95,9 +100,47 @@ class _ColorLogInterceptor extends Interceptor {
       Level.error,
       '✗ ${err.requestOptions.method} ${err.requestOptions.uri}\n'
       '${err.message}\n'
-      'Response: ${err.response?.data}',
+      'Response: ${_redact(err.response?.data)}',
     );
     handler.next(err);
+  }
+
+  /// Credentials that must never reach logcat: an ID token or a session
+  /// token read out of a log is enough to impersonate the user, and logs get
+  /// pasted into chats and bug reports.
+  static const _secretKeys = {
+    'idtoken',
+    'id_token',
+    'accesstoken',
+    'access_token',
+    'refreshtoken',
+    'refresh_token',
+    'token',
+    'jwt',
+    'password',
+    'fcmtoken',
+    'fcm_token',
+    'authorization',
+    'x-api-key',
+  };
+
+  /// Returns [data] with every secret value replaced by its length, which is
+  /// enough to tell "empty/missing" from "present" while debugging.
+  static Object? debugRedact(Object? data) => _redact(data);
+
+  static Object? _redact(Object? data) {
+    if (data is Map) {
+      return {
+        for (final entry in data.entries)
+          entry.key: _secretKeys.contains(
+                entry.key.toString().toLowerCase(),
+              )
+              ? '<redacted ${entry.value?.toString().length ?? 0} chars>'
+              : _redact(entry.value),
+      };
+    }
+    if (data is List) return data.map(_redact).toList();
+    return data;
   }
 
   /// On Android, adb/logcat truncates any single log line around ~1000

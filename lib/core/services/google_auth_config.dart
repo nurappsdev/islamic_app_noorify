@@ -22,10 +22,10 @@ class GoogleAuthConfig {
     defaultValue: _defaultServerClientId,
   );
 
-  /// TODO(google-auth): create the Web OAuth client in Google Cloud Console
-  /// and paste its ID here. Format:
-  /// `104828246708-xxxxxxxxxxxxxxxx.apps.googleusercontent.com`.
-  static const String _defaultServerClientId = '';
+  /// The Web OAuth client of project `tuhfatulmuslim-3bb03`. The backend must
+  /// verify incoming ID tokens against this exact value (`aud`).
+  static const String _defaultServerClientId =
+      '104828246708-r38gvkpfgtqduq754bv1o6fhmd8ckok4.apps.googleusercontent.com';
 
   /// The **iOS** OAuth client. Unused on Android, required on iOS.
   ///

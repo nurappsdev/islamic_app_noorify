@@ -48,14 +48,28 @@ X-API-Key: <the same key every other endpoint already requires>
 ```jsonc
 {
   "idToken": "<Google ID token — a JWT>",
-  "fcmToken": "<optional; this device's push token>",
-  "platform": "android"        // only sent when fcmToken is present
+  "platform": "android",             // always sent
+  "fcmToken": "<this device's push token>",
+  "deviceId": "<stable per-install UUID>",
+  "appVersion": "1.0.8+8"            // "<version>+<buildNumber>"
 }
 ```
 
-Only `idToken` is ever present on every call. **Trust nothing but `idToken`** —
-the e-mail, name and picture must be read out of the verified token, never
-from the request body.
+`idToken` and `platform` are always present. The other three are omitted
+entirely (not sent as `null` or `""`) when the device cannot supply them —
+e.g. `fcmToken` before notification permission is granted — so **treat them
+as optional** and do not make them required in the Zod schema.
+
+`deviceId` is a random UUID generated on first launch and kept in the app's
+local storage. It identifies the *install*, not the hardware: it survives
+sign-out and app restarts, and changes on reinstall. Android's hardware IDs
+are deliberately not used (`Build.ID` is not unique, and `ANDROID_ID` is no
+longer exposed to apps).
+
+**Trust nothing but `idToken`** — the e-mail, name and picture must be read
+out of the verified token, never from the request body. `deviceId` and
+`appVersion` are client-supplied and unverified, so use them for telemetry
+and device bookkeeping, never for authorization.
 
 ## 3. Response — identical envelope to `/auth/login`
 

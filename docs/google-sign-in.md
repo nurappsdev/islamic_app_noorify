@@ -166,10 +166,16 @@ missing route rather than a rejected request.
 ```jsonc
 {
   "idToken": "<Google ID token (JWT)>",
-  "fcmToken": "<optional, device push token>",
-  "platform": "android" | "ios"   // only sent alongside fcmToken
+  "platform": "android" | "ios",   // always sent
+  "fcmToken": "<device push token>",
+  "deviceId": "<stable per-install UUID>",
+  "appVersion": "1.0.8+8"
 }
 ```
+
+The last three are omitted when unavailable rather than sent empty.
+`deviceId` / `appVersion` come from `DeviceIdentityService` and are filled in
+by `AccountRepositoryImpl.googleSignIn`, so every entry point sends them.
 
 ### Response — identical envelope to `/auth/login`
 

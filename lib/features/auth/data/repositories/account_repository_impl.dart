@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/services/device_identity_service.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -90,10 +91,37 @@ class AccountRepositoryImpl implements AccountRepository {
   }
 
   @override
-  Future<Either<Failure, AuthUser>> googleSignIn(GoogleSignInParams params) {
+  Future<Either<Failure, AuthUser>> googleSignIn(
+    GoogleSignInParams params,
+  ) async {
+    final result = await _googleSignIn(params);
+    if (result.isLeft()) {
+      // The ID token was spent on a request that failed, so drop the cached
+      // Google session: retrying with the same stale credential would fail
+      // the same way, and the user would be stuck until they reinstalled.
+      await GoogleAuthService.instance.clearStaleSession();
+    }
+    return result;
+  }
+
+  Future<Either<Failure, AuthUser>> _googleSignIn(GoogleSignInParams params) {
     return _guard(() async {
+      // Filled in here so every entry point (sign-in, sign-up, the guest
+      // prompt) sends them without having to gather them itself. Values
+      // already on [params] win, which is what tests use.
+      final identity = await DeviceIdentityService.instance.describe();
       final result = await _remote.googleSignIn(
-        GoogleSignInRequestModel.fromParams(params),
+        GoogleSignInRequestModel.fromParams(
+          GoogleSignInParams(
+            idToken: params.idToken,
+            email: params.email,
+            displayName: params.displayName,
+            photoUrl: params.photoUrl,
+            fcmToken: params.fcmToken,
+            deviceId: params.deviceId ?? identity.deviceId,
+            appVersion: params.appVersion ?? identity.appVersion,
+          ),
+        ),
       );
       // Same Hive key as e-mail sign-in, so every protected call, the token
       // refresh and logout all keep working unchanged.

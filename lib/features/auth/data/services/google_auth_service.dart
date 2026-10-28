@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:tuhfatul_muslim/core/services/google_auth_config.dart';
@@ -73,7 +74,25 @@ class GoogleAuthService {
     final googleSignIn = GoogleSignIn.instance;
     final GoogleSignInAccount account;
     if (googleSignIn.supportsAuthenticate()) {
-      account = await googleSignIn.authenticate();
+      try {
+        account = await googleSignIn.authenticate();
+      } on GoogleSignInException catch (e) {
+        // The framework reports a failed credential request only as a generic
+        // error, so log the real code here: without it the cause (usually an
+        // unregistered signing certificate) is invisible. Never log the token
+        // itself — only the failure metadata.
+        debugPrint(
+          '[GoogleSignIn] authenticate failed: code=${e.code} '
+          'description=${e.description} details=${e.details}',
+        );
+        // A genuine cancel leaves nothing behind, but any other failure can
+        // strand a half-built Credential Manager session that makes every
+        // retry fail the same way until it is cleared.
+        if (e.code != GoogleSignInExceptionCode.canceled) {
+          await clearStaleSession();
+        }
+        rethrow;
+      }
     } else {
       final lightweight = await googleSignIn.attemptLightweightAuthentication();
       if (lightweight == null) {
@@ -121,6 +140,18 @@ class GoogleAuthService {
         return appText.googleAuthErrorInterrupted;
       default:
         return error.description ?? appText.googleAuthErrorGeneric;
+    }
+  }
+
+  /// Drops any cached Credential Manager session so the next attempt starts
+  /// clean. Used after a failed sign-in, and after the backend rejects a
+  /// token — otherwise the SDK keeps handing back the same stale credential.
+  Future<void> clearStaleSession() async {
+    try {
+      await GoogleSignIn.instance.signOut();
+      debugPrint('[GoogleSignIn] cleared cached session');
+    } catch (e) {
+      debugPrint('[GoogleSignIn] could not clear cached session: $e');
     }
   }
 

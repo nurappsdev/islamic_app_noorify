@@ -9,6 +9,8 @@ class GoogleSignInParams {
     this.displayName,
     this.photoUrl,
     this.fcmToken,
+    this.deviceId,
+    this.appVersion,
   });
 
   /// The signed JWT from Google. The backend verifies this; nothing else in
@@ -24,6 +26,12 @@ class GoogleSignInParams {
   /// This device's current FCM token, sent along so the backend can
   /// associate it with the signed-in account.
   final String? fcmToken;
+
+  /// Stable per-install identifier and the running app version, both from
+  /// [DeviceIdentityService]. `null` when the platform could not supply them,
+  /// in which case the field is simply left out of the request.
+  final String? deviceId;
+  final String? appVersion;
 
   /// Returns an error message, or `null` when the input looks valid.
   String? validate() {
