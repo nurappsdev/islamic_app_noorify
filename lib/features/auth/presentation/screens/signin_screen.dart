@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -195,6 +196,9 @@ class _SignInViewState extends State<_SignInView> {
   void _onLoginState(BuildContext context, LoginState state) {
     switch (state.status) {
       case LoginStatus.success:
+        // Hand the credentials to Google Password Manager / iCloud Keychain /
+        // any other autofill service, so next time they are one tap away.
+        TextInput.finishAutofillContext(shouldSave: true);
         // Token is already stored in Hive by the repository at this point.
         skipAuthGateNotifier.value = true;
         unawaited(saveAppPreferences());
@@ -300,66 +304,68 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   SizedBox(height: 24.h),
                   LocalizedFormScope(
-                    child: Form(
-                      key: _formKey,
-                      // Disabled here, not onUserInteraction: Form tracks
-                      // "has the user interacted" at the form level, so
-                      // onUserInteraction on the Form re-validates every
-                      // field once ANY field is touched. Each field below
-                      // instead validates only itself via its own key.
-                      autovalidateMode: AutovalidateMode.disabled,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextFormField(
-                            key: _emailFieldKey,
-                            controller: _emailController,
-                            validator: _validateEmail,
-                            onChanged: (_) =>
-                                _emailFieldKey.currentState?.validate(),
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [
-                              AutofillHints.email,
-                              AutofillHints.telephoneNumber,
-                            ],
-                            decoration: _fieldDecoration(
-                              hint: appText.emailOrPhoneHint,
-                              prefixIcon: Icons.mark_email_unread_outlined,
+                    child: AutofillGroup(
+                      child: Form(
+                        key: _formKey,
+                        // Disabled here, not onUserInteraction: Form tracks
+                        // "has the user interacted" at the form level, so
+                        // onUserInteraction on the Form re-validates every
+                        // field once ANY field is touched. Each field below
+                        // instead validates only itself via its own key.
+                        autovalidateMode: AutovalidateMode.disabled,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              key: _emailFieldKey,
+                              controller: _emailController,
+                              validator: _validateEmail,
+                              onChanged: (_) =>
+                                  _emailFieldKey.currentState?.validate(),
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [
+                                AutofillHints.username,
+                                AutofillHints.email,
+                              ],
+                              decoration: _fieldDecoration(
+                                hint: appText.emailOrPhoneHint,
+                                prefixIcon: Icons.mark_email_unread_outlined,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 8.h),
-                          TextFormField(
-                            key: _passwordFieldKey,
-                            controller: _passwordController,
-                            validator: _validatePassword,
-                            onChanged: (_) =>
-                                _passwordFieldKey.currentState?.validate(),
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.done,
-                            autofillHints: const [AutofillHints.password],
-                            onFieldSubmitted: (_) {
-                              if (isLoading) return;
-                              _signIn();
-                            },
-                            decoration: _fieldDecoration(
-                              hint: appText.passwordHint,
-                              prefixIcon: Icons.key_outlined,
-                              suffixIcon: IconButton(
-                                tooltip: appText.togglePassword,
-                                onPressed: () =>
-                                    _auth.add(const ToggleObscurePassword()),
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  color: AppColor.authIcon,
-                                  size: 18.sp,
+                            SizedBox(height: 8.h),
+                            TextFormField(
+                              key: _passwordFieldKey,
+                              controller: _passwordController,
+                              validator: _validatePassword,
+                              onChanged: (_) =>
+                                  _passwordFieldKey.currentState?.validate(),
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              autofillHints: const [AutofillHints.password],
+                              onFieldSubmitted: (_) {
+                                if (_isLoading) return;
+                                _signIn();
+                              },
+                              decoration: _fieldDecoration(
+                                hint: appText.passwordHint,
+                                prefixIcon: Icons.key_outlined,
+                                suffixIcon: IconButton(
+                                  tooltip: appText.togglePassword,
+                                  onPressed: () =>
+                                      _auth.add(const ToggleObscurePassword()),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppColor.authIcon,
+                                    size: 18.sp,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -302,6 +303,8 @@ class _SignupViewState extends State<_SignupView> {
         return;
       }
     }
+    // Offer the new credentials to the device's password manager.
+    TextInput.finishAutofillContext(shouldSave: true);
     skipAuthGateNotifier.value = true;
     unawaited(saveAppPreferences());
     unawaited(ProfileService.instance.refresh());
@@ -494,10 +497,12 @@ class _SignupViewState extends State<_SignupView> {
     Widget? suffixIcon,
     Key? fieldKey,
     ValueChanged<String>? onChanged,
+    Iterable<String>? autofillHints,
   }) {
     return TextFormField(
       key: fieldKey,
       controller: controller,
+      autofillHints: autofillHints,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       obscureText: obscureText,
@@ -642,153 +647,159 @@ class _SignupViewState extends State<_SignupView> {
                     40.h,
               ),
               child: LocalizedFormScope(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          style: IconButton.styleFrom(
-                            backgroundColor: context.surfaceColor(
-                              Color(0xFFFFFAD7),
-                            ),
-                            foregroundColor: context.inkColor(Colors.black),
-                            fixedSize: Size(36.r, 36.r),
-                          ),
-                          onPressed: () => Navigator.of(context).maybePop(),
-                          icon: Icon(Icons.arrow_back_ios_new, size: 15.sp),
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        appText.createAccount,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: context.inkColor(AppColor.authLogo),
-                          fontSize: 21.sp,
-                          fontWeight: FontWeight.w600,
-                          height: 1.15,
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        appText.signUpSubtitle,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: context.inkColor(AppColor.authLogo),
-                          fontSize: 15.sp,
-                          height: 1.35,
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                      _authField(
-                        controller: _nameController,
-                        hint: appText.enterYourName,
-                        icon: Icons.person_outline,
-                        validator: _validateName,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      SizedBox(height: 9.h),
-                      _authField(
-                        controller: _emailController,
-                        hint: appText.emailAddress,
-                        icon: Icons.mail_outline,
-                        validator: _validateEmail,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      SizedBox(height: 9.h),
-                      _phoneField(appText),
-                      SizedBox(height: 9.h),
-                      _genderField(appText),
-                      SizedBox(height: 9.h),
-                      _authField(
-                        controller: _passwordController,
-                        hint: appText.passwordHint,
-                        icon: Icons.key_outlined,
-                        obscureText: _obscurePassword,
-                        validator: _validatePassword,
-                        // Re-check the confirm field if it was already filled.
-                        onChanged: (_) {
-                          if (_confirmPasswordController.text.isNotEmpty) {
-                            _confirmFieldKey.currentState?.validate();
-                          }
-                        },
-                        textInputAction: TextInputAction.next,
-                        suffixIcon: _passwordVisibilityButton(
-                          appText: appText,
-                          obscure: _obscurePassword,
-                          onPressed: () =>
-                              _auth.add(const ToggleObscurePassword()),
-                        ),
-                      ),
-                      SizedBox(height: 9.h),
-                      _authField(
-                        controller: _confirmPasswordController,
-                        hint: appText.confirmPassword,
-                        icon: Icons.key_outlined,
-                        obscureText: _obscureConfirm,
-                        fieldKey: _confirmFieldKey,
-                        validator: _validateConfirmPassword,
-                        textInputAction: TextInputAction.done,
-                        suffixIcon: _passwordVisibilityButton(
-                          appText: appText,
-                          obscure: _obscureConfirm,
-                          onPressed: () =>
-                              _auth.add(const ToggleObscureConfirm()),
-                        ),
-                      ),
-                      SizedBox(height: 28.h),
-                      // Facebook is still a stub, so the section shows
-                      // Google only.
-                      _socialSignupSection(appText),
-                      SizedBox(height: 28.h),
-                      _termsRow(appText),
-                      SizedBox(height: 12.h),
-                      AuthButton(
-                        label: appText.createAccount,
-                        isLoading: _isLoading,
-                        height: 60.h,
-                        onPressed: _termsAccepted ? _createAccount : null,
-                      ),
-                      SizedBox(height: 10.h),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4.w,
-                        children: [
-                          Text(
-                            appText.alreadyHaveAccount,
-                            style: TextStyle(
-                              color: context.inkColor(AppColor.authLogo),
-                              fontSize: 12.sp,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(
-                              context,
-                            ).pushReplacementNamed(RouteNames.signIn),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 2.w),
-                              minimumSize: Size(0, 30.h),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: context.inkColor(
-                                AppColor.createAccount,
+                child: AutofillGroup(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            style: IconButton.styleFrom(
+                              backgroundColor: context.surfaceColor(
+                                Color(0xFFFFFAD7),
                               ),
+                              foregroundColor: context.inkColor(Colors.black),
+                              fixedSize: Size(36.r, 36.r),
                             ),
-                            child: Text(
-                              appText.logIn,
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            icon: Icon(Icons.arrow_back_ios_new, size: 15.sp),
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          appText.createAccount,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: context.inkColor(AppColor.authLogo),
+                            fontSize: 21.sp,
+                            fontWeight: FontWeight.w600,
+                            height: 1.15,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          appText.signUpSubtitle,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: context.inkColor(AppColor.authLogo),
+                            fontSize: 15.sp,
+                            height: 1.35,
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        _authField(
+                          controller: _nameController,
+                          hint: appText.enterYourName,
+                          icon: Icons.person_outline,
+                          validator: _validateName,
+                          autofillHints: const [AutofillHints.name],
+                          textInputAction: TextInputAction.next,
+                        ),
+                        SizedBox(height: 9.h),
+                        _authField(
+                          controller: _emailController,
+                          hint: appText.emailAddress,
+                          icon: Icons.mail_outline,
+                          validator: _validateEmail,
+                          autofillHints: const [AutofillHints.newUsername],
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                        ),
+                        SizedBox(height: 9.h),
+                        _phoneField(appText),
+                        SizedBox(height: 9.h),
+                        _genderField(appText),
+                        SizedBox(height: 9.h),
+                        _authField(
+                          controller: _passwordController,
+                          hint: appText.passwordHint,
+                          icon: Icons.key_outlined,
+                          obscureText: _obscurePassword,
+                          validator: _validatePassword,
+                          autofillHints: const [AutofillHints.newPassword],
+                          // Re-check the confirm field if it was already filled.
+                          onChanged: (_) {
+                            if (_confirmPasswordController.text.isNotEmpty) {
+                              _confirmFieldKey.currentState?.validate();
+                            }
+                          },
+                          textInputAction: TextInputAction.next,
+                          suffixIcon: _passwordVisibilityButton(
+                            appText: appText,
+                            obscure: _obscurePassword,
+                            onPressed: () =>
+                                _auth.add(const ToggleObscurePassword()),
+                          ),
+                        ),
+                        SizedBox(height: 9.h),
+                        _authField(
+                          controller: _confirmPasswordController,
+                          hint: appText.confirmPassword,
+                          icon: Icons.key_outlined,
+                          obscureText: _obscureConfirm,
+                          fieldKey: _confirmFieldKey,
+                          validator: _validateConfirmPassword,
+                          autofillHints: const [AutofillHints.newPassword],
+                          textInputAction: TextInputAction.done,
+                          suffixIcon: _passwordVisibilityButton(
+                            appText: appText,
+                            obscure: _obscureConfirm,
+                            onPressed: () =>
+                                _auth.add(const ToggleObscureConfirm()),
+                          ),
+                        ),
+                        SizedBox(height: 28.h),
+                        // TODO: re-enable "Sign Up with Others" (Google / Facebook)
+                        // when social sign-up is ready.
+                        // _socialSignupSection(appText),
+                        // SizedBox(height: 28.h),
+                        _termsRow(appText),
+                        SizedBox(height: 12.h),
+                        AuthButton(
+                          label: appText.createAccount,
+                          isLoading: _isLoading,
+                          height: 60.h,
+                          onPressed: _termsAccepted ? _createAccount : null,
+                        ),
+                        SizedBox(height: 10.h),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4.w,
+                          children: [
+                            Text(
+                              appText.alreadyHaveAccount,
                               style: TextStyle(
+                                color: context.inkColor(AppColor.authLogo),
                                 fontSize: 12.sp,
-                                decoration: TextDecoration.underline,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            TextButton(
+                              onPressed: () => Navigator.of(
+                                context,
+                              ).pushReplacementNamed(RouteNames.signIn),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.symmetric(horizontal: 2.w),
+                                minimumSize: Size(0, 30.h),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                foregroundColor: context.inkColor(
+                                  AppColor.createAccount,
+                                ),
+                              ),
+                              child: Text(
+                                appText.logIn,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
