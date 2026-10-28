@@ -5,7 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -17,6 +19,7 @@ import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
@@ -218,35 +221,14 @@ class _SignInViewState extends State<_SignInView> {
     Navigator.of(context).pushNamed(RouteNames.forgotPassword);
   }
 
-  /// "Continue with Google", styled to sit beside [AuthButton] as the
-  /// secondary action rather than competing with it.
+  /// Google's branded button, matching [AuthButton]'s height and radius so
+  /// the two read as one stack of actions.
   Widget _googleSignInButton(AppText appText, bool isLoading) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52.h,
-      child: OutlinedButton.icon(
-        key: const Key('signin_google_button'),
-        onPressed: isLoading ? null : _signInWithGoogle,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.inkColor(AppColor.authLogo),
-          side: BorderSide(color: context.lineColor(AppColor.authFieldBorder)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-        ),
-        icon: Text(
-          'G',
-          style: TextStyle(
-            color: const Color(0xFF4285F4),
-            fontSize: 19.sp,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        label: Text(
-          appText.google,
-          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-        ),
-      ),
+    return GoogleSignInButton(
+      key: const Key('signin_google_button'),
+      label: AuthPromptTexts.continueWithGoogle.resolve(languageOf(context)),
+      isLoading: isLoading,
+      onPressed: _signInWithGoogle,
     );
   }
 

@@ -7,7 +7,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -587,11 +590,16 @@ class _SignupViewState extends State<_SignupView> {
                 color: context.lineColor(AppColor.authFieldBorder),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: Text(
-                appText.signUpWithOthers,
-                style: TextStyle(color: AppColor.primary, fontSize: 13.sp),
+            // Flexible, because the Bangla label is wider than the English
+            // one and overflowed the row at narrow widths.
+            Flexible(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                child: Text(
+                  appText.signUpWithOthers,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColor.primary, fontSize: 13.sp),
+                ),
               ),
             ),
             Expanded(
@@ -602,48 +610,14 @@ class _SignupViewState extends State<_SignupView> {
           ],
         ),
         SizedBox(height: 16.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _socialIconButton(
-              key: const Key('signup_google_button'),
-              tooltip: appText.google,
-              onPressed: _isLoading ? null : _signUpWithGoogle,
-              child: Text(
-                'G',
-                style: TextStyle(
-                  color: const Color(0xFF4285F4),
-                  fontSize: 23.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
+        GoogleSignInButton(
+          key: const Key('signup_google_button'),
+          label: AuthPromptTexts.signUpWithGoogle.resolve(languageOf(context)),
+          isLoading: _isLoading,
+          height: 60.h,
+          onPressed: _signUpWithGoogle,
         ),
       ],
-    );
-  }
-
-  Widget _socialIconButton({
-    required Key key,
-    required String tooltip,
-    required VoidCallback? onPressed,
-    required Widget child,
-  }) {
-    return SizedBox.square(
-      dimension: 40.r,
-      child: OutlinedButton(
-        key: key,
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          shape: const CircleBorder(),
-          padding: EdgeInsets.zero,
-          side: BorderSide(color: context.lineColor(AppColor.authFieldBorder)),
-          foregroundColor: AppColor.primary,
-          backgroundColor: context.surfaceColor(Colors.white),
-        ),
-        child: Tooltip(message: tooltip, child: child),
-      ),
     );
   }
 

@@ -69,6 +69,11 @@ class AuthPromptTexts {
     en: 'Continue with Google',
     bn: 'গুগল দিয়ে চালিয়ে যান',
   );
+
+  static const signUpWithGoogle = LocalizedText(
+    en: 'Sign up with Google',
+    bn: 'গুগল দিয়ে সাইন আপ করুন',
+  );
 }
 
 /// Every feature that asks a guest to sign in, keyed by [AuthFeature.id].

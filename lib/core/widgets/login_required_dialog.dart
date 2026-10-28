@@ -14,6 +14,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
 import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -321,45 +322,12 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                       ),
                     ],
                     SizedBox(height: 12.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        key: const Key('login_required_google_button'),
-                        onPressed: _googleBusy ? null : _signInWithGoogle,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size.fromHeight(48.h),
-                          foregroundColor: ink,
-                          side: BorderSide(
-                            color: AppColor.primary.withValues(alpha: .45),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16.r),
-                          ),
-                        ),
-                        icon: _googleBusy
-                            ? SizedBox(
-                                width: 18.sp,
-                                height: 18.sp,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'G',
-                                style: TextStyle(
-                                  color: const Color(0xFF4285F4),
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                        label: Text(
-                          widget.googleLabel,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                    GoogleSignInButton(
+                      key: const Key('login_required_google_button'),
+                      label: widget.googleLabel,
+                      isLoading: _googleBusy,
+                      height: 48.h,
+                      onPressed: _signInWithGoogle,
                     ),
                   ],
                 ),
