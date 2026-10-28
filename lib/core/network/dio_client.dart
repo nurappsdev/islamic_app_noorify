@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 
@@ -40,6 +41,7 @@ class DioClient {
       'X-API-Key': ApiConstants.apiKey,
     });
 
+    dio.interceptors.add(const LanguageHeaderInterceptor());
     if (kDebugMode) {
       dio.interceptors.add(_ColorLogInterceptor());
     }

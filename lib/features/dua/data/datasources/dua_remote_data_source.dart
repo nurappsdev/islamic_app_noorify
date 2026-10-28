@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
@@ -60,7 +61,8 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
       },
       validateStatus: (status) => status != null && status < 500,
     );
-    final dio = Dio(options);
+    final dio = Dio(options)
+      ..interceptors.add(const LanguageHeaderInterceptor());
     if (kDebugMode) dio.interceptors.add(_DuaApiLogInterceptor());
     return dio;
   }

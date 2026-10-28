@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
@@ -56,7 +57,8 @@ class ZikrRemoteDataSourceImpl implements ZikrRemoteDataSource {
       },
       validateStatus: (status) => status != null && status < 500,
     );
-    final dio = Dio(options);
+    final dio = Dio(options)
+      ..interceptors.add(const LanguageHeaderInterceptor());
     // The endpoint is on the same host as the app's sign-in API, so the
     // stored access token can be verified by the Zikr backend. It is attached
     // by [_options] below.
