@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
@@ -10,6 +11,8 @@ import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/google_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
@@ -29,9 +32,15 @@ class SignInScreen extends StatelessWidget {
       providers: [
         BlocProvider<SignInBloc>(create: (_) => SignInBloc()),
         BlocProvider<LoginBloc>(
-          create: (_) => LoginBloc(
-            LoginUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
-          ),
+          create: (_) {
+            final repository = AccountRepositoryImpl(
+              AuthRemoteDataSourceImpl(),
+            );
+            return LoginBloc(
+              LoginUser(repository),
+              GoogleSignInUser(repository),
+            );
+          },
         ),
       ],
       child: const _SignInView(),
@@ -56,6 +65,10 @@ class _SignInViewState extends State<_SignInView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  /// `true` only while the Google account picker is on screen; the REST
+  /// exchange that follows is tracked by [LoginBloc] like any other sign-in.
+  bool _googleBusy = false;
+
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
 
@@ -65,7 +78,9 @@ class _SignInViewState extends State<_SignInView> {
   /// "Tried to listen to a value exposed with provider, from outside of the
   /// widget tree".
   bool get _isLoading =>
-      _authState.isLoading || context.watch<LoginBloc>().state.isLoading;
+      _authState.isLoading ||
+      _googleBusy ||
+      context.watch<LoginBloc>().state.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
 
   @override
@@ -138,6 +153,42 @@ class _SignInViewState extends State<_SignInView> {
     );
   }
 
+  /// Runs the Google account picker, then hands the ID token to [LoginBloc]
+  /// to be exchanged for an app session. A cancelled picker is silent.
+  Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    final appText = AppText.of(context);
+    final loginBloc = context.read<LoginBloc>();
+
+    setState(() => _googleBusy = true);
+    try {
+      final result = await GoogleAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        GoogleLoginSubmitted(
+          idToken: result.idToken,
+          email: result.email,
+          displayName: result.displayName,
+          photoUrl: result.photoUrl,
+          fcmToken: fcmToken,
+        ),
+      );
+    } on GoogleSignInException catch (e) {
+      _showMessage(GoogleAuthService.messageFor(e, appText));
+    } catch (_) {
+      _showMessage(appText.googleAuthErrorGeneric);
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted || message.trim().isEmpty) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _onLoginState(BuildContext context, LoginState state) {
     switch (state.status) {
       case LoginStatus.success:
@@ -165,6 +216,38 @@ class _SignInViewState extends State<_SignInView> {
 
   void _openEmailVerification() {
     Navigator.of(context).pushNamed(RouteNames.forgotPassword);
+  }
+
+  /// "Continue with Google", styled to sit beside [AuthButton] as the
+  /// secondary action rather than competing with it.
+  Widget _googleSignInButton(AppText appText, bool isLoading) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52.h,
+      child: OutlinedButton.icon(
+        key: const Key('signin_google_button'),
+        onPressed: isLoading ? null : _signInWithGoogle,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: context.inkColor(AppColor.authLogo),
+          side: BorderSide(color: context.lineColor(AppColor.authFieldBorder)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+        icon: Text(
+          'G',
+          style: TextStyle(
+            color: const Color(0xFF4285F4),
+            fontSize: 19.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        label: Text(
+          appText.google,
+          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
   }
 
   void _continueAsGuest() {
@@ -323,6 +406,8 @@ class _SignInViewState extends State<_SignInView> {
                     isLoading: isLoading,
                     onPressed: _signIn,
                   ),
+                  SizedBox(height: 18.h),
+                  _googleSignInButton(appText, isLoading),
                   SizedBox(height: 14.h),
                   Wrap(
                     alignment: WrapAlignment.center,

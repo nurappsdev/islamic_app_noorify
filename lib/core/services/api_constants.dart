@@ -32,6 +32,11 @@ class ApiConstants {
   static const String verifyEmailEndPoint = "/auth/verify-otp";
   static const String resendOtpEndPoint = "/auth/resend-otp";
   static const String signInEndPoint = "/auth/login";
+
+  /// `POST`: exchanges a Google ID token for an app session. Body:
+  /// `{ "idToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
+  /// Responds with the same envelope as [signInEndPoint].
+  static const String googleSignInEndPoint = "/auth/google";
   static const String forgotPasswordPoint = "/auth/forgot-password";
   static const String resetPasswordEndPoint = "/auth/reset-password";
 

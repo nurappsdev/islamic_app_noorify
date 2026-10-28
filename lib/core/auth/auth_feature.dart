@@ -65,6 +65,10 @@ class AuthPromptTexts {
 
   static const notNow = LocalizedText(en: 'Not now', bn: 'এখন নয়');
   static const signIn = LocalizedText(en: 'Sign in', bn: 'সাইন-ইন');
+  static const continueWithGoogle = LocalizedText(
+    en: 'Continue with Google',
+    bn: 'গুগল দিয়ে চালিয়ে যান',
+  );
 }
 
 /// Every feature that asks a guest to sign in, keyed by [AuthFeature.id].

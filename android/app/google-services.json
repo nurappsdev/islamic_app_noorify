@@ -12,7 +12,16 @@
           "package_name": "com.tuhfatulmuslim.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "104828246708-sbspq2oe1jbq834bv88ubd1ojkg17kvm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tuhfatulmuslim.app",
+            "certificate_hash": "d13cf6629b2baffca740c9666c7e995538a985b8"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCFbIH_uCTCfh6Zs_kgbFH2BZ7l97E-oAs"

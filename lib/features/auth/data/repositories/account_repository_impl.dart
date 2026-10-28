@@ -4,13 +4,16 @@ import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/forgot_password_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/google_sign_in_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/register_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/resend_otp_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/reset_password_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/verify_otp_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/login_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
@@ -87,7 +90,34 @@ class AccountRepositoryImpl implements AccountRepository {
   }
 
   @override
-  Future<void> logout() => _local.clearToken();
+  Future<Either<Failure, AuthUser>> googleSignIn(GoogleSignInParams params) {
+    return _guard(() async {
+      final result = await _remote.googleSignIn(
+        GoogleSignInRequestModel.fromParams(params),
+      );
+      // Same Hive key as e-mail sign-in, so every protected call, the token
+      // refresh and logout all keep working unchanged.
+      await _local.cacheToken(result.token);
+      final email = (params.email ?? '').trim();
+      return result.user ??
+          AuthUser(
+            id: '',
+            name: params.displayName?.trim().isNotEmpty == true
+                ? params.displayName!.trim()
+                : email.split('@').first,
+            email: email,
+          );
+    });
+  }
+
+  @override
+  Future<void> logout() async {
+    await _local.clearToken();
+    // Also drop the Google SDK's own cached account, so the next sign-in
+    // shows the picker instead of silently reusing the last one. A no-op for
+    // sessions that never used Google.
+    await GoogleAuthService.instance.signOut();
+  }
 
   @override
   String? get authToken => _local.getToken();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -6,7 +8,18 @@ import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
+import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// Whether a login token is stored (the user is signed in, not a guest).
@@ -26,8 +39,13 @@ Future<bool> requireLogin(
 }) async {
   if (isUserSignedIn) return true;
   await showLoginRequiredDialog(context, feature: feature);
-  return false;
+  // Signing in with Google happens inside the dialog, so the gated feature
+  // can go ahead straight away rather than making the user tap again.
+  return isUserSignedIn;
 }
+
+/// What the user picked in the sign-in prompt.
+enum _LoginChoice { notNow, signIn, googleSignedIn }
 
 /// Shows the sign-in prompt for [feature] and, when the user picks "Sign in",
 /// opens Sign In. Returns whether they picked it.
@@ -39,7 +57,7 @@ Future<bool> showLoginRequiredDialog(
   final config = AuthFeatures.of(feature);
   final notNow = AuthPromptTexts.notNow.resolve(language);
   final navigator = Navigator.of(context);
-  final login = await showGeneralDialog<bool>(
+  final choice = await showGeneralDialog<_LoginChoice>(
     context: context,
     barrierDismissible: true,
     barrierLabel: notNow,
@@ -61,31 +79,108 @@ Future<bool> showLoginRequiredDialog(
             message: config.messageFor(language),
             noLabel: notNow,
             loginLabel: AuthPromptTexts.signIn.resolve(language),
+            googleLabel: AuthPromptTexts.continueWithGoogle.resolve(language),
+            language: language,
           ),
         ),
       );
     },
   );
-  if (login != true) return false;
+  // Already signed in via Google inside the dialog — nothing left to open.
+  if (choice == _LoginChoice.googleSignedIn) return true;
+  if (choice != _LoginChoice.signIn) return false;
   navigator.pushNamed(RouteNames.signIn);
   return true;
 }
 
-class _LoginRequiredCard extends StatelessWidget {
+class _LoginRequiredCard extends StatefulWidget {
   const _LoginRequiredCard({
     required this.title,
     required this.message,
     required this.noLabel,
     required this.loginLabel,
+    required this.googleLabel,
+    required this.language,
   });
 
   final String title;
   final String message;
   final String noLabel;
   final String loginLabel;
+  final String googleLabel;
+  final AppLanguage language;
+
+  @override
+  State<_LoginRequiredCard> createState() => _LoginRequiredCardState();
+}
+
+class _LoginRequiredCardState extends State<_LoginRequiredCard> {
+  bool _googleBusy = false;
+
+  /// Shown inside the card: a snackbar would be drawn behind the dialog's
+  /// own barrier, where the user could not read it.
+  String? _googleError;
+
+  /// Signs in with Google without leaving the prompt. On success the dialog
+  /// closes reporting [_LoginChoice.googleSignedIn], so the feature the user
+  /// originally tapped can continue.
+  Future<void> _signInWithGoogle() async {
+    if (_googleBusy) return;
+    setState(() {
+      _googleBusy = true;
+      _googleError = null;
+    });
+    final navigator = Navigator.of(context);
+    final appText = AppText.forLanguage(widget.language);
+
+    try {
+      final google = await GoogleAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      final outcome = await AccountRepositoryImpl(AuthRemoteDataSourceImpl())
+          .googleSignIn(
+            GoogleSignInParams(
+              idToken: google.idToken,
+              email: google.email,
+              displayName: google.displayName,
+              photoUrl: google.photoUrl,
+              fcmToken: fcmToken,
+            ),
+          );
+
+      final failure = outcome.fold((f) => f, (_) => null);
+      if (failure != null) {
+        _show(failure.message);
+        return;
+      }
+
+      // Match what the sign-in screen does on a successful login.
+      await SessionCleaner.clearGuestAlarms();
+      skipAuthGateNotifier.value = true;
+      unawaited(saveAppPreferences());
+      unawaited(ProfileService.instance.refresh());
+      navigator.pop(_LoginChoice.googleSignedIn);
+      return;
+    } on GoogleSignInException catch (e) {
+      _show(GoogleAuthService.messageFor(e, appText));
+    } catch (_) {
+      _show(appText.googleAuthErrorGeneric);
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
+  /// A blank message means the user simply cancelled; nothing is shown.
+  void _show(String message) {
+    if (!mounted || message.trim().isEmpty) return;
+    setState(() => _googleError = message);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.title;
+    final message = widget.message;
+    final noLabel = widget.noLabel;
+    final loginLabel = widget.loginLabel;
     final ink = context.inkColor(AppColor.lightTextStrong);
     return Center(
       child: Material(
@@ -140,7 +235,12 @@ class _LoginRequiredCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context, false),
+                            onPressed: _googleBusy
+                                ? null
+                                : () => Navigator.pop(
+                                    context,
+                                    _LoginChoice.notNow,
+                                  ),
                             style: OutlinedButton.styleFrom(
                               minimumSize: Size.fromHeight(48.h),
                               foregroundColor: AppColor.authLogo,
@@ -180,7 +280,12 @@ class _LoginRequiredCard extends StatelessWidget {
                               ],
                             ),
                             child: FilledButton.icon(
-                              onPressed: () => Navigator.pop(context, true),
+                              onPressed: _googleBusy
+                                  ? null
+                                  : () => Navigator.pop(
+                                      context,
+                                      _LoginChoice.signIn,
+                                    ),
                               icon: Icon(Icons.login_rounded, size: 18.sp),
                               label: Text(
                                 loginLabel,
@@ -202,6 +307,59 @@ class _LoginRequiredCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    if (_googleError != null) ...[
+                      SizedBox(height: 12.h),
+                      Text(
+                        _googleError!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFD93025),
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 12.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        key: const Key('login_required_google_button'),
+                        onPressed: _googleBusy ? null : _signInWithGoogle,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size.fromHeight(48.h),
+                          foregroundColor: ink,
+                          side: BorderSide(
+                            color: AppColor.primary.withValues(alpha: .45),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                        ),
+                        icon: _googleBusy
+                            ? SizedBox(
+                                width: 18.sp,
+                                height: 18.sp,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'G',
+                                style: TextStyle(
+                                  color: const Color(0xFF4285F4),
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                        label: Text(
+                          widget.googleLabel,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

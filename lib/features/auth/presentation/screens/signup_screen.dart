@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,13 +13,13 @@ import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/login_params.dart';
+import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
-import 'package:tuhfatul_muslim/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:tuhfatul_muslim/features/auth/data/services/auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/register_account.dart';
-import 'package:tuhfatul_muslim/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/register/register_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/screens/email_verification_screen.dart';
@@ -33,6 +32,14 @@ import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
+
+/// Carries a REST [Failure]'s message out of the Google route resolver, so the
+/// caller can tell a backend refusal apart from a cancelled account picker.
+class _GoogleSignUpFailure implements Exception {
+  const _GoogleSignUpFailure(this.message);
+
+  final String message;
+}
 
 class _Country {
   const _Country(this.flag, this.name, this.dialCode, this.nameBn);
@@ -298,13 +305,35 @@ class _SignupViewState extends State<_SignupView> {
     navigator.pushNamedAndRemoveUntil(RouteNames.home, (_) => false);
   }
 
+  /// Signs up (or signs straight in, when the Google e-mail already has an
+  /// account) through the REST backend. Firebase Authentication plays no part:
+  /// the ID token goes to `POST /auth/google`, and the token that comes back
+  /// is cached in the same Hive key as an e-mail sign-in — so this is a
+  /// first-class session, unlike the Firebase-only one it replaces.
   Future<String> _defaultGoogleSignUpRouteResolver() async {
-    await SignUpUseCase(AuthRepositoryImpl(AuthService.instance)).withGoogle();
-    // This is a Firebase-only session (no REST token), so it never touches
-    // the auth Hive box `LoginBloc`/`OtpVerificationBloc` watch — clear
-    // whatever was armed as a Guest here too.
+    final result = await GoogleAuthService.instance.signIn();
+    final fcmToken = await FirebaseTokenService.instance.getToken();
+
+    final outcome = await AccountRepositoryImpl(AuthRemoteDataSourceImpl())
+        .googleSignIn(
+          GoogleSignInParams(
+            idToken: result.idToken,
+            email: result.email,
+            displayName: result.displayName,
+            photoUrl: result.photoUrl,
+            fcmToken: fcmToken,
+          ),
+        );
+
+    final failure = outcome.fold((f) => f, (_) => null);
+    if (failure != null) {
+      throw _GoogleSignUpFailure(failure.message);
+    }
+
+    // Whatever was armed as a Guest must not carry into this account.
     await SessionCleaner.clearGuestAlarms();
-    await _setSkipAuthGate(false);
+    await _setSkipAuthGate(true);
+    unawaited(ProfileService.instance.refresh());
     return RouteNames.home;
   }
 
@@ -330,9 +359,9 @@ class _SignupViewState extends State<_SignupView> {
       if (!mounted) return;
       Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } on GoogleSignInException catch (e) {
-      _showMessage(AuthService.instance.messageForGoogleException(e, appText));
-    } on FirebaseAuthException catch (e) {
-      _showMessage(AuthService.instance.messageForException(e, appText));
+      _showMessage(GoogleAuthService.messageFor(e, appText));
+    } on _GoogleSignUpFailure catch (e) {
+      _showMessage(e.message);
     } catch (_) {
       _showMessage(appText.googleAuthErrorGeneric);
     } finally {
@@ -589,17 +618,6 @@ class _SignupViewState extends State<_SignupView> {
                 ),
               ),
             ),
-            SizedBox(width: 18.w),
-            _socialIconButton(
-              key: const Key('signup_facebook_button'),
-              tooltip: appText.facebook,
-              onPressed: () {},
-              child: Icon(
-                Icons.facebook,
-                color: const Color(0xFF1877F2),
-                size: 24.sp,
-              ),
-            ),
           ],
         ),
       ],
@@ -749,10 +767,10 @@ class _SignupViewState extends State<_SignupView> {
                         ),
                       ),
                       SizedBox(height: 28.h),
-                      // TODO: re-enable "Sign Up with Others" (Google / Facebook)
-                      // when social sign-up is ready.
-                      // _socialSignupSection(appText),
-                      // SizedBox(height: 28.h),
+                      // Facebook is still a stub, so the section shows
+                      // Google only.
+                      _socialSignupSection(appText),
+                      SizedBox(height: 28.h),
                       _termsRow(appText),
                       SizedBox(height: 12.h),
                       AuthButton(
