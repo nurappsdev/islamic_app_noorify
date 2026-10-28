@@ -3,17 +3,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/google_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
@@ -29,9 +35,15 @@ class SignInScreen extends StatelessWidget {
       providers: [
         BlocProvider<SignInBloc>(create: (_) => SignInBloc()),
         BlocProvider<LoginBloc>(
-          create: (_) => LoginBloc(
-            LoginUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
-          ),
+          create: (_) {
+            final repository = AccountRepositoryImpl(
+              AuthRemoteDataSourceImpl(),
+            );
+            return LoginBloc(
+              LoginUser(repository),
+              GoogleSignInUser(repository),
+            );
+          },
         ),
       ],
       child: const _SignInView(),
@@ -56,6 +68,10 @@ class _SignInViewState extends State<_SignInView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  /// `true` only while the Google account picker is on screen; the REST
+  /// exchange that follows is tracked by [LoginBloc] like any other sign-in.
+  bool _googleBusy = false;
+
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
 
@@ -65,7 +81,9 @@ class _SignInViewState extends State<_SignInView> {
   /// "Tried to listen to a value exposed with provider, from outside of the
   /// widget tree".
   bool get _isLoading =>
-      _authState.isLoading || context.watch<LoginBloc>().state.isLoading;
+      _authState.isLoading ||
+      _googleBusy ||
+      context.watch<LoginBloc>().state.isLoading;
   bool get _obscurePassword => _authState.obscurePassword;
 
   @override
@@ -138,6 +156,42 @@ class _SignInViewState extends State<_SignInView> {
     );
   }
 
+  /// Runs the Google account picker, then hands the ID token to [LoginBloc]
+  /// to be exchanged for an app session. A cancelled picker is silent.
+  Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    final appText = AppText.of(context);
+    final loginBloc = context.read<LoginBloc>();
+
+    setState(() => _googleBusy = true);
+    try {
+      final result = await GoogleAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        GoogleLoginSubmitted(
+          idToken: result.idToken,
+          email: result.email,
+          displayName: result.displayName,
+          photoUrl: result.photoUrl,
+          fcmToken: fcmToken,
+        ),
+      );
+    } on GoogleSignInException catch (e) {
+      _showMessage(GoogleAuthService.messageFor(e, appText));
+    } catch (_) {
+      _showMessage(appText.googleAuthErrorGeneric);
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted || message.trim().isEmpty) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   void _onLoginState(BuildContext context, LoginState state) {
     switch (state.status) {
       case LoginStatus.success:
@@ -165,6 +219,17 @@ class _SignInViewState extends State<_SignInView> {
 
   void _openEmailVerification() {
     Navigator.of(context).pushNamed(RouteNames.forgotPassword);
+  }
+
+  /// Google's branded button, matching [AuthButton]'s height and radius so
+  /// the two read as one stack of actions.
+  Widget _googleSignInButton(AppText appText, bool isLoading) {
+    return GoogleSignInButton(
+      key: const Key('signin_google_button'),
+      label: AuthPromptTexts.continueWithGoogle.resolve(languageOf(context)),
+      isLoading: isLoading,
+      onPressed: _signInWithGoogle,
+    );
   }
 
   void _continueAsGuest() {
@@ -323,6 +388,8 @@ class _SignInViewState extends State<_SignInView> {
                     isLoading: isLoading,
                     onPressed: _signIn,
                   ),
+                  SizedBox(height: 18.h),
+                  _googleSignInButton(appText, isLoading),
                   SizedBox(height: 14.h),
                   Wrap(
                     alignment: WrapAlignment.center,

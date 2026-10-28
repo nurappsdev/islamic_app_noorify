@@ -71,6 +71,27 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Google Sign-In redirect.
+	     TODO(google-auth): the iOS OAuth client for bundle ID
+	     com.tuhfatulmuslim.app does not exist yet. Once it is created in
+	     Google Cloud Console, uncomment the block below and set the string
+	     to that client's REVERSED client ID, i.e. the ID read backwards:
+	       com.googleusercontent.apps.104828246708-xxxxxxxxxxxx
+	     Pass the forward ID to the app with
+	       --dart-define=GOOGLE_IOS_CLIENT_ID=...
+	     or paste it into GoogleAuthConfig._defaultIosClientId.
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_WITH_REVERSED_IOS_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+	-->
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
