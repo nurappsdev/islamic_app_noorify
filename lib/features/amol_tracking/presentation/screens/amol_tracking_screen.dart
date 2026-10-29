@@ -25,6 +25,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/bloc/amol_daily/amol_daily_bloc.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_dashboard_screen.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_day_clock.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_localized_format.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_shared_widgets.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
@@ -124,9 +125,12 @@ class AmolTrackingScreen extends StatefulWidget {
 }
 
 class _AmolTrackingScreenState extends State<AmolTrackingScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  /// The day being tracked: the device's own calendar day, which turns over
+  /// at midnight (see [AmolDayClock]). Everything logged from this screen
+  /// carries it, so a tap that lands after the rollover belongs to the new
+  /// day and the day just closed is left as it was.
   late DateTime _today;
-  Timer? _trackingBoundaryTimer;
   late String? _focusedPillarKey = widget.selectedSection?.pillarKey;
   late String? _expandedPillarKey =
       _focusedPillarKey ??
@@ -181,15 +185,17 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
 
   AmolDailyDashboard? _sharedToday() {
     final shared = AmolDailyStore.instance.value;
-    return shared != null && shared.dateIso == _isoDate(_today) ? shared : null;
+    return shared != null && shared.dateIso == isoDate(_today) ? shared : null;
   }
 
+  /// Today's prayer times, used only to gate a prayer tick to its own
+  /// time — never to decide which day this is.
   DailyPrayerTimes? _prayerTimes;
-
-  /// The most recent times this device has, even from an earlier day. Used
-  /// only to resolve the Fajr-to-Fajr date, never to gate a tick.
-  DailyPrayerTimes? _lastKnownTimes;
   late final StreamSubscription<String> _logFailureSub;
+
+  /// The screen follows the app-wide day unless the caller supplies its own
+  /// clock (tests), which keeps it in full control of the date.
+  bool get _followsDayClock => widget.now == null;
 
   /// The item to centre and highlight, if the caller named one. Cleared when
   /// the user moves focus to another section.
@@ -207,13 +213,6 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     return key == 'magrib' ? 'maghrib' : key;
   }
 
-  static String _isoDate(DateTime date) {
-    final y = date.year.toString().padLeft(4, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
-
   static String _formatPercentage(num percentage) {
     final isWhole = percentage % 1 == 0;
     return '${percentage.toStringAsFixed(isWhole ? 0 : 1)} %';
@@ -222,7 +221,11 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
   @override
   void initState() {
     super.initState();
-    _today = _calendarDate(_now());
+    _today = amolTrackingDate(_now());
+    if (_followsDayClock) {
+      WidgetsBinding.instance.addObserver(this);
+      AmolDayClock.instance.addListener(_onDayChanged);
+    }
     // Quran reading can change while this screen remains in the navigation
     // stack. Its offline projection lives in the shared daily store, while
     // this screen owns a separate bloc, so keep the two views connected
@@ -239,54 +242,46 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
         SnackBar(content: Text(AppText.of(context).failureUnknown)),
       );
     });
-    unawaited(_refreshTrackingDay(load: true));
+    _refreshTrackingDay(load: true);
+    unawaited(_refreshPrayerTimes());
+  }
+
+  /// Midnight: the checklist on screen is yesterday's, so it is replaced by
+  /// the new day's — empty, zero points — without the user doing anything.
+  void _onDayChanged() => _refreshTrackingDay();
+
+  /// A device that slept through midnight is caught here, before the user
+  /// can tick anything against the day that has ended.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !_followsDayClock) return;
+    AmolDayClock.instance.refresh();
+    _refreshTrackingDay();
+    unawaited(_refreshPrayerTimes());
   }
 
   void _onSharedDailyChanged() {
     if (!mounted) return;
     final shared = AmolDailyStore.instance.value;
-    if (shared == null || shared.dateIso != _isoDate(_today)) return;
+    if (shared == null || shared.dateIso != isoDate(_today)) return;
     _bloc.add(UseAmolDailyDashboard(shared));
   }
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
-  static DateTime _calendarDate(DateTime date) =>
-      DateTime(date.year, date.month, date.day);
-
-  /// Resolves this screen's API date from the current civil day's Fajr. The
-  /// pre-Fajr hours remain on the prior `YYYY-MM-DD` record.
-  Future<void> _refreshTrackingDay({bool load = false}) async {
-    final now = _now();
-    final times = await _loadPrayerTimes(_calendarDate(now));
-    if (!mounted) return;
-    // The gate below only trusts times fetched for this very day; the date
-    // itself may fall back to the last Fajr this device knows, so a tick made
-    // before Fajr while offline still lands on the day the user is living.
-    final dateTimes = times ?? _lastKnownTimes;
-    final trackingDate = dateTimes == null
-        ? _calendarDate(now)
-        : amolTrackingDate(now, dateTimes);
+  /// Rotates the screen onto the day it is now, loading it from zero when
+  /// that has changed. Nothing is carried over: the bloc drops the ticks
+  /// held for the old day and the shared checklist follows.
+  void _refreshTrackingDay({bool load = false}) {
+    final trackingDate = amolTrackingDate(_now());
     final changed = trackingDate != _today;
     if (changed) setState(() => _today = trackingDate);
     if (changed || load) {
-      _bloc.add(LoadAmolDaily(_isoDate(_today), silent: !changed));
+      // A new day is loaded openly (the shimmer), since every row on screen
+      // belongs to the day that has just closed.
+      _bloc.add(LoadAmolDaily(isoDate(_today), silent: !changed));
       if (changed) unawaited(AmolDailyStore.instance.load());
     }
-    _scheduleTrackingBoundary(times);
-  }
-
-  /// At midnight, re-read the new civil day's Fajr; at Fajr, rotate the
-  /// active tracker to that day. This keeps both boundaries location-aware.
-  void _scheduleTrackingBoundary(DailyPrayerTimes? times) {
-    _trackingBoundaryTimer?.cancel();
-    final now = _now();
-    final next = times == null
-        ? now.add(const Duration(minutes: 1))
-        : nextAmolTrackingCheck(now, times);
-    _trackingBoundaryTimer = Timer(next.difference(now), () {
-      if (mounted) unawaited(_refreshTrackingDay());
-    });
   }
 
   /// Fast: short enough to feel immediate, long enough to read as a scroll
@@ -428,20 +423,20 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     });
   }
 
-  Future<DailyPrayerTimes?> _loadPrayerTimes(DateTime civilDate) async {
+  /// Today's prayer times for the tick gate. Only times fetched for this
+  /// very day are used, so a stale set can never gate a tick.
+  Future<void> _refreshPrayerTimes() async {
+    final today = amolTrackingDate(_now());
     try {
       final service = await AladhanPrayerTimeService.create();
-      final cached = service.cachedPrayerTimes(civilDate);
+      final cached = service.cachedPrayerTimes(today);
       if (mounted && cached != null) setState(() => _prayerTimes = cached);
 
-      final fresh = await service.loadPrayerTimes(civilDate);
+      final fresh = await service.loadPrayerTimes(today);
       if (mounted && fresh != null) setState(() => _prayerTimes = fresh);
-      _lastKnownTimes = fresh ?? cached ?? service.lastCachedPrayerTimes();
-      return fresh ?? cached;
     } catch (_) {
-      // Times stay null; the gate below allows tracking when they're
-      // unavailable rather than blocking the user on our own load failure.
-      return null;
+      // Times stay null; the gate allows tracking when they're unavailable
+      // rather than blocking the user on our own load failure.
     }
   }
 
@@ -478,7 +473,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       ).pushNamed(pillarKey == 'quran' ? RouteNames.quran : RouteNames.hadith);
       if (!mounted) return;
       final shared = AmolDailyStore.instance.value;
-      if (shared != null && shared.dateIso == _isoDate(_today)) {
+      if (shared != null && shared.dateIso == isoDate(_today)) {
         _bloc.add(UseAmolDailyDashboard(shared));
       } else {
         _reload();
@@ -513,7 +508,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
       _didChangeTracking = true;
       _bloc.add(
         UncheckAmolDailyItem(
-          logDate: _isoDate(_today),
+          logDate: isoDate(_today),
           pillarKey: pillarKey,
           itemKey: item.itemKey,
         ),
@@ -538,7 +533,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     _didChangeTracking = true;
     _bloc.add(
       LogAmolDailyItem(
-        logDate: _isoDate(_today),
+        logDate: isoDate(_today),
         pillarKey: pillarKey,
         itemKey: item.itemKey,
       ),
@@ -591,7 +586,7 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
     });
   }
 
-  void _reload() => _bloc.add(LoadAmolDaily(_isoDate(_today)));
+  void _reload() => _bloc.add(LoadAmolDaily(isoDate(_today)));
 
   /// Pull-to-refresh: reloads the day. When a dashboard is already showing,
   /// the reload is silent (no shimmer flash) — the [RefreshIndicator]'s own
@@ -602,13 +597,16 @@ class _AmolTrackingScreenState extends State<AmolTrackingScreen>
           s.status == AmolDailyStatus.success ||
           s.status == AmolDailyStatus.failure,
     );
-    _bloc.add(LoadAmolDaily(_isoDate(_today), silent: _bloc.state.hasData));
+    _bloc.add(LoadAmolDaily(isoDate(_today), silent: _bloc.state.hasData));
     await future;
   }
 
   @override
   void dispose() {
-    _trackingBoundaryTimer?.cancel();
+    if (_followsDayClock) {
+      WidgetsBinding.instance.removeObserver(this);
+      AmolDayClock.instance.removeListener(_onDayChanged);
+    }
     _stagger.dispose();
     _scroll.dispose();
     _logFailureSub.cancel();

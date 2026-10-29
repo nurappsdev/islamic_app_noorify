@@ -7,13 +7,12 @@ import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/datasources/amol_tracking_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/repositories/amol_tracking_repository_impl.dart';
-import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_local_projection.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_day_clock.dart';
 import 'package:tuhfatul_muslim/features/dua/data/services/dua_offline_reading_progress_store.dart';
-import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 
 /// Today's tracker checklist (`GET /amol/tracker/daily`), shared so the Home
@@ -27,10 +26,17 @@ import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_readi
 /// old checklist is dropped and, if a user is now signed in, today's is
 /// fetched again. Without this the cards keep showing what was loaded as a
 /// guest (or for the previous account) until the app is restarted.
+///
+/// It belongs to one day just as strictly. The day is [AmolDayClock]'s, so
+/// at midnight — app running or not — the previous day's checklist, its
+/// progress and its points are dropped on the spot and the new day is
+/// fetched from zero. Yesterday's numbers are never shown as today's, and
+/// yesterday's own record is left untouched wherever it is kept.
 class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
   AmolDailyStore._() : super(null) {
     _token = _currentToken();
-    _activeDate = isoDate(DateTime.now());
+    _activeDate = _dayClock.date;
+    _dayClock.addListener(_onDayChanged);
     unawaited(_refreshTrackingDay());
     QuranOfflineReadingProgressStore.shared.addListener(_onOfflineQuranChanged);
     unawaited(QuranOfflineReadingProgressStore.shared.restore());
@@ -64,11 +70,14 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
   /// can't land its result in the new one.
   int _session = 0;
 
-  /// Bumped whenever the Fajr-to-Fajr tracking date changes. It prevents a
+  /// Bumped whenever the tracking date changes at midnight. It prevents a
   /// slow response for the prior cycle from restoring its checklist.
   int _dayGeneration = 0;
   late String _activeDate;
-  Timer? _boundaryTimer;
+
+  /// The one clock the whole app rolls over by. Held for the app's lifetime:
+  /// this store is a singleton and is never disposed.
+  final AmolDayClock _dayClock = AmolDayClock.instance;
   // Held for the app's lifetime: the store is a singleton and is never disposed.
   // ignore: unused_field
   StreamSubscription<BoxEvent>? _tokenWatch;
@@ -100,27 +109,8 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     if (token != null) load();
   }
 
-  /// The active API date, based on today's location-aware Fajr. When prayer
-  /// times cannot be read, the civil date is used only as a temporary fallback
-  /// until the next boundary check succeeds.
-  Future<String> _resolveTrackingDate() async {
-    final now = DateTime.now();
-    try {
-      final service = await AladhanPrayerTimeService.create();
-      // Offline past the day the times were cached for, the last known Fajr
-      // is still a far better answer than the civil date, which would move
-      // the pre-Fajr hours onto the wrong record.
-      final times =
-          service.cachedPrayerTimes(now) ??
-          await service.loadPrayerTimes(now) ??
-          service.lastCachedPrayerTimes();
-      if (times != null) return amolTrackingDateIso(now, times);
-    } catch (_) {}
-    return isoDate(now);
-  }
-
-  /// Clears only the active in-memory Fajr cycle. Server records for earlier
-  /// dates are never changed or deleted.
+  /// Clears only the active in-memory day. Server records for earlier dates,
+  /// and this device's own stored days, are never changed or deleted.
   bool _activateDate(String date) {
     if (date == _activeDate) return false;
     _activeDate = date;
@@ -133,31 +123,12 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     return true;
   }
 
-  Future<void> _refreshTrackingDay() async {
-    final date = await _resolveTrackingDate();
-    final changed = _activateDate(date);
-    if (changed) await _loadActiveDate();
-    await _scheduleNextBoundary();
-  }
+  /// Midnight, while the app is running: the day on screen is closed and the
+  /// new one is fetched from zero.
+  void _onDayChanged() => unawaited(_refreshTrackingDay());
 
-  /// Re-evaluates exactly at Fajr. After a day's Fajr has passed, a midnight
-  /// check obtains the following civil date's dynamic Fajr before scheduling
-  /// that next Fajr boundary.
-  Future<void> _scheduleNextBoundary() async {
-    _boundaryTimer?.cancel();
-    final now = DateTime.now();
-    var next = now.add(const Duration(minutes: 1));
-    try {
-      final service = await AladhanPrayerTimeService.create();
-      final times =
-          service.cachedPrayerTimes(now) ??
-          await service.loadPrayerTimes(now) ??
-          service.lastCachedPrayerTimes();
-      if (times != null) next = nextAmolTrackingCheck(now, times);
-    } catch (_) {}
-    _boundaryTimer = Timer(next.difference(now), () {
-      unawaited(_refreshTrackingDay());
-    });
+  Future<void> _refreshTrackingDay() async {
+    if (_activateDate(_dayClock.date)) await _loadActiveDate();
   }
 
   /// The pillar with [pillarKey] in the latest load, or `null`.
@@ -168,15 +139,22 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     return null;
   }
 
+  /// The day everything here belongs to, as `YYYY-MM-DD`.
+  String get activeDate => _activeDate;
+
   /// Loads once if nothing has been loaded yet.
   Future<void> ensureLoaded() async {
     await _refreshTrackingDay();
     if (value == null) await load();
   }
 
-  /// Fetches today's checklist. A failed fetch keeps the previous value.
-  Future<void> load() async {
-    _activateDate(await _resolveTrackingDate());
+  /// Fetches today's checklist. A failed fetch keeps the previous value —
+  /// unless the day itself has changed, which drops it first.
+  Future<void> load() {
+    // Read the clock rather than trusting the last timer: a device that was
+    // asleep at midnight asks for the day the user is actually living.
+    _dayClock.refresh();
+    _activateDate(_dayClock.date);
     return _loadActiveDate();
   }
 

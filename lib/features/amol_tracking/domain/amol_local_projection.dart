@@ -248,7 +248,8 @@ String _durationText(int seconds) {
 /// A fresh, untouched day built from the last day the server sent: the same
 /// pillars, items, titles and point values, nothing completed.
 ///
-/// This is what makes a new Fajr-to-Fajr day tickable while offline — the
+/// This is what makes a day that began at midnight tickable while offline —
+/// the
 /// checklist itself only ever comes from the server, so without a template
 /// there would be nothing on screen to tick.
 AmolDailyDashboard blankAmolDay(AmolDailyDashboard template, String dateIso) {

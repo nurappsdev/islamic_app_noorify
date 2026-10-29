@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_day_clock.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_entry_label.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/update/app_update_watcher.dart';
@@ -99,13 +100,28 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
     super.initState();
     _storeLoadedOnce = AmolDailyStore.instance.value != null;
     AmolDailyStore.instance.addListener(_onAmolStoreChanged);
+    AmolDayClock.instance.addListener(_onDayChanged);
     unawaited(NotificationBadgeService.instance.refresh());
   }
 
   @override
   void dispose() {
     AmolDailyStore.instance.removeListener(_onAmolStoreChanged);
+    AmolDayClock.instance.removeListener(_onDayChanged);
     super.dispose();
+  }
+
+  /// Midnight, with Home on screen: every daily figure here belongs to the
+  /// day that has just ended. The dashboard is fetched again for the new day
+  /// — and shows zero until it answers, rather than yesterday's totals (see
+  /// [HomeDashboardBloc]) — while the prayer cards are rebuilt for the new
+  /// date.
+  void _onDayChanged() {
+    if (!mounted) return;
+    context.read<HomeDashboardBloc>().add(
+      const LoadHomeDashboard(silent: true),
+    );
+    setState(() => _refreshTick++);
   }
 
   void _onAmolStoreChanged() {

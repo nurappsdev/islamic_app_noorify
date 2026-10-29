@@ -23,7 +23,7 @@ class RefreshOfflineReadingProgress extends AmolDailyEvent {
 }
 
 /// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, selected by the
-/// frontend's location-aware Fajr-to-Fajr tracking cycle).
+/// frontend's own midnight-to-midnight tracking day).
 class LoadAmolDaily extends AmolDailyEvent {
   const LoadAmolDaily(this.date, {this.silent = false});
 

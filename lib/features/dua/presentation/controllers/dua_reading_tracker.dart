@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
 import 'package:tuhfatul_muslim/features/dua/data/services/dua_read_completion_store.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/dua_reading_points.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_reading_repository.dart';
@@ -42,6 +43,11 @@ abstract final class DuaReadingTrackerConfig {
 /// the record ([DuaReadCompletionStore]), so opening the same dua again
 /// shows it read, with the duration that was recorded, and times nothing —
 /// no further reading time is reported for it.
+///
+/// A visit that runs past midnight is split there: the minutes read before
+/// it are reported for the day they were read in, and the visit starts again
+/// from zero on the new day. Neither day is ever credited with the other's
+/// time.
 ///
 /// Day totals are the server's arithmetic: a visit reports only its own
 /// seconds, and the half point per five minutes is awarded on the day's
@@ -195,6 +201,8 @@ class DuaReadingTracker extends ChangeNotifier {
   Future<bool> complete() async {
     if (_completed || _submitting || _disposed) return _completed;
     if (!_repository.isSignedIn) return false;
+    // Ticked after midnight: the day that ended keeps its own minutes.
+    _rollOverAtMidnight();
     _submitting = true;
     notifyListeners();
     try {
@@ -222,6 +230,8 @@ class DuaReadingTracker extends ChangeNotifier {
   Future<void> finish() async {
     if (_finished) return;
     _finished = true;
+    // Left after midnight: each day is reported with only its own time.
+    if (!_alreadyRead) _rollOverAtMidnight();
     _stopClock();
     // Read on an earlier visit: this one was never timed.
     if (_alreadyRead) return;
@@ -306,6 +316,7 @@ class DuaReadingTracker extends ChangeNotifier {
   }
 
   void _tick() {
+    if (_rollOverAtMidnight()) return;
     final seconds = elapsedSeconds;
     if (seconds == _shownSeconds) return;
     _shownSeconds = seconds;
@@ -330,6 +341,46 @@ class DuaReadingTracker extends ChangeNotifier {
       seconds: unreported,
       date: startedAt,
     );
+  }
+
+  /// Midnight, mid-visit: reports the time that belongs to the day which has
+  /// just ended and starts the visit again, from zero, on the new day.
+  /// Returns whether that happened.
+  ///
+  /// The split is on the clock, not on the visit: whatever ran up to
+  /// midnight is the old day's, whatever has run since is the new day's, so
+  /// neither is ever credited with the other's minutes.
+  bool _rollOverAtMidnight() {
+    final startedAt = _startedAt;
+    if (startedAt == null || _completed) return false;
+    final now = _now();
+    final midnight = amolTrackingDate(now);
+    if (!midnight.isAfter(startedAt)) return false;
+
+    final since = _runningSince;
+    final Duration carried;
+    if (since != null && since.isBefore(midnight)) {
+      // The stopwatch was running through midnight: close it there.
+      _banked += midnight.difference(since);
+      carried = now.difference(midnight);
+    } else {
+      // It started after midnight (a resume), or is stopped: everything
+      // banked is the old day's and nothing of it is the new day's.
+      carried = since == null ? Duration.zero : now.difference(since);
+    }
+    _runningSince = null;
+    // Claims and sends the old day's seconds under the old day's date.
+    // Anything below the API's half-minute minimum is dropped, exactly as it
+    // would be on leaving the screen.
+    unawaited(_report());
+    _startedAt = midnight;
+    _banked = carried;
+    _runningSince = now;
+    _reported = 0;
+    _shownSeconds = carried.inSeconds;
+    _publishedMinute = 0;
+    notifyListeners();
+    return true;
   }
 
   /// Moves the time run so far into [_banked] and stops the stopwatch.

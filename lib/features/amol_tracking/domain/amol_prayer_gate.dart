@@ -3,9 +3,11 @@ import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart'
 
 /// Whether an Amol prayer item may be logged at [now].
 ///
-/// The tracker is grouped by a Fajr-to-Fajr date. Tahajjud's gate begins at
-/// the preceding evening's Isha, so the post-midnight part of that window is
-/// still available before Fajr.
+/// The tracker is grouped by the local calendar day (midnight to midnight).
+/// Tahajjud is prayed in the small hours of its own day, so its gate begins
+/// at the *preceding* evening's Isha; every other prayer is gated by its own
+/// time on the day being tracked, which is why Isha and Witr have to be
+/// ticked before midnight closes that day.
 bool canLogAmolPrayerItem({
   required DateTime now,
   required DateTime trackingDate,

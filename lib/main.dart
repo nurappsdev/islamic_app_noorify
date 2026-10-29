@@ -30,6 +30,7 @@ import 'features/home/domain/prayer_location.dart';
 import 'features/prayer_widget/data/services/prayer_widget_service.dart';
 import 'features/quran/data/services/quran_audio_handler.dart';
 import 'features/amol_tracking/presentation/controllers/amol_sync.dart';
+import 'features/amol_tracking/presentation/state/amol_day_clock.dart';
 import 'features/quran/presentation/controllers/quran_reading_sync.dart';
 import 'shared/bloc/language/language_bloc.dart';
 import 'package:flutter/services.dart';
@@ -129,6 +130,9 @@ Future<void> main() async {
   // Same for dua reading: a visit read offline is reported under the date it
   // was read, so its half point per five minutes still lands on that day.
   DuaReadingSync.shared.start();
+  // Starts watching for midnight, so the whole app turns over to the new day
+  // together — Home cards, the Amol tracker and the shared checklist.
+  AmolDayClock.instance.refresh();
   // Which duas were already ticked as read, so reopening one shows its box
   // checked straight away instead of starting a timer first.
   unawaited(DuaReadCompletionStore.shared.restore());

@@ -397,6 +397,24 @@ void main() {
       expect(await _saved(), isEmpty);
     });
 
+    test('a session running past midnight is reported day by day', () async {
+      final repository = _repository(remote..goOnline());
+      final reader = tracker(repository);
+      // Ten minutes before midnight, five after it.
+      reader.show(2, 1, 5);
+      clock.now = DateTime(2026, 10, 20, 0, 5);
+      await reader.dispose();
+      await _settle();
+
+      expect(
+        [for (final call in remote.calls) call.date],
+        ['2026-10-19', '2026-10-20'],
+      );
+      expect(remote.calls.first.seconds, 600);
+      expect(remote.calls.last.seconds, 300);
+      expect(await _saved(), isEmpty);
+    });
+
     test('signing out mid-session drops its draft', () async {
       var signedIn = true;
       final repository = QuranReadingRepositoryImpl(

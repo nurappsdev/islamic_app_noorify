@@ -639,6 +639,62 @@ void main() {
     );
   });
 
+  group('midnight during a visit', () {
+    test('each day is reported with only its own minutes', () async {
+      final repository = _FakeRepository();
+      final clock = _Clock()..now = DateTime(2026, 10, 29, 23, 50);
+      final tracker = _tracker(repository, clock)..start();
+
+      // Ten minutes before midnight, five after it.
+      clock.now = DateTime(2026, 10, 30, 0, 5);
+      await tracker.finish();
+      tracker.dispose();
+
+      expect(
+        [for (final call in repository.tracked) call.date],
+        ['2026-10-29', '2026-10-30'],
+      );
+      expect(repository.tracked.first.seconds, 600);
+      expect(repository.tracked.last.seconds, 300);
+      // Two reports, two ids: neither day can overwrite the other.
+      expect(
+        repository.tracked.first.sessionId,
+        isNot(repository.tracked.last.sessionId),
+      );
+    });
+
+    test('the checkbox after midnight still splits the visit', () async {
+      final repository = _FakeRepository();
+      final clock = _Clock()..now = DateTime(2026, 10, 29, 23, 40);
+      final tracker = _tracker(repository, clock)..start();
+
+      clock.now = DateTime(2026, 10, 30, 0, 10);
+      expect(await tracker.complete(), isTrue);
+      await tracker.finish();
+      tracker.dispose();
+
+      expect(
+        [for (final call in repository.tracked) call.date],
+        ['2026-10-29', '2026-10-30'],
+      );
+      expect(repository.tracked.first.seconds, 20 * 60);
+      expect(repository.tracked.last.seconds, 10 * 60);
+    });
+
+    test('a visit entirely inside one day is reported once', () async {
+      final repository = _FakeRepository();
+      final clock = _Clock()..now = DateTime(2026, 10, 29, 23, 0);
+      final tracker = _tracker(repository, clock)..start();
+
+      clock.now = DateTime(2026, 10, 29, 23, 20);
+      await tracker.finish();
+      tracker.dispose();
+
+      expect(repository.tracked, hasLength(1));
+      expect(repository.tracked.single.date, '2026-10-29');
+    });
+  });
+
   group('the Amol projection', () {
     test('offline dua time earns half a point at five minutes', () {
       final projected = projectOfflineDuaReading(
