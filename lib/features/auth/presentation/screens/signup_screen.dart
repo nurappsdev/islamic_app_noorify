@@ -136,6 +136,11 @@ class _SignupViewState extends State<_SignupView> {
   String? _selectedGender;
   _Country _selectedCountry = _countries.first;
 
+  /// `true` only while the Google sign-up is in flight. Kept out of
+  /// [_isLoading] on purpose: the spinner belongs inside the Google button,
+  /// so the Create Account button is left alone while Google runs.
+  bool _googleBusy = false;
+
   SignUpBloc get _auth => context.read<SignUpBloc>();
   SignUpState get _authState => _auth.state;
   bool get _isLoading =>
@@ -356,8 +361,9 @@ class _SignupViewState extends State<_SignupView> {
   }
 
   Future<void> _signUpWithGoogle() async {
+    FocusScope.of(context).unfocus();
     final appText = AppText.of(context);
-    _auth.add(const SetLoading(true));
+    setState(() => _googleBusy = true);
     try {
       final route =
           await (widget.googleSignUpRouteResolver ??
@@ -371,9 +377,7 @@ class _SignupViewState extends State<_SignupView> {
     } catch (_) {
       _showMessage(appText.googleAuthErrorGeneric);
     } finally {
-      if (mounted) {
-        _auth.add(const SetLoading(false));
-      }
+      if (mounted) setState(() => _googleBusy = false);
     }
   }
 
@@ -762,6 +766,16 @@ class _SignupViewState extends State<_SignupView> {
                           isLoading: _isLoading,
                           height: 60.h,
                           onPressed: _termsAccepted ? _createAccount : null,
+                        ),
+                        SizedBox(height: 18.h),
+                        GoogleSignInButton(
+                          key: const Key('signup_google_button'),
+                          label: AuthPromptTexts.continueWithGoogle.resolve(
+                            languageOf(context),
+                          ),
+                          isLoading: _googleBusy,
+                          height: 60.h,
+                          onPressed: _signUpWithGoogle,
                         ),
                         SizedBox(height: 10.h),
                         Wrap(
