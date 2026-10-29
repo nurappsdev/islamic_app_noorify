@@ -27,6 +27,17 @@ abstract interface class DuaRemoteDataSource {
   /// for reading, since the plan endpoints only guarantee `duaId`.
   Future<DuaFeaturedModel> getDuaById(String id);
 
+  /// Reports dua reading (`POST /duas/reading/track`) — the signed-in
+  /// user's access token, `duaId`, the `seconds` spent reading since the
+  /// last report and the `date` (`YYYY-MM-DD`) it was read on. The server
+  /// awards the Dua point from the day's total: half a point per complete
+  /// five minutes, one point at most.
+  Future<void> trackReading({
+    required String duaId,
+    required int seconds,
+    required String date,
+  });
+
   /// Dua planner — needs the signed-in user's access token.
   Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
@@ -105,6 +116,19 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   @override
   Future<DuaFeaturedModel> getDuaById(String id) async =>
       DuaFeaturedModel.fromJson(_dataMap(await _get('/duas/$id')));
+
+  @override
+  Future<void> trackReading({
+    required String duaId,
+    required int seconds,
+    required String date,
+  }) => _call(
+    () => _dio.post<dynamic>(
+      '/duas/reading/track',
+      data: {'duaId': duaId, 'seconds': seconds, 'date': date},
+      options: _options(requiresAuth: true),
+    ),
+  );
 
   @override
   Future<DuaPlanPage> getPlans({

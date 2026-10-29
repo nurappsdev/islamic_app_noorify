@@ -379,6 +379,7 @@ const Map<String, String> appTextEn = <String, String>{
   'duaLastRead': 'Last read',
   'duaRecitePrefix': 'Recite the following statement',
   'duaReciteSuffix': 'times -',
+  'duaMarkAsReadLabel': 'Read / Completed',
   'duaBookmarkAdded': 'Saved to bookmark',
   'duaCopied': 'Copied',
   'duaShareFailed': "Couldn't share this dua. Please try again.",

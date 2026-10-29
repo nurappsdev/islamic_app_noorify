@@ -377,6 +377,7 @@ const Map<String, String> appTextBn = <String, String>{
   'duaLastRead': 'সর্বশেষ পঠিত',
   'duaRecitePrefix': 'নিম্নোক্ত বাণীটি',
   'duaReciteSuffix': 'বার বলবে -',
+  'duaMarkAsReadLabel': 'পড়া সম্পন্ন',
   'duaBookmarkAdded': 'বুকমার্কে সংরক্ষিত হয়েছে',
   'duaCopied': 'কপি হয়েছে',
   'duaShareFailed': 'দোআ শেয়ার করা যায়নি, আবার চেষ্টা করুন।',

@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_local_project
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
+import 'package:tuhfatul_muslim/features/dua/data/services/dua_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 
@@ -33,6 +34,8 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     unawaited(_refreshTrackingDay());
     QuranOfflineReadingProgressStore.shared.addListener(_onOfflineQuranChanged);
     unawaited(QuranOfflineReadingProgressStore.shared.restore());
+    DuaOfflineReadingProgressStore.shared.addListener(_onOfflineDuaChanged);
+    unawaited(DuaOfflineReadingProgressStore.shared.restore());
     try {
       _tokenWatch = HiveService.auth.watch().listen((_) => _onAuthBoxChanged());
     } catch (_) {
@@ -47,10 +50,12 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
   );
   Future<void>? _inFlight;
 
-  /// The last server snapshot. [value] may have pending Quran reading
-  /// projected over it, so future local updates must always start here.
+  /// The last server snapshot. [value] may have pending Quran and dua
+  /// reading projected over it, so future local updates must always start
+  /// here.
   AmolDailyDashboard? _serverValue;
   final _quranAcknowledgedInServer = <String>{};
+  final _duaAcknowledgedInServer = <String>{};
 
   /// The token the current [value] (or in-flight fetch) belongs to.
   String? _token;
@@ -88,7 +93,9 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     // not be shown to the next one while the fresh one loads.
     _serverValue = null;
     _quranAcknowledgedInServer.clear();
+    _duaAcknowledgedInServer.clear();
     QuranOfflineReadingProgressStore.shared.clear();
+    DuaOfflineReadingProgressStore.shared.clear();
     value = null;
     if (token != null) load();
   }
@@ -121,6 +128,7 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     _inFlight = null;
     _serverValue = null;
     _quranAcknowledgedInServer.clear();
+    _duaAcknowledgedInServer.clear();
     value = null;
     return true;
   }
@@ -202,13 +210,16 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
         _quranAcknowledgedInServer.addAll(
           QuranOfflineReadingProgressStore.shared.acknowledgedIdsFor(date),
         );
-        _applyOfflineQuranProjection();
+        _duaAcknowledgedInServer.addAll(
+          DuaOfflineReadingProgressStore.shared.acknowledgedIdsFor(date),
+        );
+        _applyOfflineReadingProjection();
       });
     } catch (_) {}
   }
 
   void _onOfflineQuranChanged() {
-    _applyOfflineQuranProjection();
+    _applyOfflineReadingProjection();
     final acknowledged = QuranOfflineReadingProgressStore.shared
         .acknowledgedIdsFor(_activeDate);
     if (acknowledged.any((id) => !_quranAcknowledgedInServer.contains(id))) {
@@ -216,16 +227,32 @@ class AmolDailyStore extends ValueNotifier<AmolDailyDashboard?> {
     }
   }
 
-  void _applyOfflineQuranProjection() {
+  void _onOfflineDuaChanged() {
+    _applyOfflineReadingProjection();
+    final acknowledged = DuaOfflineReadingProgressStore.shared
+        .acknowledgedIdsFor(_activeDate);
+    if (acknowledged.any((id) => !_duaAcknowledgedInServer.contains(id))) {
+      // The server has taken a dua report this baseline does not contain:
+      // fetch the day again so its own arithmetic replaces this projection.
+      unawaited(load());
+    }
+  }
+
+  /// Both reading projections over the last server snapshot, never over an
+  /// already projected value, so no minute is ever counted twice.
+  void _applyOfflineReadingProjection() {
     final server = _serverValue;
     if (server == null || server.dateIso != _activeDate) return;
-    final progress = QuranOfflineReadingProgressStore.shared.progressFor(
+    final quran = QuranOfflineReadingProgressStore.shared.progressFor(
       _activeDate,
       acknowledgedInBaseline: _quranAcknowledgedInServer,
     );
-    value = projectOfflineQuranReading(
-      server,
-      additionalSeconds: progress.seconds,
+    value = projectOfflineDuaReading(
+      projectOfflineQuranReading(server, additionalSeconds: quran.seconds),
+      additionalSeconds: DuaOfflineReadingProgressStore.shared.secondsFor(
+        _activeDate,
+        acknowledgedInBaseline: _duaAcknowledgedInServer,
+      ),
     );
   }
 }

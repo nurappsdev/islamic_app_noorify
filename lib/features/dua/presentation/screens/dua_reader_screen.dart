@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +12,9 @@ import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/repositories/dua_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/controllers/dua_reading_tracker.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bookmark_sheet.dart';
@@ -22,9 +27,20 @@ import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 /// Single-dua reader (design `devImg/img_19.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].
 ///
-/// UI only: the recitation counter is in-memory and resets when the screen is
-/// left; the bookmark icon opens [DuaBookmarkSheet]. The play icon has no
-/// audio yet, so it isn't wired.
+/// The recitation counter is in-memory and resets when the screen is left;
+/// the bookmark icon opens [DuaBookmarkSheet]. The play icon has no audio
+/// yet, so it isn't wired.
+///
+/// Opening the screen starts a reading timer ([DuaReadingTracker]), shown in
+/// the header's top-right corner. Past half a minute — the least
+/// `POST /duas/reading/track` accepts — a "Read / Completed" checkbox
+/// appears; checking it reports the time and stops the timer. Leaving the
+/// screen reports it too, so each visit counts exactly once and the next one
+/// starts from zero while the day's total keeps adding up.
+///
+/// Checking the box is permanent: a dua marked read opens with its box
+/// already checked and its recorded duration shown, and no timer runs for it
+/// again.
 class DuaReaderScreen extends StatelessWidget {
   const DuaReaderScreen({super.key, required this.args});
 
@@ -48,7 +64,12 @@ class _DuaReaderView extends StatefulWidget {
   State<_DuaReaderView> createState() => _DuaReaderViewState();
 }
 
-class _DuaReaderViewState extends State<_DuaReaderView> {
+class _DuaReaderViewState extends State<_DuaReaderView>
+    with WidgetsBindingObserver {
+  /// Reports how long this dua is read. Null for the legacy mock catalog's
+  /// demo duas: they have no `_id` the API would accept.
+  DuaReadingTracker? _reading;
+
   /// Whether the bottom recite bar (counter, reset, bookmark, play) shows.
   /// It is off for now; set it to `true` to bring the bar back, which is why
   /// its widget and the counter state below are kept. Not `const`, so the
@@ -61,6 +82,57 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
 
   void _incrementCount() => setState(() => _count++);
   void _resetCount() => setState(() => _count = 0);
+
+  @override
+  void initState() {
+    super.initState();
+    final duaId = widget.args.featuredModel?.id ?? '';
+    if (duaId.isEmpty) return;
+    WidgetsBinding.instance.addObserver(this);
+    _reading = DuaReadingTracker(DuaReadingRepositoryImpl.shared, duaId: duaId)
+      ..start();
+  }
+
+  @override
+  void dispose() {
+    final reading = _reading;
+    if (reading != null) {
+      WidgetsBinding.instance.removeObserver(this);
+      // Leaving the screen reports what was read, whether or not the
+      // checkbox was used; the request outlives this widget, and seconds
+      // the checkbox already reported are not sent again.
+      unawaited(reading.finish());
+      reading.dispose();
+    }
+    super.dispose();
+  }
+
+  /// Only foreground time is reading time.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _reading?.resume();
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _reading?.pause();
+    }
+  }
+
+  /// The "Read / Completed" checkbox: reports the time read so far and
+  /// stops the timer. Tracking needs the signed-in user's token, so a guest
+  /// is asked to sign in first and nothing is reported for them.
+  Future<void> _markAsRead() async {
+    final reading = _reading;
+    if (reading == null || reading.isCompleted || reading.isSubmitting) return;
+    if (!reading.canReport) {
+      await showDuaLoginRequiredDialog(context);
+      return;
+    }
+    await reading.complete();
+  }
 
   /// Unifies a real `/duas/featured` item and the legacy mock [DuaDetail]
   /// into one shape the view below renders, resolving bilingual fields in
@@ -465,6 +537,10 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                     action: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (_reading case final tracker?) ...[
+                          _DuaReadingTimerPill(tracker: tracker),
+                          SizedBox(width: 8.w),
+                        ],
                         _HeaderIconButton(
                           icon: Icons.copy_rounded,
                           onTap: _copyFullText,
@@ -482,6 +558,8 @@ class _DuaReaderViewState extends State<_DuaReaderView> {
                       ],
                     ),
                   ),
+                  if (_reading case final tracker?)
+                    _DuaReadCheckbox(tracker: tracker, onTap: _markAsRead),
                   if (readable.categoryLabel.isNotEmpty) ...[
                     SizedBox(height: 18.h),
                     _CategoryPill(label: readable.categoryLabel),
@@ -775,6 +853,156 @@ class _HeaderIconButton extends StatelessWidget {
         minimumSize: Size(38.r, 38.r),
       ),
       icon: Icon(icon, size: 18),
+    );
+  }
+}
+
+/// The live reading timer in the header's top-right corner: how long this
+/// visit has been reading, refreshed each second. It stops for good once the
+/// dua is marked read, and then shows a check instead of the clock — on a
+/// dua read earlier, from the moment the screen opens.
+class _DuaReadingTimerPill extends StatelessWidget {
+  const _DuaReadingTimerPill({required this.tracker});
+
+  final DuaReadingTracker tracker;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: tracker,
+      builder: (context, _) {
+        final seconds = tracker.elapsedSeconds;
+        final read = tracker.isCompleted;
+        final accent = read ? const Color(0xFF2F6B3C) : const Color(0xFF5D6B44);
+        return Container(
+          height: 38.r,
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(
+              read ? const Color(0xFFDCEEC0) : const Color(0xFFF3F1DE),
+            ),
+            borderRadius: BorderRadius.circular(19.r),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                read ? Icons.check_circle_rounded : Icons.timer_outlined,
+                size: 13.sp,
+                color: context.inkColor(accent),
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                context.localizedDigits(
+                  '${seconds ~/ 60}:'
+                  '${(seconds % 60).toString().padLeft(2, '0')}',
+                ),
+                style: TextStyle(
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.inkColor(accent),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// The "Read / Completed" checkbox, right-aligned under the header. It shows
+/// once this visit is long enough to report ([DuaReadingTracker.canComplete])
+/// and, once checked, stays checked and disabled — the reading has been
+/// recorded and the timer above has stopped. A dua read on an earlier visit
+/// shows it checked right away.
+class _DuaReadCheckbox extends StatelessWidget {
+  const _DuaReadCheckbox({required this.tracker, required this.onTap});
+
+  final DuaReadingTracker tracker;
+  final Future<void> Function() onTap;
+
+  static const _green = Color(0xFF2F6B3C);
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return ListenableBuilder(
+      listenable: tracker,
+      builder: (context, _) {
+        final read = tracker.isCompleted;
+        final busy = tracker.isSubmitting;
+        if (!read && !busy && !tracker.canComplete) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: EdgeInsets.only(top: 14.h),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: read || busy ? null : () => unawaited(onTap()),
+                borderRadius: BorderRadius.circular(20.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(
+                      read ? _green : const Color(0xFFECF0DC),
+                    ),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: context.lineColor(
+                        read ? _green : const Color(0xFFDCE3C4),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (busy)
+                        SizedBox(
+                          width: 13.r,
+                          height: 13.r,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            valueColor: AlwaysStoppedAnimation(
+                              read ? Colors.white : _green,
+                            ),
+                          ),
+                        )
+                      else
+                        Icon(
+                          read
+                              ? Icons.check_box_rounded
+                              : Icons.check_box_outline_blank_rounded,
+                          size: 15.sp,
+                          color: read
+                              ? Colors.white
+                              : context.inkColor(const Color(0xFF4C5A34)),
+                        ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        appText.duaMarkAsReadLabel,
+                        style: TextStyle(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: read
+                              ? Colors.white
+                              : context.inkColor(const Color(0xFF4C5A34)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

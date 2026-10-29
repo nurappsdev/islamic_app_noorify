@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/core/storage/session_clear_audit.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_day_snapshot_store.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_pending_actions_store.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/dua/data/services/dua_read_completion_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
 import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -32,8 +33,13 @@ class SessionCleaner {
     'quran_last_read',
     'quran_reading_history',
     'quran_bookmarks',
-    // Unsent Quran reading time: it must not be credited to the next account.
+    // Unsent Quran and dua reading time: it must not be credited to the
+    // next account.
     'quran_reading_pending',
+    'dua_reading_pending',
+    // Which duas this account ticked as read: the next one must start with
+    // none of them checked.
+    DuaReadCompletionStore.key,
     // Unsent Amol ticks, and the cached daily checklists they are shown
     // against: both belong to the account that made them. Clearing them is
     // what keeps one account's offline progress from being logged under the
@@ -87,6 +93,9 @@ class SessionCleaner {
     // not just the Hive data, so nothing left armed can still ring once
     // Guest mode (or a different account) is active.
     await _safe(() => AlarmScheduler.cancelAllAlarms(reason: 'signed out'));
+    // The keys above are gone from storage; this drops the copy the reader
+    // holds in memory, so an open dua does not keep showing as read.
+    DuaReadCompletionStore.shared.clear();
 
     profileNameNotifier.value = null;
     profilePhotoUrlNotifier.value = null;

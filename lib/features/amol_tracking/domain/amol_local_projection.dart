@@ -1,6 +1,7 @@
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pending_action.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/dua/domain/dua_reading_points.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_points.dart';
 
 /// The pillars whose items are a plain tick, and so may be queued offline and
@@ -82,17 +83,49 @@ AmolDailyDashboard projectAmolDay(
 /// checklist. The Quran item awards one point for every completed five
 /// minutes, so the total is calculated from the duration the day already
 /// holds instead of rounding each offline session separately.
+AmolDailyDashboard projectOfflineQuranReading(
+  AmolDailyDashboard dashboard, {
+  required int additionalSeconds,
+}) => _projectOfflineReading(
+  dashboard,
+  pillarKey: 'quran',
+  additionalSeconds: additionalSeconds,
+  pointsForSeconds: quranReadingPointsForSeconds,
+);
+
+/// The same for dua reading, under the Dua item's own rule: half a point for
+/// every completed five minutes, one point a day at most (ten minutes).
 ///
-/// That duration comes from the item's own `entry` block (`amount`, in
+/// The day's dua time is cumulative, so a visit read offline is added to
+/// what the day already holds rather than rounded on its own — three
+/// two-minute visits earn the same half point one six-minute visit does.
+AmolDailyDashboard projectOfflineDuaReading(
+  AmolDailyDashboard dashboard, {
+  required int additionalSeconds,
+}) => _projectOfflineReading(
+  dashboard,
+  pillarKey: 'dua',
+  additionalSeconds: additionalSeconds,
+  pointsForSeconds: duaReadingPointsForSeconds,
+);
+
+/// [dashboard] with [additionalSeconds] of reading this device still holds
+/// added to the pillar measured in minutes under [pillarKey].
+///
+/// The day's duration comes from the item's own `entry` block (`amount`, in
 /// minutes) — the pillar's `formattedSubtext` is a points fraction such as
 /// `"5/9"`, not a duration. A payload with neither (an older response) still
 /// has its local minutes added, but keeps the points the server awarded:
 /// a duration this code cannot read is never treated as zero minutes.
-AmolDailyDashboard projectOfflineQuranReading(
+/// [pointsForSeconds] is that pillar's own rule, used only when the response
+/// carries no `entry` block to read it from.
+AmolDailyDashboard _projectOfflineReading(
   AmolDailyDashboard dashboard, {
+  required String pillarKey,
   required int additionalSeconds,
+  required num Function(int seconds) pointsForSeconds,
 }) {
-  final index = dashboard.pillars.indexWhere((p) => p.pillarKey == 'quran');
+  final index = dashboard.pillars.indexWhere((p) => p.pillarKey == pillarKey);
   if (index < 0) return dashboard;
 
   final current = dashboard.pillars[index];
@@ -107,12 +140,11 @@ AmolDailyDashboard projectOfflineQuranReading(
     // server's points.
     return additionalSeconds <= 0
         ? dashboard
-        : _withQuranPoints(
+        : _withEntryPoints(
             dashboard,
             index,
             earned: _cap(
-              current.earnedPoints +
-                  quranReadingPointsForSeconds(additionalSeconds),
+              current.earnedPoints + pointsForSeconds(additionalSeconds),
               current.maxPoints,
             ),
           );
@@ -120,7 +152,7 @@ AmolDailyDashboard projectOfflineQuranReading(
 
   final totalSeconds = recordedSeconds + additionalSeconds;
   final totalMinutes = totalSeconds ~/ 60;
-  // Duration is the source of truth for Quran's five-minute rule. A stale
+  // Duration is the source of truth for a five-minute rule. A stale
   // response can otherwise say e.g. "14min" and "4 points" at the same
   // time, even though four points require at least twenty minutes. Rebuild
   // the shown point total from the same duration shown on the card, by the
@@ -128,7 +160,7 @@ AmolDailyDashboard projectOfflineQuranReading(
   final pointsForDuration = _cap(
     isMinuteEntry
         ? entry.pointsFor(totalMinutes)
-        : quranReadingPointsForSeconds(totalSeconds),
+        : pointsForSeconds(totalSeconds),
     current.maxPoints,
   );
   // With no new local time, only repair an impossible over-award from a
@@ -142,7 +174,7 @@ AmolDailyDashboard projectOfflineQuranReading(
     return dashboard;
   }
 
-  return _withQuranPoints(
+  return _withEntryPoints(
     dashboard,
     index,
     earned: earned,
@@ -155,9 +187,9 @@ AmolDailyDashboard projectOfflineQuranReading(
   );
 }
 
-/// [dashboard] with the Quran pillar at [index] rewritten to [earned] points
+/// [dashboard] with the entry pillar at [index] rewritten to [earned] points
 /// (and [minutes] read, when known), and the day's total recomputed.
-AmolDailyDashboard _withQuranPoints(
+AmolDailyDashboard _withEntryPoints(
   AmolDailyDashboard dashboard,
   int index, {
   required num earned,

@@ -23,6 +23,8 @@ import 'features/alarm/data/services/alarm_migration.dart';
 import 'features/alarm/data/services/alarm_sync.dart';
 import 'features/alarm/domain/entities/alarm_ring_payload.dart';
 import 'features/alarm/presentation/screens/alarm_ringing_screen.dart';
+import 'features/dua/data/services/dua_read_completion_store.dart';
+import 'features/dua/presentation/controllers/dua_reading_sync.dart';
 import 'features/home/data/services/prayer_location_service.dart';
 import 'features/home/domain/prayer_location.dart';
 import 'features/prayer_widget/data/services/prayer_widget_service.dart';
@@ -124,6 +126,12 @@ Future<void> main() async {
   // Sends Quran reading done offline (or cut off by the app closing) once
   // the server is reachable, now and whenever the app comes back.
   QuranReadingSync.shared.start();
+  // Same for dua reading: a visit read offline is reported under the date it
+  // was read, so its half point per five minutes still lands on that day.
+  DuaReadingSync.shared.start();
+  // Which duas were already ticked as read, so reopening one shows its box
+  // checked straight away instead of starting a timer first.
+  unawaited(DuaReadCompletionStore.shared.restore());
   // Same for Amol ticks made offline: sent silently, by comparison with the
   // server's own state so nothing is logged twice.
   AmolSync.shared.start();

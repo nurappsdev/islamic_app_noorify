@@ -13,12 +13,13 @@ class UseAmolDailyDashboard extends AmolDailyEvent {
   final AmolDailyDashboard dashboard;
 }
 
-/// Reapplies Quran reading held locally over the last server checklist.
+/// Reapplies the Quran and dua reading held locally over the last server
+/// checklist.
 ///
-/// This contains no value because the Quran progress store is the one durable
-/// source of the current cumulative offline duration.
-class RefreshOfflineQuranProgress extends AmolDailyEvent {
-  const RefreshOfflineQuranProgress();
+/// This contains no value because the reading progress stores are the one
+/// durable source of the current cumulative offline duration.
+class RefreshOfflineReadingProgress extends AmolDailyEvent {
+  const RefreshOfflineReadingProgress();
 }
 
 /// Loads `GET /amol/tracker/daily?date=[date]` (`YYYY-MM-DD`, selected by the
