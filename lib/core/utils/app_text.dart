@@ -352,6 +352,7 @@ class AppText {
     required this.duaLastRead,
     required this.duaRecitePrefix,
     required this.duaReciteSuffix,
+    required this.duaMarkAsReadLabel,
     required this.duaBookmarkAdded,
     required this.duaCopied,
     required this.duaShareFailed,
@@ -1328,6 +1329,10 @@ class AppText {
   final String duaLastRead;
   final String duaRecitePrefix;
   final String duaReciteSuffix;
+
+  /// Label of the reader's "Read / Completed" checkbox, which appears once
+  /// a dua has been read long enough to be reported.
+  final String duaMarkAsReadLabel;
   final String duaBookmarkAdded;
   final String duaCopied;
   final String duaShareFailed;
@@ -3229,6 +3234,11 @@ class AppText {
         map,
         'duaReciteSuffix',
         fallback?.duaReciteSuffix ?? '',
+      ),
+      duaMarkAsReadLabel: _read(
+        map,
+        'duaMarkAsReadLabel',
+        fallback?.duaMarkAsReadLabel ?? '',
       ),
       duaBookmarkAdded: _read(
         map,

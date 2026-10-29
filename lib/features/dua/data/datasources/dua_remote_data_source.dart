@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
@@ -25,6 +28,17 @@ abstract interface class DuaRemoteDataSource {
   /// One dua's full content (`GET /duas/{id}`) — used to show a plan's duas
   /// for reading, since the plan endpoints only guarantee `duaId`.
   Future<DuaFeaturedModel> getDuaById(String id);
+
+  /// Reports dua reading (`POST /duas/reading/track`) — the signed-in
+  /// user's access token, `duaId`, the `seconds` spent reading since the
+  /// last report and the `date` (`YYYY-MM-DD`) it was read on. The server
+  /// awards the Dua point from the day's total: half a point per complete
+  /// five minutes, one point at most.
+  Future<void> trackReading({
+    required String duaId,
+    required int seconds,
+    required String date,
+  });
 
   /// Dua planner — needs the signed-in user's access token.
   Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
@@ -60,8 +74,9 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
       },
       validateStatus: (status) => status != null && status < 500,
     );
-    final dio = Dio(options);
-    if (kDebugMode) dio.interceptors.add(_DuaApiLogInterceptor());
+    final dio = Dio(options)
+      ..interceptors.add(const LanguageHeaderInterceptor());
+    if (kDebugMode) dio.interceptors.add(DuaApiLogInterceptor());
     return dio;
   }
 
@@ -103,6 +118,19 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   @override
   Future<DuaFeaturedModel> getDuaById(String id) async =>
       DuaFeaturedModel.fromJson(_dataMap(await _get('/duas/$id')));
+
+  @override
+  Future<void> trackReading({
+    required String duaId,
+    required int seconds,
+    required String date,
+  }) => _call(
+    () => _dio.post<dynamic>(
+      '/duas/reading/track',
+      data: {'duaId': duaId, 'seconds': seconds, 'date': date},
+      options: _options(requiresAuth: true),
+    ),
+  );
 
   @override
   Future<DuaPlanPage> getPlans({
@@ -230,10 +258,48 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   }
 }
 
-class _DuaApiLogInterceptor extends Interceptor {
+/// Traces the dua endpoints in the debug console: every call's method, URI
+/// and status, and for the reading report also the exact body sent and the
+/// server's answer. Added only in debug builds (see [_buildDio]).
+class DuaApiLogInterceptor extends Interceptor {
+  /// `POST /duas/reading/track`, whose body is traced field by field.
+  static const _trackPath = '/duas/reading/track';
+
+  static bool _isTrack(RequestOptions options) =>
+      options.path.endsWith(_trackPath);
+
+  /// The reading report exactly as it goes on the wire: the three fields by
+  /// name, then the encoded body, where a quoted value tells a string from a
+  /// number at a glance.
+  ///
+  /// Request headers are never printed — the session's bearer token is one
+  /// of them.
+  static void _logReadingPayload(RequestOptions options) {
+    final data = options.data;
+    if (data is Map) {
+      debugPrint(
+        '[DUA API]   payload duaId=${data['duaId']} '
+        'seconds=${data['seconds']} date=${data['date']}',
+      );
+    }
+    debugPrint('[DUA API]   body ${_short(data)}');
+  }
+
+  /// [body] as one line, cut short so a long answer stays readable.
+  static String _short(Object? body) {
+    String text;
+    try {
+      text = body is String ? body : jsonEncode(body);
+    } catch (_) {
+      text = '$body';
+    }
+    return text.length <= 600 ? text : '${text.substring(0, 600)}…';
+  }
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     debugPrint('[DUA API] → ${options.method} ${options.uri}');
+    if (_isTrack(options)) _logReadingPayload(options);
     handler.next(options);
   }
 
@@ -245,6 +311,11 @@ class _DuaApiLogInterceptor extends Interceptor {
     debugPrint(
       '[DUA API] ← ${response.statusCode} ${response.requestOptions.uri}',
     );
+    // Includes a refusal: anything under 500 arrives here, so a rejected
+    // report shows the server's own message next to what was sent.
+    if (_isTrack(response.requestOptions)) {
+      debugPrint('[DUA API]   response ${_short(response.data)}');
+    }
     handler.next(response);
   }
 
@@ -254,6 +325,8 @@ class _DuaApiLogInterceptor extends Interceptor {
       '[DUA API] ✕ ${err.requestOptions.method} ${err.requestOptions.uri}: '
       '${err.response?.statusCode} ${err.response?.data ?? err.message}',
     );
+    // Not delivered: the repository keeps this report and sends it again.
+    if (_isTrack(err.requestOptions)) _logReadingPayload(err.requestOptions);
     handler.next(err);
   }
 }

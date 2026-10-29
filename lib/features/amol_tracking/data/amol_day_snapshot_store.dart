@@ -7,8 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// `AmolDailyDashboardModel.fromJson` a live response goes through.
 ///
 /// One entry per `YYYY-MM-DD`, unlike a single-slot cache: the tracker has to
-/// serve the day the user is looking at, and a new Fajr-to-Fajr day needs the
-/// most recent day as the template to build an empty checklist from.
+/// serve the day the user is looking at, and a day that has just begun at
+/// midnight needs the most recent day as the template to build an empty
+/// checklist from. A stored day is never shown as another day's.
 class AmolDaySnapshotStore {
   /// The one every repository and the remote data source use unless a test
   /// injects its own.

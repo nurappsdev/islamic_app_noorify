@@ -11,6 +11,7 @@ class DuaSettingsBloc extends Bloc<DuaSettingsEvent, DuaSettingsState> {
     on<LoadDuaSettings>(_onLoad);
     on<SetDuaArabicFontSize>(_onSetArabicFontSize);
     on<SetDuaTranslationFontSize>(_onSetTranslationFontSize);
+    on<SetDuaFontSizes>(_onSetFontSizes);
     on<ToggleDuaArabic>(_onToggleArabic);
     on<ToggleDuaTranslation>(_onToggleTranslation);
     on<ToggleDuaTransliteration>(_onToggleTransliteration);
@@ -60,6 +61,21 @@ class DuaSettingsBloc extends Bloc<DuaSettingsEvent, DuaSettingsState> {
     emit(state.copyWith(translationFontSize: event.size));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_translationFontSizeKey, event.size);
+  }
+
+  Future<void> _onSetFontSizes(
+    SetDuaFontSizes event,
+    Emitter<DuaSettingsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        arabicFontSize: event.arabic,
+        translationFontSize: event.translation,
+      ),
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_arabicFontSizeKey, event.arabic);
+    await prefs.setDouble(_translationFontSizeKey, event.translation);
   }
 
   Future<void> _onToggleArabic(

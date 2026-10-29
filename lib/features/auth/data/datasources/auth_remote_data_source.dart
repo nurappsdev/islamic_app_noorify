@@ -5,8 +5,10 @@ import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/auth_user_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/forgot_password_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/google_sign_in_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_response_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/logout_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/register_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/resend_otp_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/reset_password_request_model.dart';
@@ -36,12 +38,21 @@ abstract interface class AuthRemoteDataSource {
   /// Signs in; returns the auth token (+ user when the API includes it).
   Future<LoginResponseModel> login(LoginRequestModel body);
 
+  /// Exchanges a verified Google ID token for an app session; returns the
+  /// auth token (+ user when the API includes it), exactly like [login].
+  Future<LoginResponseModel> googleSignIn(GoogleSignInRequestModel body);
+
   /// Verifies the signed-in user's current [password] ahead of account
   /// deletion. `POST /auth/delete-account` with the session's bearer token.
   Future<String> verifyDeleteAccountPassword(
     String password, {
     required String authToken,
   });
+
+  /// Ends the session server-side: revokes the refresh token and unregisters
+  /// this device's push token. [authToken] goes in the `Authorization`
+  /// header, since the call identifies the session being closed.
+  Future<String> logout(LogoutRequestModel body, {required String authToken});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -115,6 +126,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<LoginResponseModel> googleSignIn(GoogleSignInRequestModel body) async {
+    final response = await _send(
+      ApiConstants.googleSignInEndPoint,
+      body.toJson(),
+    );
+    final json = _envelope(response);
+    final data = json['data'];
+    return LoginResponseModel.fromJson(
+      data is Map<String, dynamic> ? data : json,
+      headerToken:
+          response.headers.value('authorization') ??
+          response.headers.value('x-access-token'),
+    );
+  }
+
+  @override
   Future<String> verifyDeleteAccountPassword(
     String password, {
     required String authToken,
@@ -127,6 +154,21 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       ),
     );
     return json['message']?.toString() ?? 'Password verified.';
+  }
+
+  @override
+  Future<String> logout(
+    LogoutRequestModel body, {
+    required String authToken,
+  }) async {
+    final json = _envelope(
+      await _send(
+        ApiConstants.logoutEndPoint,
+        body.toJson(),
+        headers: {'Authorization': 'Bearer $authToken'},
+      ),
+    );
+    return json['message']?.toString() ?? 'Logged out.';
   }
 
   // ---------------------------------------------------------------------------

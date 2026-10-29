@@ -32,10 +32,20 @@ class ApiConstants {
   static const String verifyEmailEndPoint = "/auth/verify-otp";
   static const String resendOtpEndPoint = "/auth/resend-otp";
   static const String signInEndPoint = "/auth/login";
+
+  /// `POST`: exchanges a Google ID token for an app session. Body:
+  /// `{ "idToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
+  /// Responds with the same envelope as [signInEndPoint].
+  static const String googleSignInEndPoint = "/auth/google";
   static const String forgotPasswordPoint = "/auth/forgot-password";
   static const String resetPasswordEndPoint = "/auth/reset-password";
 
   static const String refreshTokenEndPoint = "/auth/refresh-token";
+
+  /// `POST`: ends the session on the server. Body:
+  /// `{ "refreshToken": "...", "fcmToken": "..." }`, with the session's own
+  /// bearer token in the `Authorization` header.
+  static const String logoutEndPoint = "/auth/logout";
   static const String accountDelete = "/users/delete";
 
   /// `DELETE`: permanently deletes the signed-in user's account, once the

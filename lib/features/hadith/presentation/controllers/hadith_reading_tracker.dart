@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
 import 'package:tuhfatul_muslim/features/hadith/domain/usecases/track_hadith_reading.dart';
 
 /// Tunables of the reading tracker.
@@ -39,6 +40,10 @@ enum HadithCompletion { done, alreadyCompleted, failed }
 /// * Once a hadith is reported as completed, its dwell time freezes (see
 ///   [tick]) — its timer visibly stops — and it is remembered on the device,
 ///   so it is never reported again.
+/// * Reading that runs past midnight is reported for the day it happened on:
+///   at the rollover the time so far is sent for the day that has ended (as
+///   reading time, marking nothing read) and the counters start again from
+///   zero, so the new day is never credited with yesterday's minutes.
 class HadithReadingTracker extends ChangeNotifier {
   HadithReadingTracker(
     this._track, {
@@ -58,6 +63,10 @@ class HadithReadingTracker extends ChangeNotifier {
   /// Seconds each hadith spent in focus. Stops growing once that hadith is
   /// in [_completed] (see [tick]).
   final Map<String, int> _dwell = {};
+
+  /// The tracking day [_dwell] was accrued on, and the day every report
+  /// carries — not the day it happens to be sent on.
+  late DateTime _dwellDay = amolTrackingDate(_now());
   final Set<String> _completed = {};
   final Set<String> _completing = {};
 
@@ -153,6 +162,7 @@ class HadithReadingTracker extends ChangeNotifier {
   @visibleForTesting
   void tick(String? hadithId) {
     if (_paused) return;
+    _rollOverAtMidnight();
     _elapsed++;
     if (hadithId != null && !_completed.contains(hadithId)) {
       _dwell[hadithId] = (_dwell[hadithId] ?? 0) + 1;
@@ -217,7 +227,7 @@ class HadithReadingTracker extends ChangeNotifier {
         hadithIds: ids,
         seconds: seconds,
         completed: completed,
-        date: _now(),
+        date: _dwellDay,
       );
       return await result.fold((_) => HadithCompletion.failed, (_) async {
         if (completed) {
@@ -236,6 +246,28 @@ class HadithReadingTracker extends ChangeNotifier {
   /// or the 5-minute auto-complete dialog.
   Future<HadithCompletion> complete(String hadithId) =>
       submit([hadithId], completed: true);
+
+  /// Midnight with the screen still open: the time read up to it belongs to
+  /// the day that has ended, so it is reported under that day before the
+  /// counters start again from zero on the new one. Nothing is marked read —
+  /// that stays the user's own choice.
+  void _rollOverAtMidnight() {
+    final today = amolTrackingDate(_now());
+    if (today == _dwellDay) return;
+    final ids = [
+      for (final entry in _dwell.entries)
+        if (entry.value > minSeconds &&
+            !_completed.contains(entry.key) &&
+            !_completing.contains(entry.key))
+          entry.key,
+    ];
+    // Sent before the day is moved on, so it carries the old day's date;
+    // [submit] reads the seconds it needs before its request leaves.
+    if (ids.isNotEmpty) unawaited(submit(ids, completed: false));
+    _dwell.clear();
+    _elapsed = 0;
+    _dwellDay = today;
+  }
 
   Future<void> _saveCompleted() async {
     try {

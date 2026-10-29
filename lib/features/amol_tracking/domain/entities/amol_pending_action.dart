@@ -2,7 +2,7 @@
 /// yet — the unit of the offline queue.
 ///
 /// Identity is [id]: the day it belongs to *and* the item. The day matters,
-/// because the same item is ticked again on the next Fajr-to-Fajr day and the
+/// because the same item is ticked again on the next day and the
 /// two must never collapse into one.
 class PendingAmolAction {
   const PendingAmolAction({
@@ -17,7 +17,7 @@ class PendingAmolAction {
   /// `true` for a tick (`log-item`), `false` for an untick (`delete-item`).
   final bool isLog;
 
-  /// The Fajr-to-Fajr day this belongs to (`YYYY-MM-DD`), resolved when the
+  /// The tracking day this belongs to (`YYYY-MM-DD`), resolved when the
   /// user tapped — never re-derived at sync time, so a tick made before Fajr
   /// still lands on the day the user made it.
   final String logDate;

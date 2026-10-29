@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_text_zoom.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// "Typography & Script Styling" sliders in the reader's settings sheet
@@ -23,10 +24,9 @@ class DuaFontSizeControls extends StatelessWidget {
           icon: Icons.menu_book_rounded,
           label: appText.duaArabicFontSizeLabel,
           value: state.arabicFontSize,
-          // 16-50px: the 20px default scaled down to 80% and up to 250%,
-          // the same reach the Quran and Hadith readers allow.
-          min: 16,
-          max: 50,
+          // The same limits the reader's pinch gesture obeys.
+          min: DuaFontSizeLimits.arabicMin,
+          max: DuaFontSizeLimits.arabicMax,
           onChanged: (value) =>
               context.read<DuaSettingsBloc>().add(SetDuaArabicFontSize(value)),
         ),
@@ -35,9 +35,8 @@ class DuaFontSizeControls extends StatelessWidget {
           icon: Icons.translate_rounded,
           label: appText.duaTranslationFontSizeLabel,
           value: state.translationFontSize,
-          // 10-30px, around the 12px default.
-          min: 10,
-          max: 30,
+          min: DuaFontSizeLimits.translationMin,
+          max: DuaFontSizeLimits.translationMax,
           onChanged: (value) => context.read<DuaSettingsBloc>().add(
             SetDuaTranslationFontSize(value),
           ),

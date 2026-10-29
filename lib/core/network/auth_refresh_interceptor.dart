@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 
@@ -57,7 +58,7 @@ class AuthRefreshInterceptor extends Interceptor {
       },
       validateStatus: (status) => status != null && status < 500,
     ),
-  );
+  )..interceptors.add(const LanguageHeaderInterceptor());
 
   @override
   Future<void> onResponse(
