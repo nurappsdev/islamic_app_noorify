@@ -52,10 +52,7 @@ abstract interface class AuthRemoteDataSource {
   /// Ends the session server-side: revokes the refresh token and unregisters
   /// this device's push token. [authToken] goes in the `Authorization`
   /// header, since the call identifies the session being closed.
-  Future<String> logout(
-    LogoutRequestModel body, {
-    required String authToken,
-  });
+  Future<String> logout(LogoutRequestModel body, {required String authToken});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
