@@ -540,4 +540,24 @@ class HadithDatabase {
       await txn.delete(_bookmarksTable);
     });
   }
+
+  /// How many rows are left in the tables [clearUserData] empties. Read by
+  /// the post-logout audit: `0` means no saved hadith of the account that
+  /// just signed out is still on the device.
+  Future<int> userDataRowCount() async {
+    final db = await open();
+    var total = 0;
+    for (final table in const [
+      _bookmarkFolderMapTable,
+      _bookmarkFoldersTable,
+      _bookmarksTable,
+    ]) {
+      total +=
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM $table'),
+          ) ??
+          0;
+    }
+    return total;
+  }
 }

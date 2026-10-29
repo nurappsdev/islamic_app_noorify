@@ -1,10 +1,12 @@
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tuhfatul_muslim/core/storage/hive_service.dart';
+import 'package:tuhfatul_muslim/core/storage/session_clear_audit.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_day_snapshot_store.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/data/amol_pending_actions_store.dart';
 import 'package:tuhfatul_muslim/features/alarm/data/services/alarm_scheduler.dart';
+import 'package:tuhfatul_muslim/features/dua/data/services/dua_read_completion_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
 import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -31,8 +33,13 @@ class SessionCleaner {
     'quran_last_read',
     'quran_reading_history',
     'quran_bookmarks',
-    // Unsent Quran reading time: it must not be credited to the next account.
+    // Unsent Quran and dua reading time: it must not be credited to the
+    // next account.
     'quran_reading_pending',
+    'dua_reading_pending',
+    // Which duas this account ticked as read: the next one must start with
+    // none of them checked.
+    DuaReadCompletionStore.key,
     // Unsent Amol ticks, and the cached daily checklists they are shown
     // against: both belong to the account that made them. Clearing them is
     // what keeps one account's offline progress from being logged under the
@@ -42,10 +49,27 @@ class SessionCleaner {
     // The single-slot cache earlier builds wrote the checklist to.
     'offline_cache_amol_daily_json',
     'offline_cache_amol_daily_at_ms',
+    // The user's own Quran playlists and plans, mirrored here from the API as
+    // a secondary cache — the next account must not be served them.
+    'quran_playlists_v1',
+    'quran_saved_plans_v1',
   };
 
   /// SharedPreferences key prefixes holding per-user progress.
-  static const _userPrefPrefixes = ['ebook_last_page_', 'alarm_dismissed_'];
+  ///
+  /// `offline_cache_` is every `LatestJsonCache` payload — the Home
+  /// dashboard, the leaderboard, the Amol checklists — and each one is a
+  /// response fetched *for the account that was signed in*. Clearing by
+  /// prefix means a cache added later is covered without anyone having to
+  /// remember this list; the downloaded content caches (books, Quran text,
+  /// Asma-ul-Husna) live in Hive and SQLite, not under this prefix, so they
+  /// are untouched.
+  @visibleForTesting
+  static const userPrefPrefixes = [
+    'ebook_last_page_',
+    'alarm_dismissed_',
+    'offline_cache_',
+  ];
 
   /// Call right after sign-out, before returning to Guest mode.
   static Future<void> clearUserData() async {
@@ -59,7 +83,7 @@ class SessionCleaner {
       final prefs = await SharedPreferences.getInstance();
       for (final key in prefs.getKeys().toList()) {
         if (userPrefKeys.contains(key) ||
-            _userPrefPrefixes.any(key.startsWith)) {
+            userPrefPrefixes.any(key.startsWith)) {
           await prefs.remove(key);
         }
       }
@@ -69,12 +93,26 @@ class SessionCleaner {
     // not just the Hive data, so nothing left armed can still ring once
     // Guest mode (or a different account) is active.
     await _safe(() => AlarmScheduler.cancelAllAlarms(reason: 'signed out'));
+    // The keys above are gone from storage; this drops the copy the reader
+    // holds in memory, so an open dua does not keep showing as read.
+    DuaReadCompletionStore.shared.clear();
 
     profileNameNotifier.value = null;
     profilePhotoUrlNotifier.value = null;
     profilePhotoBase64Notifier.value = null;
     skipAuthGateNotifier.value = false;
     NotificationBadgeService.instance.reset();
+
+    // Debug-only proof that the wipe above actually landed: every store is
+    // read back and reported as Cleared / Not Cleared. Counts and key names
+    // only — a stored value never reaches the console.
+    if (kDebugMode) {
+      final report = await SessionClearAudit.run(
+        prefKeys: userPrefKeys,
+        prefPrefixes: userPrefPrefixes,
+      );
+      report.debugLog();
+    }
   }
 
   /// Call right after a Guest successfully signs in or registers (i.e. a

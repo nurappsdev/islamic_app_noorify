@@ -120,19 +120,22 @@ void main() {
     },
   );
 
-  test('a batch submit reports the sum of each hadith\'s dwell seconds', () async {
-    spend(35, on: 'a');
-    spend(40, on: 'b');
-    expect(
-      await tracker.submit(['a', 'b'], completed: true),
-      HadithCompletion.done,
-    );
-    expect(repo.calls, hasLength(1));
-    expect(repo.calls.single.hadithIds, ['a', 'b']);
-    expect(repo.calls.single.seconds, 75);
-    expect(tracker.isCompleted('a'), isTrue);
-    expect(tracker.isCompleted('b'), isTrue);
-  });
+  test(
+    'a batch submit reports the sum of each hadith\'s dwell seconds',
+    () async {
+      spend(35, on: 'a');
+      spend(40, on: 'b');
+      expect(
+        await tracker.submit(['a', 'b'], completed: true),
+        HadithCompletion.done,
+      );
+      expect(repo.calls, hasLength(1));
+      expect(repo.calls.single.hadithIds, ['a', 'b']);
+      expect(repo.calls.single.seconds, 75);
+      expect(tracker.isCompleted('a'), isTrue);
+      expect(tracker.isCompleted('b'), isTrue);
+    },
+  );
 
   test(
     'a batch submit drops ids already completed, and sends nothing once none are left',
@@ -197,6 +200,44 @@ void main() {
     expect(next.isCompleted('a'), isTrue);
     expect(await next.complete('a'), HadithCompletion.alreadyCompleted);
     expect(repo.calls, hasLength(1));
+  });
+
+  group('midnight', () {
+    test('reading is reported for the day it happened on', () async {
+      var now = DateTime(2026, 9, 20, 23, 55);
+      final crossing = HadithReadingTracker(
+        TrackHadithReading(repo),
+        now: () => now,
+      );
+      addTearDown(crossing.dispose);
+
+      // A minute of reading before midnight.
+      for (var i = 0; i < 60; i++) {
+        crossing.tick('h1');
+      }
+      expect(repo.calls, isEmpty);
+
+      // The first tick of the new day closes the old one.
+      now = DateTime(2026, 9, 21, 0, 0, 1);
+      crossing.tick('h1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(repo.calls.single.date, '2026-09-20');
+      expect(repo.calls.single.seconds, 60);
+      expect(
+        repo.calls.single.completed,
+        isFalse,
+        reason: 'reading time only: marking it read stays the user\'s choice',
+      );
+      // The new day starts from zero, and reports under its own date.
+      expect(crossing.dwellSeconds('h1'), 1);
+      for (var i = 0; i < 30; i++) {
+        crossing.tick('h1');
+      }
+      expect(await crossing.complete('h1'), HadithCompletion.done);
+      expect(repo.calls.last.date, '2026-09-21');
+      expect(repo.calls.last.seconds, 31);
+    });
   });
 
   group('timer cleanup', () {
