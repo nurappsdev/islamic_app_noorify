@@ -243,6 +243,7 @@ class _SignupViewState extends State<_SignupView> {
   void _createAccount() {
     FocusScope.of(context).unfocus();
 
+    if (_googleBusy) return;
     if (!_termsAccepted) {
       _showMessage(AppText.readOf(context).validatorTermsRequired);
       return;
@@ -362,6 +363,7 @@ class _SignupViewState extends State<_SignupView> {
 
   Future<void> _signUpWithGoogle() async {
     FocusScope.of(context).unfocus();
+    if (_googleBusy || context.read<RegisterBloc>().state.isLoading) return;
     final appText = AppText.of(context);
     setState(() => _googleBusy = true);
     try {
@@ -622,7 +624,7 @@ class _SignupViewState extends State<_SignupView> {
         GoogleSignInButton(
           key: const Key('signup_google_button'),
           label: AuthPromptTexts.signUpWithGoogle.resolve(languageOf(context)),
-          isLoading: _isLoading,
+          isLoading: _googleBusy,
           height: 60.h,
           onPressed: _signUpWithGoogle,
         ),
