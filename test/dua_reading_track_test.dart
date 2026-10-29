@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dartz/dartz.dart' show Either, Right;
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -416,6 +416,90 @@ void main() {
         'date': '2026-10-29',
       });
       expect(adapter.request?.headers['Authorization'], 'Bearer test-token');
+    });
+
+    test('the screen\'s own values reach the wire unchanged', () async {
+      final adapter = _StubAdapter();
+      final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
+        ..httpClientAdapter = adapter;
+      final clock = _Clock();
+      // The whole chain the reader uses: tracker -> repository -> Dio.
+      final tracker = DuaReadingTracker(
+        DuaReadingRepositoryImpl(
+          DuaRemoteDataSourceImpl(dio: dio, local: _SignedInLocal()),
+          local: DuaReadingLocalDataSourceImpl(),
+          isSignedIn: () => true,
+        ),
+        // The dua's own `_id`, as the reader screen passes it.
+        duaId: '68f1c0de9ab3c5d7e4f10a22',
+        now: () => clock.now,
+        saveEvery: null,
+        completion: DuaReadCompletionStore(),
+      )..start();
+
+      clock.advance(42);
+      expect(await tracker.complete(), isTrue);
+      tracker.dispose();
+
+      // Decoded from the body Dio was handed, so the types are the ones sent.
+      final body = adapter.request?.data as Map;
+      expect(body, {
+        'duaId': '68f1c0de9ab3c5d7e4f10a22',
+        'seconds': 42,
+        'date': '2026-10-29',
+      });
+      expect(body['seconds'], isA<int>());
+      expect(jsonEncode(body), contains('"seconds":42'));
+      // Nothing is left waiting: the server took it.
+      expect(await _saved(), isEmpty);
+    });
+
+    test('the debug trace prints the payload and the answer', () async {
+      final adapter = _StubAdapter();
+      final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
+        ..httpClientAdapter = adapter
+        ..interceptors.add(DuaApiLogInterceptor());
+      final source = DuaRemoteDataSourceImpl(dio: dio, local: _SignedInLocal());
+
+      final lines = <String>[];
+      final original = debugPrint;
+      debugPrint = (message, {wrapWidth}) => lines.add(message ?? '');
+      try {
+        await source.trackReading(
+          duaId: 'dua-77',
+          seconds: 42,
+          date: '2026-10-29',
+        );
+      } finally {
+        debugPrint = original;
+      }
+
+      expect(
+        lines,
+        contains('[DUA API]   payload duaId=dua-77 seconds=42 date=2026-10-29'),
+      );
+      expect(
+        lines.any(
+          (l) => l.contains('"duaId":"dua-77"') && l.contains('"seconds":42'),
+        ),
+        isTrue,
+        reason: 'the encoded body is printed',
+      );
+      expect(
+        lines.any((l) => l.contains('← 200')),
+        isTrue,
+        reason: 'the status is printed',
+      );
+      expect(
+        lines.any((l) => l.contains('Read tracked')),
+        isTrue,
+        reason: 'the response body is printed',
+      );
+      // Never the session's token, however the request is logged.
+      expect(
+        lines.any((l) => l.contains('test-token') || l.contains('Bearer')),
+        isFalse,
+      );
     });
   });
 
