@@ -16,6 +16,15 @@ class SetDuaTranslationFontSize extends DuaSettingsEvent {
   final double size;
 }
 
+/// Both reading sizes at once — what a pinch on the reader commits when it
+/// ends. One event, so the sizes it reached arrive together and neither
+/// text is drawn at its old size while the other has moved.
+class SetDuaFontSizes extends DuaSettingsEvent {
+  const SetDuaFontSizes({required this.arabic, required this.translation});
+  final double arabic;
+  final double translation;
+}
+
 class ToggleDuaArabic extends DuaSettingsEvent {
   const ToggleDuaArabic(this.show);
   final bool show;
