@@ -43,6 +43,11 @@ import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 /// already checked and its recorded duration shown, and no timer runs for it
 /// again.
 ///
+/// Those same three texts are selectable: a long press puts the handles and
+/// the platform's own Copy menu on the one that was pressed, so any part of
+/// it can be taken. Everything else on the page stays plain, unselectable
+/// text.
+///
 /// A two-finger pinch anywhere on the page resizes the three reading texts —
 /// the Arabic, the Bangla pronunciation and the Bangla translation — and
 /// nothing else: the title, the header, the cards and every label keep their
@@ -704,10 +709,15 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                               if (segment.arabic.isNotEmpty)
                                 Padding(
                                   padding: EdgeInsets.symmetric(vertical: 4.h),
-                                  child: Text(
+                                  child: SelectableText(
                                     segment.arabic,
                                     textAlign: TextAlign.right,
                                     textDirection: TextDirection.rtl,
+                                    // The list keeps every drag: without
+                                    // this the text's own viewport takes
+                                    // them and the page stops scrolling.
+                                    scrollPhysics:
+                                        const NeverScrollableScrollPhysics(),
                                     style: TextStyle(
                                       fontFamily: 'Noorehuda',
                                       fontFamilyFallback: appFontFamilyFallback,
@@ -726,9 +736,10 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                     if (settings.showTransliteration &&
                         readable.transliteration.isNotEmpty) ...[
                       SizedBox(height: 10.h),
-                      Text(
+                      SelectableText(
                         readable.transliteration,
                         textAlign: TextAlign.center,
+                        scrollPhysics: const NeverScrollableScrollPhysics(),
                         style: TextStyle(
                           fontSize: _translationFontSize(settings).sp,
                           height: 1.6,
@@ -776,8 +787,10 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                               if (segment.translation.isNotEmpty)
                                 Padding(
                                   padding: EdgeInsets.symmetric(vertical: 3.h),
-                                  child: Text(
+                                  child: SelectableText(
                                     segment.translation,
+                                    scrollPhysics:
+                                        const NeverScrollableScrollPhysics(),
                                     style: TextStyle(
                                       fontSize: _translationFontSize(
                                         settings,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -187,7 +188,9 @@ void main() {
     // it is the only widget carrying the whole title.
     const title = 'Dua For Testing Zoom';
 
-    Future<void> pump(WidgetTester tester) async {
+    /// [tall] adds filler segments, so the page is longer than the screen
+    /// and has somewhere to scroll.
+    Future<void> pump(WidgetTester tester, {bool tall = false}) async {
       tester.view.physicalSize = const Size(375 * 3, 812 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
@@ -200,10 +203,19 @@ void main() {
               home: DuaReaderScreen(
                 args: DuaReaderArgs.mock(
                   featured: DuaCatalog.featured.first,
-                  detail: const DuaDetail(
+                  detail: DuaDetail(
                     name: title,
                     segments: [
-                      DuaSegment(arabic: arabic, translation: translation),
+                      const DuaSegment(
+                        arabic: arabic,
+                        translation: translation,
+                      ),
+                      if (tall)
+                        for (var i = 0; i < 8; i++)
+                          DuaSegment(
+                            arabic: 'filler arabic $i',
+                            translation: 'filler translation $i ' * 6,
+                          ),
                     ],
                     transliteration: pronunciation,
                   ),
@@ -216,8 +228,19 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    /// A fixed label, such as the title: still a plain [Text].
     double sizeOf(WidgetTester tester, String text) =>
         tester.widget<Text>(find.text(text)).style!.fontSize!;
+
+    /// The reading texts are [SelectableText], which `find.text` — a [Text]
+    /// matcher — does not see.
+    Finder readingText(String text) => find.byWidgetPredicate(
+      (widget) => widget is SelectableText && widget.data == text,
+      description: 'SelectableText("$text")',
+    );
+
+    double readingSizeOf(WidgetTester tester, String text) =>
+        tester.widget<SelectableText>(readingText(text)).style!.fontSize!;
 
     /// Spreads two fingers over the reader to twice their distance.
     Future<void> pinchOut(WidgetTester tester) async {
@@ -243,34 +266,35 @@ void main() {
       await pump(tester);
 
       final before = {
-        for (final text in [arabic, pronunciation, translation, title])
-          text: sizeOf(tester, text),
+        for (final text in [arabic, pronunciation, translation])
+          text: readingSizeOf(tester, text),
       };
+      final titleBefore = sizeOf(tester, title);
 
       await pinchOut(tester);
 
       // Twice the finger distance, twice the reading size.
-      expect(sizeOf(tester, arabic), closeTo(before[arabic]! * 2, 0.5));
+      expect(readingSizeOf(tester, arabic), closeTo(before[arabic]! * 2, 0.5));
       expect(
-        sizeOf(tester, pronunciation),
+        readingSizeOf(tester, pronunciation),
         closeTo(before[pronunciation]! * 2, 0.5),
       );
       expect(
-        sizeOf(tester, translation),
+        readingSizeOf(tester, translation),
         closeTo(before[translation]! * 2, 0.5),
       );
       // The title is not reading text.
-      expect(sizeOf(tester, title), before[title]);
+      expect(sizeOf(tester, title), titleBefore);
     });
 
     testWidgets('the size reached outlives the gesture', (tester) async {
       await pump(tester);
       await pinchOut(tester);
-      final zoomed = sizeOf(tester, arabic);
+      final zoomed = readingSizeOf(tester, arabic);
 
       // Several frames on from the commit: still the size it was let go at.
       await tester.pump(const Duration(seconds: 1));
-      expect(sizeOf(tester, arabic), zoomed);
+      expect(readingSizeOf(tester, arabic), zoomed);
     });
 
     testWidgets('a pinch beyond the limit stops at the largest size', (
@@ -284,8 +308,106 @@ void main() {
 
       // 20px scaled by 2 four times would be 320px; the slider's ceiling is
       // 50px and the pinch obeys it.
-      expect(sizeOf(tester, arabic), DuaFontSizeLimits.arabicMax);
-      expect(sizeOf(tester, translation), DuaFontSizeLimits.translationMax);
+      expect(readingSizeOf(tester, arabic), DuaFontSizeLimits.arabicMax);
+      expect(
+        readingSizeOf(tester, translation),
+        DuaFontSizeLimits.translationMax,
+      );
+    });
+
+    testWidgets('each reading text can be selected, the rest cannot', (
+      tester,
+    ) async {
+      await pump(tester);
+
+      for (final text in [arabic, pronunciation, translation]) {
+        expect(readingText(text), findsOneWidget, reason: text);
+      }
+      // The title and the category label stay plain text.
+      expect(find.text(title), findsOneWidget);
+      expect(readingText(title), findsNothing);
+    });
+
+    testWidgets('a long press selects a word and the menu copies it', (
+      tester,
+    ) async {
+      final copied = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied.add((call.arguments as Map)['text'] as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pump(tester);
+
+      await tester.longPress(readingText(translation));
+      await tester.pumpAndSettle();
+
+      // The platform's own menu, with a word of the translation selected.
+      expect(find.text('Copy'), findsOneWidget);
+      await tester.tap(find.text('Copy'));
+      await tester.pumpAndSettle();
+
+      expect(copied, hasLength(1));
+      expect(copied.single, isNotEmpty);
+      expect(translation, contains(copied.single));
+    });
+
+    testWidgets('a pinch started on the selectable text still zooms', (
+      tester,
+    ) async {
+      await pump(tester);
+      final before = readingSizeOf(tester, translation);
+      // Both fingers inside the translation, which has its own long-press
+      // and tap recognizers in the arena.
+      final center = tester.getCenter(readingText(translation));
+
+      final first = await tester.startGesture(
+        center - const Offset(30, 0),
+        pointer: 1,
+      );
+      final second = await tester.startGesture(
+        center + const Offset(30, 0),
+        pointer: 2,
+      );
+      await tester.pump();
+      await first.moveBy(const Offset(-30, 0));
+      await second.moveBy(const Offset(30, 0));
+      await tester.pump();
+      await first.up();
+      await second.up();
+      await tester.pumpAndSettle();
+
+      expect(readingSizeOf(tester, translation), closeTo(before * 2, 0.5));
+      // A pinch is not a long press: no selection menu came up.
+      expect(find.text('Copy'), findsNothing);
+    });
+
+    testWidgets('a drag over the reading text still scrolls the page', (
+      tester,
+    ) async {
+      await pump(tester, tall: true);
+      final before = tester.getTopLeft(readingText(translation)).dy;
+
+      await tester.drag(readingText(translation), const Offset(0, -150));
+      await tester.pumpAndSettle();
+
+      // Selectable text brings its own viewport, which must not swallow the
+      // drag: the page is what moves, by the distance dragged less the slop
+      // the gesture spends before the scroll starts.
+      expect(
+        tester.getTopLeft(readingText(translation)).dy,
+        lessThan(before - 100),
+      );
     });
   });
 }
