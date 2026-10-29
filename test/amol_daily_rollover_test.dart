@@ -142,7 +142,7 @@ void main() {
     expect(bloc.state.isItemChecked('tahajjud', false), isFalse);
   });
 
-  test('Tahajjud can be logged at 3 AM for the new civil day', () {
+  group('prayer time gates', () {
     const times = DailyPrayerTimes(
       dateKey: '2026-10-22',
       readableDate: '',
@@ -156,16 +156,93 @@ void main() {
       isha: PrayerClockTime(hour: 19, minute: 0),
     );
 
-    expect(
-      canLogAmolPrayerItem(
-        now: DateTime(2026, 10, 22, 3),
-        trackingDate: DateTime(2026, 10, 22),
-        pillarKey: 'nafl_salat',
-        itemKey: 'tahajjud',
-        times: times,
-      ),
-      isTrue,
-    );
+    /// The gate as the tracker asks it: the day a tick lands on is always the
+    /// calendar day [now] falls in.
+    bool canLog(String pillarKey, String itemKey, DateTime now) =>
+        canLogAmolPrayerItem(
+          now: now,
+          trackingDate: amolTrackingDate(now),
+          pillarKey: pillarKey,
+          itemKey: itemKey,
+          times: times,
+        );
+
+    test('Tahajjud can be logged at 3 AM, against the new civil day', () {
+      final now = DateTime(2026, 10, 22, 3);
+      expect(canLog('nafl_salat', 'tahajjud', now), isTrue);
+      // And it is recorded on the day it was prayed, not the evening before.
+      expect(amolTrackingDateIso(now), '2026-10-22');
+    });
+
+    test('Tahajjud is open from Isha right through the small hours', () {
+      // Isha opens it, midnight doesn't close it, and the last minute before
+      // Fajr still counts.
+      for (final now in [
+        DateTime(2026, 10, 22, 19),
+        DateTime(2026, 10, 22, 23, 59, 59),
+        DateTime(2026, 10, 23),
+        DateTime(2026, 10, 23, 4, 29, 59),
+      ]) {
+        expect(canLog('nafl_salat', 'tahajjud', now), isTrue, reason: '$now');
+      }
+    });
+
+    test('Tahajjud is blocked once Fajr begins, until the next Isha', () {
+      for (final now in [
+        DateTime(2026, 10, 22, 4, 30),
+        DateTime(2026, 10, 22, 6),
+        DateTime(2026, 10, 22, 12),
+        DateTime(2026, 10, 22, 18, 59, 59),
+      ]) {
+        expect(canLog('nafl_salat', 'tahajjud', now), isFalse, reason: '$now');
+      }
+    });
+
+    test('Salatul Wudu can be ticked at any hour of the day', () {
+      // It follows performing wudu, not a prayer time — and in particular it
+      // does not wait for Maghrib.
+      for (final now in [
+        DateTime(2026, 10, 22),
+        DateTime(2026, 10, 22, 9, 15),
+        DateTime(2026, 10, 22, 17),
+        DateTime(2026, 10, 22, 23, 59, 59),
+      ]) {
+        expect(canLog('nafl_salat', 'awabin', now), isTrue, reason: '$now');
+      }
+    });
+
+    test('Tahiyyatul Masjid is open all day too', () {
+      expect(
+        canLog('nafl_salat', 'tahiyyatul_masjid', DateTime(2026, 10, 22, 10)),
+        isTrue,
+      );
+    });
+
+    test('every other prayer still waits for its own time', () {
+      expect(
+        canLog('nafl_salat', 'ishraq', DateTime(2026, 10, 22, 5)),
+        isFalse,
+      );
+      expect(canLog('nafl_salat', 'ishraq', DateTime(2026, 10, 22, 6)), isTrue);
+      expect(
+        canLog('fardh_prayer', 'asr', DateTime(2026, 10, 22, 15)),
+        isFalse,
+      );
+      expect(
+        canLog('fardh_prayer', 'asr', DateTime(2026, 10, 22, 15, 30)),
+        isTrue,
+      );
+      expect(
+        canLog('sunnah_witr', 'witr', DateTime(2026, 10, 22, 18)),
+        isFalse,
+      );
+      expect(canLog('sunnah_witr', 'witr', DateTime(2026, 10, 22, 19)), isTrue);
+      // The closed day: Witr can no longer be ticked after midnight.
+      expect(
+        canLog('sunnah_witr', 'witr', DateTime(2026, 10, 23, 0, 5)),
+        isFalse,
+      );
+    });
   });
 
   group('the tracking day', () {
