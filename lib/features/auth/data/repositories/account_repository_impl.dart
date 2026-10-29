@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.
 import 'package:tuhfatul_muslim/features/auth/data/models/forgot_password_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/google_sign_in_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/logout_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/register_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/resend_otp_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/reset_password_request_model.dart';
@@ -21,6 +22,7 @@ import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.da
 import 'package:tuhfatul_muslim/features/auth/domain/entities/reset_password_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/verify_otp_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/repositories/account_repository.dart';
+import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
 
 class AccountRepositoryImpl implements AccountRepository {
   AccountRepositoryImpl(this._remote, {AuthLocalDataSource? local})
@@ -140,11 +142,49 @@ class AccountRepositoryImpl implements AccountRepository {
 
   @override
   Future<void> logout() async {
+    // Told to the server first, while the tokens that identify this session
+    // are still stored.
+    await _revokeSession();
     await _local.clearToken();
     // Also drop the Google SDK's own cached account, so the next sign-in
     // shows the picker instead of silently reusing the last one. A no-op for
     // sessions that never used Google.
     await GoogleAuthService.instance.signOut();
+  }
+
+  /// `POST /auth/logout`: revokes this session's refresh token and
+  /// unregisters this device's push token.
+  ///
+  /// Best effort on purpose. Signing out is a local decision, so an
+  /// unreachable server, an already-expired token or a missing FCM token
+  /// must not strand the user inside the account — the caller clears the
+  /// session either way.
+  Future<void> _revokeSession() async {
+    final authToken = _local.getToken();
+    if (authToken == null) return;
+    try {
+      // The whole round trip is capped, this device's push token included
+      // (reading it can stall where Play Services is missing), so the Logout
+      // button never sits spinning on Dio's full timeout.
+      await Future(() async {
+        final fcmToken = await FirebaseTokenService.instance.getToken();
+        await _remote.logout(
+          LogoutRequestModel(refreshToken: _refreshToken, fcmToken: fcmToken),
+          authToken: authToken,
+        );
+      }).timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Already signing out; nothing left to tell the user.
+    }
+  }
+
+  /// The stored refresh token. It belongs to the Hive-backed source rather
+  /// than to [AuthLocalDataSource] itself, which is also how
+  /// `AuthRefreshInterceptor` reads it; a source that does not keep one
+  /// simply has nothing to revoke.
+  String? get _refreshToken {
+    final local = _local;
+    return local is AuthLocalDataSourceImpl ? local.getRefreshToken() : null;
   }
 
   @override
