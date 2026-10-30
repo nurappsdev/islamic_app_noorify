@@ -554,7 +554,7 @@ void main() {
       expect(dashboard.pendingItemKeys, {'fajr'});
     });
 
-    test('a new Fajr-to-Fajr day offline is empty but tickable', () async {
+    test('a new day offline is empty but tickable', () async {
       await repository.getDaily(date: '2026-10-20');
       remote.offline = true;
 

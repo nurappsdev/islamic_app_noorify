@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_local_project
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/delete_amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/get_amol_daily.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/usecases/log_amol_item.dart';
+import 'package:tuhfatul_muslim/features/dua/data/services/dua_offline_reading_progress_store.dart';
 import 'package:tuhfatul_muslim/features/quran/data/services/quran_offline_reading_progress_store.dart';
 
 import 'amol_daily_event.dart';
@@ -25,8 +26,11 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     this._deleteAmolItem, {
     AmolDailyDashboard? initialDashboard,
     QuranOfflineReadingProgressStore? offlineQuranProgress,
+    DuaOfflineReadingProgressStore? offlineDuaProgress,
   }) : _offlineQuranProgress =
            offlineQuranProgress ?? QuranOfflineReadingProgressStore.shared,
+       _offlineDuaProgress =
+           offlineDuaProgress ?? DuaOfflineReadingProgressStore.shared,
        super(
          initialDashboard == null
              ? const AmolDailyState.initial()
@@ -34,25 +38,28 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
        ) {
     on<LoadAmolDaily>(_onLoad);
     on<UseAmolDailyDashboard>(_onUseSharedDashboard);
-    on<RefreshOfflineQuranProgress>(_onRefreshOfflineQuranProgress);
+    on<RefreshOfflineReadingProgress>(_onRefreshOfflineReadingProgress);
     on<LogAmolDailyItem>(_onLogItem);
     on<UncheckAmolDailyItem>(_onUncheckItem);
-    _offlineQuranProgress.addListener(_onOfflineQuranProgressChanged);
+    _offlineQuranProgress.addListener(_onOfflineReadingProgressChanged);
+    _offlineDuaProgress.addListener(_onOfflineReadingProgressChanged);
   }
 
   final GetAmolDaily _getAmolDaily;
   final LogAmolItem _logAmolItem;
   final DeleteAmolItem _deleteAmolItem;
   final QuranOfflineReadingProgressStore _offlineQuranProgress;
+  final DuaOfflineReadingProgressStore _offlineDuaProgress;
 
   /// Every load owns a generation. This prevents a slow response for the
   /// previous civil day from restoring yesterday's checklist after midnight.
   int _loadGeneration = 0;
   String? _activeDate;
 
-  /// The unprojected result of the last checklist request. Quran's device
-  /// duration is always applied over this value, never over a prior projected
-  /// result, so every five-minute point is counted exactly once.
+  /// The unprojected result of the last checklist request. The Quran and dua
+  /// durations held on the device are always applied over this value, never
+  /// over a prior projected result, so every five-minute point is counted
+  /// exactly once.
   AmolDailyDashboard? _serverDashboard;
 
   /// One-off notifications for a failed `log-item`/`delete-item` call (the
@@ -65,7 +72,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     UseAmolDailyDashboard event,
     Emitter<AmolDailyState> emit,
   ) {
-    // The shared store has already applied its local Quran projection.
+    // The shared store has already applied its local reading projections.
     // Discard a previous raw baseline so another local notification cannot
     // add the same seconds a second time.
     _serverDashboard = null;
@@ -78,41 +85,47 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
     );
   }
 
-  void _onOfflineQuranProgressChanged() {
-    if (!isClosed) add(const RefreshOfflineQuranProgress());
+  void _onOfflineReadingProgressChanged() {
+    if (!isClosed) add(const RefreshOfflineReadingProgress());
   }
 
-  void _onRefreshOfflineQuranProgress(
-    RefreshOfflineQuranProgress event,
+  void _onRefreshOfflineReadingProgress(
+    RefreshOfflineReadingProgress event,
     Emitter<AmolDailyState> emit,
   ) {
     final server = _serverDashboard;
     if (server == null || server.dateIso != _activeDate) return;
     emit(
       AmolDailyState.success(
-        _projectOfflineQuran(server),
+        _projectOfflineReading(server),
         completionOverrides: state.completionOverrides,
         loggingItemKeys: state.loggingItemKeys,
       ),
     );
   }
 
-  AmolDailyDashboard _projectOfflineQuran(AmolDailyDashboard dashboard) {
+  AmolDailyDashboard _projectOfflineReading(AmolDailyDashboard dashboard) {
     final date = dashboard.dateIso;
-    return projectOfflineQuranReading(
-      dashboard,
-      // A report acknowledged by the Quran API is left for the shared Amol
-      // store to reconcile against its next fresh daily response. This bloc
-      // only owns reports still waiting on this device, so it can never add
-      // a report that an online response already contains.
-      additionalSeconds: _offlineQuranProgress
-          .progressFor(
-            date,
-            acknowledgedInBaseline: _offlineQuranProgress.acknowledgedIdsFor(
+    // A report acknowledged by the Quran or Dua API is left for the shared
+    // Amol store to reconcile against its next fresh daily response. This
+    // bloc only owns reports still waiting on this device, so it can never
+    // add a report that an online response already contains.
+    return projectOfflineDuaReading(
+      projectOfflineQuranReading(
+        dashboard,
+        additionalSeconds: _offlineQuranProgress
+            .progressFor(
               date,
-            ),
-          )
-          .seconds,
+              acknowledgedInBaseline: _offlineQuranProgress.acknowledgedIdsFor(
+                date,
+              ),
+            )
+            .seconds,
+      ),
+      additionalSeconds: _offlineDuaProgress.secondsFor(
+        date,
+        acknowledgedInBaseline: _offlineDuaProgress.acknowledgedIdsFor(date),
+      ),
     );
   }
 
@@ -151,7 +164,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
         _serverDashboard = dashboard;
         emit(
           AmolDailyState.success(
-            _projectOfflineQuran(dashboard),
+            _projectOfflineReading(dashboard),
             completionOverrides: completionOverrides,
           ),
         );
@@ -190,7 +203,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
         _serverDashboard = dashboard;
         emit(
           AmolDailyState.success(
-            _projectOfflineQuran(dashboard),
+            _projectOfflineReading(dashboard),
             completionOverrides: completionOverrides,
             loggingItemKeys: state.loggingItemKeys.difference({event.itemKey}),
           ),
@@ -230,7 +243,7 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
         _serverDashboard = dashboard;
         emit(
           AmolDailyState.success(
-            _projectOfflineQuran(dashboard),
+            _projectOfflineReading(dashboard),
             completionOverrides: completionOverrides,
             loggingItemKeys: state.loggingItemKeys.difference({event.itemKey}),
           ),
@@ -241,7 +254,8 @@ class AmolDailyBloc extends Bloc<AmolDailyEvent, AmolDailyState> {
 
   @override
   Future<void> close() {
-    _offlineQuranProgress.removeListener(_onOfflineQuranProgressChanged);
+    _offlineQuranProgress.removeListener(_onOfflineReadingProgressChanged);
+    _offlineDuaProgress.removeListener(_onOfflineReadingProgressChanged);
     unawaited(_logFailures.close());
     return super.close();
   }

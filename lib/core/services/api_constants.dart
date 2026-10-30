@@ -1,9 +1,9 @@
 class ApiConstants {
   // local
-    static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
+   // static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
   //live
-   //  static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1";
+     static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1";
   // static const String baseUrl = "https://tuhfatulmuslim.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
 
@@ -41,6 +41,11 @@ class ApiConstants {
   static const String resetPasswordEndPoint = "/auth/reset-password";
 
   static const String refreshTokenEndPoint = "/auth/refresh-token";
+
+  /// `POST`: ends the session on the server. Body:
+  /// `{ "refreshToken": "...", "fcmToken": "..." }`, with the session's own
+  /// bearer token in the `Authorization` header.
+  static const String logoutEndPoint = "/auth/logout";
   static const String accountDelete = "/users/delete";
 
   /// `DELETE`: permanently deletes the signed-in user's account, once the

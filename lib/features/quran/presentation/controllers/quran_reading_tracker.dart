@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/amol_tracking_day.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/repositories/quran_reading_repository.dart';
 import 'package:tuhfatul_muslim/features/quran/domain/quran_reading_points.dart';
 
@@ -34,6 +35,10 @@ abstract final class QuranReadingTrackerConfig {
 /// [flush], [pause] and [dispose] run. A report that fails (offline, say)
 /// stays with the repository, which sends it later: tracking never gets in
 /// the way of reading.
+///
+/// A session that runs past midnight is split there: the minutes before it
+/// are reported for the day they were read in, and the session goes on from
+/// zero on the new day — the same boundary the Amol tracker uses.
 ///
 /// Every [saveEvery] while the clock runs, the session so far is saved as a
 /// draft, so an app closed without [pause] or [dispose] still has it sent on
@@ -92,6 +97,8 @@ class QuranReadingTracker {
   /// reading so far.
   Future<void> pause() {
     if (_paused || _disposed) return Future.value();
+    // Before the session is stopped, so each day still keeps its own time.
+    _rollOverAtMidnight();
     _paused = true;
     _session?.stop(_now());
     _saver?.cancel();
@@ -134,9 +141,9 @@ class QuranReadingTracker {
 
   void _publishLiveProgress({bool force = false}) {
     final session = _session;
-    if (session == null || _paused || _disposed || !_repository.isSignedIn) {
-      return;
-    }
+    if (session == null || _paused || _disposed) return;
+    if (_rollOverAtMidnight()) return;
+    if (!_repository.isSignedIn) return;
     final seconds = math.min(session.peek(_now()), maxSeconds);
     if (seconds < minSeconds) return;
     final minutes = seconds ~/ 60;
@@ -179,12 +186,29 @@ class QuranReadingTracker {
     );
   }
 
+  /// Midnight, mid-session: closes the session at midnight so the minutes
+  /// read before it are reported under the day they were read in, and the
+  /// session carries on from midnight on the new day. Returns whether that
+  /// happened.
+  bool _rollOverAtMidnight() {
+    final session = _session;
+    if (session == null || _disposed) return false;
+    final midnight = amolTrackingDate(_now());
+    if (!midnight.isAfter(session.startedAt)) return false;
+    unawaited(flush(upTo: midnight));
+    return true;
+  }
+
   /// Reports the current session, if long enough, and starts a fresh one on
   /// the page on screen.
-  Future<void> flush() async {
+  ///
+  /// [upTo] ends the session at that moment instead of now — the midnight
+  /// split: the seconds before it are reported for the day that has ended,
+  /// and the session that replaces it starts counting from there.
+  Future<void> flush({DateTime? upTo}) async {
     final session = _session;
     if (session == null) return;
-    final now = _now();
+    final now = upTo ?? _now();
     final seconds = session.take(now);
     final page = _page;
     _session = _disposed || page == null
@@ -216,6 +240,8 @@ class QuranReadingTracker {
   /// Reports the last session and stops for good. Safe to call twice.
   Future<void> dispose() {
     if (_disposed) return Future.value();
+    // Left after midnight: the day that ended is reported on its own first.
+    _rollOverAtMidnight();
     _disposed = true;
     _saver?.cancel();
     _progressTicker?.cancel();

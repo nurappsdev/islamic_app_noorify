@@ -69,22 +69,30 @@ class _SignInViewState extends State<_SignInView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  /// `true` only while the Google account picker is on screen; the REST
-  /// exchange that follows is tracked by [LoginBloc] like any other sign-in.
+  /// Which button started the sign-in that is in flight. [LoginBloc] runs
+  /// both flows and its `isLoading` cannot tell them apart, so the flow is
+  /// remembered here instead: each flag stays up from the tap until
+  /// [_onLoginState] sees the exchange end, which keeps the spinner inside
+  /// the button that was actually pressed.
   bool _googleBusy = false;
+  bool _emailBusy = false;
 
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
 
-  /// Whether a sign-in is in flight. This *watches* [LoginBloc], so it may
-  /// only be read while building — [build] reads it once and hands the value
-  /// down, since a field callback that read it here crashed with provider's
-  /// "Tried to listen to a value exposed with provider, from outside of the
-  /// widget tree".
-  bool get _isLoading =>
-      _authState.isLoading ||
-      _googleBusy ||
-      context.watch<LoginBloc>().state.isLoading;
+  /// Whether an e-mail + password sign-in is in flight. This *watches*
+  /// [LoginBloc], so it may only be read while building — [build] reads it
+  /// once and hands the value down, since a field callback that read it here
+  /// crashed with provider's "Tried to listen to a value exposed with
+  /// provider, from outside of the widget tree".
+  bool get _loginLoading {
+    final exchanging = context.watch<LoginBloc>().state.isLoading;
+    return _authState.isLoading || _emailBusy || (exchanging && !_googleBusy);
+  }
+
+  /// Whether the Google sign-in is in flight — the picker and the exchange
+  /// that follows it. Watches nothing, so it is safe to read anywhere.
+  bool get _googleLoading => _googleBusy;
   bool get _obscurePassword => _authState.obscurePassword;
 
   @override
@@ -145,22 +153,32 @@ class _SignInViewState extends State<_SignInView> {
 
   Future<void> _signIn() async {
     FocusScope.of(context).unfocus();
+    if (_emailBusy || _googleBusy) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     // Captured before the await below so nothing here touches `context`
     // once this device's FCM token has been fetched.
     final loginBloc = context.read<LoginBloc>();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final fcmToken = await FirebaseTokenService.instance.getToken();
-    loginBloc.add(
-      LoginSubmitted(email: email, password: password, fcmToken: fcmToken),
-    );
+    setState(() => _emailBusy = true);
+    try {
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        LoginSubmitted(email: email, password: password, fcmToken: fcmToken),
+      );
+    } catch (_) {
+      // The request never left: drop the spinner rather than leave the
+      // button spinning on a state that will never arrive.
+      if (mounted) setState(() => _emailBusy = false);
+      rethrow;
+    }
   }
 
   /// Runs the Google account picker, then hands the ID token to [LoginBloc]
   /// to be exchanged for an app session. A cancelled picker is silent.
   Future<void> _signInWithGoogle() async {
     FocusScope.of(context).unfocus();
+    if (_emailBusy || _googleBusy) return;
     final appText = AppText.of(context);
     final loginBloc = context.read<LoginBloc>();
 
@@ -177,13 +195,15 @@ class _SignInViewState extends State<_SignInView> {
           fcmToken: fcmToken,
         ),
       );
+      // The flag stays up while [LoginBloc] exchanges the token;
+      // [_onLoginState] drops it.
+      return;
     } on GoogleSignInException catch (e) {
       _showMessage(GoogleAuthService.messageFor(e, appText));
     } catch (_) {
       _showMessage(appText.googleAuthErrorGeneric);
-    } finally {
-      if (mounted) setState(() => _googleBusy = false);
     }
+    if (mounted) setState(() => _googleBusy = false);
   }
 
   void _showMessage(String message) {
@@ -194,6 +214,15 @@ class _SignInViewState extends State<_SignInView> {
   }
 
   void _onLoginState(BuildContext context, LoginState state) {
+    if (state.status == LoginStatus.success ||
+        state.status == LoginStatus.failure) {
+      if (mounted) {
+        setState(() {
+          _emailBusy = false;
+          _googleBusy = false;
+        });
+      }
+    }
     switch (state.status) {
       case LoginStatus.success:
         // Hand the credentials to Google Password Manager / iCloud Keychain /
@@ -251,11 +280,21 @@ class _SignInViewState extends State<_SignInView> {
     return BlocListener<LoginBloc, LoginState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: _onLoginState,
-      child: _buildScaffold(appText, _isLoading),
+      child: _buildScaffold(
+        appText,
+        loginLoading: _loginLoading,
+        googleLoading: _googleLoading,
+      ),
     );
   }
 
-  Widget _buildScaffold(AppText appText, bool isLoading) {
+  Widget _buildScaffold(
+    AppText appText, {
+    required bool loginLoading,
+    required bool googleLoading,
+  }) {
+    // The secondary links stay disabled during either sign-in, as before.
+    final isLoading = loginLoading || googleLoading;
     return Scaffold(
       backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
@@ -344,7 +383,7 @@ class _SignInViewState extends State<_SignInView> {
                               textInputAction: TextInputAction.done,
                               autofillHints: const [AutofillHints.password],
                               onFieldSubmitted: (_) {
-                                if (_isLoading) return;
+                                if (_emailBusy || _googleBusy) return;
                                 _signIn();
                               },
                               decoration: _fieldDecoration(
@@ -391,11 +430,11 @@ class _SignInViewState extends State<_SignInView> {
                   SizedBox(height: 40.h),
                   AuthButton(
                     label: appText.login,
-                    isLoading: isLoading,
+                    isLoading: loginLoading,
                     onPressed: _signIn,
                   ),
                   SizedBox(height: 18.h),
-                  _googleSignInButton(appText, isLoading),
+                  _googleSignInButton(appText, googleLoading),
                   SizedBox(height: 14.h),
                   Wrap(
                     alignment: WrapAlignment.center,
