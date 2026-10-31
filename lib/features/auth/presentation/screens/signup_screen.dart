@@ -10,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
@@ -628,6 +629,16 @@ class _SignupViewState extends State<_SignupView> {
           height: 60.h,
           onPressed: _signUpWithGoogle,
         ),
+        SizedBox(height: 16.h),
+        // Presentation only: Facebook login is not wired up yet.
+        FacebookSignInButton(
+          key: const Key('signup_facebook_button'),
+          label: AuthPromptTexts.signUpWithFacebook.resolve(
+            languageOf(context),
+          ),
+          height: 60.h,
+          onPressed: () {},
+        ),
       ],
     );
   }
@@ -778,6 +789,17 @@ class _SignupViewState extends State<_SignupView> {
                           isLoading: _googleBusy,
                           height: 60.h,
                           onPressed: _signUpWithGoogle,
+                        ),
+                        SizedBox(height: 18.h),
+                        // Presentation only: Facebook login is not wired up
+                        // yet.
+                        FacebookSignInButton(
+                          key: const Key('signup_facebook_button'),
+                          label: AuthPromptTexts.continueWithFacebook.resolve(
+                            languageOf(context),
+                          ),
+                          height: 60.h,
+                          onPressed: () {},
                         ),
                         SizedBox(height: 10.h),
                         Wrap(
