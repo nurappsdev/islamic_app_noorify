@@ -20,6 +20,7 @@ import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -265,6 +266,16 @@ class _SignInViewState extends State<_SignInView> {
     );
   }
 
+  /// Facebook's branded button, the same frame as [_googleSignInButton].
+  /// Presentation only: Facebook login is not wired up yet.
+  Widget _facebookSignInButton() {
+    return FacebookSignInButton(
+      key: const Key('signin_facebook_button'),
+      label: AuthPromptTexts.continueWithFacebook.resolve(languageOf(context)),
+      onPressed: () {},
+    );
+  }
+
   void _continueAsGuest() {
     // No token is stored, so the user stays unauthenticated while browsing.
     Navigator.of(
@@ -435,6 +446,8 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   SizedBox(height: 18.h),
                   _googleSignInButton(appText, googleLoading),
+                  SizedBox(height: 18.h),
+                  _facebookSignInButton(),
                   SizedBox(height: 14.h),
                   Wrap(
                     alignment: WrapAlignment.center,

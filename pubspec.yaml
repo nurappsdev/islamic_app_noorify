@@ -117,6 +117,7 @@ flutter:
     - assets/hadith/
     - assets/language/
     - assets/googleIcon.png
+    - assets/facebookIcon.svg
     - assets/appLogo.png
     - assets/appLogoFinal.png
     - assets/splasImg.png
