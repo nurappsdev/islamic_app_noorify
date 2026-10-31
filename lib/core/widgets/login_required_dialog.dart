@@ -14,6 +14,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
 import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
@@ -81,6 +82,9 @@ Future<bool> showLoginRequiredDialog(
             noLabel: notNow,
             loginLabel: AuthPromptTexts.signIn.resolve(language),
             googleLabel: AuthPromptTexts.continueWithGoogle.resolve(language),
+            facebookLabel: AuthPromptTexts.continueWithFacebook.resolve(
+              language,
+            ),
             language: language,
           ),
         ),
@@ -101,6 +105,7 @@ class _LoginRequiredCard extends StatefulWidget {
     required this.noLabel,
     required this.loginLabel,
     required this.googleLabel,
+    required this.facebookLabel,
     required this.language,
   });
 
@@ -109,6 +114,7 @@ class _LoginRequiredCard extends StatefulWidget {
   final String noLabel;
   final String loginLabel;
   final String googleLabel;
+  final String facebookLabel;
   final AppLanguage language;
 
   @override
@@ -328,6 +334,14 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                       isLoading: _googleBusy,
                       height: 48.h,
                       onPressed: _signInWithGoogle,
+                    ),
+                    SizedBox(height: 12.h),
+                    // Presentation only: Facebook login is not wired up yet.
+                    FacebookSignInButton(
+                      key: const Key('login_required_facebook_button'),
+                      label: widget.facebookLabel,
+                      height: 48.h,
+                      onPressed: () {},
                     ),
                   ],
                 ),
