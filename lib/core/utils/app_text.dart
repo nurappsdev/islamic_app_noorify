@@ -267,6 +267,10 @@ class AppText {
     required this.googleAuthErrorUiUnavailable,
     required this.googleAuthErrorInterrupted,
     required this.googleAuthErrorGeneric,
+    required this.facebookAuthErrorInProgress,
+    required this.facebookAuthErrorGeneric,
+    required this.facebookAuthSignedIn,
+    required this.facebookAuthSignedInAs,
     required this.dashboard,
     required this.quizHistory,
     required this.seeAll,
@@ -1232,6 +1236,10 @@ class AppText {
   final String googleAuthErrorUiUnavailable;
   final String googleAuthErrorInterrupted;
   final String googleAuthErrorGeneric;
+  final String facebookAuthErrorInProgress;
+  final String facebookAuthErrorGeneric;
+  final String facebookAuthSignedIn;
+  final String facebookAuthSignedInAs;
 
   // Dashboard feature
   final String dashboard;
@@ -2929,6 +2937,26 @@ class AppText {
         map,
         'googleAuthErrorGeneric',
         fallback?.googleAuthErrorGeneric ?? '',
+      ),
+      facebookAuthErrorInProgress: _read(
+        map,
+        'facebookAuthErrorInProgress',
+        fallback?.facebookAuthErrorInProgress ?? '',
+      ),
+      facebookAuthErrorGeneric: _read(
+        map,
+        'facebookAuthErrorGeneric',
+        fallback?.facebookAuthErrorGeneric ?? '',
+      ),
+      facebookAuthSignedIn: _read(
+        map,
+        'facebookAuthSignedIn',
+        fallback?.facebookAuthSignedIn ?? '',
+      ),
+      facebookAuthSignedInAs: _read(
+        map,
+        'facebookAuthSignedInAs',
+        fallback?.facebookAuthSignedInAs ?? '',
       ),
       dashboard: _read(map, 'dashboard', fallback?.dashboard ?? ''),
       quizHistory: _read(map, 'quizHistory', fallback?.quizHistory ?? ''),

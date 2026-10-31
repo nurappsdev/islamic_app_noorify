@@ -152,6 +152,37 @@
                 <action android:name="es.antonborri.home_widget.action.BACKGROUND"/>
             </intent-filter>
         </receiver>
+
+        <!-- Facebook Login. The SDK reads the App ID and Client Token from
+             these two meta-data entries at startup; the values live in
+             res/values/strings.xml. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+
+        <!-- Hosts the login dialog when the Facebook app is not installed. -->
+        <activity
+            android:name="com.facebook.FacebookActivity"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:exported="false"
+            android:label="Tuhfatul Muslim"
+            tools:ignore="HardcodedText" />
+
+        <!-- Receives the Custom Tab redirect back from the browser-based
+             login at fb<APP_ID>://authorize. -->
+        <activity
+            android:name="com.facebook.CustomTabActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/fb_login_protocol_scheme" />
+            </intent-filter>
+        </activity>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -167,5 +198,9 @@
             <action android:name="android.intent.action.SENDTO"/>
             <data android:scheme="mailto"/>
         </intent>
+        <!-- Facebook Login: without this the SDK cannot see an installed
+             Facebook app on Android 11+ and always falls back to a Custom
+             Tab, which loses single sign-on. -->
+        <package android:name="com.facebook.katana" />
     </queries>
 </manifest>

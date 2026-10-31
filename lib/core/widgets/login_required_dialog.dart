@@ -14,6 +14,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_s
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
@@ -123,6 +124,13 @@ class _LoginRequiredCard extends StatefulWidget {
 
 class _LoginRequiredCardState extends State<_LoginRequiredCard> {
   bool _googleBusy = false;
+  bool _facebookBusy = false;
+
+  /// The Facebook outcome, shown inside the card for the same reason
+  /// [_googleError] is. [_facebookFailed] picks the colour: this one line
+  /// reports success too, since there is no session to close the dialog on.
+  String? _facebookMessage;
+  bool _facebookFailed = false;
 
   /// Shown inside the card: a snackbar would be drawn behind the dialog's
   /// own barrier, where the user could not read it.
@@ -180,6 +188,44 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
   void _show(String message) {
     if (!mounted || message.trim().isEmpty) return;
     setState(() => _googleError = message);
+  }
+
+  /// Runs the Facebook login dialog and reports the outcome inside the card.
+  ///
+  /// Stops at the access token: there is no `/auth/facebook` backend yet, so
+  /// the prompt stays open and the gated feature stays locked — unlike the
+  /// Google button, which closes the dialog on success.
+  Future<void> _signInWithFacebook() async {
+    if (_facebookBusy) return;
+    setState(() {
+      _facebookBusy = true;
+      _facebookMessage = null;
+    });
+    final appText = AppText.forLanguage(widget.language);
+
+    try {
+      final result = await FacebookAuthService.instance.signIn();
+      _showFacebook(
+        FacebookAuthService.successMessageFor(result, appText),
+        failed: false,
+      );
+    } on FacebookAuthException catch (e) {
+      _showFacebook(FacebookAuthService.messageFor(e, appText), failed: true);
+    } catch (e) {
+      debugPrint('[FacebookAuth] unexpected failure: $e');
+      _showFacebook(appText.facebookAuthErrorGeneric, failed: true);
+    } finally {
+      if (mounted) setState(() => _facebookBusy = false);
+    }
+  }
+
+  /// A blank message means the user simply cancelled; nothing is shown.
+  void _showFacebook(String message, {required bool failed}) {
+    if (!mounted || message.trim().isEmpty) return;
+    setState(() {
+      _facebookMessage = message;
+      _facebookFailed = failed;
+    });
   }
 
   @override
@@ -336,13 +382,27 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                       onPressed: _signInWithGoogle,
                     ),
                     SizedBox(height: 12.h),
-                    // Presentation only: Facebook login is not wired up yet.
                     FacebookSignInButton(
                       key: const Key('login_required_facebook_button'),
                       label: widget.facebookLabel,
+                      isLoading: _facebookBusy,
+                      onPressed: _signInWithFacebook,
                       height: 48.h,
-                      onPressed: () {},
                     ),
+                    if (_facebookMessage != null) ...[
+                      SizedBox(height: 12.h),
+                      Text(
+                        _facebookMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: _facebookFailed
+                              ? const Color(0xFFD93025)
+                              : const Color(0xFF1E7B34),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

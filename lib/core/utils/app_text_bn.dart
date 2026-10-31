@@ -270,6 +270,11 @@ const Map<String, String> appTextBn = <String, String>{
   'googleAuthErrorInterrupted':
       'গুগল সাইন-ইন বাধাগ্রস্ত হয়েছে। আবার চেষ্টা করুন।',
   'googleAuthErrorGeneric': 'গুগল সাইন-ইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
+  'facebookAuthErrorInProgress':
+      'একটি ফেসবুক লগ-ইন ইতিমধ্যে চলছে। অনুগ্রহ করে অপেক্ষা করুন।',
+  'facebookAuthErrorGeneric': 'ফেসবুক লগ-ইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
+  'facebookAuthSignedIn': 'ফেসবুক লগ-ইন সফল হয়েছে।',
+  'facebookAuthSignedInAs': 'ফেসবুক লগ-ইন সফল — {name}',
 
   // Dashboard feature
   'dashboard': 'ড্যাশবোর্ড',

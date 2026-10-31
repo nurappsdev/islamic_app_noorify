@@ -10,6 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
@@ -141,6 +142,9 @@ class _SignupViewState extends State<_SignupView> {
   /// [_isLoading] on purpose: the spinner belongs inside the Google button,
   /// so the Create Account button is left alone while Google runs.
   bool _googleBusy = false;
+
+  /// Same idea as [_googleBusy], for the Facebook button.
+  bool _facebookBusy = false;
 
   SignUpBloc get _auth => context.read<SignUpBloc>();
   SignUpState get _authState => _auth.state;
@@ -381,6 +385,29 @@ class _SignupViewState extends State<_SignupView> {
       _showMessage(appText.googleAuthErrorGeneric);
     } finally {
       if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
+  /// Runs the Facebook login dialog and reports the outcome on screen.
+  ///
+  /// Stops at the access token: there is no `/auth/facebook` backend yet, so
+  /// no account is created and no app session is started. A cancelled dialog
+  /// is silent.
+  Future<void> _signUpWithFacebook() async {
+    FocusScope.of(context).unfocus();
+    if (_facebookBusy) return;
+    final appText = AppText.of(context);
+    setState(() => _facebookBusy = true);
+    try {
+      final result = await FacebookAuthService.instance.signIn();
+      _showMessage(FacebookAuthService.successMessageFor(result, appText));
+    } on FacebookAuthException catch (e) {
+      _showMessage(FacebookAuthService.messageFor(e, appText));
+    } catch (e) {
+      debugPrint('[FacebookAuth] unexpected failure: $e');
+      _showMessage(appText.facebookAuthErrorGeneric);
+    } finally {
+      if (mounted) setState(() => _facebookBusy = false);
     }
   }
 
@@ -630,14 +657,14 @@ class _SignupViewState extends State<_SignupView> {
           onPressed: _signUpWithGoogle,
         ),
         SizedBox(height: 16.h),
-        // Presentation only: Facebook login is not wired up yet.
         FacebookSignInButton(
           key: const Key('signup_facebook_button'),
           label: AuthPromptTexts.signUpWithFacebook.resolve(
             languageOf(context),
           ),
+          isLoading: _facebookBusy,
           height: 60.h,
-          onPressed: () {},
+          onPressed: _signUpWithFacebook,
         ),
       ],
     );
@@ -791,15 +818,14 @@ class _SignupViewState extends State<_SignupView> {
                           onPressed: _signUpWithGoogle,
                         ),
                         SizedBox(height: 18.h),
-                        // Presentation only: Facebook login is not wired up
-                        // yet.
                         FacebookSignInButton(
                           key: const Key('signup_facebook_button'),
                           label: AuthPromptTexts.continueWithFacebook.resolve(
                             languageOf(context),
                           ),
+                          isLoading: _facebookBusy,
                           height: 60.h,
-                          onPressed: () {},
+                          onPressed: _signUpWithFacebook,
                         ),
                         SizedBox(height: 10.h),
                         Wrap(

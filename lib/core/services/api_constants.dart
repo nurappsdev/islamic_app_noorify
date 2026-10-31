@@ -37,6 +37,11 @@ class ApiConstants {
   /// `{ "idToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
   /// Responds with the same envelope as [signInEndPoint].
   static const String googleSignInEndPoint = "/auth/google";
+
+  /// `POST`: exchanges a Facebook access token for an app session. Body:
+  /// `{ "accessToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
+  /// Responds with the same envelope as [signInEndPoint].
+  static const String facebookSignInEndPoint = "/auth/facebook";
   static const String forgotPasswordPoint = "/auth/forgot-password";
   static const String resetPasswordEndPoint = "/auth/reset-password";
 
