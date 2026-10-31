@@ -202,6 +202,10 @@ class AccountRepositoryImpl implements AccountRepository {
     // shows the picker instead of silently reusing the last one. A no-op for
     // sessions that never used Google.
     await GoogleAuthService.instance.signOut();
+    // Same for Facebook: without this the SDK hands back the previous
+    // account's token and the next login silently reuses it. A no-op for
+    // sessions that never used Facebook.
+    await FacebookAuthService.instance.signOut();
   }
 
   /// `POST /auth/logout`: revokes this session's refresh token and

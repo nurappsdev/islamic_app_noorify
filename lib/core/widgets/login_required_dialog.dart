@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_
 import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
@@ -48,7 +49,7 @@ Future<bool> requireLogin(
 }
 
 /// What the user picked in the sign-in prompt.
-enum _LoginChoice { notNow, signIn, googleSignedIn }
+enum _LoginChoice { notNow, signIn, googleSignedIn, facebookSignedIn }
 
 /// Shows the sign-in prompt for [feature] and, when the user picks "Sign in",
 /// opens Sign In. Returns whether they picked it.
@@ -92,8 +93,12 @@ Future<bool> showLoginRequiredDialog(
       );
     },
   );
-  // Already signed in via Google inside the dialog — nothing left to open.
-  if (choice == _LoginChoice.googleSignedIn) return true;
+  // Already signed in via Google or Facebook inside the dialog — nothing
+  // left to open.
+  if (choice == _LoginChoice.googleSignedIn ||
+      choice == _LoginChoice.facebookSignedIn) {
+    return true;
+  }
   if (choice != _LoginChoice.signIn) return false;
   navigator.pushNamed(RouteNames.signIn);
   return true;
@@ -126,9 +131,8 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
   bool _googleBusy = false;
   bool _facebookBusy = false;
 
-  /// The Facebook outcome, shown inside the card for the same reason
-  /// [_googleError] is. [_facebookFailed] picks the colour: this one line
-  /// reports success too, since there is no session to close the dialog on.
+  /// The Facebook failure, shown inside the card for the same reason
+  /// [_googleError] is. Success never lands here: it closes the dialog.
   String? _facebookMessage;
   bool _facebookFailed = false;
 
@@ -190,25 +194,45 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
     setState(() => _googleError = message);
   }
 
-  /// Runs the Facebook login dialog and reports the outcome inside the card.
-  ///
-  /// Stops at the access token: there is no `/auth/facebook` backend yet, so
-  /// the prompt stays open and the gated feature stays locked — unlike the
-  /// Google button, which closes the dialog on success.
+  /// Logs in with Facebook without leaving the prompt. On success the dialog
+  /// closes reporting [_LoginChoice.facebookSignedIn], so the feature the
+  /// user originally tapped can continue — the same as the Google button.
   Future<void> _signInWithFacebook() async {
     if (_facebookBusy) return;
     setState(() {
       _facebookBusy = true;
       _facebookMessage = null;
     });
+    final navigator = Navigator.of(context);
     final appText = AppText.forLanguage(widget.language);
 
     try {
-      final result = await FacebookAuthService.instance.signIn();
-      _showFacebook(
-        FacebookAuthService.successMessageFor(result, appText),
-        failed: false,
-      );
+      final facebook = await FacebookAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      final outcome = await AccountRepositoryImpl(AuthRemoteDataSourceImpl())
+          .facebookSignIn(
+            FacebookSignInParams(
+              accessToken: facebook.accessToken,
+              email: facebook.email,
+              displayName: facebook.displayName,
+              photoUrl: facebook.photoUrl,
+              fcmToken: fcmToken,
+            ),
+          );
+
+      final failure = outcome.fold((f) => f, (_) => null);
+      if (failure != null) {
+        _showFacebook(failure.message, failed: true);
+        return;
+      }
+
+      // Match what the sign-in screen does on a successful login.
+      await SessionCleaner.clearGuestAlarms();
+      skipAuthGateNotifier.value = true;
+      unawaited(saveAppPreferences());
+      unawaited(ProfileService.instance.refresh());
+      navigator.pop(_LoginChoice.facebookSignedIn);
+      return;
     } on FacebookAuthException catch (e) {
       _showFacebook(FacebookAuthService.messageFor(e, appText), failed: true);
     } catch (e) {

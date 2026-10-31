@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
@@ -43,6 +44,15 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_state.dart';
 /// caller can tell a backend refusal apart from a cancelled account picker.
 class _GoogleSignUpFailure implements Exception {
   const _GoogleSignUpFailure(this.message);
+
+  final String message;
+}
+
+/// The backend rejected the Facebook access token. Mirrors
+/// [_GoogleSignUpFailure] so the handler can tell a backend refusal apart
+/// from the SDK failing.
+class _FacebookSignUpFailure implements Exception {
+  const _FacebookSignUpFailure(this.message);
 
   final String message;
 }
@@ -86,10 +96,18 @@ const _countries = <_Country>[
 
 typedef GoogleSignUpRouteResolver = Future<String> Function();
 
+/// Same contract as [GoogleSignUpRouteResolver], for the Facebook button.
+typedef FacebookSignUpRouteResolver = Future<String> Function();
+
 class SignupScreen extends StatelessWidget {
-  const SignupScreen({super.key, this.googleSignUpRouteResolver});
+  const SignupScreen({
+    super.key,
+    this.googleSignUpRouteResolver,
+    this.facebookSignUpRouteResolver,
+  });
 
   final GoogleSignUpRouteResolver? googleSignUpRouteResolver;
+  final FacebookSignUpRouteResolver? facebookSignUpRouteResolver;
 
   @override
   Widget build(BuildContext context) {
@@ -102,15 +120,22 @@ class SignupScreen extends StatelessWidget {
           ),
         ),
       ],
-      child: _SignupView(googleSignUpRouteResolver: googleSignUpRouteResolver),
+      child: _SignupView(
+        googleSignUpRouteResolver: googleSignUpRouteResolver,
+        facebookSignUpRouteResolver: facebookSignUpRouteResolver,
+      ),
     );
   }
 }
 
 class _SignupView extends StatefulWidget {
-  const _SignupView({this.googleSignUpRouteResolver});
+  const _SignupView({
+    this.googleSignUpRouteResolver,
+    this.facebookSignUpRouteResolver,
+  });
 
   final GoogleSignUpRouteResolver? googleSignUpRouteResolver;
+  final FacebookSignUpRouteResolver? facebookSignUpRouteResolver;
 
   @override
   State<_SignupView> createState() => _SignupViewState();
@@ -354,6 +379,36 @@ class _SignupViewState extends State<_SignupView> {
     return RouteNames.home;
   }
 
+  /// Logs in with Facebook, exchanges the access token for an app session and
+  /// returns the route to land on. Mirrors
+  /// [_defaultGoogleSignUpRouteResolver] step for step.
+  Future<String> _defaultFacebookSignUpRouteResolver() async {
+    final result = await FacebookAuthService.instance.signIn();
+    final fcmToken = await FirebaseTokenService.instance.getToken();
+
+    final outcome = await AccountRepositoryImpl(AuthRemoteDataSourceImpl())
+        .facebookSignIn(
+          FacebookSignInParams(
+            accessToken: result.accessToken,
+            email: result.email,
+            displayName: result.displayName,
+            photoUrl: result.photoUrl,
+            fcmToken: fcmToken,
+          ),
+        );
+
+    final failure = outcome.fold((f) => f, (_) => null);
+    if (failure != null) {
+      throw _FacebookSignUpFailure(failure.message);
+    }
+
+    // Whatever was armed as a Guest must not carry into this account.
+    await SessionCleaner.clearGuestAlarms();
+    await _setSkipAuthGate(true);
+    unawaited(ProfileService.instance.refresh());
+    return RouteNames.home;
+  }
+
   Future<void> _setSkipAuthGate(bool value) async {
     skipAuthGateNotifier.value = value;
     await saveAppPreferences();
@@ -388,21 +443,23 @@ class _SignupViewState extends State<_SignupView> {
     }
   }
 
-  /// Runs the Facebook login dialog and reports the outcome on screen.
-  ///
-  /// Stops at the access token: there is no `/auth/facebook` backend yet, so
-  /// no account is created and no app session is started. A cancelled dialog
-  /// is silent.
+  /// Runs the Facebook login dialog, exchanges the token for an app session
+  /// and lands on Home. A cancelled dialog is silent.
   Future<void> _signUpWithFacebook() async {
     FocusScope.of(context).unfocus();
-    if (_facebookBusy) return;
+    if (_facebookBusy || context.read<RegisterBloc>().state.isLoading) return;
     final appText = AppText.of(context);
     setState(() => _facebookBusy = true);
     try {
-      final result = await FacebookAuthService.instance.signIn();
-      _showMessage(FacebookAuthService.successMessageFor(result, appText));
+      final route =
+          await (widget.facebookSignUpRouteResolver ??
+              _defaultFacebookSignUpRouteResolver)();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } on FacebookAuthException catch (e) {
       _showMessage(FacebookAuthService.messageFor(e, appText));
+    } on _FacebookSignUpFailure catch (e) {
+      _showMessage(e.message);
     } catch (e) {
       debugPrint('[FacebookAuth] unexpected failure: $e');
       _showMessage(appText.facebookAuthErrorGeneric);
