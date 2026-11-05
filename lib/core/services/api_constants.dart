@@ -1,9 +1,9 @@
 class ApiConstants {
   // local
-   // static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
+  //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
   //live
-     static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1";
+    static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1";
   // static const String baseUrl = "https://tuhfatulmuslim.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
 
@@ -37,6 +37,11 @@ class ApiConstants {
   /// `{ "idToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
   /// Responds with the same envelope as [signInEndPoint].
   static const String googleSignInEndPoint = "/auth/google";
+
+  /// `POST`: exchanges a Facebook access token for an app session. Body:
+  /// `{ "accessToken": "...", "fcmToken": "...", "platform": "android|ios" }`.
+  /// Responds with the same envelope as [signInEndPoint].
+  static const String facebookSignInEndPoint = "/auth/facebook";
   static const String forgotPasswordPoint = "/auth/forgot-password";
   static const String resetPasswordEndPoint = "/auth/reset-password";
 

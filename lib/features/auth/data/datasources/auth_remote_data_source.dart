@@ -5,6 +5,7 @@ import 'package:tuhfatul_muslim/core/network/dio_client.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/auth_user_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/forgot_password_request_model.dart';
+import 'package:tuhfatul_muslim/features/auth/data/models/facebook_sign_in_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/google_sign_in_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_request_model.dart';
 import 'package:tuhfatul_muslim/features/auth/data/models/login_response_model.dart';
@@ -41,6 +42,10 @@ abstract interface class AuthRemoteDataSource {
   /// Exchanges a verified Google ID token for an app session; returns the
   /// auth token (+ user when the API includes it), exactly like [login].
   Future<LoginResponseModel> googleSignIn(GoogleSignInRequestModel body);
+
+  /// Exchanges a verified Facebook access token for an app session; returns
+  /// the auth token (+ user when the API includes it), exactly like [login].
+  Future<LoginResponseModel> facebookSignIn(FacebookSignInRequestModel body);
 
   /// Verifies the signed-in user's current [password] ahead of account
   /// deletion. `POST /auth/delete-account` with the session's bearer token.
@@ -129,6 +134,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<LoginResponseModel> googleSignIn(GoogleSignInRequestModel body) async {
     final response = await _send(
       ApiConstants.googleSignInEndPoint,
+      body.toJson(),
+    );
+    final json = _envelope(response);
+    final data = json['data'];
+    return LoginResponseModel.fromJson(
+      data is Map<String, dynamic> ? data : json,
+      headerToken:
+          response.headers.value('authorization') ??
+          response.headers.value('x-access-token'),
+    );
+  }
+
+  @override
+  Future<LoginResponseModel> facebookSignIn(
+    FacebookSignInRequestModel body,
+  ) async {
+    final response = await _send(
+      ApiConstants.facebookSignInEndPoint,
       body.toJson(),
     );
     final json = _envelope(response);

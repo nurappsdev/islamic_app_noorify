@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bloc.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button_metrics.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/profile_badges.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/settings_option_row.dart';
@@ -782,7 +783,7 @@ class _LogoutButtonView extends StatelessWidget {
       builder: (context, state) {
         final appText = AppText.of(context);
         return SizedBox(
-          height: 52.h,
+          height: AuthButtonMetrics.signOutHeight,
           child: OutlinedButton(
             onPressed: state.inProgress
                 ? null
@@ -790,27 +791,43 @@ class _LogoutButtonView extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               backgroundColor: context.surfaceColor(Color(0xFFFBEAEA)),
               foregroundColor: context.inkColor(AppColor.forgotPassword),
-              side: const BorderSide(color: AppColor.forgotPassword),
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              side: const BorderSide(
+                color: AppColor.forgotPassword,
+                width: AuthButtonMetrics.borderWidth,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: AuthButtonMetrics.horizontalPadding,
+              ),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(26.r),
+                borderRadius: BorderRadius.circular(AuthButtonMetrics.radius),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.logout_rounded, size: 18),
-                    SizedBox(width: 8.w),
-                    Text(
-                      appText.logout,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
+                // Flexible so a long translated label shrinks instead of
+                // overflowing the slimmer frame.
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        size: AuthButtonMetrics.iconSize,
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: AuthButtonLabel(
+                          appText.logout,
+                          style: TextStyle(
+                            fontSize: AuthButtonMetrics.labelSize,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 if (state.inProgress)
                   SizedBox(
