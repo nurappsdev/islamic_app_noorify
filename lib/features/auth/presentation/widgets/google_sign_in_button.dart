@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'auth_button_metrics.dart';
+
 /// Google's branded sign-in button: the white logo tile on Google blue.
 ///
-/// Geometry (height, corner radius, label size) deliberately matches
-/// [AuthButton] so it sits directly under the primary action without
-/// looking like a different control.
+/// Geometry (height, corner radius, label size) comes from
+/// [AuthButtonMetrics], the same source [AuthButton] reads, so it sits
+/// directly under the primary action without looking like a different
+/// control.
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({
     super.key,
@@ -26,9 +29,9 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonHeight = height ?? 50.h;
+    final buttonHeight = height ?? AuthButtonMetrics.height;
     // The white tile sits inside the pill with an even margin all round.
-    final tileSize = buttonHeight - 10.h;
+    final tileSize = buttonHeight - 8.h;
 
     return SizedBox(
       height: buttonHeight,
@@ -38,16 +41,17 @@ class GoogleSignInButton extends StatelessWidget {
           foregroundColor: Colors.white,
           disabledBackgroundColor: _googleBlue.withValues(alpha: .5),
           disabledForegroundColor: Colors.white70,
-          padding: EdgeInsets.symmetric(horizontal: 5.w),
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(29.r),
+            borderRadius: BorderRadius.circular(AuthButtonMetrics.radius),
           ),
         ),
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? SizedBox(
-                width: 18.w,
-                height: 18.h,
+                width: AuthButtonMetrics.spinnerSize,
+                height: AuthButtonMetrics.spinnerSize,
                 child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
@@ -62,20 +66,18 @@ class GoogleSignInButton extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24.r),
                     ),
-                    padding: EdgeInsets.all(7.r),
+                    padding: EdgeInsets.all(6.r),
                     child: Image.asset(
                       'assets/googleIcon.png',
                       fit: BoxFit.contain,
                     ),
                   ),
                   Expanded(
-                    child: Text(
+                    child: AuthButtonLabel(
                       label,
                       textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: AuthButtonMetrics.labelSize,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

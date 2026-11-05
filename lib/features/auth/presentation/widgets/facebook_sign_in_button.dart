@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'auth_button_metrics.dart';
+
 /// Facebook's branded sign-in button: the white "f" mark on Facebook blue.
 ///
-/// Geometry (height, corner radius, tile size, label size) deliberately
-/// mirrors [GoogleSignInButton] so the two social buttons stack as one pair
-/// of identical controls.
-///
-/// UI only for now: no Facebook login is wired up behind [onPressed].
+/// Geometry (height, corner radius, tile size, label size) comes from
+/// [AuthButtonMetrics], the same source [GoogleSignInButton] reads, so the
+/// two social buttons stack as one pair of identical controls.
 class FacebookSignInButton extends StatelessWidget {
   const FacebookSignInButton({
     super.key,
@@ -30,9 +30,9 @@ class FacebookSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonHeight = height ?? 50.h;
+    final buttonHeight = height ?? AuthButtonMetrics.height;
     // The white mark sits inside the pill with an even margin all round.
-    final tileSize = buttonHeight - 10.h;
+    final tileSize = buttonHeight - 8.h;
 
     return SizedBox(
       height: buttonHeight,
@@ -42,16 +42,17 @@ class FacebookSignInButton extends StatelessWidget {
           foregroundColor: Colors.white,
           disabledBackgroundColor: _facebookBlue.withValues(alpha: .5),
           disabledForegroundColor: Colors.white70,
-          padding: EdgeInsets.symmetric(horizontal: 5.w),
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(29.r),
+            borderRadius: BorderRadius.circular(AuthButtonMetrics.radius),
           ),
         ),
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? SizedBox(
-                width: 18.w,
-                height: 18.h,
+                width: AuthButtonMetrics.spinnerSize,
+                height: AuthButtonMetrics.spinnerSize,
                 child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
@@ -70,13 +71,11 @@ class FacebookSignInButton extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Text(
+                    child: AuthButtonLabel(
                       label,
                       textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: AuthButtonMetrics.labelSize,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

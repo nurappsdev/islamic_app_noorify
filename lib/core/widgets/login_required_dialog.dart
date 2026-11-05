@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/auth/data/repositories/account_reposito
 import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button_metrics.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
@@ -319,20 +320,29 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                                     _LoginChoice.notNow,
                                   ),
                             style: OutlinedButton.styleFrom(
-                              minimumSize: Size.fromHeight(48.h),
+                              minimumSize: Size.fromHeight(
+                                AuthButtonMetrics.compactHeight,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal:
+                                    AuthButtonMetrics.compactHorizontalPadding,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               foregroundColor: AppColor.authLogo,
                               side: const BorderSide(
                                 color: AppColor.primary,
-                                width: 1.4,
+                                width: AuthButtonMetrics.borderWidth,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.r),
+                                borderRadius: BorderRadius.circular(
+                                  AuthButtonMetrics.dialogRadius,
+                                ),
                               ),
                             ),
-                            child: Text(
+                            child: AuthButtonLabel(
                               noLabel,
                               style: TextStyle(
-                                fontSize: 15.sp,
+                                fontSize: AuthButtonMetrics.compactLabelSize,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -363,21 +373,34 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                                       context,
                                       _LoginChoice.signIn,
                                     ),
-                              icon: Icon(Icons.login_rounded, size: 18.sp),
-                              label: Text(
+                              icon: Icon(
+                                Icons.login_rounded,
+                                size: AuthButtonMetrics.iconSize,
+                              ),
+                              label: AuthButtonLabel(
                                 loginLabel,
                                 style: TextStyle(
-                                  fontSize: 15.sp,
+                                  fontSize: AuthButtonMetrics.compactLabelSize,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               style: FilledButton.styleFrom(
-                                minimumSize: Size.fromHeight(48.h),
+                                minimumSize: Size.fromHeight(
+                                  AuthButtonMetrics.compactHeight,
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AuthButtonMetrics
+                                      .compactHorizontalPadding,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                iconSize: AuthButtonMetrics.iconSize,
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16.r),
+                                  borderRadius: BorderRadius.circular(
+                                    AuthButtonMetrics.dialogRadius,
+                                  ),
                                 ),
                               ),
                             ),
@@ -402,7 +425,7 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                       key: const Key('login_required_google_button'),
                       label: widget.googleLabel,
                       isLoading: _googleBusy,
-                      height: 48.h,
+                      height: AuthButtonMetrics.height,
                       onPressed: _signInWithGoogle,
                     ),
                     SizedBox(height: 12.h),
@@ -411,7 +434,7 @@ class _LoginRequiredCardState extends State<_LoginRequiredCard> {
                       label: widget.facebookLabel,
                       isLoading: _facebookBusy,
                       onPressed: _signInWithFacebook,
-                      height: 48.h,
+                      height: AuthButtonMetrics.height,
                     ),
                     if (_facebookMessage != null) ...[
                       SizedBox(height: 12.h),
