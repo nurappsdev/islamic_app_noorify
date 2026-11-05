@@ -20,6 +20,8 @@ import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
@@ -44,6 +46,7 @@ class SignInScreen extends StatelessWidget {
             return LoginBloc(
               LoginUser(repository),
               GoogleSignInUser(repository),
+              FacebookSignInUser(repository),
             );
           },
         ),
@@ -77,6 +80,10 @@ class _SignInViewState extends State<_SignInView> {
   /// the button that was actually pressed.
   bool _googleBusy = false;
   bool _emailBusy = false;
+
+  /// Whether the Facebook login dialog / token fetch is in flight. Separate
+  /// from [_googleBusy] so the spinner stays in the button that was tapped.
+  bool _facebookBusy = false;
 
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
@@ -207,6 +214,40 @@ class _SignInViewState extends State<_SignInView> {
     if (mounted) setState(() => _googleBusy = false);
   }
 
+  /// Runs the Facebook login dialog, then hands the access token to
+  /// [LoginBloc] to be exchanged for an app session. A cancelled dialog is
+  /// silent, exactly as a cancelled Google picker is.
+  Future<void> _signInWithFacebook() async {
+    FocusScope.of(context).unfocus();
+    if (_facebookBusy) return;
+    final appText = AppText.of(context);
+    final loginBloc = context.read<LoginBloc>();
+
+    setState(() => _facebookBusy = true);
+    try {
+      final result = await FacebookAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        FacebookLoginSubmitted(
+          accessToken: result.accessToken,
+          email: result.email,
+          displayName: result.displayName,
+          photoUrl: result.photoUrl,
+          fcmToken: fcmToken,
+        ),
+      );
+      // The flag stays up while [LoginBloc] exchanges the token;
+      // [_onLoginState] drops it.
+      return;
+    } on FacebookAuthException catch (e) {
+      _showMessage(FacebookAuthService.messageFor(e, appText));
+    } catch (e) {
+      debugPrint('[FacebookAuth] unexpected failure: $e');
+      _showMessage(appText.facebookAuthErrorGeneric);
+    }
+    if (mounted) setState(() => _facebookBusy = false);
+  }
+
   void _showMessage(String message) {
     if (!mounted || message.trim().isEmpty) return;
     ScaffoldMessenger.of(
@@ -221,6 +262,7 @@ class _SignInViewState extends State<_SignInView> {
         setState(() {
           _emailBusy = false;
           _googleBusy = false;
+          _facebookBusy = false;
         });
       }
     }
@@ -267,12 +309,12 @@ class _SignInViewState extends State<_SignInView> {
   }
 
   /// Facebook's branded button, the same frame as [_googleSignInButton].
-  /// Presentation only: Facebook login is not wired up yet.
   Widget _facebookSignInButton() {
     return FacebookSignInButton(
       key: const Key('signin_facebook_button'),
       label: AuthPromptTexts.continueWithFacebook.resolve(languageOf(context)),
-      onPressed: () {},
+      isLoading: _facebookBusy,
+      onPressed: _signInWithFacebook,
     );
   }
 

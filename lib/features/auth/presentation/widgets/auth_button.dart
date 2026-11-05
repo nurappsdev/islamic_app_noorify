@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/utils/app_color.dart';
+import 'auth_button_metrics.dart';
 
 class AuthButton extends StatelessWidget {
   const AuthButton({
@@ -19,27 +19,38 @@ class AuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final buttonHeight = height ?? AuthButtonMetrics.height;
+
     return SizedBox(
-      height: height ?? 50.h,
+      height: buttonHeight,
       child: FilledButton(
         style: FilledButton.styleFrom(
           backgroundColor: AppColor.primary,
           foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(
+            horizontal: AuthButtonMetrics.horizontalPadding,
+          ),
+          // The slimmer frame leaves no room for the default 48dp tap
+          // padding to grow the button back to its old height.
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(29.r),
+            borderRadius: BorderRadius.circular(AuthButtonMetrics.radius),
           ),
         ),
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? SizedBox(
-                width: 18.w,
-                height: 18.h,
+                width: AuthButtonMetrics.spinnerSize,
+                height: AuthButtonMetrics.spinnerSize,
                 child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
                 ),
               )
-            : Text(label, style: TextStyle(fontSize: 14.sp)),
+            : AuthButtonLabel(
+                label,
+                style: TextStyle(fontSize: AuthButtonMetrics.labelSize),
+              ),
       ),
     );
   }

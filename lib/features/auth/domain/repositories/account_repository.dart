@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/login_params.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/facebook_sign_in_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/google_sign_in_params.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/otp_verification_result.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/entities/register_params.dart';
@@ -48,6 +49,12 @@ abstract interface class AccountRepository {
   /// to local storage (Hive) and the signed-in [AuthUser] is returned, exactly
   /// as [login] does — so a Google session is a first-class REST session.
   Future<Either<Failure, AuthUser>> googleSignIn(GoogleSignInParams params);
+
+  /// Signs in with a Facebook access token. On success the auth token is
+  /// persisted to local storage (Hive) and the signed-in [AuthUser] is
+  /// returned, exactly as [login] does — so a Facebook session is a
+  /// first-class REST session.
+  Future<Either<Failure, AuthUser>> facebookSignIn(FacebookSignInParams params);
 
   /// Clears the persisted session (removes the token from Hive).
   Future<void> logout();

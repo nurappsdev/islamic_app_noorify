@@ -6,6 +6,7 @@ import 'package:tuhfatul_muslim/features/auth/domain/entities/auth_user.dart';
 
 import 'package:tuhfatul_muslim/core/storage/session_cleaner.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
 import 'package:tuhfatul_muslim/features/auth/domain/usecases/google_sign_in_user.dart';
 
 import 'login_event.dart';
@@ -15,10 +16,11 @@ export 'login_event.dart';
 export 'login_state.dart';
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  LoginBloc(this._loginUser, [this._googleSignInUser])
+  LoginBloc(this._loginUser, [this._googleSignInUser, this._facebookSignInUser])
     : super(const LoginState.initial()) {
     on<LoginSubmitted>(_onSubmitted);
     on<GoogleLoginSubmitted>(_onGoogleSubmitted);
+    on<FacebookLoginSubmitted>(_onFacebookSubmitted);
     on<LoginReset>((_, emit) => emit(const LoginState.initial()));
   }
 
@@ -26,6 +28,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
   /// Only supplied by screens that offer a Google button.
   final GoogleSignInUser? _googleSignInUser;
+
+  /// Only supplied by screens that offer a Facebook button.
+  final FacebookSignInUser? _facebookSignInUser;
 
   Future<void> _onSubmitted(
     LoginSubmitted event,
@@ -63,6 +68,35 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     final result = await googleSignInUser(
       GoogleSignInParams(
         idToken: event.idToken,
+        email: event.email,
+        displayName: event.displayName,
+        photoUrl: event.photoUrl,
+        fcmToken: event.fcmToken,
+      ),
+    );
+
+    await _emitResult(result, emit);
+  }
+
+  Future<void> _onFacebookSubmitted(
+    FacebookLoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    final facebookSignInUser = _facebookSignInUser;
+    if (facebookSignInUser == null) {
+      emit(
+        const LoginState.failure(
+          UnknownFailure('Facebook login is not available here.'),
+        ),
+      );
+      return;
+    }
+
+    emit(const LoginState.loading());
+
+    final result = await facebookSignInUser(
+      FacebookSignInParams(
+        accessToken: event.accessToken,
         email: event.email,
         displayName: event.displayName,
         photoUrl: event.photoUrl,

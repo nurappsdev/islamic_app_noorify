@@ -272,6 +272,11 @@ const Map<String, String> appTextEn = <String, String>{
   'googleAuthErrorInterrupted':
       'Google sign-in was interrupted. Please try again.',
   'googleAuthErrorGeneric': 'Google sign-in failed. Please try again.',
+  'facebookAuthErrorInProgress':
+      'A Facebook login is already in progress. Please wait.',
+  'facebookAuthErrorGeneric': 'Facebook login failed. Please try again.',
+  'facebookAuthSignedIn': 'Facebook login successful.',
+  'facebookAuthSignedInAs': 'Facebook login successful — {name}',
 
   // Dashboard feature
   'dashboard': 'Dashboard',
