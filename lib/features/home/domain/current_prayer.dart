@@ -89,11 +89,18 @@ String localizedPeriodClock(
   required AppText appText,
   required bool bangla,
 }) {
+  final digits = localizedClockDigits(time, bangla: bangla);
+  if (times == null) return digits;
+  return '${dayPeriodNameFor(time, times).displayName(appText)} $digits';
+}
+
+/// `৫:২৩` / `5:23` — [time] on a 12-hour clock, digits only, with no
+/// [DayPeriodName] or AM/PM marker. For places where the surrounding label
+/// already says which part of the day it is.
+String localizedClockDigits(PrayerClockTime time, {required bool bangla}) {
   final hour12 = time.hour % 12 == 0 ? 12 : time.hour % 12;
-  final digits = localizeDigits(
+  return localizeDigits(
     '$hour12:${time.minute.toString().padLeft(2, '0')}',
     bangla: bangla,
   );
-  if (times == null) return digits;
-  return '${dayPeriodNameFor(time, times).displayName(appText)} $digits';
 }
