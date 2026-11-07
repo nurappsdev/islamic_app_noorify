@@ -23,7 +23,7 @@ class SunnahPrayerData {
     this.sunnahCompleted = false,
   });
 
-  /// Matches the pill labels: `Fajr`, `Duhr`, `Asr`, `Magrib`, `Esa`.
+  /// Matches the pill labels: `Fajr`, `Duhr`, `Witr`, `Magrib`, `Esa`.
   final String prayerName;
   final String? label;
   final num points;
@@ -68,9 +68,9 @@ class SunnahWitrCardContent extends StatelessWidget {
   static const _pills = [
     ('Fajr', 1, (left: 0.56, centerY: 0.30, width: 0.427), true),
     ('Duhr', 1, (left: 0.56, centerY: 0.76, width: 0.34), true),
-    ('Asr', 1, (left: 0.177, centerY: 0.88, width: 0.30), false),
+    ('Witr', 1, (left: 0.177, centerY: 0.88, width: 0.30), false),
     ('Magrib', 1, (left: 0.012, centerY: 0.53, width: 0.33), false),
-    ('Esa', 2, (left: 0.142, centerY: 0.16, width: 0.327), false),
+    ('Esa', 1, (left: 0.142, centerY: 0.16, width: 0.327), false),
   ];
 
   SunnahPrayerData? _dataFor(String name) {
@@ -229,7 +229,7 @@ class _SunnahPill extends StatelessWidget {
 String _localizedPrayerName(AppText appText, String key) => switch (key) {
   'Fajr' => appText.prayerFajr,
   'Duhr' => appText.prayerDhuhr,
-  'Asr' => appText.prayerAsr,
+  'Witr' => appText.salahWitr,
   'Magrib' => appText.prayerMaghrib,
   'Esa' => appText.prayerIsha,
   _ => key,
