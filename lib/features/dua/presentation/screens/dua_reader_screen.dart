@@ -366,12 +366,15 @@ class _DuaReaderViewState extends State<_DuaReaderView>
     return buffer.toString().trim();
   }
 
-  Future<void> _copyFullText() async {
+  Future<void> _showCopySheet() async {
     final appText = AppText.of(context);
-    final text = _plainText(context);
-    if (text.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
+    final copied = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DuaCopySheet(readable: _readable(context)),
+    );
+    if (copied != true || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(appText.duaCopied),
@@ -623,7 +626,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                           ],
                           _HeaderIconButton(
                             icon: Icons.copy_rounded,
-                            onTap: _copyFullText,
+                            onTap: _showCopySheet,
                           ),
                           SizedBox(width: 8.w),
                           _HeaderIconButton(
@@ -920,6 +923,318 @@ class _DuaReadable {
   final String reference;
   final String instruction;
   final String virtue;
+}
+
+/// Copy chooser shown from the reader app bar. Each card can be selected on
+/// its own, while "All Dua" toggles every available section together.
+class _DuaCopySheet extends StatefulWidget {
+  const _DuaCopySheet({required this.readable});
+
+  final _DuaReadable readable;
+
+  @override
+  State<_DuaCopySheet> createState() => _DuaCopySheetState();
+}
+
+class _DuaCopySheetState extends State<_DuaCopySheet> {
+  late Set<_DuaCopyPart> _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = _availableParts.toSet();
+  }
+
+  List<_DuaCopyPart> get _availableParts => [
+    if (_arabicAndTranslation.isNotEmpty) _DuaCopyPart.arabicAndTranslation,
+    if (widget.readable.transliteration.isNotEmpty)
+      _DuaCopyPart.transliteration,
+    if (_referenceAndGuidance.isNotEmpty) _DuaCopyPart.referenceAndGuidance,
+  ];
+
+  String get _arabicAndTranslation {
+    final arabic = widget.readable.segments
+        .map((segment) => segment.arabic)
+        .where((text) => text.isNotEmpty)
+        .join('\n');
+    final translation = widget.readable.segments
+        .map((segment) => segment.translation)
+        .where((text) => text.isNotEmpty)
+        .join('\n');
+    return [arabic, translation].where((text) => text.isNotEmpty).join('\n');
+  }
+
+  String get _referenceAndGuidance => [
+    widget.readable.reference,
+    widget.readable.instruction,
+    widget.readable.virtue,
+  ].where((text) => text.isNotEmpty).join('\n');
+
+  bool get _allSelected =>
+      _availableParts.isNotEmpty && _availableParts.every(_selected.contains);
+
+  void _toggleAll() => setState(() {
+    if (_allSelected) {
+      _selected.removeAll(_availableParts);
+    } else {
+      _selected.addAll(_availableParts);
+    }
+  });
+
+  void _toggle(_DuaCopyPart part) => setState(() {
+    if (!_selected.add(part)) _selected.remove(part);
+  });
+
+  String get _selectedText {
+    final parts = <String>[];
+    if (widget.readable.name.isNotEmpty) parts.add(widget.readable.name);
+    if (_selected.contains(_DuaCopyPart.arabicAndTranslation)) {
+      final arabic = widget.readable.segments
+          .map((segment) => segment.arabic)
+          .where((text) => text.isNotEmpty)
+          .join('\n');
+      final translation = widget.readable.segments
+          .map((segment) => segment.translation)
+          .where((text) => text.isNotEmpty)
+          .join('\n');
+      if (arabic.isNotEmpty) parts.add('Arabic\n$arabic');
+      if (translation.isNotEmpty) parts.add('Translation\n$translation');
+    }
+    if (_selected.contains(_DuaCopyPart.transliteration)) {
+      parts.add('Transliteration\n${widget.readable.transliteration}');
+    }
+    if (_selected.contains(_DuaCopyPart.referenceAndGuidance)) {
+      if (widget.readable.reference.isNotEmpty) {
+        parts.add('Reference\n${widget.readable.reference}');
+      }
+      if (widget.readable.instruction.isNotEmpty) {
+        parts.add('Guidance\n${widget.readable.instruction}');
+      }
+      if (widget.readable.virtue.isNotEmpty) {
+        parts.add('Virtue\n${widget.readable.virtue}');
+      }
+    }
+    return parts.join('\n\n');
+  }
+
+  Future<void> _copy() async {
+    final text = _selectedText.trim();
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = [
+      (
+        icon: Icons.checklist_rounded,
+        title: 'All Dua',
+        subtitle: 'Select all available Dua content',
+        selected: _allSelected,
+        enabled: _availableParts.isNotEmpty,
+        onTap: _toggleAll,
+      ),
+      (
+        icon: Icons.menu_book_outlined,
+        title: 'Arabic & Translation',
+        subtitle: 'Copy the original text and its meaning',
+        selected: _selected.contains(_DuaCopyPart.arabicAndTranslation),
+        enabled: _availableParts.contains(_DuaCopyPart.arabicAndTranslation),
+        onTap: () => _toggle(_DuaCopyPart.arabicAndTranslation),
+      ),
+      (
+        icon: Icons.assignment_outlined,
+        title: 'Phonetic Transliteration',
+        subtitle: 'Helps with clear pronunciation',
+        selected: _selected.contains(_DuaCopyPart.transliteration),
+        enabled: _availableParts.contains(_DuaCopyPart.transliteration),
+        onTap: () => _toggle(_DuaCopyPart.transliteration),
+      ),
+      (
+        icon: Icons.article_outlined,
+        title: 'Reference & Guidance',
+        subtitle: 'Copy the source, guidance, and virtue',
+        selected: _selected.contains(_DuaCopyPart.referenceAndGuidance),
+        enabled: _availableParts.contains(_DuaCopyPart.referenceAndGuidance),
+        onTap: () => _toggle(_DuaCopyPart.referenceAndGuidance),
+      ),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(24.w, 14.h, 24.w, 18.h),
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(34.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56.w,
+              height: 6.h,
+              decoration: BoxDecoration(
+                color: context.lineColor(const Color(0xFFD4D1CE)),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            SizedBox(height: 18.h),
+            Row(
+              children: [
+                Text(
+                  'Copy',
+                  style: TextStyle(
+                    color: const Color(0xFFA5B657),
+                    fontSize: 28.sp,
+                    fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: context.surfaceColor(
+                      const Color(0xFFF4F4F2),
+                    ),
+                    foregroundColor: context.inkColor(const Color(0xFF777572)),
+                    minimumSize: Size(40.r, 40.r),
+                  ),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                ),
+              ],
+            ),
+            SizedBox(height: 18.h),
+            for (final option in options) ...[
+              _DuaCopyOptionCard(
+                icon: option.icon,
+                title: option.title,
+                subtitle: option.subtitle,
+                selected: option.selected,
+                enabled: option.enabled,
+                onTap: option.onTap,
+              ),
+              SizedBox(height: 10.h),
+            ],
+            SizedBox(height: 4.h),
+            SizedBox(
+              width: double.infinity,
+              height: 58.h,
+              child: FilledButton(
+                onPressed: _selected.isEmpty ? null : _copy,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFA5B657),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFDCE4BE),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                ),
+                child: Text('Copy!', style: TextStyle(fontSize: 17.sp)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _DuaCopyPart {
+  arabicAndTranslation,
+  transliteration,
+  referenceAndGuidance,
+}
+
+class _DuaCopyOptionCard extends StatelessWidget {
+  const _DuaCopyOptionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled
+        ? const Color(0xFFA5B657)
+        : context.inkColor(const Color(0xFFC9C9C4));
+    return Material(
+      color: context.surfaceColor(const Color(0xFFFDFDFC)),
+      borderRadius: BorderRadius.circular(24.r),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(24.r),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: BoxConstraints(minHeight: 86.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(
+              color: selected ? const Color(0xFFA5B657) : Colors.transparent,
+              width: selected ? 1.5 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .035),
+                blurRadius: 16.r,
+                offset: Offset(0, 5.h),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 27.sp),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: enabled
+                            ? context.inkColor(const Color(0xFF383632))
+                            : color,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(color: color, fontSize: 12.sp),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Icon(
+                selected
+                    ? Icons.check_box_rounded
+                    : Icons.check_box_outline_blank_rounded,
+                color: color,
+                size: 26.sp,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// A circular icon button in the header's action row (design `img_19.png`:
