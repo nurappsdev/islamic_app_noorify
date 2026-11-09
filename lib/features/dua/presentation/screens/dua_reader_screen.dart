@@ -334,8 +334,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
     }
   }
 
-  /// Title, Arabic, translation and reference as plain text — for the
-  /// header's copy and share actions.
+  /// Every available reader section as plain text — for sharing all Dua
+  /// content from the app-bar share chooser.
   String _plainText(BuildContext context) {
     final readable = _readable(context);
     final buffer = StringBuffer();
@@ -348,6 +348,11 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       buffer
         ..writeln()
         ..writeln(arabic);
+    }
+    if (readable.transliteration.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.transliteration);
     }
     final translation = readable.segments
         .map((s) => s.translation)
@@ -362,6 +367,16 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       buffer
         ..writeln()
         ..writeln(readable.reference);
+    }
+    if (readable.instruction.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.instruction);
+    }
+    if (readable.virtue.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.virtue);
     }
     return buffer.toString().trim();
   }
@@ -383,16 +398,45 @@ class _DuaReaderViewState extends State<_DuaReaderView>
     );
   }
 
-  Future<void> _shareFullText() async {
+  Future<void> _showShareSheet() async {
     final appText = AppText.of(context);
-    final text = _plainText(context);
+    final readable = _readable(context);
+    final part = await showModalBottomSheet<_DuaSharePart>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DuaShareSheet(readable: readable),
+    );
+    if (part == null || !mounted) return;
+    await _shareText(_shareTextFor(readable, part), readable.name, appText);
+  }
+
+  String _shareTextFor(_DuaReadable readable, _DuaSharePart part) {
+    switch (part) {
+      case _DuaSharePart.all:
+        return _plainText(context);
+      case _DuaSharePart.name:
+        return readable.name;
+      case _DuaSharePart.guidanceAndVirtue:
+        return [
+          readable.instruction,
+          readable.virtue,
+        ].where((text) => text.isNotEmpty).join('\n\n');
+      case _DuaSharePart.transliteration:
+        return readable.transliteration;
+      case _DuaSharePart.reference:
+        return readable.reference;
+    }
+  }
+
+  Future<void> _shareText(String text, String subject, AppText appText) async {
     if (text.isEmpty) return;
     try {
       final box = context.findRenderObject();
       await SharePlus.instance.share(
         ShareParams(
           text: text,
-          subject: _readable(context).name,
+          subject: subject,
           sharePositionOrigin: box is RenderBox
               ? box.localToGlobal(Offset.zero) & box.size
               : null,
@@ -631,7 +675,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                           SizedBox(width: 8.w),
                           _HeaderIconButton(
                             icon: Icons.ios_share_rounded,
-                            onTap: _shareFullText,
+                            onTap: _showShareSheet,
                           ),
                           SizedBox(width: 8.w),
                           _HeaderIconButton(
@@ -1228,6 +1272,202 @@ class _DuaCopyOptionCard extends StatelessWidget {
                     : Icons.check_box_outline_blank_rounded,
                 color: color,
                 size: 26.sp,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A content picker before handing the selected text to Android's native
+/// share surface (Quick Share, installed apps, and so on).
+class _DuaShareSheet extends StatelessWidget {
+  const _DuaShareSheet({required this.readable});
+
+  final _DuaReadable readable;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasGuidance =
+        readable.instruction.isNotEmpty || readable.virtue.isNotEmpty;
+    final options = [
+      (
+        part: _DuaSharePart.all,
+        icon: Icons.checklist_rounded,
+        title: 'All Dua',
+        subtitle: 'Share all available Dua content',
+        enabled: readable.name.isNotEmpty || readable.segments.isNotEmpty,
+      ),
+      (
+        part: _DuaSharePart.name,
+        icon: Icons.short_text_rounded,
+        title: 'Dua name',
+        subtitle: 'Share only this Dua name',
+        enabled: readable.name.isNotEmpty,
+      ),
+      (
+        part: _DuaSharePart.guidanceAndVirtue,
+        icon: Icons.menu_book_outlined,
+        title: 'Dua Guidance & Virtue',
+        subtitle: 'Share the guidance and benefit',
+        enabled: hasGuidance,
+      ),
+      (
+        part: _DuaSharePart.transliteration,
+        icon: Icons.assignment_outlined,
+        title: 'Phonetic Transliteration',
+        subtitle: 'Share pronunciation-friendly text',
+        enabled: readable.transliteration.isNotEmpty,
+      ),
+      (
+        part: _DuaSharePart.reference,
+        icon: Icons.article_outlined,
+        title: 'Reference & Source',
+        subtitle: 'Share the Dua reference',
+        enabled: readable.reference.isNotEmpty,
+      ),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 22.h),
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(34.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56.w,
+              height: 5.h,
+              decoration: BoxDecoration(
+                color: context.lineColor(const Color(0xFFD4D1CE)),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            SizedBox(height: 18.h),
+            Row(
+              children: [
+                Text(
+                  'Share',
+                  style: TextStyle(
+                    color: const Color(0xFFA5B657),
+                    fontSize: 24.sp,
+                    fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: context.surfaceColor(
+                      const Color(0xFFF4F4F2),
+                    ),
+                    foregroundColor: context.inkColor(const Color(0xFF777572)),
+                    minimumSize: Size(40.r, 40.r),
+                  ),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            for (final option in options) ...[
+              _DuaShareOptionCard(
+                icon: option.icon,
+                title: option.title,
+                subtitle: option.subtitle,
+                enabled: option.enabled,
+                onTap: () => Navigator.of(context).pop(option.part),
+              ),
+              SizedBox(height: 8.h),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _DuaSharePart { all, name, guidanceAndVirtue, transliteration, reference }
+
+class _DuaShareOptionCard extends StatelessWidget {
+  const _DuaShareOptionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final olive = const Color(0xFFA5B657);
+    final muted = context.inkColor(const Color(0xFFC9C9C4));
+    return Material(
+      color: context.surfaceColor(const Color(0xFFFDFDFC)),
+      borderRadius: BorderRadius.circular(18.r),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(18.r),
+        child: Container(
+          constraints: BoxConstraints(minHeight: 62.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 9.h),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .035),
+                blurRadius: 13.r,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: enabled ? olive : muted, size: 23.sp),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: enabled
+                            ? context.inkColor(const Color(0xFF383632))
+                            : muted,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: enabled ? olive : muted,
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Icon(
+                Icons.reply_rounded,
+                color: enabled ? olive : muted,
+                size: 22.sp,
               ),
             ],
           ),
