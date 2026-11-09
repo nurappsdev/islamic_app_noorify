@@ -48,7 +48,7 @@ class DuaBottomNav extends StatelessWidget {
         AppBottomNavItem(
           icon: Icons.pie_chart_outline_rounded,
           label: appText.dashboard,
-          onTap: go(4, RouteNames.duaDashboard),
+          onTap: go(4, RouteNames.duaAnalyticsDashboard),
         ),
       ],
     );
