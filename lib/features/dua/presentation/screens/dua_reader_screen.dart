@@ -25,6 +25,11 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
+const _tuhfatulMuslimPlayStoreUrl =
+    'https://play.google.com/store/apps/details?id=com.tuhfatulmuslim.app&pcampaignid=web_share';
+const _tuhfatulMuslimShareInvitation =
+    'Discover more daily Duas with Tuhfatul Muslim.';
+
 /// Single-dua reader (design `devImg/img_19.png`), reached by tapping a dua
 /// row on [DuaGroupScreen] / [DuaAllDuaScreen].
 ///
@@ -78,9 +83,6 @@ class _DuaReaderView extends StatefulWidget {
 
 class _DuaReaderViewState extends State<_DuaReaderView>
     with WidgetsBindingObserver {
-  static const _playStoreUrl =
-      'https://play.google.com/store/apps/details?id=com.tuhfatulmuslim.app&pcampaignid=web_share';
-
   /// Reports how long this dua is read. Null for the legacy mock catalog's
   /// demo duas: they have no `_id` the API would accept.
   DuaReadingTracker? _reading;
@@ -437,8 +439,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
     if (shareText.isEmpty) return;
     final message = [
       shareText,
-      'Discover more daily Duas with Tuhfatul Muslim.',
-      _playStoreUrl,
+      _tuhfatulMuslimShareInvitation,
+      _tuhfatulMuslimPlayStoreUrl,
     ].join('\n\n');
     try {
       final box = context.findRenderObject();
@@ -1073,7 +1075,15 @@ class _DuaCopySheetState extends State<_DuaCopySheet> {
   Future<void> _copy() async {
     final text = _selectedText.trim();
     if (text.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
+    await Clipboard.setData(
+      ClipboardData(
+        text: [
+          text,
+          _tuhfatulMuslimShareInvitation,
+          _tuhfatulMuslimPlayStoreUrl,
+        ].join('\n\n'),
+      ),
+    );
     if (mounted) Navigator.of(context).pop(true);
   }
 
