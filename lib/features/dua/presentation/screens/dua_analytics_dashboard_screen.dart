@@ -389,85 +389,135 @@ class _WeeklyChart extends StatelessWidget {
   }
 }
 
-class _MonthlyChart extends StatelessWidget {
+class _MonthlyChart extends StatefulWidget {
   const _MonthlyChart({super.key});
 
   @override
+  State<_MonthlyChart> createState() => _MonthlyChartState();
+}
+
+class _MonthlyChartState extends State<_MonthlyChart> {
+  int? _selectedBar;
+
+  @override
   Widget build(BuildContext context) {
-    const values = [.84, .36, .32, .88];
-    const labels = ['28-31', '21', '14', '7'];
+    const points = [420, 180, 160, 440];
+    const labels = ['Week 4', 'Week 3', 'Week 2', 'Week 1'];
     return SizedBox(
-      height: 205.h,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      height: 218.h,
+      child: Stack(
         children: [
-          for (var index = 0; index < values.length; index++)
-            Row(
-              children: [
-                SizedBox(
-                  width: 34.w,
-                  child: Text(
-                    labels[index],
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      color: const Color(0xFF91A168),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (var index = 0; index < points.length; index++)
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 44.w,
+                      child: Text(
+                        labels[index],
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: const Color(0xFF91A168),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: SizedBox(
-                    height: 24.h,
-                    child: Stack(
-                      children: [
-                        FractionallySizedBox(
-                          widthFactor: .94,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE3EDC3),
-                              borderRadius: BorderRadius.circular(7.r),
-                            ),
+                    SizedBox(width: 9.w),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedBar = index),
+                        child: SizedBox(
+                          height: 24.h,
+                          child: Stack(
+                            children: [
+                              FractionallySizedBox(
+                                widthFactor: 1,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE3EDC3),
+                                    borderRadius: BorderRadius.circular(7.r),
+                                  ),
+                                ),
+                              ),
+                              FractionallySizedBox(
+                                widthFactor: points[index] / 500,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  decoration: BoxDecoration(
+                                    color: _selectedBar == index
+                                        ? const Color(0xFF718E3B)
+                                        : const Color(0xFFA8B657),
+                                    borderRadius: BorderRadius.circular(7.r),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        FractionallySizedBox(
-                          widthFactor: values[index],
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFA8B657),
-                              borderRadius: BorderRadius.circular(7.r),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          SizedBox(height: 4.h),
-          Padding(
-            padding: EdgeInsets.only(left: 48.w),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                for (final day in const [
-                  'Sat',
-                  'Sun',
-                  'Mon',
-                  'Tue',
-                  'Wed',
-                  'Thu',
-                  'Fri',
-                ])
-                  Text(day, style: TextStyle(fontSize: 10.sp)),
-              ],
-            ),
+              Padding(
+                padding: EdgeInsets.only(left: 53.w, right: 2.w, top: 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    for (final point in const [0, 100, 200, 300, 400, 500])
+                      Text(
+                        '$point',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: const Color(0xFF758052),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (_selectedBar case final index?)
+            Positioned(
+              top: 3.h,
+              right: 6.w,
+              child: _MonthlyCompetitorTooltip(points: points[index]),
+            ),
         ],
       ),
     );
   }
+}
+
+class _MonthlyCompetitorTooltip extends StatelessWidget {
+  const _MonthlyCompetitorTooltip({required this.points});
+
+  final int points;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(const Color(0xFFE6EEC6)),
+      borderRadius: BorderRadius.circular(12.r),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: .18),
+          blurRadius: 9.r,
+          offset: Offset(0, 3.h),
+        ),
+      ],
+    ),
+    child: Text(
+      'Competitor\nAbdullah Al-Aziz\nPoints: $points',
+      style: TextStyle(
+        color: context.inkColor(const Color(0xFF364027)),
+        fontSize: 9.sp,
+        height: 1.35,
+      ),
+    ),
+  );
 }
 
 class _Metrics extends StatelessWidget {
