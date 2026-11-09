@@ -17,7 +17,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_creat
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
-/// Dua planner (design `devImg/img_7.png`), reached from index 2 ("Planner")
+/// Dua planner (design `devImg/img_7.png`), reached from index 3 ("Planner")
 /// of [DuaBottomNav].
 ///
 /// "My Plan" and "Complete Plan" are each loaded from
@@ -131,7 +131,7 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                   top: false,
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: DuaBottomNav(selectedIndex: 2),
+                    child: DuaBottomNav(selectedIndex: 3),
                   ),
                 ),
               ],

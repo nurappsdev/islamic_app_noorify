@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_home_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -33,70 +34,88 @@ class _DuaFeaturedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
-      body: SafeArea(
-        child: BlocBuilder<DuaHomeCubit, DuaHomeState>(
-          builder: (context, state) {
-            if (state.status == DuaLoadStatus.loading ||
-                state.status == DuaLoadStatus.initial) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state.status == DuaLoadStatus.failure) {
-              return DuaErrorRetry(
-                message: state.error ?? '',
-                onRetry: () => context.read<DuaHomeCubit>().load(),
-              );
-            }
+      body: Stack(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: BlocBuilder<DuaHomeCubit, DuaHomeState>(
+              builder: (context, state) {
+                if (state.status == DuaLoadStatus.loading ||
+                    state.status == DuaLoadStatus.initial) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (state.status == DuaLoadStatus.failure) {
+                  return DuaErrorRetry(
+                    message: state.error ?? '',
+                    onRetry: () => context.read<DuaHomeCubit>().load(),
+                  );
+                }
 
-            final featured = state.featured;
-            return ListView(
-              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
-              children: [
-                SizedBox(height: 6.h),
-                DuaPageHeader(title: appText.duaFeaturedTitle),
-                SizedBox(height: 16.h),
-                Text(
-                  context.localizedDigits(
-                    '${appText.duaTotalFeaturedLabel} ( ${featured.length} )',
+                final featured = state.featured;
+                return ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    16.w,
+                    0,
+                    16.w,
+                    96.h + bottomInset,
                   ),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: context.inkColor(Color(0xFF5D6B44)),
-                  ),
-                ),
-                SizedBox(height: 14.h),
-                if (featured.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(top: 24.h),
-                    child: Text(
-                      appText.noResultsFound,
-                      textAlign: TextAlign.center,
+                  children: [
+                    SizedBox(height: 6.h),
+                    DuaPageHeader(title: appText.duaFeaturedTitle),
+                    SizedBox(height: 16.h),
+                    Text(
+                      context.localizedDigits(
+                        '${appText.duaTotalFeaturedLabel} ( ${featured.length} )',
+                      ),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: context.inkColor(Color(0xFF5D6B44)),
                       ),
                     ),
-                  )
-                else
-                  for (var i = 0; i < featured.length; i++) ...[
-                    SizedBox(
-                      height: 140.h,
-                      child: DuaFeaturedCard(
-                        featured: featured[i],
-                        onExplore: () => Navigator.of(context).pushNamed(
-                          RouteNames.duaReader,
-                          arguments: DuaReaderArgs.real(featured[i]),
+                    SizedBox(height: 14.h),
+                    if (featured.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 24.h),
+                        child: Text(
+                          appText.noResultsFound,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(Color(0xFF5D6B44)),
+                          ),
                         ),
-                      ),
-                    ),
-                    if (i != featured.length - 1) SizedBox(height: 12.h),
+                      )
+                    else
+                      for (var i = 0; i < featured.length; i++) ...[
+                        SizedBox(
+                          height: 140.h,
+                          child: DuaFeaturedCard(
+                            featured: featured[i],
+                            onExplore: () => Navigator.of(context).pushNamed(
+                              RouteNames.duaReader,
+                              arguments: DuaReaderArgs.real(featured[i]),
+                            ),
+                          ),
+                        ),
+                        if (i != featured.length - 1) SizedBox(height: 12.h),
+                      ],
                   ],
-              ],
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+          const SafeArea(
+            top: false,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: DuaBottomNav(selectedIndex: 1),
+            ),
+          ),
+        ],
       ),
     );
   }
