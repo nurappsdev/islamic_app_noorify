@@ -78,6 +78,9 @@ class _DuaReaderView extends StatefulWidget {
 
 class _DuaReaderViewState extends State<_DuaReaderView>
     with WidgetsBindingObserver {
+  static const _playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.tuhfatulmuslim.app&pcampaignid=web_share';
+
   /// Reports how long this dua is read. Null for the legacy mock catalog's
   /// demo duas: they have no `_id` the API would accept.
   DuaReadingTracker? _reading;
@@ -430,12 +433,18 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   }
 
   Future<void> _shareText(String text, String subject, AppText appText) async {
-    if (text.isEmpty) return;
+    final shareText = text.trim();
+    if (shareText.isEmpty) return;
+    final message = [
+      shareText,
+      'Discover more daily Duas with Tuhfatul Muslim.',
+      _playStoreUrl,
+    ].join('\n\n');
     try {
       final box = context.findRenderObject();
       await SharePlus.instance.share(
         ShareParams(
-          text: text,
+          text: message,
           subject: subject,
           sharePositionOrigin: box is RenderBox
               ? box.localToGlobal(Offset.zero) & box.size
