@@ -138,7 +138,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
             child: Text(
               localizedZikrNameFromKey(
                 appText,
-                zikrKey: zikrKeyFromName(catalog[i].zikrName),
+                zikrKey: zikrKeyFromCatalogItem(catalog[i]),
                 fallback: catalog[i].zikrName,
               ),
               style: TextStyle(
@@ -171,7 +171,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     setState(() {
       _zikrName = item.zikrName;
       _zikrArabic = item.nameArabic;
-      _zikrKey = zikrKeyFromName(item.zikrName);
+      _zikrKey = zikrKeyFromCatalogItem(item);
       _valueController.text = item.defaultTargetCount.toString();
     });
   }

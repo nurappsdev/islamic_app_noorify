@@ -162,7 +162,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
             ),
             const Align(
               alignment: Alignment.bottomCenter,
-              child: DuaBottomNav(selectedIndex: 1),
+              child: DuaBottomNav(selectedIndex: 2),
             ),
           ],
         ),
