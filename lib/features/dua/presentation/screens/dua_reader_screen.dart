@@ -610,15 +610,10 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                   children: [
                     SizedBox(height: 36.h),
                     DuaPageHeader(
-                      // The dua's own name is the screen title, next to the
-                      // back icon and cut to 12 characters so it can never
-                      // reach the action icons; the heading below still spells
-                      // it out in full.
-                      title: readable.name.isNotEmpty
-                          ? readable.name
-                          : appText.duaIntroTitle,
+                      // Keep the app-bar title fixed; the dua's full name is
+                      // shown in the reading content below.
+                      title: appText.duaIntroTitle,
                       titleBesideBack: true,
-                      maxTitleChars: 12,
                       action: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
