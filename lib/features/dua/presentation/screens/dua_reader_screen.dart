@@ -462,178 +462,21 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   }
 
   void _showSettingsModal() {
-    final appText = AppText.of(context);
     final settingsBloc = context.read<DuaSettingsBloc>();
     final pageContext = context;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.surfaceColor(Colors.white),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      backgroundColor: Colors.transparent,
+      builder: (_) => BlocProvider.value(
+        value: settingsBloc,
+        child: _DuaSettingsSheet(
+          onAddToPlan: () {
+            Navigator.of(pageContext).pushNamed(RouteNames.duaPlanCreate);
+          },
+        ),
       ),
-      builder: (context) {
-        return BlocProvider.value(
-          value: settingsBloc,
-          child: SafeArea(
-            top: false,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.85,
-              ),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 28.h),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: IconButton.styleFrom(
-                            backgroundColor: context.surfaceColor(
-                              const Color(0xFFF1F1E4),
-                            ),
-                            foregroundColor: context.inkColor(
-                              const Color(0xFF303629),
-                            ),
-                            minimumSize: Size(34.r, 34.r),
-                          ),
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                        ),
-                        SizedBox(width: 12.w),
-                        Text(
-                          appText.duaSettingsTitle,
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w700,
-                            color: context.inkColor(const Color(0xFF2C3320)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20.h),
-                    _SettingsSectionHeader(
-                      title: appText.duaDisplayReadingStyleSection,
-                    ),
-                    SizedBox(height: 10.h),
-                    BlocBuilder<DuaSettingsBloc, DuaSettingsState>(
-                      builder: (context, state) {
-                        return Container(
-                          padding: EdgeInsets.all(14.r),
-                          decoration: BoxDecoration(
-                            color: context.surfaceColor(Colors.white),
-                            borderRadius: BorderRadius.circular(16.r),
-                            border: Border.all(
-                              color: context.lineColor(const Color(0xFFE3E7D3)),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              _SettingsToggleRow(
-                                icon: Icons.menu_book_rounded,
-                                iconBg: const Color(0xFFF3DCC4),
-                                iconColor: const Color(0xFFB07A2E),
-                                title: appText.duaNarrationToggleTitle,
-                                subtitle: appText.duaNarrationToggleSubtitle,
-                                value: state.showNarration,
-                                onChanged: (val) => context
-                                    .read<DuaSettingsBloc>()
-                                    .add(ToggleDuaNarration(val)),
-                              ),
-                              Divider(height: 28.h),
-                              _SettingsToggleRow(
-                                icon: Icons.menu_book_outlined,
-                                iconBg: const Color(0xFFE3DAF5),
-                                iconColor: const Color(0xFF7C5FC4),
-                                title: appText.showArabicLabel,
-                                subtitle: appText.duaArabicToggleSubtitle,
-                                value: state.showArabic,
-                                onChanged: (val) => context
-                                    .read<DuaSettingsBloc>()
-                                    .add(ToggleDuaArabic(val)),
-                              ),
-                              Divider(height: 28.h),
-                              _SettingsToggleRow(
-                                icon: Icons.translate_rounded,
-                                iconBg: const Color(0xFFFBDFE6),
-                                iconColor: const Color(0xFFB0527A),
-                                title: appText.showTranslationLabel,
-                                subtitle: appText.duaTranslationToggleSubtitle,
-                                value: state.showTranslation,
-                                onChanged: (val) => context
-                                    .read<DuaSettingsBloc>()
-                                    .add(ToggleDuaTranslation(val)),
-                              ),
-                              Divider(height: 28.h),
-                              _SettingsToggleRow(
-                                icon: Icons.record_voice_over_rounded,
-                                iconBg: const Color(0xFFDCEEC0),
-                                iconColor: const Color(0xFF2F6B3C),
-                                title: appText.showTransliterationLabel,
-                                subtitle:
-                                    appText.duaTransliterationToggleSubtitle,
-                                value: state.showTransliteration,
-                                onChanged: (val) => context
-                                    .read<DuaSettingsBloc>()
-                                    .add(ToggleDuaTransliteration(val)),
-                              ),
-                              Divider(height: 28.h),
-                              _SettingsToggleRow(
-                                icon: Icons.description_rounded,
-                                iconBg: const Color(0xFFFBF0DD),
-                                iconColor: const Color(0xFFD08A3E),
-                                title: appText.duaReferenceToggleTitle,
-                                subtitle: appText.duaReferenceToggleSubtitle,
-                                value: state.showReference,
-                                onChanged: (val) => context
-                                    .read<DuaSettingsBloc>()
-                                    .add(ToggleDuaReference(val)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    SizedBox(height: 22.h),
-                    _SettingsSectionHeader(
-                      title: appText.duaTypographyStylingSection,
-                    ),
-                    SizedBox(height: 10.h),
-                    Container(
-                      padding: EdgeInsets.all(14.r),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor(Colors.white),
-                        borderRadius: BorderRadius.circular(16.r),
-                        border: Border.all(
-                          color: context.lineColor(const Color(0xFFE3E7D3)),
-                        ),
-                      ),
-                      child: const DuaFontSizeControls(),
-                    ),
-                    SizedBox(height: 16.h),
-                    const Divider(),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.settings_outlined),
-                      title: Text(appText.settingsTitle),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(
-                          pageContext,
-                        ).pushNamed(RouteNames.settings);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -978,6 +821,331 @@ class _DuaReadable {
   final String reference;
   final String instruction;
   final String virtue;
+}
+
+/// Reader overflow sheet. It opens compact with typography controls visible;
+/// the Display section expands only when the reader asks to see those toggles.
+class _DuaSettingsSheet extends StatefulWidget {
+  const _DuaSettingsSheet({required this.onAddToPlan});
+
+  final VoidCallback onAddToPlan;
+
+  @override
+  State<_DuaSettingsSheet> createState() => _DuaSettingsSheetState();
+}
+
+class _DuaSettingsSheetState extends State<_DuaSettingsSheet> {
+  bool _showDisplay = false;
+  bool _showTypography = true;
+
+  void _addToPlan() {
+    Navigator.of(context).pop();
+    widget.onAddToPlan();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = AppText.of(context);
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.surfaceColor(Colors.white),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
+        ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * .86,
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(18.w, 10.h, 18.w, 18.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 54.w,
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                      color: context.lineColor(const Color(0xFFD4D1CE)),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        text.duaSettingsTitle,
+                        style: TextStyle(
+                          color: const Color(0xFFA5B657),
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: _addToPlan,
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFA5B657),
+                        backgroundColor: context.surfaceColor(
+                          const Color(0xFFF8FAED),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 9.w,
+                          vertical: 5.h,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: Icon(Icons.playlist_add_rounded, size: 15.sp),
+                      label: Text(
+                        'Add To Plan',
+                        style: TextStyle(fontSize: 11.sp),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.surfaceColor(
+                          const Color(0xFFF4F4F2),
+                        ),
+                        foregroundColor: context.inkColor(
+                          const Color(0xFF777572),
+                        ),
+                        minimumSize: Size(36.r, 36.r),
+                      ),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                _DuaSettingsAccordionHeader(
+                  title: text.duaDisplayReadingStyleSection,
+                  expanded: _showDisplay,
+                  onTap: () => setState(() => _showDisplay = !_showDisplay),
+                ),
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 180),
+                  crossFadeState: _showDisplay
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: EdgeInsets.only(top: 10.h),
+                    child: _DuaDisplaySettings(text: text),
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                _DuaSettingsAccordionHeader(
+                  title: text.duaTypographyStylingSection,
+                  expanded: _showTypography,
+                  onTap: () =>
+                      setState(() => _showTypography = !_showTypography),
+                ),
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 180),
+                  crossFadeState: _showTypography
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  firstChild: const SizedBox.shrink(),
+                  secondChild: Padding(
+                    padding: EdgeInsets.only(top: 10.h),
+                    child: Container(
+                      padding: EdgeInsets.all(14.r),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor(const Color(0xFFFDFDFC)),
+                        borderRadius: BorderRadius.circular(16.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: .035),
+                            blurRadius: 14.r,
+                            offset: Offset(0, 4.h),
+                          ),
+                        ],
+                      ),
+                      child: const DuaFontSizeControls(),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                OutlinedButton.icon(
+                  onPressed: _addToPlan,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 56.h),
+                    foregroundColor: context.inkColor(const Color(0xFF5B614E)),
+                    side: BorderSide(
+                      color: context.lineColor(const Color(0xFFD7E59B)),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  icon: Icon(Icons.playlist_add_rounded, size: 18.sp),
+                  label: Text('Add to plan', style: TextStyle(fontSize: 13.sp)),
+                ),
+                SizedBox(height: 10.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48.h,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFA5B657),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26.r),
+                      ),
+                    ),
+                    child: Text('Done!', style: TextStyle(fontSize: 14.sp)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DuaSettingsAccordionHeader extends StatelessWidget {
+  const _DuaSettingsAccordionHeader({
+    required this.title,
+    required this.expanded,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool expanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(14.r),
+    child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: context.inkColor(const Color(0xFF292723)),
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Container(
+            width: 30.r,
+            height: 30.r,
+            decoration: BoxDecoration(
+              color: context.surfaceColor(const Color(0xFFF3F7E4)),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              expanded
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.keyboard_arrow_right_rounded,
+              color: const Color(0xFFA5B657),
+              size: 20.sp,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _DuaDisplaySettings extends StatelessWidget {
+  const _DuaDisplaySettings({required this.text});
+
+  final AppText text;
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<DuaSettingsBloc, DuaSettingsState>(
+    builder: (context, state) => Container(
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFFDFDFC)),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .035),
+            blurRadius: 14.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _SettingsToggleRow(
+            icon: Icons.menu_book_rounded,
+            iconBg: const Color(0xFFF3DCC4),
+            iconColor: const Color(0xFFB07A2E),
+            title: text.duaNarrationToggleTitle,
+            subtitle: text.duaNarrationToggleSubtitle,
+            value: state.showNarration,
+            onChanged: (value) =>
+                context.read<DuaSettingsBloc>().add(ToggleDuaNarration(value)),
+          ),
+          Divider(height: 24.h),
+          _SettingsToggleRow(
+            icon: Icons.menu_book_outlined,
+            iconBg: const Color(0xFFE3DAF5),
+            iconColor: const Color(0xFF7C5FC4),
+            title: text.showArabicLabel,
+            subtitle: text.duaArabicToggleSubtitle,
+            value: state.showArabic,
+            onChanged: (value) =>
+                context.read<DuaSettingsBloc>().add(ToggleDuaArabic(value)),
+          ),
+          Divider(height: 24.h),
+          _SettingsToggleRow(
+            icon: Icons.translate_rounded,
+            iconBg: const Color(0xFFFBDFE6),
+            iconColor: const Color(0xFFB0527A),
+            title: text.showTranslationLabel,
+            subtitle: text.duaTranslationToggleSubtitle,
+            value: state.showTranslation,
+            onChanged: (value) => context.read<DuaSettingsBloc>().add(
+              ToggleDuaTranslation(value),
+            ),
+          ),
+          Divider(height: 24.h),
+          _SettingsToggleRow(
+            icon: Icons.record_voice_over_rounded,
+            iconBg: const Color(0xFFDCEEC0),
+            iconColor: const Color(0xFF2F6B3C),
+            title: text.showTransliterationLabel,
+            subtitle: text.duaTransliterationToggleSubtitle,
+            value: state.showTransliteration,
+            onChanged: (value) => context.read<DuaSettingsBloc>().add(
+              ToggleDuaTransliteration(value),
+            ),
+          ),
+          Divider(height: 24.h),
+          _SettingsToggleRow(
+            icon: Icons.description_rounded,
+            iconBg: const Color(0xFFFBF0DD),
+            iconColor: const Color(0xFFD08A3E),
+            title: text.duaReferenceToggleTitle,
+            subtitle: text.duaReferenceToggleSubtitle,
+            value: state.showReference,
+            onChanged: (value) =>
+                context.read<DuaSettingsBloc>().add(ToggleDuaReference(value)),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// Copy chooser shown from the reader app bar. Each card can be selected on
@@ -1855,41 +2023,6 @@ class _ReciteBar extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Uppercase section label with a small accent bar, used above each group of
-/// settings cards (design `devImg/img_20.png`: "DISPLAY & READING STYLE" /
-/// "TYPOGRAPHY & SCRIPT STYLING").
-class _SettingsSectionHeader extends StatelessWidget {
-  const _SettingsSectionHeader({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 4.w,
-          height: 14.h,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(const Color(0xFFD08A3E)),
-            borderRadius: BorderRadius.circular(2.r),
-          ),
-        ),
-        SizedBox(width: 8.w),
-        Text(
-          title.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-            color: context.inkColor(const Color(0xFF8B9A4B)),
-          ),
-        ),
-      ],
     );
   }
 }
