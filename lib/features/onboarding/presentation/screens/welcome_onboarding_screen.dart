@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -60,6 +61,20 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
   Widget build(BuildContext context) {
     final language = context.watch<LanguageBloc>().state.language;
     final isLastPage = _pageIndex == _onboardingPages.length - 1;
+
+    if (kIsWeb) {
+      return _WebWelcomeOnboardingLayout(
+        controller: _pageController,
+        pageIndex: _pageIndex,
+        language: language,
+        isLastPage: isLastPage,
+        isCompleting: _isCompleting,
+        onLanguageToggle: _toggleLanguage,
+        onPageChanged: (index) => setState(() => _pageIndex = index),
+        onNext: _next,
+        onSkip: _complete,
+      );
+    }
 
     return Scaffold(
       body: DecoratedBox(
@@ -143,6 +158,348 @@ class _WelcomeOnboardingScreenState extends State<WelcomeOnboardingScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Full-width browser onboarding. It keeps the mobile flow and its content,
+/// but gives larger screens a two-column story layout rather than scaling the
+/// phone composition across the entire viewport.
+class _WebWelcomeOnboardingLayout extends StatelessWidget {
+  const _WebWelcomeOnboardingLayout({
+    required this.controller,
+    required this.pageIndex,
+    required this.language,
+    required this.isLastPage,
+    required this.isCompleting,
+    required this.onLanguageToggle,
+    required this.onPageChanged,
+    required this.onNext,
+    required this.onSkip,
+  });
+
+  final PageController controller;
+  final int pageIndex;
+  final AppLanguage language;
+  final bool isLastPage;
+  final bool isCompleting;
+  final VoidCallback onLanguageToggle;
+  final ValueChanged<int> onPageChanged;
+  final Future<void> Function() onNext;
+  final Future<void> Function() onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFFFFF), Color(0xFFEAF1D2), Color(0xFFD7E6AC)],
+          ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontal = constraints.maxWidth >= 1280 ? 64.0 : 24.0;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1240),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      horizontal,
+                      16,
+                      horizontal,
+                      28,
+                    ),
+                    child: Column(
+                      children: [
+                        _WebOnboardingHeader(
+                          pageIndex: pageIndex,
+                          language: language,
+                          isCompleting: isCompleting,
+                          onLanguageToggle: onLanguageToggle,
+                          onSkip: onSkip,
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: PageView.builder(
+                            controller: controller,
+                            itemCount: _onboardingPages.length,
+                            onPageChanged: onPageChanged,
+                            itemBuilder: (context, index) => _WebOnboardingPage(
+                              page: _onboardingPages[index],
+                              language: language,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _WebPageDots(currentIndex: pageIndex),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: isLastPage ? 196 : 146,
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: isCompleting ? null : onNext,
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: const Color(0xFF718338),
+                              disabledBackgroundColor: const Color(0xFF718338),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                            child: Text(
+                              isLastPage
+                                  ? language == AppLanguage.bangla
+                                        ? 'শুরু করুন'
+                                        : 'Get Started'
+                                  : language == AppLanguage.bangla
+                                  ? 'পরবর্তী'
+                                  : 'Next',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebOnboardingHeader extends StatelessWidget {
+  const _WebOnboardingHeader({
+    required this.pageIndex,
+    required this.language,
+    required this.isCompleting,
+    required this.onLanguageToggle,
+    required this.onSkip,
+  });
+
+  final int pageIndex;
+  final AppLanguage language;
+  final bool isCompleting;
+  final VoidCallback onLanguageToggle;
+  final Future<void> Function() onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showProgress = constraints.maxWidth >= 360;
+        return Row(
+          children: [
+            if (pageIndex == 0)
+              _WebLanguageToggle(language: language, onTap: onLanguageToggle)
+            else
+              const SizedBox(width: 1),
+            const Spacer(),
+            if (showProgress) ...[
+              Text(
+                '${pageIndex + 1} / ${_onboardingPages.length}',
+                style: const TextStyle(
+                  color: Color(0xFF66723D),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 18),
+            ],
+            OutlinedButton(
+              onPressed: isCompleting ? null : onSkip,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF65713F),
+                side: const BorderSide(color: Color(0xFFB8CB7B)),
+                minimumSize: const Size(80, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                language == AppLanguage.bangla ? 'এড়িয়ে যান' : 'Skip',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WebLanguageToggle extends StatelessWidget {
+  const _WebLanguageToggle({required this.language, required this.onTap});
+
+  final AppLanguage language;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: .72),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.translate_rounded,
+                size: 18,
+                color: Color(0xFF65713F),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                language == AppLanguage.bangla ? 'বাংলা' : 'English',
+                style: const TextStyle(
+                  color: Color(0xFF4D5831),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebOnboardingPage extends StatelessWidget {
+  const _WebOnboardingPage({required this.page, required this.language});
+
+  final _OnboardingPageData page;
+  final AppLanguage language;
+
+  @override
+  Widget build(BuildContext context) {
+    final bangla = language == AppLanguage.bangla;
+    final imagePath = page.assetPathFor(language);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 860;
+        final title = Text(
+          bangla ? page.titleBn : page.titleEn,
+          key: ValueKey('onboarding-title-${page.assetPath}-$bangla'),
+          textAlign: compact ? TextAlign.center : TextAlign.start,
+          style: TextStyle(
+            color: const Color(0xFF15190E),
+            fontSize: compact ? 27 : 34,
+            fontWeight: FontWeight.w700,
+            height: 1.16,
+          ),
+        );
+        final body = Text(
+          bangla ? page.bodyBn : page.bodyEn,
+          key: ValueKey('onboarding-body-${page.assetPath}-$bangla'),
+          textAlign: compact ? TextAlign.center : TextAlign.start,
+          style: TextStyle(
+            color: const Color(0xFF313B20),
+            fontSize: compact ? 16 : 18,
+            fontWeight: FontWeight.w500,
+            fontStyle: FontStyle.italic,
+            height: 1.48,
+          ),
+        );
+        final image = Image.asset(
+          imagePath,
+          key: ValueKey('onboarding-image-$imagePath'),
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+        );
+
+        if (compact) {
+          final imageHeight = (constraints.maxHeight * .48).clamp(180.0, 380.0);
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            child: Column(
+              key: const ValueKey('web-onboarding-compact-layout'),
+              children: [
+                SizedBox(height: imageHeight, child: image),
+                const SizedBox(height: 24),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 620),
+                  child: title,
+                ),
+                const SizedBox(height: 14),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: body,
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Row(
+          key: const ValueKey('web-onboarding-wide-layout'),
+          children: [
+            Expanded(
+              flex: 6,
+              child: Padding(padding: const EdgeInsets.all(24), child: image),
+            ),
+            const SizedBox(width: 54),
+            Expanded(
+              flex: 5,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [title, const SizedBox(height: 20), body],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WebPageDots extends StatelessWidget {
+  const _WebPageDots({required this.currentIndex});
+
+  final int currentIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_onboardingPages.length, (index) {
+        final selected = index == currentIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: selected ? 28 : 10,
+          height: 10,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF718338) : const Color(0x80FFFFFF),
+            borderRadius: BorderRadius.circular(20),
+          ),
+        );
+      }),
     );
   }
 }

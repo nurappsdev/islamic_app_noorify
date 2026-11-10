@@ -688,13 +688,29 @@ class _MonthYearRow extends StatelessWidget {
         border: Border.all(color: context.lineColor(context.appPalette.border)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _Segment(label: yearLabel, onTap: onTapYear),
-          _Segment(
-            label: monthName,
-            textDirection: textDirection,
-            onTap: onTapMonth,
+          Expanded(
+            child: Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _Segment(label: yearLabel, onTap: onTapYear),
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _Segment(
+                  label: monthName,
+                  textDirection: textDirection,
+                  onTap: onTapMonth,
+                ),
+              ),
+            ),
           ),
         ],
       ),

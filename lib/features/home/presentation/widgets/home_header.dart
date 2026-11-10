@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,22 +84,25 @@ class HomeHeader extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: 2.h),
-                  const _HeaderRotatingSubtitle(),
+                  const HomeHeaderRotatingSubtitle(),
                 ],
               ),
             ),
           ),
-          SizedBox.square(
-            dimension: 32.r,
-            child: IconButton(
-              tooltip: appText.alarm,
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
+          if (!kIsWeb)
+            SizedBox.square(
+              dimension: 32.r,
+              child: IconButton(
+                tooltip: appText.alarm,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AllAlarmScreen(),
+                  ),
+                ),
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
               ),
-              padding: EdgeInsets.zero,
-              icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
             ),
-          ),
           ValueListenableBuilder<int>(
             valueListenable: unreadNotificationCountNotifier,
             builder: (context, unreadCount, _) {
@@ -176,15 +180,18 @@ enum _RotationKind { reminder, gregorian, hijri, bangla }
 /// Reads prayer times ([AladhanPrayerTimeService]) and today's tracking
 /// state ([AmolDailyStore]) the same way the rest of Home does; writes
 /// neither, so it can't affect tracking.
-class _HeaderRotatingSubtitle extends StatefulWidget {
-  const _HeaderRotatingSubtitle();
+class HomeHeaderRotatingSubtitle extends StatefulWidget {
+  const HomeHeaderRotatingSubtitle({super.key, this.style, this.reminderColor});
+
+  final TextStyle? style;
+  final Color? reminderColor;
 
   @override
-  State<_HeaderRotatingSubtitle> createState() =>
+  State<HomeHeaderRotatingSubtitle> createState() =>
       _HeaderRotatingSubtitleState();
 }
 
-class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
+class _HeaderRotatingSubtitleState extends State<HomeHeaderRotatingSubtitle> {
   static const _greetingDuration = Duration(seconds: 5);
   static const _rotationInterval = Duration(seconds: 2);
 
@@ -344,12 +351,21 @@ class _HeaderRotatingSubtitleState extends State<_HeaderRotatingSubtitle> {
         key: ValueKey(text),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: homeSansStyle(
-          context: context,
-          fontSize: 8.sp,
-          color: isReminder ? BrandColors.warning : null,
-          fontWeight: isReminder ? FontWeight.w600 : null,
-        ),
+        style:
+            homeSansStyle(
+                  context: context,
+                  fontSize: 8.sp,
+                  color: isReminder ? BrandColors.warning : null,
+                  fontWeight: isReminder ? FontWeight.w600 : null,
+                )
+                .merge(widget.style)
+                .copyWith(
+                  // A caller can supply its surrounding header colour, but a prayer
+                  // reminder remains highlighted so it isn't mistaken for a date.
+                  color: isReminder
+                      ? (widget.reminderColor ?? BrandColors.warning)
+                      : widget.style?.color,
+                ),
       ),
     );
   }

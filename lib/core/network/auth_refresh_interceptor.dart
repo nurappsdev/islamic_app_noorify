@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
@@ -133,12 +134,18 @@ class AuthRefreshInterceptor extends Interceptor {
       response = await _refreshDio.post<dynamic>(
         ApiConstants.refreshTokenEndPoint,
         data: {'refreshToken': refreshToken},
-        options: Options(
-          headers: {
-            'Cookie':
-                '${_local.getRefreshCookieName() ?? 'refreshToken'}=$refreshToken',
-          },
-        ),
+        // Browsers prohibit JavaScript from assigning the `Cookie` request
+        // header. The refresh token is already included in the existing JSON
+        // contract above, so omit only that forbidden duplicate on Web.
+        // Native clients retain their original cookie-header behaviour.
+        options: kIsWeb
+            ? null
+            : Options(
+                headers: {
+                  'Cookie':
+                      '${_local.getRefreshCookieName() ?? 'refreshToken'}=$refreshToken',
+                },
+              ),
       );
     } on DioException {
       return null;

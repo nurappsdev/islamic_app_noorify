@@ -17,7 +17,9 @@ import '../widgets/quran_design.dart';
 import '../widgets/dashboard/quran_dashboard_header.dart' show QuranBackButton;
 
 class SurahListScreen extends StatefulWidget {
-  const SurahListScreen({super.key});
+  const SurahListScreen({super.key, this.initialQuranTab = 'home'});
+
+  final String initialQuranTab;
   @override
   State<SurahListScreen> createState() => _SurahListScreenState();
 }
@@ -88,6 +90,7 @@ class _SurahListScreenState extends State<SurahListScreen> with RouteAware {
     final t = QuranText.of(context);
     return QuranTabShell(
       onExit: () => _goToGlobalHome(context),
+      initialSelected: widget.initialQuranTab,
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
         body: SafeArea(

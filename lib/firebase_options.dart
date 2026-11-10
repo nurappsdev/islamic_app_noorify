@@ -15,12 +15,53 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  /// Firebase's browser configuration is intentionally supplied at build time.
+  /// A Web App must be registered in the same Firebase project before these
+  /// values can be known; using the Android app id on the Web is invalid.
+  static const String _webApiKey = String.fromEnvironment(
+    'FIREBASE_WEB_API_KEY',
+  );
+  static const String _webAppId = String.fromEnvironment('FIREBASE_WEB_APP_ID');
+  static const String _webMessagingSenderId = String.fromEnvironment(
+    'FIREBASE_WEB_MESSAGING_SENDER_ID',
+  );
+  static const String _webProjectId = String.fromEnvironment(
+    'FIREBASE_WEB_PROJECT_ID',
+  );
+  static const String _webAuthDomain = String.fromEnvironment(
+    'FIREBASE_WEB_AUTH_DOMAIN',
+  );
+  static const String _webStorageBucket = String.fromEnvironment(
+    'FIREBASE_WEB_STORAGE_BUCKET',
+  );
+
+  static bool get isWebConfigured =>
+      _webApiKey.isNotEmpty &&
+      _webAppId.isNotEmpty &&
+      _webMessagingSenderId.isNotEmpty &&
+      _webProjectId.isNotEmpty;
+
+  static FirebaseOptions get web {
+    if (!isWebConfigured) {
+      throw UnsupportedError(
+        'Firebase Web is not configured. Provide FIREBASE_WEB_API_KEY, '
+        'FIREBASE_WEB_APP_ID, FIREBASE_WEB_MESSAGING_SENDER_ID, and '
+        'FIREBASE_WEB_PROJECT_ID.',
+      );
+    }
+    return const FirebaseOptions(
+      apiKey: _webApiKey,
+      appId: _webAppId,
+      messagingSenderId: _webMessagingSenderId,
+      projectId: _webProjectId,
+      authDomain: _webAuthDomain,
+      storageBucket: _webStorageBucket,
+    );
+  }
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:

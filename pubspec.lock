@@ -201,6 +201,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.15"
+  dev_build:
+    dependency: transitive
+    description:
+      name: dev_build
+      sha256: "8b5b35d31c4c08486c7f1313a378b432fafafb4ad67249bc1cb6626a308459cb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.1"
   device_info_plus:
     dependency: transitive
     description:
@@ -1236,6 +1244,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  pool:
+    dependency: transitive
+    description:
+      name: pool
+      sha256: "4177f68c237ea2128d1bee66ac17b2ce05ba3dbaafcbdd54c5d40a39d0b6b11c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.3"
   posix:
     dependency: transitive
     description:
@@ -1252,6 +1268,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.6"
+  process_run:
+    dependency: transitive
+    description:
+      name: process_run
+      sha256: fafc17be1feb80b23148b0983f00a6b6e14e2b98e1369662c314767780be8dc6
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.3"
   provider:
     dependency: transitive
     description:
@@ -1405,10 +1429,10 @@ packages:
     dependency: transitive
     description:
       name: sqflite_common
-      sha256: "5bf6a55c166e73bf651ba7ec3ed486e577620e3dc8f3a9c6a258a8031b624590"
+      sha256: "35a65713b6695fbc5f3596921c8af1dfe767942c96b6c5c80a739b16a10d47eb"
       url: "https://pub.dev"
     source: hosted
-    version: "2.5.11"
+    version: "2.5.17"
   sqflite_common_ffi:
     dependency: "direct dev"
     description:
@@ -1417,6 +1441,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.3"
+  sqflite_common_ffi_web:
+    dependency: "direct main"
+    description:
+      name: sqflite_common_ffi_web
+      sha256: "5ad18c4816f7993cb78f742574a0ffec1b78632e084eae663cdef3e6c3e1db2d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0+1"
   sqflite_darwin:
     dependency: transitive
     description:
@@ -1650,7 +1682,7 @@ packages:
     source: hosted
     version: "15.2.0"
   web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: web
       sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
