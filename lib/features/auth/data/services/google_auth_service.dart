@@ -45,8 +45,13 @@ class GoogleAuthService {
     if (pending != null) return pending;
 
     final future = GoogleSignIn.instance.initialize(
-      clientId: GoogleAuthConfig.iosClientIdOrNull,
-      serverClientId: GoogleAuthConfig.serverClientId,
+      // Google Identity Services accepts the OAuth Web client as `clientId`.
+      // Passing it as `serverClientId` is unsupported by google_sign_in_web.
+      // Keep the native parameters exactly as they were.
+      clientId: kIsWeb
+          ? GoogleAuthConfig.serverClientId
+          : GoogleAuthConfig.iosClientIdOrNull,
+      serverClientId: kIsWeb ? null : GoogleAuthConfig.serverClientId,
     );
     _initFuture = future.catchError((Object error) {
       _initFuture = null;
@@ -64,8 +69,7 @@ class GoogleAuthService {
     if (!GoogleAuthConfig.isConfigured) {
       throw const GoogleSignInException(
         code: GoogleSignInExceptionCode.clientConfigurationError,
-        description:
-            'No Google server client ID is configured for this build.',
+        description: 'No Google server client ID is configured for this build.',
       );
     }
 
@@ -73,7 +77,9 @@ class GoogleAuthService {
 
     final googleSignIn = GoogleSignIn.instance;
     final GoogleSignInAccount account;
-    if (googleSignIn.supportsAuthenticate()) {
+    if (kIsWeb) {
+      account = await _signInOnWeb(googleSignIn);
+    } else if (googleSignIn.supportsAuthenticate()) {
       try {
         account = await googleSignIn.authenticate();
       } on GoogleSignInException catch (e) {
@@ -123,6 +129,31 @@ class GoogleAuthService {
           : account.displayName,
       photoUrl: account.photoUrl,
     );
+  }
+
+  /// Web uses Google Identity Services, which sends successful sign-ins on
+  /// [authenticationEvents] instead of supporting `authenticate()`. Starting
+  /// the lightweight flow here lets the SDK show its own One Tap/FedCM UI in
+  /// response to the user's existing Google button press.
+  Future<GoogleSignInAccount> _signInOnWeb(GoogleSignIn googleSignIn) async {
+    final accountFromEvent = googleSignIn.authenticationEvents
+        .where((event) => event is GoogleSignInAuthenticationEventSignIn)
+        .cast<GoogleSignInAuthenticationEventSignIn>()
+        .map((event) => event.user)
+        .first;
+    final attempt = googleSignIn.attemptLightweightAuthentication(
+      reportAllExceptions: true,
+    );
+    final account = attempt == null
+        ? await accountFromEvent.timeout(const Duration(seconds: 60))
+        : await attempt;
+    if (account == null) {
+      throw const GoogleSignInException(
+        code: GoogleSignInExceptionCode.uiUnavailable,
+        description: 'Google Sign-In did not return an account.',
+      );
+    }
+    return account;
   }
 
   /// Localized text for a [GoogleSignInException]. Returns an empty string

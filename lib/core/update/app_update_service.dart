@@ -75,7 +75,8 @@ class AppUpdateService {
 
   /// Whether in-app updates exist on this platform at all. A debug run with
   /// the mock on acts as though they do, wherever it runs.
-  bool get isSupported => _mockSource != null || Platform.isAndroid;
+  bool get isSupported =>
+      _mockSource != null || (!kIsWeb && Platform.isAndroid);
 
   /// Whether a download is running right now.
   bool get isDownloading =>

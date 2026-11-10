@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -60,7 +61,7 @@ class QuranOfflineDatabase {
   Database? _db;
 
   Future<String> _localPath() async =>
-      p.join(await getDatabasesPath(), _fileName);
+      kIsWeb ? _fileName : p.join(await getDatabasesPath(), _fileName);
 
   /// Opens (creating/upgrading as needed) the local database.
   Future<Database> open() async {
@@ -68,7 +69,7 @@ class QuranOfflineDatabase {
     if (existing != null && existing.isOpen) return existing;
 
     final path = await _localPath();
-    await Directory(p.dirname(path)).create(recursive: true);
+    if (!kIsWeb) await Directory(p.dirname(path)).create(recursive: true);
     final db = await openDatabase(
       path,
       version: _version,
@@ -401,7 +402,7 @@ class QuranOfflineDatabase {
   /// Whether the full Quran text + translations have already been downloaded.
   Future<bool> isReady() async {
     try {
-      if (!await File(await _localPath()).exists()) return false;
+      if (!kIsWeb && !await File(await _localPath()).exists()) return false;
       final db = await open();
       if (await internalResponse('offline-complete-v1', const {}) == null) {
         return false;
@@ -663,7 +664,9 @@ class QuranOfflineDatabase {
   Future<void> delete() async {
     await _db?.close();
     _db = null;
-    final file = File(await _localPath());
-    if (await file.exists()) await file.delete();
+    if (!kIsWeb) {
+      final file = File(await _localPath());
+      if (await file.exists()) await file.delete();
+    }
   }
 }

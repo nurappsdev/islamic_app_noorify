@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
+
+import '../widgets/web_mobile_canvas.dart';
 
 import '../../features/auth/presentation/screens/email_verification_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -438,8 +441,11 @@ class AppRoutes {
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
       case RouteNames.quranSurahs:
+        final initialQuranTab = settings.arguments is String
+            ? settings.arguments as String
+            : 'home';
         return _instantPage(
-          QuranFontScope(child: _surahListWithBlocs()),
+          QuranFontScope(child: _surahListWithBlocs(initialQuranTab)),
           settings,
         );
       case RouteNames.quranSurahDetail:
@@ -747,7 +753,7 @@ class AppRoutes {
     }
   }
 
-  static Widget _surahListWithBlocs() {
+  static Widget _surahListWithBlocs([String initialQuranTab = 'home']) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => LastReadBloc()..add(const LoadLastRead())),
@@ -755,7 +761,7 @@ class AppRoutes {
           create: (_) => OfflineQuranBloc()..add(const CheckOfflineQuran()),
         ),
       ],
-      child: const SurahListScreen(),
+      child: SurahListScreen(initialQuranTab: initialQuranTab),
     );
   }
 
@@ -763,7 +769,10 @@ class AppRoutes {
     Widget child,
     RouteSettings settings,
   ) {
-    return MaterialPageRoute<void>(builder: (_) => child, settings: settings);
+    return MaterialPageRoute<void>(
+      builder: (_) => _webRouteChild(child, settings),
+      settings: settings,
+    );
   }
 
   /// Like [_page], with the Quran module's typography.
@@ -771,7 +780,10 @@ class AppRoutes {
     Widget child,
     RouteSettings settings,
   ) {
-    return QuranPageRoute<void>(builder: (_) => child, settings: settings);
+    return QuranPageRoute<void>(
+      builder: (_) => _webRouteChild(child, settings),
+      settings: settings,
+    );
   }
 
   /// Like [_page], but swaps in [child] immediately instead of animating —
@@ -785,7 +797,20 @@ class AppRoutes {
       settings: settings,
       transitionDuration: Duration.zero,
       reverseTransitionDuration: Duration.zero,
-      pageBuilder: (_, _, _) => child,
+      pageBuilder: (_, _, _) => _webRouteChild(child, settings),
     );
+  }
+
+  /// Responsive Splash, Onboarding, and Home may consume the full browser
+  /// viewport. Every other route retains the existing Web mobile canvas until
+  /// its own dedicated responsive work begins.
+  static Widget _webRouteChild(Widget child, RouteSettings settings) {
+    if (!kIsWeb ||
+        settings.name == RouteNames.splash ||
+        settings.name == RouteNames.onboardingHadith ||
+        settings.name == RouteNames.home) {
+      return child;
+    }
+    return WebMobileCanvas(child: child);
   }
 }

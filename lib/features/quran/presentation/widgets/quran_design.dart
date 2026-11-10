@@ -172,7 +172,12 @@ class _NumberStar extends CustomPainter {
 
 /// Owns tab content and keeps the Quran subtree and navigation bar mounted.
 class QuranTabShell extends StatefulWidget {
-  const QuranTabShell({super.key, required this.child, this.onExit});
+  const QuranTabShell({
+    super.key,
+    required this.child,
+    this.onExit,
+    this.initialSelected = 'home',
+  });
   final Widget child;
 
   /// Called for a back from the home tab when there is no route below to
@@ -180,12 +185,25 @@ class QuranTabShell extends StatefulWidget {
   /// app.
   final VoidCallback? onExit;
 
+  /// Lets Web's Quran menu open the same five sections that mobile exposes in
+  /// [QuranBottomNav]. Invalid values safely land on the Quran home tab.
+  final String initialSelected;
+
   @override
   State<QuranTabShell> createState() => _QuranTabShellState();
 }
 
 class _QuranTabShellState extends State<QuranTabShell> {
-  String _selected = 'home';
+  static const _sections = ['home', 'learn', 'saved', 'plan', 'dashboard'];
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = _sections.contains(widget.initialSelected)
+        ? widget.initialSelected
+        : 'home';
+  }
 
   void _select(String section) {
     FocusScope.of(context).unfocus();
@@ -195,7 +213,6 @@ class _QuranTabShellState extends State<QuranTabShell> {
   @override
   Widget build(BuildContext context) {
     final text = AppText.of(context);
-    final sections = ['home', 'learn', 'saved', 'plan', 'dashboard'];
     final hasRouteBelow = ModalRoute.of(context)?.canPop ?? false;
     return PopScope(
       canPop: _selected == 'home' && (hasRouteBelow || widget.onExit == null),
@@ -210,7 +227,7 @@ class _QuranTabShellState extends State<QuranTabShell> {
       child: Scaffold(
         backgroundColor: context.pageColor(Colors.white),
         body: IndexedStack(
-          index: sections.indexOf(_selected),
+          index: _sections.indexOf(_selected),
           children: [
             widget.child,
             ComingSoonScreen(
