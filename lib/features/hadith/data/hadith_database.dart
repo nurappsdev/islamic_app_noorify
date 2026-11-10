@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -30,14 +31,14 @@ class HadithDatabase {
   Database? _db;
 
   Future<String> _localPath() async =>
-      p.join(await getDatabasesPath(), _fileName);
+      kIsWeb ? _fileName : p.join(await getDatabasesPath(), _fileName);
 
   Future<Database> open() async {
     final existing = _db;
     if (existing != null && existing.isOpen) return existing;
 
     final path = await _localPath();
-    await Directory(p.dirname(path)).create(recursive: true);
+    if (!kIsWeb) await Directory(p.dirname(path)).create(recursive: true);
     return _db = await openDatabase(
       path,
       version: _version,
@@ -182,7 +183,7 @@ class HadithDatabase {
   /// Whether [slug] has finished downloading and all of its rows are present.
   Future<bool> isBookReady(String slug) async {
     try {
-      if (!await File(await _localPath()).exists()) return false;
+      if (!kIsWeb && !await File(await _localPath()).exists()) return false;
       final db = await open();
       final book = await db.query(
         _booksTable,
@@ -207,7 +208,7 @@ class HadithDatabase {
 
   Future<Set<String>> downloadedSlugs() async {
     try {
-      if (!await File(await _localPath()).exists()) return {};
+      if (!kIsWeb && !await File(await _localPath()).exists()) return {};
       final db = await open();
       final rows = await db.query(
         _booksTable,

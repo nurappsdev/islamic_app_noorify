@@ -1,9 +1,16 @@
 class ApiConstants {
+  static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
   // local
   //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
   //live
-    static const String baseUrl = "https://api.tuhfatulmuslim.com/api/v1";
+  /// The existing production API by default. A Web staging environment may
+  /// override this at build time without changing the mobile release:
+  /// `--dart-define=API_BASE_URL=https://.../api/v1`.
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: _defaultBaseUrl,
+  );
   // static const String baseUrl = "https://tuhfatulmuslim.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
 

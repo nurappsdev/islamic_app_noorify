@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,6 +12,7 @@ import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/ebook_download
 import 'package:tuhfatul_muslim/features/hadith/presentation/screens/ebook_reader_screen.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/ebook_cover.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// One e-book: cover, title, author, language, publisher and reference, with a
 /// button that downloads the PDF onto the device, then reads it in the app.
@@ -23,11 +25,73 @@ class EbookDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) return _WebEbookDetailScreen(ebook: ebook);
     return BlocProvider(
       create: (_) =>
           EbookDownloadBloc(ebook, EbookDownloader())
             ..add(const CheckEbookDownload()),
       child: _EbookDetailView(ebook: ebook),
+    );
+  }
+}
+
+/// Browsers cannot save a PDF to the app documents directory or render it
+/// through the native file reader. Open the publisher's URL in a new browser
+/// context instead; downloading/caching remains unchanged on mobile.
+class _WebEbookDetailScreen extends StatelessWidget {
+  const _WebEbookDetailScreen({required this.ebook});
+
+  final Ebook ebook;
+
+  Future<void> _open(BuildContext context) async {
+    final uri = Uri.tryParse(ebook.pdfFileUrl);
+    if (uri == null ||
+        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open this e-book.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.pageColor(Colors.white),
+      appBar: AppBar(
+        title: Text(ebook.title),
+        backgroundColor: Colors.transparent,
+        foregroundColor: context.inkColor(const Color(0xFF2C3320)),
+      ),
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 150.w,
+                height: 210.h,
+                child: EbookCover(url: ebook.coverImageUrl),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                ebook.title,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 18.h),
+              FilledButton.icon(
+                onPressed: ebook.pdfFileUrl.isEmpty
+                    ? null
+                    : () => _open(context),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open e-book'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

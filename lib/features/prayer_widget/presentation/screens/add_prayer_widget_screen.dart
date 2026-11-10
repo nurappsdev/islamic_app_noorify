@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -41,7 +42,7 @@ class _AddPrayerWidgetScreenState extends State<AddPrayerWidgetScreen> {
     super.initState();
     unawaited(PrayerWidgetService.syncPrayerWidget());
     unawaited(_loadPreviewTimes());
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       PrayerWidgetService.isPinSupported().then((supported) {
         if (mounted) setState(() => _pinSupported = supported);
       });
@@ -758,8 +759,9 @@ class _ActionCardState extends State<_ActionCard> {
   @override
   Widget build(BuildContext context) {
     final appText = widget.appText;
-    final showButton = Platform.isAndroid && widget.pinSupported == true;
-    final instructions = Platform.isIOS
+    final showButton =
+        !kIsWeb && Platform.isAndroid && widget.pinSupported == true;
+    final instructions = !kIsWeb && Platform.isIOS
         ? appText.addPrayerWidgetIosInstructions
         : appText.addPrayerWidgetAndroidInstructions;
     return Container(

@@ -29,6 +29,14 @@ class FacebookAuthConfig {
 
   static const String _defaultClientToken = 'af1776f2d60505e3a28d70f17282fc13';
 
+  /// JavaScript SDK version used only by the browser implementation. Keep it
+  /// configurable because Meta retires Graph versions over time; a deployed
+  /// build can update it without touching Android or iOS configuration.
+  static const String webSdkVersion = String.fromEnvironment(
+    'FACEBOOK_WEB_SDK_VERSION',
+    defaultValue: 'v18.0',
+  );
+
   /// The permissions requested at login. Kept to the two that need no App
   /// Review, so the flow works for any user from day one.
   static const List<String> loginPermissions = ['email', 'public_profile'];

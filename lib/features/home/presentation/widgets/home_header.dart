@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -88,17 +89,20 @@ class HomeHeader extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox.square(
-            dimension: 32.r,
-            child: IconButton(
-              tooltip: appText.alarm,
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AllAlarmScreen()),
+          if (!kIsWeb)
+            SizedBox.square(
+              dimension: 32.r,
+              child: IconButton(
+                tooltip: appText.alarm,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const AllAlarmScreen(),
+                  ),
+                ),
+                padding: EdgeInsets.zero,
+                icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
               ),
-              padding: EdgeInsets.zero,
-              icon: Icon(Icons.alarm, color: AppColor.primary, size: 20.sp),
             ),
-          ),
           ValueListenableBuilder<int>(
             valueListenable: unreadNotificationCountNotifier,
             builder: (context, unreadCount, _) {

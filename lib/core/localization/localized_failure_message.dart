@@ -15,6 +15,8 @@ String localizeFailureMessage(String raw) {
   final known = <String, String>{
     'no internet connection': text.failureNetwork,
     'no internet connection. please try again': text.failureNetwork,
+    'the browser could not reach the api. your connection may be offline, or the api may be blocked by its cors policy':
+        'The browser could not reach the server. API access may be blocked by the server CORS policy.',
     'the request timed out. please try again': text.failureTimeout,
     'could not establish a secure connection': text.failureSecureConnection,
     'the request was cancelled': text.failureCancelled,

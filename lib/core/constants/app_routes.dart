@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
+
+import '../widgets/web_mobile_canvas.dart';
 
 import '../../features/auth/presentation/screens/email_verification_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -763,7 +766,10 @@ class AppRoutes {
     Widget child,
     RouteSettings settings,
   ) {
-    return MaterialPageRoute<void>(builder: (_) => child, settings: settings);
+    return MaterialPageRoute<void>(
+      builder: (_) => _webRouteChild(child, settings),
+      settings: settings,
+    );
   }
 
   /// Like [_page], with the Quran module's typography.
@@ -771,7 +777,10 @@ class AppRoutes {
     Widget child,
     RouteSettings settings,
   ) {
-    return QuranPageRoute<void>(builder: (_) => child, settings: settings);
+    return QuranPageRoute<void>(
+      builder: (_) => _webRouteChild(child, settings),
+      settings: settings,
+    );
   }
 
   /// Like [_page], but swaps in [child] immediately instead of animating —
@@ -785,7 +794,19 @@ class AppRoutes {
       settings: settings,
       transitionDuration: Duration.zero,
       reverseTransitionDuration: Duration.zero,
-      pageBuilder: (_, _, _) => child,
+      pageBuilder: (_, _, _) => _webRouteChild(child, settings),
     );
+  }
+
+  /// Only the responsive Splash and Onboarding experiences may consume the
+  /// full browser viewport today. Every other route retains the existing Web
+  /// mobile canvas until its own dedicated responsive work begins.
+  static Widget _webRouteChild(Widget child, RouteSettings settings) {
+    if (!kIsWeb ||
+        settings.name == RouteNames.splash ||
+        settings.name == RouteNames.onboardingHadith) {
+      return child;
+    }
+    return WebMobileCanvas(child: child);
   }
 }
