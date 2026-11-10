@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,6 +48,8 @@ import 'package:tuhfatul_muslim/features/home/presentation/widgets/prohibited_pr
 import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
 
 import '../widgets/home_progress_section.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
@@ -225,77 +228,23 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
                 children: [
                   // Fixed above the scroll view (not inside it), so it never
                   // scrolls away with the content below.
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
-                    child: const HomeHeader(),
-                  ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        RefreshIndicator(
-                          onRefresh: _onRefresh,
-                          color: AppColor.primary,
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
-                            child: Column(
-                              children: [
-                                const AmalTrackerCard(),
-
-                                SizedBox(height: 16.h),
-                                KeyedSubtree(
-                                  key: ValueKey(
-                                    'prayer-time-card-${language.name}-$_refreshTick',
-                                  ),
-                                  child: const PrayerTimeCard(),
-                                ),
-                                SizedBox(height: 24.h),
-                                KeyedSubtree(
-                                  key: ValueKey(
-                                    'prohibited-prayer-times-${language.name}-$_refreshTick',
-                                  ),
-                                  child: const ProhibitedPrayerTimesCard(),
-                                ),
-                                SizedBox(height: 16.h),
-                                HomeFeatureCardSlider(
-                                  key: ValueKey(
-                                    'home-feature-slider-${language.name}',
-                                  ),
-                                  height: 350.h,
-                                  children: [
-                                    KeyedSubtree(
-                                      key: ValueKey(
-                                        'fardh-prayer-$_refreshTick',
-                                      ),
-                                      child: const _FardhPrayerCard(),
-                                    ),
-                                    const _HadithReadingCard(),
-                                    const _QuranCard(),
-                                    KeyedSubtree(
-                                      key: ValueKey('nafl-more-$_refreshTick'),
-                                      child: const _NaflMoreCard(),
-                                    ),
-                                    const _ZikrCard(),
-                                    const _SunnahWitrCard(),
-                                    const _QuizCard(),
-                                  ],
-                                ),
-
-                                SizedBox(height: 10.h),
-                                const HomeProgressSection(),
-                                SizedBox(height: 10.h),
-                                const HomeFeatureGrid(),
-                                SizedBox(height: 10.h),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Align(
-                          alignment: Alignment.bottomCenter,
-                          child: HomeBottomNav(),
-                        ),
-                      ],
+                  if (!kIsWeb)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
+                      child: const HomeHeader(),
                     ),
+                  Expanded(
+                    child: kIsWeb
+                        ? _WebHomeDashboard(
+                            language: language,
+                            refreshTick: _refreshTick,
+                            onRefresh: _onRefresh,
+                          )
+                        : _MobileHomeDashboard(
+                            language: language,
+                            refreshTick: _refreshTick,
+                            onRefresh: _onRefresh,
+                          ),
                   ),
                 ],
               ),
@@ -306,6 +255,804 @@ class _HomeScreenViewState extends State<_HomeScreenView> {
     );
   }
 }
+
+/// The original phone-only composition. Keeping it in a separate widget is
+/// deliberate: Web layout changes below cannot alter Android or iOS geometry.
+class _MobileHomeDashboard extends StatelessWidget {
+  const _MobileHomeDashboard({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: onRefresh,
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
+            child: Column(
+              children: _homeSections(
+                language: language,
+                refreshTick: refreshTick,
+              ),
+            ),
+          ),
+        ),
+        const Align(alignment: Alignment.bottomCenter, child: HomeBottomNav()),
+      ],
+    );
+  }
+}
+
+/// A desktop/tablet dashboard that reuses every existing Home feature and its
+/// data source. Wide browsers receive two intentional reading columns rather
+/// than a stretched phone canvas; compact browsers naturally collapse back to
+/// one column.
+class _WebHomeDashboard extends StatelessWidget {
+  const _WebHomeDashboard({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _WebHomeContent(
+          language: language,
+          refreshTick: refreshTick,
+          onRefresh: onRefresh,
+          showBottomNavigation: constraints.maxWidth < 760,
+        );
+      },
+    );
+  }
+}
+
+class _WebHomeContent extends StatelessWidget {
+  const _WebHomeContent({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+    required this.showBottomNavigation,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+  final bool showBottomNavigation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            const _WebHomeTopBar(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: onRefresh,
+                color: AppColor.primary,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final prayerRow = constraints.maxWidth >= 900;
+                    final slider = HomeFeatureCardSlider(
+                      key: ValueKey('home-feature-slider-${language.name}'),
+                      height: 350,
+                      children: [
+                        KeyedSubtree(
+                          key: ValueKey('fardh-prayer-$refreshTick'),
+                          child: const _FardhPrayerCard(),
+                        ),
+                        const _HadithReadingCard(),
+                        const _QuranCard(),
+                        KeyedSubtree(
+                          key: ValueKey('nafl-more-$refreshTick'),
+                          child: const _NaflMoreCard(),
+                        ),
+                        const _ZikrCard(),
+                        const _SunnahWitrCard(),
+                        const _QuizCard(),
+                      ],
+                    );
+                    final prayerCard = KeyedSubtree(
+                      key: ValueKey(
+                        'prayer-time-card-${language.name}-$refreshTick',
+                      ),
+                      child: const PrayerTimeCard(),
+                    );
+                    final prohibitedCard = KeyedSubtree(
+                      key: ValueKey(
+                        'prohibited-prayer-times-${language.name}-$refreshTick',
+                      ),
+                      child: const ProhibitedPrayerTimesCard(),
+                    );
+
+                    return SingleChildScrollView(
+                      key: const ValueKey('web-home-scroll-view'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        18,
+                        24,
+                        showBottomNavigation ? 104 : 36,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1320),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // The existing Amol carousel becomes the wide
+                              // dashboard hero, just like the supplied design.
+                              const AmalTrackerCard(),
+                              const SizedBox(height: 22),
+                              if (prayerRow)
+                                Row(
+                                  key: const ValueKey('web-home-prayer-row'),
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(flex: 2, child: prayerCard),
+                                    const SizedBox(width: 24),
+                                    Expanded(child: prohibitedCard),
+                                  ],
+                                )
+                              else
+                                Column(
+                                  key: const ValueKey('web-home-prayer-stack'),
+                                  children: [
+                                    prayerCard,
+                                    const SizedBox(height: 18),
+                                    prohibitedCard,
+                                  ],
+                                ),
+                              const SizedBox(height: 22),
+                              slider,
+                              const SizedBox(height: 22),
+                              const _WebLegacyPanel(child: HomeFeatureGrid()),
+                              // Qibla compass and the calendar remain in the
+                              // Android/iOS Home only, per the Web design.
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (showBottomNavigation)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: const HomeBottomNav(),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Desktop-only navigation matching the reference's persistent left rail.
+/// It uses the app's existing routes; Android/iOS keep their bottom bar.
+const _webHeaderInk = Color(0xFF26321B);
+const _webHeaderMutedInk = Color(0xB326321B);
+
+class _WebHomeTopBar extends StatelessWidget {
+  const _WebHomeTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Material(
+      // Use the same soft olive surface as the Amol Tracker card.
+      color: context.surfaceColor(context.appPalette.tint),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: .08),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 78,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 900;
+              final showReminder = constraints.maxWidth >= 1120;
+              final showBrandName = constraints.maxWidth >= 620;
+
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: constraints.maxWidth < 620 ? 12 : 28,
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/appLogo.png',
+                      width: 46,
+                      height: 46,
+                      color: _webHeaderInk,
+                      colorBlendMode: BlendMode.srcIn,
+                    ),
+                    if (showBrandName) ...[
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Tuhfatul Muslim',
+                        style: TextStyle(
+                          color: _webHeaderInk,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 28),
+                    ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _WebTopNavButton(
+                              label: appText.home,
+                              selected: true,
+                            ),
+                            PopupMenuButton<String>(
+                              tooltip: appText.categoryQuran,
+                              offset: const Offset(0, 46),
+                              onSelected: (tab) =>
+                                  Navigator.of(context).pushReplacementNamed(
+                                    RouteNames.quranSurahs,
+                                    arguments: tab,
+                                  ),
+                              itemBuilder: (context) => [
+                                _quranMenuItem(
+                                  'home',
+                                  appText.categoryQuran,
+                                  Icons.menu_book_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'learn',
+                                  appText.learn.isEmpty
+                                      ? 'Learn'
+                                      : appText.learn,
+                                  Icons.school_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'saved',
+                                  appText.saved.isEmpty
+                                      ? 'Saved'
+                                      : appText.saved,
+                                  Icons.bookmark_border_rounded,
+                                ),
+                                _quranMenuItem(
+                                  'plan',
+                                  appText.planner.isEmpty
+                                      ? 'Plan'
+                                      : appText.planner,
+                                  Icons.assignment_turned_in_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'dashboard',
+                                  appText.dashboard.isEmpty
+                                      ? 'Dashboard'
+                                      : appText.dashboard,
+                                  Icons.grid_view_outlined,
+                                ),
+                              ],
+                              child: _WebTopNavButton(
+                                label: appText.categoryQuran,
+                                trailing: Icons.keyboard_arrow_down_rounded,
+                              ),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.categoryHadith,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.hadith),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.featureDua,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.dua),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.featureDijpr,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.zikr),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.todaysAmolTrack,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const AmolTrackingScreen(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (showReminder) ...[
+                      const SizedBox(width: 12),
+                      const SizedBox(
+                        width: 215,
+                        child: HomeHeaderRotatingSubtitle(
+                          style: TextStyle(
+                            color: _webHeaderInk,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          reminderColor: _webHeaderInk,
+                        ),
+                      ),
+                    ],
+                    _WebHeaderNotifications(label: appText.notifications),
+                    const SizedBox(width: 8),
+                    _WebHeaderProfile(
+                      fallbackName: appText.competitorName,
+                      showDetails: !compact,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _quranMenuItem(
+    String value,
+    String label,
+    IconData icon,
+  ) => PopupMenuItem(
+    value: value,
+    child: Row(
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF316648)),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    ),
+  );
+}
+
+class _WebHeaderNotifications extends StatelessWidget {
+  const _WebHeaderNotifications({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: unreadNotificationCountNotifier,
+      builder: (context, unreadCount, _) {
+        final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              tooltip: label,
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(RouteNames.notifications),
+              icon: const Icon(Icons.notifications_none_rounded),
+              color: _webHeaderInk,
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 4,
+                top: 5,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE75A51),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WebHeaderProfile extends StatelessWidget {
+  const _WebHeaderProfile({
+    required this.fallbackName,
+    required this.showDetails,
+  });
+
+  final String fallbackName;
+  final bool showDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboardName = context.localized(
+      context
+          .watch<HomeDashboardBloc>()
+          .state
+          .dashboard
+          ?.userSummary
+          .localizedFullName,
+    );
+    final now = bangladeshNow();
+    final date = context.localizedDigits(
+      '${now.day} ${AppText.of(context).monthNames[now.month - 1]} ${now.year}',
+    );
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ProfileAvatarCircle(
+                dimension: 40,
+                backgroundColor: Colors.white.withValues(alpha: .34),
+                placeholderIconColor: _webHeaderInk,
+              ),
+              if (showDetails) ...[
+                const SizedBox(width: 9),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 170),
+                  child: ValueListenableBuilder<String?>(
+                    valueListenable: profileNameNotifier,
+                    builder: (context, profileName, _) {
+                      final name = (profileName ?? '').trim().isNotEmpty
+                          ? profileName!.trim()
+                          : (dashboardName.isEmpty
+                                ? fallbackName
+                                : dashboardName);
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _webHeaderInk,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            date,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _webHeaderMutedInk,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebTopNavButton extends StatelessWidget {
+  const _WebTopNavButton({
+    required this.label,
+    this.onTap,
+    this.selected = false,
+    this.trailing,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool selected;
+  final IconData? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    const foreground = _webHeaderInk;
+    return Material(
+      color: selected
+          ? Colors.white.withValues(alpha: .56)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 2),
+                Icon(trailing, size: 18, color: foreground),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Retained as an alternate navigation treatment while the top bar is the
+// active Web navigation requested by the current design.
+// ignore: unused_element
+class _WebHomeSidebar extends StatelessWidget {
+  const _WebHomeSidebar();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final destinations = [
+      _WebSidebarDestination(
+        icon: Icons.home_rounded,
+        label: appText.home,
+        selected: true,
+        onTap: () {},
+      ),
+      _WebSidebarDestination(
+        icon: Icons.menu_book_outlined,
+        label: appText.categoryQuran,
+        onTap: () =>
+            Navigator.of(context).pushReplacementNamed(RouteNames.quranSurahs),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.auto_stories_outlined,
+        label: appText.categoryHadith,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.volunteer_activism_outlined,
+        label: appText.featureDua,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.dua),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.nightlight_round,
+        label: appText.featureDijpr,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.zikr),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.fact_check_outlined,
+        label: appText.todaysAmolTrack,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const AmolTrackingScreen()),
+        ),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.mosque_outlined,
+        label: appText.viewPrayerTimes,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.prayerTimes),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.workspace_premium_outlined,
+        label: appText.featureAsmaUlHusna,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.asma),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.quiz_outlined,
+        label: appText.featureQuizAndLearn,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.winQuiz),
+      ),
+    ];
+
+    return SizedBox(
+      width: 276,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF01442F), Color(0xFF126745)],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 24, 18, 28),
+            child: Column(
+              children: [
+                Image.asset('assets/appLogo.png', width: 78, height: 78),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tuhfatul Muslim',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 26),
+                for (final destination in destinations)
+                  _WebSidebarTile(destination: destination),
+                const Divider(color: Color(0x99D7E9C1), height: 30),
+                _WebSidebarTile(
+                  destination: _WebSidebarDestination(
+                    icon: Icons.settings_outlined,
+                    label: appText.settingsTitle,
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(RouteNames.settings),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebSidebarDestination {
+  const _WebSidebarDestination({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool selected;
+}
+
+class _WebSidebarTile extends StatelessWidget {
+  const _WebSidebarTile({required this.destination});
+
+  final _WebSidebarDestination destination;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Material(
+        color: destination.selected
+            ? const Color(0xFFA1AE57)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: destination.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+            child: Row(
+              children: [
+                Icon(destination.icon, color: Colors.white, size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    destination.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Places an existing mobile-first Home card in a readable Web column without
+/// altering the card's own Android/iOS layout, data, or interaction logic.
+class _WebLegacyPanel extends StatelessWidget {
+  const _WebLegacyPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final visualWidth = constraints.maxWidth.clamp(0.0, 560.0).toDouble();
+        if (visualWidth == 0) return const SizedBox.shrink();
+        // The Android/iOS cards keep their natural height, text styles and
+        // behaviour; Web only provides a readable max-width and reflow.
+        return Center(
+          child: SizedBox(width: visualWidth, child: child),
+        );
+      },
+    );
+  }
+}
+
+List<Widget> _homeSections({
+  required AppLanguage language,
+  required int refreshTick,
+}) => [
+  const AmalTrackerCard(),
+  SizedBox(height: 16.h),
+  KeyedSubtree(
+    key: ValueKey('prayer-time-card-${language.name}-$refreshTick'),
+    child: const PrayerTimeCard(),
+  ),
+  SizedBox(height: 24.h),
+  KeyedSubtree(
+    key: ValueKey('prohibited-prayer-times-${language.name}-$refreshTick'),
+    child: const ProhibitedPrayerTimesCard(),
+  ),
+  SizedBox(height: 16.h),
+  HomeFeatureCardSlider(
+    key: ValueKey('home-feature-slider-${language.name}'),
+    height: 350.h,
+    children: [
+      KeyedSubtree(
+        key: ValueKey('fardh-prayer-$refreshTick'),
+        child: const _FardhPrayerCard(),
+      ),
+      const _HadithReadingCard(),
+      const _QuranCard(),
+      KeyedSubtree(
+        key: ValueKey('nafl-more-$refreshTick'),
+        child: const _NaflMoreCard(),
+      ),
+      const _ZikrCard(),
+      const _SunnahWitrCard(),
+      const _QuizCard(),
+    ],
+  ),
+  SizedBox(height: 10.h),
+  const HomeProgressSection(),
+  SizedBox(height: 10.h),
+  const HomeFeatureGrid(),
+  SizedBox(height: 10.h),
+];
 
 /// Opens the Amol tracker with [section] popped to the front.
 void _openTracker(

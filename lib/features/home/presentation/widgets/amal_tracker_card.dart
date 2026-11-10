@@ -1,6 +1,7 @@
 import 'dart:async';
-
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, PointerEnterEvent, PointerExitEvent;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +16,6 @@ import 'package:tuhfatul_muslim/features/home/presentation/utils/amol_track_card
 import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_shimmer.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 import 'package:tuhfatul_muslim/shared/widgets/amal_tracker_tile.dart';
-import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_progress_ring.dart';
 
 class AmalTrackerCard extends StatefulWidget {
   const AmalTrackerCard({super.key});
@@ -184,6 +184,7 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   Timer? _autoSlideTimer;
   int _currentPage = _initialPage;
   bool _isHolding = false;
+  bool _isMouseHovering = false;
   bool _isAutoSliding = false;
 
   /// How many cards the slider is currently showing; set on each build.
@@ -220,7 +221,10 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
     _autoSlideTimer?.cancel();
     _autoSlideTimer = Timer(_slideDuration, () async {
       if (!mounted) return;
-      if (_isHolding || !_isOnScreen || !_pageController.hasClients) {
+      if (_isHolding ||
+          _isMouseHovering ||
+          !_isOnScreen ||
+          !_pageController.hasClients) {
         _scheduleAutoSlide();
         return;
       }
@@ -254,6 +258,19 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
   void _onPointerEnd(PointerEvent _) {
     _isHolding = false;
     // Fresh dwell for whichever card the user let go on.
+    _scheduleAutoSlide();
+  }
+
+  void _onMouseEnter(PointerEnterEvent _) {
+    if (!kIsWeb) return;
+    _isMouseHovering = true;
+    _autoSlideTimer?.cancel();
+  }
+
+  void _onMouseExit(PointerExitEvent _) {
+    if (!kIsWeb) return;
+    _isMouseHovering = false;
+    // Do not advance immediately after the user has inspected a card.
     _scheduleAutoSlide();
   }
 
@@ -314,54 +331,69 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
           children: [
             SizedBox(
               height: AmalTrackerTile.height,
-              child: Listener(
-                onPointerDown: _onPointerDown,
-                onPointerUp: _onPointerEnd,
-                onPointerCancel: _onPointerEnd,
-                child: GestureDetector(
-                  onDoubleTap: _restartFromFirst,
-                  child: PageView.builder(
-                    // Lets the controller restore the page if the slider is rebuilt
-                    // from scratch (e.g. the shimmer shows during a refresh).
-                    key: const PageStorageKey<String>('amal-tracker-slider'),
-                    controller: _pageController,
-                    physics: const BouncingScrollPhysics(),
-                    onPageChanged: (index) {
-                      _currentPage = index;
-                      // A manual swipe shouldn't get cut short by an auto-advance
-                      // landing right after it, so give this slide a fresh 3s dwell.
-                      _scheduleAutoSlide();
-                    },
-                    itemBuilder: (context, pageIndex) {
-                      final index = pageIndex % items.length;
-                      return AnimatedBuilder(
-                        animation: _pageController,
-                        builder: (context, child) {
-                          var page = _currentPage.toDouble();
-                          if (_pageController.hasClients &&
-                              _pageController.position.haveDimensions) {
-                            page = _pageController.page ?? page;
-                          }
-                          final delta = (page - pageIndex).abs().clamp(
-                            0.0,
-                            1.0,
-                          );
-                          final scale = 1 - (delta * 0.08);
-                          final opacity = 1 - (delta * 0.35);
-                          return Opacity(
-                            opacity: opacity,
-                            child: Transform.scale(scale: scale, child: child),
+              child: MouseRegion(
+                cursor: kIsWeb ? SystemMouseCursors.grab : MouseCursor.defer,
+                onEnter: _onMouseEnter,
+                onExit: _onMouseExit,
+                child: Listener(
+                  onPointerDown: _onPointerDown,
+                  onPointerUp: _onPointerEnd,
+                  onPointerCancel: _onPointerEnd,
+                  child: GestureDetector(
+                    onDoubleTap: _restartFromFirst,
+                    child: ScrollConfiguration(
+                      behavior: kIsWeb
+                          ? const _WebAmalTrackerScrollBehavior()
+                          : ScrollConfiguration.of(context),
+                      child: PageView.builder(
+                        // Lets the controller restore the page if the slider is rebuilt
+                        // from scratch (e.g. the shimmer shows during a refresh).
+                        key: const PageStorageKey<String>(
+                          'amal-tracker-slider',
+                        ),
+                        controller: _pageController,
+                        physics: const BouncingScrollPhysics(),
+                        onPageChanged: (index) {
+                          _currentPage = index;
+                          // A manual swipe shouldn't get cut short by an auto-advance
+                          // landing right after it, so give this slide a fresh 3s dwell.
+                          _scheduleAutoSlide();
+                        },
+                        itemBuilder: (context, pageIndex) {
+                          final index = pageIndex % items.length;
+                          return AnimatedBuilder(
+                            animation: _pageController,
+                            builder: (context, child) {
+                              var page = _currentPage.toDouble();
+                              if (_pageController.hasClients &&
+                                  _pageController.position.haveDimensions) {
+                                page = _pageController.page ?? page;
+                              }
+                              final delta = (page - pageIndex).abs().clamp(
+                                0.0,
+                                1.0,
+                              );
+                              final scale = 1 - (delta * 0.08);
+                              final opacity = 1 - (delta * 0.35);
+                              return Opacity(
+                                opacity: opacity,
+                                child: Transform.scale(
+                                  scale: scale,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.zero,
+                              child: _AmalSlide(
+                                item: items[index],
+                                isTodaysTrack: index == 0,
+                              ),
+                            ),
                           );
                         },
-                        child: Padding(
-                          padding: EdgeInsets.zero,
-                          child: _AmalSlide(
-                            item: items[index],
-                            isTodaysTrack: index == 0,
-                          ),
-                        ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -373,6 +405,18 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       },
     );
   }
+}
+
+/// Flutter Web leaves mouse dragging out of scrollables by default. This
+/// opt-in affects only the Web Amol carousel; mobile keeps its touch physics.
+class _WebAmalTrackerScrollBehavior extends MaterialScrollBehavior {
+  const _WebAmalTrackerScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
 }
 
 class _AmalCarouselDots extends StatelessWidget {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,6 +36,10 @@ class MyApp extends StatelessWidget {
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
+      // Web keeps the Android/iOS design units. Routes reflow their existing
+      // widgets with constraints instead of magnifying a mobile canvas.
+      enableScaleWH: () => !kIsWeb,
+      enableScaleText: () => !kIsWeb,
       builder: (context, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,

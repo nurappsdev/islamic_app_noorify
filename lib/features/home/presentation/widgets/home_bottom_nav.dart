@@ -18,38 +18,36 @@ class HomeBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return AppBottomNavBar(
-      selectedIndex: selectedIndex,
-      items: [
-        AppBottomNavItem(
-          iconAsset: 'assets/homeImg/mainHomeIcon.png',
-          label: appText.home,
-          onTap: () => _goTo(context, RouteNames.home),
+    final items = [
+      AppBottomNavItem(
+        iconAsset: 'assets/homeImg/mainHomeIcon.png',
+        label: appText.home,
+        onTap: () => _goTo(context, RouteNames.home),
+      ),
+      AppBottomNavItem(
+        iconAsset: 'assets/homeImg/quranImg.png',
+        iconAssetColor: Colors.white,
+        label: appText.categoryQuran,
+        onTap: () => _goTo(context, RouteNames.quranSurahs),
+      ),
+      // Opened over Home, so back returns to it.
+      AppBottomNavItem(
+        iconAsset: 'assets/homeImg/haditImg.png',
+        iconAssetColor: Colors.white,
+        label: appText.categoryHadith,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
+      ),
+      AppBottomNavItem(
+        icon: Icons.leaderboard_rounded,
+        label: appText.leaderboard,
+        onTap: () => _goTo(
+          context,
+          RouteNames.leaderboard,
+          loginFeature: AuthFeatures.leaderboard,
         ),
-        AppBottomNavItem(
-          iconAsset: 'assets/homeImg/quranImg.png',
-          iconAssetColor: Colors.white,
-          label: appText.categoryQuran,
-          onTap: () => _goTo(context, RouteNames.quranSurahs),
-        ),
-        // Opened over Home, so back returns to it.
-        AppBottomNavItem(
-          iconAsset: 'assets/homeImg/haditImg.png',
-          iconAssetColor: Colors.white,
-          label: appText.categoryHadith,
-          onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
-        ),
-        AppBottomNavItem(
-          icon: Icons.leaderboard_rounded,
-          label: appText.leaderboard,
-          onTap: () => _goTo(
-            context,
-            RouteNames.leaderboard,
-            loginFeature: AuthFeatures.leaderboard,
-          ),
-        ),
-      ],
-    );
+      ),
+    ];
+    return AppBottomNavBar(selectedIndex: selectedIndex, items: items);
   }
 }
 

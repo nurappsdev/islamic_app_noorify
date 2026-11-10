@@ -441,8 +441,11 @@ class AppRoutes {
         return _page(const LearningTestResultScreen(), settings);
       case RouteNames.quran:
       case RouteNames.quranSurahs:
+        final initialQuranTab = settings.arguments is String
+            ? settings.arguments as String
+            : 'home';
         return _instantPage(
-          QuranFontScope(child: _surahListWithBlocs()),
+          QuranFontScope(child: _surahListWithBlocs(initialQuranTab)),
           settings,
         );
       case RouteNames.quranSurahDetail:
@@ -750,7 +753,7 @@ class AppRoutes {
     }
   }
 
-  static Widget _surahListWithBlocs() {
+  static Widget _surahListWithBlocs([String initialQuranTab = 'home']) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => LastReadBloc()..add(const LoadLastRead())),
@@ -758,7 +761,7 @@ class AppRoutes {
           create: (_) => OfflineQuranBloc()..add(const CheckOfflineQuran()),
         ),
       ],
-      child: const SurahListScreen(),
+      child: SurahListScreen(initialQuranTab: initialQuranTab),
     );
   }
 
@@ -798,13 +801,14 @@ class AppRoutes {
     );
   }
 
-  /// Only the responsive Splash and Onboarding experiences may consume the
-  /// full browser viewport today. Every other route retains the existing Web
-  /// mobile canvas until its own dedicated responsive work begins.
+  /// Responsive Splash, Onboarding, and Home may consume the full browser
+  /// viewport. Every other route retains the existing Web mobile canvas until
+  /// its own dedicated responsive work begins.
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
     if (!kIsWeb ||
         settings.name == RouteNames.splash ||
-        settings.name == RouteNames.onboardingHadith) {
+        settings.name == RouteNames.onboardingHadith ||
+        settings.name == RouteNames.home) {
       return child;
     }
     return WebMobileCanvas(child: child);
