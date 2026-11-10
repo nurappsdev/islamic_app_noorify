@@ -1,23 +1,56 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:islami_app_noorify/features/auth/presentation/widgets/auth_button.dart';
-import 'package:islami_app_noorify/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/google_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/google_sign_in_user.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/login_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/login/login_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
+import 'package:tuhfatul_muslim/features/auth/data/services/facebook_auth_service.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/facebook_sign_in_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/facebook_sign_in_button.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/google_sign_in_button.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/services/firebase/firebase_token_service.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<SignInBloc>(
-      create: (_) => SignInBloc(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SignInBloc>(create: (_) => SignInBloc()),
+        BlocProvider<LoginBloc>(
+          create: (_) {
+            final repository = AccountRepositoryImpl(
+              AuthRemoteDataSourceImpl(),
+            );
+            return LoginBloc(
+              LoginUser(repository),
+              GoogleSignInUser(repository),
+              FacebookSignInUser(repository),
+            );
+          },
+        ),
+      ],
       child: const _SignInView(),
     );
   }
@@ -31,14 +64,43 @@ class _SignInView extends StatefulWidget {
 }
 
 class _SignInViewState extends State<_SignInView> {
-  static const _logoImagePath = 'assets/noorifyLogo.png';
+  static const _logoImagePath = 'assets/appLogoFinal.png';
+  static const _errorColor = Color(0xFFD93025);
+  final _formKey = GlobalKey<FormState>();
+  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
+  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  /// Which button started the sign-in that is in flight. [LoginBloc] runs
+  /// both flows and its `isLoading` cannot tell them apart, so the flow is
+  /// remembered here instead: each flag stays up from the tap until
+  /// [_onLoginState] sees the exchange end, which keeps the spinner inside
+  /// the button that was actually pressed.
+  bool _googleBusy = false;
+  bool _emailBusy = false;
+
+  /// Whether the Facebook login dialog / token fetch is in flight. Separate
+  /// from [_googleBusy] so the spinner stays in the button that was tapped.
+  bool _facebookBusy = false;
+
   SignInBloc get _auth => context.read<SignInBloc>();
   SignInState get _authState => _auth.state;
-  bool get _isLoading => _authState.isLoading;
+
+  /// Whether an e-mail + password sign-in is in flight. This *watches*
+  /// [LoginBloc], so it may only be read while building — [build] reads it
+  /// once and hands the value down, since a field callback that read it here
+  /// crashed with provider's "Tried to listen to a value exposed with
+  /// provider, from outside of the widget tree".
+  bool get _loginLoading {
+    final exchanging = context.watch<LoginBloc>().state.isLoading;
+    return _authState.isLoading || _emailBusy || (exchanging && !_googleBusy);
+  }
+
+  /// Whether the Google sign-in is in flight — the picker and the exchange
+  /// that follows it. Watches nothing, so it is safe to read anywhere.
+  bool get _googleLoading => _googleBusy;
   bool get _obscurePassword => _authState.obscurePassword;
 
   @override
@@ -60,34 +122,207 @@ class _SignInViewState extends State<_SignInView> {
       prefixIcon: Icon(prefixIcon, color: AppColor.authIcon, size: 18.sp),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.surfaceColor(Colors.white),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
       border: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: radius,
-        borderSide: const BorderSide(color: AppColor.authFieldBorder),
+        borderSide: BorderSide(
+          color: context.lineColor(AppColor.authFieldBorder),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: radius,
         borderSide: const BorderSide(color: AppColor.primary, width: 1.2),
       ),
+      errorStyle: TextStyle(color: _errorColor, fontSize: 11.5.sp, height: 1.2),
+      errorMaxLines: null,
+      errorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: const BorderSide(color: _errorColor, width: 1.2),
+      ),
     );
   }
 
+  String? _validateEmail(String? value) =>
+      LocalizedValidator.readOf(context).email(value);
+
+  String? _validatePassword(String? value) =>
+      LocalizedValidator.readOf(context).password(value);
+
   Future<void> _signIn() async {
-    skipAuthGateNotifier.value = true;
-    unawaited(saveAppPreferences());
-    if (!mounted) return;
-    Navigator.of(
+    FocusScope.of(context).unfocus();
+    if (_emailBusy || _googleBusy) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    // Captured before the await below so nothing here touches `context`
+    // once this device's FCM token has been fetched.
+    final loginBloc = context.read<LoginBloc>();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    setState(() => _emailBusy = true);
+    try {
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        LoginSubmitted(email: email, password: password, fcmToken: fcmToken),
+      );
+    } catch (_) {
+      // The request never left: drop the spinner rather than leave the
+      // button spinning on a state that will never arrive.
+      if (mounted) setState(() => _emailBusy = false);
+      rethrow;
+    }
+  }
+
+  /// Runs the Google account picker, then hands the ID token to [LoginBloc]
+  /// to be exchanged for an app session. A cancelled picker is silent.
+  Future<void> _signInWithGoogle() async {
+    FocusScope.of(context).unfocus();
+    if (_emailBusy || _googleBusy) return;
+    final appText = AppText.of(context);
+    final loginBloc = context.read<LoginBloc>();
+
+    setState(() => _googleBusy = true);
+    try {
+      final result = await GoogleAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        GoogleLoginSubmitted(
+          idToken: result.idToken,
+          email: result.email,
+          displayName: result.displayName,
+          photoUrl: result.photoUrl,
+          fcmToken: fcmToken,
+        ),
+      );
+      // The flag stays up while [LoginBloc] exchanges the token;
+      // [_onLoginState] drops it.
+      return;
+    } on GoogleSignInException catch (e) {
+      _showMessage(GoogleAuthService.messageFor(e, appText));
+    } catch (_) {
+      _showMessage(appText.googleAuthErrorGeneric);
+    }
+    if (mounted) setState(() => _googleBusy = false);
+  }
+
+  /// Runs the Facebook login dialog, then hands the access token to
+  /// [LoginBloc] to be exchanged for an app session. A cancelled dialog is
+  /// silent, exactly as a cancelled Google picker is.
+  Future<void> _signInWithFacebook() async {
+    FocusScope.of(context).unfocus();
+    if (_facebookBusy) return;
+    final appText = AppText.of(context);
+    final loginBloc = context.read<LoginBloc>();
+
+    setState(() => _facebookBusy = true);
+    try {
+      final result = await FacebookAuthService.instance.signIn();
+      final fcmToken = await FirebaseTokenService.instance.getToken();
+      loginBloc.add(
+        FacebookLoginSubmitted(
+          accessToken: result.accessToken,
+          email: result.email,
+          displayName: result.displayName,
+          photoUrl: result.photoUrl,
+          fcmToken: fcmToken,
+        ),
+      );
+      // The flag stays up while [LoginBloc] exchanges the token;
+      // [_onLoginState] drops it.
+      return;
+    } on FacebookAuthException catch (e) {
+      _showMessage(FacebookAuthService.messageFor(e, appText));
+    } catch (e) {
+      debugPrint('[FacebookAuth] unexpected failure: $e');
+      _showMessage(appText.facebookAuthErrorGeneric);
+    }
+    if (mounted) setState(() => _facebookBusy = false);
+  }
+
+  void _showMessage(String message) {
+    if (!mounted || message.trim().isEmpty) return;
+    ScaffoldMessenger.of(
       context,
-    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _onLoginState(BuildContext context, LoginState state) {
+    if (state.status == LoginStatus.success ||
+        state.status == LoginStatus.failure) {
+      if (mounted) {
+        setState(() {
+          _emailBusy = false;
+          _googleBusy = false;
+          _facebookBusy = false;
+        });
+      }
+    }
+    switch (state.status) {
+      case LoginStatus.success:
+        // Hand the credentials to Google Password Manager / iCloud Keychain /
+        // any other autofill service, so next time they are one tap away.
+        TextInput.finishAutofillContext(shouldSave: true);
+        // Token is already stored in Hive by the repository at this point.
+        skipAuthGateNotifier.value = true;
+        unawaited(saveAppPreferences());
+        unawaited(ProfileService.instance.refresh());
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
+      case LoginStatus.failure:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              state.errorMessage ?? AppText.readOf(context).signInFailed,
+            ),
+          ),
+        );
+        context.read<LoginBloc>().add(const LoginReset());
+      case LoginStatus.initial:
+      case LoginStatus.loading:
+        break;
+    }
   }
 
   void _openEmailVerification() {
     Navigator.of(context).pushNamed(RouteNames.forgotPassword);
+  }
+
+  /// Google's branded button, matching [AuthButton]'s height and radius so
+  /// the two read as one stack of actions.
+  Widget _googleSignInButton(AppText appText, bool isLoading) {
+    return GoogleSignInButton(
+      key: const Key('signin_google_button'),
+      label: AuthPromptTexts.continueWithGoogle.resolve(languageOf(context)),
+      isLoading: isLoading,
+      onPressed: _signInWithGoogle,
+    );
+  }
+
+  /// Facebook's branded button, the same frame as [_googleSignInButton].
+  Widget _facebookSignInButton() {
+    return FacebookSignInButton(
+      key: const Key('signin_facebook_button'),
+      label: AuthPromptTexts.continueWithFacebook.resolve(languageOf(context)),
+      isLoading: _facebookBusy,
+      onPressed: _signInWithFacebook,
+    );
+  }
+
+  void _continueAsGuest() {
+    // No token is stored, so the user stays unauthenticated while browsing.
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.home, (route) => false);
   }
 
   @override
@@ -95,8 +330,26 @@ class _SignInViewState extends State<_SignInView> {
     final appText = AppText.of(context);
     context.watch<SignInBloc>();
 
+    return BlocListener<LoginBloc, LoginState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onLoginState,
+      child: _buildScaffold(
+        appText,
+        loginLoading: _loginLoading,
+        googleLoading: _googleLoading,
+      ),
+    );
+  }
+
+  Widget _buildScaffold(
+    AppText appText, {
+    required bool loginLoading,
+    required bool googleLoading,
+  }) {
+    // The secondary links stay disabled during either sign-in, as before.
+    final isLoading = loginLoading || googleLoading;
     return Scaffold(
-      backgroundColor: AppColor.authBackground,
+      backgroundColor: context.pageColor(AppColor.authBackground),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -119,9 +372,9 @@ class _SignInViewState extends State<_SignInView> {
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Text(
-                            'Noorify',
+                            AppText.of(context).tuhfatulMuslim,
                             style: TextStyle(
-                              color: AppColor.authLogo,
+                              color: context.inkColor(AppColor.authLogo),
                               fontSize: 28.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -132,58 +385,78 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    appText.noorify,
+                    appText.tuhfatulMuslim,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.black,
+                      color: context.inkColor(const Color(0xFF859065)),
                       fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
                       height: 1.2,
-                      fontFamily: 'Times New Roman',
                     ),
                   ),
-                  SizedBox(height: 38.h),
-                  SizedBox(
-                    height: 45.h,
-                    child: TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const [
-                        AutofillHints.email,
-                        AutofillHints.telephoneNumber,
-                      ],
-                      decoration: _fieldDecoration(
-                        hint: appText.emailOrPhoneHint,
-                        prefixIcon: Icons.mark_email_unread_outlined,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    height: 45.h,
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      autofillHints: const [AutofillHints.password],
-                      onSubmitted: (_) {
-                        if (_isLoading) return;
-                        _signIn();
-                      },
-                      decoration: _fieldDecoration(
-                        hint: appText.passwordHint,
-                        prefixIcon: Icons.key_outlined,
-                        suffixIcon: IconButton(
-                          tooltip: appText.togglePassword,
-                          onPressed: () =>
-                              _auth.add(const ToggleObscurePassword()),
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: AppColor.authIcon,
-                            size: 18.sp,
-                          ),
+                  SizedBox(height: 24.h),
+                  LocalizedFormScope(
+                    child: AutofillGroup(
+                      child: Form(
+                        key: _formKey,
+                        // Disabled here, not onUserInteraction: Form tracks
+                        // "has the user interacted" at the form level, so
+                        // onUserInteraction on the Form re-validates every
+                        // field once ANY field is touched. Each field below
+                        // instead validates only itself via its own key.
+                        autovalidateMode: AutovalidateMode.disabled,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              key: _emailFieldKey,
+                              controller: _emailController,
+                              validator: _validateEmail,
+                              onChanged: (_) =>
+                                  _emailFieldKey.currentState?.validate(),
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [
+                                AutofillHints.username,
+                                AutofillHints.email,
+                              ],
+                              decoration: _fieldDecoration(
+                                hint: appText.emailOrPhoneHint,
+                                prefixIcon: Icons.mark_email_unread_outlined,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            TextFormField(
+                              key: _passwordFieldKey,
+                              controller: _passwordController,
+                              validator: _validatePassword,
+                              onChanged: (_) =>
+                                  _passwordFieldKey.currentState?.validate(),
+                              obscureText: _obscurePassword,
+                              textInputAction: TextInputAction.done,
+                              autofillHints: const [AutofillHints.password],
+                              onFieldSubmitted: (_) {
+                                if (_emailBusy || _googleBusy) return;
+                                _signIn();
+                              },
+                              decoration: _fieldDecoration(
+                                hint: appText.passwordHint,
+                                prefixIcon: Icons.key_outlined,
+                                suffixIcon: IconButton(
+                                  tooltip: appText.togglePassword,
+                                  onPressed: () =>
+                                      _auth.add(const ToggleObscurePassword()),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppColor.authIcon,
+                                    size: 18.sp,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -192,9 +465,11 @@ class _SignInViewState extends State<_SignInView> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: _isLoading ? null : _openEmailVerification,
+                      onPressed: isLoading ? null : _openEmailVerification,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColor.forgotPassword,
+                        foregroundColor: context.inkColor(
+                          AppColor.forgotPassword,
+                        ),
                         padding: EdgeInsets.symmetric(horizontal: 4.w),
                         minimumSize: Size(0, 34.h),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -208,9 +483,13 @@ class _SignInViewState extends State<_SignInView> {
                   SizedBox(height: 40.h),
                   AuthButton(
                     label: appText.login,
-                    isLoading: _isLoading,
+                    isLoading: loginLoading,
                     onPressed: _signIn,
                   ),
+                  SizedBox(height: 18.h),
+                  _googleSignInButton(appText, googleLoading),
+                  SizedBox(height: 18.h),
+                  _facebookSignInButton(),
                   SizedBox(height: 14.h),
                   Wrap(
                     alignment: WrapAlignment.center,
@@ -218,10 +497,10 @@ class _SignInViewState extends State<_SignInView> {
                     spacing: 4.w,
                     children: [
                       Text(
-                        appText.newToNoorify,
+                        appText.newToTuhfatulMuslim,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: AppColor.authLogo,
+                          color: context.inkColor(AppColor.authLogo),
                           fontSize: 11.sp,
                         ),
                       ),
@@ -231,12 +510,28 @@ class _SignInViewState extends State<_SignInView> {
                         child: Text(
                           appText.createAccount,
                           style: TextStyle(
-                            color: AppColor.createAccount,
+                            color: context.inkColor(AppColor.createAccount),
                             fontSize: 11.sp,
                           ),
                         ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: 14.h),
+                  TextButton(
+                    onPressed: isLoading ? null : _continueAsGuest,
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.inkColor(AppColor.authLogo),
+                      minimumSize: Size(0, 34.h),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      appText.guestUser,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                   SizedBox(height: 72.h),
                 ],

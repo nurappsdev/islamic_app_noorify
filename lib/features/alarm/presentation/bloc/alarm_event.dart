@@ -20,10 +20,12 @@ class SelectPeriod extends AlarmEvent {
   final int index;
 }
 
+/// Sets the "before prayer" offset, in minutes — either a preset (20/30/40)
+/// or a custom value (1-59) picked via the "Custom" dialog.
 class SelectOffset extends AlarmEvent {
-  const SelectOffset(this.index);
+  const SelectOffset(this.minutes);
 
-  final int index;
+  final int minutes;
 }
 
 class SetVibrateAndRing extends AlarmEvent {

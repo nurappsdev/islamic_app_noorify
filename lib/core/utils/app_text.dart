@@ -4,24 +4,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text_bn.dart';
-import 'package:islami_app_noorify/core/utils/app_text_en.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text_bn.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text_en.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_context.dart';
 
 class AppText {
   const AppText({
-    required this.noorify,
+    required this.tuhfatulMuslim,
     required this.splashTitle,
     required this.splashQuote,
     required this.emailOrPhoneHint,
     required this.passwordHint,
     required this.forgotPassword,
     required this.login,
-    required this.newToNoorify,
+    required this.newToTuhfatulMuslim,
     required this.createAccount,
+    required this.guestUser,
     required this.signUpSubtitle,
     required this.enterYourName,
     required this.emailAddress,
+    required this.emailCopied,
     required this.emailVerification,
     required this.sendOtp,
     required this.otpVerification,
@@ -43,8 +46,17 @@ class AppText {
     required this.alreadyHaveAccount,
     required this.logIn,
     required this.back,
+    required this.comingSoon,
+    required this.alarm,
     required this.setAlarm,
     required this.setAllAlarm,
+    required this.allAlarm,
+    required this.prayersAlarm,
+    required this.alarmWillRingIn,
+    required this.hrLabel,
+    required this.noAlarmSet,
+    required this.alarmLabel,
+    required this.alarmLabelHint,
     required this.vibrateAndRing,
     required this.setRingtone,
     required this.vibrate,
@@ -60,6 +72,25 @@ class AppText {
     required this.offsetBefore30Min,
     required this.offsetBefore40Min,
     required this.offsetBefore60Min,
+    required this.offsetCustom,
+    required this.offsetMinutesUnit,
+    required this.alarmCancel,
+    required this.alarmSet,
+    required this.allAlarmsSaved,
+    required this.alarmIsRinging,
+    required this.stopAlarm,
+    required this.snoozeAlarm,
+    required this.deleteAlarmTitle,
+    required this.deleteAlarmMessage,
+    required this.deleteAlarmConfirm,
+    required this.deleteRingtoneTitle,
+    required this.deleteRingtoneMessage,
+    required this.deleteRingtoneConfirm,
+    required this.alarmNotSetForPrayer,
+    required this.exactAlarmPermissionNeeded,
+    required this.exactAlarmPermissionTitle,
+    required this.exactAlarmPermissionExplanation,
+    required this.exactAlarmPermissionAllow,
     required this.amolTracking,
     required this.daily,
     required this.weekly,
@@ -67,17 +98,24 @@ class AppText {
     required this.point,
     required this.myPoints,
     required this.todaysAmolTrack,
+    required this.weeklyAmolTrack,
+    required this.monthlyAmolTrack,
     required this.amolTrack,
     required this.todays,
     required this.averageTodaysDays,
+    required this.thisWeeksAverage,
+    required this.thisMonthsAverage,
     required this.myPosition,
     required this.myNearestOrCompetitor,
     required this.competitorInitials,
     required this.viewInDashboard,
+    required this.amolPrayerTimeNotStarted,
+    required this.ok,
     required this.categoryFardhPrayer,
     required this.categorySunnahAndWitr,
     required this.categoryQuran,
     required this.categoryNaflSalat,
+    required this.categoryZikr,
     required this.categoryHadith,
     required this.hadithIntroTitle,
     required this.hadithIntroSubtitle,
@@ -88,6 +126,7 @@ class AppText {
     required this.hadithEbook,
     required this.hadithLibraryTitle,
     required this.hadithCategory,
+    required this.hadithSubCategory,
     required this.hadithBookDownloadTitle,
     required this.hadithBookDownloadBody,
     required this.hadithBookDownloadAction,
@@ -98,14 +137,73 @@ class AppText {
     required this.hadithCopy,
     required this.hadithCopied,
     required this.hadithShare,
+    required this.hadithCopyTranslation,
+    required this.hadithCopyArabic,
+    required this.hadithCopyFull,
+    required this.hadithShareScreenshot,
+    required this.hadithReport,
+    required this.hadithReportMessage,
+    required this.hadithShareFailed,
+    required this.hadithReportFailed,
+    required this.ebookOpenFailed,
+    required this.hadithComplete,
+    required this.hadithCompleted,
+    required this.hadithCompletedQuestion,
+    required this.hadithReadingTimeComplete,
+    required this.hadithGuestTrackQuestion,
+    required this.hadithTrackFailed,
+    required this.folderNameInputHint,
+    required this.cancelAction,
+    required this.ebookOpen,
+    required this.ebookDownloaded,
+    required this.ebookDownloadFailed,
+    required this.themeSwitchToDark,
+    required this.themeSwitchToLight,
+    required this.hadithBookmark,
+    required this.hadithBookmarkAdded,
+    required this.hadithBookmarkRemoved,
+    required this.bookmarkSheetTitle,
+    required this.searchFolderHint,
+    required this.createFolderAction,
+    required this.saveAction,
+    required this.favoriteFolder,
+    required this.folderNameHint,
     required this.hadithBookRef,
     required this.hadithRefAuthor,
     required this.hadithRefTranslator,
     required this.hadithRefEditors,
     required this.hadithRefPublisher,
     required this.hadithRefYear,
+    required this.savedHadithTitle,
+    required this.saved,
+    required this.noSavedHadithMessage,
+    required this.noResultsFound,
+    required this.savedTabHadith,
+    required this.savedTabFolder,
+    required this.noFoldersMessage,
+    required this.totalReadingHadith,
+    required this.totalReadingTime,
+    required this.ebookLabel,
+    required this.noReadingHistory,
+    required this.hadithNoLabel,
+    required this.totalSavedLabel,
+    required this.newFolder,
     required this.categoryQuiz,
     required this.categoryNaflAndMore,
+    required this.compassTitle,
+    required this.kiblahLabel,
+    required this.viewFullScreen,
+    required this.compassDirectionEast,
+    required this.compassDirectionWest,
+    required this.compassLocationServicesDisabled,
+    required this.compassPermissionDenied,
+    required this.compassUnsupported,
+    required this.compassOpenSettings,
+    required this.compassEnableLocation,
+    required this.compassCalibrationHint,
+    required this.kiblahCompassTitle,
+    required this.compassDirectionLeft,
+    required this.compassDirectionRight,
     required this.salahFajr,
     required this.salahDuhr,
     required this.salahAsr,
@@ -123,6 +221,7 @@ class AppText {
     required this.naflAwabin,
     required this.moreSadaqah,
     required this.moreKarzeHasanah,
+    required this.moreRozaKaffarah,
     required this.moreNaflFasting,
     required this.morePhysicalExercise,
     required this.moreGivenGoodAdvice,
@@ -168,6 +267,10 @@ class AppText {
     required this.googleAuthErrorUiUnavailable,
     required this.googleAuthErrorInterrupted,
     required this.googleAuthErrorGeneric,
+    required this.facebookAuthErrorInProgress,
+    required this.facebookAuthErrorGeneric,
+    required this.facebookAuthSignedIn,
+    required this.facebookAuthSignedInAs,
     required this.dashboard,
     required this.quizHistory,
     required this.seeAll,
@@ -176,14 +279,127 @@ class AppText {
     required this.weeklyQuizValue,
     required this.monthlyQuizValue,
     required this.competitorName,
+    required this.guestUserName,
     required this.quranicScience,
     required this.questionsCountLabel,
     required this.greeting,
+    required this.prayerReminderPrefix,
+    required this.prayerReminderSuffix,
     required this.timer,
     required this.notifications,
+    required this.noNotificationsAvailable,
+    required this.notificationUnread,
+    required this.notificationRead,
     required this.featureDua,
     required this.featureDijpr,
+    required this.zikrIntroTitle,
+    required this.zikrIntroSubtitle,
+    required this.zikrIntroStartButton,
+    required this.zikrTitle,
+    required this.zikrTotalZikr,
+    required this.zikrLastZikr,
+    required this.zikrMyCreatedZikr,
+    required this.zikrGetStart,
+    required this.zikrAllTitle,
+    required this.zikrCounterReset,
+    required this.zikrCreateTitle,
+    required this.zikrCreateNameHint,
+    required this.zikrCreateTargetHint,
+    required this.zikrCreateAdd,
+    required this.zikrNewTitle,
+    required this.zikrSelectZikr,
+    required this.zikrSetReadingValue,
+    required this.zikrReadingValueHint,
+    required this.zikrCreate,
+    required this.zikrCreated,
+    required this.zikrCustom,
+    required this.zikrCancel,
+    required this.zikrWriteZikrName,
+    required this.zikrWriteZikrNameHint,
+    required this.zikrAddMore,
+    required this.zikrPlanCreateTitle,
+    required this.zikrPlanName,
+    required this.zikrPlanCompletionDays,
+    required this.zikrPlanWriteHere,
+    required this.zikrPlanDefaultName,
+    required this.zikrPlanValidationMessage,
+    required this.zikrPlanComplete,
+    required this.zikrPlanDays,
+    required this.zikrTodaysValueGraph,
+    required this.zikrMostDoing,
+    required this.zikrHistory,
+    required this.zikrTapToCount,
+    required this.zikrCompletingProgress,
+    required this.zikrCompleted,
+    required this.zikrNameSubhanAllah,
+    required this.zikrNameAlhamdulillah,
+    required this.zikrNameAllahuAkbar,
+    required this.zikrNameFinalZikr,
+    required this.zikrNameLaIlahaIllallah,
+    required this.zikrNameAstaghfirullah,
+    required this.zikrNameLaHawla,
+    required this.zikrNameSalawat,
+    required this.zikrNameSubhanAllahiWaBihamdihi,
+    required this.duaIntroTitle,
+    required this.duaIntroSubtitle,
+    required this.duaIntroStartButton,
+    required this.duaFeaturedTitle,
+    required this.duaCategoryTitle,
+    required this.duaAllCategoryTitle,
+    required this.duaTotalCategoryLabel,
+    required this.duaSearchCategoryHint,
+    required this.duaTotalFeaturedLabel,
+    required this.duaExplore,
+    required this.duaTotalDuaLabel,
+    required this.duaAllDuaTitle,
+    required this.duaSearchDuaHint,
+    required this.duaLastRead,
+    required this.duaRecitePrefix,
+    required this.duaReciteSuffix,
+    required this.duaMarkAsReadLabel,
+    required this.duaBookmarkAdded,
+    required this.duaCopied,
+    required this.duaShareFailed,
+    required this.duaNarrationTitle,
+    required this.duaArabicSectionTitle,
+    required this.duaTranslationSectionTitle,
+    required this.duaAuthenticTitle,
+    required this.duaChainVerifiedBadge,
+    required this.duaDisplayReadingStyleSection,
+    required this.duaTypographyStylingSection,
+    required this.duaNarrationToggleTitle,
+    required this.duaNarrationToggleSubtitle,
+    required this.duaArabicToggleSubtitle,
+    required this.duaTranslationToggleSubtitle,
+    required this.duaTransliterationToggleSubtitle,
+    required this.duaReferenceToggleTitle,
+    required this.duaReferenceToggleSubtitle,
+    required this.duaArabicFontSizeLabel,
+    required this.duaTranslationFontSizeLabel,
+    required this.duaSettingsTitle,
+    required this.showArabicLabel,
+    required this.showTranslationLabel,
+    required this.hadithLanguageTitle,
+    required this.hadithLanguageSection,
+    required this.hadithLanguageArabicSubtitle,
+    required this.hadithLanguageTranslationSection,
+    required this.hadithLanguageBanglaSubtitle,
+    required this.hadithLanguageEnglishSubtitle,
+    required this.hadithLanguageNote,
+    required this.duaCreateFolderTitle,
+    required this.duaFolderNameFieldHint,
+    required this.duaCancel,
     required this.featureAsmaUlHusna,
+    required this.asmaHusnaTitle,
+    required this.asmaHusnaHadithNarrator,
+    required this.asmaHusnaHadithArabic,
+    required this.asmaHusnaHadithTranslation,
+    required this.asmaHusnaSourcesLabel,
+    required this.asmaHusnaSourceBukhari,
+    required this.asmaHusnaSourceMuslim,
+    required this.asmaHusnaAgreedNote,
+    required this.asmaHusnaNamesCount,
+    required this.asmaHusnaClickDetails,
     required this.featureQuizAndLearn,
     required this.zakatCalculator,
     required this.ageCalculate,
@@ -202,6 +418,10 @@ class AppText {
     required this.bengaliDatePlaceholder,
     required this.gregorianDatePlaceholder,
     required this.locationPlaceholder,
+    required this.locationFinding,
+    required this.locationServiceDisabled,
+    required this.locationPermissionDenied,
+    required this.locationUnavailable,
     required this.viewPrayerTimes,
     required this.sunrise,
     required this.sunset,
@@ -211,6 +431,12 @@ class AppText {
     required this.dhuhrPrayerTime,
     required this.prohibitedPrayerTimes,
     required this.jawaal,
+    required this.periodSubheSadik,
+    required this.periodSokal,
+    required this.periodDupur,
+    required this.periodBikel,
+    required this.periodSondhya,
+    required this.periodRaat,
     required this.prayerTimesTitle,
     required this.hijriDateUnavailable,
     required this.nextPrefix,
@@ -218,8 +444,9 @@ class AppText {
     required this.prayerFajr,
     required this.prayerDhuhr,
     required this.prayerAsr,
-    required this.prayerMaghribAndIftar,
+    required this.prayerMaghrib,
     required this.prayerIsha,
+    required this.namazWord,
     required this.learning,
     required this.explore,
     required this.exploreQuranicSciences,
@@ -264,11 +491,31 @@ class AppText {
     required this.plannerPlanTwo,
     required this.createPlan,
     required this.myPlan,
+    required this.searchPlan,
     required this.completePlan,
     required this.noCompletedPlansMessage,
+    required this.noPlansYetMessage,
+    required this.planStartedSuccess,
+    required this.planStatusComplete,
     required this.getStart,
     required this.createPlanHeader,
     required this.planNameLabel,
+    required this.planTargetDaysLabel,
+    required this.planTargetDaysHint,
+    required this.duaPlanSlotLabel,
+    required this.duaPlanStatusLabel,
+    required this.duaSlotMorning,
+    required this.duaSlotAfternoon,
+    required this.duaSlotEvening,
+    required this.duaSlotNight,
+    required this.duaSlotAnytime,
+    required this.planEdit,
+    required this.planDelete,
+    required this.planComplete,
+    required this.planEditTitle,
+    required this.planDeleteQuestion,
+    required this.planCompleteQuestion,
+    required this.planCancel,
     required this.writeHereHint,
     required this.selectQuizCategory,
     required this.egQuranicScienceHint,
@@ -277,6 +524,15 @@ class AppText {
     required this.add,
     required this.create,
     required this.addMore,
+    required this.hadithCreatePlanTitle,
+    required this.selectHadithBook,
+    required this.selectCategory,
+    required this.selectDua,
+    required this.duaSelectedCount,
+    required this.egSahihBukhariHint,
+    required this.egHadithCategoryHint,
+    required this.hadithCategorySample,
+    required this.hadithCountSample,
     required this.categories,
     required this.quizzesCountLabel,
     required this.seerahAndHistory,
@@ -304,6 +560,7 @@ class AppText {
     required this.quranReaderSettingsTitle,
     required this.quranArabicLabel,
     required this.quranArabicSizeLabel,
+    required this.quranArabicFontLabel,
     required this.quranTranslationSizeLabel,
     required this.quranDownloadEditionCta,
     required this.quranEditionDownloading,
@@ -321,13 +578,126 @@ class AppText {
     required this.completedHistory,
     required this.unableToLoadQuizHistory,
     required this.tryAgain,
+    required this.learningNoCategories,
+    required this.learningNoArticles,
+    required this.learningNoSearchResults,
+    required this.learningSearchArticles,
+    required this.learningArticleNotFound,
+    required this.learningCategoryNotFound,
+    required this.learningErrorInvalid,
+    required this.learningErrorRateLimit,
+    required this.learningNoContent,
+    required this.articlePublishedOn,
+    required this.articleByAuthor,
+    required this.quizQuestionOfTotal,
+    required this.quizTimeRemaining,
+    required this.submit,
+    required this.noQuizAvailable,
+    required this.unableToLoadQuiz,
+    required this.unableToLoadQuizCategories,
+    required this.noQuizCategories,
+    required this.quizSubmitFailed,
+    required this.dailyQuiz,
+    required this.dailyQuizNumber,
+    required this.dailyQuizzesDone,
+    required this.startDailyQuizNumber,
+    required this.dailyQuizNumberCompleted,
+    required this.allDailyQuizzesCompleted,
+    required this.youCompletedTheQuiz,
+    required this.scoreLabel,
+    required this.reviewAnswers,
+    required this.explanationLabel,
+    required this.notAnswered,
+    required this.noQuizAttemptsYet,
+    required this.bestScore,
+    required this.averageScore,
+    required this.attemptsLabel,
+    required this.unableToLoadAttempt,
+    required this.questionUnavailable,
+    required this.allLabel,
+    required this.noQuestionsInGroup,
+    required this.planStatusPlanned,
+    required this.planStatusInProgress,
+    required this.planStatusCompleted,
+    required this.planStatusAbandoned,
+    required this.startLabel,
+    required this.continueLabel,
+    required this.abandonPlan,
+    required this.abandonPlanQuestion,
+    required this.abandonPlanNote,
+    required this.scheduleLabel,
+    required this.notScheduled,
+    required this.clearLabel,
+    required this.notCompletedLabel,
+    required this.quizzesCompletedLabel,
+    required this.percentCompleteLabel,
+    required this.remainingLabel,
+    required this.numberOfQuizzes,
+    required this.questionsPerQuiz,
+    required this.planNameRequired,
+    required this.addAtLeastOneQuiz,
+    required this.selectCategoryFirst,
+    required this.selectDuaFirst,
+    required this.planCreated,
+    required this.planUpdated,
+    required this.planAbandoned,
+    required this.planSave,
+    required this.nextQuizLabel,
+    required this.backToPlan,
+    required this.planQuizLabel,
+    required this.planErrorNotFound,
+    required this.planErrorAbandoned,
+    required this.planErrorNotStarted,
+    required this.planErrorPortionDone,
+    required this.planErrorInvalid,
+    required this.noPlannedQuestions,
+    required this.correctLabel,
+    required this.incorrectLabel,
+    required this.unansweredLabel,
+    required this.answeredLabel,
+    required this.correctPercentageLabel,
+    required this.totalTimeLabel,
+    required this.currentStreakLabel,
+    required this.averageMinutesPerDayLabel,
+    required this.completedAtLabel,
+    required this.fiftyFiftyUsedLabel,
+    required this.difficultyLabel,
+    required this.quizCategoryLabel,
+    required this.minutesLabel,
+    required this.daysWord,
+    required this.youLabel,
+    required this.rankLabel,
+    required this.aheadLabel,
+    required this.behindLabel,
+    required this.noCompetitorYet,
+    required this.quizComparisonTitle,
+    required this.dailyActivity,
+    required this.noQuizActivity,
+    required this.quizErrorNetwork,
+    required this.quizErrorSession,
+    required this.quizErrorForbidden,
+    required this.quizErrorNotFound,
+    required this.quizErrorInvalidRange,
+    required this.quizErrorGeneric,
     required this.questionsWord,
     required this.learn,
     required this.planner,
     required this.profileTitle,
+    required this.editProfileTitle,
+    required this.editProfileSelectPhotoTitle,
+    required this.editProfileChooseGallery,
+    required this.editProfileCancel,
+    required this.editProfileImagePickError,
+    required this.editProfilePhotoUploadError,
     required this.percentCompleteSuffix,
     required this.mymensingh,
     required this.badgeLabel,
+    required this.badgesTitle,
+    required this.badgePointsToNext,
+    required this.badgeTopReached,
+    required this.badgePointsRange,
+    required this.badgeUnlocked,
+    required this.badgeMorePoints,
     required this.position,
     required this.pointsWord,
     required this.familyMember,
@@ -336,9 +706,207 @@ class AppText {
     required this.familyMemberNameSabit,
     required this.familyMemberNameAli,
     required this.logout,
+    required this.logoutConfirmMessage,
+    required this.yes,
+    required this.no,
+    required this.prayerNowLabel,
+    required this.loginRequiredMessage,
+    required this.quranAllTypes,
+    required this.quranSurahNumberTitle,
+    required this.hadithTimerRead,
+    required this.hadithTimerReading,
+    required this.hadithTimerPaused,
+    required this.calendarArabicInBangla,
+    required this.quranBookmarkSurah,
+    required this.quranOfflineTitle,
+    required this.hadithCompetitor,
+    required this.failurePasswordRule,
+    required this.failureResetSessionExpired,
+    required this.failureGoogleUnavailable,
+    required this.failureAudioServer,
+    required this.failureNoAudioSurah,
+    required this.failureNoAudioAyah,
+    required this.failureAudioDownload,
+    required this.failureQuranContent,
+    required this.failureDownloadInterrupted,
+    required this.failureSurahListLoad,
+    required this.failureNotAvailableOffline,
+    required this.failureContentLoad,
+    required this.failureTranslationBuiltIn,
+    required this.failureNoTranslationSurah,
+    required this.failureEbookNoPdf,
+    required this.failureDownloadFailed,
+    required this.failureQuranPlanDuplicateName,
+    required this.failureQuranPlanLoad,
+    required this.failureQuranPlanCreate,
+    required this.failureQuranPlanUpdate,
+    required this.failureQuranPlanDetailsLoad,
+    required this.failureQuranPlanAyahsLoad,
+    required this.failureQuranPlanComplete,
+    required this.failureQuranPlanDelete,
+    required this.failureQuranPlanNotFound,
+    required this.failureQuranPlanUnreadAyahs,
+    required this.failureQuranPlaylistDuplicateName,
+    required this.failureQuranPlaylistLoad,
+    required this.failureQuranPlaylistCreate,
+    required this.failureQuranPlaylistUpdate,
+    required this.failureQuranPlaylistDetailsLoad,
+    required this.failureQuranPlaylistAyahsLoad,
+    required this.failureQuranPlaylistDelete,
+    required this.failureQuranPlaylistNotFound,
+    required this.quranSurahBookmarked,
+    required this.quranSurahBookmarkRemoved,
+    required this.quranViewInAyat,
+    required this.quranChangeText,
+    required this.quranTranslationUnavailable,
+    required this.quranReadyOffline,
+    required this.quranDownloading,
+    required this.commonDone,
+    required this.quranRetryDownload,
+    required this.quranDownloadQuran,
+    required this.quranShareTranslation,
+    required this.quranNoTafsir,
+    required this.hadithTimeMinutes,
+    required this.hadithPointValue,
+    required this.quranRangeEnd,
+    required this.commonCancel,
+    required this.commonApply,
+    required this.quranParaTitle,
+    required this.quranNoSurahs,
+    required this.quranParaRange,
+    required this.quranSurahAyahRange,
+    required this.quranAyahLoadFailed,
+    required this.quranPageLabel,
+    required this.quranSurahChip,
+    required this.quranFilterTitle,
+    required this.quranActions,
+    required this.quranPageLoadFailedRetry,
+    required this.quranNoAyahs,
+    required this.quranVerseInfo,
+    required this.quranTafsirVerse,
+    required this.quranCloseTafsir,
+    required this.quranSurahPage,
+    required this.quranTajweedDownload,
+    required this.quranSearchSurahOrPara,
+    required this.quranNoResults,
+    required this.quranBrowseHint,
+    required this.quranTranslateHeading,
+    required this.quranSelectTranslateLanguage,
+    required this.quranRetryLanguages,
+    required this.quranNoTranslations,
+    required this.quranCopy,
+    required this.quranShare,
+    required this.quranPlayAyah,
+    required this.quranBookmarkAyah,
+    required this.quranSajdah,
+    required this.quranTajweedTitle,
+    required this.quranTajweedUnavailable,
+    required this.quranDownloadInterrupted,
+    required this.quranKeepScreenOpen,
+    required this.quranNoFilters,
+    required this.quranJuzParaCarousel,
+    required this.quranSearchAndSelectSurah,
+    required this.quranSelectedSurah,
+    required this.quranNoSurahsFound,
+    required this.quranSurahTranslationAyahs,
+    required this.quranSelectAyat,
+    required this.quranAyahNumber,
+    required this.quranAyahCopied,
+    required this.quranShareFailed,
+    required this.quranSurahAyahCount,
+    required this.quranSurahHeadingInfo,
+    required this.quranBismillah,
+    required this.quranAyahTitle,
+    required this.quranAudioAyahTitle,
+    required this.duaSavedEdit,
+    required this.duaSavedDelete,
+    required this.duaSavedTitle,
+    required this.duaEditBookmarkTitle,
+    required this.duaEditPlanTitle,
+    required this.duaDeletePlanTitle,
+    required this.duaDeletePlanMessage,
+    required this.duaFolderName,
+    required this.duaFolderNameHint,
+    required this.duaSaveChanges,
+    required this.duaDeleteBookmarkTitle,
+    required this.duaDeleteBookmarkMessage,
+    required this.duaYesDelete,
+    required this.duaSavedCount,
+    required this.duaTotalSaved,
+    required this.amolReadConfirmMessage,
+    required this.amolUntrackTitle,
+    required this.amolUntrackMessage,
+    required this.leaderboardRankLabel,
+    required this.leaderboardNotRanked,
+    required this.leaderboardFirstPlace,
+    required this.leaderboardPointsBehindFirst,
+    required this.leaderboardPointsBehindFirstNamed,
+    required this.leaderboardParticipants,
+    required this.leaderboardTotalQuranTime,
+    required this.leaderboardMostReadingSura,
+    required this.readAtLabel,
+    required this.verificationCodeSent,
+    required this.verificationResendFailed,
+    required this.verificationFailed,
+    required this.resendCodeInSeconds,
+    required this.didntGetCodeResend,
+    required this.passwordUpdated,
+    required this.resetPasswordFailed,
+    required this.signInFailed,
+    required this.registrationFailed,
+    required this.currentPasswordHint,
+    required this.noDataHere,
+    required this.legalEffectiveLabel,
+    required this.legalLastUpdatedLabel,
+    required this.validatorRequired,
+    required this.validatorEmailEmpty,
+    required this.validatorEmailInvalid,
+    required this.validatorPasswordEmpty,
+    required this.validatorPasswordRule,
+    required this.validatorPasswordMin,
+    required this.validatorPasswordMax,
+    required this.validatorNameEmpty,
+    required this.validatorNameShort,
+    required this.validatorConfirmPasswordEmpty,
+    required this.validatorPasswordMismatch,
+    required this.validatorCurrentPasswordEmpty,
+    required this.validatorNewPasswordEmpty,
+    required this.validatorPasswordNoSpaces,
+    required this.validatorPasswordUppercase,
+    required this.validatorPasswordLowercase,
+    required this.validatorPasswordNumber,
+    required this.validatorPasswordSpecial,
+    required this.validatorPasswordSameAsOld,
+    required this.validatorConfirmNewPasswordEmpty,
+    required this.validatorOtpCode,
+    required this.validatorTermsRequired,
+    required this.passwordRequirementsHint,
+    required this.amLabel,
+    required this.pmLabel,
+    required this.hijriSuffix,
+    required this.failureNetwork,
+    required this.failureTimeout,
+    required this.failureSecureConnection,
+    required this.failureCancelled,
+    required this.failureStorage,
+    required this.failureUnknown,
+    required this.failureUnexpectedResponse,
+    required this.failureRequestFailed,
+    required this.failureNoSignedInUser,
+    required this.failureNoPasswordSignIn,
+    required this.failureMissingGoogleToken,
     required this.settingsTitle,
     required this.aboutUs,
     required this.ourProducts,
+    required this.addPrayerWidgetTitle,
+    required this.addPrayerWidgetSubtitle,
+    required this.addPrayerWidgetButton,
+    required this.addPrayerWidgetAndroidInstructions,
+    required this.addPrayerWidgetIosInstructions,
+    required this.widgetSizeSmall,
+    required this.widgetSizeMedium,
+    required this.widgetSizeLarge,
+    required this.widgetAmolTagline,
     required this.adminSupport,
     required this.feedback,
     required this.appLanguage,
@@ -360,7 +928,8 @@ class AppText {
     required this.surahMeaningWomen,
     required this.quranIntroSubtitle,
     required this.quranLoadError,
-    required this.hifjoQuranTitle,
+    required this.quranMajeedTitle,
+    required this.hifzulQuranTitle,
     required this.lastReadLabel,
     required this.viewReadingHistory,
     required this.ayahNoLabel,
@@ -385,20 +954,36 @@ class AppText {
     required this.selectReciterTitle,
     required this.tafsirTitle,
     required this.repeatLabel,
+    required this.showTransliterationLabel,
+    required this.yearly,
+    required this.leaderboard,
+    required this.leaderboardTitle,
+    required this.yourRank,
+    required this.ptsToRank,
+    required this.deleteAccountConfirmPasswordTitle,
+    required this.deleteAccountConfirmPasswordMessage,
+    required this.deleteAccountPasswordHint,
+    required this.deleteAccountEmptyPassword,
+    required this.deleteAccountIncorrectPassword,
+    required this.deleteAccountFinalTitle,
+    required this.deleteAccountFinalMessage,
+    required this.deleteAccountFailureMessage,
   });
 
-  final String noorify;
+  final String tuhfatulMuslim;
   final String splashTitle;
   final String splashQuote;
   final String emailOrPhoneHint;
   final String passwordHint;
   final String forgotPassword;
   final String login;
-  final String newToNoorify;
+  final String newToTuhfatulMuslim;
   final String createAccount;
+  final String guestUser;
   final String signUpSubtitle;
   final String enterYourName;
   final String emailAddress;
+  final String emailCopied;
   final String emailVerification;
   final String sendOtp;
   final String otpVerification;
@@ -422,10 +1007,19 @@ class AppText {
 
   // Shared
   final String back;
+  final String comingSoon;
 
   // Alarm feature
+  final String alarm;
   final String setAlarm;
   final String setAllAlarm;
+  final String allAlarm;
+  final String prayersAlarm;
+  final String alarmWillRingIn;
+  final String hrLabel;
+  final String noAlarmSet;
+  final String alarmLabel;
+  final String alarmLabelHint;
   final String vibrateAndRing;
   final String setRingtone;
   final String vibrate;
@@ -441,6 +1035,25 @@ class AppText {
   final String offsetBefore30Min;
   final String offsetBefore40Min;
   final String offsetBefore60Min;
+  final String offsetCustom;
+  final String offsetMinutesUnit;
+  final String alarmCancel;
+  final String alarmSet;
+  final String allAlarmsSaved;
+  final String alarmIsRinging;
+  final String stopAlarm;
+  final String snoozeAlarm;
+  final String deleteAlarmTitle;
+  final String deleteAlarmMessage;
+  final String deleteAlarmConfirm;
+  final String deleteRingtoneTitle;
+  final String deleteRingtoneMessage;
+  final String deleteRingtoneConfirm;
+  final String alarmNotSetForPrayer;
+  final String exactAlarmPermissionNeeded;
+  final String exactAlarmPermissionTitle;
+  final String exactAlarmPermissionExplanation;
+  final String exactAlarmPermissionAllow;
 
   // Amol tracking feature
   final String amolTracking;
@@ -450,17 +1063,24 @@ class AppText {
   final String point;
   final String myPoints;
   final String todaysAmolTrack;
+  final String weeklyAmolTrack;
+  final String monthlyAmolTrack;
   final String amolTrack;
   final String todays;
   final String averageTodaysDays;
+  final String thisWeeksAverage;
+  final String thisMonthsAverage;
   final String myPosition;
   final String myNearestOrCompetitor;
   final String competitorInitials;
   final String viewInDashboard;
+  final String amolPrayerTimeNotStarted;
+  final String ok;
   final String categoryFardhPrayer;
   final String categorySunnahAndWitr;
   final String categoryQuran;
   final String categoryNaflSalat;
+  final String categoryZikr;
   final String categoryHadith;
   final String hadithIntroTitle;
   final String hadithIntroSubtitle;
@@ -471,6 +1091,7 @@ class AppText {
   final String hadithEbook;
   final String hadithLibraryTitle;
   final String hadithCategory;
+  final String hadithSubCategory;
   final String hadithBookDownloadTitle;
   final String hadithBookDownloadBody;
   final String hadithBookDownloadAction;
@@ -481,14 +1102,73 @@ class AppText {
   final String hadithCopy;
   final String hadithCopied;
   final String hadithShare;
+  final String hadithCopyTranslation;
+  final String hadithCopyArabic;
+  final String hadithCopyFull;
+  final String hadithShareScreenshot;
+  final String hadithReport;
+  final String hadithReportMessage;
+  final String hadithShareFailed;
+  final String hadithReportFailed;
+  final String ebookOpenFailed;
+  final String hadithComplete;
+  final String hadithCompleted;
+  final String hadithCompletedQuestion;
+  final String hadithReadingTimeComplete;
+  final String hadithGuestTrackQuestion;
+  final String hadithTrackFailed;
+  final String folderNameInputHint;
+  final String cancelAction;
+  final String ebookOpen;
+  final String ebookDownloaded;
+  final String ebookDownloadFailed;
+  final String themeSwitchToDark;
+  final String themeSwitchToLight;
+  final String hadithBookmark;
+  final String hadithBookmarkAdded;
+  final String hadithBookmarkRemoved;
+  final String bookmarkSheetTitle;
+  final String searchFolderHint;
+  final String createFolderAction;
+  final String saveAction;
+  final String favoriteFolder;
+  final String folderNameHint;
   final String hadithBookRef;
   final String hadithRefAuthor;
   final String hadithRefTranslator;
   final String hadithRefEditors;
   final String hadithRefPublisher;
   final String hadithRefYear;
+  final String savedHadithTitle;
+  final String saved;
+  final String noSavedHadithMessage;
+  final String noResultsFound;
+  final String savedTabHadith;
+  final String savedTabFolder;
+  final String noFoldersMessage;
+  final String totalReadingHadith;
+  final String totalReadingTime;
+  final String ebookLabel;
+  final String noReadingHistory;
+  final String hadithNoLabel;
+  final String totalSavedLabel;
+  final String newFolder;
   final String categoryQuiz;
   final String categoryNaflAndMore;
+  final String compassTitle;
+  final String kiblahLabel;
+  final String viewFullScreen;
+  final String compassDirectionEast;
+  final String compassDirectionWest;
+  final String compassLocationServicesDisabled;
+  final String compassPermissionDenied;
+  final String compassUnsupported;
+  final String compassOpenSettings;
+  final String compassEnableLocation;
+  final String compassCalibrationHint;
+  final String kiblahCompassTitle;
+  final String compassDirectionLeft;
+  final String compassDirectionRight;
   final String salahFajr;
   final String salahDuhr;
   final String salahAsr;
@@ -506,6 +1186,7 @@ class AppText {
   final String naflAwabin;
   final String moreSadaqah;
   final String moreKarzeHasanah;
+  final String moreRozaKaffarah;
   final String moreNaflFasting;
   final String morePhysicalExercise;
   final String moreGivenGoodAdvice;
@@ -555,6 +1236,10 @@ class AppText {
   final String googleAuthErrorUiUnavailable;
   final String googleAuthErrorInterrupted;
   final String googleAuthErrorGeneric;
+  final String facebookAuthErrorInProgress;
+  final String facebookAuthErrorGeneric;
+  final String facebookAuthSignedIn;
+  final String facebookAuthSignedInAs;
 
   // Dashboard feature
   final String dashboard;
@@ -565,16 +1250,140 @@ class AppText {
   final String weeklyQuizValue;
   final String monthlyQuizValue;
   final String competitorName;
+  final String guestUserName;
   final String quranicScience;
   final String questionsCountLabel;
 
   // Home feature
   final String greeting;
+
+  /// Leads the rotating "have you completed X prayer yet?" header reminder,
+  /// e.g. `"Have you completed"` before the localized prayer name.
+  final String prayerReminderPrefix;
+
+  /// Trails the rotating prayer reminder after the localized prayer name,
+  /// e.g. `"prayer yet?"`.
+  final String prayerReminderSuffix;
   final String timer;
   final String notifications;
+  final String noNotificationsAvailable;
+  final String notificationUnread;
+  final String notificationRead;
   final String featureDua;
   final String featureDijpr;
+  final String zikrIntroTitle;
+  final String zikrIntroSubtitle;
+  final String zikrIntroStartButton;
+  final String zikrTitle;
+  final String zikrTotalZikr;
+  final String zikrLastZikr;
+  final String zikrMyCreatedZikr;
+  final String zikrGetStart;
+  final String zikrAllTitle;
+  final String zikrCounterReset;
+  final String zikrCreateTitle;
+  final String zikrCreateNameHint;
+  final String zikrCreateTargetHint;
+  final String zikrCreateAdd;
+  final String zikrNewTitle;
+  final String zikrSelectZikr;
+  final String zikrSetReadingValue;
+  final String zikrReadingValueHint;
+  final String zikrCreate;
+  final String zikrCreated;
+  final String zikrCustom;
+  final String zikrCancel;
+  final String zikrWriteZikrName;
+  final String zikrWriteZikrNameHint;
+  final String zikrAddMore;
+  final String zikrPlanCreateTitle;
+  final String zikrPlanName;
+  final String zikrPlanCompletionDays;
+  final String zikrPlanWriteHere;
+  final String zikrPlanDefaultName;
+  final String zikrPlanValidationMessage;
+  final String zikrPlanComplete;
+  final String zikrPlanDays;
+  final String zikrTodaysValueGraph;
+  final String zikrMostDoing;
+  final String zikrHistory;
+  final String zikrTapToCount;
+  final String zikrCompletingProgress;
+  final String zikrCompleted;
+  final String zikrNameSubhanAllah;
+  final String zikrNameAlhamdulillah;
+  final String zikrNameAllahuAkbar;
+  final String zikrNameFinalZikr;
+  final String zikrNameLaIlahaIllallah;
+  final String zikrNameAstaghfirullah;
+  final String zikrNameLaHawla;
+  final String zikrNameSalawat;
+  final String zikrNameSubhanAllahiWaBihamdihi;
+
+  // Dua feature
+  final String duaIntroTitle;
+  final String duaIntroSubtitle;
+  final String duaIntroStartButton;
+  final String duaFeaturedTitle;
+  final String duaCategoryTitle;
+  final String duaAllCategoryTitle;
+  final String duaTotalCategoryLabel;
+  final String duaSearchCategoryHint;
+  final String duaTotalFeaturedLabel;
+  final String duaExplore;
+  final String duaTotalDuaLabel;
+  final String duaAllDuaTitle;
+  final String duaSearchDuaHint;
+  final String duaLastRead;
+  final String duaRecitePrefix;
+  final String duaReciteSuffix;
+
+  /// Label of the reader's "Read / Completed" checkbox, which appears once
+  /// a dua has been read long enough to be reported.
+  final String duaMarkAsReadLabel;
+  final String duaBookmarkAdded;
+  final String duaCopied;
+  final String duaShareFailed;
+  final String duaNarrationTitle;
+  final String duaArabicSectionTitle;
+  final String duaTranslationSectionTitle;
+  final String duaAuthenticTitle;
+  final String duaChainVerifiedBadge;
+  final String duaDisplayReadingStyleSection;
+  final String duaTypographyStylingSection;
+  final String duaNarrationToggleTitle;
+  final String duaNarrationToggleSubtitle;
+  final String duaArabicToggleSubtitle;
+  final String duaTranslationToggleSubtitle;
+  final String duaTransliterationToggleSubtitle;
+  final String duaReferenceToggleTitle;
+  final String duaReferenceToggleSubtitle;
+  final String duaArabicFontSizeLabel;
+  final String duaTranslationFontSizeLabel;
+  final String duaSettingsTitle;
+  final String showArabicLabel;
+  final String showTranslationLabel;
+  final String hadithLanguageTitle;
+  final String hadithLanguageSection;
+  final String hadithLanguageArabicSubtitle;
+  final String hadithLanguageTranslationSection;
+  final String hadithLanguageBanglaSubtitle;
+  final String hadithLanguageEnglishSubtitle;
+  final String hadithLanguageNote;
+  final String duaCreateFolderTitle;
+  final String duaFolderNameFieldHint;
+  final String duaCancel;
   final String featureAsmaUlHusna;
+  final String asmaHusnaTitle;
+  final String asmaHusnaHadithNarrator;
+  final String asmaHusnaHadithArabic;
+  final String asmaHusnaHadithTranslation;
+  final String asmaHusnaSourcesLabel;
+  final String asmaHusnaSourceBukhari;
+  final String asmaHusnaSourceMuslim;
+  final String asmaHusnaAgreedNote;
+  final String asmaHusnaNamesCount;
+  final String asmaHusnaClickDetails;
   final String featureQuizAndLearn;
   final String zakatCalculator;
   final String ageCalculate;
@@ -593,6 +1402,10 @@ class AppText {
   final String bengaliDatePlaceholder;
   final String gregorianDatePlaceholder;
   final String locationPlaceholder;
+  final String locationFinding;
+  final String locationServiceDisabled;
+  final String locationPermissionDenied;
+  final String locationUnavailable;
   final String viewPrayerTimes;
   final String sunrise;
   final String sunset;
@@ -602,6 +1415,12 @@ class AppText {
   final String dhuhrPrayerTime;
   final String prohibitedPrayerTimes;
   final String jawaal;
+  final String periodSubheSadik;
+  final String periodSokal;
+  final String periodDupur;
+  final String periodBikel;
+  final String periodSondhya;
+  final String periodRaat;
   final String prayerTimesTitle;
   final String hijriDateUnavailable;
   final String nextPrefix;
@@ -609,8 +1428,9 @@ class AppText {
   final String prayerFajr;
   final String prayerDhuhr;
   final String prayerAsr;
-  final String prayerMaghribAndIftar;
+  final String prayerMaghrib;
   final String prayerIsha;
+  final String namazWord;
 
   // Learning feature
   final String learning;
@@ -659,11 +1479,31 @@ class AppText {
   final String plannerPlanTwo;
   final String createPlan;
   final String myPlan;
+  final String searchPlan;
   final String completePlan;
   final String noCompletedPlansMessage;
+  final String noPlansYetMessage;
+  final String planStartedSuccess;
+  final String planStatusComplete;
   final String getStart;
   final String createPlanHeader;
   final String planNameLabel;
+  final String planTargetDaysLabel;
+  final String planTargetDaysHint;
+  final String duaPlanSlotLabel;
+  final String duaPlanStatusLabel;
+  final String duaSlotMorning;
+  final String duaSlotAfternoon;
+  final String duaSlotEvening;
+  final String duaSlotNight;
+  final String duaSlotAnytime;
+  final String planEdit;
+  final String planDelete;
+  final String planComplete;
+  final String planEditTitle;
+  final String planDeleteQuestion;
+  final String planCompleteQuestion;
+  final String planCancel;
   final String writeHereHint;
   final String selectQuizCategory;
   final String egQuranicScienceHint;
@@ -672,6 +1512,15 @@ class AppText {
   final String add;
   final String create;
   final String addMore;
+  final String hadithCreatePlanTitle;
+  final String selectHadithBook;
+  final String selectCategory;
+  final String selectDua;
+  final String duaSelectedCount;
+  final String egSahihBukhariHint;
+  final String egHadithCategoryHint;
+  final String hadithCategorySample;
+  final String hadithCountSample;
 
   // Quiz feature
   final String categories;
@@ -701,6 +1550,7 @@ class AppText {
   final String quranReaderSettingsTitle;
   final String quranArabicLabel;
   final String quranArabicSizeLabel;
+  final String quranArabicFontLabel;
   final String quranTranslationSizeLabel;
   final String quranDownloadEditionCta;
   final String quranEditionDownloading;
@@ -718,15 +1568,150 @@ class AppText {
   final String completedHistory;
   final String unableToLoadQuizHistory;
   final String tryAgain;
+  final String learningNoCategories;
+  final String learningNoArticles;
+  final String learningNoSearchResults;
+  final String learningSearchArticles;
+  final String learningArticleNotFound;
+  final String learningCategoryNotFound;
+  final String learningErrorInvalid;
+  final String learningErrorRateLimit;
+  final String learningNoContent;
+  final String articlePublishedOn;
+  final String articleByAuthor;
+  final String quizQuestionOfTotal;
+  final String quizTimeRemaining;
+  final String submit;
+  final String noQuizAvailable;
+  final String unableToLoadQuiz;
+  final String unableToLoadQuizCategories;
+  final String noQuizCategories;
+  final String quizSubmitFailed;
+  final String dailyQuiz;
+
+  /// The daily quiz's title when a day has more than one: `{n}` of `{total}`.
+  final String dailyQuizNumber;
+
+  /// How many of the day's daily quizzes are done.
+  final String dailyQuizzesDone;
+
+  /// Starts the next daily quiz `{n}`.
+  final String startDailyQuizNumber;
+
+  /// The result title after a daily quiz the day has more of.
+  final String dailyQuizNumberCompleted;
+
+  /// Shown instead of a quiz once every daily quiz of the day is done.
+  final String allDailyQuizzesCompleted;
+  final String youCompletedTheQuiz;
+  final String scoreLabel;
+  final String reviewAnswers;
+  final String explanationLabel;
+  final String notAnswered;
+  final String noQuizAttemptsYet;
+  final String bestScore;
+  final String averageScore;
+  final String attemptsLabel;
+  final String unableToLoadAttempt;
+  final String questionUnavailable;
+  final String allLabel;
+  final String noQuestionsInGroup;
+  final String planStatusPlanned;
+  final String planStatusInProgress;
+  final String planStatusCompleted;
+  final String planStatusAbandoned;
+  final String startLabel;
+  final String continueLabel;
+  final String abandonPlan;
+  final String abandonPlanQuestion;
+  final String abandonPlanNote;
+  final String scheduleLabel;
+  final String notScheduled;
+  final String clearLabel;
+  final String notCompletedLabel;
+  final String quizzesCompletedLabel;
+  final String percentCompleteLabel;
+  final String remainingLabel;
+  final String numberOfQuizzes;
+  final String questionsPerQuiz;
+  final String planNameRequired;
+  final String addAtLeastOneQuiz;
+  final String selectCategoryFirst;
+  final String selectDuaFirst;
+  final String planCreated;
+  final String planUpdated;
+  final String planAbandoned;
+  final String planSave;
+  final String nextQuizLabel;
+  final String backToPlan;
+  final String planQuizLabel;
+  final String planErrorNotFound;
+  final String planErrorAbandoned;
+  final String planErrorNotStarted;
+  final String planErrorPortionDone;
+  final String planErrorInvalid;
+  final String noPlannedQuestions;
+  final String correctLabel;
+  final String incorrectLabel;
+  final String unansweredLabel;
+  final String answeredLabel;
+  final String correctPercentageLabel;
+  final String totalTimeLabel;
+  final String currentStreakLabel;
+  final String averageMinutesPerDayLabel;
+  final String completedAtLabel;
+  final String fiftyFiftyUsedLabel;
+  final String difficultyLabel;
+  final String quizCategoryLabel;
+  final String minutesLabel;
+  final String daysWord;
+  final String youLabel;
+  final String rankLabel;
+  final String aheadLabel;
+  final String behindLabel;
+  final String noCompetitorYet;
+  final String quizComparisonTitle;
+  final String dailyActivity;
+  final String noQuizActivity;
+  final String quizErrorNetwork;
+  final String quizErrorSession;
+  final String quizErrorForbidden;
+  final String quizErrorNotFound;
+  final String quizErrorInvalidRange;
+  final String quizErrorGeneric;
   final String questionsWord;
   final String learn;
   final String planner;
 
   // Profile feature
   final String profileTitle;
+  final String editProfileTitle;
+  final String editProfileSelectPhotoTitle;
+  final String editProfileChooseGallery;
+  final String editProfileCancel;
+  final String editProfileImagePickError;
+  final String editProfilePhotoUploadError;
   final String percentCompleteSuffix;
   final String mymensingh;
   final String badgeLabel;
+
+  /// Title of the full badge list.
+  final String badgesTitle;
+
+  /// Points still needed for the next badge `{name}`.
+  final String badgePointsToNext;
+
+  /// Shown once the last badge is reached.
+  final String badgeTopReached;
+
+  /// A badge's points range.
+  final String badgePointsRange;
+
+  /// A badge the user has reached.
+  final String badgeUnlocked;
+
+  /// Points still needed for a locked badge.
+  final String badgeMorePoints;
   final String position;
   final String pointsWord;
   final String familyMember;
@@ -735,11 +1720,209 @@ class AppText {
   final String familyMemberNameSabit;
   final String familyMemberNameAli;
   final String logout;
+  final String logoutConfirmMessage;
+  final String yes;
+  final String no;
+  final String prayerNowLabel;
+  final String loginRequiredMessage;
+  final String quranAllTypes;
+  final String quranSurahNumberTitle;
+  final String hadithTimerRead;
+  final String hadithTimerReading;
+  final String hadithTimerPaused;
+  final String calendarArabicInBangla;
+  final String quranBookmarkSurah;
+  final String quranOfflineTitle;
+  final String hadithCompetitor;
+  final String failurePasswordRule;
+  final String failureResetSessionExpired;
+  final String failureGoogleUnavailable;
+  final String failureAudioServer;
+  final String failureNoAudioSurah;
+  final String failureNoAudioAyah;
+  final String failureAudioDownload;
+  final String failureQuranContent;
+  final String failureDownloadInterrupted;
+  final String failureSurahListLoad;
+  final String failureNotAvailableOffline;
+  final String failureContentLoad;
+  final String failureTranslationBuiltIn;
+  final String failureNoTranslationSurah;
+  final String failureEbookNoPdf;
+  final String failureDownloadFailed;
+  final String failureQuranPlanDuplicateName;
+  final String failureQuranPlanLoad;
+  final String failureQuranPlanCreate;
+  final String failureQuranPlanUpdate;
+  final String failureQuranPlanDetailsLoad;
+  final String failureQuranPlanAyahsLoad;
+  final String failureQuranPlanComplete;
+  final String failureQuranPlanDelete;
+  final String failureQuranPlanNotFound;
+  final String failureQuranPlanUnreadAyahs;
+  final String failureQuranPlaylistDuplicateName;
+  final String failureQuranPlaylistLoad;
+  final String failureQuranPlaylistCreate;
+  final String failureQuranPlaylistUpdate;
+  final String failureQuranPlaylistDetailsLoad;
+  final String failureQuranPlaylistAyahsLoad;
+  final String failureQuranPlaylistDelete;
+  final String failureQuranPlaylistNotFound;
+  final String quranSurahBookmarked;
+  final String quranSurahBookmarkRemoved;
+  final String quranViewInAyat;
+  final String quranChangeText;
+  final String quranTranslationUnavailable;
+  final String quranReadyOffline;
+  final String quranDownloading;
+  final String commonDone;
+  final String quranRetryDownload;
+  final String quranDownloadQuran;
+  final String quranShareTranslation;
+  final String quranNoTafsir;
+  final String hadithTimeMinutes;
+  final String hadithPointValue;
+  final String quranRangeEnd;
+  final String commonCancel;
+  final String commonApply;
+  final String quranParaTitle;
+  final String quranNoSurahs;
+  final String quranParaRange;
+  final String quranSurahAyahRange;
+  final String quranAyahLoadFailed;
+  final String quranPageLabel;
+  final String quranSurahChip;
+  final String quranFilterTitle;
+  final String quranActions;
+  final String quranPageLoadFailedRetry;
+  final String quranNoAyahs;
+  final String quranVerseInfo;
+  final String quranTafsirVerse;
+  final String quranCloseTafsir;
+  final String quranSurahPage;
+  final String quranTajweedDownload;
+  final String quranSearchSurahOrPara;
+  final String quranNoResults;
+  final String quranBrowseHint;
+  final String quranTranslateHeading;
+  final String quranSelectTranslateLanguage;
+  final String quranRetryLanguages;
+  final String quranNoTranslations;
+  final String quranCopy;
+  final String quranShare;
+  final String quranPlayAyah;
+  final String quranBookmarkAyah;
+  final String quranSajdah;
+  final String quranTajweedTitle;
+  final String quranTajweedUnavailable;
+  final String quranDownloadInterrupted;
+  final String quranKeepScreenOpen;
+  final String quranNoFilters;
+  final String quranJuzParaCarousel;
+  final String quranSearchAndSelectSurah;
+  final String quranSelectedSurah;
+  final String quranNoSurahsFound;
+  final String quranSurahTranslationAyahs;
+  final String quranSelectAyat;
+  final String quranAyahNumber;
+  final String quranAyahCopied;
+  final String quranShareFailed;
+  final String quranSurahAyahCount;
+  final String quranSurahHeadingInfo;
+  final String quranBismillah;
+  final String quranAyahTitle;
+  final String quranAudioAyahTitle;
+  final String duaSavedEdit;
+  final String duaSavedDelete;
+  final String duaSavedTitle;
+  final String duaEditBookmarkTitle;
+  final String duaEditPlanTitle;
+  final String duaDeletePlanTitle;
+  final String duaDeletePlanMessage;
+  final String duaFolderName;
+  final String duaFolderNameHint;
+  final String duaSaveChanges;
+  final String duaDeleteBookmarkTitle;
+  final String duaDeleteBookmarkMessage;
+  final String duaYesDelete;
+  final String duaSavedCount;
+  final String duaTotalSaved;
+  final String amolReadConfirmMessage;
+  final String amolUntrackTitle;
+  final String amolUntrackMessage;
+  final String leaderboardRankLabel;
+  final String leaderboardNotRanked;
+  final String leaderboardFirstPlace;
+  final String leaderboardPointsBehindFirst;
+  final String leaderboardPointsBehindFirstNamed;
+  final String leaderboardParticipants;
+  final String leaderboardTotalQuranTime;
+  final String leaderboardMostReadingSura;
+  final String readAtLabel;
+  final String verificationCodeSent;
+  final String verificationResendFailed;
+  final String verificationFailed;
+  final String resendCodeInSeconds;
+  final String didntGetCodeResend;
+  final String passwordUpdated;
+  final String resetPasswordFailed;
+  final String signInFailed;
+  final String registrationFailed;
+  final String currentPasswordHint;
+  final String noDataHere;
+  final String legalEffectiveLabel;
+  final String legalLastUpdatedLabel;
+  final String validatorRequired;
+  final String validatorEmailEmpty;
+  final String validatorEmailInvalid;
+  final String validatorPasswordEmpty;
+  final String validatorPasswordRule;
+  final String validatorPasswordMin;
+  final String validatorPasswordMax;
+  final String validatorNameEmpty;
+  final String validatorNameShort;
+  final String validatorConfirmPasswordEmpty;
+  final String validatorPasswordMismatch;
+  final String validatorCurrentPasswordEmpty;
+  final String validatorNewPasswordEmpty;
+  final String validatorPasswordNoSpaces;
+  final String validatorPasswordUppercase;
+  final String validatorPasswordLowercase;
+  final String validatorPasswordNumber;
+  final String validatorPasswordSpecial;
+  final String validatorPasswordSameAsOld;
+  final String validatorConfirmNewPasswordEmpty;
+  final String validatorOtpCode;
+  final String validatorTermsRequired;
+  final String passwordRequirementsHint;
+  final String amLabel;
+  final String pmLabel;
+  final String hijriSuffix;
+  final String failureNetwork;
+  final String failureTimeout;
+  final String failureSecureConnection;
+  final String failureCancelled;
+  final String failureStorage;
+  final String failureUnknown;
+  final String failureUnexpectedResponse;
+  final String failureRequestFailed;
+  final String failureNoSignedInUser;
+  final String failureNoPasswordSignIn;
+  final String failureMissingGoogleToken;
 
   // Settings feature
   final String settingsTitle;
   final String aboutUs;
   final String ourProducts;
+  final String addPrayerWidgetTitle;
+  final String addPrayerWidgetSubtitle;
+  final String addPrayerWidgetButton;
+  final String addPrayerWidgetAndroidInstructions;
+  final String addPrayerWidgetIosInstructions;
+  final String widgetSizeSmall;
+  final String widgetSizeMedium;
+  final String widgetSizeLarge;
+  final String widgetAmolTagline;
   final String adminSupport;
   final String feedback;
   final String appLanguage;
@@ -765,7 +1948,10 @@ class AppText {
   final String surahMeaningWomen;
   final String quranIntroSubtitle;
   final String quranLoadError;
-  final String hifjoQuranTitle;
+
+  /// The Quran home's section picker: reading (this screen) and Hifz.
+  final String quranMajeedTitle;
+  final String hifzulQuranTitle;
   final String lastReadLabel;
   final String viewReadingHistory;
   final String ayahNoLabel;
@@ -790,6 +1976,22 @@ class AppText {
   final String selectReciterTitle;
   final String tafsirTitle;
   final String repeatLabel;
+  final String showTransliterationLabel;
+  final String yearly;
+  final String leaderboard;
+  final String leaderboardTitle;
+  final String yourRank;
+  final String ptsToRank;
+
+  // Delete account flow
+  final String deleteAccountConfirmPasswordTitle;
+  final String deleteAccountConfirmPasswordMessage;
+  final String deleteAccountPasswordHint;
+  final String deleteAccountEmptyPassword;
+  final String deleteAccountIncorrectPassword;
+  final String deleteAccountFinalTitle;
+  final String deleteAccountFinalMessage;
+  final String deleteAccountFailureMessage;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -801,6 +2003,8 @@ class AppText {
         return categoryQuran;
       case 'Nafl Salat':
         return categoryNaflSalat;
+      case 'Zikr':
+        return categoryZikr;
       case 'Hadith':
         return categoryHadith;
       case 'Quiz':
@@ -850,7 +2054,11 @@ class AppText {
 
   factory AppText.fromMap(Map<dynamic, dynamic> map, {AppText? fallback}) {
     return AppText(
-      noorify: _read(map, 'noorify', fallback?.noorify ?? ''),
+      tuhfatulMuslim: _read(
+        map,
+        'tuhfatulMuslim',
+        fallback?.tuhfatulMuslim ?? '',
+      ),
       splashTitle: _read(map, 'splashTitle', fallback?.splashTitle ?? ''),
       splashQuote: _read(map, 'splashQuote', fallback?.splashQuote ?? ''),
       emailOrPhoneHint: _read(
@@ -865,8 +2073,13 @@ class AppText {
         fallback?.forgotPassword ?? '',
       ),
       login: _read(map, 'login', fallback?.login ?? ''),
-      newToNoorify: _read(map, 'newToNoorify', fallback?.newToNoorify ?? ''),
+      newToTuhfatulMuslim: _read(
+        map,
+        'newToTuhfatulMuslim',
+        fallback?.newToTuhfatulMuslim ?? '',
+      ),
       createAccount: _read(map, 'createAccount', fallback?.createAccount ?? ''),
+      guestUser: _read(map, 'guestUser', fallback?.guestUser ?? ''),
       signUpSubtitle: _read(
         map,
         'signUpSubtitle',
@@ -874,6 +2087,7 @@ class AppText {
       ),
       enterYourName: _read(map, 'enterYourName', fallback?.enterYourName ?? ''),
       emailAddress: _read(map, 'emailAddress', fallback?.emailAddress ?? ''),
+      emailCopied: _read(map, 'emailCopied', fallback?.emailCopied ?? ''),
       emailVerification: _read(
         map,
         'emailVerification',
@@ -923,8 +2137,25 @@ class AppText {
       ),
       logIn: _read(map, 'logIn', fallback?.logIn ?? ''),
       back: _read(map, 'back', fallback?.back ?? ''),
+      comingSoon: _read(map, 'comingSoon', fallback?.comingSoon ?? ''),
+      alarm: _read(map, 'alarm', fallback?.alarm ?? ''),
       setAlarm: _read(map, 'setAlarm', fallback?.setAlarm ?? ''),
       setAllAlarm: _read(map, 'setAllAlarm', fallback?.setAllAlarm ?? ''),
+      allAlarm: _read(map, 'allAlarm', fallback?.allAlarm ?? ''),
+      prayersAlarm: _read(map, 'prayersAlarm', fallback?.prayersAlarm ?? ''),
+      alarmWillRingIn: _read(
+        map,
+        'alarmWillRingIn',
+        fallback?.alarmWillRingIn ?? '',
+      ),
+      hrLabel: _read(map, 'hrLabel', fallback?.hrLabel ?? ''),
+      noAlarmSet: _read(map, 'noAlarmSet', fallback?.noAlarmSet ?? ''),
+      alarmLabel: _read(map, 'alarmLabel', fallback?.alarmLabel ?? ''),
+      alarmLabelHint: _read(
+        map,
+        'alarmLabelHint',
+        fallback?.alarmLabelHint ?? '',
+      ),
       vibrateAndRing: _read(
         map,
         'vibrateAndRing',
@@ -980,6 +2211,81 @@ class AppText {
         'offsetBefore60Min',
         fallback?.offsetBefore60Min ?? '',
       ),
+      offsetCustom: _read(map, 'offsetCustom', fallback?.offsetCustom ?? ''),
+      offsetMinutesUnit: _read(
+        map,
+        'offsetMinutesUnit',
+        fallback?.offsetMinutesUnit ?? '',
+      ),
+      alarmCancel: _read(map, 'alarmCancel', fallback?.alarmCancel ?? ''),
+      alarmSet: _read(map, 'alarmSet', fallback?.alarmSet ?? ''),
+      allAlarmsSaved: _read(
+        map,
+        'allAlarmsSaved',
+        fallback?.allAlarmsSaved ?? '',
+      ),
+      alarmIsRinging: _read(
+        map,
+        'alarmIsRinging',
+        fallback?.alarmIsRinging ?? '',
+      ),
+      stopAlarm: _read(map, 'stopAlarm', fallback?.stopAlarm ?? ''),
+      snoozeAlarm: _read(map, 'snoozeAlarm', fallback?.snoozeAlarm ?? ''),
+      deleteAlarmTitle: _read(
+        map,
+        'deleteAlarmTitle',
+        fallback?.deleteAlarmTitle ?? '',
+      ),
+      deleteAlarmMessage: _read(
+        map,
+        'deleteAlarmMessage',
+        fallback?.deleteAlarmMessage ?? '',
+      ),
+      deleteAlarmConfirm: _read(
+        map,
+        'deleteAlarmConfirm',
+        fallback?.deleteAlarmConfirm ?? '',
+      ),
+      deleteRingtoneTitle: _read(
+        map,
+        'deleteRingtoneTitle',
+        fallback?.deleteRingtoneTitle ?? '',
+      ),
+      deleteRingtoneMessage: _read(
+        map,
+        'deleteRingtoneMessage',
+        fallback?.deleteRingtoneMessage ?? '',
+      ),
+      deleteRingtoneConfirm: _read(
+        map,
+        'deleteRingtoneConfirm',
+        fallback?.deleteRingtoneConfirm ?? '',
+      ),
+      alarmNotSetForPrayer: _read(
+        map,
+        'alarmNotSetForPrayer',
+        fallback?.alarmNotSetForPrayer ?? '',
+      ),
+      exactAlarmPermissionNeeded: _read(
+        map,
+        'exactAlarmPermissionNeeded',
+        fallback?.exactAlarmPermissionNeeded ?? '',
+      ),
+      exactAlarmPermissionTitle: _read(
+        map,
+        'exactAlarmPermissionTitle',
+        fallback?.exactAlarmPermissionTitle ?? '',
+      ),
+      exactAlarmPermissionExplanation: _read(
+        map,
+        'exactAlarmPermissionExplanation',
+        fallback?.exactAlarmPermissionExplanation ?? '',
+      ),
+      exactAlarmPermissionAllow: _read(
+        map,
+        'exactAlarmPermissionAllow',
+        fallback?.exactAlarmPermissionAllow ?? '',
+      ),
       amolTracking: _read(map, 'amolTracking', fallback?.amolTracking ?? ''),
       daily: _read(map, 'daily', fallback?.daily ?? ''),
       weekly: _read(map, 'weekly', fallback?.weekly ?? ''),
@@ -991,12 +2297,32 @@ class AppText {
         'todaysAmolTrack',
         fallback?.todaysAmolTrack ?? '',
       ),
+      weeklyAmolTrack: _read(
+        map,
+        'weeklyAmolTrack',
+        fallback?.weeklyAmolTrack ?? '',
+      ),
+      monthlyAmolTrack: _read(
+        map,
+        'monthlyAmolTrack',
+        fallback?.monthlyAmolTrack ?? '',
+      ),
       amolTrack: _read(map, 'amolTrack', fallback?.amolTrack ?? ''),
       todays: _read(map, 'todays', fallback?.todays ?? ''),
       averageTodaysDays: _read(
         map,
         'averageTodaysDays',
         fallback?.averageTodaysDays ?? '',
+      ),
+      thisWeeksAverage: _read(
+        map,
+        'thisWeeksAverage',
+        fallback?.thisWeeksAverage ?? '',
+      ),
+      thisMonthsAverage: _read(
+        map,
+        'thisMonthsAverage',
+        fallback?.thisMonthsAverage ?? '',
       ),
       myPosition: _read(map, 'myPosition', fallback?.myPosition ?? ''),
       myNearestOrCompetitor: _read(
@@ -1009,6 +2335,12 @@ class AppText {
         'competitorInitials',
         fallback?.competitorInitials ?? '',
       ),
+      amolPrayerTimeNotStarted: _read(
+        map,
+        'amolPrayerTimeNotStarted',
+        fallback?.amolPrayerTimeNotStarted ?? '',
+      ),
+      ok: _read(map, 'ok', fallback?.ok ?? ''),
       viewInDashboard: _read(
         map,
         'viewInDashboard',
@@ -1030,6 +2362,7 @@ class AppText {
         'categoryNaflSalat',
         fallback?.categoryNaflSalat ?? '',
       ),
+      categoryZikr: _read(map, 'categoryZikr', fallback?.categoryZikr ?? ''),
       categoryHadith: _read(
         map,
         'categoryHadith',
@@ -1060,11 +2393,7 @@ class AppText {
         'hadithLastRead',
         fallback?.hadithLastRead ?? '',
       ),
-      hadithLibrary: _read(
-        map,
-        'hadithLibrary',
-        fallback?.hadithLibrary ?? '',
-      ),
+      hadithLibrary: _read(map, 'hadithLibrary', fallback?.hadithLibrary ?? ''),
       hadithEbook: _read(map, 'hadithEbook', fallback?.hadithEbook ?? ''),
       hadithLibraryTitle: _read(
         map,
@@ -1075,6 +2404,11 @@ class AppText {
         map,
         'hadithCategory',
         fallback?.hadithCategory ?? '',
+      ),
+      hadithSubCategory: _read(
+        map,
+        'hadithSubCategory',
+        fallback?.hadithSubCategory ?? '',
       ),
       hadithBookDownloadTitle: _read(
         map,
@@ -1114,17 +2448,288 @@ class AppText {
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
       hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
+      hadithCopyTranslation: _read(
+        map,
+        'hadithCopyTranslation',
+        fallback?.hadithCopyTranslation ?? '',
+      ),
+      hadithCopyArabic: _read(
+        map,
+        'hadithCopyArabic',
+        fallback?.hadithCopyArabic ?? '',
+      ),
+      hadithCopyFull: _read(
+        map,
+        'hadithCopyFull',
+        fallback?.hadithCopyFull ?? '',
+      ),
+      hadithShareScreenshot: _read(
+        map,
+        'hadithShareScreenshot',
+        fallback?.hadithShareScreenshot ?? '',
+      ),
+      hadithReport: _read(map, 'hadithReport', fallback?.hadithReport ?? ''),
+      hadithReportMessage: _read(
+        map,
+        'hadithReportMessage',
+        fallback?.hadithReportMessage ?? '',
+      ),
+      hadithShareFailed: _read(
+        map,
+        'hadithShareFailed',
+        fallback?.hadithShareFailed ?? '',
+      ),
+      hadithReportFailed: _read(
+        map,
+        'hadithReportFailed',
+        fallback?.hadithReportFailed ?? '',
+      ),
+      ebookOpenFailed: _read(
+        map,
+        'ebookOpenFailed',
+        fallback?.ebookOpenFailed ?? '',
+      ),
+      hadithComplete: _read(
+        map,
+        'hadithComplete',
+        fallback?.hadithComplete ?? '',
+      ),
+      hadithCompleted: _read(
+        map,
+        'hadithCompleted',
+        fallback?.hadithCompleted ?? '',
+      ),
+      hadithCompletedQuestion: _read(
+        map,
+        'hadithCompletedQuestion',
+        fallback?.hadithCompletedQuestion ?? '',
+      ),
+      hadithReadingTimeComplete: _read(
+        map,
+        'hadithReadingTimeComplete',
+        fallback?.hadithReadingTimeComplete ?? '',
+      ),
+      hadithGuestTrackQuestion: _read(
+        map,
+        'hadithGuestTrackQuestion',
+        fallback?.hadithGuestTrackQuestion ?? '',
+      ),
+      hadithTrackFailed: _read(
+        map,
+        'hadithTrackFailed',
+        fallback?.hadithTrackFailed ?? '',
+      ),
+      folderNameInputHint: _read(
+        map,
+        'folderNameInputHint',
+        fallback?.folderNameInputHint ?? '',
+      ),
+      cancelAction: _read(map, 'cancelAction', fallback?.cancelAction ?? ''),
+      ebookOpen: _read(map, 'ebookOpen', fallback?.ebookOpen ?? ''),
+      ebookDownloaded: _read(
+        map,
+        'ebookDownloaded',
+        fallback?.ebookDownloaded ?? '',
+      ),
+      ebookDownloadFailed: _read(
+        map,
+        'ebookDownloadFailed',
+        fallback?.ebookDownloadFailed ?? '',
+      ),
+      themeSwitchToDark: _read(
+        map,
+        'themeSwitchToDark',
+        fallback?.themeSwitchToDark ?? '',
+      ),
+      themeSwitchToLight: _read(
+        map,
+        'themeSwitchToLight',
+        fallback?.themeSwitchToLight ?? '',
+      ),
+      hadithBookmark: _read(
+        map,
+        'hadithBookmark',
+        fallback?.hadithBookmark ?? '',
+      ),
+      hadithBookmarkAdded: _read(
+        map,
+        'hadithBookmarkAdded',
+        fallback?.hadithBookmarkAdded ?? '',
+      ),
+      hadithBookmarkRemoved: _read(
+        map,
+        'hadithBookmarkRemoved',
+        fallback?.hadithBookmarkRemoved ?? '',
+      ),
+      bookmarkSheetTitle: _read(
+        map,
+        'bookmarkSheetTitle',
+        fallback?.bookmarkSheetTitle ?? '',
+      ),
+      searchFolderHint: _read(
+        map,
+        'searchFolderHint',
+        fallback?.searchFolderHint ?? '',
+      ),
+      createFolderAction: _read(
+        map,
+        'createFolderAction',
+        fallback?.createFolderAction ?? '',
+      ),
+      saveAction: _read(map, 'saveAction', fallback?.saveAction ?? ''),
+      favoriteFolder: _read(
+        map,
+        'favoriteFolder',
+        fallback?.favoriteFolder ?? '',
+      ),
+      folderNameHint: _read(
+        map,
+        'folderNameHint',
+        fallback?.folderNameHint ?? '',
+      ),
       hadithBookRef: _read(map, 'hadithBookRef', fallback?.hadithBookRef ?? ''),
-      hadithRefAuthor: _read(map, 'hadithRefAuthor', fallback?.hadithRefAuthor ?? ''),
-      hadithRefTranslator: _read(map, 'hadithRefTranslator', fallback?.hadithRefTranslator ?? ''),
-      hadithRefEditors: _read(map, 'hadithRefEditors', fallback?.hadithRefEditors ?? ''),
-      hadithRefPublisher: _read(map, 'hadithRefPublisher', fallback?.hadithRefPublisher ?? ''),
+      hadithRefAuthor: _read(
+        map,
+        'hadithRefAuthor',
+        fallback?.hadithRefAuthor ?? '',
+      ),
+      hadithRefTranslator: _read(
+        map,
+        'hadithRefTranslator',
+        fallback?.hadithRefTranslator ?? '',
+      ),
+      hadithRefEditors: _read(
+        map,
+        'hadithRefEditors',
+        fallback?.hadithRefEditors ?? '',
+      ),
+      hadithRefPublisher: _read(
+        map,
+        'hadithRefPublisher',
+        fallback?.hadithRefPublisher ?? '',
+      ),
       hadithRefYear: _read(map, 'hadithRefYear', fallback?.hadithRefYear ?? ''),
+      savedHadithTitle: _read(
+        map,
+        'savedHadithTitle',
+        fallback?.savedHadithTitle ?? '',
+      ),
+      saved: _read(map, 'saved', fallback?.saved ?? ''),
+      noSavedHadithMessage: _read(
+        map,
+        'noSavedHadithMessage',
+        fallback?.noSavedHadithMessage ?? '',
+      ),
+      noResultsFound: _read(
+        map,
+        'noResultsFound',
+        fallback?.noResultsFound ?? '',
+      ),
+      savedTabHadith: _read(
+        map,
+        'savedTabHadith',
+        fallback?.savedTabHadith ?? '',
+      ),
+      savedTabFolder: _read(
+        map,
+        'savedTabFolder',
+        fallback?.savedTabFolder ?? '',
+      ),
+      noFoldersMessage: _read(
+        map,
+        'noFoldersMessage',
+        fallback?.noFoldersMessage ?? '',
+      ),
+      totalReadingHadith: _read(
+        map,
+        'totalReadingHadith',
+        fallback?.totalReadingHadith ?? '',
+      ),
+      totalReadingTime: _read(
+        map,
+        'totalReadingTime',
+        fallback?.totalReadingTime ?? '',
+      ),
+      ebookLabel: _read(map, 'ebookLabel', fallback?.ebookLabel ?? ''),
+      noReadingHistory: _read(
+        map,
+        'noReadingHistory',
+        fallback?.noReadingHistory ?? '',
+      ),
+      hadithNoLabel: _read(map, 'hadithNoLabel', fallback?.hadithNoLabel ?? ''),
+      totalSavedLabel: _read(
+        map,
+        'totalSavedLabel',
+        fallback?.totalSavedLabel ?? '',
+      ),
+      newFolder: _read(map, 'newFolder', fallback?.newFolder ?? ''),
       categoryQuiz: _read(map, 'categoryQuiz', fallback?.categoryQuiz ?? ''),
       categoryNaflAndMore: _read(
         map,
         'categoryNaflAndMore',
         fallback?.categoryNaflAndMore ?? '',
+      ),
+      compassTitle: _read(map, 'compassTitle', fallback?.compassTitle ?? ''),
+      kiblahLabel: _read(map, 'kiblahLabel', fallback?.kiblahLabel ?? ''),
+      viewFullScreen: _read(
+        map,
+        'viewFullScreen',
+        fallback?.viewFullScreen ?? '',
+      ),
+      compassDirectionEast: _read(
+        map,
+        'compassDirectionEast',
+        fallback?.compassDirectionEast ?? '',
+      ),
+      compassDirectionWest: _read(
+        map,
+        'compassDirectionWest',
+        fallback?.compassDirectionWest ?? '',
+      ),
+      compassLocationServicesDisabled: _read(
+        map,
+        'compassLocationServicesDisabled',
+        fallback?.compassLocationServicesDisabled ?? '',
+      ),
+      compassPermissionDenied: _read(
+        map,
+        'compassPermissionDenied',
+        fallback?.compassPermissionDenied ?? '',
+      ),
+      compassUnsupported: _read(
+        map,
+        'compassUnsupported',
+        fallback?.compassUnsupported ?? '',
+      ),
+      compassOpenSettings: _read(
+        map,
+        'compassOpenSettings',
+        fallback?.compassOpenSettings ?? '',
+      ),
+      compassEnableLocation: _read(
+        map,
+        'compassEnableLocation',
+        fallback?.compassEnableLocation ?? '',
+      ),
+      compassCalibrationHint: _read(
+        map,
+        'compassCalibrationHint',
+        fallback?.compassCalibrationHint ?? '',
+      ),
+      kiblahCompassTitle: _read(
+        map,
+        'kiblahCompassTitle',
+        fallback?.kiblahCompassTitle ?? '',
+      ),
+      compassDirectionLeft: _read(
+        map,
+        'compassDirectionLeft',
+        fallback?.compassDirectionLeft ?? '',
+      ),
+      compassDirectionRight: _read(
+        map,
+        'compassDirectionRight',
+        fallback?.compassDirectionRight ?? '',
       ),
       salahFajr: _read(map, 'salahFajr', fallback?.salahFajr ?? ''),
       salahDuhr: _read(map, 'salahDuhr', fallback?.salahDuhr ?? ''),
@@ -1166,6 +2771,11 @@ class AppText {
         map,
         'moreKarzeHasanah',
         fallback?.moreKarzeHasanah ?? '',
+      ),
+      moreRozaKaffarah: _read(
+        map,
+        'moreRozaKaffarah',
+        fallback?.moreRozaKaffarah ?? '',
       ),
       moreNaflFasting: _read(
         map,
@@ -1328,6 +2938,26 @@ class AppText {
         'googleAuthErrorGeneric',
         fallback?.googleAuthErrorGeneric ?? '',
       ),
+      facebookAuthErrorInProgress: _read(
+        map,
+        'facebookAuthErrorInProgress',
+        fallback?.facebookAuthErrorInProgress ?? '',
+      ),
+      facebookAuthErrorGeneric: _read(
+        map,
+        'facebookAuthErrorGeneric',
+        fallback?.facebookAuthErrorGeneric ?? '',
+      ),
+      facebookAuthSignedIn: _read(
+        map,
+        'facebookAuthSignedIn',
+        fallback?.facebookAuthSignedIn ?? '',
+      ),
+      facebookAuthSignedInAs: _read(
+        map,
+        'facebookAuthSignedInAs',
+        fallback?.facebookAuthSignedInAs ?? '',
+      ),
       dashboard: _read(map, 'dashboard', fallback?.dashboard ?? ''),
       quizHistory: _read(map, 'quizHistory', fallback?.quizHistory ?? ''),
       seeAll: _read(map, 'seeAll', fallback?.seeAll ?? ''),
@@ -1352,6 +2982,7 @@ class AppText {
         'competitorName',
         fallback?.competitorName ?? '',
       ),
+      guestUserName: _read(map, 'guestUserName', fallback?.guestUserName ?? ''),
       quranicScience: _read(
         map,
         'quranicScience',
@@ -1363,14 +2994,486 @@ class AppText {
         fallback?.questionsCountLabel ?? '',
       ),
       greeting: _read(map, 'greeting', fallback?.greeting ?? ''),
+      prayerReminderPrefix: _read(
+        map,
+        'prayerReminderPrefix',
+        fallback?.prayerReminderPrefix ?? '',
+      ),
+      prayerReminderSuffix: _read(
+        map,
+        'prayerReminderSuffix',
+        fallback?.prayerReminderSuffix ?? '',
+      ),
       timer: _read(map, 'timer', fallback?.timer ?? ''),
       notifications: _read(map, 'notifications', fallback?.notifications ?? ''),
+      noNotificationsAvailable: _read(
+        map,
+        'noNotificationsAvailable',
+        fallback?.noNotificationsAvailable ?? '',
+      ),
+      notificationUnread: _read(
+        map,
+        'notificationUnread',
+        fallback?.notificationUnread ?? '',
+      ),
+      notificationRead: _read(
+        map,
+        'notificationRead',
+        fallback?.notificationRead ?? '',
+      ),
       featureDua: _read(map, 'featureDua', fallback?.featureDua ?? ''),
       featureDijpr: _read(map, 'featureDijpr', fallback?.featureDijpr ?? ''),
+      zikrIntroTitle: _read(
+        map,
+        'zikrIntroTitle',
+        fallback?.zikrIntroTitle ?? '',
+      ),
+      zikrIntroSubtitle: _read(
+        map,
+        'zikrIntroSubtitle',
+        fallback?.zikrIntroSubtitle ?? '',
+      ),
+      zikrIntroStartButton: _read(
+        map,
+        'zikrIntroStartButton',
+        fallback?.zikrIntroStartButton ?? '',
+      ),
+      zikrTitle: _read(map, 'zikrTitle', fallback?.zikrTitle ?? ''),
+      zikrTotalZikr: _read(map, 'zikrTotalZikr', fallback?.zikrTotalZikr ?? ''),
+      zikrLastZikr: _read(map, 'zikrLastZikr', fallback?.zikrLastZikr ?? ''),
+      zikrMyCreatedZikr: _read(
+        map,
+        'zikrMyCreatedZikr',
+        fallback?.zikrMyCreatedZikr ?? '',
+      ),
+      zikrGetStart: _read(map, 'zikrGetStart', fallback?.zikrGetStart ?? ''),
+      zikrAllTitle: _read(map, 'zikrAllTitle', fallback?.zikrAllTitle ?? ''),
+      zikrCounterReset: _read(
+        map,
+        'zikrCounterReset',
+        fallback?.zikrCounterReset ?? '',
+      ),
+      zikrCreateTitle: _read(
+        map,
+        'zikrCreateTitle',
+        fallback?.zikrCreateTitle ?? '',
+      ),
+      zikrCreateNameHint: _read(
+        map,
+        'zikrCreateNameHint',
+        fallback?.zikrCreateNameHint ?? '',
+      ),
+      zikrCreateTargetHint: _read(
+        map,
+        'zikrCreateTargetHint',
+        fallback?.zikrCreateTargetHint ?? '',
+      ),
+      zikrCreateAdd: _read(map, 'zikrCreateAdd', fallback?.zikrCreateAdd ?? ''),
+      zikrNewTitle: _read(map, 'zikrNewTitle', fallback?.zikrNewTitle ?? ''),
+      zikrSelectZikr: _read(
+        map,
+        'zikrSelectZikr',
+        fallback?.zikrSelectZikr ?? '',
+      ),
+      zikrSetReadingValue: _read(
+        map,
+        'zikrSetReadingValue',
+        fallback?.zikrSetReadingValue ?? '',
+      ),
+      zikrReadingValueHint: _read(
+        map,
+        'zikrReadingValueHint',
+        fallback?.zikrReadingValueHint ?? '',
+      ),
+      zikrCreate: _read(map, 'zikrCreate', fallback?.zikrCreate ?? ''),
+      zikrCreated: _read(map, 'zikrCreated', fallback?.zikrCreated ?? ''),
+      zikrCustom: _read(map, 'zikrCustom', fallback?.zikrCustom ?? ''),
+      zikrCancel: _read(map, 'zikrCancel', fallback?.zikrCancel ?? ''),
+      zikrWriteZikrName: _read(
+        map,
+        'zikrWriteZikrName',
+        fallback?.zikrWriteZikrName ?? '',
+      ),
+      zikrWriteZikrNameHint: _read(
+        map,
+        'zikrWriteZikrNameHint',
+        fallback?.zikrWriteZikrNameHint ?? '',
+      ),
+      zikrAddMore: _read(map, 'zikrAddMore', fallback?.zikrAddMore ?? ''),
+      zikrPlanCreateTitle: _read(
+        map,
+        'zikrPlanCreateTitle',
+        fallback?.zikrPlanCreateTitle ?? '',
+      ),
+      zikrPlanName: _read(map, 'zikrPlanName', fallback?.zikrPlanName ?? ''),
+      zikrPlanCompletionDays: _read(
+        map,
+        'zikrPlanCompletionDays',
+        fallback?.zikrPlanCompletionDays ?? '',
+      ),
+      zikrPlanWriteHere: _read(
+        map,
+        'zikrPlanWriteHere',
+        fallback?.zikrPlanWriteHere ?? '',
+      ),
+      zikrPlanDefaultName: _read(
+        map,
+        'zikrPlanDefaultName',
+        fallback?.zikrPlanDefaultName ?? '',
+      ),
+      zikrPlanValidationMessage: _read(
+        map,
+        'zikrPlanValidationMessage',
+        fallback?.zikrPlanValidationMessage ?? '',
+      ),
+      zikrPlanComplete: _read(
+        map,
+        'zikrPlanComplete',
+        fallback?.zikrPlanComplete ?? '',
+      ),
+      zikrPlanDays: _read(map, 'zikrPlanDays', fallback?.zikrPlanDays ?? ''),
+      zikrTodaysValueGraph: _read(
+        map,
+        'zikrTodaysValueGraph',
+        fallback?.zikrTodaysValueGraph ?? '',
+      ),
+      zikrMostDoing: _read(map, 'zikrMostDoing', fallback?.zikrMostDoing ?? ''),
+      zikrHistory: _read(map, 'zikrHistory', fallback?.zikrHistory ?? ''),
+      zikrTapToCount: _read(
+        map,
+        'zikrTapToCount',
+        fallback?.zikrTapToCount ?? '',
+      ),
+      zikrCompletingProgress: _read(
+        map,
+        'zikrCompletingProgress',
+        fallback?.zikrCompletingProgress ?? '',
+      ),
+      zikrCompleted: _read(map, 'zikrCompleted', fallback?.zikrCompleted ?? ''),
+      zikrNameSubhanAllah: _read(
+        map,
+        'zikrNameSubhanAllah',
+        fallback?.zikrNameSubhanAllah ?? '',
+      ),
+      zikrNameAlhamdulillah: _read(
+        map,
+        'zikrNameAlhamdulillah',
+        fallback?.zikrNameAlhamdulillah ?? '',
+      ),
+      zikrNameAllahuAkbar: _read(
+        map,
+        'zikrNameAllahuAkbar',
+        fallback?.zikrNameAllahuAkbar ?? '',
+      ),
+      zikrNameFinalZikr: _read(
+        map,
+        'zikrNameFinalZikr',
+        fallback?.zikrNameFinalZikr ?? '',
+      ),
+      zikrNameLaIlahaIllallah: _read(
+        map,
+        'zikrNameLaIlahaIllallah',
+        fallback?.zikrNameLaIlahaIllallah ?? '',
+      ),
+      zikrNameAstaghfirullah: _read(
+        map,
+        'zikrNameAstaghfirullah',
+        fallback?.zikrNameAstaghfirullah ?? '',
+      ),
+      zikrNameLaHawla: _read(
+        map,
+        'zikrNameLaHawla',
+        fallback?.zikrNameLaHawla ?? '',
+      ),
+      zikrNameSalawat: _read(
+        map,
+        'zikrNameSalawat',
+        fallback?.zikrNameSalawat ?? '',
+      ),
+      zikrNameSubhanAllahiWaBihamdihi: _read(
+        map,
+        'zikrNameSubhanAllahiWaBihamdihi',
+        fallback?.zikrNameSubhanAllahiWaBihamdihi ?? '',
+      ),
+      duaIntroTitle: _read(map, 'duaIntroTitle', fallback?.duaIntroTitle ?? ''),
+      duaIntroSubtitle: _read(
+        map,
+        'duaIntroSubtitle',
+        fallback?.duaIntroSubtitle ?? '',
+      ),
+      duaIntroStartButton: _read(
+        map,
+        'duaIntroStartButton',
+        fallback?.duaIntroStartButton ?? '',
+      ),
+      duaFeaturedTitle: _read(
+        map,
+        'duaFeaturedTitle',
+        fallback?.duaFeaturedTitle ?? '',
+      ),
+      duaCategoryTitle: _read(
+        map,
+        'duaCategoryTitle',
+        fallback?.duaCategoryTitle ?? '',
+      ),
+      duaAllCategoryTitle: _read(
+        map,
+        'duaAllCategoryTitle',
+        fallback?.duaAllCategoryTitle ?? '',
+      ),
+      duaTotalCategoryLabel: _read(
+        map,
+        'duaTotalCategoryLabel',
+        fallback?.duaTotalCategoryLabel ?? '',
+      ),
+      duaSearchCategoryHint: _read(
+        map,
+        'duaSearchCategoryHint',
+        fallback?.duaSearchCategoryHint ?? '',
+      ),
+      duaTotalFeaturedLabel: _read(
+        map,
+        'duaTotalFeaturedLabel',
+        fallback?.duaTotalFeaturedLabel ?? '',
+      ),
+      duaExplore: _read(map, 'duaExplore', fallback?.duaExplore ?? ''),
+      duaTotalDuaLabel: _read(
+        map,
+        'duaTotalDuaLabel',
+        fallback?.duaTotalDuaLabel ?? '',
+      ),
+      duaAllDuaTitle: _read(
+        map,
+        'duaAllDuaTitle',
+        fallback?.duaAllDuaTitle ?? '',
+      ),
+      duaSearchDuaHint: _read(
+        map,
+        'duaSearchDuaHint',
+        fallback?.duaSearchDuaHint ?? '',
+      ),
+      duaLastRead: _read(map, 'duaLastRead', fallback?.duaLastRead ?? ''),
+      duaRecitePrefix: _read(
+        map,
+        'duaRecitePrefix',
+        fallback?.duaRecitePrefix ?? '',
+      ),
+      duaReciteSuffix: _read(
+        map,
+        'duaReciteSuffix',
+        fallback?.duaReciteSuffix ?? '',
+      ),
+      duaMarkAsReadLabel: _read(
+        map,
+        'duaMarkAsReadLabel',
+        fallback?.duaMarkAsReadLabel ?? '',
+      ),
+      duaBookmarkAdded: _read(
+        map,
+        'duaBookmarkAdded',
+        fallback?.duaBookmarkAdded ?? '',
+      ),
+      duaCopied: _read(map, 'duaCopied', fallback?.duaCopied ?? ''),
+      duaShareFailed: _read(
+        map,
+        'duaShareFailed',
+        fallback?.duaShareFailed ?? '',
+      ),
+      duaNarrationTitle: _read(
+        map,
+        'duaNarrationTitle',
+        fallback?.duaNarrationTitle ?? '',
+      ),
+      duaArabicSectionTitle: _read(
+        map,
+        'duaArabicSectionTitle',
+        fallback?.duaArabicSectionTitle ?? '',
+      ),
+      duaTranslationSectionTitle: _read(
+        map,
+        'duaTranslationSectionTitle',
+        fallback?.duaTranslationSectionTitle ?? '',
+      ),
+      duaAuthenticTitle: _read(
+        map,
+        'duaAuthenticTitle',
+        fallback?.duaAuthenticTitle ?? '',
+      ),
+      duaChainVerifiedBadge: _read(
+        map,
+        'duaChainVerifiedBadge',
+        fallback?.duaChainVerifiedBadge ?? '',
+      ),
+      duaDisplayReadingStyleSection: _read(
+        map,
+        'duaDisplayReadingStyleSection',
+        fallback?.duaDisplayReadingStyleSection ?? '',
+      ),
+      duaTypographyStylingSection: _read(
+        map,
+        'duaTypographyStylingSection',
+        fallback?.duaTypographyStylingSection ?? '',
+      ),
+      duaNarrationToggleTitle: _read(
+        map,
+        'duaNarrationToggleTitle',
+        fallback?.duaNarrationToggleTitle ?? '',
+      ),
+      duaNarrationToggleSubtitle: _read(
+        map,
+        'duaNarrationToggleSubtitle',
+        fallback?.duaNarrationToggleSubtitle ?? '',
+      ),
+      duaArabicToggleSubtitle: _read(
+        map,
+        'duaArabicToggleSubtitle',
+        fallback?.duaArabicToggleSubtitle ?? '',
+      ),
+      duaTranslationToggleSubtitle: _read(
+        map,
+        'duaTranslationToggleSubtitle',
+        fallback?.duaTranslationToggleSubtitle ?? '',
+      ),
+      duaTransliterationToggleSubtitle: _read(
+        map,
+        'duaTransliterationToggleSubtitle',
+        fallback?.duaTransliterationToggleSubtitle ?? '',
+      ),
+      duaReferenceToggleTitle: _read(
+        map,
+        'duaReferenceToggleTitle',
+        fallback?.duaReferenceToggleTitle ?? '',
+      ),
+      duaReferenceToggleSubtitle: _read(
+        map,
+        'duaReferenceToggleSubtitle',
+        fallback?.duaReferenceToggleSubtitle ?? '',
+      ),
+      duaArabicFontSizeLabel: _read(
+        map,
+        'duaArabicFontSizeLabel',
+        fallback?.duaArabicFontSizeLabel ?? '',
+      ),
+      duaTranslationFontSizeLabel: _read(
+        map,
+        'duaTranslationFontSizeLabel',
+        fallback?.duaTranslationFontSizeLabel ?? '',
+      ),
+      duaSettingsTitle: _read(
+        map,
+        'duaSettingsTitle',
+        fallback?.duaSettingsTitle ?? '',
+      ),
+      showArabicLabel: _read(
+        map,
+        'showArabicLabel',
+        fallback?.showArabicLabel ?? '',
+      ),
+      showTranslationLabel: _read(
+        map,
+        'showTranslationLabel',
+        fallback?.showTranslationLabel ?? '',
+      ),
+      hadithLanguageTitle: _read(
+        map,
+        'hadithLanguageTitle',
+        fallback?.hadithLanguageTitle ?? '',
+      ),
+      hadithLanguageSection: _read(
+        map,
+        'hadithLanguageSection',
+        fallback?.hadithLanguageSection ?? '',
+      ),
+      hadithLanguageArabicSubtitle: _read(
+        map,
+        'hadithLanguageArabicSubtitle',
+        fallback?.hadithLanguageArabicSubtitle ?? '',
+      ),
+      hadithLanguageTranslationSection: _read(
+        map,
+        'hadithLanguageTranslationSection',
+        fallback?.hadithLanguageTranslationSection ?? '',
+      ),
+      hadithLanguageBanglaSubtitle: _read(
+        map,
+        'hadithLanguageBanglaSubtitle',
+        fallback?.hadithLanguageBanglaSubtitle ?? '',
+      ),
+      hadithLanguageEnglishSubtitle: _read(
+        map,
+        'hadithLanguageEnglishSubtitle',
+        fallback?.hadithLanguageEnglishSubtitle ?? '',
+      ),
+      hadithLanguageNote: _read(
+        map,
+        'hadithLanguageNote',
+        fallback?.hadithLanguageNote ?? '',
+      ),
+      duaCreateFolderTitle: _read(
+        map,
+        'duaCreateFolderTitle',
+        fallback?.duaCreateFolderTitle ?? '',
+      ),
+      duaFolderNameFieldHint: _read(
+        map,
+        'duaFolderNameFieldHint',
+        fallback?.duaFolderNameFieldHint ?? '',
+      ),
+      duaCancel: _read(map, 'duaCancel', fallback?.duaCancel ?? ''),
       featureAsmaUlHusna: _read(
         map,
         'featureAsmaUlHusna',
         fallback?.featureAsmaUlHusna ?? '',
+      ),
+      asmaHusnaTitle: _read(
+        map,
+        'asmaHusnaTitle',
+        fallback?.asmaHusnaTitle ?? '',
+      ),
+      asmaHusnaHadithNarrator: _read(
+        map,
+        'asmaHusnaHadithNarrator',
+        fallback?.asmaHusnaHadithNarrator ?? '',
+      ),
+      asmaHusnaHadithArabic: _read(
+        map,
+        'asmaHusnaHadithArabic',
+        fallback?.asmaHusnaHadithArabic ?? '',
+      ),
+      asmaHusnaHadithTranslation: _read(
+        map,
+        'asmaHusnaHadithTranslation',
+        fallback?.asmaHusnaHadithTranslation ?? '',
+      ),
+      asmaHusnaSourcesLabel: _read(
+        map,
+        'asmaHusnaSourcesLabel',
+        fallback?.asmaHusnaSourcesLabel ?? '',
+      ),
+      asmaHusnaSourceBukhari: _read(
+        map,
+        'asmaHusnaSourceBukhari',
+        fallback?.asmaHusnaSourceBukhari ?? '',
+      ),
+      asmaHusnaSourceMuslim: _read(
+        map,
+        'asmaHusnaSourceMuslim',
+        fallback?.asmaHusnaSourceMuslim ?? '',
+      ),
+      asmaHusnaAgreedNote: _read(
+        map,
+        'asmaHusnaAgreedNote',
+        fallback?.asmaHusnaAgreedNote ?? '',
+      ),
+      asmaHusnaNamesCount: _read(
+        map,
+        'asmaHusnaNamesCount',
+        fallback?.asmaHusnaNamesCount ?? '',
+      ),
+      asmaHusnaClickDetails: _read(
+        map,
+        'asmaHusnaClickDetails',
+        fallback?.asmaHusnaClickDetails ?? '',
       ),
       featureQuizAndLearn: _read(
         map,
@@ -1446,6 +3549,26 @@ class AppText {
         'locationPlaceholder',
         fallback?.locationPlaceholder ?? '',
       ),
+      locationFinding: _read(
+        map,
+        'locationFinding',
+        fallback?.locationFinding ?? '',
+      ),
+      locationServiceDisabled: _read(
+        map,
+        'locationServiceDisabled',
+        fallback?.locationServiceDisabled ?? '',
+      ),
+      locationPermissionDenied: _read(
+        map,
+        'locationPermissionDenied',
+        fallback?.locationPermissionDenied ?? '',
+      ),
+      locationUnavailable: _read(
+        map,
+        'locationUnavailable',
+        fallback?.locationUnavailable ?? '',
+      ),
       viewPrayerTimes: _read(
         map,
         'viewPrayerTimes',
@@ -1475,6 +3598,16 @@ class AppText {
         fallback?.prohibitedPrayerTimes ?? '',
       ),
       jawaal: _read(map, 'jawaal', fallback?.jawaal ?? ''),
+      periodSubheSadik: _read(
+        map,
+        'periodSubheSadik',
+        fallback?.periodSubheSadik ?? '',
+      ),
+      periodSokal: _read(map, 'periodSokal', fallback?.periodSokal ?? ''),
+      periodDupur: _read(map, 'periodDupur', fallback?.periodDupur ?? ''),
+      periodBikel: _read(map, 'periodBikel', fallback?.periodBikel ?? ''),
+      periodSondhya: _read(map, 'periodSondhya', fallback?.periodSondhya ?? ''),
+      periodRaat: _read(map, 'periodRaat', fallback?.periodRaat ?? ''),
       prayerTimesTitle: _read(
         map,
         'prayerTimesTitle',
@@ -1494,12 +3627,9 @@ class AppText {
       prayerFajr: _read(map, 'prayerFajr', fallback?.prayerFajr ?? ''),
       prayerDhuhr: _read(map, 'prayerDhuhr', fallback?.prayerDhuhr ?? ''),
       prayerAsr: _read(map, 'prayerAsr', fallback?.prayerAsr ?? ''),
-      prayerMaghribAndIftar: _read(
-        map,
-        'prayerMaghribAndIftar',
-        fallback?.prayerMaghribAndIftar ?? '',
-      ),
+      prayerMaghrib: _read(map, 'prayerMaghrib', fallback?.prayerMaghrib ?? ''),
       prayerIsha: _read(map, 'prayerIsha', fallback?.prayerIsha ?? ''),
+      namazWord: _read(map, 'namazWord', fallback?.namazWord ?? ''),
       learning: _read(map, 'learning', fallback?.learning ?? ''),
       explore: _read(map, 'explore', fallback?.explore ?? ''),
       exploreQuranicSciences: _read(
@@ -1656,11 +3786,27 @@ class AppText {
       ),
       createPlan: _read(map, 'createPlan', fallback?.createPlan ?? ''),
       myPlan: _read(map, 'myPlan', fallback?.myPlan ?? ''),
+      searchPlan: _read(map, 'searchPlan', fallback?.searchPlan ?? ''),
       completePlan: _read(map, 'completePlan', fallback?.completePlan ?? ''),
       noCompletedPlansMessage: _read(
         map,
         'noCompletedPlansMessage',
         fallback?.noCompletedPlansMessage ?? '',
+      ),
+      noPlansYetMessage: _read(
+        map,
+        'noPlansYetMessage',
+        fallback?.noPlansYetMessage ?? '',
+      ),
+      planStartedSuccess: _read(
+        map,
+        'planStartedSuccess',
+        fallback?.planStartedSuccess ?? '',
+      ),
+      planStatusComplete: _read(
+        map,
+        'planStatusComplete',
+        fallback?.planStatusComplete ?? '',
       ),
       getStart: _read(map, 'getStart', fallback?.getStart ?? ''),
       createPlanHeader: _read(
@@ -1669,6 +3815,62 @@ class AppText {
         fallback?.createPlanHeader ?? '',
       ),
       planNameLabel: _read(map, 'planNameLabel', fallback?.planNameLabel ?? ''),
+      planTargetDaysLabel: _read(
+        map,
+        'planTargetDaysLabel',
+        fallback?.planTargetDaysLabel ?? '',
+      ),
+      planTargetDaysHint: _read(
+        map,
+        'planTargetDaysHint',
+        fallback?.planTargetDaysHint ?? '',
+      ),
+      duaPlanSlotLabel: _read(
+        map,
+        'duaPlanSlotLabel',
+        fallback?.duaPlanSlotLabel ?? '',
+      ),
+      duaPlanStatusLabel: _read(
+        map,
+        'duaPlanStatusLabel',
+        fallback?.duaPlanStatusLabel ?? '',
+      ),
+      duaSlotMorning: _read(
+        map,
+        'duaSlotMorning',
+        fallback?.duaSlotMorning ?? '',
+      ),
+      duaSlotAfternoon: _read(
+        map,
+        'duaSlotAfternoon',
+        fallback?.duaSlotAfternoon ?? '',
+      ),
+      duaSlotEvening: _read(
+        map,
+        'duaSlotEvening',
+        fallback?.duaSlotEvening ?? '',
+      ),
+      duaSlotNight: _read(map, 'duaSlotNight', fallback?.duaSlotNight ?? ''),
+      duaSlotAnytime: _read(
+        map,
+        'duaSlotAnytime',
+        fallback?.duaSlotAnytime ?? '',
+      ),
+      planEdit: _read(map, 'planEdit', fallback?.planEdit ?? ''),
+      planDelete: _read(map, 'planDelete', fallback?.planDelete ?? ''),
+      planComplete: _read(map, 'planComplete', fallback?.planComplete ?? ''),
+      planEditTitle: _read(map, 'planEditTitle', fallback?.planEditTitle ?? ''),
+      planDeleteQuestion: _read(
+        map,
+        'planDeleteQuestion',
+        fallback?.planDeleteQuestion ?? '',
+      ),
+      planCompleteQuestion: _read(
+        map,
+        'planCompleteQuestion',
+        fallback?.planCompleteQuestion ?? '',
+      ),
+      planCancel: _read(map, 'planCancel', fallback?.planCancel ?? ''),
       writeHereHint: _read(map, 'writeHereHint', fallback?.writeHereHint ?? ''),
       selectQuizCategory: _read(
         map,
@@ -1685,6 +3887,47 @@ class AppText {
       add: _read(map, 'add', fallback?.add ?? ''),
       create: _read(map, 'create', fallback?.create ?? ''),
       addMore: _read(map, 'addMore', fallback?.addMore ?? ''),
+      hadithCreatePlanTitle: _read(
+        map,
+        'hadithCreatePlanTitle',
+        fallback?.hadithCreatePlanTitle ?? '',
+      ),
+      selectHadithBook: _read(
+        map,
+        'selectHadithBook',
+        fallback?.selectHadithBook ?? '',
+      ),
+      selectCategory: _read(
+        map,
+        'selectCategory',
+        fallback?.selectCategory ?? '',
+      ),
+      selectDua: _read(map, 'selectDua', fallback?.selectDua ?? ''),
+      duaSelectedCount: _read(
+        map,
+        'duaSelectedCount',
+        fallback?.duaSelectedCount ?? '',
+      ),
+      egSahihBukhariHint: _read(
+        map,
+        'egSahihBukhariHint',
+        fallback?.egSahihBukhariHint ?? '',
+      ),
+      egHadithCategoryHint: _read(
+        map,
+        'egHadithCategoryHint',
+        fallback?.egHadithCategoryHint ?? '',
+      ),
+      hadithCategorySample: _read(
+        map,
+        'hadithCategorySample',
+        fallback?.hadithCategorySample ?? '',
+      ),
+      hadithCountSample: _read(
+        map,
+        'hadithCountSample',
+        fallback?.hadithCountSample ?? '',
+      ),
       categories: _read(map, 'categories', fallback?.categories ?? ''),
       quizzesCountLabel: _read(
         map,
@@ -1812,6 +4055,11 @@ class AppText {
         'quranArabicSizeLabel',
         fallback?.quranArabicSizeLabel ?? '',
       ),
+      quranArabicFontLabel: _read(
+        map,
+        'quranArabicFontLabel',
+        fallback?.quranArabicFontLabel ?? '',
+      ),
       quranTranslationSizeLabel: _read(
         map,
         'quranTranslationSizeLabel',
@@ -1885,10 +4133,421 @@ class AppText {
         fallback?.unableToLoadQuizHistory ?? '',
       ),
       tryAgain: _read(map, 'tryAgain', fallback?.tryAgain ?? ''),
+      learningNoCategories: _read(
+        map,
+        'learningNoCategories',
+        fallback?.learningNoCategories ?? '',
+      ),
+      learningNoArticles: _read(
+        map,
+        'learningNoArticles',
+        fallback?.learningNoArticles ?? '',
+      ),
+      learningNoSearchResults: _read(
+        map,
+        'learningNoSearchResults',
+        fallback?.learningNoSearchResults ?? '',
+      ),
+      learningSearchArticles: _read(
+        map,
+        'learningSearchArticles',
+        fallback?.learningSearchArticles ?? '',
+      ),
+      learningArticleNotFound: _read(
+        map,
+        'learningArticleNotFound',
+        fallback?.learningArticleNotFound ?? '',
+      ),
+      learningCategoryNotFound: _read(
+        map,
+        'learningCategoryNotFound',
+        fallback?.learningCategoryNotFound ?? '',
+      ),
+      learningErrorInvalid: _read(
+        map,
+        'learningErrorInvalid',
+        fallback?.learningErrorInvalid ?? '',
+      ),
+      learningErrorRateLimit: _read(
+        map,
+        'learningErrorRateLimit',
+        fallback?.learningErrorRateLimit ?? '',
+      ),
+      learningNoContent: _read(
+        map,
+        'learningNoContent',
+        fallback?.learningNoContent ?? '',
+      ),
+      articlePublishedOn: _read(
+        map,
+        'articlePublishedOn',
+        fallback?.articlePublishedOn ?? '',
+      ),
+      articleByAuthor: _read(
+        map,
+        'articleByAuthor',
+        fallback?.articleByAuthor ?? '',
+      ),
+      quizQuestionOfTotal: _read(
+        map,
+        'quizQuestionOfTotal',
+        fallback?.quizQuestionOfTotal ?? '',
+      ),
+      quizTimeRemaining: _read(
+        map,
+        'quizTimeRemaining',
+        fallback?.quizTimeRemaining ?? '',
+      ),
+      submit: _read(map, 'submit', fallback?.submit ?? ''),
+      noQuizAvailable: _read(
+        map,
+        'noQuizAvailable',
+        fallback?.noQuizAvailable ?? '',
+      ),
+      unableToLoadQuiz: _read(
+        map,
+        'unableToLoadQuiz',
+        fallback?.unableToLoadQuiz ?? '',
+      ),
+      unableToLoadQuizCategories: _read(
+        map,
+        'unableToLoadQuizCategories',
+        fallback?.unableToLoadQuizCategories ?? '',
+      ),
+      noQuizCategories: _read(
+        map,
+        'noQuizCategories',
+        fallback?.noQuizCategories ?? '',
+      ),
+      quizSubmitFailed: _read(
+        map,
+        'quizSubmitFailed',
+        fallback?.quizSubmitFailed ?? '',
+      ),
+      dailyQuiz: _read(map, 'dailyQuiz', fallback?.dailyQuiz ?? ''),
+      dailyQuizNumber: _read(
+        map,
+        'dailyQuizNumber',
+        fallback?.dailyQuizNumber ?? '',
+      ),
+      dailyQuizzesDone: _read(
+        map,
+        'dailyQuizzesDone',
+        fallback?.dailyQuizzesDone ?? '',
+      ),
+      startDailyQuizNumber: _read(
+        map,
+        'startDailyQuizNumber',
+        fallback?.startDailyQuizNumber ?? '',
+      ),
+      dailyQuizNumberCompleted: _read(
+        map,
+        'dailyQuizNumberCompleted',
+        fallback?.dailyQuizNumberCompleted ?? '',
+      ),
+      allDailyQuizzesCompleted: _read(
+        map,
+        'allDailyQuizzesCompleted',
+        fallback?.allDailyQuizzesCompleted ?? '',
+      ),
+      youCompletedTheQuiz: _read(
+        map,
+        'youCompletedTheQuiz',
+        fallback?.youCompletedTheQuiz ?? '',
+      ),
+      scoreLabel: _read(map, 'scoreLabel', fallback?.scoreLabel ?? ''),
+      reviewAnswers: _read(map, 'reviewAnswers', fallback?.reviewAnswers ?? ''),
+      explanationLabel: _read(
+        map,
+        'explanationLabel',
+        fallback?.explanationLabel ?? '',
+      ),
+      notAnswered: _read(map, 'notAnswered', fallback?.notAnswered ?? ''),
+      noQuizAttemptsYet: _read(
+        map,
+        'noQuizAttemptsYet',
+        fallback?.noQuizAttemptsYet ?? '',
+      ),
+      bestScore: _read(map, 'bestScore', fallback?.bestScore ?? ''),
+      averageScore: _read(map, 'averageScore', fallback?.averageScore ?? ''),
+      attemptsLabel: _read(map, 'attemptsLabel', fallback?.attemptsLabel ?? ''),
+      unableToLoadAttempt: _read(
+        map,
+        'unableToLoadAttempt',
+        fallback?.unableToLoadAttempt ?? '',
+      ),
+      questionUnavailable: _read(
+        map,
+        'questionUnavailable',
+        fallback?.questionUnavailable ?? '',
+      ),
+      allLabel: _read(map, 'allLabel', fallback?.allLabel ?? ''),
+      noQuestionsInGroup: _read(
+        map,
+        'noQuestionsInGroup',
+        fallback?.noQuestionsInGroup ?? '',
+      ),
+      planStatusPlanned: _read(
+        map,
+        'planStatusPlanned',
+        fallback?.planStatusPlanned ?? '',
+      ),
+      planStatusInProgress: _read(
+        map,
+        'planStatusInProgress',
+        fallback?.planStatusInProgress ?? '',
+      ),
+      planStatusCompleted: _read(
+        map,
+        'planStatusCompleted',
+        fallback?.planStatusCompleted ?? '',
+      ),
+      planStatusAbandoned: _read(
+        map,
+        'planStatusAbandoned',
+        fallback?.planStatusAbandoned ?? '',
+      ),
+      startLabel: _read(map, 'startLabel', fallback?.startLabel ?? ''),
+      continueLabel: _read(map, 'continueLabel', fallback?.continueLabel ?? ''),
+      abandonPlan: _read(map, 'abandonPlan', fallback?.abandonPlan ?? ''),
+      abandonPlanQuestion: _read(
+        map,
+        'abandonPlanQuestion',
+        fallback?.abandonPlanQuestion ?? '',
+      ),
+      abandonPlanNote: _read(
+        map,
+        'abandonPlanNote',
+        fallback?.abandonPlanNote ?? '',
+      ),
+      scheduleLabel: _read(map, 'scheduleLabel', fallback?.scheduleLabel ?? ''),
+      notScheduled: _read(map, 'notScheduled', fallback?.notScheduled ?? ''),
+      clearLabel: _read(map, 'clearLabel', fallback?.clearLabel ?? ''),
+      notCompletedLabel: _read(
+        map,
+        'notCompletedLabel',
+        fallback?.notCompletedLabel ?? '',
+      ),
+      quizzesCompletedLabel: _read(
+        map,
+        'quizzesCompletedLabel',
+        fallback?.quizzesCompletedLabel ?? '',
+      ),
+      percentCompleteLabel: _read(
+        map,
+        'percentCompleteLabel',
+        fallback?.percentCompleteLabel ?? '',
+      ),
+      remainingLabel: _read(
+        map,
+        'remainingLabel',
+        fallback?.remainingLabel ?? '',
+      ),
+      numberOfQuizzes: _read(
+        map,
+        'numberOfQuizzes',
+        fallback?.numberOfQuizzes ?? '',
+      ),
+      questionsPerQuiz: _read(
+        map,
+        'questionsPerQuiz',
+        fallback?.questionsPerQuiz ?? '',
+      ),
+      planNameRequired: _read(
+        map,
+        'planNameRequired',
+        fallback?.planNameRequired ?? '',
+      ),
+      addAtLeastOneQuiz: _read(
+        map,
+        'addAtLeastOneQuiz',
+        fallback?.addAtLeastOneQuiz ?? '',
+      ),
+      selectCategoryFirst: _read(
+        map,
+        'selectCategoryFirst',
+        fallback?.selectCategoryFirst ?? '',
+      ),
+      selectDuaFirst: _read(
+        map,
+        'selectDuaFirst',
+        fallback?.selectDuaFirst ?? '',
+      ),
+      planCreated: _read(map, 'planCreated', fallback?.planCreated ?? ''),
+      planUpdated: _read(map, 'planUpdated', fallback?.planUpdated ?? ''),
+      planAbandoned: _read(map, 'planAbandoned', fallback?.planAbandoned ?? ''),
+      planSave: _read(map, 'planSave', fallback?.planSave ?? ''),
+      nextQuizLabel: _read(map, 'nextQuizLabel', fallback?.nextQuizLabel ?? ''),
+      backToPlan: _read(map, 'backToPlan', fallback?.backToPlan ?? ''),
+      planQuizLabel: _read(map, 'planQuizLabel', fallback?.planQuizLabel ?? ''),
+      planErrorNotFound: _read(
+        map,
+        'planErrorNotFound',
+        fallback?.planErrorNotFound ?? '',
+      ),
+      planErrorAbandoned: _read(
+        map,
+        'planErrorAbandoned',
+        fallback?.planErrorAbandoned ?? '',
+      ),
+      planErrorNotStarted: _read(
+        map,
+        'planErrorNotStarted',
+        fallback?.planErrorNotStarted ?? '',
+      ),
+      planErrorPortionDone: _read(
+        map,
+        'planErrorPortionDone',
+        fallback?.planErrorPortionDone ?? '',
+      ),
+      planErrorInvalid: _read(
+        map,
+        'planErrorInvalid',
+        fallback?.planErrorInvalid ?? '',
+      ),
+      noPlannedQuestions: _read(
+        map,
+        'noPlannedQuestions',
+        fallback?.noPlannedQuestions ?? '',
+      ),
+      correctLabel: _read(map, 'correctLabel', fallback?.correctLabel ?? ''),
+      incorrectLabel: _read(
+        map,
+        'incorrectLabel',
+        fallback?.incorrectLabel ?? '',
+      ),
+      unansweredLabel: _read(
+        map,
+        'unansweredLabel',
+        fallback?.unansweredLabel ?? '',
+      ),
+      answeredLabel: _read(map, 'answeredLabel', fallback?.answeredLabel ?? ''),
+      correctPercentageLabel: _read(
+        map,
+        'correctPercentageLabel',
+        fallback?.correctPercentageLabel ?? '',
+      ),
+      totalTimeLabel: _read(
+        map,
+        'totalTimeLabel',
+        fallback?.totalTimeLabel ?? '',
+      ),
+      currentStreakLabel: _read(
+        map,
+        'currentStreakLabel',
+        fallback?.currentStreakLabel ?? '',
+      ),
+      averageMinutesPerDayLabel: _read(
+        map,
+        'averageMinutesPerDayLabel',
+        fallback?.averageMinutesPerDayLabel ?? '',
+      ),
+      completedAtLabel: _read(
+        map,
+        'completedAtLabel',
+        fallback?.completedAtLabel ?? '',
+      ),
+      fiftyFiftyUsedLabel: _read(
+        map,
+        'fiftyFiftyUsedLabel',
+        fallback?.fiftyFiftyUsedLabel ?? '',
+      ),
+      difficultyLabel: _read(
+        map,
+        'difficultyLabel',
+        fallback?.difficultyLabel ?? '',
+      ),
+      quizCategoryLabel: _read(
+        map,
+        'quizCategoryLabel',
+        fallback?.quizCategoryLabel ?? '',
+      ),
+      minutesLabel: _read(map, 'minutesLabel', fallback?.minutesLabel ?? ''),
+      daysWord: _read(map, 'daysWord', fallback?.daysWord ?? ''),
+      youLabel: _read(map, 'youLabel', fallback?.youLabel ?? ''),
+      rankLabel: _read(map, 'rankLabel', fallback?.rankLabel ?? ''),
+      aheadLabel: _read(map, 'aheadLabel', fallback?.aheadLabel ?? ''),
+      behindLabel: _read(map, 'behindLabel', fallback?.behindLabel ?? ''),
+      noCompetitorYet: _read(
+        map,
+        'noCompetitorYet',
+        fallback?.noCompetitorYet ?? '',
+      ),
+      quizComparisonTitle: _read(
+        map,
+        'quizComparisonTitle',
+        fallback?.quizComparisonTitle ?? '',
+      ),
+      dailyActivity: _read(map, 'dailyActivity', fallback?.dailyActivity ?? ''),
+      noQuizActivity: _read(
+        map,
+        'noQuizActivity',
+        fallback?.noQuizActivity ?? '',
+      ),
+      quizErrorNetwork: _read(
+        map,
+        'quizErrorNetwork',
+        fallback?.quizErrorNetwork ?? '',
+      ),
+      quizErrorSession: _read(
+        map,
+        'quizErrorSession',
+        fallback?.quizErrorSession ?? '',
+      ),
+      quizErrorForbidden: _read(
+        map,
+        'quizErrorForbidden',
+        fallback?.quizErrorForbidden ?? '',
+      ),
+      quizErrorNotFound: _read(
+        map,
+        'quizErrorNotFound',
+        fallback?.quizErrorNotFound ?? '',
+      ),
+      quizErrorInvalidRange: _read(
+        map,
+        'quizErrorInvalidRange',
+        fallback?.quizErrorInvalidRange ?? '',
+      ),
+      quizErrorGeneric: _read(
+        map,
+        'quizErrorGeneric',
+        fallback?.quizErrorGeneric ?? '',
+      ),
       questionsWord: _read(map, 'questionsWord', fallback?.questionsWord ?? ''),
       learn: _read(map, 'learn', fallback?.learn ?? ''),
       planner: _read(map, 'planner', fallback?.planner ?? ''),
       profileTitle: _read(map, 'profileTitle', fallback?.profileTitle ?? ''),
+      editProfileTitle: _read(
+        map,
+        'editProfileTitle',
+        fallback?.editProfileTitle ?? '',
+      ),
+      editProfileSelectPhotoTitle: _read(
+        map,
+        'editProfileSelectPhotoTitle',
+        fallback?.editProfileSelectPhotoTitle ?? '',
+      ),
+      editProfileChooseGallery: _read(
+        map,
+        'editProfileChooseGallery',
+        fallback?.editProfileChooseGallery ?? '',
+      ),
+      editProfileCancel: _read(
+        map,
+        'editProfileCancel',
+        fallback?.editProfileCancel ?? '',
+      ),
+      editProfileImagePickError: _read(
+        map,
+        'editProfileImagePickError',
+        fallback?.editProfileImagePickError ?? '',
+      ),
+      editProfilePhotoUploadError: _read(
+        map,
+        'editProfilePhotoUploadError',
+        fallback?.editProfilePhotoUploadError ?? '',
+      ),
       percentCompleteSuffix: _read(
         map,
         'percentCompleteSuffix',
@@ -1896,6 +4555,28 @@ class AppText {
       ),
       mymensingh: _read(map, 'mymensingh', fallback?.mymensingh ?? ''),
       badgeLabel: _read(map, 'badgeLabel', fallback?.badgeLabel ?? ''),
+      badgesTitle: _read(map, 'badgesTitle', fallback?.badgesTitle ?? ''),
+      badgePointsToNext: _read(
+        map,
+        'badgePointsToNext',
+        fallback?.badgePointsToNext ?? '',
+      ),
+      badgeTopReached: _read(
+        map,
+        'badgeTopReached',
+        fallback?.badgeTopReached ?? '',
+      ),
+      badgePointsRange: _read(
+        map,
+        'badgePointsRange',
+        fallback?.badgePointsRange ?? '',
+      ),
+      badgeUnlocked: _read(map, 'badgeUnlocked', fallback?.badgeUnlocked ?? ''),
+      badgeMorePoints: _read(
+        map,
+        'badgeMorePoints',
+        fallback?.badgeMorePoints ?? '',
+      ),
       position: _read(map, 'position', fallback?.position ?? ''),
       pointsWord: _read(map, 'pointsWord', fallback?.pointsWord ?? ''),
       familyMember: _read(map, 'familyMember', fallback?.familyMember ?? ''),
@@ -1916,9 +4597,891 @@ class AppText {
         fallback?.familyMemberNameAli ?? '',
       ),
       logout: _read(map, 'logout', fallback?.logout ?? ''),
+      logoutConfirmMessage: _read(
+        map,
+        'logoutConfirmMessage',
+        fallback?.logoutConfirmMessage ?? '',
+      ),
+      yes: _read(map, 'yes', fallback?.yes ?? ''),
+      no: _read(map, 'no', fallback?.no ?? ''),
+      prayerNowLabel: _read(
+        map,
+        'prayerNowLabel',
+        fallback?.prayerNowLabel ?? '',
+      ),
+      loginRequiredMessage: _read(
+        map,
+        'loginRequiredMessage',
+        fallback?.loginRequiredMessage ?? '',
+      ),
+      quranAllTypes: _read(map, 'quranAllTypes', fallback?.quranAllTypes ?? ''),
+      quranSurahNumberTitle: _read(
+        map,
+        'quranSurahNumberTitle',
+        fallback?.quranSurahNumberTitle ?? '',
+      ),
+      hadithTimerRead: _read(
+        map,
+        'hadithTimerRead',
+        fallback?.hadithTimerRead ?? '',
+      ),
+      hadithTimerReading: _read(
+        map,
+        'hadithTimerReading',
+        fallback?.hadithTimerReading ?? '',
+      ),
+      hadithTimerPaused: _read(
+        map,
+        'hadithTimerPaused',
+        fallback?.hadithTimerPaused ?? '',
+      ),
+      calendarArabicInBangla: _read(
+        map,
+        'calendarArabicInBangla',
+        fallback?.calendarArabicInBangla ?? '',
+      ),
+      quranBookmarkSurah: _read(
+        map,
+        'quranBookmarkSurah',
+        fallback?.quranBookmarkSurah ?? '',
+      ),
+      quranOfflineTitle: _read(
+        map,
+        'quranOfflineTitle',
+        fallback?.quranOfflineTitle ?? '',
+      ),
+      hadithCompetitor: _read(
+        map,
+        'hadithCompetitor',
+        fallback?.hadithCompetitor ?? '',
+      ),
+      failurePasswordRule: _read(
+        map,
+        'failurePasswordRule',
+        fallback?.failurePasswordRule ?? '',
+      ),
+      failureResetSessionExpired: _read(
+        map,
+        'failureResetSessionExpired',
+        fallback?.failureResetSessionExpired ?? '',
+      ),
+      failureGoogleUnavailable: _read(
+        map,
+        'failureGoogleUnavailable',
+        fallback?.failureGoogleUnavailable ?? '',
+      ),
+      failureAudioServer: _read(
+        map,
+        'failureAudioServer',
+        fallback?.failureAudioServer ?? '',
+      ),
+      failureNoAudioSurah: _read(
+        map,
+        'failureNoAudioSurah',
+        fallback?.failureNoAudioSurah ?? '',
+      ),
+      failureNoAudioAyah: _read(
+        map,
+        'failureNoAudioAyah',
+        fallback?.failureNoAudioAyah ?? '',
+      ),
+      failureAudioDownload: _read(
+        map,
+        'failureAudioDownload',
+        fallback?.failureAudioDownload ?? '',
+      ),
+      failureQuranContent: _read(
+        map,
+        'failureQuranContent',
+        fallback?.failureQuranContent ?? '',
+      ),
+      failureDownloadInterrupted: _read(
+        map,
+        'failureDownloadInterrupted',
+        fallback?.failureDownloadInterrupted ?? '',
+      ),
+      failureSurahListLoad: _read(
+        map,
+        'failureSurahListLoad',
+        fallback?.failureSurahListLoad ?? '',
+      ),
+      failureNotAvailableOffline: _read(
+        map,
+        'failureNotAvailableOffline',
+        fallback?.failureNotAvailableOffline ?? '',
+      ),
+      failureContentLoad: _read(
+        map,
+        'failureContentLoad',
+        fallback?.failureContentLoad ?? '',
+      ),
+      failureTranslationBuiltIn: _read(
+        map,
+        'failureTranslationBuiltIn',
+        fallback?.failureTranslationBuiltIn ?? '',
+      ),
+      failureNoTranslationSurah: _read(
+        map,
+        'failureNoTranslationSurah',
+        fallback?.failureNoTranslationSurah ?? '',
+      ),
+      failureEbookNoPdf: _read(
+        map,
+        'failureEbookNoPdf',
+        fallback?.failureEbookNoPdf ?? '',
+      ),
+      failureDownloadFailed: _read(
+        map,
+        'failureDownloadFailed',
+        fallback?.failureDownloadFailed ?? '',
+      ),
+      failureQuranPlanDuplicateName: _read(
+        map,
+        'failureQuranPlanDuplicateName',
+        fallback?.failureQuranPlanDuplicateName ?? '',
+      ),
+      failureQuranPlanLoad: _read(
+        map,
+        'failureQuranPlanLoad',
+        fallback?.failureQuranPlanLoad ?? '',
+      ),
+      failureQuranPlanCreate: _read(
+        map,
+        'failureQuranPlanCreate',
+        fallback?.failureQuranPlanCreate ?? '',
+      ),
+      failureQuranPlanUpdate: _read(
+        map,
+        'failureQuranPlanUpdate',
+        fallback?.failureQuranPlanUpdate ?? '',
+      ),
+      failureQuranPlanDetailsLoad: _read(
+        map,
+        'failureQuranPlanDetailsLoad',
+        fallback?.failureQuranPlanDetailsLoad ?? '',
+      ),
+      failureQuranPlanAyahsLoad: _read(
+        map,
+        'failureQuranPlanAyahsLoad',
+        fallback?.failureQuranPlanAyahsLoad ?? '',
+      ),
+      failureQuranPlanComplete: _read(
+        map,
+        'failureQuranPlanComplete',
+        fallback?.failureQuranPlanComplete ?? '',
+      ),
+      failureQuranPlanDelete: _read(
+        map,
+        'failureQuranPlanDelete',
+        fallback?.failureQuranPlanDelete ?? '',
+      ),
+      failureQuranPlanNotFound: _read(
+        map,
+        'failureQuranPlanNotFound',
+        fallback?.failureQuranPlanNotFound ?? '',
+      ),
+      failureQuranPlanUnreadAyahs: _read(
+        map,
+        'failureQuranPlanUnreadAyahs',
+        fallback?.failureQuranPlanUnreadAyahs ?? '',
+      ),
+      failureQuranPlaylistDuplicateName: _read(
+        map,
+        'failureQuranPlaylistDuplicateName',
+        fallback?.failureQuranPlaylistDuplicateName ?? '',
+      ),
+      failureQuranPlaylistLoad: _read(
+        map,
+        'failureQuranPlaylistLoad',
+        fallback?.failureQuranPlaylistLoad ?? '',
+      ),
+      failureQuranPlaylistCreate: _read(
+        map,
+        'failureQuranPlaylistCreate',
+        fallback?.failureQuranPlaylistCreate ?? '',
+      ),
+      failureQuranPlaylistUpdate: _read(
+        map,
+        'failureQuranPlaylistUpdate',
+        fallback?.failureQuranPlaylistUpdate ?? '',
+      ),
+      failureQuranPlaylistDetailsLoad: _read(
+        map,
+        'failureQuranPlaylistDetailsLoad',
+        fallback?.failureQuranPlaylistDetailsLoad ?? '',
+      ),
+      failureQuranPlaylistAyahsLoad: _read(
+        map,
+        'failureQuranPlaylistAyahsLoad',
+        fallback?.failureQuranPlaylistAyahsLoad ?? '',
+      ),
+      failureQuranPlaylistDelete: _read(
+        map,
+        'failureQuranPlaylistDelete',
+        fallback?.failureQuranPlaylistDelete ?? '',
+      ),
+      failureQuranPlaylistNotFound: _read(
+        map,
+        'failureQuranPlaylistNotFound',
+        fallback?.failureQuranPlaylistNotFound ?? '',
+      ),
+      quranSurahBookmarked: _read(
+        map,
+        'quranSurahBookmarked',
+        fallback?.quranSurahBookmarked ?? '',
+      ),
+      quranSurahBookmarkRemoved: _read(
+        map,
+        'quranSurahBookmarkRemoved',
+        fallback?.quranSurahBookmarkRemoved ?? '',
+      ),
+      quranViewInAyat: _read(
+        map,
+        'quranViewInAyat',
+        fallback?.quranViewInAyat ?? '',
+      ),
+      quranChangeText: _read(
+        map,
+        'quranChangeText',
+        fallback?.quranChangeText ?? '',
+      ),
+      quranTranslationUnavailable: _read(
+        map,
+        'quranTranslationUnavailable',
+        fallback?.quranTranslationUnavailable ?? '',
+      ),
+      quranReadyOffline: _read(
+        map,
+        'quranReadyOffline',
+        fallback?.quranReadyOffline ?? '',
+      ),
+      quranDownloading: _read(
+        map,
+        'quranDownloading',
+        fallback?.quranDownloading ?? '',
+      ),
+      commonDone: _read(map, 'commonDone', fallback?.commonDone ?? ''),
+      quranRetryDownload: _read(
+        map,
+        'quranRetryDownload',
+        fallback?.quranRetryDownload ?? '',
+      ),
+      quranDownloadQuran: _read(
+        map,
+        'quranDownloadQuran',
+        fallback?.quranDownloadQuran ?? '',
+      ),
+      quranShareTranslation: _read(
+        map,
+        'quranShareTranslation',
+        fallback?.quranShareTranslation ?? '',
+      ),
+      quranNoTafsir: _read(map, 'quranNoTafsir', fallback?.quranNoTafsir ?? ''),
+      hadithTimeMinutes: _read(
+        map,
+        'hadithTimeMinutes',
+        fallback?.hadithTimeMinutes ?? '',
+      ),
+      hadithPointValue: _read(
+        map,
+        'hadithPointValue',
+        fallback?.hadithPointValue ?? '',
+      ),
+      quranRangeEnd: _read(map, 'quranRangeEnd', fallback?.quranRangeEnd ?? ''),
+      commonCancel: _read(map, 'commonCancel', fallback?.commonCancel ?? ''),
+      commonApply: _read(map, 'commonApply', fallback?.commonApply ?? ''),
+      quranParaTitle: _read(
+        map,
+        'quranParaTitle',
+        fallback?.quranParaTitle ?? '',
+      ),
+      quranNoSurahs: _read(map, 'quranNoSurahs', fallback?.quranNoSurahs ?? ''),
+      quranParaRange: _read(
+        map,
+        'quranParaRange',
+        fallback?.quranParaRange ?? '',
+      ),
+      quranSurahAyahRange: _read(
+        map,
+        'quranSurahAyahRange',
+        fallback?.quranSurahAyahRange ?? '',
+      ),
+      quranAyahLoadFailed: _read(
+        map,
+        'quranAyahLoadFailed',
+        fallback?.quranAyahLoadFailed ?? '',
+      ),
+      quranPageLabel: _read(
+        map,
+        'quranPageLabel',
+        fallback?.quranPageLabel ?? '',
+      ),
+      quranSurahChip: _read(
+        map,
+        'quranSurahChip',
+        fallback?.quranSurahChip ?? '',
+      ),
+      quranFilterTitle: _read(
+        map,
+        'quranFilterTitle',
+        fallback?.quranFilterTitle ?? '',
+      ),
+      quranActions: _read(map, 'quranActions', fallback?.quranActions ?? ''),
+      quranPageLoadFailedRetry: _read(
+        map,
+        'quranPageLoadFailedRetry',
+        fallback?.quranPageLoadFailedRetry ?? '',
+      ),
+      quranNoAyahs: _read(map, 'quranNoAyahs', fallback?.quranNoAyahs ?? ''),
+      quranVerseInfo: _read(
+        map,
+        'quranVerseInfo',
+        fallback?.quranVerseInfo ?? '',
+      ),
+      quranTafsirVerse: _read(
+        map,
+        'quranTafsirVerse',
+        fallback?.quranTafsirVerse ?? '',
+      ),
+      quranCloseTafsir: _read(
+        map,
+        'quranCloseTafsir',
+        fallback?.quranCloseTafsir ?? '',
+      ),
+      quranSurahPage: _read(
+        map,
+        'quranSurahPage',
+        fallback?.quranSurahPage ?? '',
+      ),
+      quranTajweedDownload: _read(
+        map,
+        'quranTajweedDownload',
+        fallback?.quranTajweedDownload ?? '',
+      ),
+      quranSearchSurahOrPara: _read(
+        map,
+        'quranSearchSurahOrPara',
+        fallback?.quranSearchSurahOrPara ?? '',
+      ),
+      quranNoResults: _read(
+        map,
+        'quranNoResults',
+        fallback?.quranNoResults ?? '',
+      ),
+      quranBrowseHint: _read(
+        map,
+        'quranBrowseHint',
+        fallback?.quranBrowseHint ?? '',
+      ),
+      quranTranslateHeading: _read(
+        map,
+        'quranTranslateHeading',
+        fallback?.quranTranslateHeading ?? '',
+      ),
+      quranSelectTranslateLanguage: _read(
+        map,
+        'quranSelectTranslateLanguage',
+        fallback?.quranSelectTranslateLanguage ?? '',
+      ),
+      quranRetryLanguages: _read(
+        map,
+        'quranRetryLanguages',
+        fallback?.quranRetryLanguages ?? '',
+      ),
+      quranNoTranslations: _read(
+        map,
+        'quranNoTranslations',
+        fallback?.quranNoTranslations ?? '',
+      ),
+      quranCopy: _read(map, 'quranCopy', fallback?.quranCopy ?? ''),
+      quranShare: _read(map, 'quranShare', fallback?.quranShare ?? ''),
+      quranPlayAyah: _read(map, 'quranPlayAyah', fallback?.quranPlayAyah ?? ''),
+      quranBookmarkAyah: _read(
+        map,
+        'quranBookmarkAyah',
+        fallback?.quranBookmarkAyah ?? '',
+      ),
+      quranSajdah: _read(map, 'quranSajdah', fallback?.quranSajdah ?? ''),
+      quranTajweedTitle: _read(
+        map,
+        'quranTajweedTitle',
+        fallback?.quranTajweedTitle ?? '',
+      ),
+      quranTajweedUnavailable: _read(
+        map,
+        'quranTajweedUnavailable',
+        fallback?.quranTajweedUnavailable ?? '',
+      ),
+      quranDownloadInterrupted: _read(
+        map,
+        'quranDownloadInterrupted',
+        fallback?.quranDownloadInterrupted ?? '',
+      ),
+      quranKeepScreenOpen: _read(
+        map,
+        'quranKeepScreenOpen',
+        fallback?.quranKeepScreenOpen ?? '',
+      ),
+      quranNoFilters: _read(
+        map,
+        'quranNoFilters',
+        fallback?.quranNoFilters ?? '',
+      ),
+      quranJuzParaCarousel: _read(
+        map,
+        'quranJuzParaCarousel',
+        fallback?.quranJuzParaCarousel ?? '',
+      ),
+      quranSearchAndSelectSurah: _read(
+        map,
+        'quranSearchAndSelectSurah',
+        fallback?.quranSearchAndSelectSurah ?? '',
+      ),
+      quranSelectedSurah: _read(
+        map,
+        'quranSelectedSurah',
+        fallback?.quranSelectedSurah ?? '',
+      ),
+      quranNoSurahsFound: _read(
+        map,
+        'quranNoSurahsFound',
+        fallback?.quranNoSurahsFound ?? '',
+      ),
+      quranSurahTranslationAyahs: _read(
+        map,
+        'quranSurahTranslationAyahs',
+        fallback?.quranSurahTranslationAyahs ?? '',
+      ),
+      quranSelectAyat: _read(
+        map,
+        'quranSelectAyat',
+        fallback?.quranSelectAyat ?? '',
+      ),
+      quranAyahNumber: _read(
+        map,
+        'quranAyahNumber',
+        fallback?.quranAyahNumber ?? '',
+      ),
+      quranAyahCopied: _read(
+        map,
+        'quranAyahCopied',
+        fallback?.quranAyahCopied ?? '',
+      ),
+      quranShareFailed: _read(
+        map,
+        'quranShareFailed',
+        fallback?.quranShareFailed ?? '',
+      ),
+      quranSurahAyahCount: _read(
+        map,
+        'quranSurahAyahCount',
+        fallback?.quranSurahAyahCount ?? '',
+      ),
+      quranSurahHeadingInfo: _read(
+        map,
+        'quranSurahHeadingInfo',
+        fallback?.quranSurahHeadingInfo ?? '',
+      ),
+      quranBismillah: _read(
+        map,
+        'quranBismillah',
+        fallback?.quranBismillah ?? '',
+      ),
+      quranAyahTitle: _read(
+        map,
+        'quranAyahTitle',
+        fallback?.quranAyahTitle ?? '',
+      ),
+      quranAudioAyahTitle: _read(
+        map,
+        'quranAudioAyahTitle',
+        fallback?.quranAudioAyahTitle ?? '',
+      ),
+      duaSavedEdit: _read(map, 'duaSavedEdit', fallback?.duaSavedEdit ?? ''),
+      duaSavedDelete: _read(
+        map,
+        'duaSavedDelete',
+        fallback?.duaSavedDelete ?? '',
+      ),
+      duaSavedTitle: _read(map, 'duaSavedTitle', fallback?.duaSavedTitle ?? ''),
+      duaEditBookmarkTitle: _read(
+        map,
+        'duaEditBookmarkTitle',
+        fallback?.duaEditBookmarkTitle ?? '',
+      ),
+      duaEditPlanTitle: _read(
+        map,
+        'duaEditPlanTitle',
+        fallback?.duaEditPlanTitle ?? '',
+      ),
+      duaDeletePlanTitle: _read(
+        map,
+        'duaDeletePlanTitle',
+        fallback?.duaDeletePlanTitle ?? '',
+      ),
+      duaDeletePlanMessage: _read(
+        map,
+        'duaDeletePlanMessage',
+        fallback?.duaDeletePlanMessage ?? '',
+      ),
+      duaFolderName: _read(map, 'duaFolderName', fallback?.duaFolderName ?? ''),
+      duaFolderNameHint: _read(
+        map,
+        'duaFolderNameHint',
+        fallback?.duaFolderNameHint ?? '',
+      ),
+      duaSaveChanges: _read(
+        map,
+        'duaSaveChanges',
+        fallback?.duaSaveChanges ?? '',
+      ),
+      duaDeleteBookmarkTitle: _read(
+        map,
+        'duaDeleteBookmarkTitle',
+        fallback?.duaDeleteBookmarkTitle ?? '',
+      ),
+      duaDeleteBookmarkMessage: _read(
+        map,
+        'duaDeleteBookmarkMessage',
+        fallback?.duaDeleteBookmarkMessage ?? '',
+      ),
+      duaYesDelete: _read(map, 'duaYesDelete', fallback?.duaYesDelete ?? ''),
+      duaSavedCount: _read(map, 'duaSavedCount', fallback?.duaSavedCount ?? ''),
+      duaTotalSaved: _read(map, 'duaTotalSaved', fallback?.duaTotalSaved ?? ''),
+      amolReadConfirmMessage: _read(
+        map,
+        'amolReadConfirmMessage',
+        fallback?.amolReadConfirmMessage ?? '',
+      ),
+      amolUntrackTitle: _read(
+        map,
+        'amolUntrackTitle',
+        fallback?.amolUntrackTitle ?? '',
+      ),
+      amolUntrackMessage: _read(
+        map,
+        'amolUntrackMessage',
+        fallback?.amolUntrackMessage ?? '',
+      ),
+      leaderboardRankLabel: _read(
+        map,
+        'leaderboardRankLabel',
+        fallback?.leaderboardRankLabel ?? '',
+      ),
+      leaderboardNotRanked: _read(
+        map,
+        'leaderboardNotRanked',
+        fallback?.leaderboardNotRanked ?? '',
+      ),
+      leaderboardFirstPlace: _read(
+        map,
+        'leaderboardFirstPlace',
+        fallback?.leaderboardFirstPlace ?? '',
+      ),
+      leaderboardPointsBehindFirst: _read(
+        map,
+        'leaderboardPointsBehindFirst',
+        fallback?.leaderboardPointsBehindFirst ?? '',
+      ),
+      leaderboardPointsBehindFirstNamed: _read(
+        map,
+        'leaderboardPointsBehindFirstNamed',
+        fallback?.leaderboardPointsBehindFirstNamed ?? '',
+      ),
+      leaderboardParticipants: _read(
+        map,
+        'leaderboardParticipants',
+        fallback?.leaderboardParticipants ?? '',
+      ),
+      leaderboardTotalQuranTime: _read(
+        map,
+        'leaderboardTotalQuranTime',
+        fallback?.leaderboardTotalQuranTime ?? '',
+      ),
+      leaderboardMostReadingSura: _read(
+        map,
+        'leaderboardMostReadingSura',
+        fallback?.leaderboardMostReadingSura ?? '',
+      ),
+      readAtLabel: _read(map, 'readAtLabel', fallback?.readAtLabel ?? ''),
+      verificationCodeSent: _read(
+        map,
+        'verificationCodeSent',
+        fallback?.verificationCodeSent ?? '',
+      ),
+      verificationResendFailed: _read(
+        map,
+        'verificationResendFailed',
+        fallback?.verificationResendFailed ?? '',
+      ),
+      verificationFailed: _read(
+        map,
+        'verificationFailed',
+        fallback?.verificationFailed ?? '',
+      ),
+      resendCodeInSeconds: _read(
+        map,
+        'resendCodeInSeconds',
+        fallback?.resendCodeInSeconds ?? '',
+      ),
+      didntGetCodeResend: _read(
+        map,
+        'didntGetCodeResend',
+        fallback?.didntGetCodeResend ?? '',
+      ),
+      passwordUpdated: _read(
+        map,
+        'passwordUpdated',
+        fallback?.passwordUpdated ?? '',
+      ),
+      resetPasswordFailed: _read(
+        map,
+        'resetPasswordFailed',
+        fallback?.resetPasswordFailed ?? '',
+      ),
+      signInFailed: _read(map, 'signInFailed', fallback?.signInFailed ?? ''),
+      registrationFailed: _read(
+        map,
+        'registrationFailed',
+        fallback?.registrationFailed ?? '',
+      ),
+      currentPasswordHint: _read(
+        map,
+        'currentPasswordHint',
+        fallback?.currentPasswordHint ?? '',
+      ),
+      noDataHere: _read(map, 'noDataHere', fallback?.noDataHere ?? ''),
+      legalEffectiveLabel: _read(
+        map,
+        'legalEffectiveLabel',
+        fallback?.legalEffectiveLabel ?? '',
+      ),
+      legalLastUpdatedLabel: _read(
+        map,
+        'legalLastUpdatedLabel',
+        fallback?.legalLastUpdatedLabel ?? '',
+      ),
+      validatorRequired: _read(
+        map,
+        'validatorRequired',
+        fallback?.validatorRequired ?? '',
+      ),
+      validatorEmailEmpty: _read(
+        map,
+        'validatorEmailEmpty',
+        fallback?.validatorEmailEmpty ?? '',
+      ),
+      validatorEmailInvalid: _read(
+        map,
+        'validatorEmailInvalid',
+        fallback?.validatorEmailInvalid ?? '',
+      ),
+      validatorPasswordEmpty: _read(
+        map,
+        'validatorPasswordEmpty',
+        fallback?.validatorPasswordEmpty ?? '',
+      ),
+      validatorPasswordRule: _read(
+        map,
+        'validatorPasswordRule',
+        fallback?.validatorPasswordRule ?? '',
+      ),
+      validatorPasswordMin: _read(
+        map,
+        'validatorPasswordMin',
+        fallback?.validatorPasswordMin ?? '',
+      ),
+      validatorPasswordMax: _read(
+        map,
+        'validatorPasswordMax',
+        fallback?.validatorPasswordMax ?? '',
+      ),
+      validatorNameEmpty: _read(
+        map,
+        'validatorNameEmpty',
+        fallback?.validatorNameEmpty ?? '',
+      ),
+      validatorNameShort: _read(
+        map,
+        'validatorNameShort',
+        fallback?.validatorNameShort ?? '',
+      ),
+      validatorConfirmPasswordEmpty: _read(
+        map,
+        'validatorConfirmPasswordEmpty',
+        fallback?.validatorConfirmPasswordEmpty ?? '',
+      ),
+      validatorPasswordMismatch: _read(
+        map,
+        'validatorPasswordMismatch',
+        fallback?.validatorPasswordMismatch ?? '',
+      ),
+      validatorCurrentPasswordEmpty: _read(
+        map,
+        'validatorCurrentPasswordEmpty',
+        fallback?.validatorCurrentPasswordEmpty ?? '',
+      ),
+      validatorNewPasswordEmpty: _read(
+        map,
+        'validatorNewPasswordEmpty',
+        fallback?.validatorNewPasswordEmpty ?? '',
+      ),
+      validatorPasswordNoSpaces: _read(
+        map,
+        'validatorPasswordNoSpaces',
+        fallback?.validatorPasswordNoSpaces ?? '',
+      ),
+      validatorPasswordUppercase: _read(
+        map,
+        'validatorPasswordUppercase',
+        fallback?.validatorPasswordUppercase ?? '',
+      ),
+      validatorPasswordLowercase: _read(
+        map,
+        'validatorPasswordLowercase',
+        fallback?.validatorPasswordLowercase ?? '',
+      ),
+      validatorPasswordNumber: _read(
+        map,
+        'validatorPasswordNumber',
+        fallback?.validatorPasswordNumber ?? '',
+      ),
+      validatorPasswordSpecial: _read(
+        map,
+        'validatorPasswordSpecial',
+        fallback?.validatorPasswordSpecial ?? '',
+      ),
+      validatorPasswordSameAsOld: _read(
+        map,
+        'validatorPasswordSameAsOld',
+        fallback?.validatorPasswordSameAsOld ?? '',
+      ),
+      validatorConfirmNewPasswordEmpty: _read(
+        map,
+        'validatorConfirmNewPasswordEmpty',
+        fallback?.validatorConfirmNewPasswordEmpty ?? '',
+      ),
+      validatorOtpCode: _read(
+        map,
+        'validatorOtpCode',
+        fallback?.validatorOtpCode ?? '',
+      ),
+      validatorTermsRequired: _read(
+        map,
+        'validatorTermsRequired',
+        fallback?.validatorTermsRequired ?? '',
+      ),
+      passwordRequirementsHint: _read(
+        map,
+        'passwordRequirementsHint',
+        fallback?.passwordRequirementsHint ?? '',
+      ),
+      amLabel: _read(map, 'amLabel', fallback?.amLabel ?? ''),
+      pmLabel: _read(map, 'pmLabel', fallback?.pmLabel ?? ''),
+      hijriSuffix: _read(map, 'hijriSuffix', fallback?.hijriSuffix ?? ''),
+      failureNetwork: _read(
+        map,
+        'failureNetwork',
+        fallback?.failureNetwork ?? '',
+      ),
+      failureTimeout: _read(
+        map,
+        'failureTimeout',
+        fallback?.failureTimeout ?? '',
+      ),
+      failureSecureConnection: _read(
+        map,
+        'failureSecureConnection',
+        fallback?.failureSecureConnection ?? '',
+      ),
+      failureCancelled: _read(
+        map,
+        'failureCancelled',
+        fallback?.failureCancelled ?? '',
+      ),
+      failureStorage: _read(
+        map,
+        'failureStorage',
+        fallback?.failureStorage ?? '',
+      ),
+      failureUnknown: _read(
+        map,
+        'failureUnknown',
+        fallback?.failureUnknown ?? '',
+      ),
+      failureUnexpectedResponse: _read(
+        map,
+        'failureUnexpectedResponse',
+        fallback?.failureUnexpectedResponse ?? '',
+      ),
+      failureRequestFailed: _read(
+        map,
+        'failureRequestFailed',
+        fallback?.failureRequestFailed ?? '',
+      ),
+      failureNoSignedInUser: _read(
+        map,
+        'failureNoSignedInUser',
+        fallback?.failureNoSignedInUser ?? '',
+      ),
+      failureNoPasswordSignIn: _read(
+        map,
+        'failureNoPasswordSignIn',
+        fallback?.failureNoPasswordSignIn ?? '',
+      ),
+      failureMissingGoogleToken: _read(
+        map,
+        'failureMissingGoogleToken',
+        fallback?.failureMissingGoogleToken ?? '',
+      ),
       settingsTitle: _read(map, 'settingsTitle', fallback?.settingsTitle ?? ''),
       aboutUs: _read(map, 'aboutUs', fallback?.aboutUs ?? ''),
       ourProducts: _read(map, 'ourProducts', fallback?.ourProducts ?? ''),
+      addPrayerWidgetTitle: _read(
+        map,
+        'addPrayerWidgetTitle',
+        fallback?.addPrayerWidgetTitle ?? '',
+      ),
+      addPrayerWidgetSubtitle: _read(
+        map,
+        'addPrayerWidgetSubtitle',
+        fallback?.addPrayerWidgetSubtitle ?? '',
+      ),
+      addPrayerWidgetButton: _read(
+        map,
+        'addPrayerWidgetButton',
+        fallback?.addPrayerWidgetButton ?? '',
+      ),
+      addPrayerWidgetAndroidInstructions: _read(
+        map,
+        'addPrayerWidgetAndroidInstructions',
+        fallback?.addPrayerWidgetAndroidInstructions ?? '',
+      ),
+      addPrayerWidgetIosInstructions: _read(
+        map,
+        'addPrayerWidgetIosInstructions',
+        fallback?.addPrayerWidgetIosInstructions ?? '',
+      ),
+      widgetSizeSmall: _read(
+        map,
+        'widgetSizeSmall',
+        fallback?.widgetSizeSmall ?? '',
+      ),
+      widgetSizeMedium: _read(
+        map,
+        'widgetSizeMedium',
+        fallback?.widgetSizeMedium ?? '',
+      ),
+      widgetSizeLarge: _read(
+        map,
+        'widgetSizeLarge',
+        fallback?.widgetSizeLarge ?? '',
+      ),
+      widgetAmolTagline: _read(
+        map,
+        'widgetAmolTagline',
+        fallback?.widgetAmolTagline ?? '',
+      ),
       adminSupport: _read(map, 'adminSupport', fallback?.adminSupport ?? ''),
       feedback: _read(map, 'feedback', fallback?.feedback ?? ''),
       appLanguage: _read(map, 'appLanguage', fallback?.appLanguage ?? ''),
@@ -1980,10 +5543,15 @@ class AppText {
         'quranLoadError',
         fallback?.quranLoadError ?? '',
       ),
-      hifjoQuranTitle: _read(
+      quranMajeedTitle: _read(
         map,
-        'hifjoQuranTitle',
-        fallback?.hifjoQuranTitle ?? '',
+        'quranMajeedTitle',
+        fallback?.quranMajeedTitle ?? '',
+      ),
+      hifzulQuranTitle: _read(
+        map,
+        'hifzulQuranTitle',
+        fallback?.hifzulQuranTitle ?? '',
       ),
       lastReadLabel: _read(map, 'lastReadLabel', fallback?.lastReadLabel ?? ''),
       viewReadingHistory: _read(
@@ -2045,6 +5613,60 @@ class AppText {
       ),
       tafsirTitle: _read(map, 'tafsirTitle', fallback?.tafsirTitle ?? ''),
       repeatLabel: _read(map, 'repeatLabel', fallback?.repeatLabel ?? ''),
+      showTransliterationLabel: _read(
+        map,
+        'showTransliterationLabel',
+        fallback?.showTransliterationLabel ?? '',
+      ),
+      yearly: _read(map, 'yearly', fallback?.yearly ?? ''),
+      leaderboard: _read(map, 'leaderboard', fallback?.leaderboard ?? ''),
+      leaderboardTitle: _read(
+        map,
+        'leaderboardTitle',
+        fallback?.leaderboardTitle ?? '',
+      ),
+      yourRank: _read(map, 'yourRank', fallback?.yourRank ?? ''),
+      ptsToRank: _read(map, 'ptsToRank', fallback?.ptsToRank ?? ''),
+      deleteAccountConfirmPasswordTitle: _read(
+        map,
+        'deleteAccountConfirmPasswordTitle',
+        fallback?.deleteAccountConfirmPasswordTitle ?? '',
+      ),
+      deleteAccountConfirmPasswordMessage: _read(
+        map,
+        'deleteAccountConfirmPasswordMessage',
+        fallback?.deleteAccountConfirmPasswordMessage ?? '',
+      ),
+      deleteAccountPasswordHint: _read(
+        map,
+        'deleteAccountPasswordHint',
+        fallback?.deleteAccountPasswordHint ?? '',
+      ),
+      deleteAccountEmptyPassword: _read(
+        map,
+        'deleteAccountEmptyPassword',
+        fallback?.deleteAccountEmptyPassword ?? '',
+      ),
+      deleteAccountIncorrectPassword: _read(
+        map,
+        'deleteAccountIncorrectPassword',
+        fallback?.deleteAccountIncorrectPassword ?? '',
+      ),
+      deleteAccountFinalTitle: _read(
+        map,
+        'deleteAccountFinalTitle',
+        fallback?.deleteAccountFinalTitle ?? '',
+      ),
+      deleteAccountFinalMessage: _read(
+        map,
+        'deleteAccountFinalMessage',
+        fallback?.deleteAccountFinalMessage ?? '',
+      ),
+      deleteAccountFailureMessage: _read(
+        map,
+        'deleteAccountFailureMessage',
+        fallback?.deleteAccountFailureMessage ?? '',
+      ),
     );
   }
 
@@ -2067,8 +5689,13 @@ class AppText {
     );
   }
 
-  static AppText of(BuildContext context) {
-    final language = context.watch<LanguageBloc>().state.language;
+  static AppText of(BuildContext context) => forLanguage(languageOf(context));
+
+  /// Like [of], but does not subscribe to [LanguageBloc] changes. Use this
+  /// outside of `build` (e.g. in gesture callbacks) where listening would
+  /// throw a provider assertion.
+  static AppText readOf(BuildContext context) {
+    final language = context.read<LanguageBloc>().state.language;
     return forLanguage(language);
   }
 

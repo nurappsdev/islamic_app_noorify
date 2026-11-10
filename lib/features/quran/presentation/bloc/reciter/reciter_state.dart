@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/reciter.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reciter.dart';
 
 class ReciterState {
   const ReciterState({

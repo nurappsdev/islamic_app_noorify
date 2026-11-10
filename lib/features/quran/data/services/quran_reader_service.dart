@@ -1,12 +1,13 @@
 import 'dart:convert';
+import 'quran_content_service.dart';
 
 import 'package:http/http.dart' as http;
 
-import 'package:islami_app_noorify/features/quran/domain/juz_summary.dart';
-import 'package:islami_app_noorify/features/quran/domain/reciter.dart';
-import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/juz_summary.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reciter.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/verse_item.dart';
 
-/// Free, keyless Quran Foundation API: https://api.quran.com/api/v4
+/// Legacy facade: internal content plus Quran.com audio and tafsir only.
 abstract interface class QuranReaderService {
   Future<List<JuzSummary>> loadJuzList();
 
@@ -35,36 +36,37 @@ class QuranComReaderService implements QuranReaderService {
     : _client = client ?? http.Client();
 
   static const _host = 'api.quran.com';
-  static const _translationId = '20'; // Saheeh International (English)
 
   final http.Client _client;
 
   @override
-  Future<List<JuzSummary>> loadJuzList() async {
-    final uri = Uri.https(_host, '/api/v4/juzs');
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 12));
-    if (response.statusCode != 200) {
-      throw const FormatException('Failed to load juz list');
-    }
-    final body = jsonDecode(response.body);
-    if (body is! Map<String, dynamic> || body['juzs'] is! List) {
-      throw const FormatException('Invalid juz list response');
-    }
-    final seen = <int>{};
-    final juzs = <JuzSummary>[];
-    for (final raw in (body['juzs'] as List)) {
-      final juz = JuzSummary.fromJson(raw as Map<String, dynamic>);
-      if (seen.add(juz.number)) juzs.add(juz);
-    }
-    juzs.sort((a, b) => a.number.compareTo(b.number));
-    return juzs;
-  }
+  Future<List<JuzSummary>> loadJuzList() =>
+      QuranContentService.shared.loadParas();
 
   @override
-  Future<List<VerseItem>> loadVersesByJuz(int juzNumber) {
-    return _loadVerses('/api/v4/verses/by_juz/$juzNumber', perPage: 320);
+  Future<List<VerseItem>> loadVersesByJuz(int juzNumber) async {
+    final content = QuranContentService.shared;
+    final para = await content.loadPara(juzNumber);
+    final result = <VerseItem>[];
+    for (final surah in para.surahs) {
+      final meta = await content.loadSurah(surah.number);
+      final ayahs = await content.loadRange(
+        surah.number,
+        from: surah.number == para.startSurahNo ? para.startAyah : 1,
+        to: surah.number == para.endSurahNo ? para.endAyah : meta.totalAyah,
+      );
+      result.addAll(
+        ayahs.map(
+          (a) => VerseItem(
+            surahNo: a.surahNumber,
+            ayahNo: a.ayahNumber,
+            arabic: a.textArabic,
+            translation: a.translations[161]?.text ?? '',
+          ),
+        ),
+      );
+    }
+    return result;
   }
 
   @override
@@ -175,59 +177,17 @@ class QuranComReaderService implements QuranReaderService {
     int resourceId,
     int surahNo,
   ) async {
-    final uri = Uri.https(_host, '/api/v4/quran/translations/$resourceId', {
-      'chapter_number': '$surahNo',
-    });
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 20));
-    if (response.statusCode != 200) {
-      throw const FormatException('Failed to load chapter translation');
-    }
-    final body = jsonDecode(response.body);
-    if (body is! Map<String, dynamic> || body['translations'] is! List) {
-      throw const FormatException('Invalid chapter translation response');
-    }
-    final list = body['translations'] as List;
-    final result = <int, String>{};
-    for (var i = 0; i < list.length; i++) {
-      final raw = list[i];
-      if (raw is! Map<String, dynamic>) continue;
-      final text = (raw['text'] as String? ?? '')
-          .replaceAll(RegExp(r'<[^>]*>'), '')
-          .trim();
-      // The array is in ayah order with no verse number of its own.
-      result[i + 1] = text;
-    }
-    if (result.isEmpty) {
-      throw const FormatException('Empty chapter translation');
-    }
-    return result;
-  }
-
-  Future<List<VerseItem>> _loadVerses(
-    String path, {
-    required int perPage,
-  }) async {
-    final uri = Uri.https(_host, path, {
-      'words': 'false',
-      'fields': 'text_uthmani',
-      'translations': _translationId,
-      'per_page': '$perPage',
-    });
-    final response = await _client
-        .get(uri)
-        .timeout(const Duration(seconds: 12));
-    if (response.statusCode != 200) {
-      throw const FormatException('Failed to load verses');
-    }
-    final body = jsonDecode(response.body);
-    if (body is! Map<String, dynamic> || body['verses'] is! List) {
-      throw const FormatException('Invalid verses response');
-    }
-    return [
-      for (final raw in (body['verses'] as List))
-        VerseItem.fromJson(raw as Map<String, dynamic>),
-    ];
+    final content = QuranContentService.shared;
+    final meta = await content.loadSurah(surahNo);
+    final ayahs = await content.loadRange(
+      surahNo,
+      from: 1,
+      to: meta.totalAyah,
+      translations: [resourceId],
+    );
+    return {
+      for (final a in ayahs)
+        a.ayahNumber: a.translations[resourceId]?.text ?? '',
+    };
   }
 }

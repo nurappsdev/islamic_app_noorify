@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ equivalent of backup_rules.xml, for both cloud backup and
+     device-to-device transfer: the plugin's list of armed OS alarms is not
+     restored; the user's saved alarms are. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="dev.fluttercommunity.plus.android_alarm_manager_plugin.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="dev.fluttercommunity.plus.android_alarm_manager_plugin.xml"/>
+    </device-transfer>
+</data-extraction-rules>

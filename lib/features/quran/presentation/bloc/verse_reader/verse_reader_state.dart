@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/verse_item.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/verse_item.dart';
 
 class VerseReaderState {
   const VerseReaderState({

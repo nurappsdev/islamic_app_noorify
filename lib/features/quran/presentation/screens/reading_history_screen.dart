@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
-import 'package:islami_app_noorify/features/quran/presentation/quran_route_args.dart';
-import 'package:islami_app_noorify/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/bloc/reading_history/reading_history_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/quran_route_args.dart';
+import 'package:tuhfatul_muslim/features/quran/presentation/widgets/quran_shimmer.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class ReadingHistoryScreen extends StatelessWidget {
   const ReadingHistoryScreen({super.key});
@@ -40,8 +42,12 @@ class ReadingHistoryScreen extends StatelessWidget {
                           child: IconButton(
                             onPressed: () => Navigator.maybePop(context),
                             style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFEDE7A6),
-                              foregroundColor: AppColor.authLogo,
+                              backgroundColor: context.surfaceColor(
+                                Color(0xFFEDE7A6),
+                              ),
+                              foregroundColor: context.inkColor(
+                                AppColor.authLogo,
+                              ),
                             ),
                             icon: const Icon(
                               Icons.arrow_back_ios_new_rounded,
@@ -73,7 +79,7 @@ class ReadingHistoryScreen extends StatelessWidget {
                             child: Text(
                               appText.noReadingHistoryYet,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color: context.inkColor(Colors.grey.shade700),
                                 fontSize: 13.sp,
                               ),
                             ),
@@ -86,7 +92,9 @@ class ReadingHistoryScreen extends StatelessWidget {
                           itemBuilder: (context, index) {
                             final entry = entries[index];
                             return Material(
-                              color: Colors.white.withValues(alpha: .85),
+                              color: context.surfaceColor(
+                                Colors.white.withValues(alpha: .85),
+                              ),
                               borderRadius: BorderRadius.circular(16.r),
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(16.r),
@@ -94,6 +102,7 @@ class ReadingHistoryScreen extends StatelessWidget {
                                   RouteNames.quranSurahDetail,
                                   arguments: SurahRouteArgs(
                                     surahNo: entry.surahNo,
+                                    ayahNo: entry.ayahNo,
                                     surahName: entry.surahName,
                                   ),
                                 ),
@@ -105,7 +114,9 @@ class ReadingHistoryScreen extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.r),
                                     border: Border.all(
-                                      color: const Color(0xFFDDE8C1),
+                                      color: context.lineColor(
+                                        Color(0xFFDDE8C1),
+                                      ),
                                     ),
                                   ),
                                   child: Row(
@@ -130,9 +141,13 @@ class ReadingHistoryScreen extends StatelessWidget {
                                             ),
                                             SizedBox(height: 3.h),
                                             Text(
-                                              '${appText.ayahNoLabel}: ${entry.ayahNo}',
+                                              context.localizedDigits(
+                                                '${appText.ayahNoLabel}: ${entry.ayahNo}',
+                                              ),
                                               style: TextStyle(
-                                                color: Colors.grey,
+                                                color: context.inkColor(
+                                                  Colors.grey,
+                                                ),
                                                 fontSize: 12.sp,
                                               ),
                                             ),

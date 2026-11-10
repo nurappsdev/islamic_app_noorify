@@ -1,0 +1,219 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+
+/// The zikr set being built (design `devImg/img_16.png`).
+///
+/// Reached with "Create" from [ZikrCreateScreen]; shows every zikr added so far.
+/// "Add More" returns to [ZikrCreateScreen] carrying the current set;
+/// "Let's Get Start" opens the counter with the whole sequence.
+class ZikrSetScreen extends StatelessWidget {
+  const ZikrSetScreen({super.key, required this.items});
+
+  final List<ZikrItem> items;
+
+  Future<void> _createRoutineAndStart(BuildContext context) async {
+    final appText = AppText.of(context);
+    try {
+      final routine = await zikrRepository.createRoutine({
+        'routineName': items.length == 1 ? items.first.name : appText.zikrTitle,
+        'items': [
+          for (final item in items)
+            {
+              'zikrKey': item.zikrKey,
+              'zikrName': item.name,
+              if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
+              'targetCount': item.target,
+            },
+        ],
+      });
+      if (!context.mounted) return;
+      Navigator.of(context).pushNamed(
+        RouteNames.zikrCounter,
+        arguments: ZikrCounterArgs(
+          title: routine.routineName,
+          items: [
+            for (final item in items) item.copyWith(routineId: routine.id),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      if (error is AuthenticationRequiredException) {
+        await showZikrLoginRequiredDialog(context);
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return Scaffold(
+      backgroundColor: context.pageColor(Colors.white),
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: 6.h),
+            SizedBox(
+              height: 44.h,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 12.w),
+                      child: IconButton(
+                        onPressed: () => Navigator.maybePop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFCBD16B),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          minimumSize: Size(38.r, 38.r),
+                        ),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    appText.zikrNewTitle,
+                    style: TextStyle(
+                      color: context.inkColor(Color(0xFF2C3320)),
+                      fontSize: 19.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 14.h),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
+                children: [
+                  for (final item in items) ...[
+                    _ZikrRow(item: item),
+                    SizedBox(height: 12.h),
+                  ],
+                  SizedBox(height: 4.h),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.of(context).pushReplacementNamed(
+                            RouteNames.zikrCreate,
+                            arguments: items,
+                          ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.inkColor(AppColor.authLogo),
+                        side: BorderSide(
+                          color: context.lineColor(Color(0xFFC7D6A6)),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 10.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.r),
+                        ),
+                      ),
+                      child: Text(
+                        appText.zikrAddMore,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h + bottomInset),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54.h,
+                child: FilledButton(
+                  onPressed: items.isEmpty
+                      ? null
+                      : () => _createRoutineAndStart(context),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColor.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28.r),
+                    ),
+                  ),
+                  child: Text(
+                    appText.zikrIntroStartButton,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ZikrRow extends StatelessWidget {
+  const _ZikrRow({required this.item});
+
+  final ZikrItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Color(0xFFF4F7EA)),
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              localizedZikrItemName(AppText.of(context), item),
+              style: TextStyle(
+                fontSize: 15.sp,
+                color: context.inkColor(Color(0xFF6B7358)),
+              ),
+            ),
+          ),
+          Text(
+            context.localizedDigits('(${item.target})'),
+            style: TextStyle(
+              fontSize: 15.sp,
+              color: context.inkColor(Color(0xFF6B7358)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

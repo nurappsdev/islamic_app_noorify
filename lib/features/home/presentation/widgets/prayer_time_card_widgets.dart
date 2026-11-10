@@ -9,18 +9,24 @@ class _CurrentPrayerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = _isBangla(context);
     final times = this.times;
+    String clock(PrayerClockTime t) =>
+        localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final period = times == null ? null : currentPrayerPeriod(now, times);
-    final label = times == null
+    final periodName = times == null
         ? '—'
         : (period?.displayName(appText) ?? appText.naflIshraq);
+    final label = times == null
+        ? periodName
+        : '$periodName ${appText.namazWord}';
     final rangeText = times == null
         ? '—'
         : period != null
-        ? '${formatPrayerTime(prayerStart(period, times))} – '
-              '${formatPrayerTime(prayerEnd(period, times))}'
-        : '${formatPrayerTime(times.sunrise)} – '
-              '${formatPrayerTime(times.dhuhr)}';
+        ? '${clock(prayerStart(period, times))} – '
+              '${clock(prayerEnd(period, times))}'
+        : '${clock(times.sunrise)} – '
+              '${clock(times.dhuhr)}';
     return Container(
       width: 190.w,
       height: 66.h,
@@ -40,8 +46,8 @@ class _CurrentPrayerBadge extends StatelessWidget {
               borderRadius: BorderRadius.circular(10.r),
             ),
             child: Padding(
-              padding: EdgeInsets.all(5.r),
-              child: CustomPaint(painter: _PrayerBadgeIllustrationPainter()),
+              padding: EdgeInsets.all(6.r),
+              child: Image.asset('assets/sejdaIcon.png', fit: BoxFit.contain),
             ),
           ),
           SizedBox(width: 14.w),
@@ -74,6 +80,101 @@ class _CurrentPrayerBadge extends StatelessWidget {
   }
 }
 
+/// The one style for the calendar dates along the top of the card, so the
+/// Hijri and Bengali dates always look alike. [fontSize] is only passed by
+/// [_CardDateRow], when both have to shrink to fit.
+TextStyle _calendarDateStyle({required Color color, double? fontSize}) {
+  return homeSerifStyle(
+    fontSize: fontSize ?? 10.sp,
+    fontWeight: FontWeight.w400,
+    color: color,
+  ).copyWith(height: 1.2);
+}
+
+/// The two calendar dates along the top of the card: [start] at the left edge
+/// and [end] at the right, set in [_calendarDateStyle].
+///
+/// When the pair is too wide for the card (the English Hijri date is long),
+/// both shrink by the same factor rather than each fitting itself, so they
+/// keep the same size and neither looks more prominent.
+class _CardDateRow extends StatelessWidget {
+  const _CardDateRow({
+    required this.start,
+    required this.end,
+    required this.color,
+  });
+
+  final String start;
+  final String end;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = _calendarDateStyle(color: color);
+    final scaler = MediaQuery.textScalerOf(context);
+    final gap = 28.w;
+
+    double widthOf(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: base),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      return painter.width;
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final startWidth = widthOf(start);
+        final endWidth = widthOf(end);
+        final textWidth = startWidth + endWidth;
+        final room = constraints.maxWidth - gap;
+        // A little under the exact fit, so rounding never overflows the row.
+        // No lower floor: a longer Hijri month name (e.g. "রবিউস সানি" vs.
+        // "সফর") must still be free to shrink as far as it needs to.
+        final scale = textWidth <= room || textWidth == 0
+            ? 1.0
+            : (room / textWidth * .98).clamp(0.0001, 1.0);
+        final style = _calendarDateStyle(
+          color: color,
+          fontSize: base.fontSize! * scale,
+        );
+        // Each box gets its proportional share of the available `room`
+        // rather than its own measured width — Bengali text shaping makes
+        // TextPainter.width an underestimate of what the real Text widget
+        // renders, so sizing the box to the raw measurement clipped the tail
+        // of both dates (fading out mid-word) even though there was unused
+        // space on the other side. Splitting proportionally keeps the same
+        // "longer date gets more room" balance while leaving slack on both
+        // sides to absorb that measurement error.
+        final startShare = textWidth == 0
+            ? room / 2
+            : room * startWidth / textWidth;
+        final endShare = room - startShare;
+        Widget date(String text, double width) => SizedBox(
+          width: width,
+          child: Text(
+            text,
+            style: style,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+          ),
+        );
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            date(start, startShare),
+            SizedBox(width: gap),
+            date(end, endShare),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _PrayerEdgeTime extends StatelessWidget {
   const _PrayerEdgeTime({
     required this.label,
@@ -97,7 +198,6 @@ class _PrayerEdgeTime extends StatelessWidget {
     final displayTime = showPrimary ? time : secondaryTime;
     return SizedBox(
       key: ValueKey(isSunrise ? 'prayer-edge-sunrise' : 'prayer-edge-sunset'),
-      height: 46.h,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -120,6 +220,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   child: Text(
                     displayLabel,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: homeSansStyle(fontSize: 13.sp, color: Colors.white),
                   ),
                 ),
@@ -130,6 +231,7 @@ class _PrayerEdgeTime extends StatelessWidget {
                   child: Text(
                     displayTime,
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: homeSansStyle(fontSize: 15.sp, color: Colors.white),
                   ),
                 ),

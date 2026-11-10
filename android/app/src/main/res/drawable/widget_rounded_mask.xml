@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pure outline shape: the root FrameLayout uses this as its background with
+     android:clipToOutline="true" so the full-bleed background photo (an
+     unrounded rectangle) gets clipped to the card's rounded corners,
+     regardless of the widget's actual (continuously resizable) dimensions. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+    <corners android:radius="20dp" />
+</shape>

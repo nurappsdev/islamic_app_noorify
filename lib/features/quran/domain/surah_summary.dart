@@ -15,6 +15,18 @@ class SurahSummary {
   final String revelationPlace;
   final int totalAyah;
 
+  factory SurahSummary.fromInternalJson(Map<String, dynamic> json) =>
+      SurahSummary(
+        number: ((json['number'] ?? json['surahNumber']) as num).toInt(),
+        name: (json['nameSimple'] ?? json['nameEnglish']) as String? ?? '',
+        nameArabic: json['nameArabic'] as String? ?? '',
+        translation: json['nameBangla'] as String? ?? '',
+        revelationPlace:
+            (json['revelationType'] ?? json['revelationPlace']) as String? ??
+            '',
+        totalAyah: (json['ayahCount'] as num?)?.toInt() ?? 0,
+      );
+
   factory SurahSummary.fromJson(int number, Map<String, dynamic> json) {
     return SurahSummary(
       number: number,

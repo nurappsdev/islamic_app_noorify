@@ -1,0 +1,479 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_home_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/zikr_planner_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_bottom_nav.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+
+/// Zikr planner (design `devImg/img_20.png`), reached from index 1 ("Planner")
+/// of [ZikrBottomNav].
+///
+/// "My Plan", "Search Plan" and "Complete Plan" are loaded from their
+/// corresponding backend API queries.
+class ZikrPlannerScreen extends StatefulWidget {
+  const ZikrPlannerScreen({super.key});
+
+  @override
+  State<ZikrPlannerScreen> createState() => _ZikrPlannerScreenState();
+}
+
+class _ZikrPlannerScreenState extends State<ZikrPlannerScreen> {
+  int _tab = 0; // 0 = My Plan, 1 = Search Plan, 2 = Complete Plan
+  final _searchController = TextEditingController();
+  String _query = '';
+  late final ZikrPlannerCubit _cubit = ZikrPlannerCubit(zikrRepository);
+
+  @override
+  void dispose() {
+    _cubit.close();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createPlan() async {
+    await Navigator.of(context).pushNamed(RouteNames.zikrPlanCreate);
+    if (!mounted) return;
+    setState(() => _tab = 0);
+    await _cubit.selectTab(0);
+  }
+
+  Future<void> _openPlan(ZikrPlan plan) async {
+    if (_tab == 1) {
+      try {
+        await _cubit.enroll(plan.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppText.of(context).planStartedSuccess)),
+          );
+        }
+      } catch (error) {
+        if (mounted) {
+          if (error is AuthenticationRequiredException) {
+            await showZikrLoginRequiredDialog(context);
+            return;
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$error')));
+        }
+      }
+      return;
+    }
+    Navigator.of(context).pushNamed(RouteNames.zikrPlanDetail, arguments: plan);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cubit.load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    return BlocProvider.value(
+      value: _cubit,
+      child: BlocListener<ZikrPlannerCubit, ZikrPlannerState>(
+        listenWhen: (previous, current) =>
+            previous.error != current.error &&
+            current.error?.contains('AuthenticationRequiredException') == true,
+        listener: (context, _) => showZikrLoginRequiredDialog(context),
+        child: Scaffold(
+          backgroundColor: context.pageColor(Colors.white),
+          body: SafeArea(
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(height: 6.h),
+                    _PlannerTabs(
+                      labels: [
+                        appText.myPlan,
+                        appText.searchPlan,
+                        appText.completePlan,
+                      ],
+                      selected: _tab,
+                      onChanged: (i) {
+                        setState(() => _tab = i);
+                        _cubit.selectTab(i);
+                      },
+                    ),
+                    if (_tab == 1) ...[
+                      SizedBox(height: 16.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) =>
+                              setState(() => _query = value.trim()),
+                          decoration: InputDecoration(
+                            hintText: appText.searchPlan,
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: BorderSide(
+                                color: context.lineColor(Color(0xFFDDE8C1)),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24.r),
+                              borderSide: const BorderSide(
+                                color: AppColor.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    Expanded(
+                      child: BlocBuilder<ZikrPlannerCubit, ZikrPlannerState>(
+                        builder: (context, state) =>
+                            _buildTabBody(appText, state),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_tab != 2)
+                  Positioned(
+                    right: 24.w,
+                    bottom: 78.h + bottomInset,
+                    child: FilledButton.icon(
+                      onPressed: _createPlan,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF9AAA63),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18.w,
+                          vertical: 12.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.r),
+                        ),
+                      ),
+                      icon: Icon(Icons.edit_outlined, size: 18.sp),
+                      label: Text(
+                        appText.createPlan,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                const SafeArea(
+                  top: false,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ZikrBottomNav(selectedIndex: 1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabBody(AppText appText, ZikrPlannerState state) {
+    final daysLabel = appText.zikrPlanDays.toLowerCase();
+    if (state.status == ZikrLoadStatus.loading && state.plans.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_tab == 2) {
+      final plans = state.plans;
+      if (plans.isEmpty) {
+        return Center(
+          child: Transform.translate(
+            offset: Offset(0, -20.h),
+            child: _EmptyPlans(message: appText.noPlansYetMessage),
+          ),
+        );
+      }
+      return _PlanList(
+        plans: plans,
+        daysLabel: daysLabel,
+        statusLabel: appText.zikrPlanComplete,
+        onTap: _openPlan,
+      );
+    }
+
+    var plans = state.plans;
+    if (_tab == 1 && _query.isNotEmpty) {
+      final query = _query.toLowerCase();
+      plans = [
+        for (final plan in plans)
+          if (plan.planName.toLowerCase().contains(query)) plan,
+      ];
+    }
+    if (plans.isEmpty) {
+      return Center(
+        child: Transform.translate(
+          offset: Offset(0, -20.h),
+          child: _EmptyPlans(message: appText.noPlansYetMessage),
+        ),
+      );
+    }
+    return _PlanList(plans: plans, daysLabel: daysLabel, onTap: _openPlan);
+  }
+}
+
+class _PlanList extends StatelessWidget {
+  const _PlanList({
+    required this.plans,
+    required this.daysLabel,
+    required this.onTap,
+    this.statusLabel,
+  });
+
+  final List<ZikrPlan> plans;
+  final String daysLabel;
+  final String? statusLabel;
+  final ValueChanged<ZikrPlan> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 96.h),
+      itemCount: plans.length,
+      separatorBuilder: (_, _) => SizedBox(height: 12.h),
+      itemBuilder: (context, i) {
+        final plan = plans[i];
+        return InkWell(
+          onTap: () => onTap(plan),
+          borderRadius: BorderRadius.circular(18.r),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: context.lineColor(Color(0xFFDDE8C1))),
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46.r,
+                  height: 46.r,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(Color(0xFFC9DBA3)),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(
+                    Icons.menu_book_rounded,
+                    size: 22.sp,
+                    color: context.inkColor(Color(0xFF6E8B3D)),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plan.planName,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                          color: context.inkColor(Color(0xFF3D3170)),
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        context.localizedDigits(
+                          '${plan.currentCount}/${plan.totalTargetCount} '
+                          '( ${plan.completionDays} $daysLabel )',
+                        ),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: const Color(0xFF9AA579),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (statusLabel != null) ...[
+                  SizedBox(width: 8.w),
+                  Text(
+                    statusLabel!,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFFA1AD59),
+                    ),
+                  ),
+                ],
+                SizedBox(width: 4.w),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20.sp,
+                  color: context.inkColor(Color(0xFF9BA85B)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PlannerTabs extends StatelessWidget {
+  const _PlannerTabs({
+    required this.labels,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> labels;
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: context.lineColor(Color(0xFFDDE8C1))),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: _PlannerTab(
+                label: labels[i],
+                selected: i == selected,
+                onTap: () => onChanged(i),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlannerTab extends StatelessWidget {
+  const _PlannerTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 42.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: selected ? const Color(0xFF9AAA63) : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(
+              selected ? const Color(0xFFDDE8BA) : Colors.transparent,
+            ),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: context.inkColor(Color(0xFF303629)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyPlans extends StatelessWidget {
+  const _EmptyPlans({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 110.w,
+          height: 96.h,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.sticky_note_2_rounded,
+                color: const Color(0xFFDDE8BA),
+                size: 88.sp,
+              ),
+              Positioned(
+                top: 30.h,
+                child: Text(
+                  '?',
+                  style: TextStyle(
+                    color: context.inkColor(Color(0xFF84945F)),
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 16.h,
+                left: 4.w,
+                child: Icon(
+                  Icons.wb_sunny_outlined,
+                  color: context.inkColor(Color(0xFF84945F)),
+                  size: 24.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: const Color(0xFF5B9BD5),
+            fontSize: 13.sp,
+            height: 1.4,
+            decoration: TextDecoration.underline,
+            decorationColor: const Color(0xFF5B9BD5),
+          ),
+        ),
+      ],
+    );
+  }
+}
