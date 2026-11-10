@@ -862,14 +862,15 @@ class _SunnahWitrCard extends StatefulWidget {
 }
 
 class _SunnahWitrCardState extends State<_SunnahWitrCard> {
-  /// Pill label -> the tracker `itemKey`s behind it. Isha's pill (+2) covers
-  /// the Isha Sunnah and Witr; only the Isha Sunnah drives its colour.
+  /// Pill label -> the tracker `itemKey` behind it. Witr has its own pill
+  /// (in place of Asr, which has no Sunnah of its own), so Isha's pill is
+  /// just the Isha Sunnah.
   static const _pillItems = {
     'Fajr': ['fajr_sunnah'],
     'Duhr': ['dhuhr_sunnah'],
-    'Asr': ['asr_sunnah'],
+    'Witr': ['witr'],
     'Magrib': ['maghrib_sunnah'],
-    'Esa': ['isha_sunnah', 'witr'],
+    'Esa': ['isha_sunnah'],
   };
 
   @override
@@ -899,7 +900,6 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
     const chartKeyByItemKey = {
       'fajr_sunnah': 'fajrSunnah',
       'dhuhr_sunnah': 'dhuhrSunnah',
-      'asr_sunnah': 'asrSunnah',
       'maghrib_sunnah': 'maghribSunnah',
       'isha_sunnah': 'ishaSunnah',
       'witr': 'witr',

@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
@@ -13,6 +12,7 @@ import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dar
 import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
 import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_tap_feedback.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
@@ -41,6 +41,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
   late final PageController _pageController = PageController(
     viewportFraction: 0.44,
   );
+  final ZikrTapFeedback _feedback = ZikrTapFeedback();
   int _index = 0;
   bool _isCompleting = false;
   bool _allowPop = false;
@@ -56,7 +57,16 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
   bool get _finished => _totalTarget > 0 && _total >= _totalTarget;
 
   @override
+  void initState() {
+    super.initState();
+    // Warm the click clip and probe the vibrator up front so the very first
+    // tap already feels immediate.
+    _feedback.prepare();
+  }
+
+  @override
   void dispose() {
+    _feedback.dispose();
     _sync.close();
     _pageController.dispose();
     super.dispose();
@@ -86,11 +96,12 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
 
   Future<void> _count() async {
     if (_isCompleting) return;
+    // Every tap answers with a click and a tick, counted or not.
+    _feedback.tap();
     if (_itemDone) {
-      _switchZikr();
+      _advanceZikr();
       return;
     }
-    HapticFeedback.selectionClick();
     setState(() {
       _counts[_index]++;
       _lastCountedIndex = _index;
@@ -103,7 +114,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
       if (_item.planId != null) 'planId': _item.planId,
     });
     if (_itemDone) {
-      HapticFeedback.mediumImpact();
+      _feedback.milestone();
       await _sync.syncNow();
       final next = _nextIncomplete();
       if (next != null) {
@@ -133,15 +144,21 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
     Navigator.of(context).pop();
   }
 
-  /// Move to the next zikr — used by tapping the zikr card itself.
+  /// Move to the next zikr — used by tapping the zikr card itself, which
+  /// gets the same click and tick as the counter button.
   void _switchZikr() {
+    _feedback.tap();
+    _advanceZikr();
+  }
+
+  /// The move itself, without feedback — for callers that already gave some.
+  void _advanceZikr() {
     if (_items.length < 2) return;
-    HapticFeedback.selectionClick();
     _goToZikr((_index + 1) % _items.length);
   }
 
   void _reset() {
-    HapticFeedback.lightImpact();
+    _feedback.soft();
     setState(() {
       for (var i = 0; i < _counts.length; i++) {
         _counts[i] = 0;

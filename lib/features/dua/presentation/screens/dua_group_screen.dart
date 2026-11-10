@@ -93,7 +93,7 @@ class DuaGroupScreen extends StatelessWidget {
             top: false,
             child: Align(
               alignment: Alignment.bottomCenter,
-              child: DuaBottomNav(),
+              child: DuaBottomNav(selectedIndex: 0),
             ),
           ),
         ],

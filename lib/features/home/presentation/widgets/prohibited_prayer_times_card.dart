@@ -62,18 +62,19 @@ class _ProhibitedPrayerTimesCardState extends State<ProhibitedPrayerTimesCard> {
     final windows = times == null
         ? null
         : ProhibitedPrayerWindows.fromDailyTimes(times);
+    // Digits only — the tile's title already says which part of the day
+    // the window sits in.
     String rangeText(ProhibitedPrayerWindow? window) => window == null
         ? '--:-- – --:--'
-        : '${localizedPeriodClock(window.start, times: times, appText: appText, bangla: bangla)}'
+        : '${localizedClockDigits(window.start, bangla: bangla)}'
               ' – '
-              '${localizedPeriodClock(window.end, times: times, appText: appText, bangla: bangla)}';
+              '${localizedClockDigits(window.end, bangla: bangla)}';
     return InkWell(
       onTap: () => showDialog<void>(
         context: context,
         builder: (_) => _ProhibitedTimesDialog(
           appText: appText,
           bangla: bangla,
-          times: times,
           windows: windows,
         ),
       ),
@@ -130,18 +131,23 @@ class _ForbiddenTime extends StatelessWidget {
         ),
         child: Column(
           children: [
+            // Title leads: bolder, and a step larger than the time below it.
             Text(
               title,
-              style: homeSansStyle(context: context, fontSize: 10.sp),
+              style: homeSansStyle(
+                context: context,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            SizedBox(height: 7.h),
+            SizedBox(height: 6.h),
             FittedBox(
               child: Text(
                 value,
                 style: homeSansStyle(
                   context: context,
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -159,20 +165,18 @@ class _ProhibitedTimesDialog extends StatelessWidget {
   const _ProhibitedTimesDialog({
     required this.appText,
     required this.bangla,
-    required this.times,
     required this.windows,
   });
 
   final AppText appText;
   final bool bangla;
-  final DailyPrayerTimes? times;
   final ProhibitedPrayerWindows? windows;
 
   String _rangeFor(ProhibitedPrayerWindow? window) => window == null
       ? '--:-- – --:--'
-      : '${localizedPeriodClock(window.start, times: times, appText: appText, bangla: bangla)}'
+      : '${localizedClockDigits(window.start, bangla: bangla)}'
             ' – '
-            '${localizedPeriodClock(window.end, times: times, appText: appText, bangla: bangla)}';
+            '${localizedClockDigits(window.end, bangla: bangla)}';
 
   @override
   Widget build(BuildContext context) {
