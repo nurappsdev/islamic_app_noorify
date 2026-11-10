@@ -2,9 +2,10 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:islami_app_noorify/features/quran/domain/bookmark.dart';
-import 'package:islami_app_noorify/features/quran/domain/reading_history_entry.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/arabic_font.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/bookmark.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/reading_history_entry.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class QuranLocalStore {
   QuranLocalStore(this._preferences);
@@ -14,6 +15,7 @@ class QuranLocalStore {
   static const _bookmarksKey = 'quran_bookmarks';
   static const _translationLangKey = 'quran_translation_lang';
   static const _fontSizeKey = 'quran_font_size_multiplier'; // Arabic text scale
+  static const _arabicFontFamilyKey = 'quran_arabic_font_family';
   static const _translationFontSizeKey = 'quran_translation_font_scale';
   static const _selectedEditionKey = 'quran_selected_translation_edition';
   static const _showArabicKey = 'quran_show_arabic';
@@ -147,11 +149,20 @@ class QuranLocalStore {
     await _preferences.setString(_translationLangKey, lang.name);
   }
 
-  /// Zoom applied to the Arabic ayah text. Defaults to 1.0.
-  double arabicFontScale() => _preferences.getDouble(_fontSizeKey) ?? 1.0;
+  /// Zoom applied to the Arabic ayah text. Defaults to 120%.
+  double arabicFontScale() =>
+      _preferences.getDouble(_fontSizeKey) ?? kDefaultArabicFontScale;
 
   Future<void> setArabicFontScale(double value) async {
     await _preferences.setDouble(_fontSizeKey, value);
+  }
+
+  /// Typeface used for the Arabic ayah text, as an [ArabicFont.id].
+  String arabicFontFamily() =>
+      _preferences.getString(_arabicFontFamilyKey) ?? kDefaultArabicFontId;
+
+  Future<void> setArabicFontFamily(String fontId) async {
+    await _preferences.setString(_arabicFontFamilyKey, fontId);
   }
 
   /// Zoom applied to the translation text. Defaults to 1.0.
@@ -170,7 +181,7 @@ class QuranLocalStore {
   }
 
   /// Whether the translation text is shown in the reader. Defaults to true.
-  bool showTranslation() => _preferences.getBool(_showTranslationKey) ?? true;
+  bool showTranslation() => _preferences.getBool(_showTranslationKey) ?? false;
 
   Future<void> setShowTranslation(bool value) async {
     await _preferences.setBool(_showTranslationKey, value);

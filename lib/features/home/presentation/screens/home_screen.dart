@@ -1,50 +1,1861 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/amal_tracker_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_bottom_nav.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_feature_grid.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_header.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/home_progress_section.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_time_card.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_day_clock.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/widgets/amol_entry_label.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/update/app_update_watcher.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/screens/amol_tracking_screen.dart';
+import 'package:tuhfatul_muslim/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/home/data/repositories/home_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/home/domain/usecases/get_home_dashboard.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/entities/pillar_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/home_dashboard/home_dashboard_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/amal_tracker_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/amal_tracker_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/hadith_reading_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_feature_card_slider.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/quiz_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/quran_card_content.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_feature_grid.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/home_header.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/nafl_more_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_time_card.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/sunnah_witr_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/zikr_card_content.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prohibited_prayer_times_card.dart';
+import 'package:tuhfatul_muslim/features/notifications/data/services/notification_badge_service.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
+
+import '../widgets/home_progress_section.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/navigation/amol_tracker_navigation.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 92.h),
+    return PrayerLocationScope(
+      child: BlocProvider<HomeDashboardBloc>(
+        create: (_) => HomeDashboardBloc(
+          GetHomeDashboard(HomeRepositoryImpl(HomeRemoteDataSourceImpl())),
+        )..add(const LoadHomeDashboard()),
+        // Home is the first screen of every launch, so the Google Play
+        // update check runs from here.
+        child: const AppUpdateWatcher(child: _HomeScreenView()),
+      ),
+    );
+  }
+}
+
+class _HomeScreenView extends StatefulWidget {
+  const _HomeScreenView();
+
+  @override
+  State<_HomeScreenView> createState() => _HomeScreenViewState();
+}
+
+class _HomeScreenViewState extends State<_HomeScreenView> {
+  // Bumped on every pull-to-refresh to remount the prayer-time cards below,
+  // which fetch their own data independently of HomeDashboardBloc.
+  int _refreshTick = 0;
+
+  // The percentages on the cards come from the home dashboard, while the
+  // tracker only refreshes AmolDailyStore when the user ticks something and
+  // leaves. Refetch the dashboard whenever the store changes so the cards
+  // update as soon as the user is back.
+  bool _storeLoadedOnce = false;
+
+  /// Prevents the store's refresh notification from scheduling a second Home
+  /// dashboard request while a pull-to-refresh request is already in flight.
+  bool _isPullRefreshing = false;
+
+  /// Avoid opening more than one confirmation dialog if back is invoked again
+  /// before the current dialog has been dismissed.
+  bool _isExitDialogVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _storeLoadedOnce = AmolDailyStore.instance.value != null;
+    AmolDailyStore.instance.addListener(_onAmolStoreChanged);
+    AmolDayClock.instance.addListener(_onDayChanged);
+    unawaited(NotificationBadgeService.instance.refresh());
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onAmolStoreChanged);
+    AmolDayClock.instance.removeListener(_onDayChanged);
+    super.dispose();
+  }
+
+  /// Midnight, with Home on screen: every daily figure here belongs to the
+  /// day that has just ended. The dashboard is fetched again for the new day
+  /// — and shows zero until it answers, rather than yesterday's totals (see
+  /// [HomeDashboardBloc]) — while the prayer cards are rebuilt for the new
+  /// date.
+  void _onDayChanged() {
+    if (!mounted) return;
+    context.read<HomeDashboardBloc>().add(
+      const LoadHomeDashboard(silent: true),
+    );
+    setState(() => _refreshTick++);
+  }
+
+  void _onAmolStoreChanged() {
+    // The first load only fills the checklist; nothing has changed yet.
+    if (!_storeLoadedOnce) {
+      _storeLoadedOnce = true;
+      return;
+    }
+    // A reset (sign-in/out clears it) isn't a tracking change to refetch for;
+    // the fresh checklist that follows is.
+    if (AmolDailyStore.instance.value == null) return;
+    if (!mounted || _isPullRefreshing) return;
+    context.read<HomeDashboardBloc>().add(
+      const LoadHomeDashboard(silent: true),
+    );
+  }
+
+  Future<void> _onRefresh() async {
+    final dashboardBloc = context.read<HomeDashboardBloc>();
+    _isPullRefreshing = true;
+    // Subscribe before dispatching so the loading -> done transition can't
+    // be missed.
+    final dashboardDone = dashboardBloc.stream.firstWhere(
+      (state) => state.status != HomeDashboardStatus.loading,
+    );
+    dashboardBloc.add(const LoadHomeDashboard());
+
+    try {
+      await Future.wait([
+        dashboardDone,
+        ProfileService.instance.refresh(),
+        AmolDailyStore.instance.load(),
+        NotificationBadgeService.instance.refresh(),
+      ]);
+    } catch (_) {
+      // A bloc/stream teardown mid-refresh (e.g. navigating away) shouldn't
+      // surface as an error from the pull-to-refresh gesture.
+    } finally {
+      _isPullRefreshing = false;
+    }
+    if (!mounted) return;
+    setState(() => _refreshTick++);
+  }
+
+  Future<void> _confirmExit() async {
+    if (_isExitDialogVisible || !mounted) return;
+    _isExitDialogVisible = true;
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('অ্যাপ থেকে বের হতে চান?'),
+        content: const Text('আপনি কি নিশ্চিত যে অ্যাপ থেকে বের হতে চান?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('না'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('হ্যাঁ'),
+          ),
+        ],
+      ),
+    );
+
+    _isExitDialogVisible = false;
+    if (shouldExit == true && mounted) {
+      // This closes the app without affecting the signed-in session or any
+      // locally stored user data.
+      SystemNavigator.pop();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final language = context.watch<LanguageBloc>().state.language;
+    // The confirmation applies only when Home is the navigator's root. When
+    // Home has been opened above another route, normal back navigation remains
+    // available; internal pages are not wrapped by this PopScope.
+    final isRootRoute = ModalRoute.of(context)?.isFirst ?? true;
+    return PopScope(
+      canPop: !isRootRoute,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && isRootRoute) _confirmExit();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        // Light status-bar icons on the dark background.
+        value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        child: DefaultTextStyle.merge(
+          style: TextStyle(
+            fontFamily: appFontFamilyFor(language),
+            fontFamilyFallback: appFontFamilyFallback,
+          ),
+          child: Scaffold(
+            backgroundColor: context.appPalette.background,
+            body: SafeArea(
               child: Column(
                 children: [
-                  const HomeHeader(),
-                  SizedBox(height: 10.h),
-                  const AmalTrackerCard(),
-                  SizedBox(height: 16.h),
-                   const PrayerTimeCard(),
-                  SizedBox(height: 24.h),
-                  const ProhibitedPrayerTimesCard(),
-                  SizedBox(height: 14.h),
-                  const HomeProgressSection(),
-                  SizedBox(height: 10.h),
-                  const HomeFeatureGrid(),
+                  // Fixed above the scroll view (not inside it), so it never
+                  // scrolls away with the content below.
+                  if (!kIsWeb)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(9.w, 6.h, 9.w, 0),
+                      child: const HomeHeader(),
+                    ),
+                  Expanded(
+                    child: kIsWeb
+                        ? _WebHomeDashboard(
+                            language: language,
+                            refreshTick: _refreshTick,
+                            onRefresh: _onRefresh,
+                          )
+                        : _MobileHomeDashboard(
+                            language: language,
+                            refreshTick: _refreshTick,
+                            onRefresh: _onRefresh,
+                          ),
+                  ),
                 ],
               ),
             ),
-            const Align(
-              alignment: Alignment.bottomCenter,
-              child: HomeBottomNav(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The original phone-only composition. Keeping it in a separate widget is
+/// deliberate: Web layout changes below cannot alter Android or iOS geometry.
+class _MobileHomeDashboard extends StatelessWidget {
+  const _MobileHomeDashboard({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: onRefresh,
+          color: AppColor.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(9.w, 10.h, 9.w, 92.h),
+            child: Column(
+              children: _homeSections(
+                language: language,
+                refreshTick: refreshTick,
+              ),
+            ),
+          ),
+        ),
+        const Align(alignment: Alignment.bottomCenter, child: HomeBottomNav()),
+      ],
+    );
+  }
+}
+
+/// A desktop/tablet dashboard that reuses every existing Home feature and its
+/// data source. Wide browsers receive two intentional reading columns rather
+/// than a stretched phone canvas; compact browsers naturally collapse back to
+/// one column.
+class _WebHomeDashboard extends StatelessWidget {
+  const _WebHomeDashboard({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return _WebHomeContent(
+          language: language,
+          refreshTick: refreshTick,
+          onRefresh: onRefresh,
+          showBottomNavigation: constraints.maxWidth < 760,
+        );
+      },
+    );
+  }
+}
+
+class _WebHomeContent extends StatelessWidget {
+  const _WebHomeContent({
+    required this.language,
+    required this.refreshTick,
+    required this.onRefresh,
+    required this.showBottomNavigation,
+  });
+
+  final AppLanguage language;
+  final int refreshTick;
+  final RefreshCallback onRefresh;
+  final bool showBottomNavigation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Column(
+          children: [
+            const _WebHomeTopBar(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: onRefresh,
+                color: AppColor.primary,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final prayerRow = constraints.maxWidth >= 900;
+                    final slider = HomeFeatureCardSlider(
+                      key: ValueKey('home-feature-slider-${language.name}'),
+                      height: 350,
+                      children: [
+                        KeyedSubtree(
+                          key: ValueKey('fardh-prayer-$refreshTick'),
+                          child: const _FardhPrayerCard(),
+                        ),
+                        const _HadithReadingCard(),
+                        const _QuranCard(),
+                        KeyedSubtree(
+                          key: ValueKey('nafl-more-$refreshTick'),
+                          child: const _NaflMoreCard(),
+                        ),
+                        const _ZikrCard(),
+                        const _SunnahWitrCard(),
+                        const _QuizCard(),
+                      ],
+                    );
+                    final prayerCard = KeyedSubtree(
+                      key: ValueKey(
+                        'prayer-time-card-${language.name}-$refreshTick',
+                      ),
+                      child: const PrayerTimeCard(),
+                    );
+                    final prohibitedCard = KeyedSubtree(
+                      key: ValueKey(
+                        'prohibited-prayer-times-${language.name}-$refreshTick',
+                      ),
+                      child: const ProhibitedPrayerTimesCard(),
+                    );
+
+                    return SingleChildScrollView(
+                      key: const ValueKey('web-home-scroll-view'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        18,
+                        24,
+                        showBottomNavigation ? 104 : 36,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 1320),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // The existing Amol carousel becomes the wide
+                              // dashboard hero, just like the supplied design.
+                              const AmalTrackerCard(),
+                              const SizedBox(height: 22),
+                              if (prayerRow)
+                                Row(
+                                  key: const ValueKey('web-home-prayer-row'),
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(flex: 2, child: prayerCard),
+                                    const SizedBox(width: 24),
+                                    Expanded(child: prohibitedCard),
+                                  ],
+                                )
+                              else
+                                Column(
+                                  key: const ValueKey('web-home-prayer-stack'),
+                                  children: [
+                                    prayerCard,
+                                    const SizedBox(height: 18),
+                                    prohibitedCard,
+                                  ],
+                                ),
+                              const SizedBox(height: 22),
+                              slider,
+                              const SizedBox(height: 22),
+                              const _WebLegacyPanel(child: HomeFeatureGrid()),
+                              // Qibla compass and the calendar remain in the
+                              // Android/iOS Home only, per the Web design.
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ],
         ),
+        if (showBottomNavigation)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: const HomeBottomNav(),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Desktop-only navigation matching the reference's persistent left rail.
+/// It uses the app's existing routes; Android/iOS keep their bottom bar.
+const _webHeaderInk = Color(0xFF26321B);
+const _webHeaderMutedInk = Color(0xB326321B);
+
+class _WebHomeTopBar extends StatelessWidget {
+  const _WebHomeTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Material(
+      // Use the same soft olive surface as the Amol Tracker card.
+      color: context.surfaceColor(context.appPalette.tint),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: .08),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 78,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 900;
+              final showReminder = constraints.maxWidth >= 1120;
+              final showBrandName = constraints.maxWidth >= 620;
+
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: constraints.maxWidth < 620 ? 12 : 28,
+                ),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/appLogo.png',
+                      width: 46,
+                      height: 46,
+                      color: _webHeaderInk,
+                      colorBlendMode: BlendMode.srcIn,
+                    ),
+                    if (showBrandName) ...[
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Tuhfatul Muslim',
+                        style: TextStyle(
+                          color: _webHeaderInk,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 28),
+                    ],
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _WebTopNavButton(
+                              label: appText.home,
+                              selected: true,
+                            ),
+                            PopupMenuButton<String>(
+                              tooltip: appText.categoryQuran,
+                              offset: const Offset(0, 46),
+                              onSelected: (tab) =>
+                                  Navigator.of(context).pushReplacementNamed(
+                                    RouteNames.quranSurahs,
+                                    arguments: tab,
+                                  ),
+                              itemBuilder: (context) => [
+                                _quranMenuItem(
+                                  'home',
+                                  appText.categoryQuran,
+                                  Icons.menu_book_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'learn',
+                                  appText.learn.isEmpty
+                                      ? 'Learn'
+                                      : appText.learn,
+                                  Icons.school_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'saved',
+                                  appText.saved.isEmpty
+                                      ? 'Saved'
+                                      : appText.saved,
+                                  Icons.bookmark_border_rounded,
+                                ),
+                                _quranMenuItem(
+                                  'plan',
+                                  appText.planner.isEmpty
+                                      ? 'Plan'
+                                      : appText.planner,
+                                  Icons.assignment_turned_in_outlined,
+                                ),
+                                _quranMenuItem(
+                                  'dashboard',
+                                  appText.dashboard.isEmpty
+                                      ? 'Dashboard'
+                                      : appText.dashboard,
+                                  Icons.grid_view_outlined,
+                                ),
+                              ],
+                              child: _WebTopNavButton(
+                                label: appText.categoryQuran,
+                                trailing: Icons.keyboard_arrow_down_rounded,
+                              ),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.categoryHadith,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.hadith),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.featureDua,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.dua),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.featureDijpr,
+                              onTap: () => Navigator.of(
+                                context,
+                              ).pushNamed(RouteNames.zikr),
+                            ),
+                            _WebTopNavButton(
+                              label: appText.todaysAmolTrack,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const AmolTrackingScreen(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (showReminder) ...[
+                      const SizedBox(width: 12),
+                      const SizedBox(
+                        width: 215,
+                        child: HomeHeaderRotatingSubtitle(
+                          style: TextStyle(
+                            color: _webHeaderInk,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          reminderColor: _webHeaderInk,
+                        ),
+                      ),
+                    ],
+                    _WebHeaderNotifications(label: appText.notifications),
+                    const SizedBox(width: 8),
+                    _WebHeaderProfile(
+                      fallbackName: appText.competitorName,
+                      showDetails: !compact,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
+    );
+  }
+
+  PopupMenuItem<String> _quranMenuItem(
+    String value,
+    String label,
+    IconData icon,
+  ) => PopupMenuItem(
+    value: value,
+    child: Row(
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF316648)),
+        const SizedBox(width: 10),
+        Text(label),
+      ],
+    ),
+  );
+}
+
+class _WebHeaderNotifications extends StatelessWidget {
+  const _WebHeaderNotifications({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: unreadNotificationCountNotifier,
+      builder: (context, unreadCount, _) {
+        final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              tooltip: label,
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(RouteNames.notifications),
+              icon: const Icon(Icons.notifications_none_rounded),
+              color: _webHeaderInk,
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 4,
+                top: 5,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE75A51),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _WebHeaderProfile extends StatelessWidget {
+  const _WebHeaderProfile({
+    required this.fallbackName,
+    required this.showDetails,
+  });
+
+  final String fallbackName;
+  final bool showDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboardName = context.localized(
+      context
+          .watch<HomeDashboardBloc>()
+          .state
+          .dashboard
+          ?.userSummary
+          .localizedFullName,
+    );
+    final now = bangladeshNow();
+    final date = context.localizedDigits(
+      '${now.day} ${AppText.of(context).monthNames[now.month - 1]} ${now.year}',
+    );
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.profile),
+        borderRadius: BorderRadius.circular(28),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ProfileAvatarCircle(
+                dimension: 40,
+                backgroundColor: Colors.white.withValues(alpha: .34),
+                placeholderIconColor: _webHeaderInk,
+              ),
+              if (showDetails) ...[
+                const SizedBox(width: 9),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 170),
+                  child: ValueListenableBuilder<String?>(
+                    valueListenable: profileNameNotifier,
+                    builder: (context, profileName, _) {
+                      final name = (profileName ?? '').trim().isNotEmpty
+                          ? profileName!.trim()
+                          : (dashboardName.isEmpty
+                                ? fallbackName
+                                : dashboardName);
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: _webHeaderInk,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            date,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _webHeaderMutedInk,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebTopNavButton extends StatelessWidget {
+  const _WebTopNavButton({
+    required this.label,
+    this.onTap,
+    this.selected = false,
+    this.trailing,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool selected;
+  final IconData? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    const foreground = _webHeaderInk;
+    return Material(
+      color: selected
+          ? Colors.white.withValues(alpha: .56)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+              if (trailing != null) ...[
+                const SizedBox(width: 2),
+                Icon(trailing, size: 18, color: foreground),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Retained as an alternate navigation treatment while the top bar is the
+// active Web navigation requested by the current design.
+// ignore: unused_element
+class _WebHomeSidebar extends StatelessWidget {
+  const _WebHomeSidebar();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final destinations = [
+      _WebSidebarDestination(
+        icon: Icons.home_rounded,
+        label: appText.home,
+        selected: true,
+        onTap: () {},
+      ),
+      _WebSidebarDestination(
+        icon: Icons.menu_book_outlined,
+        label: appText.categoryQuran,
+        onTap: () =>
+            Navigator.of(context).pushReplacementNamed(RouteNames.quranSurahs),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.auto_stories_outlined,
+        label: appText.categoryHadith,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.hadith),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.volunteer_activism_outlined,
+        label: appText.featureDua,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.dua),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.nightlight_round,
+        label: appText.featureDijpr,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.zikr),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.fact_check_outlined,
+        label: appText.todaysAmolTrack,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const AmolTrackingScreen()),
+        ),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.mosque_outlined,
+        label: appText.viewPrayerTimes,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.prayerTimes),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.workspace_premium_outlined,
+        label: appText.featureAsmaUlHusna,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.asma),
+      ),
+      _WebSidebarDestination(
+        icon: Icons.quiz_outlined,
+        label: appText.featureQuizAndLearn,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.winQuiz),
+      ),
+    ];
+
+    return SizedBox(
+      width: 276,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF01442F), Color(0xFF126745)],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 24, 18, 28),
+            child: Column(
+              children: [
+                Image.asset('assets/appLogo.png', width: 78, height: 78),
+                const SizedBox(height: 10),
+                const Text(
+                  'Tuhfatul Muslim',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 26),
+                for (final destination in destinations)
+                  _WebSidebarTile(destination: destination),
+                const Divider(color: Color(0x99D7E9C1), height: 30),
+                _WebSidebarTile(
+                  destination: _WebSidebarDestination(
+                    icon: Icons.settings_outlined,
+                    label: appText.settingsTitle,
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(RouteNames.settings),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebSidebarDestination {
+  const _WebSidebarDestination({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool selected;
+}
+
+class _WebSidebarTile extends StatelessWidget {
+  const _WebSidebarTile({required this.destination});
+
+  final _WebSidebarDestination destination;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Material(
+        color: destination.selected
+            ? const Color(0xFFA1AE57)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: destination.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+            child: Row(
+              children: [
+                Icon(destination.icon, color: Colors.white, size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    destination.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Places an existing mobile-first Home card in a readable Web column without
+/// altering the card's own Android/iOS layout, data, or interaction logic.
+class _WebLegacyPanel extends StatelessWidget {
+  const _WebLegacyPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final visualWidth = constraints.maxWidth.clamp(0.0, 560.0).toDouble();
+        if (visualWidth == 0) return const SizedBox.shrink();
+        // The Android/iOS cards keep their natural height, text styles and
+        // behaviour; Web only provides a readable max-width and reflow.
+        return Center(
+          child: SizedBox(width: visualWidth, child: child),
+        );
+      },
+    );
+  }
+}
+
+List<Widget> _homeSections({
+  required AppLanguage language,
+  required int refreshTick,
+}) => [
+  const AmalTrackerCard(),
+  SizedBox(height: 16.h),
+  KeyedSubtree(
+    key: ValueKey('prayer-time-card-${language.name}-$refreshTick'),
+    child: const PrayerTimeCard(),
+  ),
+  SizedBox(height: 24.h),
+  KeyedSubtree(
+    key: ValueKey('prohibited-prayer-times-${language.name}-$refreshTick'),
+    child: const ProhibitedPrayerTimesCard(),
+  ),
+  SizedBox(height: 16.h),
+  HomeFeatureCardSlider(
+    key: ValueKey('home-feature-slider-${language.name}'),
+    height: 350.h,
+    children: [
+      KeyedSubtree(
+        key: ValueKey('fardh-prayer-$refreshTick'),
+        child: const _FardhPrayerCard(),
+      ),
+      const _HadithReadingCard(),
+      const _QuranCard(),
+      KeyedSubtree(
+        key: ValueKey('nafl-more-$refreshTick'),
+        child: const _NaflMoreCard(),
+      ),
+      const _ZikrCard(),
+      const _SunnahWitrCard(),
+      const _QuizCard(),
+    ],
+  ),
+  SizedBox(height: 10.h),
+  const HomeProgressSection(),
+  SizedBox(height: 10.h),
+  const HomeFeatureGrid(),
+  SizedBox(height: 10.h),
+];
+
+/// Opens the Amol tracker with [section] popped to the front.
+void _openTracker(
+  BuildContext context,
+  AmalSection section, {
+  String? itemKey,
+}) => openAmolTracker(context, section: section, itemKey: itemKey);
+
+String _pillarText(
+  BuildContext context,
+  PillarCard? pillar,
+  LocalizedText Function(PillarCard pillar) localizedValue,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final value = context.localized(localizedValue(pillar));
+  return value.isEmpty ? fallback : value;
+}
+
+String _pillarCounter(
+  BuildContext context,
+  PillarCard? pillar,
+  String fallback,
+) {
+  if (pillar == null) return fallback;
+  final points = context.localized(pillar.localizedPoints);
+  final maxPoints = context.localized(pillar.localizedMaxPoints);
+  if (points.isNotEmpty && maxPoints.isNotEmpty) return '$points/$maxPoints';
+
+  String format(num value) =>
+      value == value.roundToDouble() ? value.toInt().toString() : '$value';
+  return context.localizedDigits(
+    '${format(pillar.points)}/${format(pillar.maxPoints)}',
+  );
+}
+
+/// Fardh-prayer card: [AmalTrackerCardContent] over [HomeGradientShape],
+/// fed from the home dashboard when it has loaded. Each bar shows only the
+/// user's tracking status: dark green when tracked, soft red when its time has
+/// passed untracked. Prayer times are the same Aladhan times (and on-device
+/// cache) as [PrayerTimeCard].
+class _FardhPrayerCard extends StatefulWidget {
+  const _FardhPrayerCard();
+
+  @override
+  State<_FardhPrayerCard> createState() => _FardhPrayerCardState();
+}
+
+class _FardhPrayerCardState extends State<_FardhPrayerCard> {
+  DailyPrayerTimes? _times;
+  Timer? _clockTimer;
+  DateTime _now = bangladeshNow();
+
+  static const _itemKeys = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTimes();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+    _clockTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() => _now = bangladeshNow());
+      // Times may only reach the cache after PrayerTimeCard's fetch lands, or
+      // roll over at midnight; re-reading the cache costs no network call.
+      _refreshFromCache();
+    });
+  }
+
+  Future<void> _refreshFromCache() async {
+    try {
+      final service = await AladhanPrayerTimeService.create();
+      final cached = service.cachedPrayerTimes(_now);
+      if (mounted && cached != null) setState(() => _times = cached);
+    } catch (_) {}
+  }
+
+  Future<void> _loadTimes() async {
+    try {
+      final service = await AladhanPrayerTimeService.create();
+      final cached = service.cachedPrayerTimes(_now);
+      if (cached != null) {
+        if (mounted) setState(() => _times = cached);
+        return;
+      }
+      final fresh = await service.loadPrayerTimes(_now);
+      if (mounted && fresh != null) setState(() => _times = fresh);
+    } catch (_) {}
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    _clockTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? fardh;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'fardh_prayer') fardh = p;
+    }
+
+    final times = _times;
+    final minuteNow = _now.hour * 60 + _now.minute;
+    // Tracked prayers, from the shared daily checklist (updates when the user
+    // ticks one in the tracker).
+    final trackedFardh = AmolDailyStore.instance.pillar('fardh_prayer');
+    final completedKeys = {
+      for (final item in trackedFardh?.items ?? const <AmolItem>[])
+        if (item.isCompleted) item.itemKey,
+    };
+    final prayers = [
+      for (final (i, prayer) in PrayerBarData.defaults.indexed)
+        PrayerBarData(
+          name: PrayerPeriod.values[i].displayName(AppText.of(context)),
+          trackingName: prayer.trackingName,
+          points: prayer.points,
+          completed: completedKeys.contains(_itemKeys[i]),
+          // Red once its time has started (or passed) without being tracked;
+          // a prayer that hasn't started yet stays the default colour.
+          isMissed:
+              times != null &&
+              minuteNow >=
+                  prayerStart(PrayerPeriod.values[i], times).totalMinutes,
+        ),
+    ];
+
+    return HomeGradientShape(
+      child: AmalTrackerCardContent(
+        percentage: trackedFardh?.percentage ?? fardh?.percentage ?? 0,
+        percentageLabel: trackedFardh == null
+            ? _pillarText(
+                context,
+                fardh,
+                (pillar) => pillar.localizedPercentage,
+                '',
+              )
+            : context.localizedDigits('${trackedFardh.percentage}%'),
+        title: _pillarText(
+          context,
+          fardh,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Fardh Prayer'),
+        ),
+        completedLabel:
+            trackedFardh?.formattedSubtext ??
+            _pillarText(
+              context,
+              fardh,
+              (pillar) => pillar.localizedFormattedSubtext,
+              fardh?.formattedSubtext ?? '',
+            ),
+        prayers: prayers,
+        onOpenDashboard: () => _openTracker(context, AmalSection.fardhPrayer),
+        onPrayerTap: (prayer) => _openTracker(
+          context,
+          AmalSection.fardhPrayer,
+          itemKey: _itemKeys[prayers.indexOf(prayer)],
+        ),
+      ),
+      onTap: () => _openTracker(context, AmalSection.fardhPrayer),
+    );
+  }
+}
+
+/// Hadith-reading card: [HadithReadingCardContent] over [HomeGradientShape].
+/// Its numbers come from the tracker's own `hadith` pillar (the shared daily
+/// checklist, so they follow reading as it is tracked, offline included) and
+/// fall back to the `hadith` pillar of the home dashboard.
+class _HadithReadingCard extends StatelessWidget {
+  const _HadithReadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? hadith;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'hadith') hadith = p;
+    }
+
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        AmolPillar? tracked;
+        for (final pillar in daily?.pillars ?? const <AmolPillar>[]) {
+          if (pillar.pillarKey == 'hadith') {
+            tracked = pillar;
+            break;
+          }
+        }
+        final entry = tracked?.entry;
+        String number(num value) => value == value.roundToDouble()
+            ? value.toInt().toString()
+            : '$value';
+        return HomeGradientShape(
+          child: HadithReadingCardContent(
+            percentage: tracked?.percentage ?? hadith?.percentage ?? 0,
+            percentageLabel: tracked == null
+                ? _pillarText(
+                    context,
+                    hadith,
+                    (pillar) => pillar.localizedPercentage,
+                    '',
+                  )
+                : context.localizedDigits('${tracked.percentage.round()}%'),
+            title: _pillarText(
+              context,
+              hadith,
+              (pillar) => pillar.localizedTitle,
+              AppText.of(context).categoryLabel('Hadith'),
+            ),
+            onOpenDashboard: () => _openTracker(context, AmalSection.hadith),
+            counter: tracked == null
+                ? _pillarCounter(context, hadith, '0/7')
+                : context.localizedDigits(
+                    '${number(tracked.earnedPoints)}/'
+                    '${number(tracked.maxPoints)}',
+                  ),
+            // The footer is the time read, which the tracker reports in the
+            // item's entry block rather than in the pillar's subtext (a
+            // points fraction).
+            readingTimeLabel: entry != null && entry.isMinutes
+                ? context.amolEntryAmount(entry)
+                : _pillarText(
+                    context,
+                    hadith,
+                    (pillar) => pillar.localizedFormattedSubtext,
+                    hadith?.formattedSubtext ?? '',
+                  ),
+          ),
+          onTap: () => _openTracker(context, AmalSection.hadith),
+        );
+      },
+    );
+  }
+}
+
+/// Quran card: [QuranCardContent] over [HomeGradientShape], fed from the
+/// `quran` pillar of the home dashboard when it has loaded.
+class _QuranCard extends StatelessWidget {
+  const _QuranCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? quran;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'quran') quran = p;
+    }
+
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        AmolPillar? tracked;
+        for (final pillar in daily?.pillars ?? const <AmolPillar>[]) {
+          if (pillar.pillarKey == 'quran') {
+            tracked = pillar;
+            break;
+          }
+        }
+        final points = tracked?.earnedPoints ?? quran?.points ?? 0;
+        final max = tracked?.maxPoints ?? quran?.maxPoints ?? 0;
+        final entry = tracked?.entry;
+        String number(num value) => value == value.roundToDouble()
+            ? value.toInt().toString()
+            : '$value';
+        return HomeGradientShape(
+          child: QuranCardContent(
+            onOpenQuran: () => _openTracker(context, AmalSection.quran),
+            percentageLabel: tracked == null
+                ? _pillarText(
+                    context,
+                    quran,
+                    (pillar) => pillar.localizedPercentage,
+                    '',
+                  )
+                : context.localizedDigits('${tracked.percentage.round()}%'),
+            title: _pillarText(
+              context,
+              quran,
+              (pillar) => pillar.localizedTitle,
+              AppText.of(context).categoryLabel('Quran'),
+            ),
+            counter: tracked == null
+                ? _pillarCounter(context, quran, '0/11')
+                : context.localizedDigits('${number(points)}/${number(max)}'),
+            progress: max <= 0 ? 0 : (points / max).toDouble(),
+            // Inside the ring: how long the Quran has been read today. The
+            // tracker's own entry block holds those minutes (its pillar
+            // subtext is the points fraction already shown above), and it
+            // carries this device's unsent reading too. Without it, the Home
+            // dashboard's own duration is used.
+            readingTimeLabel: entry != null && entry.isMinutes
+                ? context.amolEntryAmount(entry)
+                : _pillarText(
+                    context,
+                    quran,
+                    (pillar) => pillar.localizedFormattedSubtext,
+                    quran?.formattedSubtext ?? '',
+                  ),
+          ),
+          onTap: () => _openTracker(context, AmalSection.quran),
+        );
+      },
+    );
+  }
+}
+
+/// Nafl and more card: [NaflMoreCardContent] over [HomeGradientShape], fed
+/// from the `nafl_and_more` pillar of the home dashboard when it has loaded.
+class _NaflMoreCard extends StatefulWidget {
+  const _NaflMoreCard();
+
+  @override
+  State<_NaflMoreCard> createState() => _NaflMoreCardState();
+}
+
+class _NaflMoreCardState extends State<_NaflMoreCard> {
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// The items and each one's tracked state come from the shared daily
+  /// checklist (`nafl_and_more` pillar).
+  List<NaflItemData> _items(BuildContext context, PillarCard? pillar) => [
+    for (final item
+        in AmolDailyStore.instance.pillar('nafl_and_more')?.items ??
+            const <AmolItem>[])
+      NaflItemData(
+        name: _localizedNaflItemName(context, pillar, item),
+        points: item.maxPoints,
+        completed: item.isCompleted,
+        itemKey: item.itemKey,
+      ),
+  ];
+
+  String _localizedNaflItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final chartKey = switch (item.itemKey) {
+      'sadaqah_hadia' => 'sadaqah',
+      'nafl_fasting' => 'fasting',
+      'given_good_advice' => 'advice',
+      'physical_exercise' => 'exercise',
+      _ => null,
+    };
+    final apiLabel = chartKey == null
+        ? ''
+        : context.localized(pillar?.localizedChartLabels[chartKey]);
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    final appText = AppText.of(context);
+    return switch (item.itemKey) {
+      'sadaqah_hadia' => appText.moreSadaqah,
+      'karje_hasanah' => appText.moreKarzeHasanah,
+      'nafl_fasting' => appText.moreNaflFasting,
+      'physical_exercise' => appText.morePhysicalExercise,
+      'given_good_advice' => appText.moreGivenGoodAdvice,
+      'skill_development' => appText.moreSkillDevelopment,
+      _ => context.localized(LocalizedText(en: item.title, bn: item.titleBn)),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? nafl;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'nafl_and_more') nafl = p;
+    }
+
+    return HomeGradientShape(
+      child: NaflMoreCardContent(
+        percentage: nafl?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          nafl,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Nafl & more'),
+        ),
+        onOpenDashboard: () => _openTracker(context, AmalSection.naflAndMore),
+        counter: _pillarCounter(context, nafl, '0/7'),
+        items: _items(context, nafl),
+        onItemTap: (item) => _openTracker(
+          context,
+          AmalSection.naflAndMore,
+          itemKey: item.itemKey,
+        ),
+      ),
+      onTap: () => _openTracker(context, AmalSection.naflAndMore),
+    );
+  }
+}
+
+/// Zikr card: [ZikrCardContent] over [HomeGradientShape], fed from the
+/// `tasbih` pillar (the server's pillarKey for Zikr) of the home dashboard
+/// when it has loaded. The tracker has no Zikr section, so it opens the Zikr
+/// feature instead.
+class _ZikrCard extends StatefulWidget {
+  const _ZikrCard();
+
+  @override
+  State<_ZikrCard> createState() => _ZikrCardState();
+}
+
+class _ZikrCardState extends State<_ZikrCard> {
+  /// The name for one tracked zikr item: the dashboard's own API label for
+  /// this `itemKey` when the server sends one (same source the Nafl & more
+  /// and Sunnah/Witr cards use), else the local Prayer-Zikr translation, else
+  /// the tracker's own `title` as-is.
+  String _localizedZikrItemName(
+    BuildContext context,
+    PillarCard? pillar,
+    AmolItem item,
+  ) {
+    final apiLabel = context.localized(
+      pillar?.localizedChartLabels[item.itemKey],
+    );
+    if (apiLabel.isNotEmpty) return apiLabel;
+
+    final staticName = localizedTrackedZikrName(
+      AppText.of(context),
+      item.itemKey,
+    );
+    if (staticName != null) return staticName;
+
+    return context.localized(LocalizedText(en: item.title, bn: item.titleBn));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? zikr;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'tasbih') zikr = p;
+    }
+    // The tracker's `tasbih` pillar (the server's pillarKey for Zikr; when
+    // it sends one) supplies the list and each zikr's tracked state; without
+    // it the card keeps its five numbered placeholders and the Home
+    // dashboard's numbers.
+    final tracked = AmolDailyStore.instance.pillar('tasbih');
+    final items = tracked == null || tracked.items.isEmpty
+        ? [
+            for (var index = 1; index <= 5; index++)
+              ZikrItemData(
+                name:
+                    '${AppText.of(context).zikrTitle} '
+                    '${context.localizedDigits('$index')}',
+              ),
+          ]
+        : [
+            for (final item in tracked.items)
+              ZikrItemData(
+                name: _localizedZikrItemName(context, zikr, item),
+                completed: item.isCompleted,
+                itemKey: item.itemKey,
+              ),
+          ];
+
+    void openZikr() => tracked == null
+        ? Navigator.of(context).pushNamed(RouteNames.zikr)
+        : _openTracker(context, AmalSection.zikr);
+
+    return HomeGradientShape(
+      onTap: openZikr,
+      child: ZikrCardContent(
+        percentage: tracked?.percentage ?? zikr?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          zikr,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Zikr'),
+        ),
+        counter: _pillarCounter(context, zikr, '0/7'),
+        items: items,
+        // With a tracker pillar, the arrow opens the tracker on it (where
+        // Zikr is ticked); otherwise the Zikr feature.
+        onOpenZikr: openZikr,
+        onItemTap: (item) => tracked == null
+            ? openZikr()
+            : _openTracker(context, AmalSection.zikr, itemKey: item.itemKey),
+      ),
+    );
+  }
+}
+
+/// Sunnah and Witr card: [SunnahWitrCardContent] over [HomeGradientShape],
+/// fed from the `sunnah_witr` pillar of the home dashboard when it has loaded.
+class _SunnahWitrCard extends StatefulWidget {
+  const _SunnahWitrCard();
+
+  @override
+  State<_SunnahWitrCard> createState() => _SunnahWitrCardState();
+}
+
+class _SunnahWitrCardState extends State<_SunnahWitrCard> {
+  /// Pill label -> the tracker `itemKey` behind it. Witr has its own pill
+  /// (in place of Asr, which has no Sunnah of its own), so Isha's pill is
+  /// just the Isha Sunnah.
+  static const _pillItems = {
+    'Fajr': ['fajr_sunnah'],
+    'Duhr': ['dhuhr_sunnah'],
+    'Witr': ['witr'],
+    'Magrib': ['maghrib_sunnah'],
+    'Esa': ['isha_sunnah'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// Per-prayer points and tracked state from the shared daily checklist
+  /// (`sunnah_witr` pillar); empty until it loads.
+  List<SunnahPrayerData> _prayers(BuildContext context, PillarCard? pillar) {
+    final items = AmolDailyStore.instance.pillar('sunnah_witr')?.items;
+    if (items == null) return const [];
+    final byKey = {for (final item in items) item.itemKey: item};
+    const chartKeyByItemKey = {
+      'fajr_sunnah': 'fajrSunnah',
+      'dhuhr_sunnah': 'dhuhrSunnah',
+      'maghrib_sunnah': 'maghribSunnah',
+      'isha_sunnah': 'ishaSunnah',
+      'witr': 'witr',
+    };
+    return [
+      for (final entry in _pillItems.entries)
+        if (byKey[entry.value.first] != null)
+          SunnahPrayerData(
+            prayerName: entry.key,
+            label: context.localized(
+              pillar?.localizedChartLabels[chartKeyByItemKey[entry
+                  .value
+                  .first]],
+            ),
+            points: [
+              for (final key in entry.value) byKey[key]?.maxPoints ?? 0,
+            ].fold<num>(0, (sum, v) => sum + v),
+            sunnahCompleted: byKey[entry.value.first]!.isCompleted,
+          ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? sunnah;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'sunnah_witr') sunnah = p;
+    }
+
+    return HomeGradientShape(
+      child: SunnahWitrCardContent(
+        percentage: sunnah?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: _pillarText(
+          context,
+          sunnah,
+          (pillar) => pillar.localizedTitle,
+          AppText.of(context).categoryLabel('Sunnah and Witr'),
+        ),
+        counter: _pillarCounter(context, sunnah, '0/6'),
+        prayers: _prayers(context, sunnah),
+        onOpenTracker: () => _openTracker(context, AmalSection.sunnahWitr),
+        onPrayerTap: (name) => _openTracker(
+          context,
+          AmalSection.sunnahWitr,
+          itemKey: _pillItems[name]?.first,
+        ),
+      ),
+      onTap: () => _openTracker(context, AmalSection.sunnahWitr),
+    );
+  }
+}
+
+/// Quiz card: [QuizCardContent] over [HomeGradientShape], fed from the `quiz`
+/// pillar of the home dashboard (title/percentage/counter) and the two
+/// glass tiles from the tracker's own `quiz` pillar items (the same
+/// `AmolDailyStore` source the Zikr card reads for its items), when the
+/// server sends them.
+class _QuizCard extends StatefulWidget {
+  const _QuizCard();
+
+  @override
+  State<_QuizCard> createState() => _QuizCardState();
+}
+
+class _QuizCardState extends State<_QuizCard> {
+  @override
+  void initState() {
+    super.initState();
+    AmolDailyStore.instance
+      ..addListener(_onStoreChanged)
+      ..ensureLoaded();
+  }
+
+  void _onStoreChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    AmolDailyStore.instance.removeListener(_onStoreChanged);
+    super.dispose();
+  }
+
+  /// One diamond tile from a tracked quiz item: its own localized title, and
+  /// its earned points once played, otherwise the worth it shows before
+  /// being played.
+  QuizTileData _tileFromItem(BuildContext context, AmolItem item) =>
+      QuizTileData(
+        title: context.localized(
+          LocalizedText(en: item.title, bn: item.titleBn),
+        ),
+        points: item.isCompleted ? item.points : item.maxPoints,
+        completed: item.isCompleted,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<HomeDashboardBloc>().state;
+    final dashboard = state.hasData ? state.dashboard : null;
+    PillarCard? quiz;
+    for (final p in dashboard?.pillarCards ?? const <PillarCard>[]) {
+      if (p.pillarKey == 'quiz') quiz = p;
+    }
+
+    final title = _pillarText(
+      context,
+      quiz,
+      (pillar) => pillar.localizedTitle,
+      AppText.of(context).categoryLabel('Quiz'),
+    );
+
+    // The tracker's `quiz` pillar supplies the two Daily Quiz tiles; without
+    // it the first tile falls back to the Home dashboard's own quiz summary
+    // and the second keeps its default label.
+    final trackedItems =
+        AmolDailyStore.instance.pillar('quiz')?.items ?? const [];
+    final firstTile = trackedItems.isNotEmpty
+        ? _tileFromItem(context, trackedItems[0])
+        : quizTileFromPillar(quiz, title: title);
+    final secondTile = trackedItems.length > 1
+        ? _tileFromItem(context, trackedItems[1])
+        : null;
+    final quizTiles = [?firstTile, ?secondTile];
+
+    return HomeGradientShape(
+      child: QuizCardContent(
+        percentage: quiz?.percentage ?? 0,
+        percentageLabel: _pillarText(
+          context,
+          quiz,
+          (pillar) => pillar.localizedPercentage,
+          '',
+        ),
+        title: title,
+        counter: _pillarCounter(context, quiz, '0/7'),
+        tiles: quizTiles,
+        onOpenTracker: () => _openTracker(context, AmalSection.quiz),
+      ),
+      onTap: () => _openTracker(context, AmalSection.quiz),
+    );
+  }
+}
+
+/// Rounded panel with a top-to-bottom white -> light green gradient.
+class HomeGradientShape extends StatelessWidget {
+  const HomeGradientShape({super.key, this.child, this.onTap});
+
+  final Widget? child;
+
+  /// Makes the whole card tappable. A button or item inside the card that
+  /// handles its own tap still wins on its own area.
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(24.r);
+    final card = Container(
+      width: double.infinity,
+      height: 380.h,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFFFFF), Color(0xFFDCEBBB)],
+        ),
+        border: Border.all(color: const Color(0xFFDCEBBB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 40.h,
+              child: Image.asset(
+                'assets/newShape.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
+            if (child != null) Positioned.fill(child: child!),
+          ],
+        ),
+      ),
+    );
+    if (onTap == null) return card;
+    // No ripple or highlight: the card looks exactly as before; only its tap
+    // area grows to cover all of it.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
     );
   }
 }
@@ -55,38 +1866,50 @@ class HomeCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.borderColor,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
+    this.radius = 11,
+    this.shadows,
   });
 
+  final double radius;
+  final List<BoxShadow>? shadows;
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? borderColor;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.appPalette;
     return Container(
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(11.r),
-        border: Border.all(color: borderColor ?? const Color(0xFFE4E8C8)),
+        color: context.surfaceColor(backgroundColor ?? palette.surface),
+        borderRadius: BorderRadius.circular(radius.r),
+        border: Border.all(
+          color: context.lineColor(borderColor ?? palette.border),
+        ),
+        boxShadow: shadows,
       ),
       child: child,
     );
   }
 }
 
+/// Pass [context] to follow the active theme; without it (and without
+/// [color]) the light-mode color is used.
 TextStyle homeSerifStyle({
   double? fontSize,
   FontWeight? fontWeight,
-  Color color = const Color(0xFF1F2B1C),
+  Color? color,
+  BuildContext? context,
 }) {
   return TextStyle(
-    color: color,
+    color: color ?? (context?.appPalette ?? AppPalette.light).textStrong,
     fontSize: fontSize,
-    fontFamily: 'Times New Roman',
+    fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
     fontStyle: FontStyle.italic,
     fontWeight: fontWeight,
   );
@@ -95,9 +1918,16 @@ TextStyle homeSerifStyle({
 TextStyle homeSansStyle({
   double? fontSize,
   FontWeight? fontWeight,
-  Color color = const Color(0xFF233021),
+  Color? color,
+  BuildContext? context,
 }) {
-  return TextStyle(color: color, fontSize: fontSize, fontWeight: fontWeight);
+  return TextStyle(
+    color: color ?? (context?.appPalette ?? AppPalette.light).textPrimary,
+    fontSize: fontSize,
+    fontFamily: appFontFamilyFor(LanguagePreference.current),
+    fontFamilyFallback: appFontFamilyFallback,
+    fontWeight: fontWeight,
+  );
 }
 
 class HomeCircleButton extends StatelessWidget {
@@ -120,7 +1950,7 @@ class HomeCircleButton extends StatelessWidget {
         onPressed: onPressed ?? () {},
         style: IconButton.styleFrom(
           padding: EdgeInsets.zero,
-          backgroundColor: const Color(0xFFDDE8AE),
+          backgroundColor: context.appPalette.tint,
           foregroundColor: AppColor.primary,
         ),
         icon: Icon(icon, size: 15.sp),

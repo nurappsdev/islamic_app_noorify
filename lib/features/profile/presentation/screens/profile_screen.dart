@@ -1,44 +1,78 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/bloc/app_preferences/app_preferences_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
+import 'package:tuhfatul_muslim/features/auth/data/repositories/account_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/usecases/logout_user.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bloc.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button_metrics.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/profile_badges.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/widgets/settings_option_row.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
+import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.dart';
+import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
+import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  static const _progress = .67;
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-  static List<_FamilyMember> _members(AppText appText) => [
-    _FamilyMember(
-      rank: 4,
-      name: appText.familyMemberNameAbdullah,
-      relation: appText.brother,
-      points: 831,
-    ),
-    _FamilyMember(
-      rank: 5,
-      name: appText.familyMemberNameSabit,
-      relation: appText.brother,
-      points: 812,
-    ),
-    _FamilyMember(
-      rank: 6,
-      name: appText.familyMemberNameAli,
-      relation: appText.brother,
-      points: 786,
-    ),
-  ];
+class _ProfileScreenState extends State<ProfileScreen> {
+  ProfileEntity? _profile;
+  List<FamilyMemberEntity> _familyMembers = const [];
+
+  /// Set once the family list has loaded, so the empty message doesn't flash
+  /// while the request is still running.
+  bool _familyLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _profile = ProfileService.instance.cachedProfile;
+    unawaited(_loadProfile());
+    // Family Members: temporarily disabled (not needed for now). Kept so
+    // the feature can be restored later; see the matching UI block below.
+    // unawaited(_loadFamilyMembers());
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await ProfileService.instance.fetchProfile();
+    if (!mounted || profile == null) return;
+    setState(() => _profile = profile);
+  }
+
+  Future<void> _loadFamilyMembers() async {
+    final members = await FamilyService.instance.fetchFamilyMembers();
+    if (!mounted) return;
+    setState(() {
+      _familyMembers = members;
+      _familyLoaded = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final members = _members(appText);
+    // Only used by the Family Members section, disabled below.
+    // final appText = AppText.of(context);
+    final profile = _profile;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Stack(
           children: [
@@ -47,8 +81,16 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 _ProfileHeader(onBack: () => Navigator.maybePop(context)),
                 SizedBox(height: 14.h),
-                const _ProfileHeroCard(progress: _progress),
+                _ProfileHeroCard(profile: profile),
+                SizedBox(height: 18.h),
+                const _FamilyMemberComingSoonCard(),
+                SizedBox(height: 18.h),
+                const _QuickSettings(),
                 SizedBox(height: 24.h),
+                // Family Members: temporarily disabled (not needed for now).
+                // Kept so the feature can be restored later; see also the
+                // disabled _loadFamilyMembers() call above.
+                /*
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -74,26 +116,63 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 14.h),
-                for (final member in members) ...[
+                if (_familyLoaded && _familyMembers.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.h),
+                    child: Center(
+                      child: Text(
+                        AppText.of(context).noDataHere,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: context.inkColor(const Color(0xFF6B7551)),
+                        ),
+                      ),
+                    ),
+                  ),
+                for (final member in _familyMembers) ...[
                   _FamilyMemberCard(member: member),
                   SizedBox(height: 10.h),
                 ],
+                */
               ],
             ),
+            // Positioned(
+            //   right: 4.w,
+            //   bottom: 76.h,
+            //   child: const _AddFamilyMemberButton(),
+            // ),
             Positioned(
-              right: 4.w,
-              bottom: 76.h,
-              child: const _AddFamilyMemberButton(),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 8.h,
-              child: const _LogoutButton(),
+              left: 16.w,
+              right: 16.w,
+              bottom: 12.h,
+              child: isUserSignedIn
+                  ? const _LogoutButton()
+                  : const _LoginButton(),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The App Language and dark/light theme options, the very same rows the
+/// Settings screen lists - they stay there too. Both screens read and write
+/// the one [AppPreferencesBloc] and the one saved language, so a change made
+/// here shows up there and the other way round.
+class _QuickSettings extends StatelessWidget {
+  const _QuickSettings();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final isDark = context.watch<AppPreferencesBloc>().state.darkThemeEnabled;
+    return Column(
+      children: [
+        SettingsOptionRow(option: appLanguageOption(context, appText)),
+        SizedBox(height: 12.h),
+        SettingsOptionRow(option: themeToggleOption(context, appText, isDark)),
+      ],
     );
   }
 }
@@ -118,7 +197,7 @@ class _ProfileHeader extends StatelessWidget {
               onPressed: onBack,
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
             ),
@@ -138,7 +217,7 @@ class _ProfileHeader extends StatelessWidget {
                   Navigator.of(context).pushNamed(RouteNames.settings),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFDFDE68),
-                foregroundColor: const Color(0xFF303629),
+                foregroundColor: Color(0xFF303629),
               ),
               icon: const Icon(Icons.settings_outlined, size: 18),
             ),
@@ -150,14 +229,15 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _ProfileHeroCard extends StatelessWidget {
-  const _ProfileHeroCard({required this.progress});
+  const _ProfileHeroCard({required this.profile});
 
-  final double progress;
+  final ProfileEntity? profile;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Container(
+    final progress = (profile?.profileCompletionPercentage ?? 0) / 100;
+    final card = Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(18.w, 28.h, 18.w, 22.h),
       decoration: BoxDecoration(
@@ -167,51 +247,93 @@ class _ProfileHeroCard extends StatelessWidget {
       child: Column(
         children: [
           _AvatarWithProgress(progress: progress),
-          SizedBox(height: 10.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 5.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCE7AC),
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            child: Text(
-              '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: const Color(0xFF3F4A2C),
-                fontWeight: FontWeight.w600,
-              ),
+          // The percentage pill overlaps the bottom of the avatar ring.
+          Transform.translate(
+            offset: Offset(0, -14.h),
+            child: Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(const Color(0xFFDCE7AC)),
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: Colors.white, width: 1.2),
+                  ),
+                  child: Text(
+                    context.localizedDigits(
+                      '${(progress * 100).round()}% ${appText.percentCompleteSuffix}',
+                    ),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: context.inkColor(const Color(0xFF7F8F52)),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                ValueListenableBuilder<String?>(
+                  valueListenable: profileNameNotifier,
+                  builder: (context, name, _) {
+                    // A guest has no profile name to show, so label the card
+                    // "Guest User" instead of the signed-in placeholder.
+                    final fallbackName = isUserSignedIn
+                        ? appText.competitorName
+                        : appText.guestUserName;
+                    return Text(
+                      (name == null || name.isEmpty) ? fallbackName : name,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 12.h),
-          Text(
-            appText.competitorName,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 19.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            '${appText.trishal}, ${appText.mymensingh}',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .85),
-              fontSize: 12.sp,
-            ),
-          ),
+          if (profile case final profile? when profile.badges.isNotEmpty) ...[
+            SizedBox(height: 2.h),
+            ProfileBadges(profile: profile),
+          ],
           SizedBox(height: 18.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (var index = 1; index <= 4; index++)
-                _BadgeCircle(label: '${appText.badgeLabel} $index'),
-              const _BadgeCircle(label: '+2'),
-            ],
+          _PositionPointsPill(
+            position: profile?.globalRankPosition ?? 0,
+            points: profile?.totalPoints ?? 0,
           ),
-          SizedBox(height: 18.h),
-          _PositionPointsPill(position: 24, points: 831),
         ],
+      ),
+    );
+    // Edit button at the card's top-right corner.
+    return Stack(
+      children: [
+        card,
+        Positioned(right: 14.w, top: 14.h, child: const _EditProfileButton()),
+      ],
+    );
+  }
+}
+
+class _EditProfileButton extends StatelessWidget {
+  const _EditProfileButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.editProfile),
+      child: Container(
+        width: 30.r,
+        height: 30.r,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColor.primary,
+          border: Border.all(color: context.lineColor(Colors.white), width: 2),
+        ),
+        child: Icon(Icons.edit_rounded, size: 15.sp, color: Colors.white),
       ),
     );
   }
@@ -235,19 +357,10 @@ class _AvatarWithProgress extends StatelessWidget {
             size: Size(dimension, dimension),
             painter: _ProfileRingPainter(progress: progress),
           ),
-          Container(
-            width: 84.r,
-            height: 84.r,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: Icon(
-              Icons.person_rounded,
-              size: 46.sp,
-              color: const Color(0xFFB7C17E),
-            ),
+          ProfileAvatarCircle(
+            dimension: 84.r,
+            backgroundColor: context.surfaceColor(Colors.white),
+            placeholderIconColor: const Color(0xFFB7C17E),
           ),
         ],
       ),
@@ -268,13 +381,13 @@ class _ProfileRingPainter extends CustomPainter {
         Size(size.width - strokeWidth, size.height - strokeWidth);
 
     final trackPaint = Paint()
-      ..color = Colors.white.withValues(alpha: .28)
+      ..color = const Color(0xFFD3E0A4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
 
     final progressPaint = Paint()
-      ..color = const Color(0xFF6FCF3E)
+      ..color = const Color(0xFF22D14B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -294,38 +407,6 @@ class _ProfileRingPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-class _BadgeCircle extends StatelessWidget {
-  const _BadgeCircle({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 46.r,
-      height: 46.r,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Color(0xFFB9C36E),
-        shape: BoxShape.circle,
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(5.r),
-        child: FittedBox(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PositionPointsPill extends StatelessWidget {
   const _PositionPointsPill({required this.position, required this.points});
 
@@ -336,50 +417,106 @@ class _PositionPointsPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     return Container(
-      height: 46.h,
+      height: 50.h,
       decoration: BoxDecoration(
-        color: const Color(0xFF8B9B5A),
-        borderRadius: BorderRadius.circular(23.r),
+        borderRadius: BorderRadius.circular(25.r),
+        border: Border.all(color: Colors.white, width: 1.2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Text(
+            context.localizedDigits('${appText.position} : $position'),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: .9),
+              fontSize: 14.sp,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.localizedDigits('${appText.pointsWord} : '),
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .9),
+                  fontSize: 14.sp,
+                ),
+              ),
+              Icon(
+                Icons.monetization_on,
+                color: const Color(0xFFFFC83D),
+                size: 20.sp,
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                context.localizedDigits('$points'),
+                style: TextStyle(
+                  color: const Color(0xFFDCE7AC),
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder for the Family Members section while the feature is disabled
+/// (see the commented-out block in [ProfileScreen]).
+class _FamilyMemberComingSoonCard extends StatelessWidget {
+  const _FamilyMemberComingSoonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFF3F5E4)),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFDCE7AC))),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Center(
-              child: Text(
-                '${appText.position} : $position',
-                style: TextStyle(color: Colors.white, fontSize: 12.sp),
-              ),
+          Container(
+            width: 38.r,
+            height: 38.r,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.surfaceColor(const Color(0xFFDCE7AC)),
+            ),
+            child: Icon(
+              Icons.groups_rounded,
+              size: 20.sp,
+              color: context.inkColor(const Color(0xFF7F8F52)),
             ),
           ),
-          Container(
-            width: 1,
-            height: 20.h,
-            color: Colors.white.withValues(alpha: .4),
-          ),
+          SizedBox(width: 12.w),
           Expanded(
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${appText.pointsWord} : ',
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                  ),
-                  Icon(
-                    Icons.monetization_on,
-                    color: const Color(0xFFFFC83D),
-                    size: 15.sp,
-                  ),
-                  SizedBox(width: 3.w),
-                  Text(
-                    '$points',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+            child: Text(
+              appText.familyMember,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFA7B462),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Text(
+              appText.comingSoon,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -389,24 +526,10 @@ class _PositionPointsPill extends StatelessWidget {
   }
 }
 
-class _FamilyMember {
-  const _FamilyMember({
-    required this.rank,
-    required this.name,
-    required this.relation,
-    required this.points,
-  });
-
-  final int rank;
-  final String name;
-  final String relation;
-  final int points;
-}
-
 class _FamilyMemberCard extends StatelessWidget {
   const _FamilyMemberCard({required this.member});
 
-  final _FamilyMember member;
+  final FamilyMemberEntity member;
 
   @override
   Widget build(BuildContext context) {
@@ -414,28 +537,29 @@ class _FamilyMemberCard extends StatelessWidget {
       height: 60.h,
       padding: EdgeInsets.symmetric(horizontal: 12.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5E4),
+        color: context.surfaceColor(Color(0xFFF3F5E4)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: [
           Text(
-            '#${member.rank}',
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF6B7551)),
+            context.localizedDigits('#${member.globalRank}'),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF6B7551)),
+            ),
           ),
           SizedBox(width: 10.w),
-          CircleAvatar(
-            radius: 15.r,
-            backgroundColor: const Color(0xFFCFCFEA),
-            child: Text(
-              'Z',
-              style: TextStyle(color: const Color(0xFF5B5B8C), fontSize: 12.sp),
-            ),
+          _FamilyMemberAvatar(
+            avatarUrl: member.memberAvatarUrl,
+            name: member.memberName,
           ),
           SizedBox(width: 10.w),
           Expanded(
             child: Text(
-              '${member.name} ( ${member.relation} )',
+              member.memberName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13.sp),
             ),
           ),
@@ -446,10 +570,44 @@ class _FamilyMemberCard extends StatelessWidget {
           ),
           SizedBox(width: 4.w),
           Text(
-            '${member.points}',
+            context.localizedDigits('${member.memberTotalPoints}'),
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FamilyMemberAvatar extends StatelessWidget {
+  const _FamilyMemberAvatar({required this.avatarUrl, required this.name});
+
+  final String? avatarUrl;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmedName = name.trim();
+    final placeholder = CircleAvatar(
+      radius: 15.r,
+      backgroundColor: context.surfaceColor(Color(0xFFCFCFEA)),
+      child: Text(
+        trimmedName.isEmpty ? '?' : trimmedName[0].toUpperCase(),
+        style: TextStyle(
+          color: context.inkColor(Color(0xFF5B5B8C)),
+          fontSize: 12.sp,
+        ),
+      ),
+    );
+    final url = avatarUrl;
+    if (url == null || url.isEmpty) return placeholder;
+    return ClipOval(
+      child: Image.network(
+        url,
+        width: 30.r,
+        height: 30.r,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => placeholder,
       ),
     );
   }
@@ -479,14 +637,29 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider<LogoutBloc>(
+      create: (_) => LogoutBloc(
+        LogoutUser(AccountRepositoryImpl(AuthRemoteDataSourceImpl())),
+      ),
+      child: const _LogoutButtonView(),
+    );
+  }
+}
+
+class _LoginButton extends StatelessWidget {
+  const _LoginButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return SizedBox(
       height: 52.h,
       child: OutlinedButton(
-        onPressed: () {},
+        onPressed: () => Navigator.of(context).pushNamed(RouteNames.signIn),
         style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFFBEAEA),
-          foregroundColor: AppColor.forgotPassword,
-          side: const BorderSide(color: AppColor.forgotPassword),
+          backgroundColor: context.surfaceColor(Colors.white),
+          foregroundColor: context.inkColor(AppColor.primary),
+          side: const BorderSide(color: AppColor.primary),
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26.r),
@@ -497,11 +670,14 @@ class _LogoutButton extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.logout_rounded, size: 18),
+                const Icon(Icons.login_rounded, size: 18),
                 SizedBox(width: 8.w),
                 Text(
-                  AppText.of(context).logout,
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+                  appText.login,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -509,6 +685,163 @@ class _LogoutButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LogoutButtonView extends StatelessWidget {
+  const _LogoutButtonView();
+
+  void _onLogoutState(BuildContext context, LogoutState state) {
+    if (!state.isDone) return;
+    // Token was removed from Hive by the bloc; clear the rest of the session
+    // and send the user back to the sign-in screen.
+    skipAuthGateNotifier.value = false;
+    unawaited(ProfileService.instance.clear());
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
+  }
+
+  Future<void> _confirmLogout(BuildContext context, AppText appText) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 34.r,
+              height: 34.r,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: dialogContext.surfaceColor(const Color(0xFFFBEAEA)),
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                size: 18.sp,
+                color: AppColor.forgotPassword,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                appText.logout,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          appText.logoutConfirmMessage,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: dialogContext.inkColor(Colors.black),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            style: TextButton.styleFrom(
+              backgroundColor: dialogContext.surfaceColor(
+                AppColor.lightTintSoft,
+              ),
+              foregroundColor: dialogContext.inkColor(Colors.black),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+            ),
+            child: Text(
+              appText.no,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColor.forgotPassword,
+            ),
+            child: Text(appText.yes),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      context.read<LogoutBloc>().add(const LogoutRequested());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<LogoutBloc, LogoutState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onLogoutState,
+      builder: (context, state) {
+        final appText = AppText.of(context);
+        return SizedBox(
+          height: AuthButtonMetrics.signOutHeight,
+          child: OutlinedButton(
+            onPressed: state.inProgress
+                ? null
+                : () => _confirmLogout(context, appText),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: context.surfaceColor(Color(0xFFFBEAEA)),
+              foregroundColor: context.inkColor(AppColor.forgotPassword),
+              side: const BorderSide(
+                color: AppColor.forgotPassword,
+                width: AuthButtonMetrics.borderWidth,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: AuthButtonMetrics.horizontalPadding,
+              ),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AuthButtonMetrics.radius),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Flexible so a long translated label shrinks instead of
+                // overflowing the slimmer frame.
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.logout_rounded,
+                        size: AuthButtonMetrics.iconSize,
+                      ),
+                      SizedBox(width: 8.w),
+                      Flexible(
+                        child: AuthButtonLabel(
+                          appText.logout,
+                          style: TextStyle(
+                            fontSize: AuthButtonMetrics.labelSize,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (state.inProgress)
+                  SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  const Icon(Icons.chevron_right_rounded, size: 20),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

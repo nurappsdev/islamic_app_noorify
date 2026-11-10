@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 
-import 'package:islami_app_noorify/features/quran/data/services/quran_local_store.dart';
+import 'package:tuhfatul_muslim/features/quran/data/services/quran_local_store.dart';
 
 import 'bookmarks_event.dart';
 import 'bookmarks_state.dart';

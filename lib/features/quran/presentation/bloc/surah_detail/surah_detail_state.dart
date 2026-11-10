@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/surah_detail.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/surah_detail.dart';
 
 class SurahDetailState {
   const SurahDetailState({

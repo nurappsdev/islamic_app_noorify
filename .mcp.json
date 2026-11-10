@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "swagger": {
+      "command": "npx",
+      "args": ["-y", "@ivotoby/openapi-mcp-server"],
+      "env": {
+        "API_BASE_URL": "https://siamnahidul7000.ilmifygroup.com/api/v1",
+        "OPENAPI_SPEC_PATH": "https://siamnahidul7000.ilmifygroup.com/api/docs.json"
+      }
+    }
+  }
+}

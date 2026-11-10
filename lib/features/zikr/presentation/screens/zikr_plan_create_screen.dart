@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
 /// "Create plan" screen (designs `devImg/img_23.png` and `devImg/img_24.png`),
 /// reached from the "Create Plan" button on [ZikrPlannerScreen].
 ///
-/// UI only. Fill the plan name + completion days, add one or more zikr with a
-/// reading value, then "Create" (which just returns to the planner).
+/// Fill the plan name + completion days, add one or more zikr with a reading
+/// value, then "Create" sends the plan to the backend and returns to the
+/// planner.
 class ZikrPlanCreateScreen extends StatefulWidget {
   const ZikrPlanCreateScreen({super.key});
 
@@ -27,8 +35,11 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
   final _valueController = TextEditingController();
 
   final List<ZikrPlanEntry> _entries = [];
+  final List<String?> _entryNameKeys = [];
   String? _zikrName;
+  String? _zikrNameKey;
   bool _adding = true;
+  bool _submitting = false;
 
   late AppText _appText;
 
@@ -47,7 +58,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
   }
 
   String get _planName => _nameController.text.trim().isEmpty
-      ? 'Plan 1'
+      ? _appText.zikrPlanDefaultName
       : _nameController.text.trim();
   int get _planDays => int.tryParse(_daysController.text.trim()) ?? 30;
 
@@ -91,8 +102,11 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           PopupMenuItem<String>(
             value: ZikrCatalog.dropdownItems[i].name,
             child: Text(
-              ZikrCatalog.dropdownItems[i].name,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+              localizedZikrItemName(_appText, ZikrCatalog.dropdownItems[i]),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF2C3320)),
+              ),
             ),
           ),
         ],
@@ -101,7 +115,10 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           value: _customValue,
           child: Text(
             _appText.zikrCustom,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF2C3320)),
+            ),
           ),
         ),
       ],
@@ -110,46 +127,26 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     if (result == null || !mounted) return;
     if (result == _customValue) {
       final name = await _askCustomName();
-      if (name != null && name.isNotEmpty) setState(() => _zikrName = name);
+      if (!mounted) return;
+      if (name != null && name.isNotEmpty) {
+        setState(() {
+          _zikrName = name;
+          _zikrNameKey = null;
+        });
+      }
       return;
     }
-    setState(() => _zikrName = result);
+    setState(() {
+      _zikrName = result;
+      _zikrNameKey = zikrNameKeyFor(result);
+    });
   }
 
   Future<String?> _askCustomName() {
-    final controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          _appText.zikrCustom,
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(
-            hintText: _appText.zikrWriteZikrNameHint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(_appText.zikrCancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
-            child: Text(_appText.zikrCreateAdd),
-          ),
-        ],
-      ),
-    ).whenComplete(controller.dispose);
+      builder: (dialogContext) => _CustomZikrNameDialog(appText: _appText),
+    );
   }
 
   void _add() {
@@ -167,7 +164,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           value: (value == null || value < 1) ? 33 : value,
         ),
       );
+      _entryNameKeys.add(_zikrNameKey);
       _zikrName = null;
+      _zikrNameKey = null;
       _valueController.clear();
       _adding = false;
     });
@@ -177,15 +176,63 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     setState(() => _adding = true);
   }
 
-  void _create() {
-    if (_entries.isEmpty) {
+  /// The entries already added via "Add", plus whatever zikr is still
+  /// filled in on the form but wasn't explicitly added yet — so tapping
+  /// "Create" right after selecting a preset/custom zikr and a target count
+  /// (without tapping the small "Add" first) still saves it, instead of the
+  /// selection being silently dropped and failing validation.
+  (List<ZikrPlanEntry>, List<String?>) _resolvedEntries() {
+    final entries = List.of(_entries);
+    final nameKeys = List.of(_entryNameKeys);
+    final pendingName = _zikrName;
+    if (pendingName != null && pendingName.isNotEmpty) {
+      final pendingValue = int.tryParse(_valueController.text.trim());
+      entries.add(
+        ZikrPlanEntry(
+          name: pendingName,
+          value: (pendingValue == null || pendingValue < 1) ? 33 : pendingValue,
+        ),
+      );
+      nameKeys.add(_zikrNameKey);
+    }
+    return (entries, nameKeys);
+  }
+
+  Future<void> _create() async {
+    final (entries, _) = _resolvedEntries();
+    if (entries.isEmpty) {
       _toast(_appText.zikrSelectZikr);
       return;
     }
+    if (_nameController.text.trim().isEmpty || _planDays < 1) {
+      _toast(_appText.zikrPlanValidationMessage);
+      return;
+    }
     HapticFeedback.selectionClick();
-    Navigator.of(context).pop(
-      ZikrPlan(name: _planName, days: _planDays, entries: List.of(_entries)),
-    );
+    setState(() => _submitting = true);
+    try {
+      await zikrRepository.createPlan({
+        'planName': _planName,
+        'completionDays': _planDays,
+        'items': [
+          for (final entry in entries)
+            {
+              'zikrKey': zikrKeyFromName(entry.name),
+              'zikrName': entry.name,
+              'targetCount': entry.value,
+            },
+        ],
+      });
+      if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (error is AuthenticationRequiredException && mounted) {
+        await showZikrLoginRequiredDialog(context);
+        return;
+      }
+      if (mounted) _toast('$error');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -193,7 +240,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     final appText = _appText;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -211,7 +258,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: const Color(0xFF303629),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -224,7 +271,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   Text(
                     appText.zikrPlanCreateTitle,
                     style: TextStyle(
-                      color: AppColor.authLogo,
+                      color: context.inkColor(AppColor.authLogo),
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -243,7 +290,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   width: double.infinity,
                   height: 54.h,
                   child: FilledButton(
-                    onPressed: _create,
+                    onPressed: _submitting ? null : _create,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColor.primary,
                       foregroundColor: Colors.white,
@@ -292,7 +339,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
         Container(
           padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 18.h),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCBB94F)),
+            border: Border.all(color: context.lineColor(Color(0xFFCBB94F))),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Column(
@@ -311,13 +358,21 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(26.r),
-                    border: Border.all(color: const Color(0xFFDDE3C6)),
+                    border: Border.all(
+                      color: context.lineColor(Color(0xFFDDE3C6)),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          _zikrName ?? appText.zikrSelectZikr,
+                          _zikrName == null
+                              ? appText.zikrSelectZikr
+                              : localizedZikrNameFromKey(
+                                  appText,
+                                  zikrKey: zikrKeyFromName(_zikrName!),
+                                  fallback: _zikrName!,
+                                ),
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontStyle: _zikrName == null
@@ -356,8 +411,8 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _add,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8C7A1F),
-              side: const BorderSide(color: Color(0xFFCBB94F)),
+              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22.r),
@@ -378,11 +433,13 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 20.h),
       children: [
         Text(
-          '$_planName  ( $_planDays ${appText.zikrPlanDays} )',
+          context.localizedDigits(
+            '$_planName  ( $_planDays ${appText.zikrPlanDays} )',
+          ),
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF2C3320),
+            color: context.inkColor(Color(0xFF2C3320)),
           ),
         ),
         SizedBox(height: 14.h),
@@ -396,8 +453,8 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _addMore,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF8C7A1F),
-              side: const BorderSide(color: Color(0xFFCBB94F)),
+              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22.r),
@@ -408,6 +465,63 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
               style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Body of the "Custom" name dialog from [_ZikrPlanCreateScreenState.
+/// _askCustomName]. Owns its own [TextEditingController] so Flutter disposes
+/// it only after this widget's `Element` is actually unmounted (once the
+/// dialog's exit animation finishes) — disposing it as soon as the
+/// `showDialog` future resolves (i.e. the instant "Add" is tapped) races the
+/// still-animating-out dialog, which still has a live [TextField] reading
+/// that controller, and throws.
+class _CustomZikrNameDialog extends StatefulWidget {
+  const _CustomZikrNameDialog({required this.appText});
+
+  final AppText appText;
+
+  @override
+  State<_CustomZikrNameDialog> createState() => _CustomZikrNameDialogState();
+}
+
+class _CustomZikrNameDialogState extends State<_CustomZikrNameDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = widget.appText;
+    return AlertDialog(
+      title: Text(
+        appText.zikrCustom,
+        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          hintText: appText.zikrWriteZikrNameHint,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(appText.zikrCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text.trim()),
+          style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
+          child: Text(appText.zikrCreateAdd),
         ),
       ],
     );
@@ -427,7 +541,7 @@ class _Label extends StatelessWidget {
       style: TextStyle(
         fontSize: big ? 15.sp : 13.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF2C3320),
+        color: context.inkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -468,7 +582,7 @@ class _RoundedField extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
-          borderSide: const BorderSide(color: Color(0xFFDDE3C6)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFDDE3C6))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
@@ -486,10 +600,11 @@ class _PlanEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appText = AppText.of(context);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFDDE3C6)),
+        border: Border.all(color: context.lineColor(Color(0xFFDDE3C6))),
         borderRadius: BorderRadius.circular(18.r),
       ),
       child: Row(
@@ -500,12 +615,12 @@ class _PlanEntryRow extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFCBD9AF)),
+              border: Border.all(color: context.lineColor(Color(0xFFCBD9AF))),
             ),
             child: Icon(
               Icons.self_improvement_rounded,
               size: 18.sp,
-              color: const Color(0xFF6E8B3D),
+              color: context.inkColor(Color(0xFF6E8B3D)),
             ),
           ),
           SizedBox(width: 12.w),
@@ -514,16 +629,20 @@ class _PlanEntryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  entry.name,
+                  localizedZikrNameFromKey(
+                    appText,
+                    zikrKey: zikrKeyFromName(entry.name),
+                    fallback: entry.name,
+                  ),
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF3D3170),
+                    color: context.inkColor(Color(0xFF3D3170)),
                   ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  '${entry.value}',
+                  context.localizedDigits('${entry.value}'),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: const Color(0xFF9AA579),

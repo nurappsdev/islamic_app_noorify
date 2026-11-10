@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
 
 /// "Book Mark" bottom sheet: pick (or create) the folders a hadith is saved
 /// into, then Save. Pops with `true` when a save happened.
@@ -34,7 +35,8 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
   void initState() {
     super.initState();
     _searchController.addListener(
-      () => setState(() => _query = _searchController.text.trim().toLowerCase()),
+      () =>
+          setState(() => _query = _searchController.text.trim().toLowerCase()),
     );
     _load();
   }
@@ -64,9 +66,11 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
   }
 
   Future<void> _createFolder() async {
-    final name = await showDialog<String>(
+    final name = await showModalBottomSheet<String>(
       context: context,
-      builder: (_) => _CreateFolderDialog(appText: widget.appText),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CreateFolderSheet(appText: widget.appText),
     );
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty) return;
@@ -104,7 +108,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
       padding: EdgeInsets.only(bottom: viewInsets),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE6BE),
+          color: context.surfaceColor(Color(0xFFDCE6BE)),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
         ),
         padding: EdgeInsets.fromLTRB(
@@ -120,7 +124,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               width: 42.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: const Color(0xFFB6C489),
+                color: context.surfaceColor(Color(0xFFB6C489)),
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
@@ -130,7 +134,7 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF3E4A2A),
+                color: context.inkColor(Color(0xFF3E4A2A)),
               ),
             ),
             SizedBox(height: 16.h),
@@ -140,21 +144,23 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
               decoration: InputDecoration(
                 hintText: appText.searchFolderHint,
                 hintStyle: TextStyle(
-                  color: const Color(0xFF8A9568),
+                  color: context.inkColor(Color(0xFF8A9568)),
                   fontSize: 13.sp,
                 ),
                 isDense: true,
                 prefixIcon: Icon(
                   Icons.search_rounded,
                   size: 18.sp,
-                  color: const Color(0xFF8A9568),
+                  color: context.inkColor(Color(0xFF8A9568)),
                 ),
                 contentPadding: EdgeInsets.symmetric(vertical: 14.h),
                 filled: true,
-                fillColor: const Color(0xFFEFF3E1),
+                fillColor: context.surfaceColor(Color(0xFFEFF3E1)),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: Color(0xFFC7D2A0)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(Color(0xFFC7D2A0)),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
@@ -195,15 +201,17 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                                       ? Icons.check_circle_rounded
                                       : Icons.circle_outlined,
                                   size: 20.sp,
-                                  color: selected
-                                      ? const Color(0xFF7C8A48)
-                                      : const Color(0xFF9AA77A),
+                                  color: context.inkColor(
+                                    selected
+                                        ? const Color(0xFF7C8A48)
+                                        : const Color(0xFF9AA77A),
+                                  ),
                                 ),
                                 SizedBox(width: 14.w),
                                 Icon(
                                   Icons.folder_rounded,
                                   size: 22.sp,
-                                  color: const Color(0xFF8B9A4B),
+                                  color: context.inkColor(Color(0xFF8B9A4B)),
                                 ),
                                 SizedBox(width: 12.w),
                                 Expanded(
@@ -211,7 +219,9 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                                     folder,
                                     style: TextStyle(
                                       fontSize: 14.sp,
-                                      color: const Color(0xFF3E4A2A),
+                                      color: context.inkColor(
+                                        Color(0xFF3E4A2A),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -229,9 +239,11 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
                   child: OutlinedButton(
                     onPressed: _createFolder,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF4C5A34),
+                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                       minimumSize: Size(0, 52.h),
-                      side: const BorderSide(color: Color(0xFF9BAE6C)),
+                      side: BorderSide(
+                        color: context.lineColor(Color(0xFF9BAE6C)),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26.r),
                       ),
@@ -272,16 +284,18 @@ class _HadithBookmarkSheetState extends State<HadithBookmarkSheet> {
   }
 }
 
-class _CreateFolderDialog extends StatefulWidget {
-  const _CreateFolderDialog({required this.appText});
+/// "Create Folder" bottom sheet: a name field with Cancel / Save. Pops with
+/// the typed name, or null when cancelled.
+class _CreateFolderSheet extends StatefulWidget {
+  const _CreateFolderSheet({required this.appText});
 
   final AppText appText;
 
   @override
-  State<_CreateFolderDialog> createState() => _CreateFolderDialogState();
+  State<_CreateFolderSheet> createState() => _CreateFolderSheetState();
 }
 
-class _CreateFolderDialogState extends State<_CreateFolderDialog> {
+class _CreateFolderSheetState extends State<_CreateFolderSheet> {
   final _controller = TextEditingController();
 
   @override
@@ -295,40 +309,122 @@ class _CreateFolderDialogState extends State<_CreateFolderDialog> {
   @override
   Widget build(BuildContext context) {
     final appText = widget.appText;
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      title: Text(
-        appText.createFolderAction,
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
+    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets),
+      child: Container(
+        decoration: BoxDecoration(
+          color: context.surfaceColor(const Color(0xFFDCE6BE)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20.w,
+          22.h,
+          20.w,
+          18.h + (viewInsets > 0 ? 0 : safeBottom),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                appText.createFolderAction,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.inkColor(const Color(0xFF3E4A2A)),
+                ),
+              ),
+            ),
+            SizedBox(height: 22.h),
+            Text(
+              appText.folderNameHint,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(const Color(0xFF6B7458)),
+              ),
+            ),
+            SizedBox(height: 10.h),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              style: TextStyle(fontSize: 13.sp),
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                hintText: appText.folderNameInputHint,
+                hintStyle: TextStyle(
+                  color: context.inkColor(const Color(0xFF8A9568)),
+                  fontSize: 13.sp,
+                ),
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 14.h,
+                ),
+                filled: true,
+                fillColor: context.surfaceColor(const Color(0xFFEFF3E1)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24.r),
+                  borderSide: BorderSide(
+                    color: context.lineColor(const Color(0xFFC7D2A0)),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24.r),
+                  borderSide: const BorderSide(color: Color(0xFF95A24E)),
+                ),
+              ),
+            ),
+            SizedBox(height: 120.h),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColor.forgotPassword,
+                      minimumSize: Size(0, 52.h),
+                      side: const BorderSide(color: AppColor.forgotPassword),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26.r),
+                      ),
+                    ),
+                    child: Text(
+                      appText.cancelAction,
+                      style: TextStyle(fontSize: 13.sp),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF95A24E),
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(0, 52.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26.r),
+                      ),
+                    ),
+                    child: Text(
+                      appText.saveAction,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        textInputAction: TextInputAction.done,
-        decoration: InputDecoration(
-          hintText: appText.folderNameHint,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFDDE8C1)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: AppColor.primary),
-          ),
-        ),
-        onSubmitted: (_) => _submit(),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
-          child: Text(appText.create),
-        ),
-      ],
     );
   }
 }

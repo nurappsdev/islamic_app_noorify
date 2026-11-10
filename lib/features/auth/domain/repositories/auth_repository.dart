@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/auth/domain/entities/user_entity.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/user_entity.dart';
 
 abstract interface class AuthRepository {
   UserEntity? get currentUser;

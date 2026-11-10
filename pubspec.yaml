@@ -1,4 +1,4 @@
-name: islami_app_noorify
+name: tuhfatul_muslim
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.8+10
 
 environment:
   sdk: ^3.12.0
@@ -35,26 +35,56 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_screenutil: ^5.9.3
+  smooth_page_indicator: ^3.0.0
   bloc: ^9.2.1
   flutter_bloc: ^9.1.1
+  dartz: ^0.10.1
   google_fonts: ^8.2.1
-  firebase_core: ^4.0.0
-  firebase_auth: ^6.0.1
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.6.1
   google_sign_in: ^7.1.1
   http: ^1.6.0
   shared_preferences: ^2.5.5
   shimmer: ^4.0.0
   sqflite: ^2.4.3
+  sqflite_common_ffi_web: ^1.2.0+1
   xml: ^6.5.0
   share_plus: ^11.0.0
   path: ^1.9.1
   path_provider: ^2.1.5
   just_audio: ^0.10.6
+  audio_session: ^0.2.4
   audio_service: ^0.18.19
+  flutter_local_notifications: ^22.3.1
+  android_alarm_manager_plus: ^5.1.1
+  timezone: ^0.11.1
   url_launcher: ^6.3.1
-
+  dio: ^5.11.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  logger: ^2.8.0
+  image_picker: ^1.2.0
+  vibration: ^3.2.1
+  pdfx: ^2.11.0
+  flutter_compass: ^0.8.1
+  geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  hijri: ^3.0.1
+  flutter_widget_from_html_core: ^0.17.4
+  markdown: ^7.3.1
+  firebase_messaging: ^16.5.0
+  animations: ^2.0.11
+  home_widget: ^0.10.0
+  flutter_svg: ^2.2.1
+  in_app_update: ^5.0.0
+  package_info_plus: ^9.0.1
+  uuid: ^4.6.0
+  web: ^1.1.1
+  flutter_facebook_auth: ^7.3.2
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -63,6 +93,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  fake_async: ^1.3.3
+  sqflite_common_ffi: ^2.4.3
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -78,15 +111,37 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/homeImg/
+    - assets/onboard/
+    - assets/images/quran/
+    - assets/images/quran_new_Design/second_surah_component_left.png
+    - assets/images/quran_new_Design/second_surah_ui_component_right.png
+    - assets/audio/
     - assets/hadith/
     - assets/language/
-    - assets/noorifyLogo.png
+    - assets/googleIcon.png
+    - assets/facebookIcon.svg
+    - assets/appLogo.png
+    - assets/appLogoFinal.png
     - assets/splasImg.png
     - assets/397.png
+    - assets/newShape.png
+    - assets/hadithImg.png
+    - assets/salatImg.png
+    - assets/sejdaIcon.png
     - assets/kakbah.png
+    - assets/compassIcon.png
     - assets/islamicImg.png
+    - assets/asmaulHusnas.png
+    - assets/asmaDetainImg.png
+    - assets/quiz.png
+    - assets/quiz_completed.png
+    - assets/quiz_reading_icon.png
+    - assets/zikr/
     - assets/data/
     - assets/database/
+    - assets/quran/
+    - assets/svgs/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
@@ -115,3 +170,40 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  fonts:
+    - family: Noorehuda
+      fonts:
+        - asset: assets/fonts/quran/Noorehuda.ttf
+
+    # Converted from public/indopak-nastaleeq-waqf-lazim-v4.2.1.woff2
+    # (QuranWBW); Flutter cannot load WOFF2.
+    - family: IndoPak Nastaleeq
+      fonts:
+        - asset: assets/fonts/quran/IndopakNastaleeq.ttf
+
+    - family: AlQalam Quran Majeed
+      fonts:
+        - asset: assets/fonts/quran/AlQalamQuranMajeed.otf
+
+    - family: Ubuntu Medium
+      fonts:
+        - asset: assets/fonts/Ubuntu-Medium.ttf
+
+    - family: Noto Sans Bengali Regular
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-VariableFont_wdth,wght.ttf
+
+    # The Bangla typeface for the whole app (see appFontFamilyBangla).
+    - family: Hind Siliguri
+      fonts:
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Light.ttf
+          weight: 300
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/hind_siliguri/HindSiliguri-Bold.ttf
+          weight: 700

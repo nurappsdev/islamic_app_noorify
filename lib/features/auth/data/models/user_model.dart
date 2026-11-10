@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:islami_app_noorify/features/auth/domain/entities/user_entity.dart';
+import 'package:tuhfatul_muslim/features/auth/domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({

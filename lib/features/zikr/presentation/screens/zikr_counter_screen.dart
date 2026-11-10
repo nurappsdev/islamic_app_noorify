@@ -1,20 +1,31 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/bloc/tasbih_counter_cubit.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_tap_feedback.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Tap-to-count screen for a zikr sequence (designs `devImg/img_17.png` and
 /// `devImg/img_18.png`).
 ///
 /// Walks through [ZikrCounterArgs.items] one zikr at a time. The header count is
 /// the running total; the dotted ring tracks the current zikr, the bottom bar
-/// tracks the whole sequence. Count is in memory only.
+/// tracks the whole sequence. An item with a [ZikrItem.trackingKey] (Prayer
+/// Zikr 1 & 2, My Created Zikr, or a planner plan) restores its count from the
+/// matching store and persists every tap and reset there — see
+/// [_storeCountOf]; every other item stays in-memory only, as before.
 class ZikrCounterScreen extends StatefulWidget {
   const ZikrCounterScreen({super.key, required this.args});
 
@@ -25,11 +36,16 @@ class ZikrCounterScreen extends StatefulWidget {
 }
 
 class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
-  late final List<int> _counts = List<int>.filled(_items.length, 0);
+  late final List<int> _counts = [for (final _ in _items) 0];
+  late final TasbihCounterCubit _sync = TasbihCounterCubit(zikrRepository);
   late final PageController _pageController = PageController(
     viewportFraction: 0.44,
   );
+  final ZikrTapFeedback _feedback = ZikrTapFeedback();
   int _index = 0;
+  bool _isCompleting = false;
+  bool _allowPop = false;
+  int? _lastCountedIndex;
 
   List<ZikrItem> get _items => widget.args.items;
   int get _totalTarget => widget.args.totalTarget;
@@ -41,7 +57,17 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
   bool get _finished => _totalTarget > 0 && _total >= _totalTarget;
 
   @override
+  void initState() {
+    super.initState();
+    // Warm the click clip and probe the vibrator up front so the very first
+    // tap already feels immediate.
+    _feedback.prepare();
+  }
+
+  @override
   void dispose() {
+    _feedback.dispose();
+    _sync.close();
     _pageController.dispose();
     super.dispose();
   }
@@ -68,29 +94,71 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
     );
   }
 
-  void _count() {
+  Future<void> _count() async {
+    if (_isCompleting) return;
+    // Every tap answers with a click and a tick, counted or not.
+    _feedback.tap();
     if (_itemDone) {
-      _switchZikr();
+      _advanceZikr();
       return;
     }
-    HapticFeedback.selectionClick();
-    setState(() => _counts[_index]++);
+    setState(() {
+      _counts[_index]++;
+      _lastCountedIndex = _index;
+    });
+    _sync.tap({
+      'zikrKey': _item.zikrKey,
+      'zikrName': _item.name,
+      if (_item.arabic.isNotEmpty) 'nameArabic': _item.arabic,
+      if (_item.routineId != null) 'routineId': _item.routineId,
+      if (_item.planId != null) 'planId': _item.planId,
+    });
     if (_itemDone) {
-      HapticFeedback.mediumImpact();
+      _feedback.milestone();
+      await _sync.syncNow();
       final next = _nextIncomplete();
-      if (next != null) _goToZikr(next);
+      if (next != null) {
+        _goToZikr(next);
+        return;
+      }
+      await _finishAndReturnHome();
     }
   }
 
-  /// Move to the next zikr — used by tapping the zikr card itself.
+  /// Flush the debounced batch before leaving, whether all beads were
+  /// completed or the user pressed Back partway through a routine.
+  Future<void> _finishAndReturnHome() async {
+    if (_isCompleting) return;
+    _isCompleting = true;
+    await _sync.syncNow();
+    if (!mounted) return;
+
+    final lastIndex = _lastCountedIndex;
+    if (lastIndex != null && _counts[lastIndex] > 0) {
+      ZikrCounterCompletionStore.complete(
+        _items[lastIndex],
+        _counts[lastIndex],
+      );
+    }
+    setState(() => _allowPop = true);
+    Navigator.of(context).pop();
+  }
+
+  /// Move to the next zikr — used by tapping the zikr card itself, which
+  /// gets the same click and tick as the counter button.
   void _switchZikr() {
+    _feedback.tap();
+    _advanceZikr();
+  }
+
+  /// The move itself, without feedback — for callers that already gave some.
+  void _advanceZikr() {
     if (_items.length < 2) return;
-    HapticFeedback.selectionClick();
     _goToZikr((_index + 1) % _items.length);
   }
 
   void _reset() {
-    HapticFeedback.lightImpact();
+    _feedback.soft();
     setState(() {
       for (var i = 0; i < _counts.length; i++) {
         _counts[i] = 0;
@@ -109,101 +177,136 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
         ? (_total / _totalTarget).clamp(0.0, 1.0)
         : 0.0;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: ListView(
-        padding: EdgeInsets.only(bottom: 30.h),
-        children: [
-          ZikrGradientHeader(title: widget.args.title, total: _total),
-          Transform.translate(
-            offset: Offset(0, -18.h),
-            child: SizedBox(
-              height: 154.h,
-              child: PageView.builder(
-                controller: _pageController,
-                scrollDirection: Axis.vertical,
-                physics: _items.length > 1
-                    ? const BouncingScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                onPageChanged: (i) => setState(() => _index = i),
-                itemCount: _items.length,
-                itemBuilder: (context, i) {
-                  return AnimatedBuilder(
-                    animation: _pageController,
-                    builder: (context, child) {
-                      var delta = (_index - i).toDouble();
-                      if (_pageController.hasClients &&
-                          _pageController.position.haveDimensions) {
-                        delta = (_pageController.page ?? _index.toDouble()) - i;
-                      }
-                      final t = (1 - delta.abs()).clamp(0.0, 1.0);
-                      return Center(
-                        child: OverflowBox(
-                          minHeight: 0,
-                          maxHeight: double.infinity,
-                          child: Opacity(
-                            opacity: 0.18 + 0.82 * t,
-                            child: Transform.scale(
-                              scale: 0.78 + 0.22 * t,
-                              child: child,
+    return BlocProvider.value(
+      value: _sync,
+      child: PopScope(
+        canPop: _allowPop,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _finishAndReturnHome();
+        },
+        child: BlocListener<TasbihCounterCubit, TasbihCounterState>(
+          listenWhen: (previous, current) =>
+              previous.error != current.error &&
+              current.error?.contains('AuthenticationRequiredException') ==
+                  true,
+          listener: (context, _) => showZikrLoginRequiredDialog(context),
+          child: Scaffold(
+            backgroundColor: context.pageColor(Colors.white),
+            body: ListView(
+              padding: EdgeInsets.only(bottom: 30.h),
+              children: [
+                ZikrGradientHeader(
+                  title: widget.args.title.isEmpty
+                      ? appText.zikrTitle
+                      : (widget.args.items.length == 1
+                            ? localizedZikrItemName(
+                                appText,
+                                widget.args.items.first,
+                              )
+                            : localizedRoutineName(context, widget.args.title)),
+                  total: _total,
+                ),
+                Transform.translate(
+                  offset: Offset(0, -18.h),
+                  child: SizedBox(
+                    height: 154.h,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      scrollDirection: Axis.vertical,
+                      physics: _items.length > 1
+                          ? const BouncingScrollPhysics()
+                          : const NeverScrollableScrollPhysics(),
+                      onPageChanged: (i) => setState(() => _index = i),
+                      itemCount: _items.length,
+                      itemBuilder: (context, i) {
+                        return AnimatedBuilder(
+                          animation: _pageController,
+                          builder: (context, child) {
+                            var delta = (_index - i).toDouble();
+                            if (_pageController.hasClients &&
+                                _pageController.position.haveDimensions) {
+                              delta =
+                                  (_pageController.page ?? _index.toDouble()) -
+                                  i;
+                            }
+                            final t = (1 - delta.abs()).clamp(0.0, 1.0);
+                            return Center(
+                              child: OverflowBox(
+                                minHeight: 0,
+                                maxHeight: double.infinity,
+                                child: Opacity(
+                                  opacity: 0.18 + 0.82 * t,
+                                  child: Transform.scale(
+                                    scale: 0.78 + 0.22 * t,
+                                    child: child,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _switchZikr,
+                            child: _CurrentZikrCard(
+                              item: _items[i],
+                              done: _counts[i],
                             ),
                           ),
-                        ),
-                      );
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                Center(
+                  child: _TapButton(
+                    progress: ringProgress.toDouble(),
+                    label: _finished
+                        ? appText.zikrCompleted
+                        : appText.zikrTapToCount,
+                    onTap: () {
+                      _count();
                     },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _switchZikr,
-                      child: _CurrentZikrCard(
-                        item: _items[i],
-                        done: _counts[i],
+                  ),
+                ),
+                SizedBox(height: 40.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Text(
+                    appText.zikrCompletingProgress,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: context.inkColor(Color(0xFF3C4A28)),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: _ProgressBar(progress: barProgress.toDouble()),
+                ),
+                SizedBox(height: 26.h),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _reset,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                    ),
+                    label: Text(
+                      appText.zikrCounterReset,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 18.h),
-          Center(
-            child: _TapButton(
-              progress: ringProgress.toDouble(),
-              label: _finished ? appText.zikrCompleted : appText.zikrTapToCount,
-              onTap: _count,
-            ),
-          ),
-          SizedBox(height: 40.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Text(
-              appText.zikrCompletingProgress,
-              style: TextStyle(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF3C4A28),
-              ),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: _ProgressBar(progress: barProgress.toDouble()),
-          ),
-          SizedBox(height: 26.h),
-          Center(
-            child: TextButton.icon(
-              onPressed: _reset,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF4C5A34),
-              ),
-              label: Text(
-                appText.zikrCounterReset,
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -217,11 +320,18 @@ class _CurrentZikrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A Prayer Zikr 1/2 key resolves its label from AppText directly; a My
+    // Created Zikr / planner item already carries its localized label in
+    // [item.name] (resolved by the caller), shown as a caption only when
+    // there's Arabic text above it to caption.
+    final localizedName = item.arabic.isNotEmpty
+        ? localizedZikrItemName(AppText.of(context), item)
+        : null;
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 40.w),
       padding: EdgeInsets.fromLTRB(20.w, 14.h, 12.w, 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCE8C4),
+        color: context.surfaceColor(Color(0xFFDCE8C4)),
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
@@ -234,43 +344,48 @@ class _CurrentZikrCard extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              item.arabic.isNotEmpty ? item.arabic : item.name,
-              textAlign: TextAlign.center,
-              textDirection: item.arabic.isNotEmpty
-                  ? TextDirection.rtl
-                  : TextDirection.ltr,
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF33421F),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.arabic.isNotEmpty ? item.arabic : item.name,
+                  textAlign: TextAlign.center,
+                  textDirection: item.arabic.isNotEmpty
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  style: TextStyle(
+                    fontFamily: item.arabic.isNotEmpty ? 'Noorehuda' : null,
+                    fontFamilyFallback: appFontFamilyFallback,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.inkColor(Color(0xFF33421F)),
+                  ),
+                ),
+                if (localizedName != null) ...[
+                  SizedBox(height: 4.h),
+                  Text(
+                    localizedName,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: context.inkColor(Color(0xFF4C5A34)),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           SizedBox(width: 10.w),
-          SizedBox(
-            width: 44.r,
-            height: 44.r,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: item.target > 0
-                      ? (done / item.target).clamp(0.0, 1.0)
-                      : 0.0,
-                  strokeWidth: 3,
-                  backgroundColor: const Color(0xFFC4D6A0),
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF6E8B3D)),
-                ),
-                Text(
-                  '$done/${item.target}',
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF4C5A34),
-                  ),
-                ),
-              ],
+          Text(
+            context.localizedDigits('$done/${item.target}'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+              color: context.inkColor(Color(0xFF4C5A34)),
             ),
           ),
         ],
@@ -338,7 +453,7 @@ class _TapButtonState extends State<_TapButton> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4C5A34),
+                    color: context.inkColor(Color(0xFF4C5A34)),
                   ),
                 ),
               ),
@@ -416,7 +531,7 @@ class _ProgressBar extends StatelessWidget {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCE8C4),
+                  color: context.surfaceColor(Color(0xFFDCE8C4)),
                   borderRadius: BorderRadius.circular(height / 2),
                 ),
               ),
@@ -424,7 +539,7 @@ class _ProgressBar extends StatelessWidget {
                 Container(
                   width: fillWidth,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFBBD08C),
+                    color: context.surfaceColor(Color(0xFFBBD08C)),
                     borderRadius: BorderRadius.circular(height / 2),
                   ),
                 ),
@@ -438,16 +553,16 @@ class _ProgressBar extends StatelessWidget {
                     width: height,
                     height: height,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFFCFE0AE),
+                      color: context.surfaceColor(Color(0xFFCFE0AE)),
                     ),
                     child: Text(
-                      '$percent %',
+                      context.localizedDigits('$percent %'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF4C5A34),
+                        color: context.inkColor(Color(0xFF4C5A34)),
                       ),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -19,34 +20,100 @@ class HadithDatabase {
   static final HadithDatabase _instance = HadithDatabase._();
 
   static const _fileName = 'hadith_books.db';
-  static const _version = 2;
+  static const _version = 4;
   static const _booksTable = 'hadith_books';
   static const _entriesTable = 'hadith_entries';
   static const _bookmarksTable = 'hadith_bookmarks';
   static const _bookmarkFoldersTable = 'hadith_bookmark_folders';
   static const _bookmarkFolderMapTable = 'hadith_bookmark_folder_map';
+  static const _contentCacheTable = 'hadith_content_cache';
 
   Database? _db;
 
   Future<String> _localPath() async =>
-      p.join(await getDatabasesPath(), _fileName);
+      kIsWeb ? _fileName : p.join(await getDatabasesPath(), _fileName);
 
   Future<Database> open() async {
     final existing = _db;
     if (existing != null && existing.isOpen) return existing;
 
     final path = await _localPath();
-    await Directory(p.dirname(path)).create(recursive: true);
+    if (!kIsWeb) await Directory(p.dirname(path)).create(recursive: true);
     return _db = await openDatabase(
       path,
       version: _version,
       onCreate: (db, _) async {
         await _createSchema(db);
         await _createBookmarkSchema(db);
+        await _createContentCacheSchema(db);
       },
       onUpgrade: (db, oldVersion, _) async {
-        if (oldVersion < 2) await _createBookmarkSchema(db);
+        if (oldVersion < 2) {
+          await _createBookmarkSchema(db);
+        } else if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE $_bookmarksTable ADD COLUMN payload TEXT',
+          );
+        }
+        // v3 -> v4: additive — the library content cache.
+        if (oldVersion < 4) await _createContentCacheSchema(db);
       },
+    );
+  }
+
+  /// Library content from the API (books, e-books, categories,
+  /// sub-categories, hadith pages), one row per request, so it opens without
+  /// the network. Shared content: kept across sign-out.
+  Future<void> _createContentCacheSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $_contentCacheTable (
+        cache_key TEXT PRIMARY KEY,
+        body TEXT NOT NULL,
+        content_version INTEGER NOT NULL,
+        cached_at INTEGER NOT NULL
+      )
+    ''');
+  }
+
+  /// The cached response for [key] written under [version], or null.
+  Future<({String body, DateTime cachedAt})?> cachedContent(
+    String key,
+    int version,
+  ) async {
+    final db = await open();
+    final rows = await db.query(
+      _contentCacheTable,
+      columns: ['body', 'cached_at'],
+      where: 'cache_key = ? AND content_version = ?',
+      whereArgs: [key, version],
+    );
+    if (rows.isEmpty) return null;
+    return (
+      body: rows.first['body'] as String,
+      cachedAt: DateTime.fromMillisecondsSinceEpoch(
+        rows.first['cached_at'] as int,
+      ),
+    );
+  }
+
+  /// Stores [body] for [key], replacing any older copy.
+  Future<void> cacheContent(String key, String body, int version) async {
+    final db = await open();
+    await db.insert(_contentCacheTable, {
+      'cache_key': key,
+      'body': body,
+      'content_version': version,
+      'cached_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Drops cached content written under any other [version].
+  Future<void> dropStaleContent(int version) async {
+    final db = await open();
+    await db.delete(
+      _contentCacheTable,
+      where: 'content_version <> ?',
+      whereArgs: [version],
     );
   }
 
@@ -58,6 +125,7 @@ class HadithDatabase {
         title_ar TEXT,
         title_bn TEXT,
         saved_at INTEGER NOT NULL,
+        payload TEXT,
         PRIMARY KEY (book_slug, hadith_no)
       )
     ''');
@@ -115,7 +183,7 @@ class HadithDatabase {
   /// Whether [slug] has finished downloading and all of its rows are present.
   Future<bool> isBookReady(String slug) async {
     try {
-      if (!await File(await _localPath()).exists()) return false;
+      if (!kIsWeb && !await File(await _localPath()).exists()) return false;
       final db = await open();
       final book = await db.query(
         _booksTable,
@@ -140,7 +208,7 @@ class HadithDatabase {
 
   Future<Set<String>> downloadedSlugs() async {
     try {
-      if (!await File(await _localPath()).exists()) return {};
+      if (!kIsWeb && !await File(await _localPath()).exists()) return {};
       final db = await open();
       final rows = await db.query(
         _booksTable,
@@ -240,6 +308,7 @@ class HadithDatabase {
           titleAr: (r['title_ar'] as String?) ?? '',
           titleBn: (r['title_bn'] as String?) ?? '',
           savedAt: DateTime.fromMillisecondsSinceEpoch(r['saved_at'] as int),
+          payload: r['payload'] as String?,
           folders:
               foldersByKey['${r['book_slug']}#${r['hadith_no']}'] ?? const [],
         ),
@@ -349,7 +418,7 @@ class HadithDatabase {
       }
       final existing = await txn.query(
         _bookmarksTable,
-        columns: ['title_ar', 'title_bn', 'saved_at'],
+        columns: ['title_ar', 'title_bn', 'saved_at', 'payload'],
         where: 'book_slug = ? AND hadith_no = ?',
         whereArgs: [bookmark.bookSlug, bookmark.hadithNo],
         limit: 1,
@@ -361,14 +430,17 @@ class HadithDatabase {
       final titleBn = bookmark.titleBn.isNotEmpty
           ? bookmark.titleBn
           : (prev?['title_bn'] as String?) ?? '';
+      final payload = bookmark.payload ?? prev?['payload'] as String?;
       final savedAt =
-          (prev?['saved_at'] as int?) ?? bookmark.savedAt.millisecondsSinceEpoch;
+          (prev?['saved_at'] as int?) ??
+          bookmark.savedAt.millisecondsSinceEpoch;
       await txn.insert(_bookmarksTable, {
         'book_slug': bookmark.bookSlug,
         'hadith_no': bookmark.hadithNo,
         'title_ar': titleAr,
         'title_bn': titleBn,
         'saved_at': savedAt,
+        'payload': payload,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
       for (final folder in folders) {
         await txn.insert(_bookmarkFolderMapTable, {
@@ -457,5 +529,36 @@ class HadithDatabase {
         whereArgs: [slug, hadithNo],
       );
     });
+  }
+
+  /// Deletes every bookmark and bookmark folder (the signed-in user's saved
+  /// hadiths). Downloaded book text is shared content and is kept.
+  Future<void> clearUserData() async {
+    final db = await open();
+    await db.transaction((txn) async {
+      await txn.delete(_bookmarkFolderMapTable);
+      await txn.delete(_bookmarkFoldersTable);
+      await txn.delete(_bookmarksTable);
+    });
+  }
+
+  /// How many rows are left in the tables [clearUserData] empties. Read by
+  /// the post-logout audit: `0` means no saved hadith of the account that
+  /// just signed out is still on the device.
+  Future<int> userDataRowCount() async {
+    final db = await open();
+    var total = 0;
+    for (final table in const [
+      _bookmarkFolderMapTable,
+      _bookmarkFoldersTable,
+      _bookmarksTable,
+    ]) {
+      total +=
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM $table'),
+          ) ??
+          0;
+    }
+    return total;
   }
 }

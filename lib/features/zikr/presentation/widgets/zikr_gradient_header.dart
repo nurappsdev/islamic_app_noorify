@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Green gradient header shared by the Zikr dashboard and the "New Zikr" screen:
-/// back button + centred title, the Bismillah calligraphy, and the (mock)
+/// back button + centred title, the Bismillah calligraphy, and the
 /// "Total Zikr" count. [trailing] is placed below the count (the dashboard uses
 /// it for the "Last Zikr" and "Prayer Zikr" pills).
 class ZikrGradientHeader extends StatelessWidget {
@@ -20,7 +22,7 @@ class ZikrGradientHeader extends StatelessWidget {
   final String title;
   final Widget? trailing;
 
-  /// The number shown under "Total Zikr". Defaults to the mock dashboard total.
+  /// The number shown under "Total Zikr". Defaults to 0 when not given.
   final int? total;
 
   @override
@@ -50,8 +52,10 @@ class ZikrGradientHeader extends StatelessWidget {
                       child: IconButton(
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDE7A6),
-                          foregroundColor: AppColor.authLogo,
+                          backgroundColor: context.surfaceColor(
+                            Color(0xFFEDE7A6),
+                          ),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -81,14 +85,14 @@ class ZikrGradientHeader extends StatelessWidget {
               Text(
                 AppText.of(context).zikrTotalZikr,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: .9),
+                  color: context.inkColor(Colors.white.withValues(alpha: .9)),
                   fontSize: 14.sp,
                   fontStyle: FontStyle.italic,
                 ),
               ),
               SizedBox(height: 6.h),
               Text(
-                ZikrCatalog.formatIndian(total ?? ZikrCatalog.mockTotalCount),
+                context.localizedDigits(ZikrCatalog.formatIndian(total ?? 0)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34.sp,

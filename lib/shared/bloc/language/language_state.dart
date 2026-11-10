@@ -1,7 +1,8 @@
 enum AppLanguage { english, bangla }
 
 class LanguageState {
-  const LanguageState({this.language = AppLanguage.english});
+  /// Bangla unless told otherwise: it is the app's default language.
+  const LanguageState({this.language = AppLanguage.bangla});
 
   final AppLanguage language;
 

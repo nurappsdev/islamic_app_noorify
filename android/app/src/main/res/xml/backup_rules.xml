@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older Auto Backup. The alarm plugin's list of armed OS
+     alarms belongs to the install that armed them, so it is not restored. The
+     alarms the user saved (Hive) are backed up as usual and re-armed the next
+     time the app starts. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="dev.fluttercommunity.plus.android_alarm_manager_plugin.xml"/>
+</full-backup-content>

@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/hadith/data/hadith_book_catalog.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book.dart';
-import 'package:islami_app_noorify/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
-import 'package:islami_app_noorify/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/usecases/get_hadith_library_books.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_library/hadith_library_bloc.dart';
+import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_list_scaffold.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Full "Hadith Library" collection list.
 ///
@@ -18,14 +23,55 @@ class HadithLibraryListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => HadithLibraryBloc(
+        GetHadithLibraryBooks(
+          HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl()),
+        ),
+      )..add(const LoadHadithLibrary()),
+      child: const _HadithLibraryListView(),
+    );
+  }
+}
+
+class _HadithLibraryListView extends StatelessWidget {
+  const _HadithLibraryListView();
+
+  @override
+  Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final state = context.watch<HadithLibraryBloc>().state;
     return HadithListScaffold(
       title: appText.hadithLibraryTitle,
       children: [
-        for (final book in HadithBookCatalog.libraryCollections) ...[
-          _LibraryCard(book: book, appText: appText),
-          SizedBox(height: 14.h),
-        ],
+        if (state.isLoading)
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: const Center(child: CircularProgressIndicator()),
+          )
+        else if (state.status == HadithLibraryStatus.failure) ...[
+          Padding(
+            padding: EdgeInsets.only(top: 40.h),
+            child: Text(
+              state.failure?.message ?? '',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF5D6B44)),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.read<HadithLibraryBloc>().add(
+              const LoadHadithLibrary(),
+            ),
+            child: Text(appText.tryAgain),
+          ),
+        ] else
+          for (final book in state.books) ...[
+            _LibraryCard(book: book, appText: appText),
+            SizedBox(height: 14.h),
+          ],
       ],
     );
   }
@@ -34,7 +80,7 @@ class HadithLibraryListScreen extends StatelessWidget {
 class _LibraryCard extends StatelessWidget {
   const _LibraryCard({required this.book, required this.appText});
 
-  final HadithBook book;
+  final HadithLibraryBook book;
   final AppText appText;
 
   @override
@@ -44,7 +90,7 @@ class _LibraryCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 18.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFDDE8AE),
+        color: context.surfaceColor(Color(0xFFDDE8AE)),
         borderRadius: BorderRadius.circular(18.r),
       ),
       child: Column(
@@ -55,24 +101,26 @@ class _LibraryCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.r),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF9BAE6C)),
+                  border: Border.all(
+                    color: context.lineColor(Color(0xFF9BAE6C)),
+                  ),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Icon(
                   Icons.menu_book_outlined,
                   size: 20.sp,
-                  color: const Color(0xFF5F6E3E),
+                  color: context.inkColor(Color(0xFF5F6E3E)),
                 ),
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => openHadithCollection(context, book),
+                onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 15.sp),
                 label: Text(appText.explore),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF4C5A34),
-                  side: const BorderSide(color: Color(0xFF9BAE6C)),
+                  foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                  side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   minimumSize: Size(0, 36.h),
                   textStyle: TextStyle(
@@ -88,17 +136,24 @@ class _LibraryCard extends StatelessWidget {
           ),
           SizedBox(height: 18.h),
           Text(
-            isBangla ? book.titleBn : book.titleEn,
+            (isBangla ? book.titleBn : book.titleEn).isEmpty
+                ? book.titleEn
+                : (isBangla ? book.titleBn : book.titleEn),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF2C3320),
+              color: context.inkColor(Color(0xFF2C3320)),
             ),
           ),
           SizedBox(height: 8.h),
           Text(
-            '${appText.hadithTotalHadith} : ${book.hadithCount}',
-            style: TextStyle(fontSize: 12.sp, color: const Color(0xFF5D6B44)),
+            context.localizedDigits(
+              '${appText.hadithTotalHadith} : ${formatHadithCount(book.totalHadiths)}',
+            ),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: context.inkColor(Color(0xFF5D6B44)),
+            ),
           ),
         ],
       ),

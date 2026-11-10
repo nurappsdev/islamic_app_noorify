@@ -1,0 +1,92 @@
+import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+
+enum AmolDailyStatus { initial, loading, success, failure }
+
+class AmolDailyState {
+  const AmolDailyState._({
+    required this.status,
+    this.dashboard,
+    this.failure,
+    this.loggingItemKeys = const <String>{},
+    this.completionOverrides = const <String, bool>{},
+  });
+
+  const AmolDailyState.initial() : this._(status: AmolDailyStatus.initial);
+
+  const AmolDailyState.loading({
+    Map<String, bool> completionOverrides = const <String, bool>{},
+  }) : this._(
+         status: AmolDailyStatus.loading,
+         completionOverrides: completionOverrides,
+       );
+
+  const AmolDailyState.success(
+    AmolDailyDashboard dashboard, {
+    Map<String, bool> completionOverrides = const <String, bool>{},
+    Set<String> loggingItemKeys = const <String>{},
+  }) : this._(
+         status: AmolDailyStatus.success,
+         dashboard: dashboard,
+         completionOverrides: completionOverrides,
+         loggingItemKeys: loggingItemKeys,
+       );
+
+  const AmolDailyState.failure(
+    Failure failure, {
+    Map<String, bool> completionOverrides = const <String, bool>{},
+  }) : this._(
+         status: AmolDailyStatus.failure,
+         failure: failure,
+         completionOverrides: completionOverrides,
+       );
+
+  final AmolDailyStatus status;
+  final AmolDailyDashboard? dashboard;
+  final Failure? failure;
+
+  /// The `itemKey`s currently being posted to `log-item`/`delete-item`.
+  ///
+  /// Only used to ignore a second tap on the *same* row while its request is
+  /// in flight. It is deliberately not drawn: a tick looks the same whether
+  /// it has reached the server, is on its way, or is waiting offline. Other
+  /// rows stay tappable, so a run of ticks made offline — where a request can
+  /// sit until the connect timeout — is all kept, not just the first.
+  final Set<String> loggingItemKeys;
+
+  /// `itemKey` -> the checked state the user last set locally this session.
+  /// Once an item lands here it renders at that state regardless of what a
+  /// later `GET` says `isCompleted` is, so a flaky/inconsistent backend read
+  /// can't silently flip something the user just checked or unchecked.
+  final Map<String, bool> completionOverrides;
+
+  bool get isLoading => status == AmolDailyStatus.loading;
+  bool get hasData => status == AmolDailyStatus.success && dashboard != null;
+  String? get errorMessage => failure?.message;
+
+  /// Whether [itemKey] should render checked, given the server's own
+  /// [serverIsCompleted] and this session's [completionOverrides].
+  bool isItemChecked(String itemKey, bool serverIsCompleted) =>
+      completionOverrides[itemKey] ?? serverIsCompleted;
+
+  /// Clears [itemKey]'s in-flight mark, leaving everything else as it is.
+  AmolDailyState withoutLoggingItem(String itemKey) => AmolDailyState._(
+    status: status,
+    dashboard: dashboard,
+    failure: failure,
+    loggingItemKeys: loggingItemKeys.difference({itemKey}),
+    completionOverrides: completionOverrides,
+  );
+
+  /// Marks [itemKey] checked (or unchecked, when [checked] is `false`) in
+  /// [completionOverrides] and, in the same update, records it as the
+  /// in-flight `log-item`/`delete-item` request.
+  AmolDailyState withOptimisticCompletion(String itemKey, bool checked) =>
+      AmolDailyState._(
+        status: status,
+        dashboard: dashboard,
+        failure: failure,
+        loggingItemKeys: {...loggingItemKeys, itemKey},
+        completionOverrides: {...completionOverrides, itemKey: checked},
+      );
+}

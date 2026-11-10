@@ -1,5 +1,5 @@
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_book_reference.dart';
-import 'package:islami_app_noorify/features/hadith/data/models/hadith_entry.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book_reference.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_entry.dart';
 
 enum HadithBookStatus {
   /// Looking on disk for an existing copy.

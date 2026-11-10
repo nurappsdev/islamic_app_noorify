@@ -2,20 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/widgets/zikr_gradient_header.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/models/zikr_api_models.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/widgets/zikr_gradient_header.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_api_mappers.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
 
-/// "New Zikr" screen (design `devImg/img_13.png`), reached from the `+` button
-/// on [ZikrDashboardScreen] and from "Add More" on [ZikrSetScreen].
+/// "New Zikr" screen (design `devImg/img_13.png`), reached two ways:
 ///
-/// UI only. "Create" adds the chosen zikr to the set and moves to
-/// [ZikrSetScreen]; "Lets Get Start" opens the counter with the set (plus the
-/// current selection). Any zikr already in the set arrive as route arguments
-/// (`List<ZikrItem>`).
+/// - From the `+` button on [ZikrDashboardScreen] (no route arguments): a
+///   custom one-item routine is created through the routines API; "Lets Get
+///   Start" then opens its counter directly.
+/// - From "Add More" on [ZikrSetScreen] (route arguments: the `List<ZikrItem>`
+///   built so far): building a one-off counting sequence, unrelated to My
+///   Created Zikr — "Create" adds the chosen zikr to that in-memory set and
+///   moves to [ZikrSetScreen]; "Lets Get Start" opens the counter with the
+///   set (plus the current selection), same as before.
 class ZikrCreateScreen extends StatefulWidget {
   const ZikrCreateScreen({super.key});
 
@@ -25,20 +35,27 @@ class ZikrCreateScreen extends StatefulWidget {
 
 class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
   static const _customValue = '__custom__';
-  static const List<ZikrItem> _dropdownItems = [
-    ZikrCatalog.subhanAllah,
-    ZikrCatalog.alhamdulillah,
-    ZikrCatalog.allahuAkbar,
-  ];
-
   final _fieldKey = GlobalKey();
   final _valueController = TextEditingController();
 
   String? _zikrName;
   String _zikrArabic = '';
+  String _zikrKey = 'general';
+  late Future<List<ZikrCatalogItem>> _catalog;
   List<ZikrItem> _items = [];
   bool _argsRead = false;
+
+  /// True when reached directly from [ZikrDashboardScreen]'s `+` button
+  /// (no route arguments) rather than "Add More" on [ZikrSetScreen] (which
+  /// always passes the in-progress `List<ZikrItem>`, even an empty one).
+  bool _cameFromDashboard = false;
   late AppText _appText;
+
+  @override
+  void initState() {
+    super.initState();
+    _catalog = zikrRepository.getCatalog();
+  }
 
   @override
   void didChangeDependencies() {
@@ -47,6 +64,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     if (!_argsRead) {
       _argsRead = true;
       final args = ModalRoute.of(context)?.settings.arguments;
+      _cameFromDashboard = args is! List<ZikrItem>;
       if (args is List<ZikrItem>) _items = List.of(args);
     }
   }
@@ -71,6 +89,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       arabic: _zikrArabic,
       transliteration: name,
       target: _readingValue,
+      zikrKey: _zikrKey,
     );
   }
 
@@ -85,8 +104,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
 
   Future<void> _openDropdown() async {
     FocusScope.of(context).unfocus();
-    final fieldBox =
-        _fieldKey.currentContext!.findRenderObject() as RenderBox;
+    final fieldBox = _fieldKey.currentContext!.findRenderObject() as RenderBox;
     final overlayBox =
         Overlay.of(context).context.findRenderObject() as RenderBox;
     final topLeft = fieldBox.localToGlobal(Offset.zero, ancestor: overlayBox);
@@ -100,6 +118,8 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     );
 
     final appText = _appText;
+    final catalog = await _catalog;
+    if (!mounted) return;
     final result = await showMenu<String>(
       context: context,
       position: position,
@@ -111,13 +131,20 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
       items: [
-        for (var i = 0; i < _dropdownItems.length; i++) ...[
+        for (var i = 0; i < catalog.length; i++) ...[
           if (i > 0) const PopupMenuDivider(height: 1),
           PopupMenuItem<String>(
-            value: _dropdownItems[i].name,
+            value: catalog[i].id,
             child: Text(
-              _dropdownItems[i].name,
-              style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+              localizedZikrNameFromKey(
+                appText,
+                zikrKey: zikrKeyFromCatalogItem(catalog[i]),
+                fallback: catalog[i].zikrName,
+              ),
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: context.inkColor(Color(0xFF2C3320)),
+              ),
             ),
           ),
         ],
@@ -126,7 +153,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
           value: _customValue,
           child: Text(
             appText.zikrCustom,
-            style: TextStyle(fontSize: 13.sp, color: const Color(0xFF2C3320)),
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: context.inkColor(Color(0xFF2C3320)),
+            ),
           ),
         ),
       ],
@@ -137,11 +167,12 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
       await _openCustomSheet();
       return;
     }
-    final item = _dropdownItems.firstWhere((z) => z.name == result);
+    final item = catalog.firstWhere((z) => z.id == result);
     setState(() {
-      _zikrName = item.name;
-      _zikrArabic = item.arabic;
-      _valueController.text = item.target.toString();
+      _zikrName = item.zikrName;
+      _zikrArabic = item.nameArabic;
+      _zikrKey = zikrKeyFromCatalogItem(item);
+      _valueController.text = item.defaultTargetCount.toString();
     });
   }
 
@@ -162,27 +193,84 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     setState(() {
       _zikrName = name;
       _zikrArabic = '';
+      _zikrKey = zikrKeyFromName(name);
       _valueController.text = (value != null && value > 0)
           ? value.toString()
           : '';
     });
   }
 
-  void _create() {
+  /// The `/zikr/routines` API requires a named routine with an `items` array,
+  /// even when the New Zikr form contains just one zikr.
+  Future<ZikrRoutine> _createRoutine(ZikrItem item) =>
+      zikrRepository.createRoutine({
+        'routineName': item.name,
+        'items': [
+          {
+            'zikrKey': item.zikrKey,
+            'zikrName': item.name,
+            if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
+            'targetCount': item.target,
+          },
+        ],
+      });
+
+  Future<void> _create() async {
     final item = _currentItem;
     if (item == null) {
       _toast(_appText.zikrSelectZikr);
       return;
     }
     HapticFeedback.selectionClick();
-    Navigator.of(context).pushReplacementNamed(
-      RouteNames.zikrSet,
-      arguments: [..._items, item],
-    );
+    if (_cameFromDashboard) {
+      try {
+        await _createRoutine(item);
+      } catch (error) {
+        if (error is AuthenticationRequiredException && mounted) {
+          await showZikrLoginRequiredDialog(context);
+          return;
+        }
+        _toast('$error');
+        return;
+      }
+      if (!mounted) return;
+      _toast(_appText.zikrCreated);
+      Navigator.of(context).pop(true);
+      return;
+    }
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(RouteNames.zikrSet, arguments: [..._items, item]);
   }
 
-  void _start() {
+  Future<void> _start() async {
     final item = _currentItem;
+    if (_cameFromDashboard) {
+      if (item == null) {
+        _toast(_appText.zikrSelectZikr);
+        return;
+      }
+      try {
+        final routine = await _createRoutine(item);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          RouteNames.zikrCounter,
+          result: true,
+          arguments: ZikrCounterArgs(
+            title: routine.routineName,
+            items: [item.copyWith(routineId: routine.id)],
+          ),
+        );
+      } catch (error) {
+        if (error is AuthenticationRequiredException && mounted) {
+          await showZikrLoginRequiredDialog(context);
+          return;
+        }
+        _toast('$error');
+        return;
+      }
+      return;
+    }
     final sequence = [..._items, ?item];
     if (sequence.isEmpty) {
       _toast(_appText.zikrSelectZikr);
@@ -202,10 +290,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     final appText = _appText;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: Column(
         children: [
-          ZikrGradientHeader(title: appText.zikrNewTitle),
+          ZikrGradientHeader(title: appText.zikrNewTitle, total: 0),
           Expanded(
             child: ListView(
               padding: EdgeInsets.fromLTRB(22.w, 26.h, 22.w, 20.h),
@@ -214,7 +302,13 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                 SizedBox(height: 10.h),
                 _SelectField(
                   key: _fieldKey,
-                  text: _zikrName,
+                  text: _zikrName == null
+                      ? null
+                      : localizedZikrNameFromKey(
+                          appText,
+                          zikrKey: _zikrKey,
+                          fallback: _zikrName!,
+                        ),
                   hint: appText.zikrSelectZikr,
                   onTap: _openDropdown,
                 ),
@@ -237,7 +331,9 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28.r),
-                      borderSide: const BorderSide(color: Color(0xFFCBD9AF)),
+                      borderSide: BorderSide(
+                        color: context.lineColor(Color(0xFFCBD9AF)),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(28.r),
@@ -260,8 +356,10 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                       child: OutlinedButton(
                         onPressed: _create,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColor.authLogo,
-                          side: const BorderSide(color: Color(0xFFC7D6A6)),
+                          foregroundColor: context.inkColor(AppColor.authLogo),
+                          side: BorderSide(
+                            color: context.lineColor(Color(0xFFC7D6A6)),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28.r),
                           ),
@@ -321,7 +419,7 @@ class _FieldLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 15.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF2C3320),
+        color: context.inkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -349,7 +447,7 @@ class _SelectField extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28.r),
-          border: Border.all(color: const Color(0xFFCBD9AF)),
+          border: Border.all(color: context.lineColor(Color(0xFFCBD9AF))),
         ),
         child: Row(
           children: [
@@ -359,9 +457,11 @@ class _SelectField extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
-                  color: hasValue
-                      ? const Color(0xFF2C3320)
-                      : const Color(0xFFA9B08D),
+                  color: context.inkColor(
+                    hasValue
+                        ? const Color(0xFF2C3320)
+                        : const Color(0xFFA9B08D),
+                  ),
                 ),
               ),
             ),
@@ -419,7 +519,7 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
               style: TextStyle(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF3C4A28),
+                color: context.inkColor(Color(0xFF3C4A28)),
               ),
             ),
           ),
@@ -449,8 +549,8 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFC0392B),
-                      backgroundColor: Colors.white,
+                      foregroundColor: context.inkColor(Color(0xFFC0392B)),
+                      backgroundColor: context.surfaceColor(Colors.white),
                       side: const BorderSide(color: Color(0xFFC0392B)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26.r),
@@ -513,7 +613,7 @@ class _SheetLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF5E7038),
+        color: context.inkColor(Color(0xFF5E7038)),
       ),
     );
   }
@@ -550,11 +650,11 @@ class _SheetField extends StatelessWidget {
           color: const Color(0xFF9AA579),
         ),
         filled: true,
-        fillColor: const Color(0xFFEAF1D9),
+        fillColor: context.surfaceColor(Color(0xFFEAF1D9)),
         contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.h),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),
-          borderSide: const BorderSide(color: Color(0xFFBFD09B)),
+          borderSide: BorderSide(color: context.lineColor(Color(0xFFBFD09B))),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(26.r),

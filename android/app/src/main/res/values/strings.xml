@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="prayer_widget_label">Prayer Times</string>
+    <string name="prayer_widget_description">Today\'s prayer times and a countdown to the next prayer.</string>
+
+    <!-- Facebook Login (app "Tuhfatul Muslim", App ID 1693801695699739).
+         Both values are client-side identifiers: they ship inside every APK
+         and are safe to commit. The App *Secret* is not here and must never
+         be - it belongs to the Node backend only. -->
+    <string name="facebook_app_id" translatable="false">1693801695699739</string>
+    <string name="facebook_client_token" translatable="false">af1776f2d60505e3a28d70f17282fc13</string>
+    <!-- Must be literally "fb" + the App ID: the redirect scheme the
+         Facebook app / Custom Tab calls back on. -->
+    <string name="fb_login_protocol_scheme" translatable="false">fb1693801695699739</string>
+</resources>

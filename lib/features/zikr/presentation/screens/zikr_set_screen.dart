@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:islami_app_noorify/core/constants/route_names.dart';
-import 'package:islami_app_noorify/core/utils/app_color.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/zikr/data/zikr_catalog.dart';
-import 'package:islami_app_noorify/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/data/zikr_catalog.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_route_args.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_localized_name.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/zikr/zikr_dependencies.dart';
+import 'package:tuhfatul_muslim/features/zikr/presentation/zikr_login_dialog.dart';
 
 /// The zikr set being built (design `devImg/img_16.png`).
 ///
@@ -17,13 +23,50 @@ class ZikrSetScreen extends StatelessWidget {
 
   final List<ZikrItem> items;
 
+  Future<void> _createRoutineAndStart(BuildContext context) async {
+    final appText = AppText.of(context);
+    try {
+      final routine = await zikrRepository.createRoutine({
+        'routineName': items.length == 1 ? items.first.name : appText.zikrTitle,
+        'items': [
+          for (final item in items)
+            {
+              'zikrKey': item.zikrKey,
+              'zikrName': item.name,
+              if (item.arabic.isNotEmpty) 'nameArabic': item.arabic,
+              'targetCount': item.target,
+            },
+        ],
+      });
+      if (!context.mounted) return;
+      Navigator.of(context).pushNamed(
+        RouteNames.zikrCounter,
+        arguments: ZikrCounterArgs(
+          title: routine.routineName,
+          items: [
+            for (final item in items) item.copyWith(routineId: routine.id),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      if (error is AuthenticationRequiredException) {
+        await showZikrLoginRequiredDialog(context);
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
@@ -41,7 +84,7 @@ class ZikrSetScreen extends StatelessWidget {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: const Color(0xFF303629),
+                          foregroundColor: context.inkColor(Color(0xFF303629)),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -54,7 +97,7 @@ class ZikrSetScreen extends StatelessWidget {
                   Text(
                     appText.zikrNewTitle,
                     style: TextStyle(
-                      color: const Color(0xFF2C3320),
+                      color: context.inkColor(Color(0xFF2C3320)),
                       fontSize: 19.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -75,13 +118,16 @@ class ZikrSetScreen extends StatelessWidget {
                   Align(
                     alignment: Alignment.centerRight,
                     child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pushReplacementNamed(
-                        RouteNames.zikrCreate,
-                        arguments: items,
-                      ),
+                      onPressed: () =>
+                          Navigator.of(context).pushReplacementNamed(
+                            RouteNames.zikrCreate,
+                            arguments: items,
+                          ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColor.authLogo,
-                        side: const BorderSide(color: Color(0xFFC7D6A6)),
+                        foregroundColor: context.inkColor(AppColor.authLogo),
+                        side: BorderSide(
+                          color: context.lineColor(Color(0xFFC7D6A6)),
+                        ),
                         padding: EdgeInsets.symmetric(
                           horizontal: 20.w,
                           vertical: 10.h,
@@ -110,15 +156,7 @@ class ZikrSetScreen extends StatelessWidget {
                 child: FilledButton(
                   onPressed: items.isEmpty
                       ? null
-                      : () => Navigator.of(context).pushNamed(
-                          RouteNames.zikrCounter,
-                          arguments: ZikrCounterArgs(
-                            title: items.length == 1
-                                ? items.first.name
-                                : appText.zikrTitle,
-                            items: items,
-                          ),
-                        ),
+                      : () => _createRoutineAndStart(context),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColor.primary,
                     foregroundColor: Colors.white,
@@ -153,25 +191,25 @@ class _ZikrRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F7EA),
+        color: context.surfaceColor(Color(0xFFF4F7EA)),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              item.name,
+              localizedZikrItemName(AppText.of(context), item),
               style: TextStyle(
                 fontSize: 15.sp,
-                color: const Color(0xFF6B7358),
+                color: context.inkColor(Color(0xFF6B7358)),
               ),
             ),
           ),
           Text(
-            '(${item.target})',
+            context.localizedDigits('(${item.target})'),
             style: TextStyle(
               fontSize: 15.sp,
-              color: const Color(0xFF6B7358),
+              color: context.inkColor(Color(0xFF6B7358)),
             ),
           ),
         ],

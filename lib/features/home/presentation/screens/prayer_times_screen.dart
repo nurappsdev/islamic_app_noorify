@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:islami_app_noorify/core/utils/app_text.dart';
-import 'package:islami_app_noorify/features/home/data/services/prayer_time_service.dart';
-import 'package:islami_app_noorify/features/home/domain/current_prayer.dart';
-import 'package:islami_app_noorify/features/home/domain/daily_prayer_times.dart';
-import 'package:islami_app_noorify/features/home/domain/prayer_theme_schedule.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/screens/set_alarm_screen.dart';
-import 'package:islami_app_noorify/features/alarm/presentation/screens/set_all_alarm_screen.dart';
-import 'package:islami_app_noorify/features/home/presentation/bloc/prayer_times_bloc.dart';
-import 'package:islami_app_noorify/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_time_formatter.dart';
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/home/data/services/prayer_time_service.dart';
+import 'package:tuhfatul_muslim/features/home/domain/current_prayer.dart';
+import 'package:tuhfatul_muslim/features/home/domain/daily_prayer_times.dart';
+import 'package:tuhfatul_muslim/features/home/domain/prayer_theme_schedule.dart';
+import 'package:tuhfatul_muslim/features/alarm/presentation/screens/set_all_alarm_screen.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/bloc/prayer_times_bloc.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_arc_sun_painter.dart';
+import 'package:tuhfatul_muslim/features/home/presentation/widgets/prayer_location_widgets.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
   const PrayerTimesScreen({super.key, this.prayerTimeService, this.now});
@@ -19,16 +24,18 @@ class PrayerTimesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final bloc = PrayerTimesBloc(
-          prayerTimeService: prayerTimeService,
-          now: now,
-        )..add(const LoadPrayerTimes());
-        if (now == null) bloc.add(const StartClock());
-        return bloc;
-      },
-      child: const _PrayerTimesView(),
+    return PrayerLocationScope(
+      child: BlocProvider(
+        create: (_) {
+          final bloc = PrayerTimesBloc(
+            prayerTimeService: prayerTimeService,
+            now: now,
+          )..add(const LoadPrayerTimes());
+          if (now == null) bloc.add(const StartClock());
+          return bloc;
+        },
+        child: const _PrayerTimesView(),
+      ),
     );
   }
 }
@@ -45,7 +52,7 @@ class _PrayerTimesView extends StatelessWidget {
         ? null
         : currentPrayerPeriod(state.now, state.times!);
     return Scaffold(
-      backgroundColor: _olive,
+      backgroundColor: context.pageColor(_olive),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -64,7 +71,7 @@ class _PrayerTimesView extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(15.w, 20.h, 15.w, 18.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFCFDF8),
+                  color: context.surfaceColor(Color(0xFFFCFDF8)),
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(27.r),
                   ),
@@ -95,17 +102,22 @@ class _PrayerSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = context.appLanguage == AppLanguage.bangla;
+    String clockText(PrayerClockTime? t) => t == null
+        ? LocalizedTimeFormatter.placeholder
+        : localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
+    final dates = context.localizedDates;
     final summaryPeriod = active ?? PrayerPeriod.dhuhr;
     final summaryStart = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerStart(summaryPeriod, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clockText(prayerStart(summaryPeriod, times!));
     final summaryEnd = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerEnd(summaryPeriod, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clockText(prayerEnd(summaryPeriod, times!));
     return Stack(
       fit: StackFit.expand,
       children: [
-        ColoredBox(color: olive),
+        ColoredBox(color: context.surfaceColor(olive)),
         Positioned(
           top: 110.h,
           left: 70.w,
@@ -120,8 +132,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
             tooltip: appText.back,
             onPressed: () => Navigator.of(context).pop(),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F5CE),
-              foregroundColor: const Color(0xFF526044),
+              backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+              foregroundColor: context.inkColor(Color(0xFF526044)),
             ),
             icon: const Icon(Icons.chevron_left),
           ),
@@ -137,8 +149,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
               ),
             ),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F5CE),
-              foregroundColor: const Color(0xFF526044),
+              backgroundColor: context.surfaceColor(Color(0xFFF7F5CE)),
+              foregroundColor: context.inkColor(Color(0xFF526044)),
             ),
             icon: const Icon(Icons.alarm_add_outlined),
           ),
@@ -167,7 +179,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    times?.hijriDate ?? appText.hijriDateUnavailable,
+                    dates.hijri(now, maghrib: times?.maghrib),
                     style: _italicStyle(10.sp),
                   ),
                 ),
@@ -178,7 +190,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
                   child: Text(
-                    times?.readableDate ?? _fallbackDate(now),
+                    dates.banglaCalendar(now),
                     style: _italicStyle(10.sp),
                   ),
                 ),
@@ -193,7 +205,12 @@ class _PrayerSummaryHeader extends StatelessWidget {
           child: SizedBox(
             height: 142.h,
             child: PrayerDayProgress(
-              progress: times == null ? 0 : dayProgress(now, times!),
+              progress: times == null
+                  ? 0
+                  : isNightPhase(now, times!)
+                  ? nightProgress(now, times!)
+                  : dayProgress(now, times!),
+              isNight: times != null && isNightPhase(now, times!),
             ),
           ),
         ),
@@ -204,19 +221,20 @@ class _PrayerSummaryHeader extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                times?.readableDate ?? _fallbackDate(now),
+                // English keeps the short month (`28 Sep 2026`); Bangla writes
+                // the month out in full.
+                dates.gregorian(now, shortMonth: true),
                 style: TextStyle(color: Colors.white70, fontSize: 10.sp),
               ),
               Text(
-                _formatCurrentTime(now),
+                clockText(PrayerClockTime(hour: now.hour, minute: now.minute)),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 21.sp,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Text(
-                appText.locationPlaceholder,
+              PrayerLocationText(
                 style: TextStyle(color: Colors.white70, fontSize: 9.sp),
               ),
             ],
@@ -230,7 +248,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EFB8),
+                color: context.surfaceColor(Color(0xFFE8EFB8)),
                 borderRadius: BorderRadius.circular(17.r),
                 border: Border.all(color: const Color(0xFFA7B55E)),
               ),
@@ -243,7 +261,7 @@ class _PrayerSummaryHeader extends StatelessWidget {
                     style: TextStyle(fontSize: 11.sp),
                   ),
                   Text(
-                    '$summaryStart – $summaryEnd',
+                    context.localizedDigits('$summaryStart – $summaryEnd'),
                     style: TextStyle(fontSize: 10.sp),
                   ),
                 ],
@@ -255,27 +273,30 @@ class _PrayerSummaryHeader extends StatelessWidget {
           left: 61.w,
           right: 61.w,
           bottom: 12.h,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: _EdgeLabel(
-                  title: '${appText.sunrise}, ${appText.trishal}',
-                  value: times == null
-                      ? '--:--'
-                      : formatPrayerTime(times!.sunrise),
-                ),
-              ),
-              SizedBox(width: 20.w),
-              Expanded(
-                child: _EdgeLabel(
-                  title: '${appText.sunset}, ${appText.trishal}',
-                  value: times == null
-                      ? '--:--'
-                      : formatPrayerTime(times!.sunset),
-                ),
-              ),
-            ],
+          child: PrayerLocationBuilder(
+            builder: (context, locationState) {
+              final area = locationState.location?.shortDisplayName ?? '';
+              String edgeLabel(String label) =>
+                  area.isEmpty ? label : '$label, $area';
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _EdgeLabel(
+                      title: edgeLabel(appText.sunrise),
+                      value: clockText(times?.sunrise),
+                    ),
+                  ),
+                  SizedBox(width: 20.w),
+                  Expanded(
+                    child: _EdgeLabel(
+                      title: edgeLabel(appText.sunset),
+                      value: clockText(times?.sunset),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -285,16 +306,8 @@ class _PrayerSummaryHeader extends StatelessWidget {
   static TextStyle _italicStyle(double size) => TextStyle(
     color: Colors.white,
     fontSize: size,
-    fontFamily: 'Times New Roman',
     fontStyle: FontStyle.italic,
   );
-
-  static String _fallbackDate(DateTime date) =>
-      '${date.day.toString().padLeft(2, '0')}-'
-      '${date.month.toString().padLeft(2, '0')}-${date.year}';
-
-  static String _formatCurrentTime(DateTime date) =>
-      formatPrayerTime(PrayerClockTime(hour: date.hour, minute: date.minute));
 }
 
 class _EdgeLabel extends StatelessWidget {
@@ -359,27 +372,44 @@ class _PrayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final bangla = context.appLanguage == AppLanguage.bangla;
+    String clockText(PrayerClockTime t) =>
+        localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final start = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerStart(period, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clockText(prayerStart(period, times!));
     final end = times == null
-        ? '--:--'
-        : formatPrayerTime(prayerEnd(period, times!));
+        ? LocalizedTimeFormatter.placeholder
+        : clockText(prayerEnd(period, times!));
+    final titleColor = active
+        ? Colors.white
+        : context.inkColor(const Color(0xFF2F3A22));
     return Row(
       children: [
         Container(
           width: 20.r,
           height: 20.r,
           decoration: BoxDecoration(
-            color: active ? const Color(0xFF829061) : const Color(0xFFDDEBB5),
+            color: context.surfaceColor(
+              active ? const Color(0xFF829061) : const Color(0xFFDDEBB5),
+            ),
             shape: BoxShape.circle,
+            boxShadow: active
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF829061).withValues(alpha: .45),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
           ),
           child: Center(
             child: Container(
               width: 10.r,
               height: 10.r,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
                 shape: BoxShape.circle,
               ),
             ),
@@ -387,76 +417,132 @@ class _PrayerRow extends StatelessWidget {
         ),
         SizedBox(width: 13.w),
         Expanded(
-          child: Container(
+          child: AnimatedContainer(
             key: active ? const ValueKey('active-prayer-row') : null,
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+            duration: const Duration(milliseconds: 250),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.r),
+              gradient: active
+                  ? const LinearGradient(
+                      colors: [Color(0xFF9DAB6F), Color(0xFF6F7F52)],
+                    )
+                  : null,
+              color: active ? null : context.surfaceColor(Colors.white),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
-                color: active
-                    ? const Color(0xFF7F8E60)
-                    : const Color(0xFFDCE9B8),
-                width: active ? 2 : 1,
+                color: context.lineColor(
+                  active ? const Color(0xFF6F7F52) : const Color(0xFFDCE9B8),
+                ),
+                width: active ? 1.5 : 1,
               ),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Color(0x10000000),
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
+                  color: active
+                      ? const Color(0xFF6F7F52).withValues(alpha: .4)
+                      : const Color(0x10000000),
+                  blurRadius: active ? 14 : 5,
+                  offset: Offset(0, active ? 6 : 2),
                 ),
               ],
             ),
             child: Row(
               children: [
                 Container(
-                  width: 38.r,
-                  height: 38.r,
+                  width: 42.r,
+                  height: 42.r,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF8D7),
-                    borderRadius: BorderRadius.circular(9.r),
+                    color: active
+                        ? Colors.white.withValues(alpha: .92)
+                        : context.surfaceColor(const Color(0xFFFFF8D7)),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(_icon, color: _iconColor, size: 23.sp),
+                  child: Icon(
+                    _icon,
+                    color: context.inkColor(_iconColor),
+                    size: 25.sp,
+                  ),
                 ),
-                SizedBox(width: 10.w),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        period.displayName(appText),
-                        style: TextStyle(fontSize: 12.sp),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              period.displayName(appText),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: titleColor,
+                              ),
+                            ),
+                          ),
+                          if (active) ...[
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFE27A),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Text(
+                                appText.prayerNowLabel,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF4A4210),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      SizedBox(height: 3.h),
+                      SizedBox(height: 5.h),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          '$start – $end',
-                          style: TextStyle(fontSize: 8.sp),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? Colors.white.withValues(alpha: .22)
+                                : context.surfaceColor(const Color(0xFFEEF4D6)),
+                            borderRadius: BorderRadius.circular(20.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 14.sp,
+                                color: active
+                                    ? Colors.white
+                                    : context.inkColor(const Color(0xFF7E8C61)),
+                              ),
+                              SizedBox(width: 5.w),
+                              Text(
+                                context.localizedDigits('$start – $end'),
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: titleColor,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                Tooltip(
-                  message:
-                      '${appText.setAlarmFor} ${period.displayName(appText)}',
-                  child: IconButton(
-                    key: const ValueKey('alarm-control'),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => SetAlarmScreen(
-                          period: period,
-                          initialTime: times == null
-                              ? null
-                              : prayerStart(period, times!),
-                        ),
-                      ),
-                    ),
-                    icon: Icon(Icons.alarm, size: 19.sp),
-                    color: const Color(0xFF7E8C61),
                   ),
                 ),
               ],

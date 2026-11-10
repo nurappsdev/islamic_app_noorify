@@ -1,4 +1,4 @@
-import 'package:islami_app_noorify/features/quran/domain/bookmark.dart';
+import 'package:tuhfatul_muslim/features/quran/domain/bookmark.dart';
 
 class BookmarksState {
   const BookmarksState({this.isLoading = true, this.bookmarks = const []});
