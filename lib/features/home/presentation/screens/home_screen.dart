@@ -349,7 +349,8 @@ class _WebHomeContent extends StatelessWidget {
                 color: AppColor.primary,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final prayerRow = constraints.maxWidth >= 900;
+                    final twoColumnLayout = constraints.maxWidth >= 900;
+                    final threeColumnLayout = constraints.maxWidth >= 1240;
                     final slider = HomeFeatureCardSlider(
                       key: ValueKey('home-feature-slider-${language.name}'),
                       height: 350,
@@ -369,17 +370,17 @@ class _WebHomeContent extends StatelessWidget {
                         const _QuizCard(),
                       ],
                     );
-                    final prayerCard = KeyedSubtree(
-                      key: ValueKey(
-                        'prayer-time-card-${language.name}-$refreshTick',
-                      ),
-                      child: const PrayerTimeCard(),
-                    );
                     final prohibitedCard = KeyedSubtree(
                       key: ValueKey(
                         'prohibited-prayer-times-${language.name}-$refreshTick',
                       ),
                       child: const ProhibitedPrayerTimesCard(),
+                    );
+                    final prayerCard = KeyedSubtree(
+                      key: ValueKey(
+                        'prayer-time-card-${language.name}-$refreshTick',
+                      ),
+                      child: const PrayerTimeCard(),
                     );
 
                     return SingleChildScrollView(
@@ -397,33 +398,44 @@ class _WebHomeContent extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // The existing Amol carousel becomes the wide
-                              // dashboard hero, just like the supplied design.
-                              const AmalTrackerCard(),
-                              const SizedBox(height: 22),
-                              if (prayerRow)
+                              if (threeColumnLayout) ...[
                                 Row(
-                                  key: const ValueKey('web-home-prayer-row'),
+                                  key: const ValueKey(
+                                    'web-home-fixed-prayer-layout',
+                                  ),
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(flex: 2, child: prayerCard),
+                                    const Expanded(child: AmalTrackerCard()),
+                                    const SizedBox(width: 24),
+                                    Expanded(child: prohibitedCard),
+                                    const SizedBox(width: 24),
+                                    Expanded(child: prayerCard),
+                                  ],
+                                ),
+                              ] else if (twoColumnLayout) ...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Expanded(child: AmalTrackerCard()),
                                     const SizedBox(width: 24),
                                     Expanded(child: prohibitedCard),
                                   ],
-                                )
-                              else
-                                Column(
-                                  key: const ValueKey('web-home-prayer-stack'),
-                                  children: [
-                                    prayerCard,
-                                    const SizedBox(height: 18),
-                                    prohibitedCard,
-                                  ],
                                 ),
+                                const SizedBox(height: 22),
+                                prayerCard,
+                              ] else ...[
+                                const AmalTrackerCard(),
+                                const SizedBox(height: 18),
+                                prohibitedCard,
+                                const SizedBox(height: 18),
+                                prayerCard,
+                              ],
                               const SizedBox(height: 22),
                               slider,
                               const SizedBox(height: 22),
-                              const _WebLegacyPanel(child: HomeFeatureGrid()),
+                              const _WebLegacyPanel(
+                                child: HomeFeatureGrid(columnMajor: true),
+                              ),
                               // Qibla compass and the calendar remain in the
                               // Android/iOS Home only, per the Web design.
                             ],

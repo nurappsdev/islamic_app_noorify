@@ -10,7 +10,11 @@ import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 import 'package:tuhfatul_muslim/shared/widgets/coming_soon_screen.dart';
 
 class HomeFeatureGrid extends StatelessWidget {
-  const HomeFeatureGrid({super.key});
+  const HomeFeatureGrid({super.key, this.columnMajor = false});
+
+  /// Web's reference design reads each vertical column top-to-bottom before
+  /// moving to the next one. Android/iOS retain their existing row order.
+  final bool columnMajor;
 
   static List<_HomeFeature> _features(AppText appText) => [
     _HomeFeature(
@@ -60,7 +64,19 @@ class HomeFeatureGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final features = _features(appText);
+    final baseFeatures = _features(appText);
+    final features = columnMajor
+        ? [
+            // GridView fills left-to-right by rows, so interleave the two
+            // desired columns: Quran/Hadith/Quiz | Asma/Zikr/Dua.
+            baseFeatures[0],
+            baseFeatures[3],
+            baseFeatures[1],
+            baseFeatures[4],
+            baseFeatures[2],
+            baseFeatures[5],
+          ]
+        : baseFeatures;
     return Column(
       children: [
         GridView.builder(
