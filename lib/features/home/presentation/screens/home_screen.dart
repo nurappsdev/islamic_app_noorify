@@ -349,27 +349,8 @@ class _WebHomeContent extends StatelessWidget {
                 color: AppColor.primary,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final twoColumnLayout = constraints.maxWidth >= 900;
-                    final threeColumnLayout = constraints.maxWidth >= 1240;
-                    final slider = HomeFeatureCardSlider(
-                      key: ValueKey('home-feature-slider-${language.name}'),
-                      height: 350,
-                      children: [
-                        KeyedSubtree(
-                          key: ValueKey('fardh-prayer-$refreshTick'),
-                          child: const _FardhPrayerCard(),
-                        ),
-                        const _HadithReadingCard(),
-                        const _QuranCard(),
-                        KeyedSubtree(
-                          key: ValueKey('nafl-more-$refreshTick'),
-                          child: const _NaflMoreCard(),
-                        ),
-                        const _ZikrCard(),
-                        const _SunnahWitrCard(),
-                        const _QuizCard(),
-                      ],
-                    );
+                    final twoColumnLayout = constraints.maxWidth >= 760;
+                    final threeColumnLayout = constraints.maxWidth >= 1080;
                     final prohibitedCard = KeyedSubtree(
                       key: ValueKey(
                         'prohibited-prayer-times-${language.name}-$refreshTick',
@@ -398,6 +379,12 @@ class _WebHomeContent extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              // The desktop reference is deliberately read in
+                              // three vertical columns: progress and restricted
+                              // times on the left, today's prayer clock in the
+                              // middle, and Fardh progress on the right. Keep
+                              // the cards themselves untouched; only compose
+                              // them differently for Web.
                               if (threeColumnLayout) ...[
                                 Row(
                                   key: const ValueKey(
@@ -405,36 +392,72 @@ class _WebHomeContent extends StatelessWidget {
                                   ),
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Expanded(child: AmalTrackerCard()),
-                                    const SizedBox(width: 24),
-                                    Expanded(child: prohibitedCard),
+                                    const Expanded(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          AmalTrackerCard(),
+                                          SizedBox(height: 22),
+                                          ProhibitedPrayerTimesCard(),
+                                        ],
+                                      ),
+                                    ),
                                     const SizedBox(width: 24),
                                     Expanded(child: prayerCard),
+                                    const SizedBox(width: 24),
+                                    Expanded(
+                                      child: KeyedSubtree(
+                                        key: ValueKey(
+                                          'fardh-prayer-web-$refreshTick',
+                                        ),
+                                        child: _FardhPrayerCard(),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ] else if (twoColumnLayout) ...[
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Expanded(child: AmalTrackerCard()),
+                                    const Expanded(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          AmalTrackerCard(),
+                                          SizedBox(height: 22),
+                                          ProhibitedPrayerTimesCard(),
+                                        ],
+                                      ),
+                                    ),
                                     const SizedBox(width: 24),
-                                    Expanded(child: prohibitedCard),
+                                    Expanded(child: prayerCard),
                                   ],
                                 ),
                                 const SizedBox(height: 22),
-                                prayerCard,
+                                KeyedSubtree(
+                                  key: ValueKey(
+                                    'fardh-prayer-web-$refreshTick',
+                                  ),
+                                  child: const _FardhPrayerCard(),
+                                ),
                               ] else ...[
                                 const AmalTrackerCard(),
                                 const SizedBox(height: 18),
                                 prohibitedCard,
                                 const SizedBox(height: 18),
                                 prayerCard,
+                                const SizedBox(height: 18),
+                                KeyedSubtree(
+                                  key: ValueKey(
+                                    'fardh-prayer-web-$refreshTick',
+                                  ),
+                                  child: const _FardhPrayerCard(),
+                                ),
                               ],
                               const SizedBox(height: 22),
-                              slider,
-                              const SizedBox(height: 22),
-                              const _WebLegacyPanel(
-                                child: HomeFeatureGrid(columnMajor: true),
+                              const HomeFeatureGrid(
+                                columnMajor: true,
+                                webStyle: true,
                               ),
                               // Qibla compass and the calendar remain in the
                               // Android/iOS Home only, per the Web design.
@@ -997,29 +1020,6 @@ class _WebSidebarTile extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Places an existing mobile-first Home card in a readable Web column without
-/// altering the card's own Android/iOS layout, data, or interaction logic.
-class _WebLegacyPanel extends StatelessWidget {
-  const _WebLegacyPanel({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final visualWidth = constraints.maxWidth.clamp(0.0, 560.0).toDouble();
-        if (visualWidth == 0) return const SizedBox.shrink();
-        // The Android/iOS cards keep their natural height, text styles and
-        // behaviour; Web only provides a readable max-width and reflow.
-        return Center(
-          child: SizedBox(width: visualWidth, child: child),
-        );
-      },
     );
   }
 }
