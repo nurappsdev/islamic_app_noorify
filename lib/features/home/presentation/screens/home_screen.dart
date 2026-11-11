@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -340,6 +341,7 @@ class _WebHomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        const Positioned.fill(child: _WebHomeBackground()),
         Column(
           children: [
             const _WebHomeTopBar(),
@@ -483,6 +485,105 @@ class _WebHomeContent extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A pale-mint Web surface with a quiet, connected star lattice inspired by
+/// the visual mood of the supplied reference (without reusing its image).
+class _WebHomeBackground extends StatelessWidget {
+  const _WebHomeBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? const [Color(0xFF172218), Color(0xFF101912)]
+              // A clean pale-mint base sampled from the colour mood of
+              // devImg/img_9.png.
+              : const [Color(0xFFF1FAF2), Color(0xFFE8F6EB)],
+        ),
+      ),
+      child: CustomPaint(
+        painter: _WebIslamicLatticePainter(
+          color: isDark
+              ? const Color(0xFFB9DDBB).withValues(alpha: .08)
+              : const Color(0xFFE0F1E3).withValues(alpha: .82),
+        ),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class _WebIslamicLatticePainter extends CustomPainter {
+  const _WebIslamicLatticePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const horizontalSpacing = 112.0;
+    const verticalSpacing = 96.0;
+    const outerRadius = 29.0;
+    const innerRadius = 15.0;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.05;
+
+    // Each eight-point star shares its cardinal points with its neighbours,
+    // giving the background the soft connected-lattice feeling of img_9.
+    for (
+      var y = -verticalSpacing / 2;
+      y < size.height + verticalSpacing;
+      y += verticalSpacing
+    ) {
+      for (
+        var x = -horizontalSpacing / 2;
+        x < size.width + horizontalSpacing;
+        x += horizontalSpacing
+      ) {
+        final center = Offset(x, y);
+        final star = Path();
+        for (var point = 0; point < 16; point++) {
+          final radius = point.isEven ? outerRadius : innerRadius;
+          final angle = -math.pi / 2 + point * math.pi / 8;
+          final offset = Offset(
+            center.dx + math.cos(angle) * radius,
+            center.dy + math.sin(angle) * radius,
+          );
+          if (point == 0) {
+            star.moveTo(offset.dx, offset.dy);
+          } else {
+            star.lineTo(offset.dx, offset.dy);
+          }
+        }
+        star.close();
+        canvas.drawPath(star, paint);
+        canvas.drawCircle(center, 8, paint);
+
+        // These short links make adjacent stars read as one continuous motif.
+        canvas.drawLine(
+          Offset(center.dx + outerRadius, center.dy),
+          Offset(center.dx + horizontalSpacing - outerRadius, center.dy),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(center.dx, center.dy + outerRadius),
+          Offset(center.dx, center.dy + verticalSpacing - outerRadius),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WebIslamicLatticePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 /// Desktop-only navigation matching the reference's persistent left rail.
