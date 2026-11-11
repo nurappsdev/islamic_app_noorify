@@ -366,6 +366,12 @@ class _WebHomeContent extends StatelessWidget {
                       ),
                       child: const PrayerTimeCard(),
                     );
+                    final featureSlider = KeyedSubtree(
+                      key: ValueKey(
+                        'web-home-feature-slider-${language.name}-$refreshTick',
+                      ),
+                      child: _WebHomeFeatureSlider(refreshTick: refreshTick),
+                    );
 
                     return SingleChildScrollView(
                       key: const ValueKey('web-home-scroll-view'),
@@ -412,14 +418,7 @@ class _WebHomeContent extends StatelessWidget {
                                         const SizedBox(width: 24),
                                         Expanded(child: prayerCard),
                                         const SizedBox(width: 24),
-                                        Expanded(
-                                          child: KeyedSubtree(
-                                            key: ValueKey(
-                                              'fardh-prayer-web-$refreshTick',
-                                            ),
-                                            child: _FardhPrayerCard(),
-                                          ),
-                                        ),
+                                        Expanded(child: featureSlider),
                                       ],
                                     ),
                                   ] else if (twoColumnLayout) ...[
@@ -442,12 +441,7 @@ class _WebHomeContent extends StatelessWidget {
                                       ],
                                     ),
                                     const SizedBox(height: 22),
-                                    KeyedSubtree(
-                                      key: ValueKey(
-                                        'fardh-prayer-web-$refreshTick',
-                                      ),
-                                      child: const _FardhPrayerCard(),
-                                    ),
+                                    featureSlider,
                                   ] else ...[
                                     const AmalTrackerCard(),
                                     const SizedBox(height: 18),
@@ -455,12 +449,7 @@ class _WebHomeContent extends StatelessWidget {
                                     const SizedBox(height: 18),
                                     prayerCard,
                                     const SizedBox(height: 18),
-                                    KeyedSubtree(
-                                      key: ValueKey(
-                                        'fardh-prayer-web-$refreshTick',
-                                      ),
-                                      child: const _FardhPrayerCard(),
-                                    ),
+                                    featureSlider,
                                   ],
                                   const SizedBox(height: 22),
                                   const HomeFeatureGrid(
@@ -495,6 +484,35 @@ class _WebHomeContent extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The desktop right-hand card uses the same feature carousel as Android.
+/// Hover pauses automatic movement; users can drag horizontally with a mouse
+/// or swipe to choose a card themselves.
+class _WebHomeFeatureSlider extends StatelessWidget {
+  const _WebHomeFeatureSlider({required this.refreshTick});
+
+  final int refreshTick;
+
+  @override
+  Widget build(BuildContext context) => HomeFeatureCardSlider(
+    height: 350,
+    children: [
+      KeyedSubtree(
+        key: ValueKey('fardh-prayer-web-$refreshTick'),
+        child: const _FardhPrayerCard(),
+      ),
+      const _HadithReadingCard(),
+      const _QuranCard(),
+      KeyedSubtree(
+        key: ValueKey('nafl-more-web-$refreshTick'),
+        child: const _NaflMoreCard(),
+      ),
+      const _ZikrCard(),
+      const _SunnahWitrCard(),
+      const _QuizCard(),
+    ],
+  );
 }
 
 const _webFooterInk = Colors.white;
