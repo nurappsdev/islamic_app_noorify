@@ -1,6 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart' show ValueListenable, kIsWeb;
+import 'package:flutter/gestures.dart'
+    show PointerDeviceKind, PointerEnterEvent, PointerExitEvent;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -77,6 +79,7 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
 
   Timer? _autoTimer;
   Offset? _downPosition;
+  bool _mouseIsHovering = false;
   bool _appActive = true;
 
   int get _count => widget.children.length;
@@ -127,6 +130,7 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
     // the background, or the slot is off-screen / under another route.
     final idle =
         _downPosition == null &&
+        !_mouseIsHovering &&
         _appActive &&
         TickerMode.valuesOf(context).enabled;
     if (idle && _controller.hasClients) {
@@ -149,7 +153,17 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
 
   void _onPointerEnd(PointerEvent _) {
     _downPosition = null;
-    _startAuto(widget.resumeDelay);
+    if (!_mouseIsHovering) _startAuto(widget.resumeDelay);
+  }
+
+  void _onMouseEnter(PointerEnterEvent _) {
+    _mouseIsHovering = true;
+    _pauseAuto();
+  }
+
+  void _onMouseExit(PointerExitEvent _) {
+    _mouseIsHovering = false;
+    if (_downPosition == null) _startAuto(widget.resumeDelay);
   }
 
   // ---- build --------------------------------------------------------------
@@ -177,49 +191,54 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: _onPointerDown,
-      onPointerUp: _onPointerEnd,
-      onPointerCancel: _onPointerEnd,
-      child: SizedBox(
-        height: widget.height,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: ClipRect(
-                child: ScrollConfiguration(
-                  behavior: const _NoOverscrollIndicatorBehavior(),
-                  child: PageView.builder(
-                    controller: _controller,
-                    scrollDirection: Axis.horizontal,
-                    physics: const PageScrollPhysics(),
-                    onPageChanged: _onPageChanged,
-                    itemBuilder: (context, page) => _Page(
+    return MouseRegion(
+      cursor: kIsWeb ? SystemMouseCursors.grab : MouseCursor.defer,
+      onEnter: kIsWeb ? _onMouseEnter : null,
+      onExit: kIsWeb ? _onMouseExit : null,
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: _onPointerDown,
+        onPointerUp: _onPointerEnd,
+        onPointerCancel: _onPointerEnd,
+        child: SizedBox(
+          height: widget.height,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ClipRect(
+                  child: ScrollConfiguration(
+                    behavior: const _NoOverscrollIndicatorBehavior(),
+                    child: PageView.builder(
                       controller: _controller,
-                      page: page,
-                      fallbackPage: _page,
-                      minScale: _minScale,
-                      travel: _travel,
-                      padding: widget.padding,
-                      child: widget.children[page % _count],
+                      scrollDirection: Axis.horizontal,
+                      physics: const PageScrollPhysics(),
+                      onPageChanged: _onPageChanged,
+                      itemBuilder: (context, page) => _Page(
+                        controller: _controller,
+                        page: page,
+                        fallbackPage: _page,
+                        minScale: _minScale,
+                        travel: _travel,
+                        padding: widget.padding,
+                        child: widget.children[page % _count],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            if (widget.showIndicator && _count > 1)
-              Positioned(
-                bottom: 4,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: Center(
-                    child: _Dots(count: _count, index: _index),
+              if (widget.showIndicator && _count > 1)
+                Positioned(
+                  bottom: 4,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Center(
+                      child: _Dots(count: _count, index: _index),
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -230,8 +249,14 @@ class _HomeFeatureCardSliderState extends State<HomeFeatureCardSlider>
 /// the card `PageView`, which otherwise flashes the scaffold's background
 /// behind a card during a held touch. Purely visual: scroll physics and
 /// gestures are untouched.
-class _NoOverscrollIndicatorBehavior extends ScrollBehavior {
+class _NoOverscrollIndicatorBehavior extends MaterialScrollBehavior {
   const _NoOverscrollIndicatorBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
 
   @override
   Widget buildOverscrollIndicator(

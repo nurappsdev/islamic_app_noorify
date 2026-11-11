@@ -121,6 +121,7 @@ flutter:
     - assets/language/
     - assets/googleIcon.png
     - assets/facebookIcon.svg
+    - assets/mosqe.png
     - assets/appLogo.png
     - assets/appLogoFinal.png
     - assets/splasImg.png

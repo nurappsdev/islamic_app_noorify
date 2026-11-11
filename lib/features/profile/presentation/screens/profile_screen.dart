@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -36,6 +38,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   ProfileEntity? _profile;
   List<FamilyMemberEntity> _familyMembers = const [];
+  final _webScrollController = ScrollController();
 
   /// Set once the family list has loaded, so the empty message doesn't flash
   /// while the request is still running.
@@ -67,10 +70,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _webScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Only used by the Family Members section, disabled below.
     // final appText = AppText.of(context);
     final profile = _profile;
+    if (kIsWeb) {
+      return Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: SafeArea(
+          child: _WebProfileLayout(
+            profile: profile,
+            scrollController: _webScrollController,
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
@@ -154,6 +174,165 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
+
+/// A desktop/tablet composition for Profile. The mobile screen below stays
+/// untouched; this keeps wide browsers from stretching a phone-sized card
+/// across the whole viewport.
+class _WebProfileLayout extends StatelessWidget {
+  const _WebProfileLayout({
+    required this.profile,
+    required this.scrollController,
+  });
+
+  final ProfileEntity? profile;
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 840;
+        final horizontalPadding = constraints.maxWidth >= 1200 ? 48.0 : 24.0;
+        return Scrollbar(
+          controller: scrollController,
+          thumbVisibility: true,
+          interactive: true,
+          child: ScrollConfiguration(
+            behavior: const _WebProfileScrollBehavior(),
+            child: ListView(
+              controller: scrollController,
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                24,
+                horizontalPadding,
+                48,
+              ),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _WebProfileHeader(
+                          onBack: () => Navigator.maybePop(context),
+                        ),
+                        const SizedBox(height: 28),
+                        if (wide)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 11,
+                                child: _ProfileHeroCard(profile: profile),
+                              ),
+                              const SizedBox(width: 28),
+                              const Expanded(
+                                flex: 9,
+                                child: _WebProfileSettingsColumn(),
+                              ),
+                            ],
+                          )
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _ProfileHeroCard(profile: profile),
+                              const SizedBox(height: 20),
+                              const _WebProfileSettingsColumn(),
+                            ],
+                          ),
+                        const SizedBox(height: 28),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 460),
+                            child: isUserSignedIn
+                                ? const _LogoutButton()
+                                : const _LoginButton(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WebProfileSettingsColumn extends StatelessWidget {
+  const _WebProfileSettingsColumn();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _FamilyMemberComingSoonCard(),
+      SizedBox(height: 18),
+      _QuickSettings(),
+    ],
+  );
+}
+
+class _WebProfileHeader extends StatelessWidget {
+  const _WebProfileHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Row(
+      children: [
+        IconButton(
+          tooltip: appText.back,
+          onPressed: onBack,
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFDFDE68),
+            foregroundColor: const Color(0xFF303629),
+          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            appText.profileTitle,
+            style: const TextStyle(
+              color: AppColor.primary,
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: appText.settingsTitle,
+          onPressed: () => Navigator.of(context).pushNamed(RouteNames.settings),
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFDFDE68),
+            foregroundColor: const Color(0xFF303629),
+          ),
+          icon: const Icon(Icons.settings_outlined, size: 21),
+        ),
+      ],
+    );
+  }
+}
+
+/// Flutter Web omits mouse-drag from scroll gestures unless a scroll behavior
+/// opts in. Keep the desktop pointer behaviour local to this Web route.
+class _WebProfileScrollBehavior extends MaterialScrollBehavior {
+  const _WebProfileScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
 }
 
 /// The App Language and dark/light theme options, the very same rows the
