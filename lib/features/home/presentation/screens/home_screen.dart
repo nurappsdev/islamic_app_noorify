@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
@@ -375,97 +376,106 @@ class _WebHomeContent extends StatelessWidget {
                         24,
                         showBottomNavigation ? 104 : 36,
                       ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1320),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // The desktop reference is deliberately read in
-                              // three vertical columns: progress and restricted
-                              // times on the left, today's prayer clock in the
-                              // middle, and Fardh progress on the right. Keep
-                              // the cards themselves untouched; only compose
-                              // them differently for Web.
-                              if (threeColumnLayout) ...[
-                                Row(
-                                  key: const ValueKey(
-                                    'web-home-fixed-prayer-layout',
-                                  ),
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Expanded(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          AmalTrackerCard(),
-                                          SizedBox(height: 22),
-                                          ProhibitedPrayerTimesCard(),
-                                        ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1320),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // The desktop reference is deliberately read in
+                                  // three vertical columns: progress and restricted
+                                  // times on the left, today's prayer clock in the
+                                  // middle, and Fardh progress on the right. Keep
+                                  // the cards themselves untouched; only compose
+                                  // them differently for Web.
+                                  if (threeColumnLayout) ...[
+                                    Row(
+                                      key: const ValueKey(
+                                        'web-home-fixed-prayer-layout',
                                       ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    Expanded(child: prayerCard),
-                                    const SizedBox(width: 24),
-                                    Expanded(
-                                      child: KeyedSubtree(
-                                        key: ValueKey(
-                                          'fardh-prayer-web-$refreshTick',
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Expanded(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              AmalTrackerCard(),
+                                              SizedBox(height: 22),
+                                              ProhibitedPrayerTimesCard(),
+                                            ],
+                                          ),
                                         ),
-                                        child: _FardhPrayerCard(),
+                                        const SizedBox(width: 24),
+                                        Expanded(child: prayerCard),
+                                        const SizedBox(width: 24),
+                                        Expanded(
+                                          child: KeyedSubtree(
+                                            key: ValueKey(
+                                              'fardh-prayer-web-$refreshTick',
+                                            ),
+                                            child: _FardhPrayerCard(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ] else if (twoColumnLayout) ...[
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Expanded(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              AmalTrackerCard(),
+                                              SizedBox(height: 22),
+                                              ProhibitedPrayerTimesCard(),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 24),
+                                        Expanded(child: prayerCard),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 22),
+                                    KeyedSubtree(
+                                      key: ValueKey(
+                                        'fardh-prayer-web-$refreshTick',
                                       ),
+                                      child: const _FardhPrayerCard(),
+                                    ),
+                                  ] else ...[
+                                    const AmalTrackerCard(),
+                                    const SizedBox(height: 18),
+                                    prohibitedCard,
+                                    const SizedBox(height: 18),
+                                    prayerCard,
+                                    const SizedBox(height: 18),
+                                    KeyedSubtree(
+                                      key: ValueKey(
+                                        'fardh-prayer-web-$refreshTick',
+                                      ),
+                                      child: const _FardhPrayerCard(),
                                     ),
                                   ],
-                                ),
-                              ] else if (twoColumnLayout) ...[
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Expanded(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          AmalTrackerCard(),
-                                          SizedBox(height: 22),
-                                          ProhibitedPrayerTimesCard(),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    Expanded(child: prayerCard),
-                                  ],
-                                ),
-                                const SizedBox(height: 22),
-                                KeyedSubtree(
-                                  key: ValueKey(
-                                    'fardh-prayer-web-$refreshTick',
+                                  const SizedBox(height: 22),
+                                  const HomeFeatureGrid(
+                                    columnMajor: true,
+                                    webStyle: true,
                                   ),
-                                  child: const _FardhPrayerCard(),
-                                ),
-                              ] else ...[
-                                const AmalTrackerCard(),
-                                const SizedBox(height: 18),
-                                prohibitedCard,
-                                const SizedBox(height: 18),
-                                prayerCard,
-                                const SizedBox(height: 18),
-                                KeyedSubtree(
-                                  key: ValueKey(
-                                    'fardh-prayer-web-$refreshTick',
-                                  ),
-                                  child: const _FardhPrayerCard(),
-                                ),
-                              ],
-                              const SizedBox(height: 22),
-                              const HomeFeatureGrid(
-                                columnMajor: true,
-                                webStyle: true,
+                                  // Qibla compass and the calendar remain in the
+                                  // Android/iOS Home only, per the Web design.
+                                ],
                               ),
-                              // Qibla compass and the calendar remain in the
-                              // Android/iOS Home only, per the Web design.
-                            ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 36),
+                          const _WebHomeFooter(),
+                        ],
                       ),
                     );
                   },
@@ -483,6 +493,392 @@ class _WebHomeContent extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+const _webFooterInk = Colors.white;
+const _webFooterMutedInk = Colors.white;
+const _webFooterAccent = Color(0xFFA8C98A);
+const _webPlayStoreUrl =
+    'https://play.google.com/store/apps/details?id=com.tuhfatulmuslim.app';
+
+Future<void> _openWebPlayStore() => launchUrl(
+  Uri.parse(_webPlayStoreUrl),
+  mode: LaunchMode.externalApplication,
+);
+
+/// Desktop footer that carries the same pale-mint surface as the Home page.
+/// Its mosque skyline is a local asset so it stays crisp and local.
+class _WebHomeFooter extends StatelessWidget {
+  const _WebHomeFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 1120;
+        final sidePadding = wide ? 34.0 : 24.0;
+        final availableWidth = constraints.maxWidth - sidePadding * 2;
+        final columnWidth = wide ? (availableWidth - 72) / 4 : 255.0;
+        return Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(28)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              IgnorePointer(
+                child: ShaderMask(
+                  blendMode: BlendMode.srcIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    // Reversing the footer gradient keeps the skyline legible
+                    // while using the exact same two requested colours.
+                    colors: [Color(0xFFA8C98A), Color(0xFF386C35)],
+                  ).createShader(bounds),
+                  child: Image.asset(
+                    'assets/mosqe.png',
+                    width: double.infinity,
+                    // Keep the artwork's natural ratio so a wide browser never
+                    // crops the domes and minarets at the top or bottom.
+                    fit: BoxFit.fitWidth,
+                    alignment: Alignment.bottomCenter,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Container(
+                color: const Color(0xFF386C35),
+                padding: EdgeInsets.fromLTRB(sidePadding, 30, sidePadding, 30),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  runSpacing: 36,
+                  spacing: 24,
+                  children: [
+                    SizedBox(
+                      width: columnWidth,
+                      child: const _WebFooterBrand(),
+                    ),
+                    SizedBox(
+                      width: columnWidth,
+                      child: _WebFooterColumn(
+                        title: 'Important Features',
+                        children: [
+                          _WebFooterLink(
+                            icon: Icons.menu_book_rounded,
+                            label: appText.categoryQuran,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.quran),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.local_library_rounded,
+                            label: appText.categoryHadith,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.hadith),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.access_time_rounded,
+                            label: appText.prayerTimesTitle,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.prayerTimes),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.fact_check_rounded,
+                            label: appText.todaysAmolTrack,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const AmolTrackingScreen(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: columnWidth,
+                      child: _WebFooterColumn(
+                        title: 'Other Features',
+                        children: [
+                          _WebFooterLink(
+                            icon: Icons.volunteer_activism_rounded,
+                            label: appText.featureDua,
+                            onTap: () =>
+                                Navigator.of(context).pushNamed(RouteNames.dua),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.nightlight_round,
+                            label: appText.featureDijpr,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.zikr),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.workspace_premium_rounded,
+                            label: appText.featureAsmaUlHusna,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.asma),
+                          ),
+                          _WebFooterLink(
+                            icon: Icons.quiz_rounded,
+                            label: appText.featureQuizAndLearn,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pushNamed(RouteNames.winQuiz),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: columnWidth,
+                      child: const _WebFooterContact(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WebFooterBrand extends StatelessWidget {
+  const _WebFooterBrand();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .82),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Image.asset('assets/appLogo.png', fit: BoxFit.contain),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'A complete Islamic companion for every Muslim. Read, learn, and track your daily Ibadah in one place.',
+          style: TextStyle(color: _webFooterMutedInk, height: 1.55),
+        ),
+        const SizedBox(height: 20),
+        const _WebFooterStoreBadge(),
+      ],
+    );
+  }
+}
+
+class _WebFooterColumn extends StatelessWidget {
+  const _WebFooterColumn({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: _webFooterInk,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(width: 54, height: 3, color: const Color(0xFF75B56D)),
+        const SizedBox(height: 14),
+        ...children,
+      ],
+    );
+  }
+}
+
+class _WebFooterLink extends StatelessWidget {
+  const _WebFooterLink({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD8ECD9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: _webFooterAccent, size: 19),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: _webFooterInk, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WebFooterContact extends StatelessWidget {
+  const _WebFooterContact();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _WebFooterColumn(
+      title: 'Contact',
+      children: [
+        _WebFooterInfo(icon: Icons.location_on_rounded, label: 'Bangladesh'),
+        _WebFooterInfo(icon: Icons.phone_rounded, label: '+880 1601-761564'),
+        _WebFooterInfo(
+          icon: Icons.mail_rounded,
+          label: 'support@tuhfatulmuslim.org',
+        ),
+        SizedBox(height: 8),
+        _WebFooterSocials(),
+      ],
+    );
+  }
+}
+
+class _WebFooterInfo extends StatelessWidget {
+  const _WebFooterInfo({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: _webFooterAccent, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: _webFooterMutedInk, height: 1.35),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WebFooterSocials extends StatelessWidget {
+  const _WebFooterSocials();
+
+  @override
+  Widget build(BuildContext context) {
+    const icons = [Icons.facebook, Icons.play_circle_fill, Icons.send_rounded];
+    return Row(
+      children: [
+        for (final icon in icons)
+          Container(
+            width: 36,
+            height: 36,
+            margin: const EdgeInsets.only(right: 9),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFA8D3AD)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: _webFooterInk, size: 20),
+          ),
+      ],
+    );
+  }
+}
+
+class _WebFooterStoreBadge extends StatelessWidget {
+  const _WebFooterStoreBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: _openWebPlayStore,
+        borderRadius: BorderRadius.circular(12),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 26,
+                height: 26,
+                child: Image(
+                  image: AssetImage('assets/googleIcon.png'),
+                  fit: BoxFit.contain,
+                ),
+              ),
+              SizedBox(width: 7),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'GET IT ON',
+                    style: TextStyle(color: Color(0xFFDCEBD1), fontSize: 9),
+                  ),
+                  Text(
+                    'Google Play',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
