@@ -38,7 +38,7 @@ const _tuhfatulMuslimShareInvitation =
 /// yet, so it isn't wired.
 ///
 /// Opening the screen starts a reading timer ([DuaReadingTracker]), shown in
-/// the header's top-right corner. Past half a minute — the least
+/// the reading controls below the header. Past half a minute — the least
 /// `POST /duas/reading/track` accepts — a "Read / Completed" checkbox
 /// appears; checking it reports the time and stops the timer. Leaving the
 /// screen reports it too, so each visit counts exactly once and the next one
@@ -518,10 +518,11 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                       action: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (_reading case final tracker?) ...[
-                            _DuaReadingTimerPill(tracker: tracker),
-                            SizedBox(width: 8.w),
-                          ],
+                          _HeaderIconButton(
+                            icon: Icons.bookmark_border_rounded,
+                            onTap: _showBookmarkSheet,
+                          ),
+                          SizedBox(width: 8.w),
                           _HeaderIconButton(
                             icon: Icons.copy_rounded,
                             onTap: _showCopySheet,
@@ -540,7 +541,20 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                       ),
                     ),
                     if (_reading case final tracker?)
-                      _DuaReadCheckbox(tracker: tracker, onTap: _markAsRead),
+                      Padding(
+                        padding: EdgeInsets.only(top: 14.h),
+                        child: Row(
+                          children: [
+                            _DuaReadingTimerPill(tracker: tracker),
+                            const Spacer(),
+                            _DuaReadCheckbox(
+                              tracker: tracker,
+                              onTap: _markAsRead,
+                              inline: true,
+                            ),
+                          ],
+                        ),
+                      ),
                     if (readable.categoryLabel.isNotEmpty) ...[
                       SizedBox(height: 18.h),
                       _CategoryPill(label: readable.categoryLabel),
@@ -1690,8 +1704,8 @@ class _HeaderIconButton extends StatelessWidget {
   }
 }
 
-/// The live reading timer in the header's top-right corner: how long this
-/// visit has been reading, refreshed each second. It stops for good once the
+/// The live reading timer in the reader controls: how long this visit has
+/// been reading, refreshed each second. It stops for good once the
 /// dua is marked read, and then shows a check instead of the clock — on a
 /// dua read earlier, from the moment the screen opens.
 class _DuaReadingTimerPill extends StatelessWidget {
@@ -1750,10 +1764,15 @@ class _DuaReadingTimerPill extends StatelessWidget {
 /// recorded and the timer above has stopped. A dua read on an earlier visit
 /// shows it checked right away.
 class _DuaReadCheckbox extends StatelessWidget {
-  const _DuaReadCheckbox({required this.tracker, required this.onTap});
+  const _DuaReadCheckbox({
+    required this.tracker,
+    required this.onTap,
+    this.inline = false,
+  });
 
   final DuaReadingTracker tracker;
   final Future<void> Function() onTap;
+  final bool inline;
 
   static const _green = Color(0xFF2F6B3C);
 
@@ -1768,73 +1787,70 @@ class _DuaReadCheckbox extends StatelessWidget {
         if (!read && !busy && !tracker.canComplete) {
           return const SizedBox.shrink();
         }
-        return Padding(
-          padding: EdgeInsets.only(top: 14.h),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: read || busy ? null : () => unawaited(onTap()),
+        final control = Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: read || busy ? null : () => unawaited(onTap()),
+            borderRadius: BorderRadius.circular(20.r),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: context.surfaceColor(
+                  read ? _green : const Color(0xFFECF0DC),
+                ),
                 borderRadius: BorderRadius.circular(20.r),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(
-                      read ? _green : const Color(0xFFECF0DC),
-                    ),
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: context.lineColor(
-                        read ? _green : const Color(0xFFDCE3C4),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (busy)
-                        SizedBox(
-                          width: 13.r,
-                          height: 13.r,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            valueColor: AlwaysStoppedAnimation(
-                              read ? Colors.white : _green,
-                            ),
-                          ),
-                        )
-                      else
-                        Icon(
-                          read
-                              ? Icons.check_box_rounded
-                              : Icons.check_box_outline_blank_rounded,
-                          size: 15.sp,
-                          color: read
-                              ? Colors.white
-                              : context.inkColor(const Color(0xFF4C5A34)),
-                        ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        appText.duaMarkAsReadLabel,
-                        style: TextStyle(
-                          fontSize: 11.5.sp,
-                          fontWeight: FontWeight.w600,
-                          color: read
-                              ? Colors.white
-                              : context.inkColor(const Color(0xFF4C5A34)),
-                        ),
-                      ),
-                    ],
+                border: Border.all(
+                  color: context.lineColor(
+                    read ? _green : const Color(0xFFDCE3C4),
                   ),
                 ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (busy)
+                    SizedBox(
+                      width: 13.r,
+                      height: 13.r,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        valueColor: AlwaysStoppedAnimation(
+                          read ? Colors.white : _green,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      read
+                          ? Icons.check_box_rounded
+                          : Icons.check_box_outline_blank_rounded,
+                      size: 15.sp,
+                      color: read
+                          ? Colors.white
+                          : context.inkColor(const Color(0xFF4C5A34)),
+                    ),
+                  SizedBox(width: 6.w),
+                  Text(
+                    appText.duaMarkAsReadLabel,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: read
+                          ? Colors.white
+                          : context.inkColor(const Color(0xFF4C5A34)),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         );
+        return inline
+            ? control
+            : Padding(
+                padding: EdgeInsets.only(top: 14.h),
+                child: Align(alignment: Alignment.centerRight, child: control),
+              );
       },
     );
   }

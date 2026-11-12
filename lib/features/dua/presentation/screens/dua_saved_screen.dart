@@ -8,7 +8,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
-/// "Saved" — the Dua feature's bookmark folders (design `devImg/img_9.png`),
+/// "Saved" — the Dua feature's bookmark folders (design `devImg/img_16.png`),
 /// backed by [DuaBookmarkStore] (Hive): folders and their dua counts persist
 /// on-device and update live as bookmarks are added from [DuaReaderScreen].
 class DuaSavedScreen extends StatefulWidget {
@@ -36,6 +36,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
     final action = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(400, 200, 12, 0),
+      color: context.surfaceColor(Colors.white),
       items: [
         PopupMenuItem(
           value: 'edit',
@@ -87,33 +88,6 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
               children: [
                 SizedBox(height: 8.h),
                 const _Header(),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 10.h),
-                  child: TextField(
-                    controller: _search,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: AppText.of(context).searchHere,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 13.h,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.r),
-                        borderSide: BorderSide(
-                          color: context.lineColor(Color(0xFFB7C86A)),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25.r),
-                        borderSide: BorderSide(
-                          color: context.lineColor(Color(0xFFB7C86A)),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: ListenableBuilder(
                     listenable: _store,
@@ -125,35 +99,83 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                               _labelFor(folder).toLowerCase().contains(query))
                             folder,
                       ];
-                      if (folders.isEmpty) {
-                        return Center(
-                          child: Text(
-                            AppText.of(context).noResultsFound,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: context.inkColor(Color(0xFF5D6B44)),
-                            ),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 90.h),
-                        itemCount: folders.length,
-                        separatorBuilder: (_, _) => SizedBox(height: 8.h),
-                        itemBuilder: (context, index) {
-                          final folder = folders[index];
-                          return _FolderCard(
-                            name: _labelFor(folder),
-                            count: _store.countIn(folder),
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    DuaSavedFolderScreen(folder: folder),
+                      final appText = AppText.of(context);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(30.w, 12.h, 30.w, 0),
+                            child: Text(
+                              appText.duaTotalSaved.replaceAll(
+                                '{n}',
+                                context.localizedDigits(
+                                  '${_store.folders.length}',
+                                ),
+                              ),
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                                color: context.textInkColor(
+                                  const Color(0xFF252821),
+                                ),
                               ),
                             ),
-                            onMenu: () => _menu(folder),
-                          );
-                        },
+                          ),
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              21.w,
+                              10.h,
+                              21.w,
+                              16.h,
+                            ),
+                            child: _SearchField(
+                              controller: _search,
+                              hintText: appText.searchHere,
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                          Expanded(
+                            child: folders.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      appText.noResultsFound,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: context.textInkColor(
+                                          const Color(0xFF5D6B44),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : ListView.separated(
+                                    padding: EdgeInsets.fromLTRB(
+                                      21.w,
+                                      0,
+                                      21.w,
+                                      100.h,
+                                    ),
+                                    itemCount: folders.length,
+                                    separatorBuilder: (_, _) =>
+                                        SizedBox(height: 10.h),
+                                    itemBuilder: (context, index) {
+                                      final folder = folders[index];
+                                      return _FolderCard(
+                                        name: _labelFor(folder),
+                                        count: _store.countIn(folder),
+                                        onTap: () => Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                DuaSavedFolderScreen(
+                                                  folder: folder,
+                                                ),
+                                          ),
+                                        ),
+                                        onMenu: () => _menu(folder),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -173,19 +195,99 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
 
 class _Header extends StatelessWidget {
   const _Header();
+
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: 44.h,
-    child: Center(
-      child: Text(
-        AppText.of(context).duaSavedTitle,
-        style: TextStyle(
-          fontSize: 17.sp,
-          color: context.inkColor(Color(0xFF7D8E54)),
+    height: 52.h,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: EdgeInsets.only(left: 20.w),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Navigator.of(context).maybePop(),
+                borderRadius: BorderRadius.circular(20.r),
+                child: Ink(
+                  width: 36.r,
+                  height: 36.r,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD9E48C),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 16.sp,
+                    color: const Color(0xFF667342),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-      ),
+        Text(
+          AppText.of(context).duaSavedTitle,
+          style: TextStyle(
+            fontFamily: 'serif',
+            fontSize: 23.sp,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w700,
+            color: context.textInkColor(const Color(0xFF7D8E54)),
+          ),
+        ),
+      ],
     ),
   );
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.hintText,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: controller,
+    onChanged: onChanged,
+    style: TextStyle(
+      fontSize: 13.sp,
+      color: context.textInkColor(const Color(0xFF252821)),
+    ),
+    decoration: InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(
+        fontSize: 12.sp,
+        color: context.textInkColor(const Color(0xFF989B90)),
+      ),
+      isDense: true,
+      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+      filled: true,
+      fillColor: context.surfaceColor(Colors.white),
+      border: _border(context),
+      enabledBorder: _border(context),
+      focusedBorder: _border(context, focused: true),
+    ),
+  );
+
+  OutlineInputBorder _border(BuildContext context, {bool focused = false}) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(25.r),
+        borderSide: BorderSide(
+          color: context.lineColor(
+            focused ? const Color(0xFF9FAF5A) : const Color(0xFFCAD48F),
+          ),
+          width: focused ? 1.25 : 0.9,
+        ),
+      );
 }
 
 class _FolderCard extends StatelessWidget {
@@ -202,38 +304,82 @@ class _FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(20.r),
+    borderRadius: BorderRadius.circular(22.r),
     child: Container(
-      height: 72.h,
-      padding: EdgeInsets.symmetric(horizontal: 10.w),
+      height: 74.h,
+      padding: EdgeInsets.symmetric(horizontal: 13.w),
       decoration: BoxDecoration(
-        border: Border.all(color: context.lineColor(Color(0xFFD5E59B))),
-        borderRadius: BorderRadius.circular(20.r),
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withValues(alpha: .22)
+                : const Color(0xFF768149).withValues(alpha: .08),
+            blurRadius: 18.r,
+            offset: Offset(0, 7.h),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFA5B657)),
-          SizedBox(width: 10.w),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: TextStyle(fontSize: 14.sp)),
-              SizedBox(height: 5.h),
-              Text(
-                AppText.of(context).duaSavedCount.replaceAll(
-                  '{n}',
-                  context.localizedDigits('$count'),
-                ),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: const Color(0xFFA5B657),
-                ),
+          Container(
+            width: 48.r,
+            height: 48.r,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF7E9977), Color(0xFFABC77C)],
               ),
-            ],
+              borderRadius: BorderRadius.circular(15.r),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFA270D0).withValues(alpha: .24),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 3.h),
+                ),
+              ],
+            ),
+            child: Icon(Icons.folder_rounded, size: 31.sp, color: Colors.white),
           ),
-          const Spacer(),
-          IconButton(onPressed: onMenu, icon: const Icon(Icons.more_vert)),
+          SizedBox(width: 13.w),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: context.textInkColor(const Color(0xFF24251F)),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  AppText.of(context).duaSavedCount.replaceAll(
+                    '{n}',
+                    context.localizedDigits('$count'),
+                  ),
+                  style: TextStyle(
+                    fontSize: 11.5.sp,
+                    color: context.textInkColor(const Color(0xFF7D7669)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onMenu,
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: context.textInkColor(const Color(0xFF61594A)),
+            ),
+          ),
         ],
       ),
     ),
@@ -271,7 +417,7 @@ class _EditSheetState extends State<_EditSheet> {
       children: [
         Text(
           AppText.of(context).duaFolderName,
-          style: TextStyle(color: context.inkColor(Color(0xFF879260))),
+          style: TextStyle(color: context.textInkColor(Color(0xFF879260))),
         ),
         SizedBox(height: 8.h),
         TextField(
@@ -307,7 +453,9 @@ class _DeleteSheet extends StatelessWidget {
         Text(
           AppText.of(context).duaDeleteBookmarkMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF8B956D)),
+          style: TextStyle(
+            color: context.textInkColor(const Color(0xFF8B956D)),
+          ),
         ),
         SizedBox(height: 130.h),
         _Buttons(
@@ -339,7 +487,7 @@ class _SheetShell extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: 17.sp,
-            color: context.inkColor(Color(0xFF879260)),
+            color: context.textInkColor(Color(0xFF879260)),
           ),
         ),
         SizedBox(height: 20.h),

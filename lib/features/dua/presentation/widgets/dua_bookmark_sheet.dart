@@ -35,6 +35,7 @@ class DuaBookmarkSheet extends StatefulWidget {
 
 class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
   final _searchController = TextEditingController();
+  final _folderController = PageController(viewportFraction: 0.34);
   final _store = DuaBookmarkStore.instance;
   late final Set<String> _selected = _initialSelection();
   String _query = '';
@@ -51,15 +52,18 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(
-      () =>
-          setState(() => _query = _searchController.text.trim().toLowerCase()),
-    );
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() => _query = _searchController.text.trim().toLowerCase());
+    if (_folderController.hasClients) _folderController.jumpToPage(0);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _folderController.dispose();
     super.dispose();
   }
 
@@ -74,6 +78,18 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
     if (trimmed.isEmpty || !mounted) return;
     _store.createFolder(trimmed);
     setState(() => _selected.add(trimmed));
+    final folderIndex = _store.folders.indexOf(trimmed);
+    if (folderIndex >= 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_folderController.hasClients) {
+          _folderController.animateToPage(
+            folderIndex,
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
   }
 
   void _save() {
@@ -103,6 +119,8 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
 
     final viewInsets = MediaQuery.of(context).viewInsets.bottom;
     final safeBottom = MediaQuery.of(context).viewPadding.bottom;
+    final availableHeight = MediaQuery.of(context).size.height - viewInsets;
+    final sheetHeight = (availableHeight * 0.78).clamp(0.0, 620.0).toDouble();
 
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets),
@@ -125,72 +143,28 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
           20.w,
           18.h + (viewInsets > 0 ? 0 : safeBottom),
         ),
-        child: SingleChildScrollView(
+        child: SizedBox(
+          height: sheetHeight,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 42.w,
                 height: 4.h,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .5),
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(99.r),
                 ),
               ),
-              SizedBox(height: 18.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      appText.bookmarkSheetTitle,
-                      style: TextStyle(
-                        fontSize: 19.sp,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: _createFolder,
-                    borderRadius: BorderRadius.circular(20.r),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: .6),
-                        ),
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/svgs/folder.svg',
-                            width: 15.sp,
-                            height: 15.sp,
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            appText.addMore,
-                            style: TextStyle(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              SizedBox(height: 14.h),
+              Text(
+                appText.bookmarkSheetTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
               ),
               SizedBox(height: 16.h),
               TextField(
@@ -226,42 +200,60 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
                 ),
               ),
               SizedBox(height: 10.h),
-              if (visible.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  child: Text(
-                    appText.searchFolderHint,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.white.withValues(alpha: .75),
-                    ),
-                  ),
-                )
-              else
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 280.h),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.symmetric(vertical: 6.h),
-                    itemCount: visible.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 10.h),
-                    itemBuilder: (context, index) {
-                      final folder = visible[index];
-                      final count = _store.countIn(folder);
-                      return _FolderTile(
-                        label: folder == DuaBookmarkStore.defaultFolder
-                            ? appText.favoriteFolder
-                            : folder,
-                        countLabel: appText.duaSavedCount.replaceAll(
-                          '{n}',
-                          context.localizedDigits('$count'),
+              Expanded(
+                child: visible.isEmpty
+                    ? Center(
+                        child: Text(
+                          appText.searchFolderHint,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.white.withValues(alpha: .75),
+                          ),
                         ),
-                        selected: _selected.contains(folder),
-                        onTap: () => _toggleFolder(folder),
-                      );
-                    },
-                  ),
-                ),
+                      )
+                    : PageView.builder(
+                        key: ValueKey(visible.join('\n')),
+                        controller: _folderController,
+                        scrollDirection: Axis.vertical,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: visible.length,
+                        itemBuilder: (context, index) {
+                          final folder = visible[index];
+                          final count = _store.countIn(folder);
+                          return AnimatedBuilder(
+                            animation: _folderController,
+                            builder: (context, child) {
+                              var delta = index.toDouble();
+                              if (_folderController.hasClients &&
+                                  _folderController.position.haveDimensions) {
+                                delta = (_folderController.page ?? 0) - index;
+                              }
+                              final focus = (1 - delta.abs()).clamp(0.0, 1.0);
+                              return Center(
+                                child: Opacity(
+                                  opacity: 0.28 + (0.72 * focus),
+                                  child: Transform.scale(
+                                    scale: 0.82 + (0.18 * focus),
+                                    child: child,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: _FolderTile(
+                              label: folder == DuaBookmarkStore.defaultFolder
+                                  ? appText.favoriteFolder
+                                  : folder,
+                              countLabel: appText.duaSavedCount.replaceAll(
+                                '{n}',
+                                context.localizedDigits('$count'),
+                              ),
+                              selected: _selected.contains(folder),
+                              onTap: () => _toggleFolder(folder),
+                            ),
+                          );
+                        },
+                      ),
+              ),
               SizedBox(height: 14.h),
               Row(
                 children: [
@@ -269,7 +261,9 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
                     child: OutlinedButton(
                       onPressed: _createFolder,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                        foregroundColor: context.textInkColor(
+                          Color(0xFF4C5A34),
+                        ),
                         minimumSize: Size(0, 52.h),
                         side: BorderSide(
                           color: context.lineColor(Color(0xFF9BAE6C)),
@@ -297,7 +291,7 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
                         ),
                       ),
                       child: Text(
-                        appText.saveAction,
+                        '${appText.saveAction} (${context.localizedDigits('${_selected.length}')})',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -333,15 +327,26 @@ class _FolderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18.r),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: selected ? 0.95 : 0.85),
-          borderRadius: BorderRadius.circular(18.r),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
+          color: context.surfaceColor(
+            Colors.white.withValues(alpha: selected ? 0.95 : 0.85),
+          ),
+          borderRadius: BorderRadius.circular(22.r),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFFC6A8F5)
+                : isDark
+                ? const Color(0xFF596344)
+                : Colors.white.withValues(alpha: 0.6),
+            width: selected ? 1.6 : 1,
+          ),
         ),
         child: Row(
           children: [
@@ -350,13 +355,17 @@ class _FolderTile extends StatelessWidget {
               height: 44.r,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F3E2),
-                borderRadius: BorderRadius.circular(12.r),
+                color: context.surfaceColor(const Color(0xFFF1F3E2)),
+                borderRadius: BorderRadius.circular(14.r),
               ),
               child: SvgPicture.asset(
                 'assets/svgs/folder.svg',
                 width: 24.sp,
                 height: 24.sp,
+                colorFilter: ColorFilter.mode(
+                  context.textInkColor(const Color(0xFF4C5A34)),
+                  BlendMode.srcIn,
+                ),
               ),
             ),
             SizedBox(width: 12.w),
@@ -371,7 +380,7 @@ class _FolderTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3320),
+                      color: context.textInkColor(const Color(0xFF2C3320)),
                     ),
                   ),
                   SizedBox(height: 3.h),
@@ -379,7 +388,7 @@ class _FolderTile extends StatelessWidget {
                     countLabel,
                     style: TextStyle(
                       fontSize: 11.5.sp,
-                      color: const Color(0xFF7C8A48),
+                      color: context.textInkColor(const Color(0xFF7C8A48)),
                     ),
                   ),
                 ],

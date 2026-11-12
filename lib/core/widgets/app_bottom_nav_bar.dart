@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+
 /// One destination of an [AppBottomNavBar].
 class AppBottomNavItem {
   const AppBottomNavItem({
@@ -59,11 +61,11 @@ class AppBottomNavBar extends StatelessWidget {
         margin: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 10.h),
         padding: EdgeInsets.all(6.r),
         decoration: BoxDecoration(
-          color: _barColor,
+          color: context.surfaceColor(_barColor),
           borderRadius: BorderRadius.circular(30.r),
           boxShadow: [
             BoxShadow(
-              color: _shadowColor.withValues(alpha: .16),
+              color: context.lineColor(_shadowColor.withValues(alpha: .16)),
               blurRadius: 12.r,
               offset: Offset(0, 3.h),
             ),
@@ -113,7 +115,9 @@ class _NavButton extends StatelessWidget {
       child: Tooltip(
         message: item.label,
         child: Material(
-          color: selected ? AppBottomNavBar._selectedColor : Colors.transparent,
+          color: selected
+              ? context.surfaceColor(AppBottomNavBar._selectedColor)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(22.r),
           child: InkWell(
             key: item.key,
