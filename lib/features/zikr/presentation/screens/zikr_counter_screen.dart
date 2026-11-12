@@ -257,19 +257,25 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 18.h),
-                Center(
-                  child: _TapButton(
-                    progress: ringProgress.toDouble(),
-                    label: _finished
-                        ? appText.zikrCompleted
-                        : appText.zikrTapToCount,
-                    onTap: () {
-                      _count();
-                    },
+       // This is deliberately wider than the round control: users
+                // can tap the surrounding counting zone without having to
+                // aim for the button itself. The zikr card and reset action
+                // remain separate interactive targets.
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _count,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 18.h, bottom: 40.h),
+                    child: Center(
+                      child: _TapButton(
+                        progress: ringProgress.toDouble(),
+                        label: _finished
+                            ? appText.zikrCompleted
+                            : appText.zikrTapToCount,
+                      ),
+                    ),
                   ),
                 ),
-                SizedBox(height: 40.h),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 24.w),
                   child: Text(
@@ -395,15 +401,10 @@ class _CurrentZikrCard extends StatelessWidget {
 }
 
 class _TapButton extends StatefulWidget {
-  const _TapButton({
-    required this.progress,
-    required this.label,
-    required this.onTap,
-  });
+  const _TapButton({required this.progress, required this.label});
 
   final double progress;
   final String label;
-  final VoidCallback onTap;
 
   @override
   State<_TapButton> createState() => _TapButtonState();
@@ -415,17 +416,18 @@ class _TapButtonState extends State<_TapButton> {
   @override
   Widget build(BuildContext context) {
     final size = 184.r;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _down = true),
-      onTapUp: (_) => setState(() => _down = false),
-      onTapCancel: () => setState(() => _down = false),
+    return Listener(
+      onPointerDown: (_) => setState(() => _down = true),
+      onPointerUp: (_) => setState(() => _down = false),
+      onPointerCancel: (_) => setState(() => _down = false),
       child: SizedBox(
         width: size,
         height: size,
         child: CustomPaint(
-          painter: _DottedRingPainter(progress: widget.progress),
+          painter: _DottedRingPainter(
+            progress: widget.progress,
+            isDark: Theme.of(context).brightness == Brightness.dark,
+          ),
           child: Center(
             child: AnimatedScale(
               scale: _down ? 0.94 : 1,
@@ -436,8 +438,11 @@ class _TapButtonState extends State<_TapButton> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const RadialGradient(
-                    colors: [Color(0xFFEDF3DF), Color(0xFFC9DBA3)],
+                  gradient: RadialGradient(
+                    colors: [
+                      context.surfaceColor(const Color(0xFFEDF3DF)),
+                      context.surfaceColor(const Color(0xFFC9DBA3)),
+                    ],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -470,9 +475,10 @@ class _TapButtonState extends State<_TapButton> {
 /// Counting fills the ring clockwise from the top: counted dots turn olive and
 /// grow, the leading dot is the darkest, the rest stay pale green.
 class _DottedRingPainter extends CustomPainter {
-  const _DottedRingPainter({required this.progress});
+  const _DottedRingPainter({required this.progress, required this.isDark});
 
   final double progress;
+  final bool isDark;
 
   static const int _dotCount = 33;
   static const Color _empty = Color(0xFFD3E2B7);
@@ -497,19 +503,21 @@ class _DottedRingPainter extends CustomPainter {
       if (i < filled) {
         // 0 at the start of the arc, 1 at the leading (most recent) dot.
         final rel = filled <= 1 ? 1.0 : i / (filled - 1);
-        color = Color.lerp(_fillStart, _fillEnd, rel)!;
+        color = _fill(Color.lerp(_fillStart, _fillEnd, rel)!);
         dotRadius = 4.4 + 1.8 * rel;
       } else {
-        color = _empty;
+        color = _fill(_empty);
         dotRadius = 4.4;
       }
       canvas.drawCircle(pos, dotRadius, Paint()..color = color);
     }
   }
 
+  Color _fill(Color color) => isDark ? DarkColorMapper.fill(color) : color;
+
   @override
   bool shouldRepaint(covariant _DottedRingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress || oldDelegate.isDark != isDark;
 }
 
 class _ProgressBar extends StatelessWidget {
