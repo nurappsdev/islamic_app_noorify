@@ -36,6 +36,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
     final action = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(400, 200, 12, 0),
+      color: context.surfaceColor(Colors.white),
       items: [
         PopupMenuItem(
           value: 'edit',
@@ -131,7 +132,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                             AppText.of(context).noResultsFound,
                             style: TextStyle(
                               fontSize: 13.sp,
-                              color: context.inkColor(Color(0xFF5D6B44)),
+                              color: context.textInkColor(Color(0xFF5D6B44)),
                             ),
                           ),
                         );
@@ -143,6 +144,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                         itemBuilder: (context, index) {
                           final folder = folders[index];
                           return _FolderCard(
+                            serial: index + 1,
                             name: _labelFor(folder),
                             count: _store.countIn(folder),
                             onTap: () => Navigator.of(context).push(
@@ -181,7 +183,7 @@ class _Header extends StatelessWidget {
         AppText.of(context).duaSavedTitle,
         style: TextStyle(
           fontSize: 17.sp,
-          color: context.inkColor(Color(0xFF7D8E54)),
+          color: context.textInkColor(Color(0xFF7D8E54)),
         ),
       ),
     ),
@@ -190,11 +192,13 @@ class _Header extends StatelessWidget {
 
 class _FolderCard extends StatelessWidget {
   const _FolderCard({
+    required this.serial,
     required this.name,
     required this.count,
     required this.onTap,
     required this.onMenu,
   });
+  final int serial;
   final String name;
   final int count;
   final VoidCallback onTap;
@@ -212,7 +216,18 @@ class _FolderCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(radius: 22.r, backgroundColor: const Color(0xFFA5B657)),
+          CircleAvatar(
+            radius: 22.r,
+            backgroundColor: const Color(0xFFA5B657),
+            child: Text(
+              context.localizedDigits('$serial'),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           SizedBox(width: 10.w),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -227,7 +242,7 @@ class _FolderCard extends StatelessWidget {
                 ),
                 style: TextStyle(
                   fontSize: 12.sp,
-                  color: const Color(0xFFA5B657),
+                  color: context.inkColor(const Color(0xFFA5B657)),
                 ),
               ),
             ],
@@ -271,7 +286,7 @@ class _EditSheetState extends State<_EditSheet> {
       children: [
         Text(
           AppText.of(context).duaFolderName,
-          style: TextStyle(color: context.inkColor(Color(0xFF879260))),
+          style: TextStyle(color: context.textInkColor(Color(0xFF879260))),
         ),
         SizedBox(height: 8.h),
         TextField(
@@ -307,7 +322,9 @@ class _DeleteSheet extends StatelessWidget {
         Text(
           AppText.of(context).duaDeleteBookmarkMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF8B956D)),
+          style: TextStyle(
+            color: context.textInkColor(const Color(0xFF8B956D)),
+          ),
         ),
         SizedBox(height: 130.h),
         _Buttons(
@@ -339,7 +356,7 @@ class _SheetShell extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: 17.sp,
-            color: context.inkColor(Color(0xFF879260)),
+            color: context.textInkColor(Color(0xFF879260)),
           ),
         ),
         SizedBox(height: 20.h),
