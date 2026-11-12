@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -185,21 +186,23 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
             ),
           );
         }
-        return _PlanCard(plan: state.plans[index]);
+        return _PlanCard(plan: state.plans[index], serial: index + 1);
       },
     );
   }
 }
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan});
+  const _PlanCard({required this.plan, required this.serial});
   final DuaPlan plan;
+  final int serial;
 
   Future<void> _menu(BuildContext context) async {
     final appText = AppText.readOf(context);
     final action = await showMenu<String>(
       context: context,
       position: const RelativeRect.fromLTRB(400, 200, 12, 0),
+      color: context.surfaceColor(Colors.white),
       items: [
         PopupMenuItem(value: 'edit', child: Text(appText.duaSavedEdit)),
         PopupMenuItem(
@@ -280,6 +283,14 @@ class _PlanCard extends StatelessWidget {
             CircleAvatar(
               radius: 23.r,
               backgroundColor: const Color(0xFFA5B657),
+              child: Text(
+                context.localizedDigits('$serial'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             SizedBox(width: 12.w),
             Expanded(
@@ -293,7 +304,7 @@ class _PlanCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: context.inkColor(const Color(0xFF2C3320)),
+                      color: context.textInkColor(const Color(0xFF2C3320)),
                     ),
                   ),
                   SizedBox(height: 3.h),
@@ -304,7 +315,7 @@ class _PlanCard extends StatelessWidget {
                     ),
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFFA5B657),
+                      color: context.inkColor(const Color(0xFFA5B657)),
                     ),
                   ),
                 ],
@@ -347,7 +358,9 @@ class _DeletePlanSheet extends StatelessWidget {
         Text(
           AppText.of(context).duaDeletePlanMessage,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF8B956D)),
+          style: TextStyle(
+            color: context.textInkColor(const Color(0xFF8B956D)),
+          ),
         ),
         SizedBox(height: 90.h),
         _SheetButtons(
@@ -379,7 +392,7 @@ class _SheetShell extends StatelessWidget {
           title,
           style: TextStyle(
             fontSize: 17.sp,
-            color: context.inkColor(const Color(0xFF879260)),
+            color: context.textInkColor(const Color(0xFF879260)),
           ),
         ),
         SizedBox(height: 20.h),
@@ -436,18 +449,33 @@ class _PlannerTabs extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      for (var i = 0; i < labels.length; i++)
-        Expanded(
-          child: _PlannerTab(
-            label: labels[i],
-            selected: i == selected,
-            onTap: () => onChanged(i),
-          ),
-        ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: isDark ? EdgeInsets.symmetric(horizontal: 12.w) : null,
+      padding: isDark ? EdgeInsets.all(4.r) : null,
+      decoration: isDark
+          ? BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              border: Border.all(color: context.appPalette.border),
+              borderRadius: BorderRadius.circular(26.r),
+            )
+          : null,
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: _PlannerTab(
+                label: labels[i],
+                selected: i == selected,
+                onTap: () => onChanged(i),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PlannerTab extends StatelessWidget {
@@ -462,28 +490,36 @@ class _PlannerTab extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    child: Container(
-      height: 42.h,
-      alignment: Alignment.center,
-      margin: EdgeInsets.symmetric(horizontal: 6.w),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(
-          selected ? const Color(0xFFE1E56A) : Colors.transparent,
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22.r),
+      child: Container(
+        height: 42.h,
+        alignment: Alignment.center,
+        margin: EdgeInsets.symmetric(horizontal: 6.w),
+        decoration: BoxDecoration(
+          color: selected
+              ? (isDark ? AppColor.darkTint : const Color(0xFFE1E56A))
+              : Colors.transparent,
+          border: selected && isDark
+              ? Border.all(color: AppColor.primary.withValues(alpha: 0.55))
+              : null,
+          borderRadius: BorderRadius.circular(22.r),
         ),
-        borderRadius: BorderRadius.circular(22.r),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
-          color: context.inkColor(const Color(0xFF303629)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: context.textInkColor(const Color(0xFF303629)),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _EmptyPlans extends StatelessWidget {
@@ -502,7 +538,7 @@ class _EmptyPlans extends StatelessWidget {
           children: [
             Icon(
               Icons.sticky_note_2_rounded,
-              color: const Color(0xFFDDE8BA),
+              color: context.surfaceColor(const Color(0xFFDDE8BA)),
               size: 88.sp,
             ),
             Positioned(
@@ -510,7 +546,7 @@ class _EmptyPlans extends StatelessWidget {
               child: Text(
                 '?',
                 style: TextStyle(
-                  color: context.inkColor(const Color(0xFF84945F)),
+                  color: context.textInkColor(const Color(0xFF84945F)),
                   fontSize: 30.sp,
                   fontWeight: FontWeight.w700,
                 ),
@@ -524,7 +560,7 @@ class _EmptyPlans extends StatelessWidget {
         message,
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: context.inkColor(const Color(0xFF5D6B44)),
+          color: context.textInkColor(const Color(0xFF5D6B44)),
           fontSize: 13.sp,
           height: 1.4,
         ),
