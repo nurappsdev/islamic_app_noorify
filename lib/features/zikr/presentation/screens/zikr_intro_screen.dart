@@ -40,7 +40,9 @@ class ZikrIntroScreen extends StatelessWidget {
                           backgroundColor: context.surfaceColor(
                             Color(0xFFDFDE68),
                           ),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
@@ -59,7 +61,7 @@ class ZikrIntroScreen extends StatelessWidget {
                             appText.zikrIntroTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: context.inkColor(Color(0xFF7D8765)),
+                              color: context.onLightInkColor(Color(0xFF7D8765)),
                               fontSize: 26.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -69,7 +71,7 @@ class ZikrIntroScreen extends StatelessWidget {
                             appText.zikrIntroSubtitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: context.inkColor(Color(0xFF4C5346)),
+                              color: context.onLightInkColor(Color(0xFF4C5346)),
                               fontSize: 13.sp,
                               height: 1.6,
                             ),

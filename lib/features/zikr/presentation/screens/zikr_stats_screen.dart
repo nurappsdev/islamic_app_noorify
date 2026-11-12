@@ -591,7 +591,7 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFCBD16B),
-                foregroundColor: context.inkColor(Color(0xFF303629)),
+                foregroundColor: context.onLightInkColor(Color(0xFF303629)),
                 minimumSize: Size(38.r, 38.r),
               ),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -600,7 +600,7 @@ class _Header extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: context.inkColor(AppColor.authLogo),
+              color: context.textInkColor(AppColor.authLogo),
               fontSize: 19.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -636,7 +636,7 @@ class _LegendDot extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12.5.sp,
-              color: context.inkColor(Color(0xFF6A7350)),
+              color: context.textInkColor(Color(0xFF6A7350)),
             ),
           ),
         ),
@@ -664,7 +664,7 @@ class _PeriodDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<int>(
       onSelected: onSelected,
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       itemBuilder: (context) => [
         PopupMenuItem(value: 0, child: Text(daily)),
@@ -685,14 +685,14 @@ class _PeriodDropdown extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
-                color: context.inkColor(Color(0xFF3E4A2A)),
+                color: context.textInkColor(Color(0xFF3E4A2A)),
               ),
             ),
             SizedBox(width: 6.w),
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 18.sp,
-              color: context.inkColor(Color(0xFF3E4A2A)),
+              color: context.textInkColor(Color(0xFF3E4A2A)),
             ),
           ],
         ),
@@ -756,7 +756,7 @@ class _ZikrDateNavigator extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w600,
-                          color: context.inkColor(Color(0xFF3E4A2A)),
+                          color: context.textInkColor(Color(0xFF3E4A2A)),
                         ),
                       ),
                     ),
@@ -765,7 +765,7 @@ class _ZikrDateNavigator extends StatelessWidget {
                       Icon(
                         Icons.calendar_month_rounded,
                         size: 15.sp,
-                        color: context.inkColor(Color(0xFF6A7350)),
+                        color: context.textInkColor(Color(0xFF6A7350)),
                       ),
                     ],
                   ],
@@ -802,7 +802,7 @@ class _ZikrDateNavArrow extends StatelessWidget {
         icon: Icon(
           icon,
           size: 16.sp,
-          color: context.inkColor(
+          color: context.textInkColor(
             enabled ? const Color(0xFF3E4A2A) : const Color(0xFFC5CAB8),
           ),
         ),
@@ -867,14 +867,14 @@ class _MonthlyFilter extends StatelessWidget {
               fontSize: 12.sp,
               fontWeight: FontWeight.w500,
               color: selected
-                  ? const Color(0xFF3E4A2A)
-                  : context.inkColor(const Color(0xFF6A7350)),
+                  ? context.textInkColor(const Color(0xFF3E4A2A))
+                  : context.textInkColor(const Color(0xFF6A7350)),
             ),
-            selectedColor: const Color(0xFFDDE8BA),
+            selectedColor: context.surfaceColor(const Color(0xFFDDE8BA)),
             backgroundColor: context.surfaceColor(Colors.white),
             side: BorderSide(
               color: selected
-                  ? const Color(0xFFDDE8BA)
+                  ? context.lineColor(const Color(0xFFDDE8BA))
                   : context.lineColor(const Color(0xFFDDE8C1)),
             ),
             shape: RoundedRectangleBorder(
@@ -936,9 +936,15 @@ class _ScrollableMonthlyChartState extends State<_ScrollableMonthlyChart> {
 
         return ScrollbarTheme(
           data: ScrollbarThemeData(
-            thumbColor: const WidgetStatePropertyAll(Color(0xFFC8D792)),
-            trackColor: const WidgetStatePropertyAll(Color(0xFFE8EFD5)),
-            trackBorderColor: const WidgetStatePropertyAll(Color(0xFFE8EFD5)),
+            thumbColor: WidgetStatePropertyAll(
+              context.surfaceColor(const Color(0xFFC8D792)),
+            ),
+            trackColor: WidgetStatePropertyAll(
+              context.surfaceColor(const Color(0xFFE8EFD5)),
+            ),
+            trackBorderColor: WidgetStatePropertyAll(
+              context.lineColor(const Color(0xFFE8EFD5)),
+            ),
             thickness: const WidgetStatePropertyAll(10),
             radius: const Radius.circular(8),
           ),
@@ -1002,7 +1008,7 @@ class _TotalPill extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
-                  color: context.inkColor(Color(0xFF3E4A2A)),
+                  color: context.textInkColor(Color(0xFF3E4A2A)),
                 ),
               ),
             ),
@@ -1025,7 +1031,7 @@ class _TotalPill extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.inkColor(Color(0xFF6A7350)),
+                    color: context.textInkColor(Color(0xFF6A7350)),
                   ),
                 ),
               ],
@@ -1051,7 +1057,9 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DashedBorderPainter(),
+      painter: _DashedBorderPainter(
+        color: context.lineColor(const Color(0xFFC7D2A0)),
+      ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(14.w, 18.h, 14.w, 18.h),
         child: Column(
@@ -1061,7 +1069,7 @@ class _StatCard extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 13.sp,
-                color: context.inkColor(Color(0xFF3B4430)),
+                color: context.textInkColor(Color(0xFF3B4430)),
               ),
             ),
             SizedBox(height: 16.h),
@@ -1071,7 +1079,7 @@ class _StatCard extends StatelessWidget {
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 fontStyle: italicValue ? FontStyle.italic : FontStyle.normal,
-                color: context.inkColor(Color(0xFF2C3320)),
+                color: context.textInkColor(Color(0xFF2C3320)),
               ),
             ),
           ],
@@ -1082,10 +1090,14 @@ class _StatCard extends StatelessWidget {
 }
 
 class _DashedBorderPainter extends CustomPainter {
+  _DashedBorderPainter({required this.color});
+
+  final Color color;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFC7D2A0)
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final path = Path()
@@ -1104,7 +1116,8 @@ class _DashedBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 class _HistoryRow extends StatelessWidget {
@@ -1128,7 +1141,7 @@ class _HistoryRow extends StatelessWidget {
           child: Icon(
             Icons.menu_book_rounded,
             size: 16.sp,
-            color: context.inkColor(Color(0xFF8B9865)),
+            color: context.textInkColor(Color(0xFF8B9865)),
           ),
         ),
         SizedBox(width: 12.w),
@@ -1139,14 +1152,17 @@ class _HistoryRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 14.sp,
-              color: context.inkColor(Color(0xFF2C3320)),
+              color: context.textInkColor(Color(0xFF2C3320)),
             ),
           ),
         ),
         SizedBox(width: 8.w),
         Text(
           context.localizedDigits(count),
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFFA1AD59)),
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: context.textInkColor(const Color(0xFFA1AD59)),
+          ),
         ),
       ],
     );
@@ -1249,6 +1265,7 @@ class _StatsChartState extends State<_StatsChart> {
                     competitorInitials: widget.competitorInitials,
                     daily: widget.daily,
                     bottomPadding: widget.bottomPadding,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
                   ),
                 ),
                 if (selected != null && selected < count)
@@ -1317,9 +1334,9 @@ class _ChartTooltip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.surfaceColor(Colors.white),
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: const Color(0xFFDDE8C1)),
+        border: Border.all(color: context.lineColor(const Color(0xFFDDE8C1))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .12),
@@ -1338,7 +1355,7 @@ class _ChartTooltip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF3E4A2A),
+                color: context.textInkColor(const Color(0xFF3E4A2A)),
               ),
             ),
             SizedBox(height: 6.h),
@@ -1382,7 +1399,7 @@ class _ChartTooltip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF2C3320),
+            color: context.textInkColor(const Color(0xFF2C3320)),
           ),
         ),
       ],
@@ -1469,6 +1486,7 @@ class _StatsChartPainter extends CustomPainter {
     required this.competitorInitials,
     required this.daily,
     required this.bottomPadding,
+    required this.isDark,
   });
 
   final List<double> values;
@@ -1479,6 +1497,13 @@ class _StatsChartPainter extends CustomPainter {
   final String competitorInitials;
   final bool daily;
   final double bottomPadding;
+  final bool isDark;
+
+  Color _fill(Color color) => isDark ? DarkColorMapper.fill(color) : color;
+
+  Color _ink(Color color) => isDark ? DarkColorMapper.textInk(color) : color;
+
+  Color _line(Color color) => isDark ? DarkColorMapper.line(color) : color;
 
   double get _maxY => _niceMaxY(values, competitorValues);
 
@@ -1508,7 +1533,7 @@ class _StatsChartPainter extends CustomPainter {
     double yAt(double v) => chartBottom - chartHeight * (v / maxY);
 
     final gridPaint = Paint()
-      ..color = const Color(0xFFECEFE1)
+      ..color = _line(const Color(0xFFECEFE1))
       ..strokeWidth = 1;
     for (final step in _steps) {
       final y = yAt(step.toDouble());
@@ -1517,7 +1542,7 @@ class _StatsChartPainter extends CustomPainter {
         canvas,
         '$step',
         Offset(chartLeft - 8, y),
-        color: const Color(0xFF9AA279),
+        color: _ink(const Color(0xFF9AA279)),
         fontSize: 9,
         anchorRight: true,
         anchorMiddleY: true,
@@ -1530,7 +1555,7 @@ class _StatsChartPainter extends CustomPainter {
         canvas,
         labels[i],
         Offset(xAt(i), chartBottom + 6),
-        color: const Color(0xFF6A7350),
+        color: _ink(const Color(0xFF6A7350)),
         fontSize: 10,
         anchorCenterX: true,
       );
@@ -1557,7 +1582,7 @@ class _StatsChartPainter extends CustomPainter {
             LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: fill,
+              colors: [for (final color in fill) _fill(color)],
             ).createShader(
               Rect.fromLTRB(chartLeft, chartTop, chartRight, chartBottom),
             ),
@@ -1570,7 +1595,7 @@ class _StatsChartPainter extends CustomPainter {
     canvas.drawPath(
       linePath,
       Paint()
-        ..color = const Color(0xFF3A4A2E)
+        ..color = _ink(const Color(0xFF3A4A2E))
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4,
     );
@@ -1578,12 +1603,12 @@ class _StatsChartPainter extends CustomPainter {
     for (var i = 0; i < points.length; i++) {
       final p = points[i];
       if (daily && values[i] == 0) continue;
-      canvas.drawCircle(p, 5, Paint()..color = Colors.white);
+      canvas.drawCircle(p, 5, Paint()..color = _fill(Colors.white));
       canvas.drawCircle(
         p,
         5,
         Paint()
-          ..color = const Color(0xFF8FA08A)
+          ..color = _line(const Color(0xFF8FA08A))
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.6,
       );
@@ -1593,8 +1618,8 @@ class _StatsChartPainter extends CustomPainter {
           size,
           Offset(p.dx, p.dy - 16),
           label: myInitials,
-          pillColor: const Color(0xFFBFD19B),
-          dotColor: const Color(0xFF3F6B4E),
+          pillColor: _fill(const Color(0xFFBFD19B)),
+          dotColor: _fill(const Color(0xFF3F6B4E)),
         );
       }
     }
@@ -1615,19 +1640,19 @@ class _StatsChartPainter extends CustomPainter {
       canvas.drawPath(
         competitorLinePath,
         Paint()
-          ..color = const Color(0xFFA9B96A)
+          ..color = _fill(const Color(0xFFA9B96A))
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.4,
       );
       for (var i = 0; i < competitorPoints.length; i++) {
         final p = competitorPoints[i];
         if (daily && competitorValues[i] == 0) continue;
-        canvas.drawCircle(p, 5, Paint()..color = Colors.white);
+        canvas.drawCircle(p, 5, Paint()..color = _fill(Colors.white));
         canvas.drawCircle(
           p,
           5,
           Paint()
-            ..color = const Color(0xFFA9B96A)
+            ..color = _fill(const Color(0xFFA9B96A))
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.6,
         );
@@ -1637,8 +1662,8 @@ class _StatsChartPainter extends CustomPainter {
             size,
             Offset(p.dx, p.dy - 16),
             label: competitorInitials,
-            pillColor: const Color(0xFFCDD891),
-            dotColor: const Color(0xFF6C7A3C),
+            pillColor: _fill(const Color(0xFFCDD891)),
+            dotColor: _fill(const Color(0xFF6C7A3C)),
           );
         }
       }
@@ -1671,7 +1696,7 @@ class _StatsChartPainter extends CustomPainter {
       canvas,
       label,
       Offset(rect.left + 19, rect.center.dy),
-      color: const Color(0xFF3E4A2A),
+      color: _ink(const Color(0xFF3E4A2A)),
       fontSize: 10,
       anchorMiddleY: true,
     );
@@ -1715,5 +1740,6 @@ class _StatsChartPainter extends CustomPainter {
       oldDelegate.myInitials != myInitials ||
       oldDelegate.competitorInitials != competitorInitials ||
       oldDelegate.daily != daily ||
-      oldDelegate.bottomPadding != bottomPadding;
+      oldDelegate.bottomPadding != bottomPadding ||
+      oldDelegate.isDark != isDark;
 }

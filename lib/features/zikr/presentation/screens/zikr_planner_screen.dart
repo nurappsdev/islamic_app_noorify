@@ -278,7 +278,7 @@ class _PlanList extends StatelessWidget {
                   child: Icon(
                     Icons.menu_book_rounded,
                     size: 22.sp,
-                    color: context.inkColor(Color(0xFF6E8B3D)),
+                    color: context.textInkColor(Color(0xFF6E8B3D)),
                   ),
                 ),
                 SizedBox(width: 12.w),
@@ -291,7 +291,7 @@ class _PlanList extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
-                          color: context.inkColor(Color(0xFF3D3170)),
+                          color: context.textInkColor(Color(0xFF3D3170)),
                         ),
                       ),
                       SizedBox(height: 3.h),
@@ -302,7 +302,7 @@ class _PlanList extends StatelessWidget {
                         ),
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: const Color(0xFF9AA579),
+                          color: context.textInkColor(const Color(0xFF9AA579)),
                         ),
                       ),
                     ],
@@ -315,7 +315,7 @@ class _PlanList extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFA1AD59),
+                      color: context.textInkColor(const Color(0xFFA1AD59)),
                     ),
                   ),
                 ],
@@ -323,7 +323,7 @@ class _PlanList extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 20.sp,
-                  color: context.inkColor(Color(0xFF9BA85B)),
+                  color: context.textInkColor(Color(0xFF9BA85B)),
                 ),
               ],
             ),
@@ -408,7 +408,7 @@ class _PlannerTab extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
-              color: context.inkColor(Color(0xFF303629)),
+              color: context.textInkColor(Color(0xFF303629)),
             ),
           ),
         ),
@@ -435,7 +435,7 @@ class _EmptyPlans extends StatelessWidget {
             children: [
               Icon(
                 Icons.sticky_note_2_rounded,
-                color: const Color(0xFFDDE8BA),
+                color: context.surfaceColor(const Color(0xFFDDE8BA)),
                 size: 88.sp,
               ),
               Positioned(
@@ -443,7 +443,7 @@ class _EmptyPlans extends StatelessWidget {
                 child: Text(
                   '?',
                   style: TextStyle(
-                    color: context.inkColor(Color(0xFF84945F)),
+                    color: context.textInkColor(Color(0xFF84945F)),
                     fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                   ),
@@ -454,7 +454,7 @@ class _EmptyPlans extends StatelessWidget {
                 left: 4.w,
                 child: Icon(
                   Icons.wb_sunny_outlined,
-                  color: context.inkColor(Color(0xFF84945F)),
+                  color: context.textInkColor(Color(0xFF84945F)),
                   size: 24.sp,
                 ),
               ),
@@ -466,11 +466,11 @@ class _EmptyPlans extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: const Color(0xFF5B9BD5),
+            color: context.textInkColor(const Color(0xFF5B9BD5)),
             fontSize: 13.sp,
             height: 1.4,
             decoration: TextDecoration.underline,
-            decorationColor: const Color(0xFF5B9BD5),
+            decorationColor: context.textInkColor(const Color(0xFF5B9BD5)),
           ),
         ),
       ],
