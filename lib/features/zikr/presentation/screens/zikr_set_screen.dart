@@ -84,7 +84,9 @@ class ZikrSetScreen extends StatelessWidget {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -97,7 +99,7 @@ class ZikrSetScreen extends StatelessWidget {
                   Text(
                     appText.zikrNewTitle,
                     style: TextStyle(
-                      color: context.inkColor(Color(0xFF2C3320)),
+                      color: context.textInkColor(Color(0xFF2C3320)),
                       fontSize: 19.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -124,7 +126,9 @@ class ZikrSetScreen extends StatelessWidget {
                             arguments: items,
                           ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: context.inkColor(AppColor.authLogo),
+                        foregroundColor: context.textInkColor(
+                          AppColor.authLogo,
+                        ),
                         side: BorderSide(
                           color: context.lineColor(Color(0xFFC7D6A6)),
                         ),
@@ -201,7 +205,7 @@ class _ZikrRow extends StatelessWidget {
               localizedZikrItemName(AppText.of(context), item),
               style: TextStyle(
                 fontSize: 15.sp,
-                color: context.inkColor(Color(0xFF6B7358)),
+                color: context.textInkColor(Color(0xFF6B7358)),
               ),
             ),
           ),
@@ -209,7 +213,7 @@ class _ZikrRow extends StatelessWidget {
             context.localizedDigits('(${item.target})'),
             style: TextStyle(
               fontSize: 15.sp,
-              color: context.inkColor(Color(0xFF6B7358)),
+              color: context.textInkColor(Color(0xFF6B7358)),
             ),
           ),
         ],

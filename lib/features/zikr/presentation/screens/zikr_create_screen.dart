@@ -123,7 +123,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     final result = await showMenu<String>(
       context: context,
       position: position,
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       elevation: 4,
       constraints: BoxConstraints(
         minWidth: fieldBox.size.width,
@@ -143,7 +143,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
               ),
               style: TextStyle(
                 fontSize: 13.sp,
-                color: context.inkColor(Color(0xFF2C3320)),
+                color: context.textInkColor(Color(0xFF2C3320)),
               ),
             ),
           ),
@@ -155,7 +155,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
             appText.zikrCustom,
             style: TextStyle(
               fontSize: 13.sp,
-              color: context.inkColor(Color(0xFF2C3320)),
+              color: context.textInkColor(Color(0xFF2C3320)),
             ),
           ),
         ),
@@ -180,7 +180,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
     final created = await showModalBottomSheet<(String, String)>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFDCE8C4),
+      backgroundColor: context.surfaceColor(const Color(0xFFDCE8C4)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(26.r)),
       ),
@@ -323,7 +323,7 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                     hintText: appText.zikrReadingValueHint,
                     hintStyle: TextStyle(
                       fontStyle: FontStyle.italic,
-                      color: const Color(0xFFA9B08D),
+                      color: context.textInkColor(const Color(0xFFA9B08D)),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 20.w,
@@ -356,7 +356,9 @@ class _ZikrCreateScreenState extends State<ZikrCreateScreen> {
                       child: OutlinedButton(
                         onPressed: _create,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: context.inkColor(AppColor.authLogo),
+                          foregroundColor: context.textInkColor(
+                            AppColor.authLogo,
+                          ),
                           side: BorderSide(
                             color: context.lineColor(Color(0xFFC7D6A6)),
                           ),
@@ -419,7 +421,7 @@ class _FieldLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 15.sp,
         fontWeight: FontWeight.w600,
-        color: context.inkColor(Color(0xFF2C3320)),
+        color: context.textInkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -457,7 +459,7 @@ class _SelectField extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
-                  color: context.inkColor(
+                  color: context.textInkColor(
                     hasValue
                         ? const Color(0xFF2C3320)
                         : const Color(0xFFA9B08D),
@@ -468,7 +470,7 @@ class _SelectField extends StatelessWidget {
             Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 22.sp,
-              color: const Color(0xFF9BA85B),
+              color: context.textInkColor(const Color(0xFF9BA85B)),
             ),
           ],
         ),
@@ -519,7 +521,7 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
               style: TextStyle(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
-                color: context.inkColor(Color(0xFF3C4A28)),
+                color: context.textInkColor(Color(0xFF3C4A28)),
               ),
             ),
           ),
@@ -549,7 +551,7 @@ class _CustomZikrSheetState extends State<_CustomZikrSheet> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: context.inkColor(Color(0xFFC0392B)),
+                      foregroundColor: context.textInkColor(Color(0xFFC0392B)),
                       backgroundColor: context.surfaceColor(Colors.white),
                       side: const BorderSide(color: Color(0xFFC0392B)),
                       shape: RoundedRectangleBorder(
@@ -613,7 +615,7 @@ class _SheetLabel extends StatelessWidget {
       style: TextStyle(
         fontSize: 14.sp,
         fontWeight: FontWeight.w600,
-        color: context.inkColor(Color(0xFF5E7038)),
+        color: context.textInkColor(Color(0xFF5E7038)),
       ),
     );
   }
@@ -647,7 +649,7 @@ class _SheetField extends StatelessWidget {
         hintText: hint,
         hintStyle: TextStyle(
           fontStyle: FontStyle.italic,
-          color: const Color(0xFF9AA579),
+          color: context.textInkColor(const Color(0xFF9AA579)),
         ),
         filled: true,
         fillColor: context.surfaceColor(Color(0xFFEAF1D9)),

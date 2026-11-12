@@ -90,7 +90,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
     final result = await showMenu<String>(
       context: context,
       position: position,
-      color: Colors.white,
+      color: context.surfaceColor(Colors.white),
       constraints: BoxConstraints(
         minWidth: fieldBox.size.width,
         maxWidth: fieldBox.size.width,
@@ -105,7 +105,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
               localizedZikrItemName(_appText, ZikrCatalog.dropdownItems[i]),
               style: TextStyle(
                 fontSize: 13.sp,
-                color: context.inkColor(Color(0xFF2C3320)),
+                color: context.textInkColor(Color(0xFF2C3320)),
               ),
             ),
           ),
@@ -117,7 +117,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
             _appText.zikrCustom,
             style: TextStyle(
               fontSize: 13.sp,
-              color: context.inkColor(Color(0xFF2C3320)),
+              color: context.textInkColor(Color(0xFF2C3320)),
             ),
           ),
         ),
@@ -258,7 +258,9 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -271,7 +273,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                   Text(
                     appText.zikrPlanCreateTitle,
                     style: TextStyle(
-                      color: context.inkColor(AppColor.authLogo),
+                      color: context.textInkColor(AppColor.authLogo),
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -378,16 +380,18 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
                             fontStyle: _zikrName == null
                                 ? FontStyle.italic
                                 : FontStyle.normal,
-                            color: _zikrName == null
-                                ? const Color(0xFFA9B08D)
-                                : const Color(0xFF2C3320),
+                            color: context.textInkColor(
+                              _zikrName == null
+                                  ? const Color(0xFFA9B08D)
+                                  : const Color(0xFF2C3320),
+                            ),
                           ),
                         ),
                       ),
                       Icon(
                         Icons.chevron_right_rounded,
                         size: 20.sp,
-                        color: const Color(0xFF9BA85B),
+                        color: context.textInkColor(const Color(0xFF9BA85B)),
                       ),
                     ],
                   ),
@@ -411,7 +415,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _add,
             style: OutlinedButton.styleFrom(
-              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              foregroundColor: context.textInkColor(Color(0xFF8C7A1F)),
               side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
@@ -439,7 +443,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w700,
-            color: context.inkColor(Color(0xFF2C3320)),
+            color: context.textInkColor(Color(0xFF2C3320)),
           ),
         ),
         SizedBox(height: 14.h),
@@ -453,7 +457,7 @@ class _ZikrPlanCreateScreenState extends State<ZikrPlanCreateScreen> {
           child: OutlinedButton(
             onPressed: _addMore,
             style: OutlinedButton.styleFrom(
-              foregroundColor: context.inkColor(Color(0xFF8C7A1F)),
+              foregroundColor: context.textInkColor(Color(0xFF8C7A1F)),
               side: BorderSide(color: context.lineColor(Color(0xFFCBB94F))),
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               shape: RoundedRectangleBorder(
@@ -541,7 +545,7 @@ class _Label extends StatelessWidget {
       style: TextStyle(
         fontSize: big ? 15.sp : 13.sp,
         fontWeight: FontWeight.w600,
-        color: context.inkColor(Color(0xFF2C3320)),
+        color: context.textInkColor(Color(0xFF2C3320)),
       ),
     );
   }
@@ -576,7 +580,7 @@ class _RoundedField extends StatelessWidget {
         hintText: hint,
         hintStyle: TextStyle(
           fontStyle: FontStyle.italic,
-          color: const Color(0xFFA9B08D),
+          color: context.textInkColor(const Color(0xFFA9B08D)),
           fontSize: 12.sp,
         ),
         contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 15.h),
@@ -620,7 +624,7 @@ class _PlanEntryRow extends StatelessWidget {
             child: Icon(
               Icons.self_improvement_rounded,
               size: 18.sp,
-              color: context.inkColor(Color(0xFF6E8B3D)),
+              color: context.textInkColor(Color(0xFF6E8B3D)),
             ),
           ),
           SizedBox(width: 12.w),
@@ -637,7 +641,7 @@ class _PlanEntryRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.inkColor(Color(0xFF3D3170)),
+                    color: context.textInkColor(Color(0xFF3D3170)),
                   ),
                 ),
                 SizedBox(height: 2.h),
@@ -645,7 +649,7 @@ class _PlanEntryRow extends StatelessWidget {
                   context.localizedDigits('${entry.value}'),
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: const Color(0xFF9AA579),
+                    color: context.textInkColor(const Color(0xFF9AA579)),
                   ),
                 ),
               ],

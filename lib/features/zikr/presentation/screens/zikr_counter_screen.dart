@@ -277,7 +277,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
-                      color: context.inkColor(Color(0xFF3C4A28)),
+                      color: context.textInkColor(Color(0xFF3C4A28)),
                     ),
                   ),
                 ),
@@ -292,7 +292,7 @@ class _ZikrCounterScreenState extends State<ZikrCounterScreen> {
                     onPressed: _reset,
                     icon: const Icon(Icons.refresh_rounded, size: 18),
                     style: TextButton.styleFrom(
-                      foregroundColor: context.inkColor(Color(0xFF4C5A34)),
+                      foregroundColor: context.textInkColor(Color(0xFF4C5A34)),
                     ),
                     label: Text(
                       appText.zikrCounterReset,
@@ -358,7 +358,7 @@ class _CurrentZikrCard extends StatelessWidget {
                     fontFamilyFallback: appFontFamilyFallback,
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.inkColor(Color(0xFF33421F)),
+                    color: context.textInkColor(Color(0xFF33421F)),
                   ),
                 ),
                 if (localizedName != null) ...[
@@ -370,7 +370,7 @@ class _CurrentZikrCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11.sp,
-                      color: context.inkColor(Color(0xFF4C5A34)),
+                      color: context.textInkColor(Color(0xFF4C5A34)),
                     ),
                   ),
                 ],
@@ -385,7 +385,7 @@ class _CurrentZikrCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
-              color: context.inkColor(Color(0xFF4C5A34)),
+              color: context.textInkColor(Color(0xFF4C5A34)),
             ),
           ),
         ],
@@ -453,7 +453,7 @@ class _TapButtonState extends State<_TapButton> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: context.inkColor(Color(0xFF4C5A34)),
+                    color: context.textInkColor(Color(0xFF4C5A34)),
                   ),
                 ),
               ),
@@ -562,7 +562,7 @@ class _ProgressBar extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
-                        color: context.inkColor(Color(0xFF4C5A34)),
+                        color: context.textInkColor(Color(0xFF4C5A34)),
                       ),
                     ),
                   ),
