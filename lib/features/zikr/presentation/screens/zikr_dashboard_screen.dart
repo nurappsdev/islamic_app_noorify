@@ -473,7 +473,7 @@ class _CreatedZikrCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
-              color: context.inkColor(Color(0xFF3C4A28)),
+              color: context.textInkColor(Color(0xFF3C4A28)),
             ),
           ),
           SizedBox(height: 12.h),
@@ -503,7 +503,7 @@ class _CreatedZikrCard extends StatelessWidget {
                       '/${context.localizedDigits('${item.target}')})',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: context.inkColor(Color(0xFF3C4A28)),
+                        color: context.textInkColor(Color(0xFF3C4A28)),
                       ),
                     ),
                   ),
@@ -566,8 +566,11 @@ class _SwipeToDeleteRoutine extends StatelessWidget {
         DismissDirection.startToEnd: 0.5,
         DismissDirection.endToStart: 0.5,
       },
-      background: _swipeDeleteBackground(Alignment.centerLeft),
-      secondaryBackground: _swipeDeleteBackground(Alignment.centerRight),
+      background: _swipeDeleteBackground(context, Alignment.centerLeft),
+      secondaryBackground: _swipeDeleteBackground(
+        context,
+        Alignment.centerRight,
+      ),
       confirmDismiss: (_) async {
         final error = await context.read<ZikrHomeCubit>().deleteRoutineRemote(
           id,
@@ -587,19 +590,20 @@ class _SwipeToDeleteRoutine extends StatelessWidget {
   }
 }
 
-Widget _swipeDeleteBackground(Alignment alignment) => Container(
-  decoration: BoxDecoration(
-    color: const Color(0xFFFFCDD2),
-    borderRadius: BorderRadius.circular(18.r),
-  ),
-  alignment: alignment,
-  padding: EdgeInsets.symmetric(horizontal: 22.w),
-  child: Icon(
-    Icons.delete_outline_rounded,
-    color: const Color(0xFFC0392B),
-    size: 22.sp,
-  ),
-);
+Widget _swipeDeleteBackground(BuildContext context, Alignment alignment) =>
+    Container(
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFFFCDD2)),
+        borderRadius: BorderRadius.circular(18.r),
+      ),
+      alignment: alignment,
+      padding: EdgeInsets.symmetric(horizontal: 22.w),
+      child: Icon(
+        Icons.delete_outline_rounded,
+        color: context.textInkColor(const Color(0xFFC0392B)),
+        size: 22.sp,
+      ),
+    );
 
 class _AddButton extends StatelessWidget {
   const _AddButton({required this.onTap});

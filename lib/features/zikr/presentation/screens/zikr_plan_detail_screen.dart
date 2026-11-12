@@ -67,7 +67,7 @@ class ZikrPlanDetailScreen extends StatelessWidget {
                           ),
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: context.inkColor(Color(0xFF9AA579)),
+                            color: context.textInkColor(Color(0xFF9AA579)),
                           ),
                         ),
                       ),
@@ -86,7 +86,9 @@ class ZikrPlanDetailScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFFA1AD59),
+                              color: context.textInkColor(
+                                const Color(0xFFA1AD59),
+                              ),
                             ),
                           ),
                         ),
@@ -100,7 +102,7 @@ class ZikrPlanDetailScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w700,
-                      color: context.inkColor(Color(0xFF2C3320)),
+                      color: context.textInkColor(Color(0xFF2C3320)),
                     ),
                   ),
                   SizedBox(height: 18.h),
@@ -168,7 +170,7 @@ class _Header extends StatelessWidget {
                 onPressed: () => Navigator.maybePop(context),
                 style: IconButton.styleFrom(
                   backgroundColor: const Color(0xFFCBD16B),
-                  foregroundColor: context.inkColor(Color(0xFF303629)),
+                  foregroundColor: context.onLightInkColor(Color(0xFF303629)),
                   minimumSize: Size(38.r, 38.r),
                 ),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -180,7 +182,7 @@ class _Header extends StatelessWidget {
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: context.inkColor(AppColor.authLogo),
+              color: context.textInkColor(AppColor.authLogo),
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
             ),
@@ -231,7 +233,7 @@ class _PlanDetailEntryRow extends StatelessWidget {
               child: Icon(
                 Icons.self_improvement_rounded,
                 size: 18.sp,
-                color: context.inkColor(Color(0xFF6E8B3D)),
+                color: context.textInkColor(Color(0xFF6E8B3D)),
               ),
             ),
             SizedBox(width: 12.w),
@@ -241,19 +243,22 @@ class _PlanDetailEntryRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
-                  color: context.inkColor(Color(0xFF3D3170)),
+                  color: context.textInkColor(Color(0xFF3D3170)),
                 ),
               ),
             ),
             Text(
               context.localizedDigits('${entry.targetCount}'),
-              style: TextStyle(fontSize: 12.sp, color: const Color(0xFF9AA579)),
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: context.textInkColor(const Color(0xFF9AA579)),
+              ),
             ),
             SizedBox(width: 6.w),
             Icon(
               Icons.chevron_right_rounded,
               size: 18.sp,
-              color: context.inkColor(Color(0xFF9BA85B)),
+              color: context.textInkColor(Color(0xFF9BA85B)),
             ),
           ],
         ),

@@ -46,7 +46,7 @@ Future<void> showZikrLoginRequiredDialog(BuildContext context) async {
                 ),
                 child: Icon(
                   Icons.lock_person_rounded,
-                  color: context.inkColor(AppColor.primary),
+                  color: context.textInkColor(AppColor.primary),
                   size: 28,
                 ),
               ),
@@ -55,7 +55,7 @@ Future<void> showZikrLoginRequiredDialog(BuildContext context) async {
                 appText.login,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: context.inkColor(const Color(0xFF2C3320)),
+                  color: context.textInkColor(const Color(0xFF2C3320)),
                   fontSize: 19,
                   fontWeight: FontWeight.w700,
                 ),
@@ -65,7 +65,7 @@ Future<void> showZikrLoginRequiredDialog(BuildContext context) async {
                 appText.loginRequiredMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: context.inkColor(const Color(0xFF68705D)),
+                  color: context.textInkColor(const Color(0xFF68705D)),
                   fontSize: 13,
                   height: 1.45,
                 ),
@@ -77,7 +77,7 @@ Future<void> showZikrLoginRequiredDialog(BuildContext context) async {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: context.inkColor(
+                        foregroundColor: context.textInkColor(
                           const Color(0xFF52613B),
                         ),
                         side: BorderSide(

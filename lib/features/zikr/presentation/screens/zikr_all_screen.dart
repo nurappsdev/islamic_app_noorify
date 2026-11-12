@@ -40,7 +40,9 @@ class ZikrAllScreen extends StatelessWidget {
                         onPressed: () => Navigator.maybePop(context),
                         style: IconButton.styleFrom(
                           backgroundColor: const Color(0xFFCBD16B),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                           minimumSize: Size(38.r, 38.r),
                         ),
                         icon: const Icon(
@@ -52,7 +54,7 @@ class ZikrAllScreen extends StatelessWidget {
                     Text(
                       appText.zikrAllTitle,
                       style: TextStyle(
-                        color: context.inkColor(AppColor.authLogo),
+                        color: context.textInkColor(AppColor.authLogo),
                         fontSize: 19.sp,
                         fontWeight: FontWeight.w600,
                       ),
@@ -117,7 +119,7 @@ class _ZikrTile extends StatelessWidget {
                       fontFamily: 'Noorehuda',
                       fontFamilyFallback: appFontFamilyFallback,
                       fontSize: 18.sp,
-                      color: context.inkColor(Color(0xFF283016)),
+                      color: context.textInkColor(Color(0xFF283016)),
                     ),
                   ),
                   SizedBox(height: 6.h),
@@ -125,7 +127,7 @@ class _ZikrTile extends StatelessWidget {
                     item.transliteration,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: context.inkColor(Color(0xFF5D6B44)),
+                      color: context.textInkColor(Color(0xFF5D6B44)),
                     ),
                   ),
                 ],
@@ -143,14 +145,14 @@ class _ZikrTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
-                  color: context.inkColor(Color(0xFF4C5A34)),
+                  color: context.textInkColor(Color(0xFF4C5A34)),
                 ),
               ),
             ),
             SizedBox(width: 4.w),
             Icon(
               Icons.chevron_right_rounded,
-              color: const Color(0xFF9BA85B),
+              color: context.textInkColor(const Color(0xFF9BA85B)),
               size: 20.sp,
             ),
           ],
