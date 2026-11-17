@@ -83,6 +83,12 @@ class SettingsScreen extends StatelessWidget {
           MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen()),
         ),
       ),
+    if (isSignedIn)
+      SettingsOption(
+        appText.forgotPassword,
+        Icons.lock_reset_outlined,
+        onTap: () => Navigator.of(context).pushNamed(RouteNames.forgotPassword),
+      ),
   ];
 
   @override
