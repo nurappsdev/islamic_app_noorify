@@ -125,13 +125,36 @@ class LocalizedDateFormatter {
   }
 
   /// The Bengali-calendar date, e.g. `13 Ashwin, 1433` / `১৩ আশ্বিন ১৪৩৩`.
-  String banglaCalendar(DateTime date) {
+  ///
+  /// Set [ordinalDay] and [withSuffix] for a Bangla heading such as
+  /// `২রা অগ্রহায়ণ ১৪৩৩ বঙ্গাব্দ`.
+  String banglaCalendar(
+    DateTime date, {
+    bool ordinalDay = false,
+    bool withSuffix = false,
+  }) {
     final bn = BanglaDate.fromGregorian(date);
     if (_bangla) {
-      return '${_numbers.integer(bn.day)} ${banglaMonthName(bn.month)} '
+      final day = ordinalDay
+          ? _banglaOrdinalDay(bn.day)
+          : _numbers.integer(bn.day);
+      final text =
+          '$day ${banglaMonthName(bn.month)} '
           '${_numbers.integer(bn.year)}';
+      return withSuffix ? '$text বঙ্গাব্দ' : text;
     }
-    return '${bn.day} ${banglaMonthName(bn.month)}, ${bn.year}';
+    final text = '${bn.day} ${banglaMonthName(bn.month)}, ${bn.year}';
+    return withSuffix ? '$text Bengali calendar' : text;
+  }
+
+  String _banglaOrdinalDay(int day) {
+    final value = _numbers.integer(day);
+    return switch (day) {
+      1 => '$valueলা',
+      2 || 3 => '$valueরা',
+      4 => '$valueঠা',
+      _ => '$valueই',
+    };
   }
 }
 

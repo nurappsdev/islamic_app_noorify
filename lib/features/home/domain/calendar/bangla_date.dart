@@ -1,7 +1,7 @@
 /// Bengali (Bangla) calendar date, converted using the fixed-epoch civil
 /// calendar Bangladesh adopted in its 2019 reform: Pohela Boishakh always
-/// falls on Gregorian 14 April, and Choitro (the last month) absorbs the
-/// leap day instead of the start date shifting year to year.
+/// falls on Gregorian 14 April. The first six months have 31 days; Falgun
+/// absorbs the leap day instead of the start date shifting year to year.
 class BanglaDate {
   const BanglaDate({
     required this.year,
@@ -46,15 +46,17 @@ class BanglaDate {
   static bool _isGregorianLeap(int year) =>
       (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 
-  /// Days in Bangla [month] of Bangla [year]. Months 1-5 have 31 days,
-  /// 6-11 have 30, and 12 (Choitro) has 31 only when the Gregorian year it
-  /// falls in (epoch year + 1) is a leap year.
+  /// Days in Bangla [month] of Bangla [year]. Bangladesh's revised calendar
+  /// gives months 1-6 31 days, months 7-10 and 12 30 days, and Falgun (11)
+  /// 29 days—30 when the Gregorian February in that Bangla year is a leap
+  /// month.
   static int daysInMonth(int year, int month) {
-    if (month == 12) {
-      final epochGregorianYear = year + 593;
-      return _isGregorianLeap(epochGregorianYear + 1) ? 31 : 30;
+    if (month <= 6) return 31;
+    if (month == 11) {
+      final gregorianYearOfFalgun = year + 594;
+      return _isGregorianLeap(gregorianYearOfFalgun) ? 30 : 29;
     }
-    return month <= 5 ? 31 : 30;
+    return 30;
   }
 
   static BanglaDate fromGregorian(DateTime date) {

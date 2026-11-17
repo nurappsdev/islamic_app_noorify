@@ -9,6 +9,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
@@ -1254,9 +1255,9 @@ class _WebHeaderProfile extends StatelessWidget {
           .localizedFullName,
     );
     final now = bangladeshNow();
-    final date = context.localizedDigits(
-      '${now.day} ${AppText.of(context).monthNames[now.month - 1]} ${now.year}',
-    );
+    final date = const LocalizedDateFormatter(
+      AppLanguage.bangla,
+    ).banglaCalendar(now, ordinalDay: true, withSuffix: true);
 
     return Material(
       color: Colors.transparent,
