@@ -17,6 +17,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_settings.dart';
@@ -35,7 +37,6 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/widgets/login_required_dialog.dart';
 import 'package:tuhfatul_muslim/core/auth/auth_feature.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
-import 'package:tuhfatul_muslim/shared/bloc/language/language_preference.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
 
 /// Route arguments for [HadithDetailScreen].
@@ -245,6 +246,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     _settingsStore.load().then((value) {
       if (mounted) setState(() => _settings = value);
     });
+    // This is the same daily Hadith total Home shows in its feature card.
+    unawaited(AmolDailyStore.instance.ensureLoaded());
     WidgetsBinding.instance.addObserver(this);
     _tracker
       ..addListener(_onTrackerChanged)
@@ -941,6 +944,8 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
+          _HadithTotalMinutesPill(),
+          SizedBox(width: 6.w),
           Padding(
             padding: EdgeInsets.only(right: 14.w),
             child: IconButton(
@@ -956,6 +961,49 @@ class _Header extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Today's Hadith-reading minutes from the shared Amol tracker, kept in sync
+/// with the Home feature card.
+class _HadithTotalMinutesPill extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        var minutes = 0;
+        for (final pillar in daily?.pillars ?? const []) {
+          if (pillar.pillarKey == 'hadith' &&
+              pillar.entry != null &&
+              pillar.entry!.isMinutes) {
+            minutes = pillar.entry!.amount.floor();
+            break;
+          }
+        }
+        return Container(
+          key: const ValueKey('hadith-total-reading-minutes'),
+          padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 5.h),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(const Color(0xFFEDF1DE)),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: const Color(0xFF9BA85B).withValues(alpha: .45),
+            ),
+          ),
+          child: Text(
+            '${context.localizedDigits('$minutes')} ${isBangla ? 'মি' : 'm'}',
+            style: TextStyle(
+              color: context.inkColor(const Color(0xFF4C5A34)),
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
+      },
     );
   }
 }

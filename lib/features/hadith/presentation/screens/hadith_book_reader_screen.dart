@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -14,10 +16,12 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book_reference.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_entry.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -61,16 +65,64 @@ class HadithBookReaderScreen extends StatefulWidget {
 class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _pageController = PageController();
+  final _totalReadingMinutes = ValueNotifier<int?>(null);
+  final _readingStopwatch = Stopwatch();
+  late final Timer _readingTimer;
+  late final AppLifecycleListener _readingLifecycle;
+  late final HadithLibraryRepositoryImpl _readingRepository =
+      HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl());
+  int _recordedMinutes = 0;
   int _currentPage = 0;
 
   /// Consumed once the book is ready and the page has been jumped to.
   late int? _pendingHadithNo = widget.initialHadithNo;
 
   @override
+  void initState() {
+    super.initState();
+    _readingStopwatch.start();
+    _readingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _refreshTotalReadingMinutes();
+    });
+    _readingLifecycle = AppLifecycleListener(
+      onHide: _readingStopwatch.stop,
+      onShow: _readingStopwatch.start,
+    );
+    _loadTotalReadingMinutes();
+  }
+
+  @override
   void dispose() {
+    _readingLifecycle.dispose();
+    _readingTimer.cancel();
+    _readingStopwatch.stop();
+    _totalReadingMinutes.dispose();
     _pageController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadTotalReadingMinutes() async {
+    final today = DateTime.now();
+    final result = await _readingRepository.getReadingHistory(
+      from: _dateKey(today),
+      to: _dateKey(today),
+    );
+    if (!mounted) return;
+    result.fold((_) => _totalReadingMinutes.value ??= 0, (history) {
+      _recordedMinutes = history.totals.totalMinutes.floor();
+      _refreshTotalReadingMinutes();
+    });
+  }
+
+  void _refreshTotalReadingMinutes() {
+    _totalReadingMinutes.value =
+        _recordedMinutes + _readingStopwatch.elapsed.inMinutes;
+  }
+
+  static String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   void _openIndex() => _scaffoldKey.currentState?.openEndDrawer();
 
@@ -161,6 +213,8 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
                 SizedBox(height: 6.h),
                 _ReaderHeader(
                   title: title,
+                  isBangla: isBangla,
+                  totalReadingMinutes: _totalReadingMinutes,
                   counter: isReady && state.entries.isNotEmpty
                       ? '${_currentPage + 1} / ${state.entries.length}'
                       : null,
@@ -210,12 +264,16 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
 class _ReaderHeader extends StatelessWidget {
   const _ReaderHeader({
     required this.title,
+    required this.isBangla,
+    required this.totalReadingMinutes,
     this.counter,
     this.onOpenIndex,
     this.onBookmark,
   });
 
   final String title;
+  final bool isBangla;
+  final ValueListenable<int?> totalReadingMinutes;
   final String? counter;
   final VoidCallback? onOpenIndex;
   final VoidCallback? onBookmark;
@@ -263,6 +321,34 @@ class _ReaderHeader extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+          SizedBox(width: 5.w),
+          ValueListenableBuilder<int?>(
+            valueListenable: totalReadingMinutes,
+            builder: (context, minutes, _) {
+              final text = minutes == null
+                  ? '–'
+                  : context.localizedDigits('$minutes');
+              return Container(
+                key: const ValueKey('hadith-reader-minutes'),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(const Color(0xFFEDF1DE)),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: const Color(0xFF9BA85B).withValues(alpha: .45),
+                  ),
+                ),
+                child: Text(
+                  isBangla ? '$text মি' : '${text}m',
+                  style: TextStyle(
+                    color: context.inkColor(const Color(0xFF4C5A34)),
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            },
           ),
           SizedBox(width: 8.w),
           if (onBookmark != null) ...[
