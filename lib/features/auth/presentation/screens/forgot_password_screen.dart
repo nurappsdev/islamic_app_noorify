@@ -10,16 +10,21 @@ import 'reset_password_screen.dart';
 /// email -> `POST /auth/forgot-password` -> OTP -> `POST /auth/verify-otp`
 /// -> Reset Password screen (with the reset token from verification).
 class ForgotPasswordScreen extends StatelessWidget {
-  ForgotPasswordScreen({super.key})
+  ForgotPasswordScreen({super.key, this.initialEmail})
     : _sendResetOtp = SendPasswordResetOtp(
         AccountRepositoryImpl(AuthRemoteDataSourceImpl()),
       );
+
+  /// The signed-in user's e-mail when reset is launched from Settings.
+  /// The sign-in entry point leaves this empty so the user can type it.
+  final String? initialEmail;
 
   final SendPasswordResetOtp _sendResetOtp;
 
   @override
   Widget build(BuildContext context) {
     return EmailVerificationScreen(
+      email: initialEmail,
       onRequestOtp: (email) async {
         final result = await _sendResetOtp(email);
         return result.fold((failure) => failure.message, (_) => null);

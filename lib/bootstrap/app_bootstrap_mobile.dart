@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/bloc/app_preferences/app_preferences_bloc.dart';
 import '../core/constants/route_names.dart';
 import '../core/network/auth_refresh_interceptor.dart';
+import '../core/services/app_startup.dart';
 import '../core/storage/hive_service.dart';
 import '../core/storage/session_cleaner.dart';
 import '../core/utils/app_text.dart';
@@ -39,15 +40,27 @@ import '../shared/services/firebase/firebase_token_service.dart';
 /// initialized by the browser entry point.
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await AppFirebaseService.initialize();
+
+  // Hive backs the authenticated session and is read while Home is built.
+  // Keep these small, essential initializers before runApp so no route can
+  // access an unopened box. They run concurrently and normally finish within
+  // the requested 2–3 second native launch window.
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  await HiveService.init();
-  if (kDebugMode) {
-    debugPrint(
-      '[FCM] token: ${await FirebaseTokenService.instance.getToken()}',
-    );
-  }
+  final initialization = await Future.wait<dynamic>([
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+    HiveService.init(),
+    AppText.load(),
+    SharedPreferences.getInstance(),
+  ]);
+  final preferences = initialization[3] as SharedPreferences;
+  final savedDarkTheme =
+      preferences.getBool(AppPreferencesBloc.darkThemeKey) ?? false;
+  final savedLanguage = LanguagePreference.read(preferences);
+  final languageBloc = LanguageBloc(initialLanguage: savedLanguage);
+  final appPreferencesBloc = AppPreferencesBloc(
+    darkThemeEnabled: savedDarkTheme,
+  );
+
   AuthRefreshInterceptor.onSessionExpired = () async {
     await SessionCleaner.clearUserData();
     appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
@@ -55,86 +68,99 @@ Future<void> bootstrap() async {
       (_) => false,
     );
   };
-  await AppText.load();
-  quranAudioHandler = await AudioService.init(
-    builder: QuranAudioHandler.new,
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.islami_app_noorify.quran.audio',
-      androidNotificationChannelName: 'Quran recitation',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
-    ),
-  );
 
-  final preferences = await SharedPreferences.getInstance();
-  final savedDarkTheme =
-      preferences.getBool(AppPreferencesBloc.darkThemeKey) ?? false;
-  final savedLanguage = LanguagePreference.read(preferences);
-  await AlarmScheduler.init();
-  await AlarmScheduler.logScheduledAlarms();
-  await migrateToOnDeviceAlarms();
-  unawaited(syncLocalAlarms());
-  alarmNotificationEvents.stream.listen((event) {
-    if (AlarmRingingScreen.isShowing(event.payload.alarmId)) return;
-    appNavigatorKey.currentState?.push(
-      MaterialPageRoute<void>(
-        builder: (_) => AlarmRingingScreen(
-          payload: event.payload,
-          autoAction: event.action == 'open' ? null : event.action,
-        ),
-      ),
-    );
-  });
-  unawaited(PrayerWidgetService.init());
-  unawaited(PrayerWidgetService.syncPrayerWidget(language: savedLanguage));
-  unawaited(
-    HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback),
-  );
-  PrayerLocationService.instance.addListener(() {
-    if (PrayerLocationService.instance.state.status ==
-        PrayerLocationStatus.ready) {
-      unawaited(PrayerWidgetService.syncPrayerWidget());
-    }
-  });
-  HomeWidget.widgetClicked.listen((uri) {
-    appNavigatorKey.currentState?.pushNamed(RouteNames.prayerTimes);
-  });
-  QuranReadingSync.shared.start();
-  DuaReadingSync.shared.start();
-  AmolDayClock.instance.refresh();
-  unawaited(DuaReadCompletionStore.shared.restore());
-  AmolSync.shared.start();
-  final launchDetails = await AlarmScheduler.launchDetails();
-  final launchPayload = launchDetails?.didNotificationLaunchApp == true
-      ? AlarmRingPayload.tryDecode(launchDetails?.notificationResponse?.payload)
-      : null;
-  final launchAction = AlarmScheduler.actionFor(
-    launchDetails?.notificationResponse?.actionId,
-  );
-
+  // The essential storage/auth setup above makes the first Home build safe.
+  // The remaining native services continue behind the Flutter splash instead
+  // of holding Android's img_17-style launch screen for a long time.
+  AppStartup.begin(_initializeServices(savedLanguage: savedLanguage));
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => LanguageBloc(initialLanguage: savedLanguage),
-        ),
-        BlocProvider(
-          create: (_) => AppPreferencesBloc(darkThemeEnabled: savedDarkTheme),
-        ),
+        BlocProvider.value(value: languageBloc),
+        BlocProvider.value(value: appPreferencesBloc),
       ],
       child: const MyApp(),
     ),
   );
-  if (launchPayload != null) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+}
+
+Future<void> _initializeServices({required AppLanguage savedLanguage}) async {
+  try {
+    await AppFirebaseService.initialize();
+    if (kDebugMode) {
+      debugPrint(
+        '[FCM] token: ${await FirebaseTokenService.instance.getToken()}',
+      );
+    }
+    quranAudioHandler = await AudioService.init(
+      builder: QuranAudioHandler.new,
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: 'com.islami_app_noorify.quran.audio',
+        androidNotificationChannelName: 'Quran recitation',
+        androidNotificationOngoing: true,
+        androidStopForegroundOnPause: true,
+      ),
+    );
+    await AlarmScheduler.init();
+    await AlarmScheduler.logScheduledAlarms();
+    await migrateToOnDeviceAlarms();
+    unawaited(syncLocalAlarms());
+    alarmNotificationEvents.stream.listen((event) {
+      if (AlarmRingingScreen.isShowing(event.payload.alarmId)) return;
       appNavigatorKey.currentState?.push(
         MaterialPageRoute<void>(
           builder: (_) => AlarmRingingScreen(
-            payload: launchPayload,
-            autoAction: launchAction,
+            payload: event.payload,
+            autoAction: event.action == 'open' ? null : event.action,
           ),
         ),
       );
     });
+    unawaited(PrayerWidgetService.init());
+    unawaited(PrayerWidgetService.syncPrayerWidget(language: savedLanguage));
+    unawaited(
+      HomeWidget.registerInteractivityCallback(refreshPrayerWidgetCallback),
+    );
+    PrayerLocationService.instance.addListener(() {
+      if (PrayerLocationService.instance.state.status ==
+          PrayerLocationStatus.ready) {
+        unawaited(PrayerWidgetService.syncPrayerWidget());
+      }
+    });
+    HomeWidget.widgetClicked.listen((uri) {
+      appNavigatorKey.currentState?.pushNamed(RouteNames.prayerTimes);
+    });
+    QuranReadingSync.shared.start();
+    DuaReadingSync.shared.start();
+    AmolDayClock.instance.refresh();
+    unawaited(DuaReadCompletionStore.shared.restore());
+    AmolSync.shared.start();
+    final launchDetails = await AlarmScheduler.launchDetails();
+    final launchPayload = launchDetails?.didNotificationLaunchApp == true
+        ? AlarmRingPayload.tryDecode(
+            launchDetails?.notificationResponse?.payload,
+          )
+        : null;
+    final launchAction = AlarmScheduler.actionFor(
+      launchDetails?.notificationResponse?.actionId,
+    );
+
+    if (launchPayload != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        appNavigatorKey.currentState?.push(
+          MaterialPageRoute<void>(
+            builder: (_) => AlarmRingingScreen(
+              payload: launchPayload,
+              autoAction: launchAction,
+            ),
+          ),
+        );
+      });
+    }
+  } catch (error, stackTrace) {
+    // A nonessential native service must not keep the opening splash on
+    // screen forever. Features which need the unavailable service handle
+    // their own error state when opened.
+    debugPrint('Deferred app startup failed: $error\n$stackTrace');
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../core/services/app_startup.dart';
 import '../../../core/utils/app_text.dart';
 import '../utils/post_splash_route.dart';
 
@@ -33,6 +34,7 @@ class _RamadanSplashScreenState extends State<RamadanSplashScreen> {
 
   Future<void> _openNextAfterDelay() async {
     await Future<void>.delayed(_splashDuration);
+    await AppStartup.ready;
     if (!mounted) return;
     // Something (namely a cold-launched `AlarmRingingScreen` — see
     // `main.dart`) was pushed on top of this screen: `pushReplacement`

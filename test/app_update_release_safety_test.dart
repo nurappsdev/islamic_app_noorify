@@ -76,8 +76,10 @@ void main() {
       );
       expect(
         code,
-        contains('AppUpdateSource get _source => _mockSource ?? const '
-            'PlayUpdateSource();'),
+        contains(
+          'AppUpdateSource get _source => _mockSource ?? const '
+          'PlayUpdateSource();',
+        ),
         reason: 'Production must fall through to the real Play source.',
       );
 
@@ -140,13 +142,12 @@ void main() {
       // this is the real Play path reporting that it does not apply - no
       // mock standing in for it.
       expect(service.isSupported, isFalse);
-      expect(await service.checkOnLaunch(), AppUpdatePrompt.none);
+      expect(await service.checkAndStartUpdate(), AppUpdateFlowResult.none);
       expect(service.status.value, InstallStatus.unknown);
     });
 
-    test('nothing can be downloaded or installed', () async {
-      expect(await service.startDownload(), AppUpdateResult.inAppUpdateFailed);
-      expect(await service.install(), isFalse);
+    test('the direct update flow cannot start', () async {
+      expect(await service.checkAndStartUpdate(), AppUpdateFlowResult.none);
       expect(service.isDownloading, isFalse);
     });
   });
