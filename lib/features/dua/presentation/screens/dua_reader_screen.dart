@@ -10,11 +10,12 @@ import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/data/repositories/dua_reading_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/controllers/dua_reading_tracker.dart';
-import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bookmark_sheet.dart';
@@ -38,15 +39,9 @@ const _tuhfatulMuslimShareInvitation =
 /// yet, so it isn't wired.
 ///
 /// Opening the screen starts a reading timer ([DuaReadingTracker]), shown in
-/// the reading controls below the header. Past half a minute — the least
-/// `POST /duas/reading/track` accepts — a "Read / Completed" checkbox
-/// appears; checking it reports the time and stops the timer. Leaving the
-/// screen reports it too, so each visit counts exactly once and the next one
-/// starts from zero while the day's total keeps adding up.
-///
-/// Checking the box is permanent: a dua marked read opens with its box
-/// already checked and its recorded duration shown, and no timer runs for it
-/// again.
+/// the reading controls below the header. Leaving the screen reports its
+/// accumulated time; the controls also show the user's total Dua-reading
+/// minutes for today, rather than a manual "Read / Completed" action.
 ///
 /// Those same three texts are selectable: a long press puts the handles and
 /// the platform's own Copy menu on the one that was pressed, so any part of
@@ -169,6 +164,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   @override
   void initState() {
     super.initState();
+    // The same daily Dua total shown by Home/Amol is shown in this reader.
+    unawaited(AmolDailyStore.instance.ensureLoaded());
     final duaId = widget.args.featuredModel?.id ?? '';
     if (duaId.isEmpty) return;
     WidgetsBinding.instance.addObserver(this);
@@ -202,19 +199,6 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       case AppLifecycleState.detached:
         _reading?.pause();
     }
-  }
-
-  /// The "Read / Completed" checkbox: reports the time read so far and
-  /// stops the timer. Tracking needs the signed-in user's token, so a guest
-  /// is asked to sign in first and nothing is reported for them.
-  Future<void> _markAsRead() async {
-    final reading = _reading;
-    if (reading == null || reading.isCompleted || reading.isSubmitting) return;
-    if (!reading.canReport) {
-      await showDuaLoginRequiredDialog(context);
-      return;
-    }
-    await reading.complete();
   }
 
   /// Unifies a real `/duas/featured` item and the legacy mock [DuaDetail]
@@ -547,11 +531,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                           children: [
                             _DuaReadingTimerPill(tracker: tracker),
                             const Spacer(),
-                            _DuaReadCheckbox(
-                              tracker: tracker,
-                              onTap: _markAsRead,
-                              inline: true,
-                            ),
+                            const _DuaTotalMinutesPill(),
                           ],
                         ),
                       ),
@@ -1758,99 +1738,59 @@ class _DuaReadingTimerPill extends StatelessWidget {
   }
 }
 
-/// The "Read / Completed" checkbox, right-aligned under the header. It shows
-/// once this visit is long enough to report ([DuaReadingTracker.canComplete])
-/// and, once checked, stays checked and disabled — the reading has been
-/// recorded and the timer above has stopped. A dua read on an earlier visit
-/// shows it checked right away.
-class _DuaReadCheckbox extends StatelessWidget {
-  const _DuaReadCheckbox({
-    required this.tracker,
-    required this.onTap,
-    this.inline = false,
-  });
-
-  final DuaReadingTracker tracker;
-  final Future<void> Function() onTap;
-  final bool inline;
-
-  static const _green = Color(0xFF2F6B3C);
+/// Today's total Dua-reading minutes. It listens to the shared Amol store, so
+/// it stays identical to the Dua total on Home and in Amol Tracking.
+class _DuaTotalMinutesPill extends StatelessWidget {
+  const _DuaTotalMinutesPill();
 
   @override
   Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    return ListenableBuilder(
-      listenable: tracker,
-      builder: (context, _) {
-        final read = tracker.isCompleted;
-        final busy = tracker.isSubmitting;
-        if (!read && !busy && !tracker.canComplete) {
-          return const SizedBox.shrink();
+    final isBangla =
+        context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
+    return ValueListenableBuilder<AmolDailyDashboard?>(
+      valueListenable: AmolDailyStore.instance,
+      builder: (context, daily, _) {
+        var minutes = 0;
+        for (final pillar in daily?.pillars ?? const []) {
+          if (pillar.pillarKey == 'dua' &&
+              pillar.entry != null &&
+              pillar.entry!.isMinutes) {
+            minutes = pillar.entry!.amount.floor();
+            break;
+          }
         }
-        final control = Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: read || busy ? null : () => unawaited(onTap()),
-            borderRadius: BorderRadius.circular(20.r),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: context.surfaceColor(
-                  read ? _green : const Color(0xFFECF0DC),
-                ),
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: context.lineColor(
-                    read ? _green : const Color(0xFFDCE3C4),
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (busy)
-                    SizedBox(
-                      width: 13.r,
-                      height: 13.r,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        valueColor: AlwaysStoppedAnimation(
-                          read ? Colors.white : _green,
-                        ),
-                      ),
-                    )
-                  else
-                    Icon(
-                      read
-                          ? Icons.check_box_rounded
-                          : Icons.check_box_outline_blank_rounded,
-                      size: 15.sp,
-                      color: read
-                          ? Colors.white
-                          : context.inkColor(const Color(0xFF4C5A34)),
-                    ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    appText.duaMarkAsReadLabel,
-                    style: TextStyle(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.w600,
-                      color: read
-                          ? Colors.white
-                          : context.inkColor(const Color(0xFF4C5A34)),
-                    ),
-                  ),
-                ],
-              ),
+        return Container(
+          key: const ValueKey('dua-total-reading-minutes'),
+          height: 38.r,
+          padding: EdgeInsets.symmetric(horizontal: 11.w),
+          decoration: BoxDecoration(
+            color: context.surfaceColor(const Color(0xFFECF0DC)),
+            borderRadius: BorderRadius.circular(19.r),
+            border: Border.all(
+              color: context.lineColor(const Color(0xFFDCE3C4)),
             ),
           ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.menu_book_rounded,
+                size: 14.sp,
+                color: context.inkColor(const Color(0xFF4C5A34)),
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                '${context.localizedDigits('$minutes')} '
+                '${isBangla ? 'মি' : 'm'}',
+                style: TextStyle(
+                  fontSize: 11.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.inkColor(const Color(0xFF4C5A34)),
+                ),
+              ),
+            ],
+          ),
         );
-        return inline
-            ? control
-            : Padding(
-                padding: EdgeInsets.only(top: 14.h),
-                child: Align(alignment: Alignment.centerRight, child: control),
-              );
       },
     );
   }
