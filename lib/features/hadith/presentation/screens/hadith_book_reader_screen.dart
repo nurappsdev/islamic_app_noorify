@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -13,11 +15,16 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/widgets/hadith_bookmark_sheet.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_book_reference.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_entry.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_library_book.dart';
+import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail_page.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/bloc/hadith_book/hadith_book_bloc.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -61,16 +68,249 @@ class HadithBookReaderScreen extends StatefulWidget {
 class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _pageController = PageController();
+  final _totalReadingMinutes = ValueNotifier<int?>(null);
+  final _sessionSeconds = ValueNotifier<int>(0);
+  final _readingStopwatch = Stopwatch();
+  late final Timer _readingTimer;
+  late final AppLifecycleListener _readingLifecycle;
+  late final HadithLibraryRepositoryImpl _readingRepository =
+      HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl());
+  final Map<int, String> _serverHadithIds = {};
+  final Map<int, int> _unmappedSeconds = {};
+  final Map<String, int> _dwellSeconds = {};
+  final Map<String, int> _pendingSeconds = {};
+  final Set<String> _trackedHadithIds = {};
+  Future<void> _reportQueue = Future.value();
+  int _activeReadingSeconds = 0;
+  int _lastMinuteReportAt = 0;
+  int? _currentHadithNo;
+  bool _leaving = false;
   int _currentPage = 0;
 
   /// Consumed once the book is ready and the page has been jumped to.
   late int? _pendingHadithNo = widget.initialHadithNo;
 
   @override
+  void initState() {
+    super.initState();
+    _readingStopwatch.start();
+    _readingTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _onReadingTick(),
+    );
+    _readingLifecycle = AppLifecycleListener(
+      onHide: _readingStopwatch.stop,
+      onShow: _readingStopwatch.start,
+    );
+    _loadTotalReadingMinutes();
+    unawaited(_loadServerHadithIds());
+  }
+
+  @override
   void dispose() {
+    _readingLifecycle.dispose();
+    _readingTimer.cancel();
+    _readingStopwatch.stop();
+    _flushPendingSeconds();
+    _totalReadingMinutes.dispose();
+    _sessionSeconds.dispose();
     _pageController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadTotalReadingMinutes() async {
+    final today = DateTime.now();
+    final result = await _readingRepository.getReadingHistory(
+      from: _dateKey(today),
+      to: _dateKey(today),
+    );
+    if (!mounted) return;
+    result.fold(
+      (_) => _totalReadingMinutes.value ??= 0,
+      (history) =>
+          _totalReadingMinutes.value = history.totals.totalMinutes.floor(),
+    );
+  }
+
+  void _onReadingTick() {
+    if (!_readingStopwatch.isRunning) return;
+    _sessionSeconds.value = _readingStopwatch.elapsed.inSeconds;
+    final hadithNo = _currentHadithNo;
+    if (hadithNo == null) return;
+    _activeReadingSeconds++;
+    final hadithId = _serverHadithIds[hadithNo];
+    if (hadithId == null || hadithId.isEmpty) {
+      _unmappedSeconds[hadithNo] = (_unmappedSeconds[hadithNo] ?? 0) + 1;
+    } else {
+      _addReadingSecond(hadithId);
+    }
+
+    // Report each reader-minute as one batch. Every Hadith that has been read
+    // for at least 30 seconds joins the batch, and keeps its own dwell time
+    // when the user swipes away and later returns.
+    while (_activeReadingSeconds - _lastMinuteReportAt >= 60) {
+      _lastMinuteReportAt += 60;
+      _queuePendingReadingTime();
+    }
+  }
+
+  void _addReadingSecond(String hadithId, [int seconds = 1]) {
+    final dwell = (_dwellSeconds[hadithId] ?? 0) + seconds;
+    _dwellSeconds[hadithId] = dwell;
+    _pendingSeconds[hadithId] = (_pendingSeconds[hadithId] ?? 0) + seconds;
+    if (dwell >= 30) _trackedHadithIds.add(hadithId);
+  }
+
+  /// Loads every Hadith ID from the matching online book once. The local
+  /// reader contains only `hadithNo`, while the tracking API needs server IDs.
+  Future<void> _loadServerHadithIds() async {
+    final booksResult = await _readingRepository.getBooks();
+    final books = booksResult.fold<List<HadithLibraryBook>?>(
+      (_) => null,
+      (value) => value,
+    );
+    if (books == null) return;
+    final book = _matchingRemoteBook(books);
+    if (book == null) return;
+
+    var pageNumber = 1;
+    var hasMore = true;
+    final ids = <int, String>{};
+    while (hasMore) {
+      final pageResult = await _readingRepository.getHadiths(
+        bookId: book.id,
+        page: pageNumber,
+        limit: 100,
+      );
+      final page = pageResult.fold<HadithDetailPage?>(
+        (_) => null,
+        (value) => value,
+      );
+      if (page == null) break;
+      for (final hadith in page.hadiths) {
+        if (hadith.id.isNotEmpty && hadith.hadithNumber > 0) {
+          ids[hadith.hadithNumber] = hadith.id;
+        }
+      }
+      hasMore = page.hasMore;
+      pageNumber++;
+    }
+    if (!mounted) return;
+    _serverHadithIds.addAll(ids);
+    _moveMappedSecondsIntoTracking();
+  }
+
+  void _moveMappedSecondsIntoTracking() {
+    final mapped = <int>[];
+    for (final entry in _unmappedSeconds.entries) {
+      final hadithId = _serverHadithIds[entry.key];
+      if (hadithId == null || hadithId.isEmpty) continue;
+      _addReadingSecond(hadithId, entry.value);
+      mapped.add(entry.key);
+    }
+    for (final hadithNo in mapped) {
+      _unmappedSeconds.remove(hadithNo);
+    }
+  }
+
+  HadithLibraryBook? _matchingRemoteBook(List<HadithLibraryBook> books) {
+    final titleOrAuthorMatch = books.where((book) {
+      return _matchesText(book.titleEn, widget.book.titleEn) ||
+          _matchesText(book.titleBn, widget.book.titleBn) ||
+          _sharesDistinctiveWord(book.titleEn, widget.book.titleEn) ||
+          _sharesDistinctiveWord(book.titleBn, widget.book.titleBn) ||
+          _matchesText(book.authorEn, widget.book.authorEn);
+    }).toList();
+    if (titleOrAuthorMatch.length == 1) return titleOrAuthorMatch.single;
+
+    final sameCount = books
+        .where((book) => book.totalHadiths == widget.book.hadithCount)
+        .toList();
+    final candidates = sameCount.where((book) {
+      return _matchesText(book.titleEn, widget.book.titleEn) ||
+          _matchesText(book.titleBn, widget.book.titleBn) ||
+          _matchesText(book.authorEn, widget.book.authorEn);
+    }).toList();
+    if (candidates.length == 1) return candidates.single;
+    return sameCount.length == 1 ? sameCount.single : null;
+  }
+
+  bool _matchesText(String first, String second) {
+    final normalizedFirst = first.toLowerCase().replaceAll(
+      RegExp(r'[\s\-_–—()]'),
+      '',
+    );
+    final normalizedSecond = second.toLowerCase().replaceAll(
+      RegExp(r'[\s\-_–—()]'),
+      '',
+    );
+    return normalizedFirst.length > 3 &&
+        normalizedSecond.length > 3 &&
+        (normalizedFirst.contains(normalizedSecond) ||
+            normalizedSecond.contains(normalizedFirst));
+  }
+
+  /// Titles from the bundled book and API are not always word-for-word the
+  /// same (for example “40 Hadith An-Nawawi” vs “Nawawi's Forty Hadith”).
+  bool _sharesDistinctiveWord(String first, String second) {
+    Set<String> words(String value) => value
+        .toLowerCase()
+        .split(RegExp(r'[^a-z0-9\u0980-\u09ff]+'))
+        .where(
+          (word) =>
+              word.length >= 4 &&
+              word != 'hadith' &&
+              word != 'imam' &&
+              word != 'হাদিস' &&
+              word != 'ইমাম',
+        )
+        .toSet();
+    final firstWords = words(first);
+    return firstWords.any(words(second).contains);
+  }
+
+  void _queuePendingReadingTime() {
+    _moveMappedSecondsIntoTracking();
+    final pending = <String, int>{
+      for (final entry in _pendingSeconds.entries)
+        if (_trackedHadithIds.contains(entry.key) && entry.value > 0)
+          entry.key: entry.value,
+    };
+    if (pending.isEmpty) return;
+    for (final hadithId in pending.keys) {
+      _pendingSeconds.remove(hadithId);
+    }
+    _reportQueue = _reportQueue.then((_) async {
+      final result = await _readingRepository.trackReading(
+        hadithIds: pending.keys.toList(growable: false),
+        seconds: pending.values.fold(0, (sum, value) => sum + value),
+        completed: false,
+        date: _dateKey(DateTime.now()),
+      );
+      result.fold((_) {}, (_) {
+        unawaited(AmolDailyStore.instance.load());
+        unawaited(_loadTotalReadingMinutes());
+      });
+    });
+  }
+
+  void _flushPendingSeconds() {
+    _queuePendingReadingTime();
+  }
+
+  void _leaveReader() {
+    if (_leaving) return;
+    _leaving = true;
+    _readingStopwatch.stop();
+    _readingTimer.cancel();
+    _flushPendingSeconds();
+    Navigator.of(context).pop();
+  }
+
+  static String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   void _openIndex() => _scaffoldKey.currentState?.openEndDrawer();
 
@@ -120,89 +360,115 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
         context.watch<LanguageBloc>().state.language == AppLanguage.bangla;
     final title = isBangla ? widget.book.titleBn : widget.book.titleEn;
 
-    return BlocConsumer<HadithBookBloc, HadithBookState>(
-      listenWhen: (prev, curr) => prev.status != curr.status,
-      listener: (context, state) {
-        if (state.status != HadithBookStatus.ready && _currentPage != 0) {
-          setState(() => _currentPage = 0);
-        }
-        final pending = _pendingHadithNo;
-        if (state.status == HadithBookStatus.ready && pending != null) {
-          _pendingHadithNo = null;
-          final index = state.entries.indexWhere((e) => e.hadithNo == pending);
-          if (index >= 0) {
-            // The pager is built by this same state change; jump after it.
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) _goToHadith(index);
-            });
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leaveReader();
+      },
+      child: BlocConsumer<HadithBookBloc, HadithBookState>(
+        listenWhen: (prev, curr) => prev.status != curr.status,
+        listener: (context, state) {
+          if (state.status != HadithBookStatus.ready && _currentPage != 0) {
+            setState(() => _currentPage = 0);
           }
-        }
-      },
-      builder: (context, state) {
-        final isReady = state.status == HadithBookStatus.ready;
-        return Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: context.pageColor(Colors.white),
-          endDrawerEnableOpenDragGesture: isReady,
-          endDrawer: isReady && state.entries.isNotEmpty
-              ? _HadithIndexDrawer(
-                  bookTitle: title,
-                  entries: state.entries,
-                  reference: state.reference,
-                  isBangla: isBangla,
-                  currentIndex: _currentPage,
-                  appText: appText,
-                  onSelect: _goToHadith,
-                )
-              : null,
-          body: SafeArea(
-            child: Column(
-              children: [
-                SizedBox(height: 6.h),
-                _ReaderHeader(
-                  title: title,
-                  counter: isReady && state.entries.isNotEmpty
-                      ? '${_currentPage + 1} / ${state.entries.length}'
-                      : null,
-                  onOpenIndex: isReady && state.entries.isNotEmpty
-                      ? _openIndex
-                      : null,
-                  onBookmark: isReady && state.entries.isNotEmpty
-                      ? () => _showBookmarkSheet(state.entries[_currentPage])
-                      : null,
-                ),
-                Expanded(
-                  child: switch (state.status) {
-                    HadithBookStatus.checking => const Center(
-                      child: CircularProgressIndicator(color: AppColor.primary),
-                    ),
-                    HadithBookStatus.needsDownload => _DownloadPrompt(
-                      book: widget.book,
-                      appText: appText,
-                    ),
-                    HadithBookStatus.downloading => _DownloadingView(
-                      state: state,
-                      appText: appText,
-                    ),
-                    HadithBookStatus.failed => _FailedView(
-                      message: state.errorMessage,
-                      appText: appText,
-                    ),
-                    HadithBookStatus.ready => _HadithPager(
-                      controller: _pageController,
-                      entries: state.entries,
-                      appText: appText,
-                      bookSlug: widget.book.slug,
-                      bookName: title,
-                      onPageChanged: (i) => setState(() => _currentPage = i),
-                    ),
-                  },
-                ),
-              ],
+          if (state.status == HadithBookStatus.ready &&
+              state.entries.isNotEmpty) {
+            _currentHadithNo = state.entries[_currentPage].hadithNo;
+          }
+          final pending = _pendingHadithNo;
+          if (state.status == HadithBookStatus.ready && pending != null) {
+            _pendingHadithNo = null;
+            final index = state.entries.indexWhere(
+              (e) => e.hadithNo == pending,
+            );
+            if (index >= 0) {
+              // The pager is built by this same state change; jump after it.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _goToHadith(index);
+              });
+            }
+          }
+        },
+        builder: (context, state) {
+          final isReady = state.status == HadithBookStatus.ready;
+          // A bloc may already be ready when this reader is opened, in which
+          // case its listener has no transition to observe.
+          if (isReady && state.entries.isNotEmpty && _currentHadithNo == null) {
+            _currentHadithNo = state.entries[_currentPage].hadithNo;
+          }
+          return Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: context.pageColor(Colors.white),
+            endDrawerEnableOpenDragGesture: isReady,
+            endDrawer: isReady && state.entries.isNotEmpty
+                ? _HadithIndexDrawer(
+                    bookTitle: title,
+                    entries: state.entries,
+                    reference: state.reference,
+                    isBangla: isBangla,
+                    currentIndex: _currentPage,
+                    appText: appText,
+                    onSelect: _goToHadith,
+                  )
+                : null,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  SizedBox(height: 6.h),
+                  _ReaderHeader(
+                    title: title,
+                    isBangla: isBangla,
+                    totalReadingMinutes: _totalReadingMinutes,
+                    sessionSeconds: _sessionSeconds,
+                    onBack: _leaveReader,
+                    counter: isReady && state.entries.isNotEmpty
+                        ? '${_currentPage + 1} / ${state.entries.length}'
+                        : null,
+                    onOpenIndex: isReady && state.entries.isNotEmpty
+                        ? _openIndex
+                        : null,
+                    onBookmark: isReady && state.entries.isNotEmpty
+                        ? () => _showBookmarkSheet(state.entries[_currentPage])
+                        : null,
+                  ),
+                  Expanded(
+                    child: switch (state.status) {
+                      HadithBookStatus.checking => const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColor.primary,
+                        ),
+                      ),
+                      HadithBookStatus.needsDownload => _DownloadPrompt(
+                        book: widget.book,
+                        appText: appText,
+                      ),
+                      HadithBookStatus.downloading => _DownloadingView(
+                        state: state,
+                        appText: appText,
+                      ),
+                      HadithBookStatus.failed => _FailedView(
+                        message: state.errorMessage,
+                        appText: appText,
+                      ),
+                      HadithBookStatus.ready => _HadithPager(
+                        controller: _pageController,
+                        entries: state.entries,
+                        appText: appText,
+                        bookSlug: widget.book.slug,
+                        bookName: title,
+                        onPageChanged: (i) {
+                          _currentHadithNo = state.entries[i].hadithNo;
+                          setState(() => _currentPage = i);
+                        },
+                      ),
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -210,12 +476,20 @@ class _HadithBookReaderScreenState extends State<HadithBookReaderScreen> {
 class _ReaderHeader extends StatelessWidget {
   const _ReaderHeader({
     required this.title,
+    required this.isBangla,
+    required this.totalReadingMinutes,
+    required this.sessionSeconds,
+    required this.onBack,
     this.counter,
     this.onOpenIndex,
     this.onBookmark,
   });
 
   final String title;
+  final bool isBangla;
+  final ValueListenable<int?> totalReadingMinutes;
+  final ValueListenable<int> sessionSeconds;
+  final VoidCallback onBack;
   final String? counter;
   final VoidCallback? onOpenIndex;
   final VoidCallback? onBookmark;
@@ -228,7 +502,7 @@ class _ReaderHeader extends StatelessWidget {
         children: [
           SizedBox(width: 14.w),
           IconButton(
-            onPressed: () => Navigator.maybePop(context),
+            onPressed: onBack,
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFCBD16B),
               foregroundColor: context.onLightInkColor(Color(0xFF303629)),
@@ -264,6 +538,36 @@ class _ReaderHeader extends StatelessWidget {
               ],
             ),
           ),
+          SizedBox(width: 5.w),
+          _ReaderTimerCircle(seconds: sessionSeconds),
+          SizedBox(width: 5.w),
+          ValueListenableBuilder<int?>(
+            valueListenable: totalReadingMinutes,
+            builder: (context, minutes, _) {
+              final text = minutes == null
+                  ? '–'
+                  : context.localizedDigits('$minutes');
+              return Container(
+                key: const ValueKey('hadith-reader-minutes'),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(const Color(0xFFEDF1DE)),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(
+                    color: const Color(0xFF9BA85B).withValues(alpha: .45),
+                  ),
+                ),
+                child: Text(
+                  isBangla ? '$text মি' : '${text}m',
+                  style: TextStyle(
+                    color: context.inkColor(const Color(0xFF4C5A34)),
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            },
+          ),
           SizedBox(width: 8.w),
           if (onBookmark != null) ...[
             IconButton(
@@ -292,6 +596,49 @@ class _ReaderHeader extends StatelessWidget {
             SizedBox(width: 38.r),
           SizedBox(width: 14.w),
         ],
+      ),
+    );
+  }
+}
+
+/// One reader-wide clock: it follows the whole book-reading session, not an
+/// individual hadith card.
+class _ReaderTimerCircle extends StatelessWidget {
+  const _ReaderTimerCircle({required this.seconds});
+
+  final ValueListenable<int> seconds;
+
+  static String _clock(int seconds) {
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(seconds ~/ 60)}:${two(seconds % 60)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: seconds,
+      builder: (context, value, _) => Container(
+        key: const ValueKey('hadith-book-reader-timer'),
+        width: 34.r,
+        height: 34.r,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: context.surfaceColor(const Color(0xFFF5F6EA)),
+          border: Border.all(
+            color: const Color(0xFF9BA85B).withValues(alpha: .6),
+          ),
+        ),
+        child: Text(
+          context.localizedDigits(_clock(value)),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: context.inkColor(const Color(0xFF4C5A34)),
+            fontSize: 8.5.sp,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
       ),
     );
   }
