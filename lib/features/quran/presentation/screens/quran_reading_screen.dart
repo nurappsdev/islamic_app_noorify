@@ -22,8 +22,10 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import '../../data/services/quran_content_service.dart';
 import '../../data/services/quran_local_store.dart';
+import '../../data/services/quran_offline_reading_progress_store.dart';
 import '../../domain/arabic_font.dart';
 import '../../domain/quran_ayah.dart';
+import '../../domain/repositories/quran_reading_repository.dart';
 import '../../domain/surah_detail.dart';
 import '../../domain/translation_edition.dart';
 import '../../data/repositories/quran_reading_repository_impl.dart';
@@ -47,12 +49,16 @@ class QuranReadingScreen extends StatelessWidget {
     this.contentService,
     this.tafsirService,
     this.readingTracker,
+    this.readingRepository,
   });
   final QuranContentService? contentService;
   final QuranReaderService? tafsirService;
 
   /// Reports what is read; by default one on the app-wide repository.
   final QuranReadingTracker? readingTracker;
+
+  /// Supplies today's accumulated reading time for the header.
+  final QuranReadingRepository? readingRepository;
   final SurahRouteArgs args;
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -83,6 +89,7 @@ class QuranReadingScreen extends StatelessWidget {
       args: args,
       tafsirService: tafsirService,
       readingTracker: readingTracker,
+      readingRepository: readingRepository,
     ),
   );
 }
@@ -92,10 +99,12 @@ class _ReaderBody extends StatefulWidget {
     required this.args,
     this.tafsirService,
     this.readingTracker,
+    this.readingRepository,
   });
   final SurahRouteArgs args;
   final QuranReaderService? tafsirService;
   final QuranReadingTracker? readingTracker;
+  final QuranReadingRepository? readingRepository;
   @override
   State<_ReaderBody> createState() => _ReaderBodyState();
 }
@@ -104,11 +113,19 @@ class _ReaderBodyState extends State<_ReaderBody> {
   late final QuranReadingSession _session =
       widget.args.readingSession ?? QuranReadingSession();
   final _seconds = ValueNotifier<int>(0);
+  final _totalReadSeconds = ValueNotifier<int?>(null);
   late final Timer _timer;
   // Reports what is read (POST /quran/reading/track); foreground time only.
   late final QuranReadingTracker _tracker =
       widget.readingTracker ??
       QuranReadingTracker(QuranReadingRepositoryImpl.shared);
+  late final QuranReadingRepository _readingRepository =
+      widget.readingRepository ?? QuranReadingRepositoryImpl.shared;
+  final _offlineProgress = QuranOfflineReadingProgressStore.shared;
+  final _totalAcknowledgedInServer = <String>{};
+  StreamSubscription<void>? _trackedReadings;
+  String? _todayDate;
+  int _serverTodayReadSeconds = 0;
   late final AppLifecycleListener _lifecycle = AppLifecycleListener(
     onHide: _tracker.pause,
     onShow: _tracker.resume,
@@ -221,17 +238,73 @@ class _ReaderBodyState extends State<_ReaderBody> {
     );
     _seconds.value = _session.elapsedSeconds;
     _lifecycle; // Starts listening.
+    _offlineProgress.addListener(_refreshTotalReadTime);
+    _trackedReadings = _readingRepository.onReadingTracked.listen(
+      (_) => unawaited(_loadTotalReadTime()),
+    );
+    unawaited(_offlineProgress.restore());
+    unawaited(_loadTotalReadTime());
     context.read<SurahPlaybackBloc>().add(SetActiveAyah(widget.args.ayahNo));
   }
 
   @override
   void dispose() {
+    _trackedReadings?.cancel();
+    _offlineProgress.removeListener(_refreshTotalReadTime);
     _lifecycle.dispose();
     // Leaving the reader (or crossing into another Surah) ends the session.
     _tracker.dispose();
     _timer.cancel();
     _seconds.dispose();
+    _totalReadSeconds.dispose();
     super.dispose();
+  }
+
+  /// Loads the same daily total that Home and Amol show. Active or pending
+  /// reading is overlaid from the shared device store, so this stays current
+  /// before the next API response arrives.
+  Future<void> _loadTotalReadTime() async {
+    if (!_readingRepository.isSignedIn) {
+      _totalReadSeconds.value = 0;
+      return;
+    }
+    final result = await _readingRepository.getDashboard();
+    if (!mounted) return;
+    result.fold(
+      (_) {
+        if (_totalReadSeconds.value == null) _totalReadSeconds.value = 0;
+      },
+      (dashboard) {
+        final date = dashboard.today.date ?? DateTime.now();
+        _todayDate = _dateKey(date);
+        _serverTodayReadSeconds = dashboard.today.readSeconds;
+        // A delivered report remains in the local projection briefly. This
+        // fresh server value already includes it, so do not count it twice.
+        _totalAcknowledgedInServer.addAll(
+          _offlineProgress.acknowledgedIdsFor(_todayDate!),
+        );
+        _refreshTotalReadTime();
+      },
+    );
+  }
+
+  void _refreshTotalReadTime() {
+    final date = _todayDate;
+    if (date == null) return;
+    final additional = _offlineProgress
+        .progressFor(date, acknowledgedInBaseline: _totalAcknowledgedInServer)
+        .seconds;
+    _totalReadSeconds.value = _serverTodayReadSeconds + additional;
+  }
+
+  static String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  String _compactSurahName(String name) {
+    final characters = name.characters;
+    return characters.length <= 12 ? name : '${characters.take(12).join()}...';
   }
 
   void _record(int ayah, String name) {
@@ -619,6 +692,12 @@ class _ReaderBodyState extends State<_ReaderBody> {
                 .state
                 .currentAyahNo;
             final surah = state.surah;
+            final headerSurahName = _compactSurahName(
+              QuranText.of(context).surahName(
+                surah?.number ?? widget.args.surahNo,
+                surah?.name ?? widget.args.surahName,
+              ),
+            );
             final opening = state.from == 1;
             // Al-Fatiha's first ayah is its Bismillah: on its opening page it
             // is shown under the Surah's name, as other Surahs' Bismillah
@@ -694,7 +773,6 @@ class _ReaderBodyState extends State<_ReaderBody> {
                           ),
                         ),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             IconButton(
@@ -721,49 +799,54 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 color: quranInk,
                               ),
                             ),
-                            InkWell(
-                              onTap: _jump,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: context
-                                      .surfaceColor(Colors.white)
-                                      .withValues(alpha: 0.65),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: quranBorder.withValues(alpha: 0.7),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 70),
+                              child: InkWell(
+                                onTap: _jump,
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 4,
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      context.localizedDigits(
-                                        appText.quranPageLabel.fill({
-                                          'n': state.ayahs.isEmpty
-                                              ? '–'
-                                              : '${state.ayahs.first.pageNumber}',
-                                        }),
+                                  decoration: BoxDecoration(
+                                    color: context
+                                        .surfaceColor(Colors.white)
+                                        .withValues(alpha: 0.65),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: quranBorder.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          context.localizedDigits(
+                                            appText.quranPageLabel.fill({
+                                              'n': state.ayahs.isEmpty
+                                                  ? '–'
+                                                  : '${state.ayahs.first.pageNumber}',
+                                            }),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: quranInk,
+                                          ),
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
+                                      const SizedBox(width: 2),
+                                      const Icon(
+                                        Icons.arrow_drop_down_rounded,
+                                        size: 18,
                                         color: quranInk,
                                       ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    const Icon(
-                                      Icons.arrow_drop_down_rounded,
-                                      size: 18,
-                                      color: quranInk,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -773,7 +856,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                                    horizontal: 2,
                                     vertical: 4,
                                   ),
                                   child: Row(
@@ -782,26 +865,21 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                     children: [
                                       Flexible(
                                         child: Text(
-                                          QuranText.of(context).surahName(
-                                            surah?.number ??
-                                                widget.args.surahNo,
-                                            surah?.name ??
-                                                widget.args.surahName,
-                                          ),
+                                          headerSurahName,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            fontSize: 14,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w700,
                                             color: quranInk,
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 2),
+                                      const SizedBox(width: 1),
                                       const Icon(
                                         Icons.keyboard_arrow_down_rounded,
-                                        size: 16,
+                                        size: 14,
                                         color: quranInk,
                                       ),
                                     ],
@@ -809,10 +887,22 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 ),
                               ),
                             ),
-                            _ReadingTimerPill(
-                              seconds: _seconds,
-                              label: appText.yourReadingTimeIs,
-                              compact: MediaQuery.sizeOf(context).width < 370,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _ReadingTimerPill(
+                                  seconds: _seconds,
+                                  label: appText.yourReadingTimeIs,
+                                  compact:
+                                      MediaQuery.sizeOf(context).width < 430,
+                                ),
+                                const SizedBox(width: 3),
+                                _TotalReadingMinutesPill(
+                                  totalSeconds: _totalReadSeconds,
+                                  compact:
+                                      MediaQuery.sizeOf(context).width < 430,
+                                ),
+                              ],
                             ),
                             PopupMenuButton<String>(
                               tooltip: appText.quranActions,
@@ -1171,6 +1261,64 @@ class _ReadingTimerPill extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Today's accumulated Quran-reading time, kept separate from the active
+/// session timer. Its source is shared with the Home and Amol projections.
+class _TotalReadingMinutesPill extends StatelessWidget {
+  const _TotalReadingMinutesPill({
+    required this.totalSeconds,
+    this.compact = false,
+  });
+
+  final ValueNotifier<int?> totalSeconds;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final qText = QuranText.of(context);
+    return ValueListenableBuilder<int?>(
+      valueListenable: totalSeconds,
+      builder: (context, value, _) {
+        final minutes = value == null ? null : value ~/ 60;
+        final minutesText = minutes == null
+            ? '–'
+            : context.localizedDigits('$minutes');
+        return Tooltip(
+          message: qText.isBangla
+              ? 'আজ মোট কুরআন পড়া হয়েছে ${minutesText == '–' ? 'লোড হচ্ছে' : '$minutesText মিনিট'}'
+              : minutes == null
+              ? 'Loading today\'s Quran reading time'
+              : 'Read $minutesText min today',
+          child: Container(
+            key: const ValueKey('quran-total-reading-time'),
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 5 : 7,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: quranOlive.withValues(alpha: .10),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: quranOlive.withValues(alpha: .34)),
+            ),
+            child: Text(
+              qText.isBangla
+                  ? '$minutesText মি'
+                  : compact
+                  ? '${minutesText}m'
+                  : '$minutesText min',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: quranOlive,
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
             ),
           ),
         );
