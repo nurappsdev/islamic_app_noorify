@@ -4,9 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button.dart';
 import 'package:tuhfatul_muslim/features/profile/data/datasources/change_password_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/profile/data/repositories/change_password_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/usecases/change_password.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
@@ -33,6 +35,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
   bool _loading = false;
+  bool _openingForgotPassword = false;
 
   final _changePassword = ChangePassword(
     ChangePasswordRepositoryImpl(ChangePasswordRemoteDataSourceImpl()),
@@ -85,6 +88,27 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _openForgotPassword() async {
+    if (_openingForgotPassword) return;
+    setState(() => _openingForgotPassword = true);
+
+    final cached = ProfileService.instance.cachedProfile;
+    final profile =
+        cached ??
+        await ProfileService.instance.fetchProfile().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () => null,
+        );
+    if (!mounted) return;
+
+    setState(() => _openingForgotPassword = false);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ForgotPasswordScreen(initialEmail: profile?.email),
+      ),
+    );
   }
 
   // --- UI ---------------------------------------------------------------------
@@ -211,7 +235,31 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             color: context.inkColor(const Color(0xFF6B7551)),
                           ),
                         ),
-                        SizedBox(height: 32.h),
+                        SizedBox(height: 14.h),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _loading || _openingForgotPassword
+                                ? null
+                                : _openForgotPassword,
+                            icon: _openingForgotPassword
+                                ? SizedBox(
+                                    width: 14.r,
+                                    height: 14.r,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Icon(Icons.lock_reset_outlined, size: 17.sp),
+                            label: Text(appText.forgotPassword),
+                            style: TextButton.styleFrom(
+                              foregroundColor: context.inkColor(
+                                AppColor.forgotPassword,
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 18.h),
                         AuthButton(
                           label: appText.confirm,
                           height: 50.h,

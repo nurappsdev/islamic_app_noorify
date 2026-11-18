@@ -138,6 +138,14 @@ void main() {
         const LocalizedDateFormatter(_bn).banglaCalendar(noon),
         '১৩ আশ্বিন ১৪৩৩',
       );
+      expect(
+        const LocalizedDateFormatter(_bn).banglaCalendar(
+          DateTime(2026, 11, 17),
+          ordinalDay: true,
+          withSuffix: true,
+        ),
+        '২রা অগ্রহায়ণ ১৪৩৩ বঙ্গাব্দ',
+      );
     });
 
     test('Gregorian date, with the weekday, in both languages', () {

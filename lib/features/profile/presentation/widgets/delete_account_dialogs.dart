@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,8 +15,13 @@ import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
 /// confirmation, then a final destructive-action confirmation, then the
 /// actual deletion. Navigates to sign-in only once every step has succeeded.
 Future<void> showDeleteAccountFlow(BuildContext context) async {
+  // Settings can be displayed inside another navigator on wide layouts. Keep
+  // one reference to the app's root navigator so a successful deletion always
+  // leaves every protected route and lands on Sign In.
+  final navigator = Navigator.of(context, rootNavigator: true);
   final verified = await showDialog<bool>(
     context: context,
+    useRootNavigator: true,
     barrierDismissible: false,
     builder: (_) => const _PasswordConfirmDialog(),
   );
@@ -26,17 +29,18 @@ Future<void> showDeleteAccountFlow(BuildContext context) async {
 
   final deleted = await showDialog<bool>(
     context: context,
+    useRootNavigator: true,
     barrierDismissible: false,
     builder: (_) => const _FinalConfirmDialog(),
   );
   if (deleted != true || !context.mounted) return;
 
-  // Same session teardown as the Sign Out button.
+  // The service clears the auth token and user data. Finish clearing the
+  // profile cache before replacing the entire app route stack with Sign In.
   skipAuthGateNotifier.value = false;
-  unawaited(ProfileService.instance.clear());
-  Navigator.of(
-    context,
-  ).pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
+  await ProfileService.instance.clear();
+  if (!navigator.mounted) return;
+  navigator.pushNamedAndRemoveUntil(RouteNames.signIn, (route) => false);
 }
 
 /// Maps whatever [DeleteAccountService] returned on the `Left` side to a

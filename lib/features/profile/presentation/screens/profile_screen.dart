@@ -20,6 +20,7 @@ import 'package:tuhfatul_muslim/features/auth/presentation/bloc/logout/logout_bl
 import 'package:tuhfatul_muslim/features/profile/data/services/family_service.dart';
 import 'package:tuhfatul_muslim/features/auth/presentation/widgets/auth_button_metrics.dart';
 import 'package:tuhfatul_muslim/features/profile/data/services/profile_service.dart';
+import 'package:tuhfatul_muslim/features/profile/presentation/screens/change_password_screen.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/profile_badges.dart';
 import 'package:tuhfatul_muslim/features/profile/presentation/widgets/settings_option_row.dart';
 import 'package:tuhfatul_muslim/features/profile/domain/entities/family_member_entity.dart';
@@ -351,6 +352,29 @@ class _QuickSettings extends StatelessWidget {
         SettingsOptionRow(option: appLanguageOption(context, appText)),
         SizedBox(height: 12.h),
         SettingsOptionRow(option: themeToggleOption(context, appText, isDark)),
+        if (isUserSignedIn) ...[
+          SizedBox(height: 12.h),
+          SettingsOptionRow(
+            option: SettingsOption(
+              appText.changePassword,
+              Icons.sync_alt_rounded,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ChangePasswordScreen(),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          SettingsOptionRow(
+            option: SettingsOption(
+              appText.forgotPassword,
+              Icons.lock_reset_outlined,
+              onTap: () =>
+                  Navigator.of(context).pushNamed(RouteNames.forgotPassword),
+            ),
+          ),
+        ],
       ],
     );
   }

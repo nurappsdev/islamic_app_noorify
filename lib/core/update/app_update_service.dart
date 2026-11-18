@@ -5,25 +5,28 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_update/in_app_update.dart';
 
 import 'app_update_mock.dart';
-import 'app_update_reminder.dart';
 import 'app_update_source.dart';
 
-/// What the launch check found, and so which prompt (if any) to show.
-enum AppUpdatePrompt {
-  /// Nothing to show: no update, Play could not answer, a download is already
-  /// running, or the user put this build off less than
-  /// [AppUpdateReminder.reminderInterval] ago.
+/// The outcome of asking Google Play to begin or resume an update.
+enum AppUpdateFlowResult {
+  /// Nothing was started: Play has no update, cannot answer, the platform is
+  /// unsupported, or the launch check has already run.
   none,
 
-  /// An update is waiting to be downloaded - show the update dialog.
-  available,
+  /// Play accepted the update flow and the downloaded update was handed back
+  /// to Play for installation.
+  started,
 
-  /// A download that finished earlier was never installed - offer the restart.
-  readyToInstall,
+  /// The user cancelled Google Play's native confirmation dialog.
+  canceled,
+
+  /// Google Play could not download or install the update.
+  failed,
 }
 
 /// Google Play *flexible* in-app updates: the new build downloads while the
-/// user carries on in the app, and is installed by a restart they ask for.
+/// user carries on in the app, then Play installs it once the download has
+/// completed.
 ///
 /// Play only answers these calls for a build it installed itself, so on a
 /// debug or sideloaded build the check reports nothing (or fails) and the app
@@ -54,24 +57,22 @@ class AppUpdateService {
   static const _resumedPollInterval = Duration(seconds: 5);
   static const _resumedPollLimit = Duration(minutes: 3);
 
-  /// Where the download has got to, for the dialog and [AppUpdateWatcher] to
-  /// follow. It stays [InstallStatus.unknown] until a download starts or one
-  /// is found already running.
+  /// Where the Google Play update has got to. It stays
+  /// [InstallStatus.unknown] until a download starts or one is found already
+  /// running.
   final ValueNotifier<InstallStatus> status = ValueNotifier(
     InstallStatus.unknown,
   );
 
   StreamSubscription<InstallStatus>? _statusSubscription;
   Timer? _resumedPollTimer;
+  bool _installing = false;
 
   /// The check runs once per launch: Home is rebuilt every time the user
   /// comes back to it, and re-asking Play each time would re-open the prompt.
   bool _checkedThisLaunch = false;
 
   AppUpdateInfo? _info;
-
-  /// Play's version code for the update on offer, as of the last check.
-  int? get availableVersionCode => _info?.availableVersionCode;
 
   /// Whether in-app updates exist on this platform at all. A debug run with
   /// the mock on acts as though they do, wherever it runs.
@@ -83,40 +84,44 @@ class AppUpdateService {
       status.value == InstallStatus.pending ||
       status.value == InstallStatus.downloading;
 
-  /// Asks Play, once per launch, whether a flexible update is waiting.
-  Future<AppUpdatePrompt> checkOnLaunch() async {
-    if (!isSupported || _checkedThisLaunch) return AppUpdatePrompt.none;
+  /// Asks Google Play once per launch and immediately starts its native
+  /// flexible-update flow when an update is available. There is deliberately
+  /// no app-owned confirmation dialog before [InAppUpdate.startFlexibleUpdate].
+  Future<AppUpdateFlowResult> checkAndStartUpdate() async {
+    if (!isSupported || _checkedThisLaunch) return AppUpdateFlowResult.none;
     _checkedThisLaunch = true;
 
-    final prompt = await _resolveLaunchPrompt();
+    final result = await _checkAndStart();
     if (kDebugMode) {
       final scenario = AppUpdateMock.scenario;
       final source = scenario == null ? 'play' : 'mock:${scenario.name}';
-      debugPrint('[AppUpdate] $source -> ${prompt.name}');
+      debugPrint('[AppUpdate] $source -> ${result.name}');
     }
-    return prompt;
+    return result;
   }
 
-  Future<AppUpdatePrompt> _resolveLaunchPrompt() async {
+  Future<AppUpdateFlowResult> _checkAndStart() async {
     final info = await _checkForUpdate();
-    if (info == null) return AppUpdatePrompt.none;
+    if (info == null) return AppUpdateFlowResult.none;
 
     // Play reports a download it is already carrying out through
     // `installStatus`, whatever it says about availability, so this is read
     // before the availability check: there is nothing to offer downloading
     // when it is downloaded, or under way, already.
     switch (info.installStatus) {
-      // Downloaded on an earlier run and never installed: only the restart
-      // is left to offer.
+      // Downloaded on an earlier run and never installed: hand it straight
+      // back to Play to finish installing.
       case InstallStatus.downloaded:
         status.value = InstallStatus.downloaded;
-        return AppUpdatePrompt.readyToInstall;
+        return await _completeDownloadedUpdate()
+            ? AppUpdateFlowResult.started
+            : AppUpdateFlowResult.failed;
       case InstallStatus.pending:
       case InstallStatus.downloading:
       case InstallStatus.installing:
         status.value = info.installStatus;
         _followExistingDownload();
-        return AppUpdatePrompt.none;
+        return AppUpdateFlowResult.none;
       case InstallStatus.unknown:
       case InstallStatus.installed:
       case InstallStatus.failed:
@@ -125,28 +130,18 @@ class AppUpdateService {
     }
 
     if (info.updateAvailability != UpdateAvailability.updateAvailable) {
-      return AppUpdatePrompt.none;
+      return AppUpdateFlowResult.none;
     }
     // Play can rule a flexible update out (a very stale client, say); without
-    // its consent there is no background download to offer.
-    if (!info.flexibleUpdateAllowed) return AppUpdatePrompt.none;
-    if (await AppUpdateReminder.isSnoozed(info.availableVersionCode)) {
-      return AppUpdatePrompt.none;
-    }
-    return AppUpdatePrompt.available;
+    // its consent there is no background download to start.
+    if (!info.flexibleUpdateAllowed) return AppUpdateFlowResult.none;
+    return _startFlexibleUpdate();
   }
 
-  /// Starts the background download, behind Play's own consent sheet.
-  ///
-  /// [status] reports the download's progress from here on. The returned
-  /// future is Play's: it resolves with [AppUpdateResult.success] only once
-  /// the download has finished, and earlier than that if the user turns the
-  /// consent sheet down or the download fails.
-  Future<AppUpdateResult> startDownload() async {
-    if (!isSupported) return AppUpdateResult.inAppUpdateFailed;
-    // Play registers a fresh progress listener per request, so asking twice
-    // would report every step of one download twice over.
-    if (isDownloading) return AppUpdateResult.success;
+  /// Starts the background download behind Google Play's native confirmation
+  /// dialog, then completes the update once it is downloaded.
+  Future<AppUpdateFlowResult> _startFlexibleUpdate() async {
+    if (!isSupported || isDownloading) return AppUpdateFlowResult.none;
 
     _listenForDownload();
     status.value = InstallStatus.pending;
@@ -157,43 +152,49 @@ class AppUpdateService {
         // update is ready to install even if no progress event arrived.
         case AppUpdateResult.success:
           status.value = InstallStatus.downloaded;
+          return await _completeDownloadedUpdate()
+              ? AppUpdateFlowResult.started
+              : AppUpdateFlowResult.failed;
         case AppUpdateResult.userDeniedUpdate:
           status.value = InstallStatus.canceled;
+          return AppUpdateFlowResult.canceled;
         case AppUpdateResult.inAppUpdateFailed:
           status.value = InstallStatus.failed;
+          return AppUpdateFlowResult.failed;
       }
-      return result;
     } catch (error) {
       _log('startFlexibleUpdate failed', error);
       status.value = InstallStatus.failed;
-      return AppUpdateResult.inAppUpdateFailed;
+      return AppUpdateFlowResult.failed;
     }
   }
 
-  /// Restarts the app into the downloaded update.
-  ///
-  /// On success the app is replaced and this future never returns, so only a
-  /// `false` - Play refusing to install - is worth acting on.
-  Future<bool> install() async {
-    if (!isSupported) return false;
+  /// Hands a downloaded update to Play for installation. On a device the app
+  /// is replaced, so a successful call normally never returns.
+  Future<bool> _completeDownloadedUpdate() async {
+    if (!isSupported || _installing) return _installing;
     // Play reports the install through the same channel as the download.
     _listenForDownload();
+    _installing = true;
+    status.value = InstallStatus.installing;
     try {
       await _source.completeFlexibleUpdate();
+      if (status.value != InstallStatus.installed) {
+        status.value = InstallStatus.installed;
+      }
       return true;
     } catch (error) {
       _log('completeFlexibleUpdate failed', error);
       status.value = InstallStatus.failed;
       return false;
+    } finally {
+      _installing = false;
     }
   }
 
-  /// Puts the prompt off for [AppUpdateReminder.reminderInterval].
-  Future<void> remindLater() => AppUpdateReminder.snooze(availableVersionCode);
-
   /// Forgets that the check has run (and any download it saw), so the next
-  /// [checkOnLaunch] asks again. For driving the flow repeatedly from a debug
-  /// run or a test; see [AppUpdateMock].
+  /// [checkAndStartUpdate] asks again. For driving the flow repeatedly from a
+  /// debug run or a test; see [AppUpdateMock].
   @visibleForTesting
   void reset() {
     _checkedThisLaunch = false;
@@ -202,6 +203,7 @@ class AppUpdateService {
     _resumedPollTimer = null;
     _statusSubscription?.cancel();
     _statusSubscription = null;
+    _installing = false;
     status.value = InstallStatus.unknown;
   }
 
@@ -231,9 +233,9 @@ class AppUpdateService {
   ///
   /// Play only streams progress to the request that started it, and that
   /// request belongs to the run that is now gone - so the only way to see
-  /// this one finish is to ask again. Polling stops as soon as it does (the
-  /// restart is then offered), and gives up after [_resumedPollLimit] rather
-  /// than asking for the rest of the session.
+  /// this one finish is to ask again. Polling stops as soon as it does (and a
+  /// downloaded update is handed to Play for installation), and gives up after
+  /// [_resumedPollLimit] rather than asking for the rest of the session.
   void _followExistingDownload() {
     if (_resumedPollTimer != null) return;
     final startedAt = DateTime.now();
@@ -252,6 +254,7 @@ class AppUpdateService {
         case InstallStatus.installing:
           return;
         case InstallStatus.downloaded:
+          unawaited(_completeDownloadedUpdate());
         case InstallStatus.installed:
         case InstallStatus.failed:
         case InstallStatus.canceled:
