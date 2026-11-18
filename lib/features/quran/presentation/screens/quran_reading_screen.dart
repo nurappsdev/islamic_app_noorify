@@ -806,7 +806,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
+                                    horizontal: 5,
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
@@ -821,29 +821,20 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          context.localizedDigits(
-                                            appText.quranPageLabel.fill({
-                                              'n': state.ayahs.isEmpty
-                                                  ? '–'
-                                                  : '${state.ayahs.first.pageNumber}',
-                                            }),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: quranInk,
-                                          ),
+                                      Text(
+                                        context.localizedDigits(
+                                          appText.quranPageLabel.fill({
+                                            'n': state.ayahs.isEmpty
+                                                ? '–'
+                                                : '${state.ayahs.first.pageNumber}',
+                                          }),
                                         ),
-                                      ),
-                                      const SizedBox(width: 2),
-                                      const Icon(
-                                        Icons.arrow_drop_down_rounded,
-                                        size: 18,
-                                        color: quranInk,
+                                        maxLines: 1,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: quranInk,
+                                        ),
                                       ),
                                     ],
                                   ),
