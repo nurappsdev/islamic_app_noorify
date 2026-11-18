@@ -12,7 +12,9 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_dail
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_settings.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_detail_model.dart';
+import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_detail.dart';
 import 'package:tuhfatul_muslim/features/hadith/presentation/screens/hadith_detail_screen.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -37,6 +39,11 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
   final _stopwatch = Stopwatch();
   late final Timer _timer;
   late final AppLifecycleListener _lifecycle;
+  late final HadithLibraryRepositoryImpl _readingRepository =
+      HadithLibraryRepositoryImpl(HadithLibraryRemoteDataSourceImpl());
+  Future<void> _reportQueue = Future.value();
+  int _reportedSeconds = 0;
+  bool _leaving = false;
 
   static HadithDetail? _decode(String? payload) {
     if (payload == null || payload.isEmpty) return null;
@@ -53,9 +60,7 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
   void initState() {
     super.initState();
     _stopwatch.start();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _sessionSeconds.value = _stopwatch.elapsed.inSeconds;
-    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     _lifecycle = AppLifecycleListener(
       onHide: _stopwatch.stop,
       onShow: _stopwatch.start,
@@ -75,6 +80,69 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
     super.dispose();
   }
 
+  void _onTick() {
+    final elapsed = _stopwatch.elapsed.inSeconds;
+    _sessionSeconds.value = elapsed;
+    // Send only finished minutes while reading. The remainder is sent when
+    // the reader is closed, so repeat visits to the same hadith always count.
+    while (elapsed - _reportedSeconds >= 60) {
+      _reportedSeconds += 60;
+      unawaited(_queueReadingTime(60));
+    }
+  }
+
+  Future<void> _queueReadingTime(int seconds) {
+    final hadithId = _hadith?.id ?? '';
+    if (hadithId.isEmpty || seconds <= 0) return Future.value();
+    _reportQueue = _reportQueue.then((_) async {
+      final result = await _readingRepository.trackReading(
+        hadithIds: [hadithId],
+        seconds: seconds,
+        completed: false,
+        date: _dateKey(DateTime.now()),
+      );
+      result.fold((_) {}, (_) => unawaited(AmolDailyStore.instance.load()));
+    });
+    return _reportQueue;
+  }
+
+  Future<void> _exitReader() async {
+    if (_leaving) return;
+    _leaving = true;
+    _stopwatch.stop();
+    _timer.cancel();
+    final remainder = _stopwatch.elapsed.inSeconds - _reportedSeconds;
+    if (remainder > 0) await _queueReadingTime(remainder);
+    await _reportQueue;
+    if (!mounted) return;
+    final isBangla =
+        context.read<LanguageBloc>().state.language == AppLanguage.bangla;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          isBangla ? 'পড়ার সময় সংরক্ষিত হয়েছে' : 'Reading time saved',
+        ),
+        content: Text(
+          isBangla
+              ? 'আপনার পড়ার সময় যোগ করা হয়েছে।'
+              : 'Your reading time has been added.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(isBangla ? 'ঠিক আছে' : 'OK'),
+          ),
+        ],
+      ),
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  static String _dateKey(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
@@ -85,82 +153,88 @@ class _HadithSavedReaderScreenState extends State<HadithSavedReaderScreen> {
               ? hadith.sourceBangla
               : hadith.sourceEnglish);
 
-    return Scaffold(
-      backgroundColor: context.pageColor(Colors.white),
-      body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: 6.h),
-            SizedBox(
-              height: 44.h,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 14.w, right: 10.w),
-                    child: IconButton(
-                      onPressed: () => Navigator.maybePop(context),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFCBD16B),
-                        foregroundColor: const Color(0xFF303629),
-                        minimumSize: Size(38.r, 38.r),
-                      ),
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 15,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      context.localizedDigits(
-                        '${appText.categoryHadith} ${widget.bookmark.hadithNo}',
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.inkColor(const Color(0xFF2C3320)),
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  _SavedHadithReadTime(seconds: _sessionSeconds),
-                  SizedBox(width: 14.w),
-                ],
-              ),
-            ),
-            Expanded(
-              child: hadith == null
-                  ? Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32.w),
-                        child: Text(
-                          appText.noSavedHadithMessage,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: context.inkColor(const Color(0xFF5D6B44)),
-                          ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_exitReader());
+      },
+      child: Scaffold(
+        backgroundColor: context.pageColor(Colors.white),
+        body: SafeArea(
+          child: Column(
+            children: [
+              SizedBox(height: 6.h),
+              SizedBox(
+                height: 44.h,
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 14.w, right: 10.w),
+                      child: IconButton(
+                        onPressed: _exitReader,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFCBD16B),
+                          foregroundColor: const Color(0xFF303629),
+                          minimumSize: Size(38.r, 38.r),
+                        ),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 15,
                         ),
                       ),
-                    )
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
-                      child: HadithDetailCard(
-                        hadith: hadith,
-                        bookName: source,
-                        settings: _settings,
-                        onTranslationLanguageChanged: (language) {
-                          final value = _settings.copyWith(
-                            translationLanguage: language,
-                          );
-                          setState(() => _settings = value);
-                          HadithContentSettingsStore().save(value);
-                        },
+                    ),
+                    Expanded(
+                      child: Text(
+                        context.localizedDigits(
+                          '${appText.categoryHadith} ${widget.bookmark.hadithNo}',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: context.inkColor(const Color(0xFF2C3320)),
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-            ),
-          ],
+                    _SavedHadithReadTime(seconds: _sessionSeconds),
+                    SizedBox(width: 14.w),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: hadith == null
+                    ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 32.w),
+                          child: Text(
+                            appText.noSavedHadithMessage,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: context.inkColor(const Color(0xFF5D6B44)),
+                            ),
+                          ),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 28.h),
+                        child: HadithDetailCard(
+                          hadith: hadith,
+                          bookName: source,
+                          settings: _settings,
+                          onTranslationLanguageChanged: (language) {
+                            final value = _settings.copyWith(
+                              translationLanguage: language,
+                            );
+                            setState(() => _settings = value);
+                            HadithContentSettingsStore().save(value);
+                          },
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -199,7 +273,6 @@ class _SavedHadithReadTime extends StatelessWidget {
         return ValueListenableBuilder<int>(
           valueListenable: seconds,
           builder: (context, value, _) {
-            final total = recordedMinutes + value ~/ 60;
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -207,7 +280,7 @@ class _SavedHadithReadTime extends StatelessWidget {
                 SizedBox(width: 4.w),
                 _TimePill(
                   text: context.localizedDigits(
-                    isBangla ? '$total মি' : '${total}m',
+                    isBangla ? '$recordedMinutes মি' : '${recordedMinutes}m',
                   ),
                   total: true,
                 ),
