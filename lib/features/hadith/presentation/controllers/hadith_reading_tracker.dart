@@ -49,6 +49,7 @@ class HadithReadingTracker extends ChangeNotifier {
     this._track, {
     DateTime Function()? now,
     this.minSeconds = HadithReadingConfig.minSeconds,
+    this.allowRepeatReads = false,
   }) : _now = now ?? DateTime.now;
 
   static const _completedKey = 'hadith_completed_ids';
@@ -57,12 +58,20 @@ class HadithReadingTracker extends ChangeNotifier {
   final DateTime Function() _now;
   final int minSeconds;
 
+  /// Keeps the per-hadith clock running after a prior completion. The
+  /// scrolling reader uses this because rereading the same hadith must add
+  /// more reading time.
+  final bool allowRepeatReads;
+
   /// Seconds spent on the screen.
   int _elapsed = 0;
 
-  /// Seconds each hadith spent in focus. Stops growing once that hadith is
-  /// in [_completed] (see [tick]).
+  /// Seconds each hadith spent in focus. This keeps growing across repeat
+  /// visits to the same hadith during a reader session.
   final Map<String, int> _dwell = {};
+
+  /// The dwell value already included in successful automatic reports.
+  final Map<String, int> _reportedDwell = {};
 
   /// The tracking day [_dwell] was accrued on, and the day every report
   /// carries — not the day it happens to be sent on.
@@ -164,7 +173,8 @@ class HadithReadingTracker extends ChangeNotifier {
     if (_paused) return;
     _rollOverAtMidnight();
     _elapsed++;
-    if (hadithId != null && !_completed.contains(hadithId)) {
+    if (hadithId != null &&
+        (allowRepeatReads || !_completed.contains(hadithId))) {
       _dwell[hadithId] = (_dwell[hadithId] ?? 0) + 1;
     }
     _onTick?.call(hadithId);
@@ -247,6 +257,50 @@ class HadithReadingTracker extends ChangeNotifier {
   Future<HadithCompletion> complete(String hadithId) =>
       submit([hadithId], completed: true);
 
+  /// Sends only dwell time that has not already been reported successfully.
+  /// It never completes a hadith, so rereading the same one keeps counting.
+  Future<HadithCompletion> submitUnreported(
+    Iterable<String> hadithIds, {
+    required int minimumSeconds,
+  }) async {
+    final ids = [
+      for (final id in hadithIds)
+        if (id.isNotEmpty &&
+            !_completing.contains(id) &&
+            dwellSeconds(id) >= minimumSeconds &&
+            dwellSeconds(id) > (_reportedDwell[id] ?? 0))
+          id,
+    ];
+    if (ids.isEmpty) return HadithCompletion.alreadyCompleted;
+    final dwellAtSubmit = {for (final id in ids) id: dwellSeconds(id)};
+    final seconds = ids.fold(
+      0,
+      (sum, id) => sum + dwellAtSubmit[id]! - (_reportedDwell[id] ?? 0),
+    );
+    if (seconds <= 0) return HadithCompletion.alreadyCompleted;
+
+    _completing.addAll(ids);
+    notifyListeners();
+    try {
+      final result = await _track(
+        hadithIds: ids,
+        seconds: seconds,
+        completed: false,
+        date: _dwellDay,
+      );
+      final completion = result.fold((_) => HadithCompletion.failed, (_) {
+        for (final id in ids) {
+          _reportedDwell[id] = dwellAtSubmit[id]!;
+        }
+        return HadithCompletion.done;
+      });
+      return completion;
+    } finally {
+      _completing.removeAll(ids);
+      notifyListeners();
+    }
+  }
+
   /// Midnight with the screen still open: the time read up to it belongs to
   /// the day that has ended, so it is reported under that day before the
   /// counters start again from zero on the new one. Nothing is marked read —
@@ -256,15 +310,15 @@ class HadithReadingTracker extends ChangeNotifier {
     if (today == _dwellDay) return;
     final ids = [
       for (final entry in _dwell.entries)
-        if (entry.value > minSeconds &&
-            !_completed.contains(entry.key) &&
-            !_completing.contains(entry.key))
+        if (entry.value >= minSeconds && !_completing.contains(entry.key))
           entry.key,
     ];
-    // Sent before the day is moved on, so it carries the old day's date;
-    // [submit] reads the seconds it needs before its request leaves.
-    if (ids.isNotEmpty) unawaited(submit(ids, completed: false));
+    // Sent before the day is moved on, so it carries the old day's date.
+    if (ids.isNotEmpty) {
+      unawaited(submitUnreported(ids, minimumSeconds: minSeconds));
+    }
     _dwell.clear();
+    _reportedDwell.clear();
     _elapsed = 0;
     _dwellDay = today;
   }
