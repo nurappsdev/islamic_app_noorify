@@ -850,7 +850,7 @@ class _ReaderBodyState extends State<_ReaderBody> {
                                 ),
                               ),
                             ),
-                            Flexible(
+                            Expanded(
                               child: InkWell(
                                 onTap: _jump,
                                 borderRadius: BorderRadius.circular(8),
