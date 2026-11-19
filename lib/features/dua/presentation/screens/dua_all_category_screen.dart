@@ -20,19 +20,37 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 /// reached from the "Duas Category" section's "See All" on
 /// [DuaDashboardScreen].
 class DuaAllCategoryScreen extends StatelessWidget {
-  const DuaAllCategoryScreen({super.key});
+  const DuaAllCategoryScreen({
+    super.key,
+    this.selectMode = false,
+    this.selectedId,
+  });
+
+  /// When true, tapping a card returns that category to the caller instead
+  /// of opening its Dua list. Used by the Create Plan sheet.
+  final bool selectMode;
+  final String? selectedId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => DuaHomeCubit(duaRepository)..load(),
-      child: const _DuaAllCategoryView(),
+      child: _DuaAllCategoryView(
+        selectMode: selectMode,
+        selectedId: selectedId,
+      ),
     );
   }
 }
 
 class _DuaAllCategoryView extends StatefulWidget {
-  const _DuaAllCategoryView();
+  const _DuaAllCategoryView({
+    required this.selectMode,
+    required this.selectedId,
+  });
+
+  final bool selectMode;
+  final String? selectedId;
 
   @override
   State<_DuaAllCategoryView> createState() => _DuaAllCategoryViewState();
@@ -93,7 +111,7 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                     16.w,
                     0,
                     16.w,
-                    96.h + bottomInset,
+                    widget.selectMode ? 24.h : 96.h + bottomInset,
                   ),
                   children: [
                     SizedBox(height: 6.h),
@@ -171,6 +189,10 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                         itemBuilder: (context, index) => DuaCategoryTile(
                           category: filtered[index],
                           index: index,
+                          selected: widget.selectedId == filtered[index].id,
+                          onTap: widget.selectMode
+                              ? () => Navigator.of(context).pop(filtered[index])
+                              : null,
                         ),
                       ),
                   ],
@@ -178,13 +200,14 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
               },
             ),
           ),
-          const SafeArea(
-            top: false,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: DuaBottomNav(selectedIndex: 1),
+          if (!widget.selectMode)
+            const SafeArea(
+              top: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: DuaBottomNav(selectedIndex: 1),
+              ),
             ),
-          ),
         ],
       ),
     );

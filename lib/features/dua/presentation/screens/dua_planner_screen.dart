@@ -4,9 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
-import 'package:tuhfatul_muslim/core/theme/app_palette.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
-import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
@@ -16,7 +14,6 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart'
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_create_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
-import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
 /// Dua planner (design `devImg/img_7.png`), reached from index 3 ("Planner")
 /// of [DuaBottomNav].
@@ -59,12 +56,17 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
   }
 
   Future<void> _createPlan() async {
-    // The route is registered via `_page()` (always `Route<void>`, same as
-    // every other screen-with-a-result in this app's router), so the result
-    // isn't typed here either — the tab reload below doesn't need it.
-    await Navigator.of(context).pushNamed(RouteNames.duaPlanCreate);
+    final created = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: .93,
+        child: const DuaPlanCreateScreen(embedded: true),
+      ),
+    );
     if (!mounted) return;
-    await _cubit.selectTab(0);
+    if (created == true) await _cubit.selectTab(0);
   }
 
   @override
@@ -93,6 +95,14 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                         selected: state.tab,
                         onChanged: _cubit.selectTab,
                       ),
+                      _PlannerCalendar(
+                        totalLabel: context.localized(
+                          LocalizedText(
+                            en: 'Total plan ${context.localizedDigits('${state.plans.length}')}',
+                            bn: 'মোট পরিকল্পনা ${context.localizedDigits('${state.plans.length}')}',
+                          ),
+                        ),
+                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: _cubit.load,
@@ -108,8 +118,10 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                   child: FilledButton.icon(
                     onPressed: _createPlan,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      foregroundColor: Colors.white,
+                      backgroundColor: context.surfaceColor(Colors.white),
+                      foregroundColor: context.textInkColor(
+                        const Color(0xFF444444),
+                      ),
                       padding: EdgeInsets.symmetric(
                         horizontal: 18.w,
                         vertical: 12.h,
@@ -118,7 +130,20 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                         borderRadius: BorderRadius.circular(24.r),
                       ),
                     ),
-                    icon: Icon(Icons.edit_outlined, size: 18.sp),
+                    icon: Container(
+                      width: 20.r,
+                      height: 20.r,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFA7B45B),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 15.sp,
+                      ),
+                    ),
                     label: Text(
                       appText.createPlan,
                       style: TextStyle(
@@ -171,7 +196,7 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
     return ListView.separated(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 14.h, 16.w, 96.h),
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 96.h),
       itemCount: state.plans.length + (showLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => SizedBox(height: 12.h),
       itemBuilder: (context, index) {
@@ -196,6 +221,14 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({required this.plan, required this.serial});
   final DuaPlan plan;
   final int serial;
+
+  String _dateLabel(BuildContext context, String value) {
+    final date = DateTime.tryParse(value);
+    if (date == null) return value;
+    return context.localizedDigits(
+      MaterialLocalizations.of(context).formatMediumDate(date),
+    );
+  }
 
   Future<void> _menu(BuildContext context) async {
     final appText = AppText.readOf(context);
@@ -267,29 +300,44 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final colors = [
+      const Color(0xFFFFD9E7),
+      const Color(0xFFFFE4A5),
+      const Color(0xFFB9EDFF),
+      const Color(0xFFD2F6A6),
+    ];
+    final cardColor = colors[(serial - 1) % colors.length];
     return InkWell(
-      borderRadius: BorderRadius.circular(18.r),
+      borderRadius: BorderRadius.circular(22.r),
       onTap: () => Navigator.of(
         context,
       ).pushNamed(RouteNames.duaPlanDetail, arguments: DuaPlanDetailArgs(plan)),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 11.h),
         decoration: BoxDecoration(
-          border: Border.all(color: context.lineColor(const Color(0xFFD5E59B))),
-          borderRadius: BorderRadius.circular(18.r),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(22.r),
+          boxShadow: [
+            BoxShadow(
+              color: cardColor.withValues(alpha: .45),
+              blurRadius: 12.r,
+              offset: Offset(0, 5.h),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 23.r,
-              backgroundColor: const Color(0xFFA5B657),
-              child: Text(
-                context.localizedDigits('$serial'),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+            Container(
+              width: 46.r,
+              height: 46.r,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .7),
+                borderRadius: BorderRadius.circular(15.r),
+              ),
+              child: Icon(
+                Icons.menu_book_rounded,
+                color: const Color(0xFFA7B45B),
+                size: 25.sp,
               ),
             ),
             SizedBox(width: 12.w),
@@ -302,37 +350,53 @@ class _PlanCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontFamily: 'serif',
+                      fontSize: 15.sp,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w700,
                       color: context.textInkColor(const Color(0xFF2C3320)),
                     ),
                   ),
                   SizedBox(height: 3.h),
                   Text(
-                    context.localizedDigits(
-                      '${plan.completedDuas}/${plan.totalDuas} '
-                      '${appText.duaTotalDuaLabel.toLowerCase()}',
-                    ),
+                    '${context.localizedDigits('${plan.completedDuas}/${plan.totalDuas}')} '
+                    '${appText.duaTotalDuaLabel.toLowerCase()}',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: context.inkColor(const Color(0xFFA5B657)),
+                      color: context.textInkColor(const Color(0xFFD45D78)),
                     ),
                   ),
+                  if (plan.startDate.isNotEmpty || plan.endDate.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      [
+                        if (plan.startDate.isNotEmpty)
+                          '${context.localized(const LocalizedText(en: 'Start', bn: 'শুরু'))}: ${_dateLabel(context, plan.startDate)}',
+                        if (plan.endDate.isNotEmpty)
+                          '${context.localized(const LocalizedText(en: 'End', bn: 'শেষ'))}: ${_dateLabel(context, plan.endDate)}',
+                      ].join('  •  '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9.5.sp,
+                        color: context.textInkColor(const Color(0xFF6F6F6F)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            // Its own middle column, between the name/progress and the
-            // 3-dot menu — not squeezed next to the title.
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8.w),
-              child: DuaPlanStatusBadge(status: plan.status),
-            ),
             IconButton(
               onPressed: () => _menu(context),
+              constraints: BoxConstraints.tightFor(width: 32.r, height: 32.r),
+              padding: EdgeInsets.zero,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: .34),
+              ),
               icon: Icon(
-                Icons.more_vert,
-                size: 20.sp,
-                color: context.inkColor(const Color(0xFFA5B657)),
+                Icons.more_vert_rounded,
+                size: 19.sp,
+                color: context.textInkColor(const Color(0xFF8B8B8B)),
               ),
             ),
           ],
@@ -437,6 +501,156 @@ class _SheetButtons extends StatelessWidget {
   );
 }
 
+class _PlannerCalendar extends StatelessWidget {
+  const _PlannerCalendar({required this.totalLabel});
+
+  final String totalLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final firstDay = today.subtract(const Duration(days: 3));
+    final localizations = MaterialLocalizations.of(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  localizations.formatMonthYear(today),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                    color: context.textInkColor(const Color(0xFF202020)),
+                  ),
+                ),
+              ),
+              _CalendarArrow(icon: Icons.chevron_left_rounded),
+              SizedBox(width: 7.w),
+              _CalendarArrow(icon: Icons.chevron_right_rounded),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              for (var index = 0; index < 7; index++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2.w),
+                    child: _PlannerDay(
+                      date: firstDay.add(Duration(days: index)),
+                      selected: firstDay.add(Duration(days: index)) == today,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 14.h, left: 2.w),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    totalLabel,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: context.textInkColor(const Color(0xFF303030)),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 31.r,
+                  height: 31.r,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F8E6),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Icons.search_rounded,
+                    size: 19.sp,
+                    color: const Color(0xFFA7B45B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarArrow extends StatelessWidget {
+  const _CalendarArrow({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 30.r,
+    height: 30.r,
+    decoration: const BoxDecoration(
+      color: Color(0xFFF2F7E2),
+      shape: BoxShape.circle,
+    ),
+    child: Icon(icon, size: 19.sp, color: const Color(0xFFA7B45B)),
+  );
+}
+
+class _PlannerDay extends StatelessWidget {
+  const _PlannerDay({required this.date, required this.selected});
+
+  final DateTime date;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    return Container(
+      height: 64.h,
+      padding: EdgeInsets.symmetric(vertical: 7.h),
+      decoration: BoxDecoration(
+        color: selected
+            ? const Color(0xFFDDEAB6)
+            : context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: const Color(0xFFEAF0D4)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            localizations.narrowWeekdays[date.weekday % 7],
+            style: TextStyle(fontSize: 9.sp, color: const Color(0xFF9CA66A)),
+          ),
+          SizedBox(height: 3.h),
+          Text(
+            context.localizedDigits('${date.day}'),
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: context.textInkColor(const Color(0xFF585E3D)),
+            ),
+          ),
+          const Spacer(),
+          Container(
+            width: 4.r,
+            height: 4.r,
+            decoration: BoxDecoration(
+              color: selected
+                  ? const Color(0xFF9DC73B)
+                  : const Color(0xFFDFE2D8),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PlannerTabs extends StatelessWidget {
   const _PlannerTabs({
     required this.labels,
@@ -450,18 +664,20 @@ class _PlannerTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
-      margin: isDark ? EdgeInsets.symmetric(horizontal: 12.w) : null,
-      padding: isDark ? EdgeInsets.all(4.r) : null,
-      decoration: isDark
-          ? BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border.all(color: context.appPalette.border),
-              borderRadius: BorderRadius.circular(26.r),
-            )
-          : null,
+      margin: EdgeInsets.symmetric(horizontal: 12.w),
+      padding: EdgeInsets.all(4.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .045),
+            blurRadius: 16.r,
+            offset: Offset(0, 5.h),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           for (var i = 0; i < labels.length; i++)
@@ -491,8 +707,6 @@ class _PlannerTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22.r),
@@ -501,12 +715,7 @@ class _PlannerTab extends StatelessWidget {
         alignment: Alignment.center,
         margin: EdgeInsets.symmetric(horizontal: 6.w),
         decoration: BoxDecoration(
-          color: selected
-              ? (isDark ? AppColor.darkTint : const Color(0xFFE1E56A))
-              : Colors.transparent,
-          border: selected && isDark
-              ? Border.all(color: AppColor.primary.withValues(alpha: 0.55))
-              : null,
+          color: selected ? const Color(0xFFA7B45B) : Colors.transparent,
           borderRadius: BorderRadius.circular(22.r),
         ),
         child: Text(
@@ -514,7 +723,9 @@ class _PlannerTab extends StatelessWidget {
           style: TextStyle(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
-            color: context.textInkColor(const Color(0xFF303629)),
+            color: selected
+                ? Colors.white
+                : context.textInkColor(const Color(0xFF303629)),
           ),
         ),
       ),
