@@ -14,7 +14,6 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart'
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_create_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
-import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
 /// Dua planner (design `devImg/img_7.png`), reached from index 3 ("Planner")
 /// of [DuaBottomNav].
@@ -223,6 +222,14 @@ class _PlanCard extends StatelessWidget {
   final DuaPlan plan;
   final int serial;
 
+  String _dateLabel(BuildContext context, String value) {
+    final date = DateTime.tryParse(value);
+    if (date == null) return value;
+    return context.localizedDigits(
+      MaterialLocalizations.of(context).formatMediumDate(date),
+    );
+  }
+
   Future<void> _menu(BuildContext context) async {
     final appText = AppText.readOf(context);
     final action = await showMenu<String>(
@@ -359,30 +366,38 @@ class _PlanCard extends StatelessWidget {
                       color: context.textInkColor(const Color(0xFFD45D78)),
                     ),
                   ),
+                  if (plan.startDate.isNotEmpty || plan.endDate.isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      [
+                        if (plan.startDate.isNotEmpty)
+                          '${context.localized(const LocalizedText(en: 'Start', bn: 'শুরু'))}: ${_dateLabel(context, plan.startDate)}',
+                        if (plan.endDate.isNotEmpty)
+                          '${context.localized(const LocalizedText(en: 'End', bn: 'শেষ'))}: ${_dateLabel(context, plan.endDate)}',
+                      ].join('  •  '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9.5.sp,
+                        color: context.textInkColor(const Color(0xFF6F6F6F)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            Column(
-              children: [
-                IconButton(
-                  onPressed: () => _menu(context),
-                  constraints: BoxConstraints.tightFor(
-                    width: 32.r,
-                    height: 32.r,
-                  ),
-                  padding: EdgeInsets.zero,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: .34),
-                  ),
-                  icon: Icon(
-                    Icons.more_vert_rounded,
-                    size: 19.sp,
-                    color: context.textInkColor(const Color(0xFF8B8B8B)),
-                  ),
-                ),
-                SizedBox(height: 3.h),
-                DuaPlanStatusBadge(status: plan.status),
-              ],
+            IconButton(
+              onPressed: () => _menu(context),
+              constraints: BoxConstraints.tightFor(width: 32.r, height: 32.r),
+              padding: EdgeInsets.zero,
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: .34),
+              ),
+              icon: Icon(
+                Icons.more_vert_rounded,
+                size: 19.sp,
+                color: context.textInkColor(const Color(0xFF8B8B8B)),
+              ),
             ),
           ],
         ),

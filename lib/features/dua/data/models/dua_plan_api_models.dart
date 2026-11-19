@@ -100,6 +100,8 @@ class DuaPlan {
     required this.isCompleted,
     required this.currentStreak,
     required this.longestStreak,
+    this.startDate = '',
+    this.endDate = '',
   });
 
   final String id;
@@ -117,6 +119,8 @@ class DuaPlan {
   final bool isCompleted;
   final int currentStreak;
   final int longestStreak;
+  final String startDate;
+  final String endDate;
 
   factory DuaPlan.fromJson(Map<String, dynamic> json) {
     final today = _mapOf(json['today']);
@@ -131,6 +135,8 @@ class DuaPlan {
       isCompleted: today['isCompleted'] == true,
       currentStreak: _asInt(stats['currentStreak']),
       longestStreak: _asInt(stats['longestStreak']),
+      startDate: json['startDate']?.toString() ?? '',
+      endDate: json['endDate']?.toString() ?? '',
     );
   }
 }

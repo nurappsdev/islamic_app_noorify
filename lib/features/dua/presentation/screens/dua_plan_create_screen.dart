@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dar
 import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_all_category_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_pickers.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
@@ -86,6 +87,7 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   bool _submitting = false;
   String _note = '';
   bool _notifyEveryDay = false;
+  bool _showDuaDropdown = false;
 
   @override
   void initState() {
@@ -151,17 +153,18 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
 
   Future<void> _pickCategory() async {
     FocusScope.of(context).unfocus();
-    final category = await showModalBottomSheet<DuaCategoryModel>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DuaCategoryPickerSheet(selectedId: _category?.id),
+    final category = await Navigator.of(context).push<DuaCategoryModel>(
+      MaterialPageRoute(
+        builder: (_) =>
+            DuaAllCategoryScreen(selectMode: true, selectedId: _category?.id),
+      ),
     );
     if (category == null || !mounted) return;
     setState(() {
       // Duas belong to their category, so switching categories clears them.
       if (_category?.id != category.id) _pendingDuas = const [];
       _category = category;
+      _showDuaDropdown = false;
     });
   }
 
@@ -172,17 +175,29 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
       return;
     }
     FocusScope.of(context).unfocus();
-    final duas = await showModalBottomSheet<List<DuaFeaturedModel>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DuaItemPickerSheet(
-        category: category,
-        initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+    setState(() => _showDuaDropdown = !_showDuaDropdown);
+  }
+
+  Future<void> _openAllDuas() async {
+    final category = _category;
+    if (category == null) {
+      _snack(AppText.readOf(context).selectCategoryFirst);
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    final duas = await Navigator.of(context).push<List<DuaFeaturedModel>>(
+      MaterialPageRoute(
+        builder: (_) => DuaPlanDuaPickerScreen(
+          category: category,
+          initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+        ),
       ),
     );
     if (duas == null || !mounted) return;
-    setState(() => _pendingDuas = duas);
+    setState(() {
+      _pendingDuas = duas;
+      _showDuaDropdown = false;
+    });
   }
 
   /// The entries already added via "Add", plus whatever duas are still
@@ -406,6 +421,7 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                         _pendingDuas = const [];
                       }
                       _category = category;
+                      _showDuaDropdown = false;
                     }),
                   ),
                 );
@@ -413,9 +429,23 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
             ),
           ),
         SizedBox(height: 18.h),
-        Text(
-          appText.selectDua,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+        Row(
+          children: [
+            Text(
+              appText.selectDua,
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            IconButton(
+              onPressed: _openAllDuas,
+              tooltip: appText.selectDua,
+              icon: Icon(
+                Icons.open_in_new_rounded,
+                size: 18.sp,
+                color: const Color(0xFFA7B45B),
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 8.h),
         _SelectionField(
@@ -430,6 +460,19 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                 ),
           onTap: _pickDua,
         ),
+        if (_showDuaDropdown) ...[
+          SizedBox(height: 10.h),
+          SizedBox(
+            height: 270.h,
+            child: DuaPlanDuaDropdown(
+              category: _category!,
+              onSelected: (dua) => setState(() {
+                _pendingDuas = [dua];
+                _showDuaDropdown = false;
+              }),
+            ),
+          ),
+        ],
         SizedBox(height: 18.h),
         Row(
           children: [
