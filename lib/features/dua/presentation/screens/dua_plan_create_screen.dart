@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dar
 import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_pickers.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 
@@ -43,9 +44,12 @@ class _PlanItemEntry {
 /// in-progress/completed/abandoned). The screen pops `true` on success, so
 /// the planner knows to reload.
 class DuaPlanCreateScreen extends StatefulWidget {
-  const DuaPlanCreateScreen({super.key, this.editPlan});
+  const DuaPlanCreateScreen({super.key, this.editPlan, this.embedded = false});
 
   final DuaPlanDetail? editPlan;
+
+  /// Renders inside the Planner's create-plan bottom sheet.
+  final bool embedded;
 
   @override
   State<DuaPlanCreateScreen> createState() => _DuaPlanCreateScreenState();
@@ -57,28 +61,21 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   );
 
   DuaCategoryModel? _category;
+  List<DuaCategoryModel> _categories = const [];
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   /// Duas picked from [_category] (multi-select, design change: several
-  /// duas from one category can be added in a single "Add") but not yet
-  /// added to [_entries].
+  /// duas from one category can be selected for the plan).
   List<DuaFeaturedModel> _pendingDuas = const [];
-  String _slot = 'anytime';
 
   late final List<_PlanItemEntry> _entries = [
     for (final item in widget.editPlan?.items ?? const [])
       if (item.dua != null) _PlanItemEntry(dua: item.dua!, slot: item.slot),
   ];
 
-  /// Whether the "added" list is showing instead of the form.
-  late bool _adding = _entries.isEmpty;
-
-  /// 0 = Sunday ... 6 = Saturday; every day by default (the API's own
-  /// default when `daysOfWeek` is left out).
-  late final Set<int> _days = {
-    ...(widget.editPlan?.daysOfWeek.isNotEmpty ?? false)
-        ? widget.editPlan!.daysOfWeek
-        : [0, 1, 2, 3, 4, 5, 6],
-  };
+  /// Existing plans show their saved dua list; new plans show the form.
+  late final bool _adding = _entries.isEmpty;
 
   /// `in_progress` / `completed` / `abandoned` — only edited (and shown) in
   /// edit mode.
@@ -87,6 +84,14 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   bool get _isEditing => widget.editPlan != null;
 
   bool _submitting = false;
+  String _note = '';
+  bool _notifyEveryDay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
 
   @override
   void dispose() {
@@ -100,6 +105,48 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await duaRepository.getCategories();
+      if (mounted) setState(() => _categories = categories);
+    } catch (_) {
+      // The existing category picker remains available as a fallback.
+    }
+  }
+
+  Future<void> _pickDate({required bool start}) async {
+    FocusScope.of(context).unfocus();
+    final today = DateUtils.dateOnly(DateTime.now());
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: start
+          ? (_startDate ?? today)
+          : (_endDate ?? _startDate ?? today),
+      firstDate: start ? today : (_startDate ?? today),
+      lastDate: DateTime(today.year + 10),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      if (start) {
+        _startDate = selected;
+        if (_endDate != null && _endDate!.isBefore(selected)) {
+          _endDate = null;
+        }
+      } else {
+        _endDate = selected;
+      }
+    });
+  }
+
+  Future<void> _editNote() async {
+    final note = await showDialog<String>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: .28),
+      builder: (_) => _PlanNoteDialog(initialValue: _note),
+    );
+    if (note != null && mounted) setState(() => _note = note.trim());
   }
 
   Future<void> _pickCategory() async {
@@ -146,49 +193,14 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   List<_PlanItemEntry> _resolvedEntries() {
     final entries = List.of(_entries);
     for (final dua in _pendingDuas) {
-      entries.add(_PlanItemEntry(dua: dua, slot: _slot));
+      entries.add(_PlanItemEntry(dua: dua, slot: 'anytime'));
     }
     return entries;
   }
 
-  void _add() {
-    final appText = AppText.readOf(context);
-    if (_category == null) {
-      _snack(appText.selectCategoryFirst);
-      return;
-    }
-    if (_pendingDuas.isEmpty) {
-      _snack(appText.selectDuaFirst);
-      return;
-    }
-    HapticFeedback.selectionClick();
-    setState(() {
-      for (final dua in _pendingDuas) {
-        _entries.add(_PlanItemEntry(dua: dua, slot: _slot));
-      }
-      _pendingDuas = const [];
-      _slot = 'anytime';
-      _adding = false;
-    });
-  }
-
-  void _addMore() => setState(() => _adding = true);
-
   void _removeEntry(int index) {
     HapticFeedback.selectionClick();
     setState(() => _entries.removeAt(index));
-  }
-
-  void _toggleDay(int day) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      // At least one day stays selected — the plan has to run sometime.
-      if (_days.contains(day)) {
-        if (_days.length > 1) _days.remove(day);
-      } else {
-        _days.add(day);
-      }
-    });
   }
 
   void _setStatus(String status) {
@@ -213,7 +225,11 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
       final draft = DuaPlanDraft(
         name: _planName,
         items: [for (final entry in entries) entry.toDraft()],
-        daysOfWeek: _days.toList()..sort(),
+        daysOfWeek: widget.editPlan?.daysOfWeek.isNotEmpty == true
+            ? widget.editPlan!.daysOfWeek
+            : const [0, 1, 2, 3, 4, 5, 6],
+        startDate: _startDate,
+        endDate: _endDate,
         status: _isEditing ? _status : null,
       );
       final editId = widget.editPlan?.id;
@@ -238,17 +254,26 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
 
-    return Scaffold(
+    final content = Scaffold(
       backgroundColor: context.pageColor(Colors.white),
       body: SafeArea(
         child: Column(
           children: [
             SizedBox(height: 6.h),
-            _Header(
-              title: _isEditing
-                  ? appText.duaEditPlanTitle
-                  : appText.createPlanHeader,
-            ),
+            widget.embedded
+                ? _CreatePlanSheetHeader(
+                    title: _isEditing
+                        ? appText.duaEditPlanTitle
+                        : appText.createPlanHeader,
+                    hasNote: _note.isNotEmpty,
+                    onAddNote: _editNote,
+                    onClose: () => Navigator.of(context).maybePop(),
+                  )
+                : _Header(
+                    title: _isEditing
+                        ? appText.duaEditPlanTitle
+                        : appText.createPlanHeader,
+                  ),
             Expanded(
               child: _adding ? _buildForm(appText) : _buildAddedList(appText),
             ),
@@ -295,6 +320,12 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
         ),
       ),
     );
+
+    if (!widget.embedded) return content;
+    return ClipRRect(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(38.r)),
+      child: content,
+    );
   }
 
   Widget _buildForm(AppText appText) {
@@ -325,96 +356,142 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
           ),
         ),
         SizedBox(height: 18.h),
-        Container(
-          padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 18.h),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: context.lineColor(const Color(0xFFD5E59B)),
+        Row(
+          children: [
+            Text(
+              appText.selectCategory,
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
             ),
-            borderRadius: BorderRadius.circular(18.r),
+            const Spacer(),
+            IconButton(
+              onPressed: _pickCategory,
+              tooltip: appText.selectCategory,
+              icon: Icon(
+                Icons.open_in_new_rounded,
+                size: 18.sp,
+                color: const Color(0xFFA7B45B),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 6.h),
+        if (_categories.isEmpty)
+          SizedBox(
+            height: 48.h,
+            child: _SelectionField(
+              hint: appText.selectCategory,
+              value: _category == null
+                  ? null
+                  : context.localized(_category!.name),
+              onTap: _pickCategory,
+            ),
+          )
+        else
+          SizedBox(
+            height: 150.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              separatorBuilder: (_, _) => SizedBox(width: 12.w),
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                return SizedBox(
+                  width: 150.w,
+                  child: DuaCategoryTile(
+                    category: category,
+                    index: index,
+                    selected: _category?.id == category.id,
+                    onTap: () => setState(() {
+                      if (_category?.id != category.id) {
+                        _pendingDuas = const [];
+                      }
+                      _category = category;
+                    }),
+                  ),
+                );
+              },
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        SizedBox(height: 18.h),
+        Text(
+          appText.selectDua,
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+        ),
+        SizedBox(height: 8.h),
+        _SelectionField(
+          hint: appText.selectDua,
+          value: _pendingDuas.isEmpty
+              ? null
+              : _pendingDuas.length == 1
+              ? context.localized(_pendingDuas.first.title)
+              : appText.duaSelectedCount.replaceAll(
+                  '{n}',
+                  context.localizedDigits('${_pendingDuas.length}'),
+                ),
+          onTap: _pickDua,
+        ),
+        SizedBox(height: 18.h),
+        Row(
+          children: [
+            Expanded(
+              child: _PlannerDateField(
+                label: context.localized(
+                  const LocalizedText(en: 'Start Date', bn: 'শুরুর তারিখ'),
+                ),
+                value: _startDate,
+                onTap: () => _pickDate(start: true),
+              ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: _PlannerDateField(
+                label: context.localized(
+                  const LocalizedText(en: 'End Date', bn: 'শেষের তারিখ'),
+                ),
+                value: _endDate,
+                onTap: () => _pickDate(start: false),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        InkWell(
+          onTap: () => setState(() => _notifyEveryDay = !_notifyEveryDay),
+          borderRadius: BorderRadius.circular(8.r),
+          child: Row(
             children: [
-              Text(
-                appText.selectCategory,
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+              SizedBox(
+                width: 28.r,
+                height: 28.r,
+                child: Checkbox(
+                  value: _notifyEveryDay,
+                  onChanged: (value) =>
+                      setState(() => _notifyEveryDay = value ?? false),
+                  activeColor: const Color(0xFFA7B45B),
+                  side: const BorderSide(color: Color(0xFFD7E7A4)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                ),
               ),
-              SizedBox(height: 10.h),
-              _SelectionField(
-                hint: appText.selectCategory,
-                value: _category == null
-                    ? null
-                    : context.localized(_category!.name),
-                onTap: _pickCategory,
-              ),
-              SizedBox(height: 18.h),
-              Text(
-                appText.selectDua,
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 10.h),
-              _SelectionField(
-                hint: appText.selectDua,
-                value: _pendingDuas.isEmpty
-                    ? null
-                    : _pendingDuas.length == 1
-                    ? context.localized(_pendingDuas.first.title)
-                    : appText.duaSelectedCount.replaceAll(
-                        '{n}',
-                        context.localizedDigits('${_pendingDuas.length}'),
-                      ),
-                onTap: _pickDua,
-              ),
-              SizedBox(height: 18.h),
-              Text(
-                appText.duaPlanSlotLabel,
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 10.h),
-              Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
-                children: [
-                  for (final slot in duaPlanSlots)
-                    _SlotChip(
-                      label: duaSlotLabel(appText, slot),
-                      selected: _slot == slot,
-                      onTap: () => setState(() => _slot = slot),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Text(
+                  context.localized(
+                    const LocalizedText(
+                      en: 'Are you want to get notification every day',
+                      bn: 'আপনি কি প্রতিদিন নোটিফিকেশন পেতে চান?',
                     ),
-                ],
+                  ),
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: context.textInkColor(const Color(0xFF2C3320)),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: EdgeInsets.only(top: 12.h),
-            child: OutlinedButton(
-              onPressed: _add,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.inkColor(AppColor.primary),
-                side: const BorderSide(color: AppColor.primary),
-                padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22.r),
-                ),
-              ),
-              child: Text(
-                appText.add,
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 22.h),
-        Text(
-          appText.repeatLabel,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
-        SizedBox(height: 12.h),
-        _DaysOfWeekRow(selected: _days, onToggle: _toggleDay),
         if (_isEditing) ..._statusSection(appText),
       ],
     );
@@ -437,31 +514,6 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
           ),
           SizedBox(height: 10.h),
         ],
-        Align(
-          alignment: Alignment.centerRight,
-          child: OutlinedButton(
-            onPressed: _addMore,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: context.inkColor(AppColor.primary),
-              side: const BorderSide(color: AppColor.primary),
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22.r),
-              ),
-            ),
-            child: Text(
-              appText.addMore,
-              style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        SizedBox(height: 22.h),
-        Text(
-          appText.repeatLabel,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        ),
-        SizedBox(height: 12.h),
-        _DaysOfWeekRow(selected: _days, onToggle: _toggleDay),
         if (_isEditing) ..._statusSection(appText),
       ],
     );
@@ -585,6 +637,254 @@ class _Header extends StatelessWidget {
   );
 }
 
+class _CreatePlanSheetHeader extends StatelessWidget {
+  const _CreatePlanSheetHeader({
+    required this.title,
+    required this.hasNote,
+    required this.onAddNote,
+    required this.onClose,
+  });
+
+  final String title;
+  final bool hasNote;
+  final VoidCallback onAddNote;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(16.w, 9.h, 16.w, 8.h),
+    child: Column(
+      children: [
+        Container(
+          width: 60.w,
+          height: 5.h,
+          decoration: BoxDecoration(
+            color: const Color(0xFFD8D6D4),
+            borderRadius: BorderRadius.circular(99.r),
+          ),
+        ),
+        SizedBox(height: 14.h),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'serif',
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24.sp,
+                  color: context.textInkColor(const Color(0xFFA7B45B)),
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: onAddNote,
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 10.w),
+                minimumSize: Size(0, 34.h),
+                foregroundColor: const Color(0xFFA7B45B),
+                side: const BorderSide(color: Color(0xFFD7E7A4)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+              icon: Icon(
+                hasNote ? Icons.note_alt_rounded : Icons.edit_note_rounded,
+                size: 15.sp,
+              ),
+              label: Text(
+                context.localized(
+                  const LocalizedText(en: 'Add note', bn: 'নোট যোগ করুন'),
+                ),
+                style: TextStyle(fontSize: 10.sp),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            IconButton(
+              onPressed: onClose,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF5F5F5),
+              ),
+              icon: Icon(
+                Icons.close_rounded,
+                size: 19.sp,
+                color: context.textInkColor(const Color(0xFF777777)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _PlanNoteDialog extends StatefulWidget {
+  const _PlanNoteDialog({required this.initialValue});
+
+  final String initialValue;
+
+  @override
+  State<_PlanNoteDialog> createState() => _PlanNoteDialogState();
+}
+
+class _PlanNoteDialogState extends State<_PlanNoteDialog> {
+  late final _controller = TextEditingController(text: widget.initialValue);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Dialog(
+    insetPadding: EdgeInsets.symmetric(horizontal: 20.w),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+    child: Padding(
+      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 22.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.localized(
+              const LocalizedText(en: 'Add note', bn: 'নোট যোগ করুন'),
+            ),
+            style: TextStyle(
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w700,
+              color: context.textInkColor(const Color(0xFF182035)),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          TextField(
+            controller: _controller,
+            minLines: 6,
+            maxLines: 6,
+            decoration: InputDecoration(
+              hintText: AppText.of(context).writeHereHint,
+              alignLabelWithHint: true,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFFD7E7A4)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: const BorderSide(color: Color(0xFFA7B45B)),
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context, _controller.text),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFA7B45B),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                  child: Text(AppText.of(context).planSave),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.textInkColor(
+                      const Color(0xFF182035),
+                    ),
+                    side: const BorderSide(color: Color(0xFFE0E4EB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                  child: Text(AppText.of(context).planCancel),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _PlannerDateField extends StatelessWidget {
+  const _PlannerDateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final DateTime? value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
+      ),
+      SizedBox(height: 8.h),
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22.r),
+          child: Ink(
+            height: 45.h,
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFD7E7A4)),
+              borderRadius: BorderRadius.circular(22.r),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value == null
+                        ? context.localized(
+                            const LocalizedText(
+                              en: 'Select date',
+                              bn: 'তারিখ বাছাই করুন',
+                            ),
+                          )
+                        : context.localizedDigits(
+                            MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(value!),
+                          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10.5.sp,
+                      color: value == null
+                          ? AppColor.authHint
+                          : context.textInkColor(const Color(0xFF2C3320)),
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.calendar_month_outlined,
+                  size: 17.sp,
+                  color: const Color(0xFFA7B45B),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
 /// A tappable field that opens a picker. Shows the picked [value], or the
 /// [hint] while nothing is picked.
 class _SelectionField extends StatelessWidget {
@@ -665,81 +965,6 @@ class _SlotChip extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: 12.sp,
-          fontWeight: FontWeight.w600,
-          color: selected
-              ? Colors.white
-              : context.inkColor(const Color(0xFF5D6B44)),
-        ),
-      ),
-    ),
-  );
-}
-
-/// The seven weekday toggle chips for `daysOfWeek` (0 = Sunday ... 6 =
-/// Saturday, matching the API).
-class _DaysOfWeekRow extends StatelessWidget {
-  const _DaysOfWeekRow({required this.selected, required this.onToggle});
-
-  final Set<int> selected;
-  final ValueChanged<int> onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    final appText = AppText.of(context);
-    final names = [
-      appText.weekdaySunday,
-      appText.weekdayMonday,
-      appText.weekdayTuesday,
-      appText.weekdayWednesday,
-      appText.weekdayThursday,
-      appText.weekdayFriday,
-      appText.weekdaySaturday,
-    ];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        for (var day = 0; day < 7; day++)
-          _DayChip(
-            label: names[day].isEmpty ? '' : names[day].substring(0, 1),
-            selected: selected.contains(day),
-            onTap: () => onToggle(day),
-          ),
-      ],
-    );
-  }
-}
-
-class _DayChip extends StatelessWidget {
-  const _DayChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 36.r,
-      height: 36.r,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: selected ? AppColor.primary : context.surfaceColor(Colors.white),
-        border: Border.all(
-          color: selected
-              ? AppColor.primary
-              : context.lineColor(AppColor.authFieldBorder),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13.sp,
           fontWeight: FontWeight.w600,
           color: selected
               ? Colors.white
