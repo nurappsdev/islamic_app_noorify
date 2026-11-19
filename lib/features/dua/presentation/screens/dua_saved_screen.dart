@@ -32,34 +32,52 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       ? AppText.of(context).favoriteFolder
       : folder;
 
-  Future<void> _menu(String folder) async {
-    final action = await showMenu<String>(
+  Future<void> _openFolderSettings(String folder) async {
+    final details = _folderDetails(folder);
+    final action = await showModalBottomSheet<_FolderSettingsAction>(
       context: context,
-      position: const RelativeRect.fromLTRB(400, 200, 12, 0),
-      color: context.surfaceColor(Colors.white),
-      items: [
-        PopupMenuItem(
-          value: 'edit',
-          child: Text(AppText.readOf(context).duaSavedEdit),
-        ),
-        PopupMenuItem(
-          value: 'delete',
-          child: Text(
-            AppText.readOf(context).duaSavedDelete,
-            style: TextStyle(color: context.inkColor(Colors.red)),
-          ),
-        ),
-      ],
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const _FolderSettingsSheet(),
     );
     if (!mounted || action == null) return;
-    if (action == 'edit') {
+
+    if (action == _FolderSettingsAction.edit) {
       final value = await _editFolder(_labelFor(folder));
       final trimmed = value?.trim() ?? '';
       if (trimmed.isNotEmpty) _store.renameFolder(folder, trimmed);
+    } else if (action == _FolderSettingsAction.info) {
+      await showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (_) => _FolderInfoSheet(details: details),
+      );
     } else {
       final yes = await _confirmDelete();
       if (yes == true) _store.deleteFolder(folder);
     }
+  }
+
+  _FolderDetails _folderDetails(String folder) {
+    final bookmarks = _store.itemsIn(folder);
+    final categories = <String>{
+      for (final bookmark in bookmarks)
+        context.localized(
+          LocalizedText(
+            bn: bookmark.categoryNameBn,
+            en: bookmark.categoryNameEn,
+          ),
+        ),
+    }..removeWhere((name) => name.isEmpty);
+    final dates = bookmarks.map((bookmark) => bookmark.createdAt).toList();
+    dates.sort();
+    return _FolderDetails(
+      duaCount: bookmarks.length,
+      categories: categories.toList(),
+      createdAt: dates.isEmpty ? null : dates.first,
+      lastUpdatedAt: dates.isEmpty ? null : dates.last,
+    );
   }
 
   Future<String?> _editFolder(String value) {
@@ -170,7 +188,8 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
                                                 ),
                                           ),
                                         ),
-                                        onMenu: () => _menu(folder),
+                                        onMenu: () =>
+                                            _openFolderSettings(folder),
                                       );
                                     },
                                   ),
@@ -381,6 +400,473 @@ class _FolderCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    ),
+  );
+}
+
+enum _FolderSettingsAction { edit, info, delete }
+
+class _FolderDetails {
+  const _FolderDetails({
+    required this.duaCount,
+    required this.categories,
+    required this.createdAt,
+    required this.lastUpdatedAt,
+  });
+
+  final int duaCount;
+  final List<String> categories;
+  final DateTime? createdAt;
+  final DateTime? lastUpdatedAt;
+}
+
+class _FolderSettingsSheet extends StatelessWidget {
+  const _FolderSettingsSheet();
+
+  @override
+  Widget build(BuildContext context) => _FolderSheet(
+    title: context.localized(
+      const LocalizedText(
+        en: 'Saved Dua Settings',
+        bn: 'সংরক্ষিত দোয়ার সেটিংস',
+      ),
+    ),
+    child: Column(
+      children: [
+        _SettingsTile(
+          icon: Icons.edit_note_rounded,
+          iconColor: const Color(0xFFF0A40C),
+          iconBackground: const Color(0xFFFFF8E7),
+          title: context.localized(
+            const LocalizedText(
+              en: 'Edit Folder Name',
+              bn: 'ফোল্ডারের নাম পরিবর্তন করুন',
+            ),
+          ),
+          subtitle: context.localized(
+            const LocalizedText(
+              en: 'You can change the folder name',
+              bn: 'ফোল্ডারের নাম পরিবর্তন করতে পারবেন',
+            ),
+          ),
+          onTap: () => Navigator.pop(context, _FolderSettingsAction.edit),
+        ),
+        SizedBox(height: 12.h),
+        _SettingsTile(
+          icon: Icons.insights_rounded,
+          iconColor: const Color(0xFF71873A),
+          iconBackground: const Color(0xFFF3F9DD),
+          title: context.localized(
+            const LocalizedText(en: 'Folder Info', bn: 'ফোল্ডারের তথ্য'),
+          ),
+          subtitle: context.localized(
+            const LocalizedText(
+              en: 'Click to see this folder details.',
+              bn: 'ফোল্ডারের বিস্তারিত দেখতে ট্যাপ করুন।',
+            ),
+          ),
+          onTap: () => Navigator.pop(context, _FolderSettingsAction.info),
+        ),
+        SizedBox(height: 12.h),
+        _SettingsTile(
+          icon: Icons.delete_outline_rounded,
+          iconColor: const Color(0xFFFF4E50),
+          iconBackground: const Color(0xFFFFE7E8),
+          title: context.localized(
+            const LocalizedText(en: 'Delete Folder', bn: 'ফোল্ডার মুছুন'),
+          ),
+          subtitle: context.localized(
+            const LocalizedText(
+              en: 'Permanently remove folder.',
+              bn: 'ফোল্ডারটি স্থায়ীভাবে মুছে ফেলুন।',
+            ),
+          ),
+          color: const Color(0xFFFF4E50),
+          onTap: () => Navigator.pop(context, _FolderSettingsAction.delete),
+        ),
+        SizedBox(height: 26.h),
+        _FolderSheetButton(
+          label: AppText.of(context).commonDone,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    ),
+  );
+}
+
+class _FolderInfoSheet extends StatelessWidget {
+  const _FolderInfoSheet({required this.details});
+
+  final _FolderDetails details;
+
+  String _date(BuildContext context, DateTime? value) {
+    if (value == null) return '—';
+    return context.localizedDigits(
+      MaterialLocalizations.of(context).formatMediumDate(value),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final categoryCount = context.localizedDigits(
+      '${details.categories.length}',
+    );
+    final duaCount = context.localizedDigits('${details.duaCount}');
+    return _FolderSheet(
+      title: context.localized(
+        const LocalizedText(en: 'Folder Info', bn: 'ফোল্ডারের তথ্য'),
+      ),
+      child: Column(
+        children: [
+          _InfoTile(
+            icon: Icons.folder_open_outlined,
+            title: context.localized(
+              const LocalizedText(
+                en: 'Total category into this folder',
+                bn: 'এই ফোল্ডারে মোট বিভাগ',
+              ),
+            ),
+            subtitle: context.localized(
+              LocalizedText(
+                en: 'Total $categoryCount category into this folder',
+                bn: 'এই ফোল্ডারে মোট $categoryCountটি বিভাগ',
+              ),
+            ),
+            child: details.categories.isEmpty
+                ? null
+                : Wrap(
+                    spacing: 6.w,
+                    runSpacing: 5.h,
+                    children: [
+                      for (final category in details.categories)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF4F4F4),
+                            borderRadius: BorderRadius.circular(7.r),
+                          ),
+                          child: Text(
+                            category,
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: context.textInkColor(
+                                const Color(0xFF666666),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          SizedBox(height: 12.h),
+          _InfoTile(
+            icon: Icons.fact_check_outlined,
+            title: context.localized(
+              const LocalizedText(
+                en: 'Total dua into this folder',
+                bn: 'এই ফোল্ডারে মোট দোয়া',
+              ),
+            ),
+            subtitle: context.localized(
+              LocalizedText(
+                en: 'Total $duaCount dua into this folder',
+                bn: 'এই ফোল্ডারে মোট $duaCountটি দোয়া',
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          _InfoTile(
+            icon: Icons.calendar_month_outlined,
+            title: context.localized(
+              const LocalizedText(
+                en: 'Folder Create Date',
+                bn: 'ফোল্ডার তৈরির তারিখ',
+              ),
+            ),
+            subtitle: context.localized(
+              LocalizedText(
+                en: 'Folder created in ${_date(context, details.createdAt)}',
+                bn: 'ফোল্ডার তৈরি হয়েছে ${_date(context, details.createdAt)}',
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          _InfoTile(
+            icon: Icons.update_rounded,
+            title: context.localized(
+              const LocalizedText(en: 'Last updated', bn: 'সর্বশেষ হালনাগাদ'),
+            ),
+            subtitle: context.localized(
+              LocalizedText(
+                en: 'Saved folder last updated ${_date(context, details.lastUpdatedAt)}',
+                bn: 'ফোল্ডারটি সর্বশেষ হালনাগাদ হয়েছে ${_date(context, details.lastUpdatedAt)}',
+              ),
+            ),
+            emphasized: true,
+          ),
+          SizedBox(height: 26.h),
+          _FolderSheetButton(
+            label: context.localized(
+              const LocalizedText(en: 'Ok', bn: 'ঠিক আছে'),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FolderSheet extends StatelessWidget {
+  const _FolderSheet({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    constraints: BoxConstraints(maxHeight: .92.sh),
+    padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 18.h),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(Colors.white),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(42.r)),
+    ),
+    child: SingleChildScrollView(
+      child: Column(
+        children: [
+          Container(
+            width: 60.w,
+            height: 6.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD6D4D3),
+              borderRadius: BorderRadius.circular(99.r),
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 25.sp,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    color: context.textInkColor(const Color(0xFFA7B45B)),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF5F5F5),
+                ),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 20.sp,
+                  color: context.textInkColor(const Color(0xFF777777)),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          child,
+        ],
+      ),
+    ),
+  );
+}
+
+class _SettingsTile extends StatelessWidget {
+  const _SettingsTile({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final String title;
+  final String subtitle;
+  final Color? color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20.r),
+      child: Ink(
+        padding: EdgeInsets.all(13.r),
+        decoration: BoxDecoration(
+          color: color == null
+              ? context.surfaceColor(Colors.white)
+              : color!.withValues(alpha: .035),
+          borderRadius: BorderRadius.circular(20.r),
+          border: color == null
+              ? null
+              : Border.all(color: color!.withValues(alpha: .22)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .025),
+              blurRadius: 16.r,
+              offset: Offset(0, 5.h),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48.r,
+              height: 48.r,
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(15.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 26.sp),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      color:
+                          color ??
+                          context.textInkColor(const Color(0xFF222222)),
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.5.sp,
+                      color: color ?? const Color(0xFF777777),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: color ?? const Color(0xFFAAAAAA),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.child,
+    this.emphasized = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget? child;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: EdgeInsets.all(16.r),
+    decoration: BoxDecoration(
+      color: emphasized
+          ? const Color(0xFFFBFDF0)
+          : context.surfaceColor(Colors.white),
+      borderRadius: BorderRadius.circular(20.r),
+      border: emphasized ? Border.all(color: const Color(0xFFD9E69A)) : null,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: .025),
+          blurRadius: 16.r,
+          offset: Offset(0, 5.h),
+        ),
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: Icon(icon, color: const Color(0xFFB6C66D), size: 27.sp),
+        ),
+        SizedBox(width: 18.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: emphasized
+                      ? const Color(0xFFA5B657)
+                      : context.textInkColor(const Color(0xFF242424)),
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 11.5.sp,
+                  color: emphasized
+                      ? const Color(0xFFA5B657)
+                      : const Color(0xFF777777),
+                ),
+              ),
+              if (child != null) ...[SizedBox(height: 8.h), child!],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _FolderSheetButton extends StatelessWidget {
+  const _FolderSheetButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    height: 58.h,
+    child: FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFFA7B45B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(32.r),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 17.sp, color: Colors.white),
       ),
     ),
   );
