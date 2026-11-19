@@ -11,7 +11,13 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 /// both the dashboard's category preview grid and the full "All Category"
 /// grid (design `devImg/img_16.png` / `devImg/img_17.png`).
 class DuaCategoryTile extends StatelessWidget {
-  const DuaCategoryTile({super.key, required this.category, this.index = 0});
+  const DuaCategoryTile({
+    super.key,
+    required this.category,
+    this.index = 0,
+    this.selected = false,
+    this.onTap,
+  });
 
   final DuaCategoryModel category;
 
@@ -19,6 +25,12 @@ class DuaCategoryTile extends StatelessWidget {
   /// [_palette] so the same category reads the same color on both the
   /// dashboard preview and the full "All Category" grid.
   final int index;
+
+  /// Draws the chosen state when the tile is used as a picker.
+  final bool selected;
+
+  /// Overrides the default category-details navigation when supplied.
+  final VoidCallback? onTap;
 
   static const _palette = [
     _CategoryPalette(bg: Color(0xFFE3DAF5), accent: Color(0xFF7C5FC4)),
@@ -33,18 +45,23 @@ class DuaCategoryTile extends StatelessWidget {
     final description = category.description;
 
     return InkWell(
-      onTap: category.id.isEmpty
-          ? null
-          : () => Navigator.of(context).pushNamed(
-              RouteNames.duaCategoryDuas,
-              arguments: DuaCategoryDuasArgs(category),
-            ),
+      onTap:
+          onTap ??
+          (category.id.isEmpty
+              ? null
+              : () => Navigator.of(context).pushNamed(
+                  RouteNames.duaCategoryDuas,
+                  arguments: DuaCategoryDuasArgs(category),
+                )),
       borderRadius: BorderRadius.circular(18.r),
       child: Container(
         padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: context.surfaceColor(palette.bg),
           borderRadius: BorderRadius.circular(18.r),
+          border: selected
+              ? Border.all(color: context.inkColor(palette.accent), width: 2)
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

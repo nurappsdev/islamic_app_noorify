@@ -73,10 +73,9 @@ class _CategoryList extends StatelessWidget {
   }
 }
 
-/// Bottom sheet listing one category's duas (`GET /duas?categoryId=...`), via
-/// [DuaCategoryDuasCubit] — multi-select (design change: a plan can hold
-/// several duas from the same category at once). Closes with every
-/// [DuaFeaturedModel] checked, once "Done" is tapped.
+/// Compact Select Dua picker (`devImg/img_27.png`) for one category's duas.
+/// Its expand action opens [DuaPlanDuaPickerScreen] (`devImg/img_28.png`).
+/// Both return the selected dua as a one-item list for Create Plan.
 class DuaItemPickerSheet extends StatelessWidget {
   const DuaItemPickerSheet({
     super.key,
@@ -90,11 +89,414 @@ class DuaItemPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => DuaCategoryDuasCubit(duaRepository)..load(category),
-    child: _DuaMultiSelectBody(
+    child: _DuaCompactPicker(
       category: category,
       initialSelectedIds: initialSelectedIds,
     ),
   );
+}
+
+/// Full-screen Dua picker used by the expand action in [DuaItemPickerSheet].
+/// It follows the Select Dua design (`devImg/img_28.png`) and returns the
+/// selected dua as a one-item list, keeping the Create Plan result contract.
+class DuaPlanDuaPickerScreen extends StatelessWidget {
+  const DuaPlanDuaPickerScreen({
+    super.key,
+    required this.category,
+    this.initialSelectedIds = const {},
+  });
+
+  final DuaCategoryModel category;
+  final Set<String> initialSelectedIds;
+
+  @override
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => DuaCategoryDuasCubit(duaRepository)..load(category),
+    child: Scaffold(
+      backgroundColor: context.pageColor(Colors.white),
+      body: SafeArea(
+        child: _DuaPickerBody(
+          category: category,
+          initialSelectedIds: initialSelectedIds,
+          fullScreen: true,
+        ),
+      ),
+    ),
+  );
+}
+
+/// Inline Select Dua dropdown for the Create Plan form. Unlike
+/// [DuaItemPickerSheet], it does not create a dialog or modal route.
+class DuaPlanDuaDropdown extends StatelessWidget {
+  const DuaPlanDuaDropdown({
+    super.key,
+    required this.category,
+    required this.onSelected,
+  });
+
+  final DuaCategoryModel category;
+  final ValueChanged<DuaFeaturedModel> onSelected;
+
+  @override
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => DuaCategoryDuasCubit(duaRepository)..load(category),
+    child: _DuaPickerBody(
+      category: category,
+      initialSelectedIds: const {},
+      fullScreen: false,
+      showTitle: false,
+      showSearch: false,
+      showExpandAction: false,
+      onSelected: onSelected,
+    ),
+  );
+}
+
+class _DuaCompactPicker extends StatelessWidget {
+  const _DuaCompactPicker({
+    required this.category,
+    required this.initialSelectedIds,
+  });
+
+  final DuaCategoryModel category;
+  final Set<String> initialSelectedIds;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * .58,
+    ),
+    decoration: BoxDecoration(
+      color: context.pageColor(Colors.white),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+    ),
+    child: SafeArea(
+      top: false,
+      child: _DuaPickerBody(
+        category: category,
+        initialSelectedIds: initialSelectedIds,
+        fullScreen: false,
+      ),
+    ),
+  );
+}
+
+class _DuaPickerBody extends StatefulWidget {
+  const _DuaPickerBody({
+    required this.category,
+    required this.initialSelectedIds,
+    required this.fullScreen,
+    this.showTitle = true,
+    this.showSearch = true,
+    this.showExpandAction = true,
+    this.onSelected,
+  });
+
+  final DuaCategoryModel category;
+  final Set<String> initialSelectedIds;
+  final bool fullScreen;
+  final bool showTitle;
+  final bool showSearch;
+  final bool showExpandAction;
+  final ValueChanged<DuaFeaturedModel>? onSelected;
+
+  @override
+  State<_DuaPickerBody> createState() => _DuaPickerBodyState();
+}
+
+class _DuaPickerBodyState extends State<_DuaPickerBody> {
+  String _query = '';
+
+  Future<void> _openFullScreen() async {
+    final result = await Navigator.of(context).push<List<DuaFeaturedModel>>(
+      MaterialPageRoute(
+        builder: (_) => DuaPlanDuaPickerScreen(
+          category: widget.category,
+          initialSelectedIds: widget.initialSelectedIds,
+        ),
+      ),
+    );
+    if (result != null && mounted) Navigator.of(context).pop(result);
+  }
+
+  void _select(DuaFeaturedModel dua) {
+    final onSelected = widget.onSelected;
+    if (onSelected != null) {
+      onSelected(dua);
+    } else {
+      Navigator.of(context).pop([dua]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final state = context.watch<DuaCategoryDuasCubit>().state;
+    final title = widget.fullScreen
+        ? context.localized(
+            const LocalizedText(en: 'Select Dua', bn: 'দোয়া বাছাই করুন'),
+          )
+        : appText.selectDua;
+
+    if (state.status == DuaCategoryDuasStatus.initial ||
+        state.status == DuaCategoryDuasStatus.loading) {
+      return const _PickerLoading();
+    }
+    if (state.status == DuaCategoryDuasStatus.failure) {
+      return _PickerMessage(
+        message: state.error ?? '',
+        actionLabel: appText.tryAgain,
+        onAction: () =>
+            context.read<DuaCategoryDuasCubit>().load(widget.category),
+      );
+    }
+
+    final query = _query.toLowerCase();
+    final duas = [
+      for (final dua in state.duas)
+        if (query.isEmpty ||
+            context.localized(dua.title).toLowerCase().contains(query) ||
+            context.localized(dua.translation).toLowerCase().contains(query))
+          dua,
+    ];
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16.w,
+        widget.fullScreen ? 8.h : 16.h,
+        16.w,
+        16.h,
+      ),
+      child: Column(
+        children: [
+          if (widget.fullScreen)
+            _FullPickerHeader(title: title)
+          else if (widget.showTitle)
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w500,
+                      color: context.textInkColor(const Color(0xFF222222)),
+                    ),
+                  ),
+                ),
+                if (widget.showExpandAction)
+                  IconButton(
+                    onPressed: _openFullScreen,
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF3F7E7),
+                    ),
+                    icon: Icon(
+                      Icons.open_in_new_rounded,
+                      color: const Color(0xFFA7B45B),
+                      size: 18.sp,
+                    ),
+                  ),
+              ],
+            ),
+          if (widget.fullScreen)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(top: 14.h, bottom: 12.h),
+                child: Text(
+                  context.localizedDigits('Total Dua ( ${state.duas.length} )'),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: context.textInkColor(const Color(0xFF222222)),
+                  ),
+                ),
+              ),
+            )
+          else if (widget.showTitle)
+            SizedBox(height: 8.h),
+          if (widget.showSearch) ...[
+            TextField(
+              onChanged: (value) => setState(() => _query = value.trim()),
+              decoration: InputDecoration(
+                hintText: widget.fullScreen ? 'Search Dua' : 'Search here',
+                hintStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontStyle: FontStyle.italic,
+                  color: const Color(0xFF9B9B9B),
+                ),
+                suffixIcon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFFA7B45B),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 14.w),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(26.r),
+                  borderSide: const BorderSide(color: Color(0xFFD7E7A4)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(26.r),
+                  borderSide: const BorderSide(color: Color(0xFFA7B45B)),
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+          ],
+          Expanded(
+            child: duas.isEmpty
+                ? Center(child: Text(appText.noResultsFound))
+                : ListView.separated(
+                    itemCount: duas.length,
+                    separatorBuilder: (_, _) => SizedBox(height: 8.h),
+                    itemBuilder: (context, index) => _PlanDuaTile(
+                      dua: duas[index],
+                      index: index,
+                      onTap: () => _select(duas[index]),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FullPickerHeader extends StatelessWidget {
+  const _FullPickerHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 48.h,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFDFDE68),
+            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
+          ),
+        ),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'serif',
+            fontSize: 24.sp,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w700,
+            color: context.textInkColor(const Color(0xFFA7B45B)),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PlanDuaTile extends StatelessWidget {
+  const _PlanDuaTile({
+    required this.dua,
+    required this.index,
+    required this.onTap,
+  });
+
+  final DuaFeaturedModel dua;
+  final int index;
+  final VoidCallback onTap;
+
+  static const _colors = [
+    Color(0xFFFAD8E7),
+    Color(0xFFFFE9AA),
+    Color(0xFFD2F5B8),
+    Color(0xFFC8E9F9),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[index % _colors.length];
+    final subtitle = context.localized(dua.translation);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(21.r),
+        child: Ink(
+          padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(21.r),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 43.r,
+                height: 43.r,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  context.localizedDigits('${index + 1}'),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    color: const Color(0xFF9AA957),
+                  ),
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.localized(dua.title),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'serif',
+                        fontSize: 16.sp,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w700,
+                        color: context.textInkColor(const Color(0xFF293021)),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle.isEmpty ? '—' : subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: context.textInkColor(const Color(0xFF777777)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 30.r,
+                height: 30.r,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .45),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF9AA957)),
+                ),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 19.sp,
+                  color: const Color(0xFF758437),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DuaMultiSelectBody extends StatefulWidget {

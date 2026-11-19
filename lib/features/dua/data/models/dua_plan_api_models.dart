@@ -45,15 +45,16 @@ class DuaPlanItemDraft {
 /// `devImg/img_8.png` — one or more duas (design's "Add"/"Add More"), each
 /// with its own target count and time slot.
 ///
-/// `startDate`/`endDate`/reminder fields are left out so a created plan
-/// simply starts today and has no end date; [status] is only set when
-/// editing (confirmed working: `PATCH` with `status` moves the plan between
-/// `in_progress`/`completed`/`abandoned`).
+/// [startDate] and [endDate] are optional calendar boundaries for the plan.
+/// [status] is only set when editing (confirmed working: `PATCH` with
+/// `status` moves the plan between `in_progress`/`completed`/`abandoned`).
 class DuaPlanDraft {
   const DuaPlanDraft({
     required this.name,
     required this.items,
     this.daysOfWeek = const [0, 1, 2, 3, 4, 5, 6],
+    this.startDate,
+    this.endDate,
     this.status,
   });
 
@@ -63,6 +64,9 @@ class DuaPlanDraft {
   /// 0 = Sunday ... 6 = Saturday.
   final List<int> daysOfWeek;
 
+  final DateTime? startDate;
+  final DateTime? endDate;
+
   /// `in_progress`, `completed` or `abandoned` — omitted on create.
   final String? status;
 
@@ -70,9 +74,16 @@ class DuaPlanDraft {
     'name': name,
     'items': [for (final item in items) item.toJson()],
     'daysOfWeek': daysOfWeek,
+    if (startDate != null) 'startDate': _dateOnly(startDate!),
+    if (endDate != null) 'endDate': _dateOnly(endDate!),
     if (status != null) 'status': status,
   };
 }
+
+String _dateOnly(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
 
 /// One of the user's dua plans, as `GET /duas/planner/plans` lists them —
 /// CONFIRMED real response (2026-10-14): `totalDuas` is top-level, today's
@@ -89,6 +100,8 @@ class DuaPlan {
     required this.isCompleted,
     required this.currentStreak,
     required this.longestStreak,
+    this.startDate = '',
+    this.endDate = '',
   });
 
   final String id;
@@ -106,6 +119,8 @@ class DuaPlan {
   final bool isCompleted;
   final int currentStreak;
   final int longestStreak;
+  final String startDate;
+  final String endDate;
 
   factory DuaPlan.fromJson(Map<String, dynamic> json) {
     final today = _mapOf(json['today']);
@@ -120,6 +135,8 @@ class DuaPlan {
       isCompleted: today['isCompleted'] == true,
       currentStreak: _asInt(stats['currentStreak']),
       longestStreak: _asInt(stats['longestStreak']),
+      startDate: json['startDate']?.toString() ?? '',
+      endDate: json['endDate']?.toString() ?? '',
     );
   }
 }
