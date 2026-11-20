@@ -18,6 +18,9 @@ class LanguageHeaderInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     options.headers[header] = code;
+    if (options.path.startsWith('/duas')) {
+      options.queryParameters.putIfAbsent('lang', () => code);
+    }
     handler.next(options);
   }
 }

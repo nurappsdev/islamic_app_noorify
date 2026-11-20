@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
-import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
@@ -132,22 +131,6 @@ class _GroupHeader extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        onPressed: () => Navigator.maybePop(context),
-                        style: IconButton.styleFrom(
-                          backgroundColor: context.surfaceColor(
-                            Color(0xFFEDE7A6),
-                          ),
-                          foregroundColor: context.inkColor(AppColor.authLogo),
-                        ),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 16,
-                        ),
-                      ),
-                    ),
                     Text(
                       featured.groupLabel,
                       style: TextStyle(

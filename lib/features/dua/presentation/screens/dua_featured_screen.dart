@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
@@ -46,7 +47,7 @@ class _DuaFeaturedView extends StatelessWidget {
               builder: (context, state) {
                 if (state.status == DuaLoadStatus.loading ||
                     state.status == DuaLoadStatus.initial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DuaListShimmer(cardHeight: 140);
                 }
                 if (state.status == DuaLoadStatus.failure) {
                   return DuaErrorRetry(
@@ -65,7 +66,10 @@ class _DuaFeaturedView extends StatelessWidget {
                   ),
                   children: [
                     SizedBox(height: 6.h),
-                    DuaPageHeader(title: appText.duaFeaturedTitle),
+                    DuaPageHeader(
+                      title: appText.duaFeaturedTitle,
+                      showBack: false,
+                    ),
                     SizedBox(height: 16.h),
                     Text(
                       context.localizedDigits(

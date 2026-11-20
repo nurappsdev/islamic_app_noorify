@@ -60,12 +60,15 @@ class DuaPlanDetailCubit extends Cubit<DuaPlanDetailState> {
   final String planId;
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(state.copyWith(status: DuaPlanDetailStatus.loading));
     try {
       final detail = await _repository.getPlanDetail(planId);
+      if (isClosed) return;
       final entries = await Future.wait([
         for (final item in detail.items) _entryFor(item),
       ]);
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: DuaPlanDetailStatus.success,
@@ -75,6 +78,7 @@ class DuaPlanDetailCubit extends Cubit<DuaPlanDetailState> {
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         state.copyWith(status: DuaPlanDetailStatus.failure, error: '$error'),
       );

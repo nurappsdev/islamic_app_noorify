@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+
 /// Back button + centered title row shared by the Dua dashboard, All
 /// Category, and Featured Dua screens (design `img_1.png` / `img_2.png` /
 /// `img_3.png`).
@@ -10,6 +12,7 @@ class DuaPageHeader extends StatelessWidget {
     required this.title,
     this.action,
     this.onBack,
+    this.showBack = true,
     this.titleBesideBack = false,
     this.maxTitleChars,
   });
@@ -21,6 +24,10 @@ class DuaPageHeader extends StatelessWidget {
   /// dashboard sends the user to the app's main Home screen instead of
   /// popping within the Dua feature's own stack.
   final VoidCallback? onBack;
+
+  /// Bottom-navigation destinations are already top-level screens, so they
+  /// hide the leading back action while detail screens keep it.
+  final bool showBack;
 
   /// Puts the title right next to the back button instead of centering it
   /// in the row — for a screen whose action icons leave no room in the
@@ -51,8 +58,8 @@ class DuaPageHeader extends StatelessWidget {
     final backButton = IconButton(
       onPressed: onBack ?? () => Navigator.maybePop(context),
       style: IconButton.styleFrom(
-        backgroundColor: const Color(0xFFDFDE68),
-        foregroundColor: const Color(0xFF303629),
+        backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
+        foregroundColor: context.onLightInkColor(const Color(0xFF303629)),
         minimumSize: Size(38.r, 38.r),
       ),
       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -63,8 +70,8 @@ class DuaPageHeader extends StatelessWidget {
       child: titleBesideBack
           ? Row(
               children: [
-                backButton,
-                SizedBox(width: 10.w),
+                if (showBack) backButton,
+                if (showBack) SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
                     _displayTitle,
@@ -79,7 +86,8 @@ class DuaPageHeader extends StatelessWidget {
           : Stack(
               alignment: Alignment.center,
               children: [
-                Align(alignment: Alignment.centerLeft, child: backButton),
+                if (showBack)
+                  Align(alignment: Alignment.centerLeft, child: backButton),
                 Text(_displayTitle, style: titleStyle),
                 if (action != null)
                   Align(alignment: Alignment.centerRight, child: action!),

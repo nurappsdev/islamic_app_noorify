@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_home_cubit.da
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -95,7 +96,7 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
               builder: (context, state) {
                 if (state.status == DuaLoadStatus.loading ||
                     state.status == DuaLoadStatus.initial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DuaCategoryGridShimmer();
                 }
                 if (state.status == DuaLoadStatus.failure) {
                   return DuaErrorRetry(
@@ -115,7 +116,10 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                   ),
                   children: [
                     SizedBox(height: 6.h),
-                    DuaPageHeader(title: appText.duaAllCategoryTitle),
+                    DuaPageHeader(
+                      title: appText.duaAllCategoryTitle,
+                      showBack: false,
+                    ),
                     SizedBox(height: 16.h),
                     Text(
                       context.localizedDigits(

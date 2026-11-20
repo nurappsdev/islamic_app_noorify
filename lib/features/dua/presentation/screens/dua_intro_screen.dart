@@ -18,11 +18,15 @@ class DuaIntroScreen extends StatelessWidget {
     final appText = AppText.of(context);
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFDFEFB), Color(0xFFF3F6E8), Color(0xFFDCE6C4)],
+            colors: [
+              context.pageColor(const Color(0xFFFDFEFB)),
+              context.pageColor(const Color(0xFFF3F6E8)),
+              context.pageColor(const Color(0xFFDCE6C4)),
+            ],
             stops: [0.0, 0.55, 1.0],
           ),
         ),
@@ -43,7 +47,9 @@ class DuaIntroScreen extends StatelessWidget {
                           backgroundColor: context.surfaceColor(
                             Color(0xFFDFDE68),
                           ),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,
