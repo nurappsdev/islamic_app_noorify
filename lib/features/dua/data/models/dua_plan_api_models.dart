@@ -116,6 +116,7 @@ class DuaPlan {
     this.description = '',
     this.reminderEnabled = false,
     this.reminderTime,
+    this.daysOfWeek = const [],
   });
 
   final String id;
@@ -139,6 +140,28 @@ class DuaPlan {
   final bool reminderEnabled;
   final String? reminderTime;
 
+  /// 0 = Sunday ... 6 = Saturday. Empty when the list response leaves the
+  /// schedule out, which is read as "every day".
+  final List<int> daysOfWeek;
+
+  /// Whether the plan runs on [date] — inside its start/end boundaries and on
+  /// a weekday its schedule includes.
+  bool runsOn(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    final start = DateTime.tryParse(startDate);
+    final end = DateTime.tryParse(endDate);
+    if (start != null &&
+        DateTime(start.year, start.month, start.day).isAfter(day)) {
+      return false;
+    }
+    if (end != null && DateTime(end.year, end.month, end.day).isBefore(day)) {
+      return false;
+    }
+    // `DateTime.weekday` is 1 = Monday ... 7 = Sunday; the API counts
+    // 0 = Sunday ... 6 = Saturday.
+    return daysOfWeek.isEmpty || daysOfWeek.contains(day.weekday % 7);
+  }
+
   factory DuaPlan.fromJson(Map<String, dynamic> json) {
     final today = _mapOf(json['today']);
     final stats = _mapOf(json['stats']);
@@ -157,6 +180,9 @@ class DuaPlan {
       description: json['description']?.toString() ?? '',
       reminderEnabled: json['reminderEnabled'] == true,
       reminderTime: json['reminderTime']?.toString(),
+      daysOfWeek: [
+        for (final day in json['daysOfWeek'] as List? ?? const []) _asInt(day),
+      ],
     );
   }
 }

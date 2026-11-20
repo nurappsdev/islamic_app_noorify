@@ -16,6 +16,12 @@ import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_planner_sc
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
+/// The Sunday ... Saturday week [date] falls in, as the strip shows it.
+List<DateTime> _weekOf(DateTime date) {
+  final sunday = date.subtract(Duration(days: date.weekday % 7));
+  return [for (var day = 0; day < 7; day++) sunday.add(Duration(days: day))];
+}
+
 String _d(DateTime date) =>
     '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'
@@ -33,6 +39,10 @@ class _FakeRepository implements DuaRepository {
 
   /// Every `PATCH` of a plan's reminder flag.
   final reminderCalls = <(String, bool)>[];
+
+  /// When set, the in-progress tab serves these plans instead of its usual
+  /// four.
+  List<DuaPlan>? planOverride;
 
   /// While set, every plans request waits on it — a stand-in for a slow
   /// network, so a test can tell a cached list from a fetched one.
@@ -72,6 +82,16 @@ class _FakeRepository implements DuaRepository {
         page: 1,
         limit: 10,
         total: 4,
+        totalPage: 1,
+      );
+    }
+    final override = planOverride;
+    if (override != null) {
+      return DuaPlanPage(
+        plans: override,
+        page: 1,
+        limit: 10,
+        total: override.length,
         totalPage: 1,
       );
     }
@@ -233,24 +253,29 @@ void main() {
       expect(find.text('04'), findsOneWidget);
       expect(find.text('Total plan 03'), findsOneWidget);
 
-      // Plans and the week's dots are fetched together, in one window.
+      // Plans and the week's dots are fetched together, for the visible
+      // Sunday ... Saturday week.
+      final week = _weekOf(repository.today);
       expect(repository.calendarWindows, hasLength(1));
       expect(repository.calendarWindows.single, (
-        _d(repository.today.subtract(const Duration(days: 3))),
-        _d(repository.today.add(const Duration(days: 3))),
+        _d(week.first),
+        _d(week.last),
       ));
 
-      // The strip runs today-3 ... today+3. Of its three past days the
-      // calendar reports one as goal-met (green) and two as not (red);
-      // today and the future days stay neutral.
+      // Every past day of the visible week that the calendar reports as
+      // goal-met shows green, the rest of the past days red; today and the
+      // future days stay neutral.
+      final past = week
+          .map((date) => date.difference(repository.today).inDays)
+          .where((offset) => offset < 0);
       final dots = dotsOf(tester);
       expect(
         dots.where((color) => color == const Color(0xFF5FBD2F)),
-        hasLength(1),
+        hasLength(past.where((offset) => offset.isEven).length),
       );
       expect(
         dots.where((color) => color == const Color(0xFFE35D5D)),
-        hasLength(2),
+        hasLength(past.where((offset) => offset.isOdd).length),
       );
     },
   );
@@ -431,6 +456,67 @@ void main() {
     }
     await tester.pump(const Duration(milliseconds: 60));
     expect(find.text('Morning Adhkar Routine'), findsOneWidget);
+  });
+
+  testWidgets('swiping the strip moves a week, like the arrows do', (
+    tester,
+  ) async {
+    final repository = await pumpPlanner(tester);
+    final week = _weekOf(repository.today);
+
+    await tester.fling(
+      find.text('${week.first.day}'),
+      const Offset(-200, 0),
+      800,
+    );
+    await tester.pumpAndSettle();
+
+    final nextWeek = week.last.add(const Duration(days: 1));
+    expect(find.text('${nextWeek.day}'), findsOneWidget);
+    // The new week's dots were fetched, once.
+    expect(repository.calendarWindows, hasLength(2));
+  });
+
+  testWidgets('a plan shows only on the weekdays its schedule includes, and an '
+      'unscheduled day carries no dot', (tester) async {
+    final repository = _FakeRepository();
+    final week = _weekOf(repository.today);
+    // A day of this week that is not today, so the plan is hidden at first.
+    final otherDay = week.firstWhere((date) => date != repository.today);
+    repository.planOverride = [
+      DuaPlan(
+        id: 'weekly-1',
+        name: 'One weekday plan',
+        status: 'in_progress',
+        totalDuas: 3,
+        completedDuas: 0,
+        percentage: 0,
+        isCompleted: false,
+        currentStreak: 0,
+        longestStreak: 0,
+        startDate: _d(week.first),
+        endDate: _d(week.last),
+        daysOfWeek: [otherDay.weekday % 7],
+      ),
+    ];
+    await pumpPlanner(tester, withRepository: repository);
+
+    expect(find.text('One weekday plan'), findsNothing);
+    expect(find.text('Total plan 00'), findsOneWidget);
+
+    // Only the one scheduled day carries a dot at all.
+    const dotColours = [
+      Color(0xFF5FBD2F),
+      Color(0xFFE35D5D),
+      Color(0xFFDFE2D8),
+      Color(0xFF6E7A45),
+    ];
+    expect(dotsOf(tester).where(dotColours.contains), hasLength(1));
+
+    await tester.tap(find.text('${otherDay.day}'));
+    await tester.pump();
+    expect(find.text('One weekday plan'), findsOneWidget);
+    expect(find.text('Total plan 01'), findsOneWidget);
   });
 
   testWidgets('tapping a card reveals its "Explore now" button', (

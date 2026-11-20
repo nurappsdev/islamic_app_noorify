@@ -147,11 +147,16 @@ class DuaPlannerCubit extends Cubit<DuaPlannerState> {
   /// across the same week twice costs nothing.
   final Set<String> _requestedDays = {};
 
+  /// The Sunday of the week [date] falls in — the strip runs Sunday to
+  /// Saturday, so that is the window the dots are fetched for.
+  static DateTime _weekStart(DateTime date) {
+    final day = _dateOnly(date);
+    return day.subtract(Duration(days: day.weekday % 7));
+  }
+
   /// The week the strip shows; [load] fetches its dots alongside the plans.
-  DateTime _windowFrom = _dateOnly(
-    DateTime.now().subtract(const Duration(days: 3)),
-  );
-  DateTime _windowTo = _dateOnly(DateTime.now().add(const Duration(days: 3)));
+  DateTime _windowFrom = _weekStart(DateTime.now());
+  DateTime _windowTo = _weekStart(DateTime.now()).add(const Duration(days: 6));
 
   /// The dots for [from]...[to], unless every day in it is already known.
   /// Called by the screen when the week strip moves — and only then.

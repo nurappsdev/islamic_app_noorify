@@ -86,35 +86,19 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
     final byDate = state.tab == 0;
     return [
       for (final plan in state.plans)
-        if ((!byDate || _runsOnSelectedDate(plan)) &&
+        if ((!byDate || plan.runsOn(_selectedDate)) &&
             (query.isEmpty || plan.name.toLowerCase().contains(query)))
           plan,
     ];
   }
 
-  /// A plan runs on the selected day when the day sits inside its start/end
-  /// boundaries; a missing boundary is open ended on that side.
-  bool _runsOnSelectedDate(DuaPlan plan) {
-    final start = DateTime.tryParse(plan.startDate);
-    final end = DateTime.tryParse(plan.endDate);
-    if (start != null && DateUtils.dateOnly(start).isAfter(_selectedDate)) {
-      return false;
-    }
-    if (end != null && DateUtils.dateOnly(end).isBefore(_selectedDate)) {
-      return false;
-    }
-    return true;
-  }
-
   void _selectDate(DateTime date) {
     if (date == _selectedDate) return;
-    setState(() => _selectedDate = date);
-    // The strip shows the selected day with three on either side; ask for
-    // that window's dots, which is a no-op once they are known.
-    _cubit.loadCalendar(
-      date.subtract(const Duration(days: 3)),
-      date.add(const Duration(days: 3)),
-    );
+    setState(() => _selectedDate = DateUtils.dateOnly(date));
+    // One request per new week: moving between days of a week already shown
+    // asks for nothing, since those seven days are known.
+    final week = _PlannerCalendar.visibleDates(_selectedDate);
+    _cubit.loadCalendar(week.first, week.last);
   }
 
   void _toggleSearch() {
@@ -497,6 +481,21 @@ class _PlanCard extends StatelessWidget {
   final VoidCallback onTap;
 
   /// A short localized date for the compact schedule chips.
+  /// The plan's span, short: "May 14 - Jun 30", or one side alone when the
+  /// other is missing.
+  String? _dateRangeLabel(BuildContext context) {
+    final start = _dateLabel(context, plan.startDate);
+    final end = _dateLabel(context, plan.endDate);
+    if (start != null && end != null) return '$start - $end';
+    if (start != null) {
+      return '${context.localized(const LocalizedText(en: 'From', bn: 'থেকে'))} $start';
+    }
+    if (end != null) {
+      return '${context.localized(const LocalizedText(en: 'Till', bn: 'পর্যন্ত'))} $end';
+    }
+    return null;
+  }
+
   String? _dateLabel(BuildContext context, String value) {
     final date = DateTime.tryParse(value);
     if (date == null) return null;
@@ -636,13 +635,7 @@ class _PlanCard extends StatelessWidget {
       (Color(0xFFD9EFA8), Color(0xFF7E9440)),
     ];
     final (cardColor, accent) = palette[(serial - 1) % palette.length];
-    final startDate = _dateLabel(context, plan.startDate);
-    final endDate = _dateLabel(context, plan.endDate);
-    final dateChip = startDate != null
-        ? '${context.localized(const LocalizedText(en: 'Start date', bn: 'শুরুর তারিখ'))} $startDate'
-        : endDate != null
-        ? '${context.localized(const LocalizedText(en: 'End date', bn: 'শেষ তারিখ'))} $endDate'
-        : null;
+    final dateChip = _dateRangeLabel(context);
     return InkWell(
       borderRadius: BorderRadius.circular(24.r),
       onTap: onTap,
@@ -835,7 +828,7 @@ class _PlanDateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+    padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
     decoration: BoxDecoration(
       color: context.surfaceColor(Colors.white.withValues(alpha: .85)),
       borderRadius: BorderRadius.circular(99.r),
@@ -844,7 +837,7 @@ class _PlanDateChip extends StatelessWidget {
       label,
       maxLines: 1,
       style: TextStyle(
-        fontSize: 9.sp,
+        fontSize: 8.5.sp,
         fontWeight: FontWeight.w600,
         color: context.textInkColor(accent),
       ),
@@ -1504,16 +1497,33 @@ class _PlannerCalendar extends StatelessWidget {
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onPickMonth;
 
-  static List<DateTime> visibleDates(DateTime selected) => [
-    for (var offset = -3; offset <= 3; offset++)
-      selected.add(Duration(days: offset)),
-  ];
+  /// The Sunday...Saturday week [selected] falls in.
+  static List<DateTime> visibleDates(DateTime selected) {
+    final sunday = DateUtils.dateOnly(
+      selected.subtract(Duration(days: selected.weekday % 7)),
+    );
+    return [for (var day = 0; day < 7; day++) sunday.add(Duration(days: day))];
+  }
 
   /// One week back or forward, as far as the user cares to go — what the
   /// plans cover only decides the dots and the list below, not where the
   /// strip may travel.
   void _moveWeek(int direction) =>
       onDateSelected(selectedDate.add(Duration(days: 7 * direction)));
+
+  /// "October, 2026", or "Oct - Nov, 2026" when the visible week starts in
+  /// one month and ends in the next.
+  String _monthLabel(MaterialLocalizations localizations, List<DateTime> week) {
+    String monthOf(DateTime date) =>
+        localizations.formatMonthYear(date).split(' ').first;
+    final first = week.first;
+    final last = week.last;
+    final year = localizations.formatYear(last);
+    if (first.month == last.month) return '${monthOf(first)}, $year';
+    String short(String month) =>
+        month.length > 3 ? month.substring(0, 3) : month;
+    return '${short(monthOf(first))} - ${short(monthOf(last))}, $year';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1526,11 +1536,7 @@ class _PlannerCalendar extends StatelessWidget {
           Row(
             children: [
               Text(
-                // "October, 2026" — the design's comma, on the locale's own
-                // month/year wording.
-                localizations
-                    .formatMonthYear(selectedDate)
-                    .replaceFirst(' ', ', '),
+                _monthLabel(localizations, dates),
                 style: TextStyle(
                   fontSize: 17.sp,
                   fontWeight: FontWeight.w500,
@@ -1568,22 +1574,31 @@ class _PlannerCalendar extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              for (final date in dates)
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2.5.w),
-                    child: _PlannerDay(
-                      date: date,
-                      selected: date == selectedDate,
-                      status: statuses.of(date),
-                      onTap: () => onDateSelected(date),
+          // Swiping the strip moves a week, the same as the arrows do.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity > 100) _moveWeek(-1);
+              if (velocity < -100) _moveWeek(1);
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                for (final date in dates)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.5.w),
+                      child: _PlannerDay(
+                        date: date,
+                        selected: date == selectedDate,
+                        status: statuses.of(date),
+                        onTap: () => onDateSelected(date),
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1591,7 +1606,9 @@ class _PlannerCalendar extends StatelessWidget {
   }
 }
 
-enum _DayStatus { none, done, missed }
+/// [hidden] is "nothing was scheduled that day", which the design leaves
+/// without a dot at all; [pending] is today or a future day still to be done.
+enum _DayStatus { hidden, pending, done, missed }
 
 /// Reading status per day, shared by the week strip and the "Select Date"
 /// sheet: green once `GET /duas/reading/calendar` reports the day's goal met,
@@ -1610,26 +1627,17 @@ class _PlannerDayStatuses {
   final bool track;
 
   _DayStatus of(DateTime date) {
-    if (!track) return _DayStatus.none;
+    if (!track || !isScheduled(date)) return _DayStatus.hidden;
     final day = calendar[_plannerApiDate(date)];
     if (day != null && day.isGoalMet) return _DayStatus.done;
     final today = DateUtils.dateOnly(DateTime.now());
-    if (date.isBefore(today) && insidePlan(date)) return _DayStatus.missed;
-    return _DayStatus.none;
+    if (date.isBefore(today)) return _DayStatus.missed;
+    return _DayStatus.pending;
   }
 
-  /// A day only counts as missed when one of the plans was actually running
-  /// on it — the reading calendar itself has no notion of a schedule.
-  bool insidePlan(DateTime date) {
-    for (final plan in plans) {
-      final start = DateTime.tryParse(plan.startDate);
-      final end = DateTime.tryParse(plan.endDate);
-      if (start != null && DateUtils.dateOnly(start).isAfter(date)) continue;
-      if (end != null && DateUtils.dateOnly(end).isBefore(date)) continue;
-      return true;
-    }
-    return false;
-  }
+  /// Whether any plan is scheduled on [date] — the reading calendar itself
+  /// has no notion of a schedule, so the plans decide.
+  bool isScheduled(DateTime date) => plans.any((plan) => plan.runsOn(date));
 }
 
 /// The "Select Date" sheet of `devImg/img_37.png`: month and year wheels over
@@ -1987,7 +1995,7 @@ class _SelectDateCell extends StatelessWidget {
     final dotColor = switch (status) {
       _DayStatus.done => const Color(0xFF5FBD2F),
       _DayStatus.missed => const Color(0xFFE35D5D),
-      _DayStatus.none => null,
+      _DayStatus.pending || _DayStatus.hidden => null,
     };
     return InkWell(
       onTap: onTap,
@@ -2148,11 +2156,13 @@ class _PlannerDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotColor = switch (status) {
+    final Color? dotColor = switch (status) {
       _DayStatus.done => const Color(0xFF5FBD2F),
       _DayStatus.missed => const Color(0xFFE35D5D),
-      _DayStatus.none =>
+      _DayStatus.pending =>
         selected ? const Color(0xFF6E7A45) : const Color(0xFFDFE2D8),
+      // Nothing scheduled that day: the design shows no dot at all.
+      _DayStatus.hidden => null,
     };
     return InkWell(
       onTap: onTap,
@@ -2202,13 +2212,18 @@ class _PlannerDay extends StatelessWidget {
               ),
             ),
             SizedBox(height: selected ? 9.h : 7.h),
-            Container(
-              width: 5.r,
+            SizedBox(
               height: 5.r,
-              decoration: BoxDecoration(
-                color: context.surfaceColor(dotColor),
-                shape: BoxShape.circle,
-              ),
+              child: dotColor == null
+                  ? null
+                  : Container(
+                      width: 5.r,
+                      height: 5.r,
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor(dotColor),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
             ),
           ],
         ),
