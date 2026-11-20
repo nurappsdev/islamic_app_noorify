@@ -379,7 +379,10 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
           style: TextStyle(fontSize: 13.sp),
           decoration: InputDecoration(
             hintText: appText.writeHereHint,
-            hintStyle: TextStyle(color: AppColor.authHint, fontSize: 12.sp),
+            hintStyle: TextStyle(
+              color: context.textInkColor(AppColor.authHint),
+              fontSize: 12.sp,
+            ),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 18.w,
               vertical: 15.h,
@@ -494,8 +497,8 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                     width: 30.r,
                     height: 30.r,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF4F8E6),
+                    decoration: BoxDecoration(
+                      color: context.surfaceColor(const Color(0xFFF4F8E6)),
                       shape: BoxShape.circle,
                     ),
                     child: Text(
@@ -571,8 +574,10 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                   value: _notifyEveryDay,
                   onChanged: (value) =>
                       setState(() => _notifyEveryDay = value ?? false),
-                  activeColor: const Color(0xFFA7B45B),
-                  side: const BorderSide(color: Color(0xFFD7E7A4)),
+                  activeColor: context.surfaceColor(const Color(0xFFA7B45B)),
+                  side: BorderSide(
+                    color: context.lineColor(const Color(0xFFD7E7A4)),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4.r),
                   ),
@@ -670,7 +675,10 @@ class _EntryRow extends StatelessWidget {
     ),
     child: Row(
       children: [
-        CircleAvatar(radius: 17.r, backgroundColor: const Color(0xFFA5B657)),
+        CircleAvatar(
+          radius: 17.r,
+          backgroundColor: context.surfaceColor(const Color(0xFFA5B657)),
+        ),
         SizedBox(width: 12.w),
         Expanded(
           child: Column(
@@ -724,7 +732,8 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               icon: const Icon(Icons.chevron_left),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFE1E56A),
+                backgroundColor: context.surfaceColor(const Color(0xFFE1E56A)),
+                foregroundColor: context.inkColor(const Color(0xFF303629)),
               ),
             ),
           ),
@@ -763,7 +772,7 @@ class _CreatePlanSheetHeader extends StatelessWidget {
           width: 60.w,
           height: 5.h,
           decoration: BoxDecoration(
-            color: const Color(0xFFD8D6D4),
+            color: context.lineColor(const Color(0xFFD8D6D4)),
             borderRadius: BorderRadius.circular(99.r),
           ),
         ),
@@ -787,8 +796,10 @@ class _CreatePlanSheetHeader extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 padding: EdgeInsets.symmetric(horizontal: 10.w),
                 minimumSize: Size(0, 34.h),
-                foregroundColor: const Color(0xFFA7B45B),
-                side: const BorderSide(color: Color(0xFFD7E7A4)),
+                foregroundColor: context.inkColor(const Color(0xFFA7B45B)),
+                side: BorderSide(
+                  color: context.lineColor(const Color(0xFFD7E7A4)),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
                 ),
@@ -808,7 +819,7 @@ class _CreatePlanSheetHeader extends StatelessWidget {
             IconButton(
               onPressed: onClose,
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFF5F5F5),
+                backgroundColor: context.surfaceColor(const Color(0xFFF5F5F5)),
               ),
               icon: Icon(
                 Icons.close_rounded,
@@ -870,11 +881,15 @@ class _PlanNoteDialogState extends State<_PlanNoteDialog> {
               alignLabelWithHint: true,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(color: Color(0xFFD7E7A4)),
+                borderSide: BorderSide(
+                  color: context.lineColor(const Color(0xFFD7E7A4)),
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(color: Color(0xFFA7B45B)),
+                borderSide: BorderSide(
+                  color: context.lineColor(const Color(0xFFA7B45B)),
+                ),
               ),
             ),
           ),
@@ -885,7 +900,9 @@ class _PlanNoteDialogState extends State<_PlanNoteDialog> {
                 child: FilledButton(
                   onPressed: () => Navigator.pop(context, _controller.text),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFA7B45B),
+                    backgroundColor: context.surfaceColor(
+                      const Color(0xFFA7B45B),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14.r),
                     ),
@@ -901,7 +918,9 @@ class _PlanNoteDialogState extends State<_PlanNoteDialog> {
                     foregroundColor: context.textInkColor(
                       const Color(0xFF182035),
                     ),
-                    side: const BorderSide(color: Color(0xFFE0E4EB)),
+                    side: BorderSide(
+                      color: context.lineColor(const Color(0xFFE0E4EB)),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14.r),
                     ),
@@ -946,7 +965,9 @@ class _PlannerDateField extends StatelessWidget {
             height: 45.h,
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFD7E7A4)),
+              border: Border.all(
+                color: context.lineColor(const Color(0xFFD7E7A4)),
+              ),
               borderRadius: BorderRadius.circular(22.r),
             ),
             child: Row(
@@ -970,7 +991,7 @@ class _PlannerDateField extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10.5.sp,
                       color: value == null
-                          ? AppColor.authHint
+                          ? context.textInkColor(AppColor.authHint)
                           : context.textInkColor(const Color(0xFF2C3320)),
                     ),
                   ),
@@ -978,7 +999,7 @@ class _PlannerDateField extends StatelessWidget {
                 Icon(
                   Icons.calendar_month_outlined,
                   size: 17.sp,
-                  color: const Color(0xFFA7B45B),
+                  color: context.inkColor(const Color(0xFFA7B45B)),
                 ),
               ],
             ),
@@ -1022,7 +1043,7 @@ class _SelectionField extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: picked == null
-                      ? AppColor.authHint
+                      ? context.textInkColor(AppColor.authHint)
                       : context.inkColor(const Color(0xFF2C3320)),
                   fontSize: 13.sp,
                 ),

@@ -126,7 +126,7 @@ class _DuaEntryTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 21.r,
-              backgroundColor: const Color(0xFFA5B657),
+              backgroundColor: context.surfaceColor(const Color(0xFFA5B657)),
               child: const Icon(
                 Icons.menu_book_outlined,
                 color: Colors.white,
@@ -153,7 +153,7 @@ class _DuaEntryTile extends StatelessWidget {
                     '· ${duaSlotLabel(appText, item.slot)}',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFFA5B657),
+                      color: context.inkColor(const Color(0xFFA5B657)),
                     ),
                   ),
                 ],
@@ -193,7 +193,8 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               icon: const Icon(Icons.chevron_left),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFE1E56A),
+                backgroundColor: context.surfaceColor(const Color(0xFFE1E56A)),
+                foregroundColor: context.inkColor(const Color(0xFF303629)),
               ),
             ),
           ),

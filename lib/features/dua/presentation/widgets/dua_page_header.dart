@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+
 /// Back button + centered title row shared by the Dua dashboard, All
 /// Category, and Featured Dua screens (design `img_1.png` / `img_2.png` /
 /// `img_3.png`).
@@ -51,8 +53,8 @@ class DuaPageHeader extends StatelessWidget {
     final backButton = IconButton(
       onPressed: onBack ?? () => Navigator.maybePop(context),
       style: IconButton.styleFrom(
-        backgroundColor: const Color(0xFFDFDE68),
-        foregroundColor: const Color(0xFF303629),
+        backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
+        foregroundColor: context.inkColor(const Color(0xFF303629)),
         minimumSize: Size(38.r, 38.r),
       ),
       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),

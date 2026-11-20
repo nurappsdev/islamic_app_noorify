@@ -134,8 +134,8 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                       width: 20.r,
                       height: 20.r,
                       alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFA7B45B),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor(const Color(0xFFA7B45B)),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -338,11 +338,11 @@ class _PlanCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 11.h),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: context.surfaceColor(cardColor),
           borderRadius: BorderRadius.circular(22.r),
           boxShadow: [
             BoxShadow(
-              color: cardColor.withValues(alpha: .45),
+              color: context.surfaceColor(cardColor.withValues(alpha: .45)),
               blurRadius: 12.r,
               offset: Offset(0, 5.h),
             ),
@@ -354,12 +354,12 @@ class _PlanCard extends StatelessWidget {
               width: 46.r,
               height: 46.r,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .7),
+                color: context.surfaceColor(Colors.white.withValues(alpha: .7)),
                 borderRadius: BorderRadius.circular(15.r),
               ),
               child: Icon(
                 Icons.menu_book_rounded,
-                color: const Color(0xFFA7B45B),
+                color: context.inkColor(const Color(0xFFA7B45B)),
                 size: 25.sp,
               ),
             ),
@@ -414,7 +414,9 @@ class _PlanCard extends StatelessWidget {
               constraints: BoxConstraints.tightFor(width: 32.r, height: 32.r),
               padding: EdgeInsets.zero,
               style: IconButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: .34),
+                backgroundColor: context.surfaceColor(
+                  Colors.white.withValues(alpha: .34),
+                ),
               ),
               icon: Icon(
                 Icons.more_vert_rounded,
@@ -450,7 +452,7 @@ class _PlanSettingsSheet extends StatelessWidget {
             width: 60.w,
             height: 6.h,
             decoration: BoxDecoration(
-              color: const Color(0xFFD6D4D3),
+              color: context.lineColor(const Color(0xFFD6D4D3)),
               borderRadius: BorderRadius.circular(99.r),
             ),
           ),
@@ -477,7 +479,9 @@ class _PlanSettingsSheet extends StatelessWidget {
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFFF5F5F5),
+                  backgroundColor: context.surfaceColor(
+                    const Color(0xFFF5F5F5),
+                  ),
                 ),
                 icon: Icon(
                   Icons.close_rounded,
@@ -565,7 +569,7 @@ class _PlanSettingsSheet extends StatelessWidget {
             child: FilledButton(
               onPressed: () => Navigator.pop(context),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFA7B45B),
+                backgroundColor: context.surfaceColor(const Color(0xFFA7B45B)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30.r),
                 ),
@@ -612,11 +616,13 @@ class _PlanSettingsTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: color == null
               ? context.surfaceColor(Colors.white)
-              : color!.withValues(alpha: .035),
+              : context.surfaceColor(color!.withValues(alpha: .035)),
           borderRadius: BorderRadius.circular(19.r),
           border: color == null
               ? null
-              : Border.all(color: color!.withValues(alpha: .22)),
+              : Border.all(
+                  color: context.lineColor(color!.withValues(alpha: .22)),
+                ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: .025),
@@ -631,10 +637,14 @@ class _PlanSettingsTile extends StatelessWidget {
               width: 45.r,
               height: 45.r,
               decoration: BoxDecoration(
-                color: iconBackground,
+                color: context.surfaceColor(iconBackground),
                 borderRadius: BorderRadius.circular(14.r),
               ),
-              child: Icon(icon, color: iconColor, size: 24.sp),
+              child: Icon(
+                icon,
+                color: context.inkColor(iconColor),
+                size: 24.sp,
+              ),
             ),
             SizedBox(width: 15.w),
             Expanded(
@@ -655,7 +665,9 @@ class _PlanSettingsTile extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 11.sp,
-                      color: color ?? const Color(0xFF777777),
+                      color: color == null
+                          ? context.textInkColor(const Color(0xFF777777))
+                          : context.inkColor(color!),
                     ),
                   ),
                 ],
@@ -663,7 +675,9 @@ class _PlanSettingsTile extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right_rounded,
-              color: color ?? const Color(0xFFAAAAAA),
+              color: color == null
+                  ? context.inkColor(const Color(0xFFAAAAAA))
+                  : context.inkColor(color!),
             ),
           ],
         ),
@@ -831,13 +845,13 @@ class _PlannerCalendar extends StatelessWidget {
                   width: 31.r,
                   height: 31.r,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8E6),
+                    color: context.surfaceColor(const Color(0xFFF4F8E6)),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
                     Icons.search_rounded,
                     size: 19.sp,
-                    color: const Color(0xFFA7B45B),
+                    color: context.inkColor(const Color(0xFFA7B45B)),
                   ),
                 ),
               ],
@@ -858,11 +872,15 @@ class _CalendarArrow extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: 30.r,
     height: 30.r,
-    decoration: const BoxDecoration(
-      color: Color(0xFFF2F7E2),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(const Color(0xFFF2F7E2)),
       shape: BoxShape.circle,
     ),
-    child: Icon(icon, size: 19.sp, color: const Color(0xFFA7B45B)),
+    child: Icon(
+      icon,
+      size: 19.sp,
+      color: context.inkColor(const Color(0xFFA7B45B)),
+    ),
   );
 }
 
@@ -879,17 +897,20 @@ class _PlannerDay extends StatelessWidget {
       height: 64.h,
       padding: EdgeInsets.symmetric(vertical: 7.h),
       decoration: BoxDecoration(
-        color: selected
-            ? const Color(0xFFDDEAB6)
-            : context.surfaceColor(Colors.white),
+        color: context.surfaceColor(
+          selected ? const Color(0xFFDDEAB6) : Colors.white,
+        ),
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: const Color(0xFFEAF0D4)),
+        border: Border.all(color: context.lineColor(const Color(0xFFEAF0D4))),
       ),
       child: Column(
         children: [
           Text(
             localizations.narrowWeekdays[date.weekday % 7],
-            style: TextStyle(fontSize: 9.sp, color: const Color(0xFF9CA66A)),
+            style: TextStyle(
+              fontSize: 9.sp,
+              color: context.textInkColor(const Color(0xFF9CA66A)),
+            ),
           ),
           SizedBox(height: 3.h),
           Text(
@@ -905,9 +926,9 @@ class _PlannerDay extends StatelessWidget {
             width: 4.r,
             height: 4.r,
             decoration: BoxDecoration(
-              color: selected
-                  ? const Color(0xFF9DC73B)
-                  : const Color(0xFFDFE2D8),
+              color: context.surfaceColor(
+                selected ? const Color(0xFF9DC73B) : const Color(0xFFDFE2D8),
+              ),
               shape: BoxShape.circle,
             ),
           ),
@@ -981,7 +1002,9 @@ class _PlannerTab extends StatelessWidget {
         alignment: Alignment.center,
         margin: EdgeInsets.symmetric(horizontal: 6.w),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFA7B45B) : Colors.transparent,
+          color: selected
+              ? context.surfaceColor(const Color(0xFFA7B45B))
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(22.r),
         ),
         child: Text(

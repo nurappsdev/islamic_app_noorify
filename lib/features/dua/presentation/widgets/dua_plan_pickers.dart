@@ -301,11 +301,13 @@ class _DuaPickerBodyState extends State<_DuaPickerBody> {
                   IconButton(
                     onPressed: _openFullScreen,
                     style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF3F7E7),
+                      backgroundColor: context.surfaceColor(
+                        const Color(0xFFF3F7E7),
+                      ),
                     ),
                     icon: Icon(
                       Icons.open_in_new_rounded,
-                      color: const Color(0xFFA7B45B),
+                      color: context.inkColor(const Color(0xFFA7B45B)),
                       size: 18.sp,
                     ),
                   ),
@@ -335,20 +337,24 @@ class _DuaPickerBodyState extends State<_DuaPickerBody> {
                 hintStyle: TextStyle(
                   fontSize: 12.sp,
                   fontStyle: FontStyle.italic,
-                  color: const Color(0xFF9B9B9B),
+                  color: context.textInkColor(const Color(0xFF9B9B9B)),
                 ),
-                suffixIcon: const Icon(
+                suffixIcon: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFFA7B45B),
+                  color: context.inkColor(const Color(0xFFA7B45B)),
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 14.w),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(26.r),
-                  borderSide: const BorderSide(color: Color(0xFFD7E7A4)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(const Color(0xFFD7E7A4)),
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(26.r),
-                  borderSide: const BorderSide(color: Color(0xFFA7B45B)),
+                  borderSide: BorderSide(
+                    color: context.lineColor(const Color(0xFFA7B45B)),
+                  ),
                 ),
               ),
             ),
@@ -378,7 +384,9 @@ class _DuaPickerBodyState extends State<_DuaPickerBody> {
               child: FilledButton(
                 onPressed: () => _done(state.duas),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFA7B45B),
+                  backgroundColor: context.surfaceColor(
+                    const Color(0xFFA7B45B),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25.r),
                   ),
@@ -411,7 +419,8 @@ class _FullPickerHeader extends StatelessWidget {
           child: IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFDFDE68),
+              backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
+              foregroundColor: context.inkColor(const Color(0xFF303629)),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
           ),
@@ -463,10 +472,13 @@ class _PlanDuaTile extends StatelessWidget {
         child: Ink(
           padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 12.h),
           decoration: BoxDecoration(
-            color: color,
+            color: context.surfaceColor(color),
             borderRadius: BorderRadius.circular(21.r),
             border: selected
-                ? Border.all(color: const Color(0xFFA7B45B), width: 1.5)
+                ? Border.all(
+                    color: context.lineColor(const Color(0xFFA7B45B)),
+                    width: 1.5,
+                  )
                 : null,
           ),
           child: Row(
@@ -475,15 +487,15 @@ class _PlanDuaTile extends StatelessWidget {
                 width: 43.r,
                 height: 43.r,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(Colors.white),
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   context.localizedDigits('${index + 1}'),
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: const Color(0xFF9AA957),
+                    color: context.textInkColor(const Color(0xFF9AA957)),
                   ),
                 ),
               ),
@@ -521,14 +533,18 @@ class _PlanDuaTile extends StatelessWidget {
                 width: 30.r,
                 height: 30.r,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .45),
+                  color: context.surfaceColor(
+                    Colors.white.withValues(alpha: .45),
+                  ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF9AA957)),
+                  border: Border.all(
+                    color: context.lineColor(const Color(0xFF9AA957)),
+                  ),
                 ),
                 child: Icon(
                   selected ? Icons.check_rounded : Icons.chevron_right_rounded,
                   size: 19.sp,
-                  color: const Color(0xFF758437),
+                  color: context.inkColor(const Color(0xFF758437)),
                 ),
               ),
             ],

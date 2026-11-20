@@ -123,8 +123,8 @@ class _DashboardHeader extends StatelessWidget {
               context,
             ).pushReplacementNamed(RouteNames.duaDashboard),
             style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFE6E77D),
-              foregroundColor: const Color(0xFF4C5631),
+              backgroundColor: context.surfaceColor(const Color(0xFFE6E77D)),
+              foregroundColor: context.inkColor(const Color(0xFF4C5631)),
               minimumSize: Size(34.r, 34.r),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
@@ -222,7 +222,10 @@ class _LegendDot extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: 9.r,
     height: 9.r,
-    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(color),
+      shape: BoxShape.circle,
+    ),
   );
 }
 
@@ -235,7 +238,9 @@ class _PercentagePill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
     decoration: BoxDecoration(
-      color: muted ? const Color(0xFFC2CF92) : const Color(0xFFA6B65B),
+      color: context.surfaceColor(
+        muted ? const Color(0xFFC2CF92) : const Color(0xFFA6B65B),
+      ),
       borderRadius: BorderRadius.circular(4.r),
     ),
     child: Text(
@@ -258,7 +263,13 @@ class _DailyChart extends StatelessWidget {
     child: Stack(
       alignment: Alignment.center,
       children: [
-        CustomPaint(size: Size(184.w, 184.w), painter: const _DonutPainter()),
+        CustomPaint(
+          size: Size(184.w, 184.w),
+          painter: _DonutPainter(
+            trackColor: context.surfaceColor(const Color(0xFFDCE8B5)),
+            progressColor: context.surfaceColor(const Color(0xFFA8B657)),
+          ),
+        ),
         Positioned(top: 12.h, right: 0, child: const _ChartTooltip()),
       ],
     ),
@@ -266,7 +277,10 @@ class _DailyChart extends StatelessWidget {
 }
 
 class _DonutPainter extends CustomPainter {
-  const _DonutPainter();
+  const _DonutPainter({required this.trackColor, required this.progressColor});
+
+  final Color trackColor;
+  final Color progressColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -276,14 +290,16 @@ class _DonutPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * .17
       ..strokeCap = StrokeCap.round;
-    paint.color = const Color(0xFFDCE8B5);
+    paint.color = trackColor;
     canvas.drawArc(rect, -math.pi * .88, math.pi * 1.34, false, paint);
-    paint.color = const Color(0xFFA8B657);
+    paint.color = progressColor;
     canvas.drawArc(rect, math.pi * .47, math.pi * 1.18, false, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
+      oldDelegate.trackColor != trackColor ||
+      oldDelegate.progressColor != progressColor;
 }
 
 class _ChartTooltip extends StatelessWidget {
@@ -336,7 +352,7 @@ class _WeeklyChart extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 9.sp,
-                      color: const Color(0xFF91A168),
+                      color: context.textInkColor(const Color(0xFF91A168)),
                     ),
                   ),
               ],
@@ -360,9 +376,11 @@ class _WeeklyChart extends StatelessWidget {
                                 heightFactor: values[index] / 100,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: index == 2 || index == 3
-                                        ? const Color(0xFFA8B657)
-                                        : const Color(0xFFD6E4AA),
+                                    color: context.surfaceColor(
+                                      index == 2 || index == 3
+                                          ? const Color(0xFFA8B657)
+                                          : const Color(0xFFD6E4AA),
+                                    ),
                                     borderRadius: BorderRadius.vertical(
                                       top: Radius.circular(7.r),
                                     ),
@@ -420,7 +438,7 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           fontSize: 10.sp,
-                          color: const Color(0xFF91A168),
+                          color: context.textInkColor(const Color(0xFF91A168)),
                         ),
                       ),
                     ),
@@ -436,7 +454,9 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                                 widthFactor: 1,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE3EDC3),
+                                    color: context.surfaceColor(
+                                      const Color(0xFFE3EDC3),
+                                    ),
                                     borderRadius: BorderRadius.circular(7.r),
                                   ),
                                 ),
@@ -446,9 +466,11 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 160),
                                   decoration: BoxDecoration(
-                                    color: _selectedBar == index
-                                        ? const Color(0xFF718E3B)
-                                        : const Color(0xFFA8B657),
+                                    color: context.surfaceColor(
+                                      _selectedBar == index
+                                          ? const Color(0xFF718E3B)
+                                          : const Color(0xFFA8B657),
+                                    ),
                                     borderRadius: BorderRadius.circular(7.r),
                                   ),
                                 ),
@@ -470,7 +492,7 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                         '$point',
                         style: TextStyle(
                           fontSize: 9.sp,
-                          color: const Color(0xFF758052),
+                          color: context.textInkColor(const Color(0xFF758052)),
                         ),
                       ),
                   ],
@@ -627,9 +649,16 @@ class _HistoryHeader extends StatelessWidget {
         children: [
           Text(
             'See All',
-            style: TextStyle(color: const Color(0xFF98A46C), fontSize: 11.sp),
+            style: TextStyle(
+              color: context.textInkColor(const Color(0xFF98A46C)),
+              fontSize: 11.sp,
+            ),
           ),
-          Container(width: 49.w, height: 1.h, color: const Color(0xFF98A46C)),
+          Container(
+            width: 49.w,
+            height: 1.h,
+            color: context.lineColor(const Color(0xFF98A46C)),
+          ),
         ],
       ),
     ],
@@ -692,9 +721,15 @@ class _HistoryRow extends StatelessWidget {
           height: 31.r,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFC7D590)),
+            border: Border.all(
+              color: context.lineColor(const Color(0xFFC7D590)),
+            ),
           ),
-          child: Icon(icon, color: const Color(0xFFA6B65B), size: 17.sp),
+          child: Icon(
+            icon,
+            color: context.inkColor(const Color(0xFFA6B65B)),
+            size: 17.sp,
+          ),
         ),
         SizedBox(width: 10.w),
         Expanded(
@@ -714,7 +749,7 @@ class _HistoryRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 8.5.sp,
-                  color: const Color(0xFF778060),
+                  color: context.textInkColor(const Color(0xFF778060)),
                 ),
               ),
             ],
@@ -730,7 +765,7 @@ class _HistoryRow extends StatelessWidget {
                 time,
                 style: TextStyle(
                   fontSize: 8.5.sp,
-                  color: const Color(0xFF97A64D),
+                  color: context.textInkColor(const Color(0xFF97A64D)),
                 ),
               ),
               SizedBox(height: 4.h),
@@ -738,7 +773,7 @@ class _HistoryRow extends StatelessWidget {
                 duration,
                 style: TextStyle(
                   fontSize: 8.sp,
-                  color: const Color(0xFF778060),
+                  color: context.textInkColor(const Color(0xFF778060)),
                 ),
               ),
             ],
