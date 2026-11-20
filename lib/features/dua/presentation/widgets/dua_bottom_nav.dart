@@ -48,27 +48,9 @@ class DuaBottomNav extends StatelessWidget {
         AppBottomNavItem(
           icon: Icons.pie_chart_outline_rounded,
           label: appText.dashboard,
-          onTap: () => _showComingSoonAlert(context, appText),
+          onTap: go(4, RouteNames.duaAnalyticsDashboard),
         ),
       ],
     );
-  }
-
-  void _showComingSoonAlert(BuildContext context, AppText appText) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(appText.comingSoon),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(appText.ok),
-          ),
-        ],
-      ),
-    );
-
-    // Enable the Dashboard route when the feature is ready:
-    // Navigator.of(context).pushReplacementNamed(RouteNames.duaAnalyticsDashboard);
   }
 }
