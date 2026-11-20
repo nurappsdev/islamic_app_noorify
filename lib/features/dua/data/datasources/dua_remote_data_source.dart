@@ -154,17 +154,23 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   }
 
   @override
-  Future<DuaPlan> createPlan(DuaPlanDraft draft) async => DuaPlan.fromJson(
-    _dataMap(
-      await _call(
-        () => _dio.post<dynamic>(
-          '/duas/planner/plans',
-          data: draft.toJson(),
-          options: _options(requiresAuth: true),
+  Future<DuaPlan> createPlan(DuaPlanDraft draft) async {
+    final payload = draft.toJson();
+    if (kDebugMode) {
+      debugPrint('[DUA API] create plan payload: ${jsonEncode(payload)}');
+    }
+    return DuaPlan.fromJson(
+      _dataMap(
+        await _call(
+          () => _dio.post<dynamic>(
+            '/duas/planner/plans',
+            data: payload,
+            options: _options(requiresAuth: true),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Future<DuaPlanDetail> getPlanDetail(String id) async =>

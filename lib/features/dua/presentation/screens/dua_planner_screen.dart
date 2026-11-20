@@ -230,30 +230,34 @@ class _PlanCard extends StatelessWidget {
     );
   }
 
-  Future<void> _menu(BuildContext context) async {
-    final appText = AppText.readOf(context);
-    final action = await showMenu<String>(
+  Future<void> _openPlanSettings(BuildContext context) async {
+    final action = await showModalBottomSheet<_PlanSettingsAction>(
       context: context,
-      position: const RelativeRect.fromLTRB(400, 200, 12, 0),
-      color: context.surfaceColor(Colors.white),
-      items: [
-        PopupMenuItem(value: 'edit', child: Text(appText.duaSavedEdit)),
-        PopupMenuItem(
-          value: 'delete',
-          child: Text(
-            appText.duaSavedDelete,
-            style: TextStyle(color: context.inkColor(Colors.red)),
-          ),
-        ),
-      ],
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const _PlanSettingsSheet(),
     );
     if (!context.mounted || action == null) return;
     final cubit = context.read<DuaPlannerCubit>();
-    if (action == 'edit') {
-      await _openEdit(context, cubit);
-    } else {
-      final yes = await _confirmDelete(context);
-      if (yes == true) await cubit.delete(plan.id);
+    switch (action) {
+      case _PlanSettingsAction.edit:
+        await _openEdit(context, cubit);
+        return;
+      case _PlanSettingsAction.delete:
+        final yes = await _confirmDelete(context);
+        if (yes == true) await cubit.delete(plan.id);
+        return;
+      case _PlanSettingsAction.info:
+        if (context.mounted) {
+          await Navigator.of(context).pushNamed(
+            RouteNames.duaPlanDetail,
+            arguments: DuaPlanDetailArgs(plan),
+          );
+        }
+        return;
+      case _PlanSettingsAction.restore:
+        await _openRestorePlan(context, cubit);
+        return;
     }
   }
 
@@ -284,11 +288,30 @@ class _PlanCard extends StatelessWidget {
       ).showSnackBar(SnackBar(content: Text('$error')));
       return;
     }
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => DuaPlanCreateScreen(editPlan: detail)),
-    );
-    await cubit.load();
+    final updated = await _showPlanDialog(context, editPlan: detail);
+    if (updated == true) await cubit.load();
   }
+
+  Future<void> _openRestorePlan(
+    BuildContext context,
+    DuaPlannerCubit cubit,
+  ) async {
+    final created = await _showPlanDialog(context);
+    if (created == true) await cubit.load();
+  }
+
+  Future<bool?> _showPlanDialog(
+    BuildContext context, {
+    DuaPlanDetail? editPlan,
+  }) => showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => FractionallySizedBox(
+      heightFactor: .93,
+      child: DuaPlanCreateScreen(embedded: true, editPlan: editPlan),
+    ),
+  );
 
   Future<bool?> _confirmDelete(BuildContext context) =>
       showModalBottomSheet<bool>(
@@ -387,7 +410,7 @@ class _PlanCard extends StatelessWidget {
               ),
             ),
             IconButton(
-              onPressed: () => _menu(context),
+              onPressed: () => _openPlanSettings(context),
               constraints: BoxConstraints.tightFor(width: 32.r, height: 32.r),
               padding: EdgeInsets.zero,
               style: IconButton.styleFrom(
@@ -404,6 +427,249 @@ class _PlanCard extends StatelessWidget {
       ),
     );
   }
+}
+
+enum _PlanSettingsAction { restore, edit, info, delete }
+
+class _PlanSettingsSheet extends StatelessWidget {
+  const _PlanSettingsSheet();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    constraints: BoxConstraints(maxHeight: .9.sh),
+    padding: EdgeInsets.fromLTRB(24.w, 10.h, 24.w, 18.h),
+    decoration: BoxDecoration(
+      color: context.surfaceColor(Colors.white),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(40.r)),
+    ),
+    child: SingleChildScrollView(
+      child: Column(
+        children: [
+          Container(
+            width: 60.w,
+            height: 6.h,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD6D4D3),
+              borderRadius: BorderRadius.circular(99.r),
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.localized(
+                    const LocalizedText(
+                      en: 'Plan Settings',
+                      bn: 'প্ল্যান সেটিংস',
+                    ),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'serif',
+                    fontSize: 25.sp,
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w700,
+                    color: context.textInkColor(const Color(0xFFA7B45B)),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF5F5F5),
+                ),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 20.sp,
+                  color: context.textInkColor(const Color(0xFF777777)),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          _PlanSettingsTile(
+            icon: Icons.restore_page_outlined,
+            iconColor: const Color(0xFF65B5D8),
+            iconBackground: const Color(0xFFE8F7FF),
+            title: context.localized(
+              const LocalizedText(
+                en: 'Restore plans',
+                bn: 'প্ল্যান পুনরুদ্ধার',
+              ),
+            ),
+            subtitle: context.localized(
+              const LocalizedText(
+                en: 'Restore your plans and start today.',
+                bn: 'প্ল্যান পুনরুদ্ধার করে আজই শুরু করুন।',
+              ),
+            ),
+            onTap: () => Navigator.pop(context, _PlanSettingsAction.restore),
+          ),
+          SizedBox(height: 10.h),
+          _PlanSettingsTile(
+            icon: Icons.edit_note_rounded,
+            iconColor: const Color(0xFFF0A40C),
+            iconBackground: const Color(0xFFFFF8E7),
+            title: context.localized(
+              const LocalizedText(
+                en: 'Edit plan details',
+                bn: 'প্ল্যান সম্পাদনা করুন',
+              ),
+            ),
+            subtitle: context.localized(
+              const LocalizedText(
+                en: 'Reminders & schedule',
+                bn: 'রিমাইন্ডার ও সময়সূচি',
+              ),
+            ),
+            onTap: () => Navigator.pop(context, _PlanSettingsAction.edit),
+          ),
+          SizedBox(height: 10.h),
+          _PlanSettingsTile(
+            icon: Icons.insights_rounded,
+            iconColor: const Color(0xFF71873A),
+            iconBackground: const Color(0xFFF3F9DD),
+            title: context.localized(
+              const LocalizedText(en: 'Plan info', bn: 'প্ল্যানের তথ্য'),
+            ),
+            subtitle: context.localized(
+              const LocalizedText(
+                en: 'History & streaks',
+                bn: 'ইতিহাস ও ধারাবাহিকতা',
+              ),
+            ),
+            onTap: () => Navigator.pop(context, _PlanSettingsAction.info),
+          ),
+          SizedBox(height: 10.h),
+          _PlanSettingsTile(
+            icon: Icons.delete_outline_rounded,
+            iconColor: const Color(0xFFFF4E50),
+            iconBackground: const Color(0xFFFFE7E8),
+            title: context.localized(
+              const LocalizedText(en: 'Delete plan', bn: 'প্ল্যান মুছুন'),
+            ),
+            subtitle: context.localized(
+              const LocalizedText(
+                en: 'Permanently remove plan',
+                bn: 'প্ল্যানটি স্থায়ীভাবে মুছুন।',
+              ),
+            ),
+            color: const Color(0xFFFF4E50),
+            onTap: () => Navigator.pop(context, _PlanSettingsAction.delete),
+          ),
+          SizedBox(height: 20.h),
+          SizedBox(
+            width: double.infinity,
+            height: 56.h,
+            child: FilledButton(
+              onPressed: () => Navigator.pop(context),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFA7B45B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+              ),
+              child: Text(
+                AppText.of(context).commonDone,
+                style: TextStyle(fontSize: 17.sp, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _PlanSettingsTile extends StatelessWidget {
+  const _PlanSettingsTile({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(19.r),
+      child: Ink(
+        padding: EdgeInsets.all(13.r),
+        decoration: BoxDecoration(
+          color: color == null
+              ? context.surfaceColor(Colors.white)
+              : color!.withValues(alpha: .035),
+          borderRadius: BorderRadius.circular(19.r),
+          border: color == null
+              ? null
+              : Border.all(color: color!.withValues(alpha: .22)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: .025),
+              blurRadius: 16.r,
+              offset: Offset(0, 5.h),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 45.r,
+              height: 45.r,
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(14.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 24.sp),
+            ),
+            SizedBox(width: 15.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color:
+                          color ??
+                          context.textInkColor(const Color(0xFF222222)),
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: color ?? const Color(0xFF777777),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: color ?? const Color(0xFFAAAAAA),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _DeletePlanSheet extends StatelessWidget {
