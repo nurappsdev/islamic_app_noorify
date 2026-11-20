@@ -14,6 +14,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_login_dialog.dart'
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_create_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 
 /// Dua planner (design `devImg/img_7.png`), reached from index 3 ("Planner")
 /// of [DuaBottomNav].
@@ -170,7 +171,7 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
 
   Widget _buildBody(AppText appText, DuaPlannerState state) {
     if (state.status == DuaPlannerStatus.loading && state.plans.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const DuaListShimmer(showHeader: false, cardHeight: 92);
     }
     if (state.plans.isEmpty) {
       // A scrollable empty state, not a bare Center, so the RefreshIndicator

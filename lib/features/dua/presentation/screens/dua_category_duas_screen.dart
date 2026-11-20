@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_category_duas
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
@@ -74,7 +75,7 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
           builder: (context, state) {
             if (state.status == DuaCategoryDuasStatus.initial ||
                 state.status == DuaCategoryDuasStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const DuaListShimmer();
             }
             if (state.status == DuaCategoryDuasStatus.failure) {
               return DuaErrorRetry(

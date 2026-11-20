@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_plan_detail_c
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// One plan's duas (design `devImg/img_7.png`'s "My Plan" entry, opened for
@@ -66,7 +67,7 @@ class _DuaPlanDetailView extends StatelessWidget {
                 builder: (context, state) {
                   if (state.status == DuaPlanDetailStatus.initial ||
                       state.status == DuaPlanDetailStatus.loading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const DuaListShimmer(showHeader: false);
                   }
                   if (state.status == DuaPlanDetailStatus.failure) {
                     return DuaErrorRetry(

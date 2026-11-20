@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_category_duas_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_home_cubit.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 
 /// Bottom sheet listing the Dua categories (`GET /duas/categories`), reused
 /// from [DuaHomeCubit] the same way [DuaAllCategoryScreen] does. Closes with
@@ -794,10 +795,7 @@ class _PickerLoading extends StatelessWidget {
   const _PickerLoading();
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.symmetric(vertical: 28.h),
-    child: const Center(child: CircularProgressIndicator()),
-  );
+  Widget build(BuildContext context) => const DuaPickerShimmer();
 }
 
 class _PickerMessage extends StatelessWidget {

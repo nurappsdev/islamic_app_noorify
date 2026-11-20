@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// Dua dashboard (design `devImg/img_4.png`) — reached from "Let's Get Start"
@@ -50,7 +51,7 @@ class _DuaDashboardView extends StatelessWidget {
               builder: (context, state) {
                 if (state.status == DuaLoadStatus.loading ||
                     state.status == DuaLoadStatus.initial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DuaDashboardShimmer();
                 }
                 if (state.status == DuaLoadStatus.failure) {
                   return DuaErrorRetry(
