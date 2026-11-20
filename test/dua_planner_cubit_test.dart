@@ -4,10 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_plan_detail_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_planner_cubit.dart';
 
 class _DelayedPlansRepository implements DuaRepository {
   final plans = Completer<DuaPlanPage>();
+  final planDetail = Completer<DuaPlanDetail>();
 
   @override
   Future<DuaPlanPage> getPlans({
@@ -36,7 +38,7 @@ class _DelayedPlansRepository implements DuaRepository {
   Future<DuaPlan> createPlan(DuaPlanDraft draft) => throw UnimplementedError();
 
   @override
-  Future<DuaPlanDetail> getPlanDetail(String id) => throw UnimplementedError();
+  Future<DuaPlanDetail> getPlanDetail(String id) => planDetail.future;
 
   @override
   Future<void> editPlan(String id, DuaPlanDraft draft) =>
@@ -62,6 +64,29 @@ void main() {
           limit: 10,
           total: 0,
           totalPage: 1,
+        ),
+      );
+
+      await loading;
+      expect(cubit.isClosed, isTrue);
+    },
+  );
+
+  test(
+    'ignores a plan-detail response that arrives after the cubit closes',
+    () async {
+      final repository = _DelayedPlansRepository();
+      final cubit = DuaPlanDetailCubit(repository, planId: 'plan-1');
+
+      final loading = cubit.load();
+      await cubit.close();
+      repository.planDetail.complete(
+        const DuaPlanDetail(
+          id: 'plan-1',
+          name: 'Morning plan',
+          status: 'in_progress',
+          daysOfWeek: [],
+          items: [],
         ),
       );
 
