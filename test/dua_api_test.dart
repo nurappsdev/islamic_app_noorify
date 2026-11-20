@@ -65,6 +65,7 @@ void main() {
         'categoryId': 'category-1',
         'page': '1',
         'limit': '20',
+        'lang': 'bn',
       });
       expect(result.total, 6);
       expect(result.totalPage, 1);

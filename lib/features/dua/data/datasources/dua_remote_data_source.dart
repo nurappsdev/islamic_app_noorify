@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
 
 int _asInt(Object? value) =>
     value is num ? value.toInt() : int.tryParse('$value') ?? 0;
@@ -19,8 +20,17 @@ Map<String, dynamic> _mapOf(Object? value) =>
 abstract interface class DuaRemoteDataSource {
   Future<List<DuaFeaturedModel>> getFeatured();
   Future<List<DuaCategoryModel>> getCategories();
+  Future<DuaCategoryModel> getCategory(String idOrSlug);
   Future<DuaPage> getByCategory(
     String categoryId, {
+    int page = 1,
+    int limit = 20,
+  });
+  Future<DuaPage> browseDuas({
+    String? categoryId,
+    String? category,
+    String? searchTerm,
+    bool? isFeatured,
     int page = 1,
     int limit = 20,
   });
@@ -39,13 +49,35 @@ abstract interface class DuaRemoteDataSource {
     required int seconds,
     required String date,
   });
+  Future<DuaFeaturedModel?> getLastRead({String? categoryId});
+  Future<DuaReadingHistoryPage> getReadingHistory({
+    int page = 1,
+    int limit = 20,
+  });
+  Future<void> deleteReadingHistoryItem(String duaId);
+  Future<void> clearReadingHistory();
+  Future<DuaDailySummary> getReadingSummary({required String date});
+  Future<DuaReadingCalendar> getReadingCalendar({
+    int days = 30,
+    String? from,
+    String? to,
+  });
+  Future<DuaReadingDashboard> getReadingDashboard({
+    required String timeframe,
+    String? date,
+  });
 
   /// Dua planner — needs the signed-in user's access token.
   Future<DuaPlanPage> getPlans({String? status, int page = 1, int limit = 10});
   Future<DuaPlan> createPlan(DuaPlanDraft draft);
   Future<DuaPlanDetail> getPlanDetail(String id);
   Future<void> editPlan(String id, DuaPlanDraft draft);
+  Future<void> setPlanReminder(String id, {required bool enabled});
   Future<void> deletePlan(String id);
+  Future<DuaPlannerToday> getPlannerToday();
+  Future<DuaPlanHistory> getPlanHistory(String id, {String? from, String? to});
+  Future<void> addPlanItem(String planId, DuaPlanItemDraft item);
+  Future<void> removePlanItem(String planId, String duaId);
 }
 
 /// Content endpoints are public/read-only; the Dua planner endpoints need the
@@ -53,12 +85,25 @@ abstract interface class DuaRemoteDataSource {
 /// public catalog/routines GETs vs. its authenticated plan endpoints).
 class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   DuaRemoteDataSourceImpl({Dio? dio, AuthLocalDataSource? local})
-    : _local = local ?? AuthLocalDataSourceImpl(),
-      _dio = dio ?? _buildDio();
+    : _local = local ?? _defaultLocal(),
+      _dio = dio ?? _buildDio() {
+    if (_dio.interceptors.whereType<LanguageHeaderInterceptor>().isEmpty) {
+      _dio.interceptors.add(const LanguageHeaderInterceptor());
+    }
+  }
 
   static const baseUrl = ApiConstants.baseUrl;
   final Dio _dio;
-  final AuthLocalDataSource _local;
+  final AuthLocalDataSource? _local;
+
+  static AuthLocalDataSource? _defaultLocal() {
+    try {
+      return AuthLocalDataSourceImpl();
+    } catch (_) {
+      // Public browse endpoints are usable before Hive is initialized.
+      return null;
+    }
+  }
 
   static Dio _buildDio() {
     final options = BaseOptions(
@@ -91,14 +136,37 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   ).map(DuaCategoryModel.fromJson).toList(growable: false);
 
   @override
+  Future<DuaCategoryModel> getCategory(String idOrSlug) async =>
+      DuaCategoryModel.fromJson(
+        _dataMap(await _get('/duas/categories/$idOrSlug')),
+      );
+
+  @override
   Future<DuaPage> getByCategory(
     String categoryId, {
+    int page = 1,
+    int limit = 20,
+  }) => browseDuas(categoryId: categoryId, page: page, limit: limit);
+
+  @override
+  Future<DuaPage> browseDuas({
+    String? categoryId,
+    String? category,
+    String? searchTerm,
+    bool? isFeatured,
     int page = 1,
     int limit = 20,
   }) async {
     final response = await _get(
       '/duas',
-      queryParameters: {'categoryId': categoryId, 'page': page, 'limit': limit},
+      queryParameters: {
+        'categoryId': ?categoryId,
+        'category': ?category,
+        'searchTerm': ?searchTerm,
+        'isFeatured': ?isFeatured,
+        'page': page,
+        'limit': limit,
+      },
     );
     final body = _body(response);
     final meta = body['meta'] is Map
@@ -129,6 +197,98 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
       '/duas/reading/track',
       data: {'duaId': duaId, 'seconds': seconds, 'date': date},
       options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<DuaFeaturedModel?> getLastRead({String? categoryId}) async {
+    final response = await _get(
+      '/duas/reading/last-read',
+      queryParameters: {'categoryId': ?categoryId},
+      requiresAuth: true,
+    );
+    final data = _body(response)['data'];
+    if (data == null || data is! Map) return null;
+    return DuaFeaturedModel.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  @override
+  Future<DuaReadingHistoryPage> getReadingHistory({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _get(
+      '/duas/reading/history',
+      queryParameters: {'page': page, 'limit': limit},
+      requiresAuth: true,
+    );
+    final meta = _mapOf(_body(response)['meta']);
+    return DuaReadingHistoryPage(
+      items: _dataList(
+        response,
+      ).map(DuaReadingHistoryItem.fromJson).toList(growable: false),
+      page: _asInt(meta['page']) == 0 ? page : _asInt(meta['page']),
+      totalPage: _asInt(meta['totalPage']),
+    );
+  }
+
+  @override
+  Future<void> deleteReadingHistoryItem(String duaId) => _call(
+    () => _dio.delete<dynamic>(
+      '/duas/reading/history/$duaId',
+      options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<void> clearReadingHistory() => _call(
+    () => _dio.delete<dynamic>(
+      '/duas/reading/history',
+      options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<DuaDailySummary> getReadingSummary({required String date}) async =>
+      DuaDailySummary.fromJson(
+        _dataMap(
+          await _get(
+            '/duas/reading/summary',
+            queryParameters: {'date': date},
+            requiresAuth: true,
+          ),
+        ),
+      );
+
+  @override
+  Future<DuaReadingCalendar> getReadingCalendar({
+    int days = 30,
+    String? from,
+    String? to,
+  }) async => DuaReadingCalendar.fromJson(
+    _dataMap(
+      await _get(
+        '/duas/reading/calendar',
+        // An explicit window wins over the rolling `days` default.
+        queryParameters: from != null && to != null
+            ? {'from': from, 'to': to}
+            : {'days': days},
+        requiresAuth: true,
+      ),
+    ),
+  );
+
+  @override
+  Future<DuaReadingDashboard> getReadingDashboard({
+    required String timeframe,
+    String? date,
+  }) async => DuaReadingDashboard.fromJson(
+    _dataMap(
+      await _get(
+        '/duas/reading/dashboard',
+        queryParameters: {'timeframe': timeframe, 'date': ?date},
+        requiresAuth: true,
+      ),
     ),
   );
 
@@ -187,10 +347,58 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     ),
   );
 
+  /// The same `PATCH` as [editPlan], carrying only `reminderEnabled` — the
+  /// plan's duas and schedule are left untouched.
+  @override
+  Future<void> setPlanReminder(String id, {required bool enabled}) => _call(
+    () => _dio.patch<dynamic>(
+      '/duas/planner/plans/$id',
+      data: {'reminderEnabled': enabled},
+      options: _options(requiresAuth: true),
+    ),
+  );
+
   @override
   Future<void> deletePlan(String id) => _call(
     () => _dio.delete<dynamic>(
       '/duas/planner/plans/$id',
+      options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<DuaPlannerToday> getPlannerToday() async => DuaPlannerToday.fromJson(
+    _dataMap(await _get('/duas/planner/today', requiresAuth: true)),
+  );
+
+  @override
+  Future<DuaPlanHistory> getPlanHistory(
+    String id, {
+    String? from,
+    String? to,
+  }) async => DuaPlanHistory.fromJson(
+    _dataMap(
+      await _get(
+        '/duas/planner/plans/$id/history',
+        queryParameters: {'from': ?from, 'to': ?to},
+        requiresAuth: true,
+      ),
+    ),
+  );
+
+  @override
+  Future<void> addPlanItem(String planId, DuaPlanItemDraft item) => _call(
+    () => _dio.post<dynamic>(
+      '/duas/planner/plans/$planId/items',
+      data: item.toJson(),
+      options: _options(requiresAuth: true),
+    ),
+  );
+
+  @override
+  Future<void> removePlanItem(String planId, String duaId) => _call(
+    () => _dio.delete<dynamic>(
+      '/duas/planner/plans/$planId/items/$duaId',
       options: _options(requiresAuth: true),
     ),
   );
@@ -208,12 +416,22 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
   );
 
   Options _options({required bool requiresAuth}) {
-    final token = _local.getToken();
+    String? token;
+    try {
+      token = _local?.getToken();
+    } catch (_) {
+      // Public catalog endpoints must still work while local auth storage is
+      // not initialized (for example, a cold-start widget test).
+      token = null;
+    }
     if (requiresAuth && (token == null || token.trim().isEmpty)) {
       throw AuthenticationRequiredException();
     }
     return Options(
-      headers: token == null ? null : {'Authorization': 'Bearer $token'},
+      headers: {
+        'X-Timezone': ApiConstants.timezone,
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
   }
 

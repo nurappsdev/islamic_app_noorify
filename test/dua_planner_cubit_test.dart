@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_plan_detail_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_planner_cubit.dart';
@@ -25,6 +26,10 @@ class _DelayedPlansRepository implements DuaRepository {
   Future<List<DuaCategoryModel>> getCategories() => throw UnimplementedError();
 
   @override
+  Future<DuaCategoryModel> getCategory(String idOrSlug) =>
+      throw UnimplementedError();
+
+  @override
   Future<DuaPage> getByCategory(
     String categoryId, {
     int page = 1,
@@ -45,7 +50,61 @@ class _DelayedPlansRepository implements DuaRepository {
       throw UnimplementedError();
 
   @override
+  Future<void> setPlanReminder(String id, {required bool enabled}) =>
+      throw UnimplementedError();
+  @override
   Future<void> deletePlan(String id) => throw UnimplementedError();
+
+  @override
+  Future<DuaPage> browseDuas({
+    String? categoryId,
+    String? category,
+    String? searchTerm,
+    bool? isFeatured,
+    int page = 1,
+    int limit = 20,
+  }) => throw UnimplementedError();
+  @override
+  Future<DuaFeaturedModel?> getLastRead({String? categoryId}) =>
+      throw UnimplementedError();
+  @override
+  Future<DuaReadingHistoryPage> getReadingHistory({
+    int page = 1,
+    int limit = 20,
+  }) => throw UnimplementedError();
+  @override
+  Future<void> deleteReadingHistoryItem(String duaId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> clearReadingHistory() => throw UnimplementedError();
+  @override
+  Future<DuaDailySummary> getReadingSummary({required String date}) =>
+      throw UnimplementedError();
+  @override
+  Future<DuaReadingCalendar> getReadingCalendar({
+    int days = 30,
+    String? from,
+    String? to,
+  }) => throw UnimplementedError();
+  @override
+  Future<DuaReadingDashboard> getReadingDashboard({
+    required String timeframe,
+    String? date,
+  }) => throw UnimplementedError();
+  @override
+  Future<DuaPlannerToday> getPlannerToday() => throw UnimplementedError();
+  @override
+  Future<DuaPlanHistory> getPlanHistory(
+    String id, {
+    String? from,
+    String? to,
+  }) => throw UnimplementedError();
+  @override
+  Future<void> addPlanItem(String planId, DuaPlanItemDraft item) =>
+      throw UnimplementedError();
+  @override
+  Future<void> removePlanItem(String planId, String duaId) =>
+      throw UnimplementedError();
 }
 
 void main() {

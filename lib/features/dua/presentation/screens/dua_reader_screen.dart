@@ -14,7 +14,9 @@ import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_dail
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/data/repositories/dua_reading_repository_impl.dart';
+import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/controllers/dua_reading_tracker.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_settings/dua_settings_bloc.dart';
@@ -81,6 +83,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   /// Reports how long this dua is read. Null for the legacy mock catalog's
   /// demo duas: they have no `_id` the API would accept.
   DuaReadingTracker? _reading;
+  DuaFeaturedModel? _fullDua;
 
   /// Whether the bottom recite bar (counter, reset, bookmark, play) shows.
   /// It is off for now; set it to `true` to bring the bar back, which is why
@@ -168,9 +171,23 @@ class _DuaReaderViewState extends State<_DuaReaderView>
     unawaited(AmolDailyStore.instance.ensureLoaded());
     final duaId = widget.args.featuredModel?.id ?? '';
     if (duaId.isEmpty) return;
+    unawaited(_loadFullDua(duaId));
     WidgetsBinding.instance.addObserver(this);
     _reading = DuaReadingTracker(DuaReadingRepositoryImpl.shared, duaId: duaId)
       ..start();
+  }
+
+  /// The featured response is intentionally treated as a preview only. The
+  /// reader always refreshes the individual dua so optional narration, tips,
+  /// references and future detail fields are complete before being displayed.
+  Future<void> _loadFullDua(String duaId) async {
+    try {
+      final detail = await duaRepository.getDuaById(duaId);
+      if (mounted) setState(() => _fullDua = detail);
+    } catch (_) {
+      // The preview stays readable offline or when detail retrieval fails.
+      // No replacement content is fabricated for unavailable fields.
+    }
   }
 
   @override
@@ -205,7 +222,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   /// into one shape the view below renders, resolving bilingual fields in
   /// the app's current language.
   _DuaReadable _readable(BuildContext context) {
-    final model = widget.args.featuredModel;
+    final model = _fullDua ?? widget.args.featuredModel;
     if (model != null) {
       final categoryName = context.localized(model.category?.name);
       final title = context.localized(model.title);
@@ -226,6 +243,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
             : null,
         reference: context.localized(model.reference),
         instruction: context.localized(model.instruction),
+        hadithNarration: context.localized(model.hadithNarration),
+        sunnahTips: context.localized(model.sunnahTips),
         virtue: context.localized(model.virtue),
       );
     }
@@ -238,6 +257,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       repeatCount: detail.repeatCount,
       reference: '',
       instruction: '',
+      hadithNarration: '',
+      sunnahTips: '',
       virtue: '',
     );
   }
@@ -245,7 +266,7 @@ class _DuaReaderViewState extends State<_DuaReaderView>
   /// The dua's own `_id`, or `mock:<name>` for the legacy catalog's demo
   /// duas — stable per-dua key used by [DuaBookmarkStore].
   String get _duaId {
-    final model = widget.args.featuredModel;
+    final model = _fullDua ?? widget.args.featuredModel;
     if (model != null) return model.id;
     return 'mock:${widget.args.detail!.name}';
   }
@@ -361,6 +382,16 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       buffer
         ..writeln()
         ..writeln(readable.instruction);
+    }
+    if (readable.hadithNarration.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.hadithNarration);
+    }
+    if (readable.sunnahTips.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(readable.sunnahTips);
     }
     if (readable.virtue.isNotEmpty) {
       buffer
@@ -565,7 +596,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                       ),
                     ],
                     if (settings.showNarration &&
-                        readable.instruction.isNotEmpty) ...[
+                        (readable.hadithNarration.isNotEmpty ||
+                            readable.instruction.isNotEmpty)) ...[
                       SizedBox(height: 16.h),
                       _SectionCard(
                         icon: Icons.menu_book_rounded,
@@ -574,7 +606,9 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                         border: const Color(0xFFE3E7D3),
                         title: appText.duaNarrationTitle,
                         child: Text(
-                          readable.instruction,
+                          readable.hadithNarration.isNotEmpty
+                              ? readable.hadithNarration
+                              : readable.instruction,
                           style: TextStyle(
                             fontSize: 12.5.sp,
                             height: 1.6,
@@ -766,6 +800,24 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                         ),
                       ),
                     ],
+                    if (readable.sunnahTips.isNotEmpty) ...[
+                      SizedBox(height: 14.h),
+                      _SectionCard(
+                        icon: Icons.lightbulb_outline_rounded,
+                        accent: const Color(0xFFB07A2E),
+                        bg: const Color(0xFFFBF3DD),
+                        border: const Color(0xFFEBDCA8),
+                        title: 'Sunnah Tips',
+                        child: Text(
+                          readable.sunnahTips,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            height: 1.6,
+                            color: context.inkColor(const Color(0xFF7C6A3A)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -804,6 +856,8 @@ class _DuaReadable {
     required this.repeatCount,
     required this.reference,
     required this.instruction,
+    required this.hadithNarration,
+    required this.sunnahTips,
     required this.virtue,
   });
 
@@ -814,6 +868,8 @@ class _DuaReadable {
   final int? repeatCount;
   final String reference;
   final String instruction;
+  final String hadithNarration;
+  final String sunnahTips;
   final String virtue;
 }
 

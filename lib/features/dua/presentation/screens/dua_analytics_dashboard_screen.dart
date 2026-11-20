@@ -6,14 +6,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 
 /// Dua reading dashboard, with Daily, Weekly and Monthly visual summaries
 /// from `devImg/img.png`, `img_1.png`, and `img_2.png`.
 ///
-/// The reading analytics API is not available in the Dua module yet, so the
-/// chart values mirror the approved design data. The period picker and layout
-/// are ready to receive live values when that endpoint is connected.
+/// Its existing approved layout is populated from the reading dashboard API.
 class DuaAnalyticsDashboardScreen extends StatefulWidget {
   const DuaAnalyticsDashboardScreen({super.key});
 
@@ -25,6 +26,40 @@ class DuaAnalyticsDashboardScreen extends StatefulWidget {
 class _DuaAnalyticsDashboardScreenState
     extends State<DuaAnalyticsDashboardScreen> {
   _DuaDashboardPeriod _period = _DuaDashboardPeriod.daily;
+  DuaReadingDashboard? _dashboard;
+  Object? _error;
+  var _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final dashboard = await duaRepository.getReadingDashboard(
+        timeframe: _period.name,
+      );
+      if (!mounted) return;
+      setState(() => _dashboard = dashboard);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = error);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _changePeriod(_DuaDashboardPeriod period) {
+    if (_period == period) return;
+    setState(() => _period = period);
+    _loadDashboard();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,29 +80,38 @@ class _DuaAnalyticsDashboardScreenState
                 112.h + bottomInset,
               ),
               children: [
-                _DashboardHeader(
-                  period: _period,
-                  onChanged: (period) => setState(() => _period = period),
-                ),
+                _DashboardHeader(period: _period, onChanged: _changePeriod),
                 SizedBox(height: 12.h),
-                const _PositionSummary(),
+                if (_loading) const LinearProgressIndicator(minHeight: 2),
+                if (_error != null)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10.h),
+                    child: TextButton(
+                      onPressed: _loadDashboard,
+                      child: const Text('Unable to load dashboard. Retry'),
+                    ),
+                  ),
+                _PositionSummary(dashboard: _dashboard),
                 SizedBox(height: 14.h),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 180),
                   child: switch (_period) {
-                    _DuaDashboardPeriod.daily => const _DailyChart(
+                    _DuaDashboardPeriod.daily => _DailyChart(
                       key: ValueKey('daily'),
+                      dashboard: _dashboard,
                     ),
-                    _DuaDashboardPeriod.weekly => const _WeeklyChart(
+                    _DuaDashboardPeriod.weekly => _WeeklyChart(
                       key: ValueKey('weekly'),
+                      dashboard: _dashboard,
                     ),
-                    _DuaDashboardPeriod.monthly => const _MonthlyChart(
+                    _DuaDashboardPeriod.monthly => _MonthlyChart(
                       key: ValueKey('monthly'),
+                      dashboard: _dashboard,
                     ),
                   },
                 ),
                 SizedBox(height: 16.h),
-                _Metrics(period: _period),
+                _Metrics(period: _period, dashboard: _dashboard),
                 SizedBox(height: 20.h),
                 _HistoryHeader(
                   title: appText.duaIntroTitle,
@@ -76,7 +120,9 @@ class _DuaAnalyticsDashboardScreenState
                   ).pushNamed(RouteNames.duaRecitationHistory),
                 ),
                 SizedBox(height: 8.h),
-                const _RecitationHistory(),
+                _RecitationHistory(
+                  items: _dashboard?.recentRecitations ?? const [],
+                ),
               ],
             ),
           ),
@@ -100,12 +146,6 @@ extension on _DuaDashboardPeriod {
     _DuaDashboardPeriod.daily => 'Daily',
     _DuaDashboardPeriod.weekly => 'Weekly',
     _DuaDashboardPeriod.monthly => 'Monthly',
-  };
-
-  String get duration => switch (this) {
-    _DuaDashboardPeriod.daily => '3h 45m',
-    _DuaDashboardPeriod.weekly => '72h 45m',
-    _DuaDashboardPeriod.monthly => '744h 45m',
   };
 }
 
@@ -165,7 +205,9 @@ class _DashboardHeader extends StatelessWidget {
 }
 
 class _PositionSummary extends StatelessWidget {
-  const _PositionSummary();
+  const _PositionSummary({this.dashboard});
+
+  final DuaReadingDashboard? dashboard;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -187,7 +229,7 @@ class _PositionSummary extends StatelessWidget {
           ),
         ),
         SizedBox(width: 8.w),
-        const _PercentagePill(value: '68%'),
+        _PercentagePill(value: _percentage(dashboard?.myPositionPercentage)),
         const Spacer(),
         const _LegendDot(color: Color(0xFFF0EEC1)),
         SizedBox(width: 5.w),
@@ -199,11 +241,16 @@ class _PositionSummary extends StatelessWidget {
           ),
         ),
         SizedBox(width: 8.w),
-        const _PercentagePill(value: '32%', muted: true),
+        _PercentagePill(
+          value: _percentage(dashboard?.competitorPercentage),
+          muted: true,
+        ),
       ],
     ),
   );
 }
+
+String _percentage(double? value) => value == null ? '—' : '${value.round()}%';
 
 class _LegendDot extends StatelessWidget {
   const _LegendDot({required this.color});
@@ -246,7 +293,9 @@ class _PercentagePill extends StatelessWidget {
 }
 
 class _DailyChart extends StatelessWidget {
-  const _DailyChart({super.key});
+  const _DailyChart({super.key, this.dashboard});
+
+  final DuaReadingDashboard? dashboard;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -259,19 +308,32 @@ class _DailyChart extends StatelessWidget {
           painter: _DonutPainter(
             trackColor: context.surfaceColor(const Color(0xFFDCE8B5)),
             progressColor: context.surfaceColor(const Color(0xFFA8B657)),
+            progress: ((dashboard?.myPositionPercentage ?? 0) / 100).clamp(
+              0.0,
+              1.0,
+            ),
           ),
         ),
-        Positioned(top: 12.h, right: 0, child: const _ChartTooltip()),
+        Positioned(
+          top: 12.h,
+          right: 0,
+          child: _ChartTooltip(dashboard: dashboard),
+        ),
       ],
     ),
   );
 }
 
 class _DonutPainter extends CustomPainter {
-  const _DonutPainter({required this.trackColor, required this.progressColor});
+  const _DonutPainter({
+    required this.trackColor,
+    required this.progressColor,
+    required this.progress,
+  });
 
   final Color trackColor;
   final Color progressColor;
+  final double progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -284,17 +346,26 @@ class _DonutPainter extends CustomPainter {
     paint.color = trackColor;
     canvas.drawArc(rect, -math.pi * .88, math.pi * 1.34, false, paint);
     paint.color = progressColor;
-    canvas.drawArc(rect, math.pi * .47, math.pi * 1.18, false, paint);
+    canvas.drawArc(
+      rect,
+      math.pi * .47,
+      math.pi * 1.34 * progress,
+      false,
+      paint,
+    );
   }
 
   @override
   bool shouldRepaint(covariant _DonutPainter oldDelegate) =>
       oldDelegate.trackColor != trackColor ||
-      oldDelegate.progressColor != progressColor;
+      oldDelegate.progressColor != progressColor ||
+      oldDelegate.progress != progress;
 }
 
 class _ChartTooltip extends StatelessWidget {
-  const _ChartTooltip();
+  const _ChartTooltip({this.dashboard});
+
+  final DuaReadingDashboard? dashboard;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -311,7 +382,8 @@ class _ChartTooltip extends StatelessWidget {
       ],
     ),
     child: Text(
-      'Abdullah Al-Aziz\n\nTime : 23 min\n\nPoint : 1.5/1.0',
+      'Time : ${dashboard?.totalReadingTimeFormatted ?? '—'}\n\n'
+      'Duas : ${dashboard?.totalDuasRecited ?? '—'}',
       style: TextStyle(
         color: context.inkColor(const Color(0xFF364027)),
         fontSize: 9.sp,
@@ -322,12 +394,17 @@ class _ChartTooltip extends StatelessWidget {
 }
 
 class _WeeklyChart extends StatelessWidget {
-  const _WeeklyChart({super.key});
+  const _WeeklyChart({super.key, this.dashboard});
+
+  final DuaReadingDashboard? dashboard;
 
   @override
   Widget build(BuildContext context) {
-    const values = [40, 75, 85, 100, 40, 75, 92];
-    const labels = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    final activity = dashboard?.activity ?? const <DuaDashboardActivityDay>[];
+    final highest = activity.fold<int>(
+      0,
+      (value, item) => math.max(value, item.minutes),
+    );
     return SizedBox(
       height: 205.h,
       child: Row(
@@ -338,7 +415,7 @@ class _WeeklyChart extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                for (final label in const ['1000', '750', '500', '250', '0'])
+                for (final label in const ['100', '75', '50', '25', '0'])
                   Text(
                     label,
                     style: TextStyle(
@@ -354,7 +431,7 @@ class _WeeklyChart extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                for (var index = 0; index < values.length; index++)
+                for (var index = 0; index < activity.length; index++)
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 3.w),
@@ -364,11 +441,13 @@ class _WeeklyChart extends StatelessWidget {
                             child: Align(
                               alignment: Alignment.bottomCenter,
                               child: FractionallySizedBox(
-                                heightFactor: values[index] / 100,
+                                heightFactor: highest == 0
+                                    ? 0
+                                    : activity[index].minutes / highest,
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: context.surfaceColor(
-                                      index == 2 || index == 3
+                                      activity[index].duas > 0
                                           ? const Color(0xFFA8B657)
                                           : const Color(0xFFD6E4AA),
                                     ),
@@ -382,7 +461,7 @@ class _WeeklyChart extends StatelessWidget {
                           ),
                           SizedBox(height: 8.h),
                           Text(
-                            labels[index],
+                            activity[index].label,
                             style: TextStyle(fontSize: 10.sp),
                           ),
                         ],
@@ -399,7 +478,9 @@ class _WeeklyChart extends StatelessWidget {
 }
 
 class _MonthlyChart extends StatefulWidget {
-  const _MonthlyChart({super.key});
+  const _MonthlyChart({super.key, this.dashboard});
+
+  final DuaReadingDashboard? dashboard;
 
   @override
   State<_MonthlyChart> createState() => _MonthlyChartState();
@@ -410,8 +491,11 @@ class _MonthlyChartState extends State<_MonthlyChart> {
 
   @override
   Widget build(BuildContext context) {
-    const points = [420, 180, 160, 440];
-    const labels = ['Week 4', 'Week 3', 'Week 2', 'Week 1'];
+    final activity =
+        widget.dashboard?.activity ?? const <DuaDashboardActivityDay>[];
+    final points = [for (final item in activity) item.minutes];
+    final labels = [for (final item in activity) item.label];
+    final highest = points.fold<int>(0, math.max);
     return SizedBox(
       height: 218.h,
       child: Stack(
@@ -453,7 +537,9 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                                 ),
                               ),
                               FractionallySizedBox(
-                                widthFactor: points[index] / 500,
+                                widthFactor: highest == 0
+                                    ? 0
+                                    : points[index] / highest,
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 160),
                                   decoration: BoxDecoration(
@@ -478,7 +564,14 @@ class _MonthlyChartState extends State<_MonthlyChart> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    for (final point in const [0, 100, 200, 300, 400, 500])
+                    for (final point in [
+                      0,
+                      highest ~/ 5,
+                      highest * 2 ~/ 5,
+                      highest * 3 ~/ 5,
+                      highest * 4 ~/ 5,
+                      highest,
+                    ])
                       Text(
                         '$point',
                         style: TextStyle(
@@ -523,7 +616,7 @@ class _MonthlyCompetitorTooltip extends StatelessWidget {
       ],
     ),
     child: Text(
-      'Competitor\nAbdullah Al-Aziz\nPoints: $points',
+      'Reading activity\nMinutes: $points',
       style: TextStyle(
         color: context.inkColor(const Color(0xFF364027)),
         fontSize: 9.sp,
@@ -534,25 +627,28 @@ class _MonthlyCompetitorTooltip extends StatelessWidget {
 }
 
 class _Metrics extends StatelessWidget {
-  const _Metrics({required this.period});
+  const _Metrics({required this.period, this.dashboard});
   final _DuaDashboardPeriod period;
+  final DuaReadingDashboard? dashboard;
 
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      const Expanded(
+      Expanded(
         child: _MetricCard(
           title: 'Total Duas Recited',
-          value: '148',
-          subtitle: 'Daily Target: 35/40',
-          colors: [Color(0xFF782CEB), Color(0xFF5245D7)],
+          value: '${dashboard?.totalDuasRecited ?? '—'}',
+          subtitle: dashboard?.dailyTargetText.isNotEmpty == true
+              ? 'Daily Target: ${dashboard!.dailyTargetText}'
+              : 'Daily Target: —',
+          colors: const [Color(0xFF782CEB), Color(0xFF5245D7)],
         ),
       ),
       SizedBox(width: 12.w),
       Expanded(
         child: _MetricCard(
           title: 'Dua Recitation Time',
-          value: period.duration,
+          value: dashboard?.totalReadingTimeFormatted ?? '—',
           subtitle: 'Total recitation time',
           colors: const [Color(0xFF08BCEB), Color(0xFF2365DD)],
         ),
@@ -665,34 +761,60 @@ class _HistoryHeader extends StatelessWidget {
 }
 
 class _RecitationHistory extends StatelessWidget {
-  const _RecitationHistory();
+  const _RecitationHistory({required this.items});
+
+  final List<DuaReadingHistoryItem> items;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: const [
-      _HistoryRow(
-        icon: Icons.wb_sunny_outlined,
-        title: 'Morning Dua',
-        subtitle: 'Alhamdulillahil... • 1 Dua',
-        time: '17 Aug At 5:35 AM',
-        duration: '8 mins read',
-      ),
-      _HistoryRow(
-        icon: Icons.location_on_outlined,
-        title: 'Waking Supplication',
-        subtitle: 'Alhamdulillahi... • 1 Dua',
-        time: '17 Aug At 6:15 AM',
-        duration: '3 mins read',
-      ),
-      _HistoryRow(
-        icon: Icons.shield_outlined,
-        title: 'Protection & Ruqyah Duas',
-        subtitle: 'Falaq, Nas & Ayat al-Kursi • 7 Duas',
-        time: '16 Aug At 9:20 PM',
-        duration: '15 mins read',
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        child: Text(
+          'No recitation history yet.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12.sp,
+            color: context.textInkColor(const Color(0xFF778060)),
+          ),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        for (final item in items.take(3))
+          _HistoryRow(
+            icon: Icons.menu_book_outlined,
+            title: context.localized(item.title),
+            subtitle: _historySubtitle(context, item),
+            time: _historyTime(context, item),
+            duration: _historyDuration(item),
+          ),
+      ],
+    );
+  }
+}
+
+String _historySubtitle(BuildContext context, DuaReadingHistoryItem item) {
+  final category = context.localized(item.category);
+  if (category.isNotEmpty) return category;
+  return item.arabic;
+}
+
+String _historyTime(BuildContext context, DuaReadingHistoryItem item) {
+  if (item.timeAgoText.isNotEmpty) return item.timeAgoText;
+  final time = item.lastReadAt?.toLocal();
+  if (time == null) return '—';
+  final localizations = MaterialLocalizations.of(context);
+  return '${localizations.formatShortDate(time)} ${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(time))}';
+}
+
+String _historyDuration(DuaReadingHistoryItem item) {
+  if (item.readSeconds <= 0) {
+    return item.readCount > 0 ? '${item.readCount} Dua' : '—';
+  }
+  final minutes = (item.readSeconds / 60).ceil();
+  return '$minutes min read';
 }
 
 class _HistoryRow extends StatelessWidget {

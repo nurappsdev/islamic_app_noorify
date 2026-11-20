@@ -39,12 +39,14 @@ class DuaHomeCubit extends Cubit<DuaHomeState> {
   final DuaRepository _repository;
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(state.copyWith(status: DuaLoadStatus.loading));
     try {
       final results = await Future.wait([
         _repository.getFeatured(),
         _repository.getCategories(),
       ]);
+      if (isClosed) return;
       final featured = results[0] as List<DuaFeaturedModel>;
       final categories = results[1] as List<DuaCategoryModel>;
 
@@ -68,6 +70,7 @@ class DuaHomeCubit extends Cubit<DuaHomeState> {
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(state.copyWith(status: DuaLoadStatus.failure, error: '$error'));
     }
   }

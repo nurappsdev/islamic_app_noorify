@@ -1,5 +1,6 @@
 class ApiConstants {
-  static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
+ // static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
+  static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
   // local
   //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
@@ -10,6 +11,13 @@ class ApiConstants {
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: _defaultBaseUrl,
+  );
+
+  /// IANA timezone used by planner and daily-record API requests. A release
+  /// for another region can override it with `APP_TIME_ZONE` at build time.
+  static const String timezone = String.fromEnvironment(
+    'APP_TIME_ZONE',
+    defaultValue: 'Asia/Dhaka',
   );
   // static const String baseUrl = "https://tuhfatulmuslim.ilmifygroup.com/api/v1";
   static const String imageBaseUrl = "";
