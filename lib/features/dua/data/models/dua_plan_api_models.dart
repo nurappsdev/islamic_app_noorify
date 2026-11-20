@@ -218,6 +218,8 @@ class DuaPlanDetail {
     required this.status,
     required this.daysOfWeek,
     required this.items,
+    this.startDate = '',
+    this.endDate = '',
   });
 
   final String id;
@@ -225,6 +227,9 @@ class DuaPlanDetail {
 
   /// `in_progress`, `completed` or `abandoned`.
   final String status;
+
+  final String startDate;
+  final String endDate;
 
   /// 0 = Sunday ... 6 = Saturday.
   final List<int> daysOfWeek;
@@ -234,6 +239,8 @@ class DuaPlanDetail {
     id: _idOf(json),
     name: json['name']?.toString() ?? '',
     status: json['status']?.toString() ?? 'in_progress',
+    startDate: json['startDate']?.toString() ?? '',
+    endDate: json['endDate']?.toString() ?? '',
     daysOfWeek: [
       for (final day in json['daysOfWeek'] as List? ?? const []) _asInt(day),
     ],

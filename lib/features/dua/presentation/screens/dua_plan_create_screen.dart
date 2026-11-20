@@ -75,8 +75,8 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
       if (item.dua != null) _PlanItemEntry(dua: item.dua!, slot: item.slot),
   ];
 
-  /// Existing plans show their saved dua list; new plans show the form.
-  late final bool _adding = _entries.isEmpty;
+  /// The sheet always keeps the Create Plan form visible, including edits.
+  late final bool _adding = widget.embedded || _entries.isEmpty;
 
   /// `in_progress` / `completed` / `abandoned` — only edited (and shown) in
   /// edit mode.
@@ -92,6 +92,13 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   @override
   void initState() {
     super.initState();
+    _startDate = DateTime.tryParse(widget.editPlan?.startDate ?? '');
+    _endDate = DateTime.tryParse(widget.editPlan?.endDate ?? '');
+    if (_isEditing && _entries.isNotEmpty) {
+      _pendingDuas = [for (final entry in _entries) entry.dua];
+      _category = _pendingDuas.first.category;
+      _entries.clear();
+    }
     _loadCategories();
   }
 
@@ -112,7 +119,21 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
   Future<void> _loadCategories() async {
     try {
       final categories = await duaRepository.getCategories();
-      if (mounted) setState(() => _categories = categories);
+      if (!mounted) return;
+      setState(() {
+        _categories = categories;
+        final selectedId =
+            _category?.id ??
+            (_pendingDuas.isEmpty ? '' : _pendingDuas.first.categoryId);
+        if (selectedId.isNotEmpty) {
+          for (final category in categories) {
+            if (category.id == selectedId) {
+              _category = category;
+              break;
+            }
+          }
+        }
+      });
     } catch (_) {
       // The existing category picker remains available as a fallback.
     }
@@ -460,15 +481,55 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
                 ),
           onTap: _pickDua,
         ),
+        if (_pendingDuas.isNotEmpty) ...[
+          SizedBox(height: 8.h),
+          Wrap(
+            spacing: 7.w,
+            runSpacing: 7.h,
+            children: [
+              for (var index = 0; index < _pendingDuas.length; index++)
+                Tooltip(
+                  message: context.localized(_pendingDuas[index].title),
+                  child: Container(
+                    width: 30.r,
+                    height: 30.r,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF4F8E6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      context.localizedDigits('${index + 1}'),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: context.textInkColor(const Color(0xFF4C5731)),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
         if (_showDuaDropdown) ...[
           SizedBox(height: 10.h),
           SizedBox(
             height: 270.h,
             child: DuaPlanDuaDropdown(
               category: _category!,
+              selectedIds: {for (final dua in _pendingDuas) dua.id},
               onSelected: (dua) => setState(() {
-                _pendingDuas = [dua];
-                _showDuaDropdown = false;
+                final selectedIndex = _pendingDuas.indexWhere(
+                  (item) => item.id == dua.id,
+                );
+                if (selectedIndex >= 0) {
+                  _pendingDuas = [
+                    for (final item in _pendingDuas)
+                      if (item.id != dua.id) item,
+                  ];
+                } else {
+                  _pendingDuas = [..._pendingDuas, dua];
+                }
               }),
             ),
           ),

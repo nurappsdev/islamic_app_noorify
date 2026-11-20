@@ -75,7 +75,7 @@ class _CategoryList extends StatelessWidget {
 
 /// Compact Select Dua picker (`devImg/img_27.png`) for one category's duas.
 /// Its expand action opens [DuaPlanDuaPickerScreen] (`devImg/img_28.png`).
-/// Both return the selected dua as a one-item list for Create Plan.
+/// Both return the selected duas for Create Plan.
 class DuaItemPickerSheet extends StatelessWidget {
   const DuaItemPickerSheet({
     super.key,
@@ -98,7 +98,7 @@ class DuaItemPickerSheet extends StatelessWidget {
 
 /// Full-screen Dua picker used by the expand action in [DuaItemPickerSheet].
 /// It follows the Select Dua design (`devImg/img_28.png`) and returns the
-/// selected dua as a one-item list, keeping the Create Plan result contract.
+/// selected duas, keeping the Create Plan result contract.
 class DuaPlanDuaPickerScreen extends StatelessWidget {
   const DuaPlanDuaPickerScreen({
     super.key,
@@ -131,10 +131,12 @@ class DuaPlanDuaDropdown extends StatelessWidget {
   const DuaPlanDuaDropdown({
     super.key,
     required this.category,
+    required this.selectedIds,
     required this.onSelected,
   });
 
   final DuaCategoryModel category;
+  final Set<String> selectedIds;
   final ValueChanged<DuaFeaturedModel> onSelected;
 
   @override
@@ -142,7 +144,7 @@ class DuaPlanDuaDropdown extends StatelessWidget {
     create: (_) => DuaCategoryDuasCubit(duaRepository)..load(category),
     child: _DuaPickerBody(
       category: category,
-      initialSelectedIds: const {},
+      initialSelectedIds: selectedIds,
       fullScreen: false,
       showTitle: false,
       showSearch: false,
@@ -206,6 +208,7 @@ class _DuaPickerBody extends StatefulWidget {
 
 class _DuaPickerBodyState extends State<_DuaPickerBody> {
   String _query = '';
+  late final Set<String> _selectedIds = Set.of(widget.initialSelectedIds);
 
   Future<void> _openFullScreen() async {
     final result = await Navigator.of(context).push<List<DuaFeaturedModel>>(
@@ -223,10 +226,20 @@ class _DuaPickerBodyState extends State<_DuaPickerBody> {
     final onSelected = widget.onSelected;
     if (onSelected != null) {
       onSelected(dua);
+    } else if (widget.fullScreen) {
+      setState(() {
+        if (!_selectedIds.remove(dua.id)) _selectedIds.add(dua.id);
+      });
     } else {
       Navigator.of(context).pop([dua]);
     }
   }
+
+  void _done(List<DuaFeaturedModel> availableDuas) =>
+      Navigator.of(context).pop([
+        for (final dua in availableDuas)
+          if (_selectedIds.contains(dua.id)) dua,
+      ]);
 
   @override
   Widget build(BuildContext context) {
@@ -350,10 +363,32 @@ class _DuaPickerBodyState extends State<_DuaPickerBody> {
                     itemBuilder: (context, index) => _PlanDuaTile(
                       dua: duas[index],
                       index: index,
+                      selected: widget.fullScreen
+                          ? _selectedIds.contains(duas[index].id)
+                          : widget.initialSelectedIds.contains(duas[index].id),
                       onTap: () => _select(duas[index]),
                     ),
                   ),
           ),
+          if (widget.fullScreen) ...[
+            SizedBox(height: 10.h),
+            SizedBox(
+              width: double.infinity,
+              height: 50.h,
+              child: FilledButton(
+                onPressed: () => _done(state.duas),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFA7B45B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25.r),
+                  ),
+                ),
+                child: Text(
+                  '${appText.commonDone} (${context.localizedDigits('${_selectedIds.length}')})',
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -400,11 +435,13 @@ class _PlanDuaTile extends StatelessWidget {
   const _PlanDuaTile({
     required this.dua,
     required this.index,
+    required this.selected,
     required this.onTap,
   });
 
   final DuaFeaturedModel dua;
   final int index;
+  final bool selected;
   final VoidCallback onTap;
 
   static const _colors = [
@@ -428,6 +465,9 @@ class _PlanDuaTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(21.r),
+            border: selected
+                ? Border.all(color: const Color(0xFFA7B45B), width: 1.5)
+                : null,
           ),
           child: Row(
             children: [
@@ -486,7 +526,7 @@ class _PlanDuaTile extends StatelessWidget {
                   border: Border.all(color: const Color(0xFF9AA957)),
                 ),
                 child: Icon(
-                  Icons.chevron_right_rounded,
+                  selected ? Icons.check_rounded : Icons.chevron_right_rounded,
                   size: 19.sp,
                   color: const Color(0xFF758437),
                 ),
