@@ -8,65 +8,112 @@ import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.
 
 enum DuaPlannerStatus { initial, loading, success, failure }
 
-class DuaPlannerState {
-  const DuaPlannerState({
-    this.status = DuaPlannerStatus.initial,
-    this.tab = 0,
+/// One tab's own list, kept in memory so switching tabs shows its plans at
+/// once instead of waiting on `GET /duas/planner/plans`.
+class DuaPlannerTabData {
+  const DuaPlannerTabData({
     this.plans = const [],
     this.page = 1,
     this.hasMore = false,
+    this.total,
+    this.status = DuaPlannerStatus.initial,
     this.loadingMore = false,
-    this.counts = const {},
-    this.calendar = const {},
     this.error,
   });
 
-  /// 0 = "My Plan" (in progress), 1 = "Complete Plan".
-  final DuaPlannerStatus status;
-  final int tab;
   final List<DuaPlan> plans;
   final int page;
   final bool hasMore;
+
+  /// The tab's count as the API reported it, shown beside its label.
+  final int? total;
+
+  final DuaPlannerStatus status;
   final bool loadingMore;
-
-  /// How many plans each tab holds, keyed by API status (`in_progress`,
-  /// `completed`) — the design shows the count beside each tab label, so the
-  /// other tab's total is fetched alongside the visible one.
-  final Map<String, int> counts;
-
-  /// Reading status per `yyyy-MM-dd`, from
-  /// `GET /duas/reading/calendar?from=...&to=...` — the week strip's dots.
-  final Map<String, DuaCalendarDay> calendar;
-
   final String? error;
 
-  DuaPlannerState copyWith({
-    DuaPlannerStatus? status,
-    int? tab,
+  /// Whether this tab has a usable list already — an empty tab counts too,
+  /// so a user with no completed plans is not made to wait twice.
+  bool get isLoaded => status == DuaPlannerStatus.success;
+
+  DuaPlannerTabData copyWith({
     List<DuaPlan>? plans,
     int? page,
     bool? hasMore,
+    int? total,
+    DuaPlannerStatus? status,
     bool? loadingMore,
-    Map<String, int>? counts,
-    Map<String, DuaCalendarDay>? calendar,
     String? error,
     bool clearError = false,
-  }) => DuaPlannerState(
-    status: status ?? this.status,
-    tab: tab ?? this.tab,
+  }) => DuaPlannerTabData(
     plans: plans ?? this.plans,
     page: page ?? this.page,
     hasMore: hasMore ?? this.hasMore,
+    total: total ?? this.total,
+    status: status ?? this.status,
     loadingMore: loadingMore ?? this.loadingMore,
-    counts: counts ?? this.counts,
-    calendar: calendar ?? this.calendar,
     error: clearError ? null : (error ?? this.error),
   );
 }
 
+class DuaPlannerState {
+  const DuaPlannerState({
+    this.tab = 0,
+    this.tabs = const {},
+    this.calendar = const {},
+  });
+
+  /// 0 = "My Plan" (in progress), 1 = "Complete Plan".
+  final int tab;
+
+  /// Both tabs' lists, by API status.
+  final Map<String, DuaPlannerTabData> tabs;
+
+  /// Reading status per `yyyy-MM-dd`, from
+  /// `GET /duas/reading/calendar?from=...&to=...` — the week strip's dots.
+  /// It depends on the week alone, never on the tab.
+  final Map<String, DuaCalendarDay> calendar;
+
+  static const inProgress = 'in_progress';
+  static const completed = 'completed';
+
+  String get statusKey => tab == 1 ? completed : inProgress;
+  DuaPlannerTabData get current => tabs[statusKey] ?? const DuaPlannerTabData();
+
+  List<DuaPlan> get plans => current.plans;
+  DuaPlannerStatus get status => current.status;
+  int get page => current.page;
+  bool get hasMore => current.hasMore;
+  bool get loadingMore => current.loadingMore;
+  String? get error => current.error;
+
+  /// Plan totals per tab, for the labels.
+  Map<String, int> get counts => {
+    for (final entry in tabs.entries)
+      if (entry.value.total != null) entry.key: entry.value.total!,
+  };
+
+  DuaPlannerState copyWith({
+    int? tab,
+    Map<String, DuaPlannerTabData>? tabs,
+    Map<String, DuaCalendarDay>? calendar,
+  }) => DuaPlannerState(
+    tab: tab ?? this.tab,
+    tabs: tabs ?? this.tabs,
+    calendar: calendar ?? this.calendar,
+  );
+
+  DuaPlannerState withTab(String status, DuaPlannerTabData data) =>
+      copyWith(tabs: {...tabs, status: data});
+}
+
 /// Loads the Dua planner's "My Plan" / "Complete Plan" tabs, 10 at a time
 /// (`GET /duas/planner/plans?status=...&page=...&limit=10`), design
-/// `devImg/img_7.png`.
+/// `devImg/img_35.png`.
+///
+/// Both tabs are cached in [DuaPlannerState.tabs]: the first load fetches the
+/// visible tab and the week's calendar in parallel, then quietly prefetches
+/// the other tab, so a tab switch is instant and costs no calendar request.
 class DuaPlannerCubit extends Cubit<DuaPlannerState> {
   DuaPlannerCubit(this._repository) : super(const DuaPlannerState());
   final DuaRepository _repository;
@@ -82,35 +129,19 @@ class DuaPlannerCubit extends Cubit<DuaPlannerState> {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
-  /// Identifies the newest first-page request. A response from an older tab
-  /// or refresh must not overwrite the newer result when it eventually
-  /// arrives.
-  int _loadGeneration = 0;
+  static String _other(String status) => status == DuaPlannerState.completed
+      ? DuaPlannerState.inProgress
+      : DuaPlannerState.completed;
 
-  static const _inProgress = 'in_progress';
-  static const _completed = 'completed';
+  /// Identifies the newest request per tab. A response from an older request
+  /// must not overwrite a newer result when it eventually arrives.
+  final Map<String, int> _generations = {};
 
-  String get _status => state.tab == 1 ? _completed : _inProgress;
+  int _bump(String status) =>
+      _generations[status] = (_generations[status] ?? 0) + 1;
 
-  /// Plans in the tab the user is *not* on, so its label can carry a count
-  /// too. One cheap `limit=1` request, and a failure just leaves the count
-  /// absent.
-  Future<void> _loadOtherCount(String status) async {
-    final other = status == _completed ? _inProgress : _completed;
-    try {
-      final page = await _repository.getPlans(status: other, page: 1, limit: 1);
-      if (isClosed) return;
-      emit(state.copyWith(counts: {...state.counts, other: page.total}));
-    } catch (_) {
-      // The tab simply shows no count.
-    }
-  }
-
-  Future<void> selectTab(int tab) async {
-    if (isClosed) return;
-    emit(state.copyWith(tab: tab));
-    await load();
-  }
+  bool _isStale(String status, int generation) =>
+      isClosed || _generations[status] != generation;
 
   /// The days the calendar endpoint has already been asked for, so moving
   /// across the same week twice costs nothing.
@@ -123,7 +154,7 @@ class DuaPlannerCubit extends Cubit<DuaPlannerState> {
   DateTime _windowTo = _dateOnly(DateTime.now().add(const Duration(days: 3)));
 
   /// The dots for [from]...[to], unless every day in it is already known.
-  /// Called by the screen whenever the week strip moves.
+  /// Called by the screen when the week strip moves — and only then.
   Future<void> loadCalendar(DateTime from, DateTime to) async {
     _windowFrom = _dateOnly(from);
     _windowTo = _dateOnly(to);
@@ -160,72 +191,155 @@ class DuaPlannerCubit extends Cubit<DuaPlannerState> {
     }
   }
 
-  /// The first page — replaces whatever was loaded before. The plans and the
-  /// week's calendar dots are fetched in parallel, so the screen waits for
-  /// one round trip rather than two.
+  /// Shows a tab at once from memory. A tab that has never loaded fetches its
+  /// first page (the screen shows a shimmer meanwhile); a cached one is
+  /// refreshed quietly behind the list that is already on screen. Either way
+  /// no calendar request goes out — the dots depend on the week, not the tab.
+  Future<void> selectTab(int tab) async {
+    if (isClosed || tab == state.tab) return;
+    emit(state.copyWith(tab: tab));
+    final status = state.statusKey;
+    await _fetchTab(status, silent: state.tabs[status]?.isLoaded ?? false);
+  }
+
+  /// The visible tab and the week's dots in parallel, then the other tab in
+  /// the background. Used on open, on pull-to-refresh and after a plan was
+  /// created, edited or deleted.
   Future<void> load() async {
     if (isClosed) return;
-    final generation = ++_loadGeneration;
-    final status = _status;
-    emit(state.copyWith(status: DuaPlannerStatus.loading, clearError: true));
+    final status = state.statusKey;
+    final generation = _bump(status);
+    emit(
+      state.withTab(
+        status,
+        state.current.copyWith(
+          status: DuaPlannerStatus.loading,
+          clearError: true,
+        ),
+      ),
+    );
     try {
       final (result, days) = await (
         _repository.getPlans(status: status, page: 1, limit: _limit),
         _calendarDays(_windowFrom, _windowTo),
       ).wait;
-      if (isClosed || generation != _loadGeneration) return;
+      if (_isStale(status, generation)) return;
       emit(
-        state.copyWith(
-          status: DuaPlannerStatus.success,
-          plans: result.plans,
-          page: result.page,
-          hasMore: result.hasMore,
-          counts: {...state.counts, status: result.total},
-          calendar: {...state.calendar, ...days},
+        state
+            .copyWith(calendar: {...state.calendar, ...days})
+            .withTab(status, _loaded(result)),
+      );
+      unawaited(_fetchTab(_other(status), silent: true));
+    } catch (error) {
+      if (_isStale(status, generation)) return;
+      emit(
+        state.withTab(
+          status,
+          state.tabs[status]?.copyWith(
+                status: DuaPlannerStatus.failure,
+                error: '$error',
+              ) ??
+              DuaPlannerTabData(
+                status: DuaPlannerStatus.failure,
+                error: '$error',
+              ),
         ),
       );
-      unawaited(_loadOtherCount(status));
-    } catch (error) {
-      if (isClosed || generation != _loadGeneration) return;
-      emit(state.copyWith(status: DuaPlannerStatus.failure, error: '$error'));
     }
   }
 
-  /// The next page, appended — ignored while a load is already in flight or
-  /// there isn't one.
+  /// Reloads the tab in front of the user and refreshes the other one in the
+  /// background — both are stale once a plan was created, edited or deleted.
+  Future<void> refreshAll({int? tab}) async {
+    if (isClosed) return;
+    if (tab != null && tab != state.tab) emit(state.copyWith(tab: tab));
+    final status = state.statusKey;
+    await _fetchTab(status);
+    unawaited(_fetchTab(_other(status), silent: true));
+  }
+
+  DuaPlannerTabData _loaded(DuaPlanPage result) => DuaPlannerTabData(
+    plans: result.plans,
+    page: result.page,
+    hasMore: result.hasMore,
+    total: result.total,
+    status: DuaPlannerStatus.success,
+  );
+
+  /// One tab's first page. A silent fetch leaves the cached list (and a
+  /// failure) untouched until the new one arrives, so nothing flickers.
+  Future<void> _fetchTab(String status, {bool silent = false}) async {
+    if (isClosed) return;
+    final generation = _bump(status);
+    final cached = state.tabs[status] ?? const DuaPlannerTabData();
+    if (!silent) {
+      emit(
+        state.withTab(
+          status,
+          cached.copyWith(status: DuaPlannerStatus.loading, clearError: true),
+        ),
+      );
+    }
+    try {
+      final result = await _repository.getPlans(
+        status: status,
+        page: 1,
+        limit: _limit,
+      );
+      if (_isStale(status, generation)) return;
+      emit(state.withTab(status, _loaded(result)));
+    } catch (error) {
+      if (_isStale(status, generation) || silent) return;
+      emit(
+        state.withTab(
+          status,
+          cached.copyWith(status: DuaPlannerStatus.failure, error: '$error'),
+        ),
+      );
+    }
+  }
+
+  /// The next page of the visible tab, appended — ignored while a load is
+  /// already in flight or there isn't one.
   Future<void> loadMore() async {
     if (isClosed || state.loadingMore || !state.hasMore) return;
-    final generation = _loadGeneration;
-    final status = _status;
-    final nextPage = state.page + 1;
-    emit(state.copyWith(loadingMore: true));
+    final status = state.statusKey;
+    final generation = _generations[status];
+    final cached = state.current;
+    final nextPage = cached.page + 1;
+    emit(state.withTab(status, cached.copyWith(loadingMore: true)));
     try {
       final result = await _repository.getPlans(
         status: status,
         page: nextPage,
         limit: _limit,
       );
-      if (isClosed || generation != _loadGeneration) return;
+      if (isClosed || _generations[status] != generation) return;
       emit(
-        state.copyWith(
-          plans: [...state.plans, ...result.plans],
-          page: result.page,
-          hasMore: result.hasMore,
-          loadingMore: false,
+        state.withTab(
+          status,
+          cached.copyWith(
+            plans: [...cached.plans, ...result.plans],
+            page: result.page,
+            hasMore: result.hasMore,
+            total: result.total,
+            loadingMore: false,
+            status: DuaPlannerStatus.success,
+          ),
         ),
       );
     } catch (_) {
       // A failed "load more" leaves the existing page visible; the user can
       // just scroll again to retry.
-      if (isClosed || generation != _loadGeneration) return;
-      emit(state.copyWith(loadingMore: false));
+      if (isClosed || _generations[status] != generation) return;
+      emit(state.withTab(status, state.current.copyWith(loadingMore: false)));
     }
   }
 
-  /// Deletes a plan, then reloads the current tab's first page.
+  /// Deletes a plan, then refreshes both tabs' lists.
   Future<void> delete(String id) async {
     await _repository.deletePlan(id);
     if (isClosed) return;
-    await load();
+    await refreshAll();
   }
 }

@@ -77,11 +77,16 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
 
   /// Both filters are local, as the spec requires: changing the date or
   /// typing in the search field never costs a request.
-  List<DuaPlan> _visiblePlans(List<DuaPlan> plans) {
+  ///
+  /// The date filter belongs to "My Plan" only — a completed plan ended
+  /// before today by definition, so filtering the "Complete Plan" tab by the
+  /// selected day would always leave it empty.
+  List<DuaPlan> _visiblePlans(DuaPlannerState state) {
     final query = _query.trim().toLowerCase();
+    final byDate = state.tab == 0;
     return [
-      for (final plan in plans)
-        if (_runsOnSelectedDate(plan) &&
+      for (final plan in state.plans)
+        if ((!byDate || _runsOnSelectedDate(plan)) &&
             (query.isEmpty || plan.name.toLowerCase().contains(query)))
           plan,
     ];
@@ -154,7 +159,7 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
       ),
     );
     if (!mounted) return;
-    if (created == true) await _cubit.selectTab(0);
+    if (created == true) await _cubit.refreshAll(tab: 0);
   }
 
   @override
@@ -196,7 +201,7 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
                       _PlannerSearchRow(
                         totalLabel: _totalPlanLabel(
                           context,
-                          _visiblePlans(state.plans).length,
+                          _visiblePlans(state).length,
                         ),
                         controller: _searchController,
                         open: _searchOpen,
@@ -284,7 +289,15 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
     if (state.status == DuaPlannerStatus.loading && state.plans.isEmpty) {
       return const DuaListShimmer(showHeader: false, cardHeight: 92);
     }
-    final plans = _visiblePlans(state.plans);
+    final plans = _visiblePlans(state);
+    if (plans.isEmpty &&
+        state.status == DuaPlannerStatus.failure &&
+        state.plans.isEmpty) {
+      return _PlannerError(
+        message: state.error ?? '',
+        onRetry: () => _cubit.load(),
+      );
+    }
     if (plans.isEmpty) {
       // A scrollable empty state, not a bare Center, so the RefreshIndicator
       // above still has something to pull against.
@@ -559,7 +572,7 @@ class _PlanCard extends StatelessWidget {
         ),
       ),
     );
-    await cubit.load();
+    await cubit.refreshAll();
   }
 
   /// Loads the plan's full detail (duas, days, status) so the edit screen
@@ -590,7 +603,7 @@ class _PlanCard extends StatelessWidget {
       return;
     }
     final updated = await _showPlanDialog(context, editPlan: detail);
-    if (updated == true) await cubit.load();
+    if (updated == true) await cubit.refreshAll();
   }
 
   Future<bool?> _showPlanDialog(
@@ -1473,15 +1486,10 @@ class _SheetButtons extends StatelessWidget {
   );
 }
 
-/// The planner's week strip. Unlike a plain "this week" calendar, the dates it
-/// walks are the ones the user's plans actually cover: the window is clamped
-/// to the earliest plan `startDate` ... latest plan `endDate`, and each day's
-/// dot comes from `GET /duas/planner/plans/{id}/history` — green once that
-/// day's duas were read, red once a scheduled day has passed unread.
-/// The planner's week strip. The dates it walks stay inside what the user's
-/// plans cover (earliest `startDate` ... latest `endDate`), and each day's dot
-/// comes from `GET /duas/reading/calendar?from=...&to=...`: green once that
-/// day's duas were all done, red once a day inside a plan has passed without
+/// The planner's week strip. The arrows step one week back or forward with no
+/// end stop, and each day's dot comes from
+/// `GET /duas/reading/calendar?from=...&to=...`: green once that day's duas
+/// were all done, red once a day a plan was running on has passed without
 /// that, grey for today-still-pending and for future days.
 class _PlannerCalendar extends StatelessWidget {
   const _PlannerCalendar({
@@ -1496,56 +1504,21 @@ class _PlannerCalendar extends StatelessWidget {
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onPickMonth;
 
-  List<DuaPlan> get plans => statuses.plans;
-
   static List<DateTime> visibleDates(DateTime selected) => [
     for (var offset = -3; offset <= 3; offset++)
       selected.add(Duration(days: offset)),
   ];
 
-  /// Earliest `startDate` over the loaded plans, and latest `endDate`; either
-  /// is null when no plan carries that boundary, and the strip is then free
-  /// to move as far as the user likes.
-  DateTime? get rangeStart =>
-      _boundary((plan) => plan.startDate, (a, b) => a.isBefore(b));
-
-  DateTime? get rangeEnd =>
-      _boundary((plan) => plan.endDate, (a, b) => a.isAfter(b));
-
-  DateTime? _boundary(
-    String Function(DuaPlan) field,
-    bool Function(DateTime, DateTime) isBetter,
-  ) {
-    DateTime? best;
-    for (final plan in plans) {
-      final date = DateTime.tryParse(field(plan));
-      if (date == null) continue;
-      final dateOnly = DateUtils.dateOnly(date);
-      if (best == null || isBetter(dateOnly, best)) best = dateOnly;
-    }
-    return best;
-  }
-
-  DateTime clamp(DateTime date) {
-    final start = rangeStart;
-    final end = rangeEnd;
-    if (start != null && date.isBefore(start)) return start;
-    if (end != null && date.isAfter(end)) return end;
-    return date;
-  }
-
-  void _moveWeek(int direction) {
-    final next = clamp(selectedDate.add(Duration(days: 7 * direction)));
-    if (next != selectedDate) onDateSelected(next);
-  }
+  /// One week back or forward, as far as the user cares to go — what the
+  /// plans cover only decides the dots and the list below, not where the
+  /// strip may travel.
+  void _moveWeek(int direction) =>
+      onDateSelected(selectedDate.add(Duration(days: 7 * direction)));
 
   @override
   Widget build(BuildContext context) {
     final dates = visibleDates(selectedDate);
     final localizations = MaterialLocalizations.of(context);
-    final start = rangeStart;
-    final end = rangeEnd;
-
     return Padding(
       padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 10.h),
       child: Column(
@@ -1585,13 +1558,11 @@ class _PlannerCalendar extends StatelessWidget {
               const Spacer(),
               _CalendarArrow(
                 icon: Icons.chevron_left_rounded,
-                enabled: start == null || selectedDate.isAfter(start),
                 onTap: () => _moveWeek(-1),
               ),
               SizedBox(width: 7.w),
               _CalendarArrow(
                 icon: Icons.chevron_right_rounded,
-                enabled: end == null || selectedDate.isBefore(end),
                 onTap: () => _moveWeek(1),
               ),
             ],
@@ -2120,37 +2091,29 @@ String _plannerApiDate(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}';
 
 class _CalendarArrow extends StatelessWidget {
-  const _CalendarArrow({
-    required this.icon,
-    required this.onTap,
-    this.enabled = true,
-  });
+  const _CalendarArrow({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
-  final bool enabled;
 
   @override
-  Widget build(BuildContext context) => Opacity(
-    opacity: enabled ? 1 : .4,
-    child: Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        customBorder: const CircleBorder(),
-        child: Ink(
-          width: 30.r,
-          height: 30.r,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(const Color(0xFFF2F7E2)),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 19.sp,
-            color: context.inkColor(const Color(0xFFA7B45B)),
-          ),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    shape: const CircleBorder(),
+    child: InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Ink(
+        width: 30.r,
+        height: 30.r,
+        decoration: BoxDecoration(
+          color: context.surfaceColor(const Color(0xFFF2F7E2)),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 19.sp,
+          color: context.inkColor(const Color(0xFFA7B45B)),
         ),
       ),
     ),
@@ -2372,6 +2335,87 @@ class _PlannerTab extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A failed load — a dead session, say — says so and offers a retry, rather
+/// than looking like a tab with no plans in it.
+class _PlannerError extends StatelessWidget {
+  const _PlannerError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: constraints.maxHeight,
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.cloud_off_rounded,
+                    size: 46.sp,
+                    color: context.inkColor(const Color(0xFFBCC5A0)),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    context.localized(
+                      const LocalizedText(
+                        en: 'The plans could not be loaded.',
+                        bn: 'প্ল্যানগুলো আনা যায়নি।',
+                      ),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5.sp,
+                      color: context.textInkColor(const Color(0xFF5D6B44)),
+                    ),
+                  ),
+                  if (message.isNotEmpty) ...[
+                    SizedBox(height: 6.h),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: context.textInkColor(const Color(0xFF9AA77A)),
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 14.h),
+                  FilledButton(
+                    onPressed: onRetry,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.surfaceColor(
+                        const Color(0xFFA7B45B),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24.r),
+                      ),
+                    ),
+                    child: Text(
+                      context.localized(
+                        const LocalizedText(en: 'Try again', bn: 'আবার চেষ্টা'),
+                      ),
+                      style: TextStyle(fontSize: 13.sp, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _EmptyPlans extends StatelessWidget {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
 import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
@@ -94,6 +95,11 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
 
   static const baseUrl = ApiConstants.baseUrl;
   final Dio _dio;
+
+  /// Test seam: lets a test prove the client carries the interceptors the
+  /// authenticated planner endpoints depend on.
+  @visibleForTesting
+  Dio get client => _dio;
   final AuthLocalDataSource? _local;
 
   static AuthLocalDataSource? _defaultLocal() {
@@ -122,6 +128,11 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     final dio = Dio(options)
       ..interceptors.add(const LanguageHeaderInterceptor());
     if (kDebugMode) dio.interceptors.add(DuaApiLogInterceptor());
+    // Without this, an expired access token makes every planner call fail
+    // with 401 ("provide a valid access token") until the user signs in
+    // again — the shared `DioClient` has carried it all along, but this
+    // feature builds its own client.
+    dio.interceptors.add(AuthRefreshInterceptor(dio: dio));
     return dio;
   }
 

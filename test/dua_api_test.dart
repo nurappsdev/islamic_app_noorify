@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
+import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
+import 'package:tuhfatul_muslim/features/dua/data/datasources/dua_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/dua/data/datasources/dua_remote_data_source.dart';
 
 class _StubAdapter implements HttpClientAdapter {
@@ -32,6 +35,18 @@ class _StubAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test(
+    'the dua client renews an expired token instead of failing with 401',
+    () {
+      // The planner endpoints are authenticated; without this interceptor an
+      // expired access token makes every call fail until the user signs in
+      // again.
+      final interceptors = DuaRemoteDataSourceImpl().client.interceptors;
+      expect(interceptors.whereType<AuthRefreshInterceptor>(), hasLength(1));
+      expect(interceptors.whereType<LanguageHeaderInterceptor>(), isNotEmpty);
+    },
+  );
+
   test(
     'loads a category page with the supplied pagination parameters',
     () async {

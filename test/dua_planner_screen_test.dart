@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -12,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_plan_api_models.dar
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_planner_screen.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 String _d(DateTime date) =>
@@ -32,6 +34,13 @@ class _FakeRepository implements DuaRepository {
   /// Every `PATCH` of a plan's reminder flag.
   final reminderCalls = <(String, bool)>[];
 
+  /// While set, every plans request waits on it — a stand-in for a slow
+  /// network, so a test can tell a cached list from a fetched one.
+  Completer<void>? gate;
+
+  /// Same, but only for the completed tab.
+  Completer<void>? completedGate;
+
   @override
   Future<DuaPlanPage> getPlans({
     String? status,
@@ -39,9 +48,27 @@ class _FakeRepository implements DuaRepository {
     int limit = 10,
   }) async {
     planRequests.add(status);
+    if (gate != null) await gate!.future;
     if (status == 'completed') {
-      return const DuaPlanPage(
-        plans: [],
+      if (completedGate != null) await completedGate!.future;
+      // Completed plans ended before today — the tab must still list them.
+      return DuaPlanPage(
+        plans: [
+          for (var i = 1; i <= 4; i++)
+            DuaPlan(
+              id: 'done-$i',
+              name: 'Finished plan $i',
+              status: 'completed',
+              totalDuas: 10,
+              completedDuas: 10,
+              percentage: 100,
+              isCompleted: true,
+              currentStreak: 0,
+              longestStreak: 7,
+              startDate: _d(today.subtract(const Duration(days: 40))),
+              endDate: _d(today.subtract(const Duration(days: 20))),
+            ),
+        ],
         page: 1,
         limit: 10,
         total: 4,
@@ -157,12 +184,15 @@ void main() {
     }
   });
 
-  Future<_FakeRepository> pumpPlanner(WidgetTester tester) async {
+  Future<_FakeRepository> pumpPlanner(
+    WidgetTester tester, {
+    _FakeRepository? withRepository,
+  }) async {
     tester.view.physicalSize = const Size(375 * 3, 812 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
-    final repository = _FakeRepository();
+    final repository = withRepository ?? _FakeRepository();
     await tester.pumpWidget(
       ScreenUtilInit(
         designSize: const Size(375, 812),
@@ -305,6 +335,102 @@ void main() {
     expect(find.text('Longest streak'), findsOneWidget);
     expect(find.text('3/10'), findsOneWidget);
     expect(find.text('30%'), findsOneWidget);
+  });
+
+  testWidgets('the Complete Plan tab lists plans that ended in the past', (
+    tester,
+  ) async {
+    final repository = await pumpPlanner(tester);
+
+    await tester.tap(find.text('Complete Plan'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    expect(repository.planRequests, contains('completed'));
+    // The selected day is today, which every completed plan ended before —
+    // the date filter must not apply to this tab.
+    expect(find.text('Finished plan 1'), findsOneWidget);
+    expect(find.text('Finished plan 4'), findsOneWidget);
+    expect(find.text('Total plan 04'), findsOneWidget);
+    expect(find.text('Morning Adhkar Routine'), findsNothing);
+  });
+
+  testWidgets('switching tabs shows the cached list without waiting', (
+    tester,
+  ) async {
+    final repository = await pumpPlanner(tester);
+
+    // Opening the screen loads the visible tab and the week's dots together,
+    // then prefetches the other tab.
+    expect(repository.planRequests, contains('in_progress'));
+    expect(repository.planRequests, contains('completed'));
+    expect(repository.calendarWindows, hasLength(1));
+
+    // From here on the network hangs: whatever the tabs show comes from
+    // memory.
+    repository.gate = Completer<void>();
+
+    await tester.tap(find.text('Complete Plan'));
+    await tester.pump();
+    expect(find.text('Finished plan 1'), findsOneWidget);
+    expect(find.byType(DuaListShimmer), findsNothing);
+
+    await tester.tap(find.text('My Plan'));
+    await tester.pump();
+    expect(find.text('Morning Adhkar Routine'), findsOneWidget);
+    expect(find.byType(DuaListShimmer), findsNothing);
+
+    // Toggling tabs never asks the calendar endpoint again.
+    expect(repository.calendarWindows, hasLength(1));
+
+    repository.gate!.complete();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('a tab still loading shows a shimmer, not an empty list', (
+    tester,
+  ) async {
+    // The completed tab's request hangs, so neither the prefetch nor the
+    // switch can have finished when the tab opens.
+    final repository = _FakeRepository()..completedGate = Completer<void>();
+    await pumpPlanner(tester, withRepository: repository);
+
+    await tester.tap(find.text('Complete Plan'));
+    await tester.pump();
+    expect(find.byType(DuaListShimmer), findsOneWidget);
+    expect(find.text('No plan runs on this day.'), findsNothing);
+
+    repository.completedGate!.complete();
+    await tester.pumpAndSettle();
+    expect(find.byType(DuaListShimmer), findsNothing);
+    expect(find.text('Finished plan 1'), findsOneWidget);
+  });
+
+  testWidgets('the arrows step one week at a time, with no end stop', (
+    tester,
+  ) async {
+    await pumpPlanner(tester);
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    // Three weeks back reaches beyond the plans' start date, which used to
+    // stop the strip; it must simply keep going.
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byIcon(Icons.chevron_left_rounded));
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 60));
+    final threeWeeksBack = today.subtract(const Duration(days: 21));
+    expect(find.text('${threeWeeksBack.day}'), findsOneWidget);
+    expect(find.text('Morning Adhkar Routine'), findsNothing);
+    expect(find.text('Total plan 00'), findsOneWidget);
+
+    // And forward again, one week per tap, back to today.
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byIcon(Icons.chevron_right_rounded));
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(find.text('Morning Adhkar Routine'), findsOneWidget);
   });
 
   testWidgets('tapping a card reveals its "Explore now" button', (
