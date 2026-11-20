@@ -66,7 +66,10 @@ class _DuaFeaturedView extends StatelessWidget {
                   ),
                   children: [
                     SizedBox(height: 6.h),
-                    DuaPageHeader(title: appText.duaFeaturedTitle),
+                    DuaPageHeader(
+                      title: appText.duaFeaturedTitle,
+                      showBack: false,
+                    ),
                     SizedBox(height: 16.h),
                     Text(
                       context.localizedDigits(

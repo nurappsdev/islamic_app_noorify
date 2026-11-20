@@ -47,7 +47,9 @@ class DuaIntroScreen extends StatelessWidget {
                           backgroundColor: context.surfaceColor(
                             Color(0xFFDFDE68),
                           ),
-                          foregroundColor: context.inkColor(Color(0xFF303629)),
+                          foregroundColor: context.onLightInkColor(
+                            Color(0xFF303629),
+                          ),
                         ),
                         icon: const Icon(
                           Icons.arrow_back_ios_new_rounded,

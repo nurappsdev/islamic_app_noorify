@@ -195,7 +195,9 @@ class _Header extends StatelessWidget {
               icon: const Icon(Icons.chevron_left),
               style: IconButton.styleFrom(
                 backgroundColor: context.surfaceColor(const Color(0xFFE1E56A)),
-                foregroundColor: context.inkColor(const Color(0xFF303629)),
+                foregroundColor: context.onLightInkColor(
+                  const Color(0xFF303629),
+                ),
               ),
             ),
           ),

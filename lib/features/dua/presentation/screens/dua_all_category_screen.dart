@@ -116,7 +116,10 @@ class _DuaAllCategoryViewState extends State<_DuaAllCategoryView> {
                   ),
                   children: [
                     SizedBox(height: 6.h),
-                    DuaPageHeader(title: appText.duaAllCategoryTitle),
+                    DuaPageHeader(
+                      title: appText.duaAllCategoryTitle,
+                      showBack: false,
+                    ),
                     SizedBox(height: 16.h),
                     Text(
                       context.localizedDigits(

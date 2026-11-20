@@ -421,7 +421,7 @@ class _FullPickerHeader extends StatelessWidget {
             onPressed: () => Navigator.of(context).maybePop(),
             style: IconButton.styleFrom(
               backgroundColor: context.surfaceColor(const Color(0xFFDFDE68)),
-              foregroundColor: context.inkColor(const Color(0xFF303629)),
+              foregroundColor: context.onLightInkColor(const Color(0xFF303629)),
             ),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
           ),

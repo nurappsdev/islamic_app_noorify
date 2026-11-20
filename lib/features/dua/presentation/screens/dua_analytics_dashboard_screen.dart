@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
@@ -116,20 +115,6 @@ class _DashboardHeader extends StatelessWidget {
     child: Stack(
       alignment: Alignment.center,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: IconButton(
-            onPressed: () => Navigator.of(
-              context,
-            ).pushReplacementNamed(RouteNames.duaDashboard),
-            style: IconButton.styleFrom(
-              backgroundColor: context.surfaceColor(const Color(0xFFE6E77D)),
-              foregroundColor: context.inkColor(const Color(0xFF4C5631)),
-              minimumSize: Size(34.r, 34.r),
-            ),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
-          ),
-        ),
         Text(
           AppText.of(context).dashboard,
           style: TextStyle(

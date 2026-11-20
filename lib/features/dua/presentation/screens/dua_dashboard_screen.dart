@@ -76,14 +76,7 @@ class _DuaDashboardView extends StatelessWidget {
                       SizedBox(height: 6.h),
                       DuaPageHeader(
                         title: appText.duaIntroTitle,
-                        // Leaving the Dua feature from its own dashboard goes
-                        // straight to the app's main Home, not back through
-                        // whatever Dua screens were visited before it.
-                        onBack: () =>
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              RouteNames.home,
-                              (route) => false,
-                            ),
+                        showBack: false,
                       ),
                       SizedBox(height: 18.h),
                       _SectionHeader(
