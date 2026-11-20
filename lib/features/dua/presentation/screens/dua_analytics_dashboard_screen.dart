@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
@@ -68,7 +69,12 @@ class _DuaAnalyticsDashboardScreenState
                 SizedBox(height: 16.h),
                 _Metrics(period: _period),
                 SizedBox(height: 20.h),
-                _HistoryHeader(title: appText.duaIntroTitle),
+                _HistoryHeader(
+                  title: appText.duaIntroTitle,
+                  onSeeAll: () => Navigator.of(
+                    context,
+                  ).pushNamed(RouteNames.duaRecitationHistory),
+                ),
                 SizedBox(height: 8.h),
                 const _RecitationHistory(),
               ],
@@ -614,8 +620,9 @@ class _MetricCard extends StatelessWidget {
 }
 
 class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader({required this.title});
+  const _HistoryHeader({required this.title, required this.onSeeAll});
   final String title;
+  final VoidCallback onSeeAll;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -630,21 +637,28 @@ class _HistoryHeader extends StatelessWidget {
           ),
         ),
       ),
-      Column(
-        children: [
-          Text(
-            'See All',
-            style: TextStyle(
-              color: context.textInkColor(const Color(0xFF98A46C)),
-              fontSize: 11.sp,
-            ),
+      InkWell(
+        onTap: onSeeAll,
+        borderRadius: BorderRadius.circular(8.r),
+        child: Padding(
+          padding: EdgeInsets.all(4.r),
+          child: Column(
+            children: [
+              Text(
+                'See All',
+                style: TextStyle(
+                  color: context.textInkColor(const Color(0xFF98A46C)),
+                  fontSize: 11.sp,
+                ),
+              ),
+              Container(
+                width: 49.w,
+                height: 1.h,
+                color: context.lineColor(const Color(0xFF98A46C)),
+              ),
+            ],
           ),
-          Container(
-            width: 49.w,
-            height: 1.h,
-            color: context.lineColor(const Color(0xFF98A46C)),
-          ),
-        ],
+        ),
       ),
     ],
   );
