@@ -577,36 +577,42 @@ class _Metrics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Row(
-      children: [
-        Expanded(
-          child: _MetricCard(
-            title: appText.duaTotalRecitedTitle,
-            value: context.localizedDigits('${dashboard.totalDuasRecited}'),
-            subtitle: appText.duaDailyTargetLabel.fill({
-              'value': context.localizedDigits(
-                dashboard.dailyTargetText.isEmpty
-                    ? '—'
-                    : dashboard.dailyTargetText,
-              ),
-            }),
-            colors: const [Color(0xFF782CEB), Color(0xFF5245D7)],
-          ),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: _MetricCard(
-            title: appText.duaRecitationTimeTitle,
-            value: context.localizedDigits(
-              dashboard.totalReadingTimeFormatted.isEmpty
-                  ? '—'
-                  : dashboard.totalReadingTimeFormatted,
+    return IntrinsicHeight(
+      child: Row(
+        // Both cards take the taller one's height, whatever the wider
+        // screen, the longer Bangla title or the reader's font size does to
+        // their content.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _MetricCard(
+              title: appText.duaTotalRecitedTitle,
+              value: context.localizedDigits('${dashboard.totalDuasRecited}'),
+              subtitle: appText.duaDailyTargetLabel.fill({
+                'value': context.localizedDigits(
+                  dashboard.dailyTargetText.isEmpty
+                      ? '—'
+                      : dashboard.dailyTargetText,
+                ),
+              }),
+              colors: const [Color(0xFF782CEB), Color(0xFF5245D7)],
             ),
-            subtitle: appText.duaTotalRecitationTime,
-            colors: const [Color(0xFF08BCEB), Color(0xFF2365DD)],
           ),
-        ),
-      ],
+          SizedBox(width: 12.w),
+          Expanded(
+            child: _MetricCard(
+              title: appText.duaRecitationTimeTitle,
+              value: context.localizedDigits(
+                dashboard.totalReadingTimeFormatted.isEmpty
+                    ? '—'
+                    : dashboard.totalReadingTimeFormatted,
+              ),
+              subtitle: appText.duaTotalRecitationTime,
+              colors: const [Color(0xFF08BCEB), Color(0xFF2365DD)],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -626,7 +632,9 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 122.h,
+    // A floor, not a ceiling: the design's height unless the content needs
+    // more, which a hardcoded one would simply cut off.
+    constraints: BoxConstraints(minHeight: 122.h),
     padding: EdgeInsets.all(13.r),
     decoration: BoxDecoration(
       gradient: LinearGradient(
@@ -645,6 +653,7 @@ class _MetricCard extends StatelessWidget {
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
@@ -652,7 +661,7 @@ class _MetricCard extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(color: Colors.white, fontSize: 10.sp),
         ),
-        const Spacer(),
+        SizedBox(height: 10.h),
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,

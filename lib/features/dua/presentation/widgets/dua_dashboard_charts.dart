@@ -261,7 +261,9 @@ class _DuaDonutChartState extends State<DuaDonutChart> {
                 curve: Curves.easeOutCubic,
                 tween: Tween(begin: 0, end: fraction),
                 builder: (context, value, _) => CustomPaint(
-                  size: Size(190.w, 190.w),
+                  // Square, and never taller than the row it sits in: a
+                  // width-only size overflows as soon as the screen is wide.
+                  size: Size.square(math.min(190.w, 190.h)),
                   painter: _DuaDonutPainter(
                     fraction: value,
                     mine: context.surfaceColor(DuaChartColors.mine),
