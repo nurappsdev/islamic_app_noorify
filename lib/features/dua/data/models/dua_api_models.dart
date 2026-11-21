@@ -71,6 +71,10 @@ class DuaFeaturedModel {
     this.instruction = LocalizedText.empty,
     this.reference = LocalizedText.empty,
     this.virtue = LocalizedText.empty,
+    this.hadithNarration = LocalizedText.empty,
+    this.sunnahTips = LocalizedText.empty,
+    this.sanadReliability = const [],
+    this.wordByWord = const [],
     this.tags = const [],
     this.recommendedRepeatCount = 1,
     this.isFeatured = false,
@@ -89,6 +93,10 @@ class DuaFeaturedModel {
   final LocalizedText instruction;
   final LocalizedText reference;
   final LocalizedText virtue;
+  final LocalizedText hadithNarration;
+  final LocalizedText sunnahTips;
+  final List<String> sanadReliability;
+  final List<DuaWordMeaning> wordByWord;
   final List<String> tags;
   final int recommendedRepeatCount;
   final bool isFeatured;
@@ -111,6 +119,10 @@ class DuaFeaturedModel {
     instruction: instruction,
     reference: reference,
     virtue: virtue,
+    hadithNarration: hadithNarration,
+    sunnahTips: sunnahTips,
+    sanadReliability: sanadReliability,
+    wordByWord: wordByWord,
     tags: tags,
     recommendedRepeatCount: recommendedRepeatCount,
     isFeatured: isFeatured,
@@ -132,6 +144,17 @@ class DuaFeaturedModel {
       instruction: LocalizedText.fromJson(json['instruction']),
       reference: LocalizedText.fromJson(json['reference']),
       virtue: LocalizedText.fromJson(json['virtue']),
+      hadithNarration: LocalizedText.fromJson(json['hadithNarration']),
+      sunnahTips: LocalizedText.fromJson(json['sunnahTips']),
+      sanadReliability: [
+        for (final value in json['sanadReliability'] as List? ?? const [])
+          value.toString(),
+      ],
+      wordByWord: [
+        for (final value in json['wordByWord'] as List? ?? const [])
+          if (value is Map)
+            DuaWordMeaning.fromJson(Map<String, dynamic>.from(value)),
+      ],
       tags: [
         for (final tag in json['tags'] as List? ?? const []) tag.toString(),
       ],
@@ -147,6 +170,21 @@ class DuaFeaturedModel {
           : null,
     );
   }
+}
+
+/// One word translation from the full reader response. The reader does not
+/// render this optional section yet, but keeping it in the API model prevents
+/// the detail response from being silently discarded.
+class DuaWordMeaning {
+  const DuaWordMeaning({required this.arabic, required this.meaning});
+
+  final String arabic;
+  final LocalizedText meaning;
+
+  factory DuaWordMeaning.fromJson(Map<String, dynamic> json) => DuaWordMeaning(
+    arabic: json['arabic']?.toString() ?? '',
+    meaning: LocalizedText.fromJson(json['meaning']),
+  );
 }
 
 /// One page from `GET /duas`. The category endpoint returns the same dua
@@ -165,4 +203,6 @@ class DuaPage {
   final int limit;
   final int total;
   final int totalPage;
+
+  bool get hasMore => page < totalPage;
 }

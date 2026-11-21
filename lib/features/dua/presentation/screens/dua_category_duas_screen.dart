@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
@@ -13,9 +14,9 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_category_duas
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
-import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// API-backed list for a category selected from the Dua dashboard or the full
 /// category screen. Its layout follows `devImg/img_6.png`.
@@ -42,30 +43,42 @@ class _DuaCategoryDuasView extends StatefulWidget {
 
 class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
   final _searchController = TextEditingController();
-  String _query = '';
+  final _scrollController = ScrollController();
+  Timer? _searchDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_loadMoreIfNeeded);
+  }
+
+  void _loadMoreIfNeeded() {
+    if (_scrollController.position.extentAfter > 280) return;
+    context.read<DuaCategoryDuasCubit>().loadMore(widget.category);
+  }
+
+  void _onSearch(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      context.read<DuaCategoryDuasCubit>().load(
+        widget.category,
+        searchTerm: value,
+      );
+    });
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebounce?.cancel();
+    _scrollController.dispose();
     super.dispose();
-  }
-
-  List<DuaFeaturedModel> _filtered(
-    List<DuaFeaturedModel> duas,
-    AppLanguage language,
-  ) {
-    if (_query.isEmpty) return duas;
-    final query = _query.toLowerCase();
-    return [
-      for (final dua in duas)
-        if (dua.title.resolve(language).toLowerCase().contains(query)) dua,
-    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    final language = context.appLanguage;
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -74,7 +87,7 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
           builder: (context, state) {
             if (state.status == DuaCategoryDuasStatus.initial ||
                 state.status == DuaCategoryDuasStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
+              return const DuaListShimmer();
             }
             if (state.status == DuaCategoryDuasStatus.failure) {
               return DuaErrorRetry(
@@ -84,9 +97,10 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
               );
             }
 
-            final duas = _filtered(state.duas, language);
+            final duas = state.duas;
             final total = state.total == 0 ? state.duas.length : state.total;
             return ListView(
+              controller: _scrollController,
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
               children: [
                 SizedBox(height: 6.h),
@@ -104,7 +118,7 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
                 SizedBox(height: 12.h),
                 TextField(
                   controller: _searchController,
-                  onChanged: (value) => setState(() => _query = value.trim()),
+                  onChanged: _onSearch,
                   decoration: InputDecoration(
                     hintText: appText.searchHere,
                     hintStyle: TextStyle(

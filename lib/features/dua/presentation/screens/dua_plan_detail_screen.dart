@@ -11,6 +11,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_plan_detail_c
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_plan_slot.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// One plan's duas (design `devImg/img_7.png`'s "My Plan" entry, opened for
@@ -66,7 +67,7 @@ class _DuaPlanDetailView extends StatelessWidget {
                 builder: (context, state) {
                   if (state.status == DuaPlanDetailStatus.initial ||
                       state.status == DuaPlanDetailStatus.loading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const DuaListShimmer(showHeader: false);
                   }
                   if (state.status == DuaPlanDetailStatus.failure) {
                     return DuaErrorRetry(
@@ -126,7 +127,7 @@ class _DuaEntryTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 21.r,
-              backgroundColor: const Color(0xFFA5B657),
+              backgroundColor: context.surfaceColor(const Color(0xFFA5B657)),
               child: const Icon(
                 Icons.menu_book_outlined,
                 color: Colors.white,
@@ -153,7 +154,7 @@ class _DuaEntryTile extends StatelessWidget {
                     '· ${duaSlotLabel(appText, item.slot)}',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFFA5B657),
+                      color: context.inkColor(const Color(0xFFA5B657)),
                     ),
                   ),
                 ],
@@ -193,7 +194,10 @@ class _Header extends StatelessWidget {
               onPressed: () => Navigator.maybePop(context),
               icon: const Icon(Icons.chevron_left),
               style: IconButton.styleFrom(
-                backgroundColor: const Color(0xFFE1E56A),
+                backgroundColor: context.surfaceColor(const Color(0xFFE1E56A)),
+                foregroundColor: context.onLightInkColor(
+                  const Color(0xFF303629),
+                ),
               ),
             ),
           ),

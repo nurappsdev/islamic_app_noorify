@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// Dua dashboard (design `devImg/img_4.png`) — reached from "Let's Get Start"
@@ -50,7 +51,7 @@ class _DuaDashboardView extends StatelessWidget {
               builder: (context, state) {
                 if (state.status == DuaLoadStatus.loading ||
                     state.status == DuaLoadStatus.initial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DuaDashboardShimmer();
                 }
                 if (state.status == DuaLoadStatus.failure) {
                   return DuaErrorRetry(
@@ -75,14 +76,7 @@ class _DuaDashboardView extends StatelessWidget {
                       SizedBox(height: 6.h),
                       DuaPageHeader(
                         title: appText.duaIntroTitle,
-                        // Leaving the Dua feature from its own dashboard goes
-                        // straight to the app's main Home, not back through
-                        // whatever Dua screens were visited before it.
-                        onBack: () =>
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              RouteNames.home,
-                              (route) => false,
-                            ),
+                        showBack: false,
                       ),
                       SizedBox(height: 18.h),
                       _SectionHeader(

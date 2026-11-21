@@ -221,32 +221,6 @@ class _Header extends StatelessWidget {
     child: Stack(
       alignment: Alignment.center,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: EdgeInsets.only(left: 20.w),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => Navigator.of(context).maybePop(),
-                borderRadius: BorderRadius.circular(20.r),
-                child: Ink(
-                  width: 36.r,
-                  height: 36.r,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD9E48C),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 16.sp,
-                    color: const Color(0xFF667342),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
         Text(
           AppText.of(context).duaSavedTitle,
           style: TextStyle(

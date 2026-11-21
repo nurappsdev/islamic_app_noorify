@@ -52,20 +52,26 @@ class DuaPlanDraft {
   const DuaPlanDraft({
     required this.name,
     required this.items,
+    this.description,
     this.daysOfWeek = const [0, 1, 2, 3, 4, 5, 6],
     this.startDate,
     this.endDate,
+    this.reminderEnabled = false,
+    this.reminderTime,
     this.status,
   });
 
   final String name;
   final List<DuaPlanItemDraft> items;
+  final String? description;
 
   /// 0 = Sunday ... 6 = Saturday.
   final List<int> daysOfWeek;
 
   final DateTime? startDate;
   final DateTime? endDate;
+  final bool reminderEnabled;
+  final String? reminderTime;
 
   /// `in_progress`, `completed` or `abandoned` — omitted on create.
   final String? status;
@@ -73,9 +79,14 @@ class DuaPlanDraft {
   Map<String, dynamic> toJson() => {
     'name': name,
     'items': [for (final item in items) item.toJson()],
+    if (description != null && description!.trim().isNotEmpty)
+      'description': description!.trim(),
     'daysOfWeek': daysOfWeek,
     if (startDate != null) 'startDate': _dateOnly(startDate!),
     if (endDate != null) 'endDate': _dateOnly(endDate!),
+    'reminderEnabled': reminderEnabled,
+    if (reminderEnabled && reminderTime != null && reminderTime!.isNotEmpty)
+      'reminderTime': reminderTime,
     if (status != null) 'status': status,
   };
 }
@@ -102,6 +113,10 @@ class DuaPlan {
     required this.longestStreak,
     this.startDate = '',
     this.endDate = '',
+    this.description = '',
+    this.reminderEnabled = false,
+    this.reminderTime,
+    this.daysOfWeek = const [],
   });
 
   final String id;
@@ -121,6 +136,31 @@ class DuaPlan {
   final int longestStreak;
   final String startDate;
   final String endDate;
+  final String description;
+  final bool reminderEnabled;
+  final String? reminderTime;
+
+  /// 0 = Sunday ... 6 = Saturday. Empty when the list response leaves the
+  /// schedule out, which is read as "every day".
+  final List<int> daysOfWeek;
+
+  /// Whether the plan runs on [date] — inside its start/end boundaries and on
+  /// a weekday its schedule includes.
+  bool runsOn(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    final start = DateTime.tryParse(startDate);
+    final end = DateTime.tryParse(endDate);
+    if (start != null &&
+        DateTime(start.year, start.month, start.day).isAfter(day)) {
+      return false;
+    }
+    if (end != null && DateTime(end.year, end.month, end.day).isBefore(day)) {
+      return false;
+    }
+    // `DateTime.weekday` is 1 = Monday ... 7 = Sunday; the API counts
+    // 0 = Sunday ... 6 = Saturday.
+    return daysOfWeek.isEmpty || daysOfWeek.contains(day.weekday % 7);
+  }
 
   factory DuaPlan.fromJson(Map<String, dynamic> json) {
     final today = _mapOf(json['today']);
@@ -137,6 +177,12 @@ class DuaPlan {
       longestStreak: _asInt(stats['longestStreak']),
       startDate: json['startDate']?.toString() ?? '',
       endDate: json['endDate']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      reminderEnabled: json['reminderEnabled'] == true,
+      reminderTime: json['reminderTime']?.toString(),
+      daysOfWeek: [
+        for (final day in json['daysOfWeek'] as List? ?? const []) _asInt(day),
+      ],
     );
   }
 }
@@ -220,6 +266,9 @@ class DuaPlanDetail {
     required this.items,
     this.startDate = '',
     this.endDate = '',
+    this.description = '',
+    this.reminderEnabled = false,
+    this.reminderTime,
   });
 
   final String id;
@@ -230,6 +279,9 @@ class DuaPlanDetail {
 
   final String startDate;
   final String endDate;
+  final String description;
+  final bool reminderEnabled;
+  final String? reminderTime;
 
   /// 0 = Sunday ... 6 = Saturday.
   final List<int> daysOfWeek;
@@ -241,6 +293,9 @@ class DuaPlanDetail {
     status: json['status']?.toString() ?? 'in_progress',
     startDate: json['startDate']?.toString() ?? '',
     endDate: json['endDate']?.toString() ?? '',
+    description: json['description']?.toString() ?? '',
+    reminderEnabled: json['reminderEnabled'] == true,
+    reminderTime: json['reminderTime']?.toString(),
     daysOfWeek: [
       for (final day in json['daysOfWeek'] as List? ?? const []) _asInt(day),
     ],

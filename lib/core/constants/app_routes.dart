@@ -136,6 +136,7 @@ import '../../features/dua/presentation/screens/dua_all_dua_screen.dart';
 import '../../features/dua/presentation/screens/dua_category_duas_screen.dart';
 import '../../features/dua/presentation/screens/dua_dashboard_screen.dart';
 import '../../features/dua/presentation/screens/dua_analytics_dashboard_screen.dart';
+import '../../features/dua/presentation/screens/dua_recitation_history_screen.dart';
 import '../../features/dua/presentation/screens/dua_featured_screen.dart';
 import '../../features/dua/presentation/screens/dua_group_screen.dart';
 import '../../features/dua/presentation/screens/dua_entry_screen.dart';
@@ -659,6 +660,8 @@ class AppRoutes {
         return _page(const DuaDashboardScreen(), settings);
       case RouteNames.duaAnalyticsDashboard:
         return _page(const DuaAnalyticsDashboardScreen(), settings);
+      case RouteNames.duaRecitationHistory:
+        return _page(const DuaRecitationHistoryScreen(), settings);
       case RouteNames.duaAllCategory:
         return _page(const DuaAllCategoryScreen(), settings);
       case RouteNames.duaCategoryDuas:
@@ -801,14 +804,16 @@ class AppRoutes {
     );
   }
 
-  /// Responsive Splash, Onboarding, and Home may consume the full browser
-  /// viewport. Every other route retains the existing Web mobile canvas until
-  /// its own dedicated responsive work begins.
+  /// Responsive Splash, Onboarding, Home, and the Dua reading dashboard may
+  /// consume the full browser viewport — each lays itself out against the
+  /// width it is given. Every other route retains the existing Web mobile
+  /// canvas until its own dedicated responsive work begins.
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
     if (!kIsWeb ||
         settings.name == RouteNames.splash ||
         settings.name == RouteNames.onboardingHadith ||
-        settings.name == RouteNames.home) {
+        settings.name == RouteNames.home ||
+        settings.name == RouteNames.duaAnalyticsDashboard) {
       return child;
     }
     return WebMobileCanvas(child: child);

@@ -833,6 +833,19 @@ class AppText {
     required this.duaYesDelete,
     required this.duaSavedCount,
     required this.duaTotalSaved,
+    required this.duaDashboardCompetitor,
+    required this.duaTotalRecitedTitle,
+    required this.duaRecitationTimeTitle,
+    required this.duaDailyTargetLabel,
+    required this.duaTotalRecitationTime,
+    required this.duaRecitationHistoryTitle,
+    required this.duaNoRecitationHistory,
+    required this.duaDashboardTimeLabel,
+    required this.duaDashboardPointLabel,
+    required this.duaMinutesRead,
+    required this.duaTimesRead,
+    required this.duaDashboardLoadFailed,
+    required this.duaDashboardWeekRange,
     required this.amolReadConfirmMessage,
     required this.amolUntrackTitle,
     required this.amolUntrackMessage,
@@ -1847,6 +1860,19 @@ class AppText {
   final String duaYesDelete;
   final String duaSavedCount;
   final String duaTotalSaved;
+  final String duaDashboardCompetitor;
+  final String duaTotalRecitedTitle;
+  final String duaRecitationTimeTitle;
+  final String duaDailyTargetLabel;
+  final String duaTotalRecitationTime;
+  final String duaRecitationHistoryTitle;
+  final String duaNoRecitationHistory;
+  final String duaDashboardTimeLabel;
+  final String duaDashboardPointLabel;
+  final String duaMinutesRead;
+  final String duaTimesRead;
+  final String duaDashboardLoadFailed;
+  final String duaDashboardWeekRange;
   final String amolReadConfirmMessage;
   final String amolUntrackTitle;
   final String amolUntrackMessage;
@@ -5148,6 +5174,19 @@ class AppText {
       duaYesDelete: _read(map, 'duaYesDelete', fallback?.duaYesDelete ?? ''),
       duaSavedCount: _read(map, 'duaSavedCount', fallback?.duaSavedCount ?? ''),
       duaTotalSaved: _read(map, 'duaTotalSaved', fallback?.duaTotalSaved ?? ''),
+      duaDashboardCompetitor: _read(map, 'duaDashboardCompetitor', fallback?.duaDashboardCompetitor ?? ''),
+      duaTotalRecitedTitle: _read(map, 'duaTotalRecitedTitle', fallback?.duaTotalRecitedTitle ?? ''),
+      duaRecitationTimeTitle: _read(map, 'duaRecitationTimeTitle', fallback?.duaRecitationTimeTitle ?? ''),
+      duaDailyTargetLabel: _read(map, 'duaDailyTargetLabel', fallback?.duaDailyTargetLabel ?? ''),
+      duaTotalRecitationTime: _read(map, 'duaTotalRecitationTime', fallback?.duaTotalRecitationTime ?? ''),
+      duaRecitationHistoryTitle: _read(map, 'duaRecitationHistoryTitle', fallback?.duaRecitationHistoryTitle ?? ''),
+      duaNoRecitationHistory: _read(map, 'duaNoRecitationHistory', fallback?.duaNoRecitationHistory ?? ''),
+      duaDashboardTimeLabel: _read(map, 'duaDashboardTimeLabel', fallback?.duaDashboardTimeLabel ?? ''),
+      duaDashboardPointLabel: _read(map, 'duaDashboardPointLabel', fallback?.duaDashboardPointLabel ?? ''),
+      duaMinutesRead: _read(map, 'duaMinutesRead', fallback?.duaMinutesRead ?? ''),
+      duaTimesRead: _read(map, 'duaTimesRead', fallback?.duaTimesRead ?? ''),
+      duaDashboardLoadFailed: _read(map, 'duaDashboardLoadFailed', fallback?.duaDashboardLoadFailed ?? ''),
+      duaDashboardWeekRange: _read(map, 'duaDashboardWeekRange', fallback?.duaDashboardWeekRange ?? ''),
       amolReadConfirmMessage: _read(
         map,
         'amolReadConfirmMessage',
