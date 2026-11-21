@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_date_formatter.dart';
+import 'package:tuhfatul_muslim/features/promo_banner/presentation/widgets/promo_banner_carousel.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_item.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_daily_dashboard.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/domain/entities/amol_pillar.dart';
@@ -453,6 +454,10 @@ class _WebHomeContent extends StatelessWidget {
                                     featureSlider,
                                   ],
                                   const SizedBox(height: 22),
+                                  const PromoBannerCarousel(
+                                    height: 180,
+                                    padding: EdgeInsets.only(bottom: 22),
+                                  ),
                                   const HomeFeatureGrid(
                                     columnMajor: true,
                                     webStyle: true,
@@ -1556,6 +1561,9 @@ List<Widget> _homeSections({
     child: const ProhibitedPrayerTimesCard(),
   ),
   SizedBox(height: 16.h),
+  // Collapses to nothing when the admin has no active banners, so the two
+  // cards around it close up with no gap of its own.
+  const PromoBannerCarousel(),
   HomeFeatureCardSlider(
     key: ValueKey('home-feature-slider-${language.name}'),
     height: 350.h,
