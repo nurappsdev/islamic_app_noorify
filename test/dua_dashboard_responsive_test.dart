@@ -7,6 +7,8 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_reading_dashboard_cubit.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_analytics_dashboard_screen.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart'
+    show DuaDonutChart;
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// A full answer, so every part of the page has something to lay out.
@@ -94,10 +96,22 @@ class _Repo extends Fake implements DuaRepository {
       DuaReadingDashboard.fromJson({..._sample, 'timeframe': timeframe});
 }
 
-/// The widths the page has to survive: a small phone, the design size, a
-/// large phone, and the 600-wide column `WebMobileCanvas` caps the browser
-/// at.
-const _widths = <double>[320, 360, 375, 430, 600];
+/// Every width the browser has to survive: a small phone, the design size,
+/// a large phone, the 600-wide column `WebMobileCanvas` used to cap the
+/// browser at, a tablet, and two desktop windows.
+const _webWidths = <double>[320, 360, 375, 430, 600, 900, 1280, 1600];
+
+/// What a phone or tablet can actually be. ScreenUtil's scaling is switched
+/// off on the browser (`enableScaleWH: () => !kIsWeb` in `main_app.dart`),
+/// so these units only ever run on Android and iOS, where a window is never
+/// a desktop's width in logical pixels.
+const _deviceWidths = <double>[320, 360, 375, 430, 600, 900];
+
+/// Whether the two metric cards are stacked, which only the wide layout
+/// does: side by side they share a top edge, stacked the second sits lower.
+bool _metricsAreStacked(WidgetTester tester) =>
+    tester.getTopLeft(find.text('Dua Recitation Time')).dy >
+    tester.getTopLeft(find.text('Total Duas Recited')).dy;
 
 void main() {
   /// Lays the dashboard out at [width].
@@ -111,7 +125,7 @@ void main() {
     required bool webUnits,
     DuaDashboardTimeframe timeframe = DuaDashboardTimeframe.daily,
   }) async {
-    tester.view.physicalSize = Size(width * 3, 812 * 3);
+    tester.view.physicalSize = Size(width * 3, (width >= 720 ? 900 : 812) * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
@@ -157,11 +171,40 @@ void main() {
     return 'width=$width webUnits=$webUnits: $error';
   }
 
+  group('the wide layout', () {
+    testWidgets('a phone width keeps the single column', (tester) async {
+      await pumpAt(tester, 375, webUnits: true);
+      expect(tester.takeException(), isNull);
+      // The cards sit side by side under the chart, as on the design.
+      expect(find.byType(DuaDonutChart), findsOneWidget);
+      expect(_metricsAreStacked(tester), isFalse);
+    });
+
+    testWidgets('a desktop width puts the cards beside the chart', (
+      tester,
+    ) async {
+      await pumpAt(tester, 1280, webUnits: true);
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DuaDonutChart), findsOneWidget);
+      expect(_metricsAreStacked(tester), isTrue);
+    });
+
+    testWidgets('the content stops widening past its maximum', (tester) async {
+      await pumpAt(tester, 1600, webUnits: true);
+      expect(tester.takeException(), isNull);
+      // Capped and centred rather than stretched edge to edge, so a wide
+      // window leaves a margin either side.
+      final left = tester.getTopLeft(find.text('Dua Recitation History')).dx;
+      expect(left, greaterThan(200));
+      expect(left, lessThan(800));
+    });
+  });
+
   for (final webUnits in [false, true]) {
     final mode = webUnits ? 'web units (no ScreenUtil scaling)' : 'mobile';
 
     group('the dashboard lays out on $mode', () {
-      for (final width in _widths) {
+      for (final width in webUnits ? _webWidths : _deviceWidths) {
         testWidgets('daily at ${width.toInt()}px', (tester) async {
           await pumpAt(tester, width, webUnits: webUnits);
           expect(overflowAt(tester, width, webUnits), isNull);

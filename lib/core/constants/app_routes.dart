@@ -804,14 +804,16 @@ class AppRoutes {
     );
   }
 
-  /// Responsive Splash, Onboarding, and Home may consume the full browser
-  /// viewport. Every other route retains the existing Web mobile canvas until
-  /// its own dedicated responsive work begins.
+  /// Responsive Splash, Onboarding, Home, and the Dua reading dashboard may
+  /// consume the full browser viewport — each lays itself out against the
+  /// width it is given. Every other route retains the existing Web mobile
+  /// canvas until its own dedicated responsive work begins.
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
     if (!kIsWeb ||
         settings.name == RouteNames.splash ||
         settings.name == RouteNames.onboardingHadith ||
-        settings.name == RouteNames.home) {
+        settings.name == RouteNames.home ||
+        settings.name == RouteNames.duaAnalyticsDashboard) {
       return child;
     }
     return WebMobileCanvas(child: child);

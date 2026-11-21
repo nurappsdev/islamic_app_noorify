@@ -60,9 +60,19 @@ class _DuaAnalyticsDashboardView extends StatelessWidget {
                     final dashboard = state.dashboard;
                     return Column(
                       children: [
-                        _DashboardHeader(
-                          timeframe: state.timeframe,
-                          onChanged: cubit.select,
+                        // Kept to the body's own width so the title and
+                        // the dropdown line up with the content under them
+                        // on a wide browser.
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: _DashboardBody.maxContentWidth,
+                            ),
+                            child: _DashboardHeader(
+                              timeframe: state.timeframe,
+                              onChanged: cubit.select,
+                            ),
+                          ),
                         ),
                         if (state.refreshing)
                           SizedBox(
@@ -117,43 +127,93 @@ class _DashboardBody extends StatelessWidget {
   final DuaReadingDashboard dashboard;
   final Future<void> Function() onRefresh;
 
+  /// Below this the page is one column, as on a phone; at or above it the
+  /// chart and the metric cards sit side by side. Measured in raw pixels,
+  /// not design units: the browser is what gets wide, and ScreenUtil does
+  /// not scale there.
+  static const wideBreakpoint = 720.0;
+
+  /// A desktop browser is far wider than this page has any use for; beyond
+  /// it the content stays put and the window grows around it.
+  static const maxContentWidth = 1100.0;
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView(
-        // Always scrollable, so a short answer can still be pulled down.
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
-        children: [
-          _PositionSummary(dashboard: dashboard),
-          SizedBox(height: 14.h),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 240),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: KeyedSubtree(
-              key: ValueKey(state.timeframe),
-              child: _TimeframeChart(
-                timeframe: state.timeframe,
-                dashboard: dashboard,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= wideBreakpoint;
+          return ListView(
+            // Always scrollable, so a short answer can still be pulled down.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: maxContentWidth),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: wide ? _wide(context) : _narrow(context),
+                  ),
+                ),
               ),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          _Metrics(dashboard: dashboard),
-          SizedBox(height: 20.h),
-          _HistoryHeader(
-            onSeeAll: () => Navigator.of(
-              context,
-            ).pushNamed(RouteNames.duaRecitationHistory),
-          ),
-          SizedBox(height: 4.h),
-          _RecitationHistory(items: dashboard.recentRecitations),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
+
+  /// Phone order: pills, chart, cards, history — each the full width.
+  List<Widget> _narrow(BuildContext context) => [
+    _PositionSummary(dashboard: dashboard),
+    SizedBox(height: 14.h),
+    _chart(),
+    SizedBox(height: 16.h),
+    _Metrics(dashboard: dashboard),
+    SizedBox(height: 20.h),
+    ..._history(context),
+  ];
+
+  /// Wide order: the chart keeps the room it needs while the two cards
+  /// stack beside it, and the history runs the full width underneath.
+  List<Widget> _wide(BuildContext context) => [
+    _PositionSummary(dashboard: dashboard),
+    SizedBox(height: 14.h),
+    // No IntrinsicHeight here: the children align to the top and size
+    // themselves, and asking a FittedBox for its intrinsic height gives an
+    // answer too small to hold the card it measures.
+    Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(flex: 3, child: _chart()),
+        SizedBox(width: 20.w),
+        Expanded(flex: 2, child: _Metrics(dashboard: dashboard, stacked: true)),
+      ],
+    ),
+    SizedBox(height: 20.h),
+    ..._history(context),
+  ];
+
+  Widget _chart() => AnimatedSwitcher(
+    duration: const Duration(milliseconds: 240),
+    switchInCurve: Curves.easeOut,
+    switchOutCurve: Curves.easeIn,
+    child: KeyedSubtree(
+      key: ValueKey(state.timeframe),
+      child: _TimeframeChart(timeframe: state.timeframe, dashboard: dashboard),
+    ),
+  );
+
+  List<Widget> _history(BuildContext context) => [
+    _HistoryHeader(
+      onSeeAll: () =>
+          Navigator.of(context).pushNamed(RouteNames.duaRecitationHistory),
+    ),
+    SizedBox(height: 4.h),
+    _RecitationHistory(items: dashboard.recentRecitations),
+  ];
 }
 
 /// The user's own name as the tooltips address them. Before a profile has
@@ -571,12 +631,28 @@ class _PercentagePill extends StatelessWidget {
 }
 
 class _Metrics extends StatelessWidget {
-  const _Metrics({required this.dashboard});
+  const _Metrics({required this.dashboard, this.stacked = false});
+
   final DuaReadingDashboard dashboard;
+
+  /// `true` beside the chart on a wide screen, where the two cards have a
+  /// narrow column to share and read better one above the other.
+  final bool stacked;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
+    final cards = _cards(context, appText);
+    if (stacked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          cards.$1,
+          SizedBox(height: 12.h),
+          cards.$2,
+        ],
+      );
+    }
     return IntrinsicHeight(
       child: Row(
         // Both cards take the taller one's height, whatever the wider
@@ -584,37 +660,36 @@ class _Metrics extends StatelessWidget {
         // their content.
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: _MetricCard(
-              title: appText.duaTotalRecitedTitle,
-              value: context.localizedDigits('${dashboard.totalDuasRecited}'),
-              subtitle: appText.duaDailyTargetLabel.fill({
-                'value': context.localizedDigits(
-                  dashboard.dailyTargetText.isEmpty
-                      ? '—'
-                      : dashboard.dailyTargetText,
-                ),
-              }),
-              colors: const [Color(0xFF782CEB), Color(0xFF5245D7)],
-            ),
-          ),
+          Expanded(child: cards.$1),
           SizedBox(width: 12.w),
-          Expanded(
-            child: _MetricCard(
-              title: appText.duaRecitationTimeTitle,
-              value: context.localizedDigits(
-                dashboard.totalReadingTimeFormatted.isEmpty
-                    ? '—'
-                    : dashboard.totalReadingTimeFormatted,
-              ),
-              subtitle: appText.duaTotalRecitationTime,
-              colors: const [Color(0xFF08BCEB), Color(0xFF2365DD)],
-            ),
-          ),
+          Expanded(child: cards.$2),
         ],
       ),
     );
   }
+
+  (Widget, Widget) _cards(BuildContext context, AppText appText) => (
+    _MetricCard(
+      title: appText.duaTotalRecitedTitle,
+      value: context.localizedDigits('${dashboard.totalDuasRecited}'),
+      subtitle: appText.duaDailyTargetLabel.fill({
+        'value': context.localizedDigits(
+          dashboard.dailyTargetText.isEmpty ? '—' : dashboard.dailyTargetText,
+        ),
+      }),
+      colors: const [Color(0xFF782CEB), Color(0xFF5245D7)],
+    ),
+    _MetricCard(
+      title: appText.duaRecitationTimeTitle,
+      value: context.localizedDigits(
+        dashboard.totalReadingTimeFormatted.isEmpty
+            ? '—'
+            : dashboard.totalReadingTimeFormatted,
+      ),
+      subtitle: appText.duaTotalRecitationTime,
+      colors: const [Color(0xFF08BCEB), Color(0xFF2365DD)],
+    ),
+  );
 }
 
 class _MetricCard extends StatelessWidget {
