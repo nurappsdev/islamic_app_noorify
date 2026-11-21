@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
+import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// Full recitation-history flow opened from the Dua dashboard's "See All"
 /// action. Its Daily, Weekly, and Monthly views follow `devImg/img_30.png`
-/// through `img_34.png` while the history endpoint is still pending.
+/// through `img_34.png`, backed by `GET /duas/reading/history`.
 class DuaRecitationHistoryScreen extends StatefulWidget {
-  const DuaRecitationHistoryScreen({super.key});
+  const DuaRecitationHistoryScreen({super.key, this.repository});
+
+  /// Injectable for tests; production uses the feature composition root.
+  final DuaRepository? repository;
 
   @override
   State<DuaRecitationHistoryScreen> createState() =>
@@ -19,7 +28,64 @@ class _DuaRecitationHistoryScreenState
   _RecitationPeriod _period = _RecitationPeriod.daily;
   final _expandedDates = <String>{};
   bool _monthPickerOpen = false;
-  int _selectedDay = 9;
+  late final DuaRepository _repository = widget.repository ?? duaRepository;
+  late DateTime _selectedDate = _dateOnly(DateTime.now());
+  List<DuaReadingHistoryItem> _items = const [];
+  bool _loading = true;
+  bool _loadingMore = false;
+  bool _failed = false;
+  int _page = 0;
+  int _totalPage = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load({bool refresh = false}) async {
+    if (_loadingMore) return;
+    setState(() {
+      _loading = !refresh || _items.isEmpty;
+      _failed = false;
+    });
+    try {
+      final page = await _repository.getReadingHistory(page: 1, limit: 50);
+      if (!mounted) return;
+      setState(() {
+        _items = page.items;
+        _page = page.page;
+        _totalPage = page.totalPage;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _failed = true;
+      });
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_loading || _loadingMore || _page >= _totalPage) return;
+    setState(() => _loadingMore = true);
+    try {
+      final page = await _repository.getReadingHistory(
+        page: _page + 1,
+        limit: 50,
+      );
+      if (!mounted) return;
+      setState(() {
+        _items = [..._items, ...page.items];
+        _page = page.page;
+        _totalPage = page.totalPage;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
 
   void _toggleDate(String date) => setState(() {
     if (!_expandedDates.add(date)) _expandedDates.remove(date);
@@ -36,33 +102,66 @@ class _DuaRecitationHistoryScreenState
             onPeriodChanged: (period) => setState(() => _period = period),
           ),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: switch (_period) {
-                _RecitationPeriod.daily => _DailyHistory(
-                  key: const ValueKey('daily-history'),
-                  selectedDay: _selectedDay,
-                  onDayChanged: (day) => setState(() => _selectedDay = day),
-                ),
-                _RecitationPeriod.weekly => _WeeklyHistory(
-                  key: const ValueKey('weekly-history'),
-                  selectedDay: _selectedDay,
-                  expandedDates: _expandedDates,
-                  onDayChanged: (day) => setState(() => _selectedDay = day),
-                  onToggle: _toggleDate,
-                ),
-                _RecitationPeriod.monthly => _MonthlyHistory(
-                  key: const ValueKey('monthly-history'),
-                  selectedDay: _selectedDay,
-                  monthPickerOpen: _monthPickerOpen,
-                  expandedDates: _expandedDates,
-                  onDayChanged: (day) => setState(() => _selectedDay = day),
-                  onMonthPickerToggle: () =>
-                      setState(() => _monthPickerOpen = !_monthPickerOpen),
-                  onToggle: _toggleDate,
-                ),
-              },
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _failed
+                ? DuaErrorRetry(
+                    message: AppText.of(context).duaDashboardLoadFailed,
+                    onRetry: _load,
+                  )
+                : RefreshIndicator(
+                    onRefresh: () => _load(refresh: true),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        if (notification.metrics.extentAfter < 240) _loadMore();
+                        return false;
+                      },
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: switch (_period) {
+                          _RecitationPeriod.daily => _DailyHistory(
+                            key: const ValueKey('daily-history'),
+                            selectedDate: _selectedDate,
+                            items: _items,
+                            loadingMore: _loadingMore,
+                            onDateChanged: (date) =>
+                                setState(() => _selectedDate = _dateOnly(date)),
+                          ),
+                          _RecitationPeriod.weekly => _WeeklyHistory(
+                            key: const ValueKey('weekly-history'),
+                            selectedDate: _selectedDate,
+                            items: _items,
+                            loadingMore: _loadingMore,
+                            expandedDates: _expandedDates,
+                            onDateChanged: (date) =>
+                                setState(() => _selectedDate = _dateOnly(date)),
+                            onToggle: _toggleDate,
+                          ),
+                          _RecitationPeriod.monthly => _MonthlyHistory(
+                            key: const ValueKey('monthly-history'),
+                            selectedDate: _selectedDate,
+                            items: _items,
+                            loadingMore: _loadingMore,
+                            monthPickerOpen: _monthPickerOpen,
+                            expandedDates: _expandedDates,
+                            onDateChanged: (date) =>
+                                setState(() => _selectedDate = _dateOnly(date)),
+                            onMonthPickerToggle: () => setState(
+                              () => _monthPickerOpen = !_monthPickerOpen,
+                            ),
+                            onMonthChanged: (month) => setState(
+                              () => _selectedDate = DateTime(
+                                month.year,
+                                month.month,
+                                _selectedDate.day.clamp(1, _daysInMonth(month)),
+                              ),
+                            ),
+                            onToggle: _toggleDate,
+                          ),
+                        },
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -177,71 +276,45 @@ class _RoundAction extends StatelessWidget {
 class _DailyHistory extends StatelessWidget {
   const _DailyHistory({
     super.key,
-    required this.selectedDay,
-    required this.onDayChanged,
+    required this.selectedDate,
+    required this.items,
+    required this.loadingMore,
+    required this.onDateChanged,
   });
 
-  final int selectedDay;
-  final ValueChanged<int> onDayChanged;
+  final DateTime selectedDate;
+  final List<DuaReadingHistoryItem> items;
+  final bool loadingMore;
+  final ValueChanged<DateTime> onDateChanged;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
-    children: [
-      const _HistoryTitle(),
-      SizedBox(height: 22.h),
-      _WeekStrip(selectedDay: selectedDay, onDayChanged: onDayChanged),
-      SizedBox(height: 22.h),
-      const _TimelineGroup(
-        time: '8:00 AM',
-        children: [
-          _RecitationCardData(
-            title: 'Added DUA names here..',
-            category: 'Category name here',
-            arabic: 'Arabic dua here . . . .',
-            surface: Color(0xFFFFE9E2),
-            accent: Color(0xFFFF604D),
-          ),
-        ],
-      ),
-      const _TimelineGroup(
-        time: '9:30 AM',
-        children: [
-          _RecitationCardData(
-            title: 'Added DUA names here..',
-            category: 'Category name here',
-            arabic: 'Arabic dua here . . . .',
-            surface: Color(0xFFE9E7FF),
-            accent: Color(0xFF5B54E8),
-          ),
-        ],
-      ),
-      const _TimelineGroup(
-        time: '10:00 AM',
-        children: [
-          _RecitationCardData(
-            title: 'Added DUA names here..',
-            category: 'Category name here',
-            arabic: 'Arabic dua here . . . .',
-            surface: Color(0xFFFFF3D4),
-            accent: Color(0xFFE9A51C),
-          ),
-        ],
-      ),
-      const _TimelineGroup(
-        time: '12:30 PM',
-        children: [
-          _RecitationCardData(
-            title: 'Added DUA names here..',
-            category: 'Category name here',
-            arabic: 'Arabic dua here . . . .',
-            surface: Color(0xFFE6F4EC),
-            accent: Color(0xFF4BA779),
-          ),
-        ],
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final selectedItems = _itemsOn(items, selectedDate);
+    final byTime = <String, List<DuaReadingHistoryItem>>{};
+    for (final item in selectedItems) {
+      final time = item.lastReadAt?.toLocal();
+      final label = time == null
+          ? '—'
+          : MaterialLocalizations.of(
+              context,
+            ).formatTimeOfDay(TimeOfDay.fromDateTime(time));
+      byTime.putIfAbsent(label, () => []).add(item);
+    }
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      children: [
+        const _HistoryTitle(),
+        SizedBox(height: 22.h),
+        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        SizedBox(height: 22.h),
+        if (selectedItems.isEmpty) const _EmptyHistory(),
+        for (final entry in byTime.entries)
+          _TimelineGroup(time: entry.key, items: entry.value),
+        if (loadingMore) const _HistoryLoadingMore(),
+      ],
+    );
+  }
 }
 
 class _HistoryTitle extends StatelessWidget {
@@ -261,92 +334,90 @@ class _HistoryTitle extends StatelessWidget {
 }
 
 class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({required this.selectedDay, required this.onDayChanged});
+  const _WeekStrip({required this.selectedDate, required this.onDateChanged});
 
-  final int selectedDay;
-  final ValueChanged<int> onDayChanged;
-
-  static const _days = [
-    ('Sun', 6),
-    ('Mon', 7),
-    ('Tue', 8),
-    ('Wed', 9),
-    ('Thu', 10),
-    ('Fri', 11),
-    ('Sat', 12),
-  ];
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateChanged;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      for (final day in _days)
-        Expanded(
-          child: InkWell(
-            onTap: () => onDayChanged(day.$2),
-            borderRadius: BorderRadius.circular(24.r),
-            child: Column(
-              children: [
-                Text(
-                  day.$1,
-                  style: TextStyle(
-                    fontSize: 9.sp,
-                    color: day.$2 == selectedDay
-                        ? context.textInkColor(const Color(0xFF2A2E27))
-                        : context.textInkColor(const Color(0xFF8A8D85)),
-                    fontWeight: day.$2 == selectedDay
-                        ? FontWeight.w700
-                        : FontWeight.w400,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  width: 36.r,
-                  height: 36.r,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(
-                      day.$2 == selectedDay
-                          ? const Color(0xFFA9B75A)
-                          : const Color(0xFFE2ECB8),
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${day.$2}',
+  Widget build(BuildContext context) {
+    final start = selectedDate.subtract(
+      Duration(days: selectedDate.weekday % 7),
+    );
+    final days = List.generate(7, (index) => start.add(Duration(days: index)));
+    return Row(
+      children: [
+        for (final day in days)
+          Expanded(
+            child: InkWell(
+              onTap: () => onDateChanged(day),
+              borderRadius: BorderRadius.circular(24.r),
+              child: Column(
+                children: [
+                  Text(
+                    MaterialLocalizations.of(
+                      context,
+                    ).narrowWeekdays[day.weekday % 7],
                     style: TextStyle(
-                      color: day.$2 == selectedDay
-                          ? Colors.white
-                          : context.textInkColor(const Color(0xFF747866)),
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 9.sp,
+                      color: _sameDay(day, selectedDate)
+                          ? context.textInkColor(const Color(0xFF2A2E27))
+                          : context.textInkColor(const Color(0xFF8A8D85)),
+                      fontWeight: _sameDay(day, selectedDate)
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
-                ),
-                SizedBox(height: 5.h),
-                Container(
-                  width: 5.r,
-                  height: 5.r,
-                  decoration: BoxDecoration(
-                    color: day.$2 == selectedDay || day.$2 == 7 || day.$2 == 10
-                        ? context.surfaceColor(const Color(0xFFA9B75A))
-                        : Colors.transparent,
-                    shape: BoxShape.circle,
+                  SizedBox(height: 8.h),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    width: 36.r,
+                    height: 36.r,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.surfaceColor(
+                        _sameDay(day, selectedDate)
+                            ? const Color(0xFFA9B75A)
+                            : const Color(0xFFE2ECB8),
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        color: _sameDay(day, selectedDate)
+                            ? Colors.white
+                            : context.textInkColor(const Color(0xFF747866)),
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 5.h),
+                  Container(
+                    width: 5.r,
+                    height: 5.r,
+                    decoration: BoxDecoration(
+                      color: _sameDay(day, selectedDate)
+                          ? context.surfaceColor(const Color(0xFFA9B75A))
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class _TimelineGroup extends StatelessWidget {
-  const _TimelineGroup({required this.time, required this.children});
+  const _TimelineGroup({required this.time, required this.items});
 
   final String time;
-  final List<_RecitationCardData> children;
+  final List<DuaReadingHistoryItem> items;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -370,204 +441,227 @@ class _TimelineGroup extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              for (final child in children) _RecitationCard(data: child),
+              for (var index = 0; index < items.length; index++)
+                _RecitationCard(item: items[index], colorIndex: index),
             ],
           ),
         ),
       ],
     ),
   );
-}
-
-class _RecitationCardData {
-  const _RecitationCardData({
-    required this.title,
-    required this.category,
-    required this.arabic,
-    required this.surface,
-    required this.accent,
-  });
-
-  final String title;
-  final String category;
-  final String arabic;
-  final Color surface;
-  final Color accent;
 }
 
 class _RecitationCard extends StatelessWidget {
-  const _RecitationCard({required this.data});
+  const _RecitationCard({required this.item, required this.colorIndex});
 
-  final _RecitationCardData data;
+  final DuaReadingHistoryItem item;
+  final int colorIndex;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: EdgeInsets.all(14.r),
-    decoration: BoxDecoration(
-      color: context.surfaceColor(data.surface),
-      borderRadius: BorderRadius.circular(23.r),
-      border: Border.all(color: context.lineColor(data.surface)),
-    ),
-    child: Row(
-      children: [
-        Container(
-          width: 40.r,
-          height: 40.r,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(data.accent),
-            shape: BoxShape.circle,
+  Widget build(BuildContext context) {
+    const surfaces = [
+      Color(0xFFFFE9E2),
+      Color(0xFFE9E7FF),
+      Color(0xFFFFF3D4),
+      Color(0xFFE6F4EC),
+    ];
+    const accents = [
+      Color(0xFFFF604D),
+      Color(0xFF5B54E8),
+      Color(0xFFE9A51C),
+      Color(0xFF4BA779),
+    ];
+    final surface = surfaces[colorIndex % surfaces.length];
+    final accent = accents[colorIndex % accents.length];
+    final title = context.localized(item.title);
+    final category = context.localized(item.category);
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(surface),
+        borderRadius: BorderRadius.circular(23.r),
+        border: Border.all(color: context.lineColor(surface)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40.r,
+            height: 40.r,
+            decoration: BoxDecoration(
+              color: context.surfaceColor(accent),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.menu_book_rounded, color: Colors.white),
           ),
-          child: const Icon(Icons.menu_book_rounded, color: Colors.white),
-        ),
-        SizedBox(width: 10.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: context.textInkColor(const Color(0xFF292A28)),
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 3.h),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: context.surfaceColor(Colors.white),
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Text(
-                  data.category,
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title.isEmpty ? '—' : title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF4E4E4B)),
-                    fontSize: 8.sp,
+                    color: context.textInkColor(const Color(0xFF292A28)),
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-              SizedBox(height: 5.h),
-              Text(
-                data.arabic,
-                style: TextStyle(
-                  color: context.textInkColor(const Color(0xFF53534D)),
-                  fontSize: 10.sp,
+                SizedBox(height: 3.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(Colors.white),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Text(
+                    category.isEmpty ? '—' : category,
+                    style: TextStyle(
+                      color: context.textInkColor(const Color(0xFF4E4E4B)),
+                      fontSize: 8.sp,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 5.h),
+                Text(
+                  item.arabic,
+                  style: TextStyle(
+                    color: context.textInkColor(const Color(0xFF53534D)),
+                    fontSize: 10.sp,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        SizedBox(width: 8.w),
-        Container(
-          width: 28.r,
-          height: 28.r,
-          decoration: BoxDecoration(
-            color: context.surfaceColor(Colors.white),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.play_arrow_rounded,
-            size: 17.sp,
-            color: context.inkColor(data.accent),
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _WeeklyHistory extends StatelessWidget {
   const _WeeklyHistory({
     super.key,
-    required this.selectedDay,
+    required this.selectedDate,
+    required this.items,
+    required this.loadingMore,
     required this.expandedDates,
-    required this.onDayChanged,
+    required this.onDateChanged,
     required this.onToggle,
   });
 
-  final int selectedDay;
+  final DateTime selectedDate;
+  final List<DuaReadingHistoryItem> items;
+  final bool loadingMore;
   final Set<String> expandedDates;
-  final ValueChanged<int> onDayChanged;
+  final ValueChanged<DateTime> onDateChanged;
   final ValueChanged<String> onToggle;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
-    children: [
-      const _HistoryTitle(),
-      SizedBox(height: 22.h),
-      _WeekStrip(selectedDay: selectedDay, onDayChanged: onDayChanged),
-      SizedBox(height: 16.h),
-      for (final summary in _weeklySummaries) ...[
-        _HistorySummary(
-          summary: summary,
-          expanded: expandedDates.contains(summary.date),
-          onTap: () => onToggle(summary.date),
-        ),
-        SizedBox(height: 11.h),
+  Widget build(BuildContext context) {
+    final summaries = _summariesForWeek(items, selectedDate);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      children: [
+        const _HistoryTitle(),
+        SizedBox(height: 22.h),
+        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        SizedBox(height: 16.h),
+        for (final summary in summaries) ...[
+          _HistorySummary(
+            summary: summary,
+            expanded: expandedDates.contains(summary.id),
+            onTap: () => onToggle(summary.id),
+          ),
+          SizedBox(height: 11.h),
+        ],
+        if (loadingMore) const _HistoryLoadingMore(),
       ],
-    ],
-  );
+    );
+  }
 }
 
 class _MonthlyHistory extends StatelessWidget {
   const _MonthlyHistory({
     super.key,
-    required this.selectedDay,
+    required this.selectedDate,
+    required this.items,
+    required this.loadingMore,
     required this.monthPickerOpen,
     required this.expandedDates,
-    required this.onDayChanged,
+    required this.onDateChanged,
     required this.onMonthPickerToggle,
+    required this.onMonthChanged,
     required this.onToggle,
   });
 
-  final int selectedDay;
+  final DateTime selectedDate;
+  final List<DuaReadingHistoryItem> items;
+  final bool loadingMore;
   final bool monthPickerOpen;
   final Set<String> expandedDates;
-  final ValueChanged<int> onDayChanged;
+  final ValueChanged<DateTime> onDateChanged;
   final VoidCallback onMonthPickerToggle;
+  final ValueChanged<DateTime> onMonthChanged;
   final ValueChanged<String> onToggle;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
-    children: [
-      _MonthSelector(expanded: monthPickerOpen, onTap: onMonthPickerToggle),
-      SizedBox(height: 10.h),
-      _MonthCalendar(selectedDay: selectedDay, onDayChanged: onDayChanged),
-      SizedBox(height: 16.h),
-      _HistorySummary(
-        summary: _weeklySummaries[3],
-        expanded: expandedDates.contains(_weeklySummaries[3].date),
-        onTap: () => onToggle(_weeklySummaries[3].date),
-      ),
-      SizedBox(height: 11.h),
-      _HistorySummary(
-        summary: _weeklySummaries[4],
-        expanded: expandedDates.contains(_weeklySummaries[4].date),
-        muted: true,
-        onTap: () => onToggle(_weeklySummaries[4].date),
-      ),
-      SizedBox(height: 11.h),
-      _HistorySummary(
-        summary: _weeklySummaries[5],
-        expanded: expandedDates.contains(_weeklySummaries[5].date),
-        muted: true,
-        onTap: () => onToggle(_weeklySummaries[5].date),
-      ),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final summaries = _summariesForMonth(items, selectedDate);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      children: [
+        _MonthSelector(
+          month: selectedDate,
+          expanded: monthPickerOpen,
+          onTap: onMonthPickerToggle,
+          onPrevious: () => onMonthChanged(
+            DateTime(selectedDate.year, selectedDate.month - 1),
+          ),
+          onNext: () => onMonthChanged(
+            DateTime(selectedDate.year, selectedDate.month + 1),
+          ),
+        ),
+        SizedBox(height: 10.h),
+        _MonthCalendar(
+          selectedDate: selectedDate,
+          activeDays: summaries.map((summary) => summary.date).toSet(),
+          onDateChanged: onDateChanged,
+        ),
+        SizedBox(height: 16.h),
+        if (summaries.isEmpty) const _EmptyHistory(),
+        for (final summary in summaries) ...[
+          _HistorySummary(
+            summary: summary,
+            expanded: expandedDates.contains(summary.id),
+            onTap: () => onToggle(summary.id),
+          ),
+          SizedBox(height: 11.h),
+        ],
+        if (loadingMore) const _HistoryLoadingMore(),
+      ],
+    );
+  }
 }
 
 class _MonthSelector extends StatelessWidget {
-  const _MonthSelector({required this.expanded, required this.onTap});
+  const _MonthSelector({
+    required this.month,
+    required this.expanded,
+    required this.onTap,
+    required this.onPrevious,
+    required this.onNext,
+  });
 
+  final DateTime month;
   final bool expanded;
   final VoidCallback onTap;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -587,21 +681,13 @@ class _MonthSelector extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                'August',
+                MaterialLocalizations.of(context).formatMonthYear(month),
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 17.sp,
                   fontWeight: FontWeight.w700,
                   fontStyle: FontStyle.italic,
                   color: context.textInkColor(const Color(0xFF596439)),
-                ),
-              ),
-              SizedBox(width: 7.w),
-              Text(
-                '2026',
-                style: TextStyle(
-                  color: context.textInkColor(const Color(0xFF596439)),
-                  fontSize: 15.sp,
                 ),
               ),
               SizedBox(width: 4.w),
@@ -611,9 +697,9 @@ class _MonthSelector extends StatelessWidget {
                 color: context.inkColor(const Color(0xFFA4B35E)),
               ),
               const Spacer(),
-              _MonthArrow(icon: Icons.chevron_left_rounded),
+              _MonthArrow(icon: Icons.chevron_left_rounded, onTap: onPrevious),
               SizedBox(width: 7.w),
-              _MonthArrow(icon: Icons.chevron_right_rounded),
+              _MonthArrow(icon: Icons.chevron_right_rounded, onTap: onNext),
             ],
           ),
         ),
@@ -636,7 +722,7 @@ class _MonthSelector extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const _MonthWheel(),
+                  child: _MonthWheel(month: month),
                 ),
               )
             : const SizedBox.shrink(),
@@ -646,58 +732,73 @@ class _MonthSelector extends StatelessWidget {
 }
 
 class _MonthArrow extends StatelessWidget {
-  const _MonthArrow({required this.icon});
+  const _MonthArrow({required this.icon, required this.onTap});
   final IconData icon;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 27.r,
-    height: 27.r,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: context.surfaceColor(Colors.white),
-      borderRadius: BorderRadius.circular(8.r),
-      border: Border.all(color: context.lineColor(const Color(0xFFE3EBCE))),
-    ),
-    child: Icon(
-      icon,
-      size: 17.sp,
-      color: context.inkColor(const Color(0xFF596439)),
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8.r),
+    child: Container(
+      width: 27.r,
+      height: 27.r,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFE3EBCE))),
+      ),
+      child: Icon(
+        icon,
+        size: 17.sp,
+        color: context.inkColor(const Color(0xFF596439)),
+      ),
     ),
   );
 }
 
 class _MonthWheel extends StatelessWidget {
-  const _MonthWheel();
+  const _MonthWheel({required this.month});
+
+  final DateTime month;
 
   @override
   Widget build(BuildContext context) {
-    const months = ['June', 'July', 'August', 'September', 'October'];
+    final months = List.generate(
+      5,
+      (index) => DateTime(month.year, month.month + index - 2),
+    );
     return Row(
       children: [
         Expanded(
           child: Column(
             children: [
-              for (final month in months)
+              for (final item in months)
                 Container(
                   height: 27.h,
                   alignment: Alignment.center,
-                  decoration: month == 'August'
+                  decoration:
+                      item.month == month.month && item.year == month.year
                       ? BoxDecoration(
                           color: context.surfaceColor(const Color(0xFFF0F4E6)),
                           borderRadius: BorderRadius.circular(8.r),
                         )
                       : null,
                   child: Text(
-                    month,
+                    MaterialLocalizations.of(context).formatMonthYear(item),
                     style: TextStyle(
                       color: context.textInkColor(
-                        month == 'August'
+                        item.month == month.month && item.year == month.year
                             ? const Color(0xFF20211E)
                             : const Color(0xFF95A08F),
                       ),
-                      fontSize: month == 'August' ? 18.sp : 14.sp,
-                      fontWeight: month == 'August'
+                      fontSize:
+                          item.month == month.month && item.year == month.year
+                          ? 18.sp
+                          : 14.sp,
+                      fontWeight:
+                          item.month == month.month && item.year == month.year
                           ? FontWeight.w700
                           : FontWeight.w400,
                     ),
@@ -709,12 +810,12 @@ class _MonthWheel extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              for (final year in const ['2026', '2026', '2026', '2026', '2026'])
+              for (final item in months)
                 SizedBox(
                   height: 27.h,
                   child: Center(
                     child: Text(
-                      year,
+                      '${item.year}',
                       style: TextStyle(
                         color: context.textInkColor(const Color(0xFF5F677A)),
                         fontSize: 15.sp,
@@ -732,207 +833,196 @@ class _MonthWheel extends StatelessWidget {
 }
 
 class _MonthCalendar extends StatelessWidget {
-  const _MonthCalendar({required this.selectedDay, required this.onDayChanged});
+  const _MonthCalendar({
+    required this.selectedDate,
+    required this.activeDays,
+    required this.onDateChanged,
+  });
 
-  final int selectedDay;
-  final ValueChanged<int> onDayChanged;
+  final DateTime selectedDate;
+  final Set<DateTime> activeDays;
+  final ValueChanged<DateTime> onDateChanged;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Row(
-        children: [
-          for (final label in const [
-            'Fri',
-            'Sat',
-            'Sun',
-            'Mon',
-            'Tue',
-            'Wed',
-            'Thu',
-          ])
-            Expanded(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: label == 'Wed'
-                      ? context.textInkColor(const Color(0xFF292A27))
-                      : context.textInkColor(const Color(0xFF989A92)),
-                  fontSize: 9.sp,
-                  fontWeight: label == 'Wed'
-                      ? FontWeight.w700
-                      : FontWeight.w400,
+  Widget build(BuildContext context) {
+    final firstDay = DateTime(selectedDate.year, selectedDate.month);
+    final startOffset = firstDay.weekday % 7;
+    final totalCells = startOffset + _daysInMonth(selectedDate);
+    return Column(
+      children: [
+        Row(
+          children: [
+            for (final label in const [
+              'Fri',
+              'Sat',
+              'Sun',
+              'Mon',
+              'Tue',
+              'Wed',
+              'Thu',
+            ])
+              Expanded(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: label == 'Wed'
+                        ? context.textInkColor(const Color(0xFF292A27))
+                        : context.textInkColor(const Color(0xFF989A92)),
+                    fontSize: 9.sp,
+                    fontWeight: label == 'Wed'
+                        ? FontWeight.w700
+                        : FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-        ],
-      ),
-      SizedBox(height: 8.h),
-      GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 31,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 7,
-          mainAxisSpacing: 8.h,
-          crossAxisSpacing: 8.w,
+          ],
         ),
-        itemBuilder: (context, index) {
-          final day = index + 1;
-          final selected = day == selectedDay;
-          return InkWell(
-            onTap: () => onDayChanged(day),
-            borderRadius: BorderRadius.circular(11.r),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.surfaceColor(
-                  selected ? const Color(0xFFA9B75A) : const Color(0xFFE2ECB8),
+        SizedBox(height: 8.h),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: totalCells,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisSpacing: 8.h,
+            crossAxisSpacing: 8.w,
+          ),
+          itemBuilder: (context, index) {
+            if (index < startOffset) return const SizedBox.shrink();
+            final date = DateTime(
+              selectedDate.year,
+              selectedDate.month,
+              index - startOffset + 1,
+            );
+            final selected = _sameDay(date, selectedDate);
+            final active = activeDays.any((item) => _sameDay(item, date));
+            return InkWell(
+              onTap: () => onDateChanged(date),
+              borderRadius: BorderRadius.circular(11.r),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(
+                    selected
+                        ? const Color(0xFFA9B75A)
+                        : active
+                        ? const Color(0xFFE2ECB8)
+                        : const Color(0xFFF5F7EB),
+                  ),
+                  borderRadius: BorderRadius.circular(11.r),
                 ),
-                borderRadius: BorderRadius.circular(11.r),
-              ),
-              child: Text(
-                '$day',
-                style: TextStyle(
-                  color: selected
-                      ? Colors.white
-                      : context.textInkColor(const Color(0xFF626950)),
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w600,
+                child: Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    color: selected
+                        ? Colors.white
+                        : context.textInkColor(const Color(0xFF626950)),
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-    ],
-  );
+            );
+          },
+        ),
+      ],
+    );
+  }
 }
 
 class _HistorySummaryData {
   const _HistorySummaryData({
+    required this.id,
     required this.date,
-    required this.count,
-    this.items = const [],
+    required this.items,
   });
 
-  final String date;
-  final String count;
-  final List<_RecitationCardData> items;
+  final String id;
+  final DateTime date;
+  final List<DuaReadingHistoryItem> items;
 }
-
-const _weeklySummaries = [
-  _HistorySummaryData(date: '23.10.26', count: '04'),
-  _HistorySummaryData(date: '24.10.26', count: '01'),
-  _HistorySummaryData(date: '25.10.26', count: '07'),
-  _HistorySummaryData(
-    date: '26.10.26',
-    count: '02',
-    items: [
-      _RecitationCardData(
-        title: 'Added DUA names here..',
-        category: 'Category name here',
-        arabic: 'Arabic dua here . . . .',
-        surface: Color(0xFFFFE9E2),
-        accent: Color(0xFFFF604D),
-      ),
-      _RecitationCardData(
-        title: 'Added DUA names here..',
-        category: 'Category name here',
-        arabic: 'Arabic dua here . . . .',
-        surface: Color(0xFFFFF3D4),
-        accent: Color(0xFFE9A51C),
-      ),
-    ],
-  ),
-  _HistorySummaryData(date: '28.10.26', count: '00'),
-  _HistorySummaryData(date: '29.10.26', count: '00'),
-];
 
 class _HistorySummary extends StatelessWidget {
   const _HistorySummary({
     required this.summary,
     required this.expanded,
     required this.onTap,
-    this.muted = false,
   });
 
   final _HistorySummaryData summary;
   final bool expanded;
   final VoidCallback onTap;
-  final bool muted;
 
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Opacity(
-        opacity: muted ? .45 : 1,
-        child: Material(
-          color: context.surfaceColor(Colors.white),
+      Material(
+        color: context.surfaceColor(Colors.white),
+        borderRadius: BorderRadius.circular(22.r),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(22.r),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(22.r),
-            child: Container(
-              height: 68.h,
-              padding: EdgeInsets.symmetric(horizontal: 18.w),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: .045),
-                    blurRadius: 16.r,
-                    offset: Offset(0, 5.h),
+          child: Container(
+            height: 68.h,
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .045),
+                  blurRadius: 16.r,
+                  offset: Offset(0, 5.h),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Text(
+                  MaterialLocalizations.of(
+                    context,
+                  ).formatShortDate(summary.date),
+                  style: TextStyle(
+                    color: context.textInkColor(const Color(0xFF292A28)),
+                    fontSize: 17.sp,
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    summary.date,
-                    style: TextStyle(
-                      color: context.textInkColor(const Color(0xFF292A28)),
-                      fontSize: 17.sp,
-                    ),
+                ),
+                const Spacer(),
+                Text(
+                  'Reeded Dua',
+                  style: TextStyle(
+                    color: context.textInkColor(const Color(0xFF242521)),
+                    fontFamily: 'serif',
+                    fontSize: 18.sp,
+                    fontStyle: FontStyle.italic,
                   ),
-                  const Spacer(),
-                  Text(
-                    'Reeded Dua',
-                    style: TextStyle(
-                      color: context.textInkColor(const Color(0xFF242521)),
-                      fontFamily: 'serif',
-                      fontSize: 18.sp,
-                      fontStyle: FontStyle.italic,
-                    ),
+                ),
+                const Spacer(),
+                Text(
+                  '${summary.items.length}'.padLeft(2, '0'),
+                  style: TextStyle(
+                    color: context.textInkColor(const Color(0xFF292A28)),
+                    fontSize: 14.sp,
                   ),
-                  const Spacer(),
-                  Text(
-                    summary.count,
-                    style: TextStyle(
-                      color: context.textInkColor(const Color(0xFF292A28)),
-                      fontSize: 14.sp,
-                    ),
+                ),
+                SizedBox(width: 20.w),
+                Container(
+                  width: 29.r,
+                  height: 29.r,
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(const Color(0xFFE0EBB3)),
+                    shape: BoxShape.circle,
                   ),
-                  SizedBox(width: 20.w),
-                  Container(
-                    width: 29.r,
-                    height: 29.r,
-                    decoration: BoxDecoration(
-                      color: context.surfaceColor(const Color(0xFFE0EBB3)),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      size: 19.sp,
-                      color: context.inkColor(const Color(0xFF62703D)),
-                    ),
+                  child: Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 19.sp,
+                    color: context.inkColor(const Color(0xFF62703D)),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -954,9 +1044,16 @@ class _HistorySummary extends StatelessWidget {
                     Expanded(
                       child: Column(
                         children: [
-                          for (final item in summary.items) ...[
-                            _RecitationCard(data: item),
-                            if (item != summary.items.last)
+                          for (
+                            var index = 0;
+                            index < summary.items.length;
+                            index++
+                          ) ...[
+                            _RecitationCard(
+                              item: summary.items[index],
+                              colorIndex: index,
+                            ),
+                            if (index != summary.items.length - 1)
                               SizedBox(height: 9.h),
                           ],
                         ],
@@ -969,4 +1066,95 @@ class _HistorySummary extends StatelessWidget {
       ),
     ],
   );
+}
+
+class _EmptyHistory extends StatelessWidget {
+  const _EmptyHistory();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 32.h),
+    child: Text(
+      AppText.of(context).duaNoRecitationHistory,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 12.sp,
+        color: context.textInkColor(const Color(0xFF778060)),
+      ),
+    ),
+  );
+}
+
+class _HistoryLoadingMore extends StatelessWidget {
+  const _HistoryLoadingMore();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.all(16.r),
+    child: const Center(child: CircularProgressIndicator()),
+  );
+}
+
+DateTime _dateOnly(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+bool _sameDay(DateTime left, DateTime right) =>
+    left.year == right.year &&
+    left.month == right.month &&
+    left.day == right.day;
+
+int _daysInMonth(DateTime value) =>
+    DateTime(value.year, value.month + 1, 0).day;
+
+List<DuaReadingHistoryItem> _itemsOn(
+  List<DuaReadingHistoryItem> items,
+  DateTime date,
+) =>
+    [
+      for (final item in items)
+        if (item.lastReadAt != null &&
+            _sameDay(item.lastReadAt!.toLocal(), date))
+          item,
+    ]..sort(
+      (left, right) => (left.lastReadAt ?? DateTime(0)).compareTo(
+        right.lastReadAt ?? DateTime(0),
+      ),
+    );
+
+List<_HistorySummaryData> _summariesForWeek(
+  List<DuaReadingHistoryItem> items,
+  DateTime selectedDate,
+) {
+  final firstDay = _dateOnly(
+    selectedDate.subtract(Duration(days: selectedDate.weekday % 7)),
+  );
+  return List.generate(7, (index) {
+    final date = firstDay.add(Duration(days: index));
+    return _HistorySummaryData(
+      id: date.toIso8601String(),
+      date: date,
+      items: _itemsOn(items, date),
+    );
+  }).reversed.toList(growable: false);
+}
+
+List<_HistorySummaryData> _summariesForMonth(
+  List<DuaReadingHistoryItem> items,
+  DateTime selectedDate,
+) {
+  final summaries = <_HistorySummaryData>[];
+  for (var day = 1; day <= _daysInMonth(selectedDate); day++) {
+    final date = DateTime(selectedDate.year, selectedDate.month, day);
+    final dayItems = _itemsOn(items, date);
+    if (dayItems.isNotEmpty) {
+      summaries.add(
+        _HistorySummaryData(
+          id: date.toIso8601String(),
+          date: date,
+          items: dayItems,
+        ),
+      );
+    }
+  }
+  return summaries.reversed.toList(growable: false);
 }

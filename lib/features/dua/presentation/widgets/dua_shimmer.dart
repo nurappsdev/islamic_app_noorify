@@ -71,6 +71,40 @@ class DuaDashboardShimmer extends StatelessWidget {
   );
 }
 
+/// Skeleton for the Dua reading dashboard: legend, chart, the two metric
+/// cards and the first recitation-history rows.
+class DuaReadingDashboardShimmer extends StatelessWidget {
+  const DuaReadingDashboardShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) => DuaShimmer(
+    child: ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+      children: [
+        const _Box(height: 36, radius: 10),
+        SizedBox(height: 14.h),
+        const _Box(height: 212, radius: 18),
+        SizedBox(height: 16.h),
+        Row(
+          children: [
+            const Expanded(child: _Box(height: 122, radius: 21)),
+            SizedBox(width: 12.w),
+            const Expanded(child: _Box(height: 122, radius: 21)),
+          ],
+        ),
+        SizedBox(height: 20.h),
+        const _Box(width: 180, height: 16),
+        SizedBox(height: 16.h),
+        for (var i = 0; i < 4; i++) ...[
+          const _Box(height: 31, radius: 10),
+          SizedBox(height: 14.h),
+        ],
+      ],
+    ),
+  );
+}
+
 /// Skeleton for searchable category screens.
 class DuaCategoryGridShimmer extends StatelessWidget {
   const DuaCategoryGridShimmer({super.key});
