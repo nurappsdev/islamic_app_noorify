@@ -246,7 +246,13 @@ class DuaComparisonSide {
   /// How far ahead of (or behind) the user this side is; `rival` only.
   final int pointsDifference;
 
-  /// [readingTimeFormatted] as a number, for the bar's length.
+  /// Whether the server actually timed this side. [readingMinutes] reads an
+  /// absent time as `0`, which is indistinguishable from a real zero, so
+  /// anything choosing a fallback has to ask this first.
+  bool get hasTime => readingTimeFormatted.trim().isNotEmpty;
+
+  /// [readingTimeFormatted] as a number, for the bar's length. `0` when the
+  /// server sent no time at all — check [hasTime] before trusting it.
   int get readingMinutes => duaParseReadingMinutes(readingTimeFormatted);
 
   static DuaComparisonSide? fromJson(Object? json) {

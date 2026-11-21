@@ -94,7 +94,10 @@ const _sample = <String, dynamic>{
 };
 
 class _FakeDashboardRepository extends Fake implements DuaRepository {
-  _FakeDashboardRepository();
+  _FakeDashboardRepository({this.payload});
+
+  /// Replaces [_sample] outright, for a test about one odd answer.
+  final Map<String, dynamic>? payload;
 
   final calls = <String>[];
 
@@ -104,6 +107,7 @@ class _FakeDashboardRepository extends Fake implements DuaRepository {
     String? date,
   }) async {
     calls.add(timeframe);
+    if (payload != null) return DuaReadingDashboard.fromJson(payload!);
     return DuaReadingDashboard.fromJson({
       ..._sample,
       'timeframe': timeframe,
@@ -479,12 +483,15 @@ void main() {
   });
 
   group('DuaAnalyticsDashboardScreen', () {
-    Future<_FakeDashboardRepository> pumpDashboard(WidgetTester tester) async {
+    Future<_FakeDashboardRepository> pumpDashboard(
+      WidgetTester tester, {
+      Map<String, dynamic>? payload,
+    }) async {
       tester.view.physicalSize = const Size(375 * 3, 812 * 3);
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
 
-      final repository = _FakeDashboardRepository();
+      final repository = _FakeDashboardRepository(payload: payload);
       addTearDown(() => profileNameNotifier.value = null);
       await tester.pumpWidget(
         ScreenUtilInit(
@@ -549,6 +556,92 @@ void main() {
       expect(inTooltip('Labib Al Mahmud'), findsOneWidget);
       expect(inTooltip('1h 19m'), findsOneWidget);
       expect(inTooltip('Point : 7/10'), findsOneWidget);
+    });
+
+    testWidgets(
+      'a comparison with names but no times is dashed, never zeroed',
+      (tester) async {
+        // The shape that showed "0 min" for both sides while the pills read
+        // 68% / 32%: the server names everyone and splits the window, but
+        // sends no time or points on either side.
+        await pumpDashboard(
+          tester,
+          payload: {
+            'timeframe': 'daily',
+            'date': '2026-11-21',
+            'overview': {
+              'totalDuasRecited': 0,
+              'myPositionPercentage': 68,
+              'competitorPercentage': 32,
+              'comparison': {
+                'me': {'name': 'Nizam', 'percentage': 68},
+                'rival': {'name': 'Labib Al Mahmud', 'percentage': 32},
+              },
+            },
+          },
+        );
+
+        final tooltip = find.byType(DuaChartTooltip);
+        Finder inTooltip(String text) =>
+            find.descendant(of: tooltip, matching: find.text(text));
+
+        expect(inTooltip('Nizam'), findsOneWidget);
+        expect(inTooltip('Labib Al Mahmud'), findsOneWidget);
+        // Nothing was timed, so nothing is claimed.
+        expect(inTooltip('0 min'), findsNothing);
+        expect(inTooltip('—'), findsNWidgets(2));
+      },
+    );
+
+    testWidgets('the rival is projected when only the user is timed', (
+      tester,
+    ) async {
+      await pumpDashboard(
+        tester,
+        payload: {
+          'timeframe': 'daily',
+          'overview': {
+            'totalReadingTimeFormatted': '1h 00m',
+            'dailyTargetText': '35/40',
+            'myPositionPercentage': 68,
+            'competitorPercentage': 32,
+            'comparison': {
+              'me': {'name': 'Nizam'},
+              'rival': {'name': 'Labib Al Mahmud'},
+            },
+          },
+        },
+      );
+
+      final tooltip = find.byType(DuaChartTooltip);
+      Finder inTooltip(String text) =>
+          find.descendant(of: tooltip, matching: find.text(text));
+
+      // The window total stands in for the user...
+      expect(inTooltip('60 min'), findsOneWidget);
+      // ...and the rival gets the 68:32 split of it, not a zero.
+      expect(inTooltip('28 min'), findsOneWidget);
+      // The day's target fraction stands in for the missing points.
+      expect(inTooltip('Point : 35/40'), findsOneWidget);
+    });
+
+    testWidgets('a day the server really timed at zero still reads zero', (
+      tester,
+    ) async {
+      await pumpDashboard(tester);
+      await choose(tester, 'Weekly');
+      await tester.tap(find.text('Sat'));
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 60));
+      }
+      // Sanity: a timed day is never dashed.
+      expect(
+        find.descendant(
+          of: find.byType(DuaChartTooltip),
+          matching: find.text('—'),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('tapping a weekly column names both sides', (tester) async {

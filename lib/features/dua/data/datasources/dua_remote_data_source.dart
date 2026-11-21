@@ -500,8 +500,140 @@ class DuaApiLogInterceptor extends Interceptor {
   /// `POST /duas/reading/track`, whose body is traced field by field.
   static const _trackPath = '/duas/reading/track';
 
+  /// `GET /duas/reading/dashboard`, whose whole answer is traced so the
+  /// Daily / Weekly / Monthly filters can be compared against what the
+  /// charts draw.
+  static const _dashboardPath = '/duas/reading/dashboard';
+
   static bool _isTrack(RequestOptions options) =>
       options.path.endsWith(_trackPath);
+
+  static bool _isDashboard(RequestOptions options) =>
+      options.path.endsWith(_dashboardPath);
+
+  /// The reading dashboard's answer: first the handful of fields the charts
+  /// disagree about most often, then the whole body.
+  ///
+  /// Request headers are never printed — the session's bearer token is one
+  /// of them.
+  static void _logDashboard(Response<dynamic> response) {
+    final timeframe =
+        response.requestOptions.queryParameters['timeframe'] ?? '?';
+    debugPrint(
+      '[DUA DASHBOARD] ===== timeframe=$timeframe '
+      'status=${response.statusCode} =====',
+    );
+    final data = response.data;
+    final body = data is Map ? Map<String, dynamic>.from(data) : null;
+    final payload = body?['data'];
+    if (payload is! Map) {
+      debugPrint('[DUA DASHBOARD] no data object; body follows');
+      _logLong(_pretty(data));
+      return;
+    }
+    final dashboard = Map<String, dynamic>.from(payload);
+    final overview = dashboard['overview'] is Map
+        ? Map<String, dynamic>.from(dashboard['overview'] as Map)
+        : const <String, dynamic>{};
+    final comparison = overview['comparison'] is Map
+        ? Map<String, dynamic>.from(overview['comparison'] as Map)
+        : const <String, dynamic>{};
+
+    debugPrint(
+      '[DUA DASHBOARD] pills  myPositionPercentage='
+      '${overview['myPositionPercentage']} '
+      'competitorPercentage=${overview['competitorPercentage']}',
+    );
+    debugPrint(
+      '[DUA DASHBOARD] totals duas=${_clip(overview['totalDuasRecited'])} '
+      'time=${_clip(overview['totalReadingTimeFormatted'])} '
+      'target=${_clip(overview['dailyTargetText'])}',
+    );
+    if (comparison.isEmpty) {
+      debugPrint('[DUA DASHBOARD] comparison: ABSENT');
+    } else {
+      for (final key in const ['me', 'my', 'rival', 'topLeader']) {
+        if (comparison[key] case final Map side) _logSide(key, side);
+      }
+    }
+
+    final days = (dashboard['weeklyActivity'] as Map?)?['days'];
+    final periods = (dashboard['monthlyActivity'] as Map?)?['periods'];
+    debugPrint(
+      '[DUA DASHBOARD] weeklyActivity.days='
+      '${days is List ? days.length : 'none'} '
+      'monthlyActivity.periods=${periods is List ? periods.length : 'none'} '
+      'recentRecitations='
+      '${dashboard['recentRecitations'] is List ? (dashboard['recentRecitations'] as List).length : 'none'}',
+    );
+    // Every entry's own three sides, which is where an empty time shows up
+    // as a flat bar.
+    for (final entry in [
+      if (days is List) ...days,
+      if (periods is List) ...periods,
+    ]) {
+      if (entry is! Map) continue;
+      final label = entry['dayOfWeek'] ?? entry['label'] ?? entry['date'];
+      debugPrint(
+        '[DUA DASHBOARD]   entry ${_clip(label, 40)} '
+        'readMinutes=${_clip(entry['readMinutes'], 20)} '
+        'my=${_sideBrief(entry['my'] ?? entry['me'])} '
+        'rival=${_sideBrief(entry['rival'])}',
+      );
+    }
+
+    debugPrint('[DUA DASHBOARD] ----- full body -----');
+    _logLong(_pretty(data));
+    debugPrint('[DUA DASHBOARD] ===== end $timeframe =====');
+  }
+
+  static void _logSide(String key, Map<dynamic, dynamic> side) => debugPrint(
+    '[DUA DASHBOARD] comparison.$key name=${_clip(side['name'])} '
+    "time='${_clip(side['readingTimeFormatted'] ?? '')}' "
+    "points='${_clip(side['pointsText'] ?? '')}' "
+    'rank=${_clip(side['rank'])} percentage=${_clip(side['percentage'])}',
+  );
+
+  static String _sideBrief(Object? side) {
+    if (side is! Map) return 'absent';
+    return "${_clip(side['name'], 40)}"
+        "/'${_clip(side['readingTimeFormatted'] ?? '', 40)}'"
+        "/'${_clip(side['pointsText'] ?? '', 40)}'";
+  }
+
+  /// A summary field cut to a glanceable length; the untouched value is
+  /// still in the full body printed underneath.
+  static String _clip(Object? value, [int max = 120]) {
+    final text = '$value';
+    return text.length <= max ? text : '${text.substring(0, max)}…';
+  }
+
+  static String _pretty(Object? body) {
+    try {
+      return const JsonEncoder.withIndent('  ').convert(body);
+    } catch (_) {
+      return '$body';
+    }
+  }
+
+  /// `debugPrint` throttles and clips a long line, so the body goes out in
+  /// pieces small enough to arrive whole.
+  static void _logLong(String text) {
+    const limit = 700;
+    for (final line in text.split('\n')) {
+      if (line.length <= limit) {
+        debugPrint('[DUA DASHBOARD] $line');
+        continue;
+      }
+      for (var at = 0; at < line.length; at += limit) {
+        final end = at + limit;
+        debugPrint(
+          '[DUA DASHBOARD] '
+          '${line.substring(at, end > line.length ? line.length : end)}',
+        );
+      }
+    }
+  }
 
   /// The reading report exactly as it goes on the wire: the three fields by
   /// name, then the encoded body, where a quoted value tells a string from a
@@ -551,6 +683,7 @@ class DuaApiLogInterceptor extends Interceptor {
     if (_isTrack(response.requestOptions)) {
       debugPrint('[DUA API]   response ${_short(response.data)}');
     }
+    if (_isDashboard(response.requestOptions)) _logDashboard(response);
     handler.next(response);
   }
 
@@ -562,6 +695,10 @@ class DuaApiLogInterceptor extends Interceptor {
     );
     // Not delivered: the repository keeps this report and sends it again.
     if (_isTrack(err.requestOptions)) _logReadingPayload(err.requestOptions);
+    // A filter that failed outright still shows what came back.
+    if (_isDashboard(err.requestOptions) && err.response != null) {
+      _logDashboard(err.response!);
+    }
     handler.next(err);
   }
 }

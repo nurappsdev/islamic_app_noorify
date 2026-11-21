@@ -173,46 +173,65 @@ class _TimeframeChart extends StatelessWidget {
   final DuaDashboardTimeframe timeframe;
   final DuaReadingDashboard dashboard;
 
-  /// The rival's minutes for a bar. The server now sends its own figure per
-  /// day and per period; a response from before the comparison model has
-  /// only the window-wide split to go on, so the bar is projected from it.
-  int _rivalMinutes(DuaComparison comparison, int mine) =>
-      comparison.rival?.readingMinutes ??
-      duaCompetitorValue(
-        mine,
-        myPercentage: dashboard.myPositionPercentage,
-        competitorPercentage: dashboard.competitorPercentage,
-      );
+  /// The minutes the server itself timed for [side], or `null` when it sent
+  /// no time — `readingMinutes` would read that as a real zero.
+  static int? _timed(DuaComparisonSide? side) =>
+      side != null && side.hasTime ? side.readingMinutes : null;
+
+  /// The rival's minutes for a bar: the server's own figure when it sent
+  /// one, else the window-wide split applied to [mine]. `null` when neither
+  /// is knowable, so nothing invents a zero.
+  int? _rivalMinutes(DuaComparison comparison, int? mine) {
+    final timed = _timed(comparison.rival);
+    if (timed != null) return timed;
+    if (mine == null || dashboard.myPositionPercentage <= 0) return null;
+    return duaCompetitorValue(
+      mine,
+      myPercentage: dashboard.myPositionPercentage,
+      competitorPercentage: dashboard.competitorPercentage,
+    );
+  }
+
+  /// A side's time: what the server formatted, else [minutes] written out,
+  /// else a dash. A real zero still reads `0 min`; only an unknown is
+  /// dashed.
+  String _time(BuildContext context, DuaComparisonSide? side, int? minutes) {
+    if (side != null && side.hasTime) {
+      return context.localizedDigits(side.readingTimeFormatted);
+    }
+    return minutes == null ? '—' : _minutes(context, minutes);
+  }
 
   /// The two rows a tooltip ends with: the user and the rival, each named
   /// and timed as the server has them, beside the colour its layer is drawn
   /// in. Each side's `pointsText` follows on its own quieter line.
   List<DuaTooltipLine> _shares(
     BuildContext context,
-    DuaComparison comparison,
-    DuaChartBar bar,
-  ) {
+    DuaComparison comparison, {
+    required int? myMinutes,
+    required int? rivalMinutes,
+    String myPointsFallback = '',
+  }) {
     final appText = AppText.of(context);
     final me = comparison.me;
     final rival = comparison.rival;
+    final myPoints = me?.pointsText.isNotEmpty == true
+        ? me!.pointsText
+        : myPointsFallback;
     return [
       DuaTooltipLine.metric(
         color: DuaChartColors.mine,
         text: me?.name.isNotEmpty == true ? me!.name : _readerName(context),
-        value: me?.readingTimeFormatted.isNotEmpty == true
-            ? context.localizedDigits(me!.readingTimeFormatted)
-            : _minutes(context, bar.mine),
+        value: _time(context, me, myMinutes),
       ),
-      if (me?.pointsText.isNotEmpty == true)
-        DuaTooltipLine.note(context.localizedDigits(me!.pointsText)),
+      if (myPoints.isNotEmpty)
+        DuaTooltipLine.note(context.localizedDigits(myPoints)),
       DuaTooltipLine.metric(
         color: DuaChartColors.competitor,
         text: rival?.name.isNotEmpty == true
             ? rival!.name
             : appText.competitorName,
-        value: rival?.readingTimeFormatted.isNotEmpty == true
-            ? context.localizedDigits(rival!.readingTimeFormatted)
-            : _minutes(context, bar.competitor),
+        value: _time(context, rival, rivalMinutes),
       ),
       if (rival?.pointsText.isNotEmpty == true)
         DuaTooltipLine.note(context.localizedDigits(rival!.pointsText)),
@@ -225,9 +244,14 @@ class _TimeframeChart extends StatelessWidget {
 
     switch (timeframe) {
       case DuaDashboardTimeframe.daily:
-        // The day's own minutes when the server sends `today`; otherwise the
-        // window total it did send.
+        // The day's own minutes when the server sends `today`, else the
+        // window total it did send, else nothing to go on.
         final today = dashboard.today;
+        final myMinutes =
+            today?.readMinutes ??
+            (dashboard.totalReadingTimeFormatted.isEmpty
+                ? null
+                : duaParseReadingMinutes(dashboard.totalReadingTimeFormatted));
         final fallbackTime = today == null
             ? dashboard.totalReadingTimeFormatted
             : _minutes(context, today.readMinutes);
@@ -256,11 +280,18 @@ class _TimeframeChart extends StatelessWidget {
                 : _shares(
                     context,
                     dashboard.comparison,
-                    DuaChartBar(
-                      label: '',
-                      mine: today?.readMinutes ?? 0,
-                      competitor: 0,
+                    myMinutes: myMinutes,
+                    rivalMinutes: _rivalMinutes(
+                      dashboard.comparison,
+                      myMinutes,
                     ),
+                    // The day's target fraction stands in when the server
+                    // sends no points of its own.
+                    myPointsFallback: dashboard.dailyTargetText.isEmpty
+                        ? ''
+                        : appText.duaDashboardPointLabel.fill({
+                            'value': dashboard.dailyTargetText,
+                          }),
                   ),
           ),
         );
@@ -273,14 +304,19 @@ class _TimeframeChart extends StatelessWidget {
               DuaChartBar(
                 label: day.label,
                 mine: day.minutes,
-                competitor: _rivalMinutes(day.comparison, day.minutes),
+                competitor: _rivalMinutes(day.comparison, day.minutes) ?? 0,
               ),
           ],
           tooltipBuilder: (index, bar) {
             final day = days[index];
             return DuaChartTooltip(
               title: bar.title,
-              lines: _shares(context, day.comparison, bar),
+              lines: _shares(
+                context,
+                day.comparison,
+                myMinutes: day.minutes,
+                rivalMinutes: _rivalMinutes(day.comparison, day.minutes),
+              ),
             );
           },
         );
@@ -296,14 +332,19 @@ class _TimeframeChart extends StatelessWidget {
                 label: duaPeriodAxisLabel(row.label),
                 title: row.label,
                 mine: row.minutes,
-                competitor: _rivalMinutes(row.comparison, row.minutes),
+                competitor: _rivalMinutes(row.comparison, row.minutes) ?? 0,
               ),
           ],
           tooltipBuilder: (index, bar) {
             final row = rows[index];
             return DuaChartTooltip(
               title: context.localizedDigits(bar.title),
-              lines: _shares(context, row.comparison, bar),
+              lines: _shares(
+                context,
+                row.comparison,
+                myMinutes: row.minutes,
+                rivalMinutes: _rivalMinutes(row.comparison, row.minutes),
+              ),
             );
           },
         );
