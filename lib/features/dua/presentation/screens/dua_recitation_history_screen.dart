@@ -91,6 +91,18 @@ class _DuaRecitationHistoryScreenState
     if (!_expandedDates.add(date)) _expandedDates.remove(date);
   });
 
+  /// Moves to [month], keeping the day of the month where it can.
+  /// [closePicker] is for a tap on the wheel: a dropdown that has been
+  /// chosen from closes, while the arrows leave it open to step through.
+  void _changeMonth(DateTime month, {bool closePicker = false}) => setState(() {
+    _selectedDate = DateTime(
+      month.year,
+      month.month,
+      _selectedDate.day.clamp(1, _daysInMonth(month)),
+    );
+    if (closePicker) _monthPickerOpen = false;
+  });
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: context.pageColor(Colors.white),
@@ -149,13 +161,9 @@ class _DuaRecitationHistoryScreenState
                             onMonthPickerToggle: () => setState(
                               () => _monthPickerOpen = !_monthPickerOpen,
                             ),
-                            onMonthChanged: (month) => setState(
-                              () => _selectedDate = DateTime(
-                                month.year,
-                                month.month,
-                                _selectedDate.day.clamp(1, _daysInMonth(month)),
-                              ),
-                            ),
+                            onMonthChanged: _changeMonth,
+                            onMonthPicked: (month) =>
+                                _changeMonth(month, closePicker: true),
                             onToggle: _toggleDate,
                           ),
                         },
@@ -595,6 +603,7 @@ class _MonthlyHistory extends StatelessWidget {
     required this.onDateChanged,
     required this.onMonthPickerToggle,
     required this.onMonthChanged,
+    required this.onMonthPicked,
     required this.onToggle,
   });
 
@@ -606,6 +615,7 @@ class _MonthlyHistory extends StatelessWidget {
   final ValueChanged<DateTime> onDateChanged;
   final VoidCallback onMonthPickerToggle;
   final ValueChanged<DateTime> onMonthChanged;
+  final ValueChanged<DateTime> onMonthPicked;
   final ValueChanged<String> onToggle;
 
   @override
@@ -625,6 +635,7 @@ class _MonthlyHistory extends StatelessWidget {
           onNext: () => onMonthChanged(
             DateTime(selectedDate.year, selectedDate.month + 1),
           ),
+          onMonthPicked: onMonthPicked,
         ),
         SizedBox(height: 10.h),
         _MonthCalendar(
@@ -655,6 +666,7 @@ class _MonthSelector extends StatelessWidget {
     required this.onTap,
     required this.onPrevious,
     required this.onNext,
+    required this.onMonthPicked,
   });
 
   final DateTime month;
@@ -662,6 +674,7 @@ class _MonthSelector extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
+  final ValueChanged<DateTime> onMonthPicked;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -722,7 +735,10 @@ class _MonthSelector extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: _MonthWheel(month: month),
+                  child: _MonthWheel(
+                    month: month,
+                    onMonthPicked: onMonthPicked,
+                  ),
                 ),
               )
             : const SizedBox.shrink(),
@@ -759,9 +775,10 @@ class _MonthArrow extends StatelessWidget {
 }
 
 class _MonthWheel extends StatelessWidget {
-  const _MonthWheel({required this.month});
+  const _MonthWheel({required this.month, required this.onMonthPicked});
 
   final DateTime month;
+  final ValueChanged<DateTime> onMonthPicked;
 
   @override
   Widget build(BuildContext context) {
@@ -769,67 +786,81 @@ class _MonthWheel extends StatelessWidget {
       5,
       (index) => DateTime(month.year, month.month + index - 2),
     );
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: Column(
-            children: [
-              for (final item in months)
-                Container(
-                  height: 27.h,
-                  alignment: Alignment.center,
-                  decoration:
-                      item.month == month.month && item.year == month.year
-                      ? BoxDecoration(
-                          color: context.surfaceColor(const Color(0xFFF0F4E6)),
-                          borderRadius: BorderRadius.circular(8.r),
-                        )
-                      : null,
-                  child: Text(
-                    MaterialLocalizations.of(context).formatMonthYear(item),
-                    style: TextStyle(
-                      color: context.textInkColor(
-                        item.month == month.month && item.year == month.year
-                            ? const Color(0xFF20211E)
-                            : const Color(0xFF95A08F),
-                      ),
-                      fontSize:
-                          item.month == month.month && item.year == month.year
-                          ? 18.sp
-                          : 14.sp,
-                      fontWeight:
-                          item.month == month.month && item.year == month.year
-                          ? FontWeight.w700
-                          : FontWeight.w400,
-                    ),
-                  ),
-                ),
-            ],
+        for (final item in months)
+          _MonthWheelRow(
+            item: item,
+            selected: item.month == month.month && item.year == month.year,
+            onTap: () => onMonthPicked(item),
           ),
-        ),
-        Expanded(
-          child: Column(
-            children: [
-              for (final item in months)
-                SizedBox(
-                  height: 27.h,
-                  child: Center(
-                    child: Text(
-                      '${item.year}',
-                      style: TextStyle(
-                        color: context.textInkColor(const Color(0xFF5F677A)),
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
       ],
     );
   }
+}
+
+/// One line of the wheel. The whole line answers a tap, so the year beside
+/// the month name picks the same month rather than sitting there inert.
+class _MonthWheelRow extends StatelessWidget {
+  const _MonthWheelRow({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final DateTime item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(8.r),
+    child: SizedBox(
+      height: 27.h,
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              alignment: Alignment.center,
+              decoration: selected
+                  ? BoxDecoration(
+                      color: context.surfaceColor(const Color(0xFFF0F4E6)),
+                      borderRadius: BorderRadius.circular(8.r),
+                    )
+                  : null,
+              child: Text(
+                MaterialLocalizations.of(context).formatMonthYear(item),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.textInkColor(
+                    selected
+                        ? const Color(0xFF20211E)
+                        : const Color(0xFF95A08F),
+                  ),
+                  fontSize: selected ? 18.sp : 14.sp,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(
+                '${item.year}',
+                style: TextStyle(
+                  color: context.textInkColor(const Color(0xFF5F677A)),
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _MonthCalendar extends StatelessWidget {
