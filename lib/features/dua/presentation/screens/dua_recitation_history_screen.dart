@@ -173,6 +173,7 @@ class _DuaRecitationHistoryScreenState
                           _RecitationPeriod.daily => _DailyHistory(
                             key: const ValueKey('daily-history'),
                             selectedDate: _selectedDate,
+                            today: _today,
                             items: _items,
                             loadingMore: _loadingMore,
                             onDateChanged: (date) =>
@@ -325,10 +326,14 @@ class _RoundAction extends StatelessWidget {
   );
 }
 
+/// The Daily view: one day's recitations on a timeline, with the same
+/// seven-day strip the Weekly view runs on — the six days before today and
+/// then today last (16 → 22 on the 22nd).
 class _DailyHistory extends StatelessWidget {
   const _DailyHistory({
     super.key,
     required this.selectedDate,
+    required this.today,
     required this.items,
     required this.loadingMore,
     required this.onDateChanged,
@@ -336,6 +341,7 @@ class _DailyHistory extends StatelessWidget {
   });
 
   final DateTime selectedDate;
+  final DateTime today;
   final List<DuaReadingHistoryItem> items;
   final bool loadingMore;
   final ValueChanged<DateTime> onDateChanged;
@@ -358,7 +364,7 @@ class _DailyHistory extends StatelessWidget {
         const _HistoryTitle(),
         SizedBox(height: 22.h),
         _WeekStrip(
-          days: _calendarWeek(selectedDate),
+          days: _trailingWeek(today),
           selectedDate: selectedDate,
           onDateChanged: onDateChanged,
         ),
@@ -393,8 +399,7 @@ class _HistoryTitle extends StatelessWidget {
 }
 
 /// The seven-day strip above the Daily and Weekly lists. The days it shows
-/// are chosen by the caller — a Sunday-first calendar week for Daily, the
-/// week ending today for Weekly — so the strip only draws them.
+/// are chosen by the caller, so the strip only draws them.
 class _WeekStrip extends StatelessWidget {
   const _WeekStrip({
     required this.days,
@@ -663,9 +668,9 @@ class _RecitationCardState extends State<_RecitationCard> {
   }
 }
 
-/// The Weekly view. Its week is the last seven days, not the calendar week
-/// the Daily strip runs on, so it never runs on into days that have not
-/// happened yet. The strip at the top reads oldest first and ends on today
+/// The Weekly view. Its week is the last seven days, not a calendar week, so
+/// it never runs on into days that have not happened yet. The strip at the
+/// top reads oldest first and ends on today
 /// (16 → 22 on the 22nd); the day cards below it run the other way, today
 /// at the top down to a week ago at the bottom.
 class _WeeklyHistory extends StatelessWidget {
@@ -1306,17 +1311,6 @@ List<DuaReadingHistoryItem> _itemsOn(
         right.lastReadAt ?? DateTime(0),
       ),
     );
-
-/// The calendar week [date] falls in, Sunday first — what the Daily strip
-/// runs on.
-List<DateTime> _calendarWeek(DateTime date) {
-  final firstDay = _dateOnly(date.subtract(Duration(days: date.weekday % 7)));
-  return List.generate(
-    7,
-    (index) => firstDay.add(Duration(days: index)),
-    growable: false,
-  );
-}
 
 /// The week ending on [today]: six days back first, up to today last (16 →
 /// 22 on the 22nd). The Weekly view runs on this so it ends on today instead
