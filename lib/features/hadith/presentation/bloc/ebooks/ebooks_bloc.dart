@@ -17,7 +17,7 @@ class EbooksBloc extends Bloc<EbooksEvent, EbooksState> {
 
   Future<void> _onLoad(LoadEbooks event, Emitter<EbooksState> emit) async {
     emit(const EbooksState(status: EbooksStatus.loading));
-    final result = await _getEbooks();
+    final result = await _getEbooks(forceRefresh: event.refresh);
     result.fold(
       (failure) =>
           emit(EbooksState(status: EbooksStatus.failure, failure: failure)),

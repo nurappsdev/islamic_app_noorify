@@ -129,9 +129,12 @@ class _HadithLibraryView extends StatelessWidget {
 /// Reloads everything on the screen and completes once all three requests
 /// have finished, so the [RefreshIndicator] spins for exactly that long.
 Future<void> _refreshLibrary(BuildContext context) {
+  // `refresh: true`: a pull must reach the API, or the shelves would just
+  // redraw the stored copy and content added since would stay hidden.
   final library = context.read<HadithLibraryBloc>()
-    ..add(const LoadHadithLibrary());
-  final ebooks = context.read<EbooksBloc>()..add(const LoadEbooks());
+    ..add(const LoadHadithLibrary(refresh: true));
+  final ebooks = context.read<EbooksBloc>()
+    ..add(const LoadEbooks(refresh: true));
   final lastRead = context.read<HadithLastReadBloc>()
     ..add(const LoadHadithLastRead());
 

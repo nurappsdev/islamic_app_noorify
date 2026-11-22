@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
+
 import 'hadith_database.dart';
 
 /// Offline-first storage for the Hadith library's static content (books,
@@ -16,8 +18,10 @@ class HadithContentCache {
 
   static final shared = HadithContentCache();
 
-  /// Version of the cached content's format.
-  static const contentVersion = 1;
+  /// Version of the cached content's format. Bumped to 2 when the API host
+  /// became part of [keyOf]'s key: the host-less rows are dropped rather
+  /// than left to answer for whichever environment is now configured.
+  static const contentVersion = 2;
 
   /// Stored content older than this is refreshed in the background.
   static const refreshAfter = Duration(days: 1);
@@ -26,9 +30,16 @@ class HadithContentCache {
   final _memory = <String, ({Map<String, dynamic> json, DateTime at})>{};
   bool _cleaned = false;
 
+  /// The key [path] and [query] are stored under, scoped to the API host.
+  ///
+  /// The base URL is part of it because a build may point at production,
+  /// staging or a dev host (`API_BASE_URL`): without it, content stored from
+  /// one host is served for another, and a book that only exists on the new
+  /// host never appears.
   static String keyOf(String path, Map<String, dynamic> query) {
     final keys = query.keys.toList()..sort();
-    return '$path?${[for (final k in keys) '$k=${query[k]}'].join('&')}';
+    final params = [for (final k in keys) '$k=${query[k]}'].join('&');
+    return '${ApiConstants.baseUrl}$path?$params';
   }
 
   /// The stored response and when it was stored, or null.

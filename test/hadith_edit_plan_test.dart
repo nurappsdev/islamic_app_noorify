@@ -109,8 +109,9 @@ class _FakeRepository implements HadithLibraryRepository {
   Completer<void>? gate;
 
   @override
-  Future<Either<Failure, List<HadithLibraryBook>>> getBooks() async =>
-      const Right([_bookOne, _bookTwo]);
+  Future<Either<Failure, List<HadithLibraryBook>>> getBooks({
+    bool forceRefresh = false,
+  }) async => const Right([_bookOne, _bookTwo]);
 
   @override
   Future<Either<Failure, HadithCategoryPage>> getCategories(
@@ -268,8 +269,10 @@ void main() {
                     onPressed: () async {
                       popped = await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
-                          builder: (_) =>
-                              HadithEditPlanScreen(args: _args, repository: repo),
+                          builder: (_) => HadithEditPlanScreen(
+                            args: _args,
+                            repository: repo,
+                          ),
                         ),
                       );
                     },

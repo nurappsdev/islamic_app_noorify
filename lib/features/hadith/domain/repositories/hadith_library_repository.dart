@@ -17,11 +17,13 @@ import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_sub_categ
 abstract interface class HadithLibraryRepository {
   /// The hadith collections of the library (`GET /hadiths/books/lists`),
   /// in the server's display order.
-  Future<Either<Failure, List<HadithLibraryBook>>> getBooks();
+  Future<Either<Failure, List<HadithLibraryBook>>> getBooks({
+    bool forceRefresh,
+  });
 
   /// The active e-books of the library (`GET /ebooks`), in the server's
   /// display order.
-  Future<Either<Failure, List<Ebook>>> getEbooks();
+  Future<Either<Failure, List<Ebook>>> getEbooks({bool forceRefresh});
 
   /// One page of the categories (chapters) of a collection
   /// (`GET /hadiths/categories?bookId=...&page=...&limit=...`), in display

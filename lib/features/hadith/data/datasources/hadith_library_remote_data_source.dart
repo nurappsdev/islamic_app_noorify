@@ -25,10 +25,12 @@ import 'package:tuhfatul_muslim/features/hadith/data/models/hadith_sub_category_
 /// [ServerException] / [NetworkException] / [ParsingException]; never returns
 /// error states.
 abstract interface class HadithLibraryRemoteDataSource {
-  Future<List<HadithLibraryBookModel>> getBooks();
+  /// [forceRefresh] goes to the API even when a stored copy exists, for a
+  /// pull-to-refresh: the shelf then shows content added since.
+  Future<List<HadithLibraryBookModel>> getBooks({bool forceRefresh});
 
-  /// `GET /ebooks` — the e-book shelf.
-  Future<List<EbookModel>> getEbooks();
+  /// `GET /ebooks` — the e-book shelf. See [getBooks] for [forceRefresh].
+  Future<List<EbookModel>> getEbooks({bool forceRefresh});
 
   /// `GET /hadiths/categories?bookId=...&page=...&limit=...&searchTerm=...`.
   Future<HadithCategoryPageModel> getCategories(
@@ -173,21 +175,27 @@ class HadithLibraryRemoteDataSourceImpl
   final _refreshing = <String>{};
 
   @override
-  Future<List<HadithLibraryBookModel>> getBooks() async {
+  Future<List<HadithLibraryBookModel>> getBooks({
+    bool forceRefresh = false,
+  }) async {
     final envelope = await _getList(
       ApiConstants.hadithBooksListEndPoint,
       // The API paginates at 10 by default; 100 is its maximum.
       {'limit': 100},
       'Hadith books',
+      forceRefresh: forceRefresh,
     );
     return envelope.items.map(HadithLibraryBookModel.fromJson).toList();
   }
 
   @override
-  Future<List<EbookModel>> getEbooks() async {
-    final envelope = await _getList(ApiConstants.ebooksEndPoint, {
-      'limit': 50,
-    }, 'E-books');
+  Future<List<EbookModel>> getEbooks({bool forceRefresh = false}) async {
+    final envelope = await _getList(
+      ApiConstants.ebooksEndPoint,
+      {'limit': 50},
+      'E-books',
+      forceRefresh: forceRefresh,
+    );
     return envelope.items.map(EbookModel.fromJson).toList();
   }
 
@@ -572,10 +580,11 @@ class HadithLibraryRemoteDataSourceImpl
     Map<String, dynamic> query,
     String what, {
     bool authenticated = false,
+    bool forceRefresh = false,
   }) async {
     final cache = authenticated || query['searchTerm'] != null ? null : _cache;
     final key = HadithContentCache.keyOf(path, query);
-    if (cache != null) {
+    if (cache != null && !forceRefresh) {
       final hit = await cache.read(key);
       if (hit != null) {
         if (HadithContentCache.isStale(hit.at)) {
