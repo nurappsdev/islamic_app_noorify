@@ -143,4 +143,54 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
   });
+
+  // All three of the user's own position cards put the rank in the leading
+  // tile, not just this month's: `GET /home/dashboard` sends a yesterday and
+  // a last-month position too.
+  for (final type in [
+    'my_yesterday_position',
+    'my_monthly_position',
+    'my_last_month_position',
+  ]) {
+    testWidgets('$type shows the rank in the leading tile', (tester) async {
+      await _pumpCard(
+        tester,
+        HighlightCard(
+          id: '4',
+          type: type,
+          title: 'My position',
+          userName: 'Me',
+          pointsText: 'Point : 30.5/40',
+          percentage: 63,
+          rank: 13,
+          localizedRank: const LocalizedText(en: '13', bn: '১৩'),
+        ),
+      );
+
+      expect(find.text('13'), findsWidgets);
+      // The rank replaces the app logo in that tile.
+      expect(find.byType(Image), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
+  testWidgets('a position card with no rank keeps the logo', (tester) async {
+    await _pumpCard(
+      tester,
+      const HighlightCard(
+        id: '5',
+        type: 'my_last_month_position',
+        title: 'My position last month',
+        userName: 'Me',
+        pointsText: 'Point : 0/40',
+        percentage: 0,
+      ),
+    );
+
+    // An empty rank string would leave an empty tile behind instead.
+    expect(find.byType(Image), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
