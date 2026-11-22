@@ -107,6 +107,11 @@ class LocalizedDateFormatter {
     return withWeekday ? '${weekdayName(date)}, $text' : text;
   }
 
+  /// `November 2026` / `নভেম্বর ২০২৬` — a month and its year, for a
+  /// month picker or a calendar heading.
+  String monthYear(DateTime date) =>
+      '${monthName(date.month)} ${_numbers.integer(date.year)}';
+
   /// The Hijri date of [now], e.g. `17 Rabi' al-thani 1448 Hijri` /
   /// `১৭ রবিউস সানি ১৪৪৮ হিজরি` (or without the suffix).
   ///

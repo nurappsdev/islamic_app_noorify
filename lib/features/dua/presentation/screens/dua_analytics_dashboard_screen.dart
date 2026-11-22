@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -362,7 +363,12 @@ class _TimeframeChart extends StatelessWidget {
           bars: [
             for (final day in days)
               DuaChartBar(
-                label: day.label,
+                // Not `day.label`: the server writes that in English.
+                label: duaLocalizedWeekdayLabel(
+                  context,
+                  serverLabel: day.label,
+                  isoDate: day.date,
+                ),
                 mine: day.minutes,
                 competitor: _rivalMinutes(day.comparison, day.minutes) ?? 0,
               ),
@@ -382,7 +388,7 @@ class _TimeframeChart extends StatelessWidget {
         );
 
       case DuaDashboardTimeframe.monthly:
-        final rows = _monthlyRows(appText);
+        final rows = _monthlyRows(context, appText);
         return DuaMonthlyBarChart(
           bars: [
             for (final row in rows)
@@ -413,13 +419,17 @@ class _TimeframeChart extends StatelessWidget {
 
   /// The monthly rows: the server's own `monthlyActivity.periods[]` when it
   /// sends them, else the month's days bucketed into spans here.
-  List<DuaDashboardPeriod> _monthlyRows(AppText appText) {
+  List<DuaDashboardPeriod> _monthlyRows(BuildContext context, AppText appText) {
     if (dashboard.periods.isNotEmpty) return dashboard.periods;
     return [
       for (final bucket in duaMonthlyBuckets(dashboard.activity))
         DuaDashboardPeriod(
           label: bucket.isSingleDay
-              ? bucket.dayLabel
+              ? duaLocalizedWeekdayLabel(
+                  context,
+                  serverLabel: bucket.dayLabel,
+                  isoDate: bucket.dayDate,
+                )
               : appText.duaDashboardWeekRange.fill({
                   'from': bucket.fromDay + 1,
                   'to': bucket.toDay,
@@ -940,9 +950,8 @@ String _time(BuildContext context, DuaReadingHistoryItem item) {
   if (item.timeAgoText.isNotEmpty) return item.timeAgoText;
   final time = item.lastReadAt?.toLocal();
   if (time == null) return '—';
-  final localizations = MaterialLocalizations.of(context);
-  return '${localizations.formatShortDate(time)} '
-      '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(time))}';
+  return '${context.localizedDates.gregorian(time, shortMonth: true)} '
+      '${context.localizedTimes.clockOf(time)}';
 }
 
 /// Minutes read when the server sends seconds; otherwise how many times the
