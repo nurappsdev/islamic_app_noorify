@@ -219,6 +219,10 @@ class AppText {
     required this.naflIshraq,
     required this.naflChast,
     required this.naflAwabin,
+    required this.naflDuha,
+    required this.naflPrayersTitle,
+    required this.prayerEndsInLabel,
+    required this.prayerStartsInLabel,
     required this.moreSadaqah,
     required this.moreKarzeHasanah,
     required this.moreRozaKaffarah,
@@ -1197,6 +1201,19 @@ class AppText {
   final String naflIshraq;
   final String naflChast;
   final String naflAwabin;
+
+  /// The Arabic name Chasht also goes by, shown beside it.
+  final String naflDuha;
+
+  /// Heading over the Nafl windows on the prayer-times screen.
+  final String naflPrayersTitle;
+
+  /// Leads the countdown to the end of the prayer window that is
+  /// running — `শেষ হতে বাকি` / `Ends in`.
+  final String prayerEndsInLabel;
+
+  /// Leads the countdown to the next window's start — `শুরু হতে বাকি`.
+  final String prayerStartsInLabel;
   final String moreSadaqah;
   final String moreKarzeHasanah;
   final String moreRozaKaffarah;
@@ -2792,6 +2809,22 @@ class AppText {
       naflIshraq: _read(map, 'naflIshraq', fallback?.naflIshraq ?? ''),
       naflChast: _read(map, 'naflChast', fallback?.naflChast ?? ''),
       naflAwabin: _read(map, 'naflAwabin', fallback?.naflAwabin ?? ''),
+      naflDuha: _read(map, 'naflDuha', fallback?.naflDuha ?? ''),
+      naflPrayersTitle: _read(
+        map,
+        'naflPrayersTitle',
+        fallback?.naflPrayersTitle ?? '',
+      ),
+      prayerEndsInLabel: _read(
+        map,
+        'prayerEndsInLabel',
+        fallback?.prayerEndsInLabel ?? '',
+      ),
+      prayerStartsInLabel: _read(
+        map,
+        'prayerStartsInLabel',
+        fallback?.prayerStartsInLabel ?? '',
+      ),
       moreSadaqah: _read(map, 'moreSadaqah', fallback?.moreSadaqah ?? ''),
       moreKarzeHasanah: _read(
         map,
@@ -5174,19 +5207,67 @@ class AppText {
       duaYesDelete: _read(map, 'duaYesDelete', fallback?.duaYesDelete ?? ''),
       duaSavedCount: _read(map, 'duaSavedCount', fallback?.duaSavedCount ?? ''),
       duaTotalSaved: _read(map, 'duaTotalSaved', fallback?.duaTotalSaved ?? ''),
-      duaDashboardCompetitor: _read(map, 'duaDashboardCompetitor', fallback?.duaDashboardCompetitor ?? ''),
-      duaTotalRecitedTitle: _read(map, 'duaTotalRecitedTitle', fallback?.duaTotalRecitedTitle ?? ''),
-      duaRecitationTimeTitle: _read(map, 'duaRecitationTimeTitle', fallback?.duaRecitationTimeTitle ?? ''),
-      duaDailyTargetLabel: _read(map, 'duaDailyTargetLabel', fallback?.duaDailyTargetLabel ?? ''),
-      duaTotalRecitationTime: _read(map, 'duaTotalRecitationTime', fallback?.duaTotalRecitationTime ?? ''),
-      duaRecitationHistoryTitle: _read(map, 'duaRecitationHistoryTitle', fallback?.duaRecitationHistoryTitle ?? ''),
-      duaNoRecitationHistory: _read(map, 'duaNoRecitationHistory', fallback?.duaNoRecitationHistory ?? ''),
-      duaDashboardTimeLabel: _read(map, 'duaDashboardTimeLabel', fallback?.duaDashboardTimeLabel ?? ''),
-      duaDashboardPointLabel: _read(map, 'duaDashboardPointLabel', fallback?.duaDashboardPointLabel ?? ''),
-      duaMinutesRead: _read(map, 'duaMinutesRead', fallback?.duaMinutesRead ?? ''),
+      duaDashboardCompetitor: _read(
+        map,
+        'duaDashboardCompetitor',
+        fallback?.duaDashboardCompetitor ?? '',
+      ),
+      duaTotalRecitedTitle: _read(
+        map,
+        'duaTotalRecitedTitle',
+        fallback?.duaTotalRecitedTitle ?? '',
+      ),
+      duaRecitationTimeTitle: _read(
+        map,
+        'duaRecitationTimeTitle',
+        fallback?.duaRecitationTimeTitle ?? '',
+      ),
+      duaDailyTargetLabel: _read(
+        map,
+        'duaDailyTargetLabel',
+        fallback?.duaDailyTargetLabel ?? '',
+      ),
+      duaTotalRecitationTime: _read(
+        map,
+        'duaTotalRecitationTime',
+        fallback?.duaTotalRecitationTime ?? '',
+      ),
+      duaRecitationHistoryTitle: _read(
+        map,
+        'duaRecitationHistoryTitle',
+        fallback?.duaRecitationHistoryTitle ?? '',
+      ),
+      duaNoRecitationHistory: _read(
+        map,
+        'duaNoRecitationHistory',
+        fallback?.duaNoRecitationHistory ?? '',
+      ),
+      duaDashboardTimeLabel: _read(
+        map,
+        'duaDashboardTimeLabel',
+        fallback?.duaDashboardTimeLabel ?? '',
+      ),
+      duaDashboardPointLabel: _read(
+        map,
+        'duaDashboardPointLabel',
+        fallback?.duaDashboardPointLabel ?? '',
+      ),
+      duaMinutesRead: _read(
+        map,
+        'duaMinutesRead',
+        fallback?.duaMinutesRead ?? '',
+      ),
       duaTimesRead: _read(map, 'duaTimesRead', fallback?.duaTimesRead ?? ''),
-      duaDashboardLoadFailed: _read(map, 'duaDashboardLoadFailed', fallback?.duaDashboardLoadFailed ?? ''),
-      duaDashboardWeekRange: _read(map, 'duaDashboardWeekRange', fallback?.duaDashboardWeekRange ?? ''),
+      duaDashboardLoadFailed: _read(
+        map,
+        'duaDashboardLoadFailed',
+        fallback?.duaDashboardLoadFailed ?? '',
+      ),
+      duaDashboardWeekRange: _read(
+        map,
+        'duaDashboardWeekRange',
+        fallback?.duaDashboardWeekRange ?? '',
+      ),
       amolReadConfirmMessage: _read(
         map,
         'amolReadConfirmMessage',
