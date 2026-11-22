@@ -25,8 +25,15 @@ class HadithLastReadBloc
     LoadHadithLastRead event,
     Emitter<HadithLastReadState> emit,
   ) async {
-    // Needs the login token; a guest simply has no last-read hadith.
-    if (!isUserSignedIn) return;
+    // Needs the login token; a guest simply has no last-read hadith. It
+    // still settles on a final state instead of returning silently: the
+    // library's pull-to-refresh waits for this bloc to stop loading, and
+    // `initial` counts as loading, so a guest's refresh spinner would
+    // otherwise never stop turning.
+    if (!isUserSignedIn) {
+      emit(const HadithLastReadState(status: HadithLastReadStatus.success));
+      return;
+    }
     final generation = ++_generation;
     if (state.lastRead == null) {
       emit(const HadithLastReadState(status: HadithLastReadStatus.loading));

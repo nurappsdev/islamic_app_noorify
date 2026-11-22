@@ -20,7 +20,7 @@ class HadithLibraryBloc extends Bloc<HadithLibraryEvent, HadithLibraryState> {
     Emitter<HadithLibraryState> emit,
   ) async {
     emit(const HadithLibraryState(status: HadithLibraryStatus.loading));
-    final result = await _getBooks();
+    final result = await _getBooks(forceRefresh: event.refresh);
     result.fold(
       (failure) => emit(
         HadithLibraryState(

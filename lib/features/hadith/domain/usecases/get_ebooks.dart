@@ -9,5 +9,6 @@ class GetEbooks {
 
   final HadithLibraryRepository _repository;
 
-  Future<Either<Failure, List<Ebook>>> call() => _repository.getEbooks();
+  Future<Either<Failure, List<Ebook>>> call({bool forceRefresh = false}) =>
+      _repository.getEbooks(forceRefresh: forceRefresh);
 }

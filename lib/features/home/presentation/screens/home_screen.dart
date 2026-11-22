@@ -1710,12 +1710,23 @@ class _FardhPrayerCardState extends State<_FardhPrayerCard> {
       for (final item in trackedFardh?.items ?? const <AmolItem>[])
         if (item.isCompleted) item.itemKey,
     };
+    // What each prayer is worth, as the tracker scores it: every fardh
+    // prayer is 2 points. Taking it from the served item keeps the bars
+    // right if that ever changes, with [PrayerBarData.defaults] standing in
+    // until the daily store has loaded.
+    final servedPoints = {
+      for (final item in trackedFardh?.items ?? const <AmolItem>[])
+        if (item.maxPoints > 0) item.itemKey: item.maxPoints,
+    };
+    int pointsFor(int index) =>
+        (servedPoints[_itemKeys[index]] ?? PrayerBarData.defaults[index].points)
+            .round();
     final prayers = [
       for (final (i, prayer) in PrayerBarData.defaults.indexed)
         PrayerBarData(
           name: PrayerPeriod.values[i].displayName(AppText.of(context)),
           trackingName: prayer.trackingName,
-          points: prayer.points,
+          points: pointsFor(i),
           completed: completedKeys.contains(_itemKeys[i]),
           // Red once its time has started (or passed) without being tracked;
           // a prayer that hasn't started yet stays the default colour.

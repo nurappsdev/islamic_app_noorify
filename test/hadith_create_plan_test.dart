@@ -53,8 +53,9 @@ class _FakeRepository implements HadithLibraryRepository {
   Completer<void>? gate;
 
   @override
-  Future<Either<Failure, List<HadithLibraryBook>>> getBooks() async =>
-      const Right([_book]);
+  Future<Either<Failure, List<HadithLibraryBook>>> getBooks({
+    bool forceRefresh = false,
+  }) async => const Right([_book]);
 
   @override
   Future<Either<Failure, HadithCategoryPage>> getCategories(
