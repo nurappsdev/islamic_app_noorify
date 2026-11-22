@@ -364,6 +364,8 @@ class AppText {
     required this.duaBookmarkAdded,
     required this.duaCopied,
     required this.duaShareFailed,
+    required this.duaOpenFailed,
+    required this.duaReadDuaLabel,
     required this.duaNarrationTitle,
     required this.duaArabicSectionTitle,
     required this.duaTranslationSectionTitle,
@@ -1374,6 +1376,14 @@ class AppText {
   final String duaBookmarkAdded;
   final String duaCopied;
   final String duaShareFailed;
+
+  /// Shown when a dua cannot be fetched for the reader — e.g. tapping a
+  /// recitation-history row while offline.
+  final String duaOpenFailed;
+
+  /// Heading on a recitation-history summary row: what the count beside it
+  /// counts.
+  final String duaReadDuaLabel;
   final String duaNarrationTitle;
   final String duaArabicSectionTitle;
   final String duaTranslationSectionTitle;
@@ -3337,6 +3347,12 @@ class AppText {
         map,
         'duaShareFailed',
         fallback?.duaShareFailed ?? '',
+      ),
+      duaOpenFailed: _read(map, 'duaOpenFailed', fallback?.duaOpenFailed ?? ''),
+      duaReadDuaLabel: _read(
+        map,
+        'duaReadDuaLabel',
+        fallback?.duaReadDuaLabel ?? '',
       ),
       duaNarrationTitle: _read(
         map,

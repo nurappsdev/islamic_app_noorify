@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/constants/route_names.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
 import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// Full recitation-history flow opened from the Dua dashboard's "See All"
 /// action. Its Daily, Weekly, and Monthly views follow `devImg/img_30.png`
 /// through `img_34.png`, backed by `GET /duas/reading/history`.
+///
+/// Tapping any recitation row reopens that dua in [DuaReaderScreen]; the
+/// history is refreshed on the way back, so the row reflects the reading
+/// that just happened.
 class DuaRecitationHistoryScreen extends StatefulWidget {
   const DuaRecitationHistoryScreen({super.key, this.repository});
 
@@ -30,6 +37,12 @@ class _DuaRecitationHistoryScreenState
   bool _monthPickerOpen = false;
   late final DuaRepository _repository = widget.repository ?? duaRepository;
   late DateTime _selectedDate = _dateOnly(DateTime.now());
+
+  /// Anchor for the Daily and Weekly views' seven-day window, which ends
+  /// today rather than following the calendar week. Held in state so tapping
+  /// a day in the strip moves the selection without sliding the window along
+  /// with it.
+  late final DateTime _today = _dateOnly(DateTime.now());
   List<DuaReadingHistoryItem> _items = const [];
   bool _loading = true;
   bool _loadingMore = false;
@@ -91,6 +104,32 @@ class _DuaRecitationHistoryScreenState
     if (!_expandedDates.add(date)) _expandedDates.remove(date);
   });
 
+  /// Opens [item]'s dua in the reader.
+  ///
+  /// A history row carries only the dua's id, title and Arabic, so the full
+  /// dua is fetched first: the reader needs its `categoryId` for swipe
+  /// navigation and its translation for the first frame. Returning from the
+  /// reader refreshes the history, which the reading just changed.
+  Future<void> _openDua(DuaReadingHistoryItem item) async {
+    if (item.duaId.isEmpty) return;
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final failureText = AppText.of(context).duaOpenFailed;
+    try {
+      final dua = await _repository.getDuaById(item.duaId);
+      if (!mounted) return;
+      await navigator.pushNamed(
+        RouteNames.duaReader,
+        arguments: DuaReaderArgs.real(dua),
+      );
+      if (!mounted) return;
+      await _load(refresh: true);
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(failureText)));
+    }
+  }
+
   /// Moves to [month], keeping the day of the month where it can.
   /// [closePicker] is for a tap on the wheel: a dropdown that has been
   /// chosen from closes, while the arrows leave it open to step through.
@@ -134,20 +173,24 @@ class _DuaRecitationHistoryScreenState
                           _RecitationPeriod.daily => _DailyHistory(
                             key: const ValueKey('daily-history'),
                             selectedDate: _selectedDate,
+                            today: _today,
                             items: _items,
                             loadingMore: _loadingMore,
                             onDateChanged: (date) =>
                                 setState(() => _selectedDate = _dateOnly(date)),
+                            onOpenDua: _openDua,
                           ),
                           _RecitationPeriod.weekly => _WeeklyHistory(
                             key: const ValueKey('weekly-history'),
                             selectedDate: _selectedDate,
+                            today: _today,
                             items: _items,
                             loadingMore: _loadingMore,
                             expandedDates: _expandedDates,
                             onDateChanged: (date) =>
                                 setState(() => _selectedDate = _dateOnly(date)),
                             onToggle: _toggleDate,
+                            onOpenDua: _openDua,
                           ),
                           _RecitationPeriod.monthly => _MonthlyHistory(
                             key: const ValueKey('monthly-history'),
@@ -165,6 +208,7 @@ class _DuaRecitationHistoryScreenState
                             onMonthPicked: (month) =>
                                 _changeMonth(month, closePicker: true),
                             onToggle: _toggleDate,
+                            onOpenDua: _openDua,
                           ),
                         },
                       ),
@@ -180,10 +224,10 @@ class _DuaRecitationHistoryScreenState
 enum _RecitationPeriod { daily, weekly, monthly }
 
 extension on _RecitationPeriod {
-  String get label => switch (this) {
-    _RecitationPeriod.daily => 'Daily',
-    _RecitationPeriod.weekly => 'Weekly',
-    _RecitationPeriod.monthly => 'Monthly',
+  String label(AppText text) => switch (this) {
+    _RecitationPeriod.daily => text.daily,
+    _RecitationPeriod.weekly => text.weekly,
+    _RecitationPeriod.monthly => text.monthly,
   };
 }
 
@@ -194,73 +238,74 @@ class _HistoryTopBar extends StatelessWidget {
   final ValueChanged<_RecitationPeriod> onPeriodChanged;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 6.h),
-    child: Row(
-      children: [
-        _RoundAction(
-          icon: Icons.close_rounded,
-          onTap: () => Navigator.of(context).maybePop(),
-        ),
-        SizedBox(width: 16.w),
-        Expanded(
-          child: Container(
-            height: 46.h,
-            padding: EdgeInsets.all(4.r),
-            decoration: BoxDecoration(
-              color: context.surfaceColor(Colors.white),
-              borderRadius: BorderRadius.circular(25.r),
-              border: Border.all(
-                color: context.lineColor(const Color(0xFFF0F0EB)),
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 6.h),
+      child: Row(
+        children: [
+          _RoundAction(
+            icon: Icons.close_rounded,
+            onTap: () => Navigator.of(context).maybePop(),
+          ),
+          SizedBox(width: 16.w),
+          Expanded(
+            child: Container(
+              height: 46.h,
+              padding: EdgeInsets.all(4.r),
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
+                borderRadius: BorderRadius.circular(25.r),
+                border: Border.all(
+                  color: context.lineColor(const Color(0xFFF0F0EB)),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                for (final item in _RecitationPeriod.values)
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => onPeriodChanged(item),
-                      borderRadius: BorderRadius.circular(21.r),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: item == period
-                              ? context.surfaceColor(const Color(0xFFDDE9B4))
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(21.r),
-                        ),
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            color: context.textInkColor(
-                              const Color(0xFF2E3227),
+              child: Row(
+                children: [
+                  for (final item in _RecitationPeriod.values)
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => onPeriodChanged(item),
+                        borderRadius: BorderRadius.circular(21.r),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: item == period
+                                ? context.surfaceColor(const Color(0xFFDDE9B4))
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(21.r),
+                          ),
+                          child: Text(
+                            item.label(appText),
+                            style: TextStyle(
+                              color: context.textInkColor(
+                                const Color(0xFF2E3227),
+                              ),
+                              fontSize: 11.sp,
+                              fontWeight: item == period
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
-                            fontSize: 11.sp,
-                            fontWeight: item == period
-                                ? FontWeight.w600
-                                : FontWeight.w400,
                           ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        SizedBox(width: 8.w),
-        const _RoundAction(icon: Icons.ios_share_outlined),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.icon, this.onTap});
+  const _RoundAction({required this.icon, required this.onTap});
 
   final IconData icon;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -281,31 +326,35 @@ class _RoundAction extends StatelessWidget {
   );
 }
 
+/// The Daily view: one day's recitations on a timeline, with the same
+/// seven-day strip the Weekly view runs on — the six days before today and
+/// then today last (16 → 22 on the 22nd).
 class _DailyHistory extends StatelessWidget {
   const _DailyHistory({
     super.key,
     required this.selectedDate,
+    required this.today,
     required this.items,
     required this.loadingMore,
     required this.onDateChanged,
+    required this.onOpenDua,
   });
 
   final DateTime selectedDate;
+  final DateTime today;
   final List<DuaReadingHistoryItem> items;
   final bool loadingMore;
   final ValueChanged<DateTime> onDateChanged;
+  final _OpenDua onOpenDua;
 
   @override
   Widget build(BuildContext context) {
     final selectedItems = _itemsOn(items, selectedDate);
+    final times = context.localizedTimes;
     final byTime = <String, List<DuaReadingHistoryItem>>{};
     for (final item in selectedItems) {
       final time = item.lastReadAt?.toLocal();
-      final label = time == null
-          ? '—'
-          : MaterialLocalizations.of(
-              context,
-            ).formatTimeOfDay(TimeOfDay.fromDateTime(time));
+      final label = time == null ? '—' : times.clockOf(time);
       byTime.putIfAbsent(label, () => []).add(item);
     }
     return ListView(
@@ -314,11 +363,19 @@ class _DailyHistory extends StatelessWidget {
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
-        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        _WeekStrip(
+          days: _trailingWeek(today),
+          selectedDate: selectedDate,
+          onDateChanged: onDateChanged,
+        ),
         SizedBox(height: 22.h),
         if (selectedItems.isEmpty) const _EmptyHistory(),
         for (final entry in byTime.entries)
-          _TimelineGroup(time: entry.key, items: entry.value),
+          _TimelineGroup(
+            time: entry.key,
+            items: entry.value,
+            onOpenDua: onOpenDua,
+          ),
         if (loadingMore) const _HistoryLoadingMore(),
       ],
     );
@@ -330,7 +387,7 @@ class _HistoryTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-    'Recitation history',
+    AppText.of(context).duaRecitationHistoryTitle,
     style: TextStyle(
       color: context.textInkColor(const Color(0xFFA3B35E)),
       fontFamily: 'serif',
@@ -341,18 +398,23 @@ class _HistoryTitle extends StatelessWidget {
   );
 }
 
+/// The seven-day strip above the Daily and Weekly lists. The days it shows
+/// are chosen by the caller, so the strip only draws them.
 class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({required this.selectedDate, required this.onDateChanged});
+  const _WeekStrip({
+    required this.days,
+    required this.selectedDate,
+    required this.onDateChanged,
+  });
 
+  final List<DateTime> days;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateChanged;
 
   @override
   Widget build(BuildContext context) {
-    final start = selectedDate.subtract(
-      Duration(days: selectedDate.weekday % 7),
-    );
-    final days = List.generate(7, (index) => start.add(Duration(days: index)));
+    final dates = context.localizedDates;
+    final numbers = context.localizedNumbers;
     return Row(
       children: [
         for (final day in days)
@@ -363,9 +425,8 @@ class _WeekStrip extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    MaterialLocalizations.of(
-                      context,
-                    ).narrowWeekdays[day.weekday % 7],
+                    // Sunday-first, the order the strip itself runs in.
+                    dates.weekdayShort(day.weekday % 7),
                     style: TextStyle(
                       fontSize: 9.sp,
                       color: _sameDay(day, selectedDate)
@@ -391,7 +452,7 @@ class _WeekStrip extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Text(
-                      '${day.day}',
+                      numbers.integer(day.day),
                       style: TextStyle(
                         color: _sameDay(day, selectedDate)
                             ? Colors.white
@@ -422,10 +483,15 @@ class _WeekStrip extends StatelessWidget {
 }
 
 class _TimelineGroup extends StatelessWidget {
-  const _TimelineGroup({required this.time, required this.items});
+  const _TimelineGroup({
+    required this.time,
+    required this.items,
+    required this.onOpenDua,
+  });
 
   final String time;
   final List<DuaReadingHistoryItem> items;
+  final _OpenDua onOpenDua;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -450,7 +516,11 @@ class _TimelineGroup extends StatelessWidget {
           child: Column(
             children: [
               for (var index = 0; index < items.length; index++)
-                _RecitationCard(item: items[index], colorIndex: index),
+                _RecitationCard(
+                  item: items[index],
+                  colorIndex: index,
+                  onOpenDua: onOpenDua,
+                ),
             ],
           ),
         ),
@@ -459,11 +529,40 @@ class _TimelineGroup extends StatelessWidget {
   );
 }
 
-class _RecitationCard extends StatelessWidget {
-  const _RecitationCard({required this.item, required this.colorIndex});
+/// Opens a recitation row's dua in the reader; completes once the reader
+/// has been closed again.
+typedef _OpenDua = Future<void> Function(DuaReadingHistoryItem item);
+
+/// One recitation row. Tapping it reopens the dua in the reader; while the
+/// dua is being fetched the row's book icon becomes a spinner, and a second
+/// tap is ignored until that finishes.
+class _RecitationCard extends StatefulWidget {
+  const _RecitationCard({
+    required this.item,
+    required this.colorIndex,
+    required this.onOpenDua,
+  });
 
   final DuaReadingHistoryItem item;
   final int colorIndex;
+  final _OpenDua onOpenDua;
+
+  @override
+  State<_RecitationCard> createState() => _RecitationCardState();
+}
+
+class _RecitationCardState extends State<_RecitationCard> {
+  bool _opening = false;
+
+  Future<void> _open() async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    try {
+      await widget.onOpenDua(widget.item);
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -479,110 +578,148 @@ class _RecitationCard extends StatelessWidget {
       Color(0xFFE9A51C),
       Color(0xFF4BA779),
     ];
-    final surface = surfaces[colorIndex % surfaces.length];
-    final accent = accents[colorIndex % accents.length];
-    final title = context.localized(item.title);
-    final category = context.localized(item.category);
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(surface),
-        borderRadius: BorderRadius.circular(23.r),
-        border: Border.all(color: context.lineColor(surface)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40.r,
-            height: 40.r,
-            decoration: BoxDecoration(
-              color: context.surfaceColor(accent),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.menu_book_rounded, color: Colors.white),
+    final surface = surfaces[widget.colorIndex % surfaces.length];
+    final accent = accents[widget.colorIndex % accents.length];
+    final title = context.localized(widget.item.title);
+    final category = context.localized(widget.item.category);
+    final radius = BorderRadius.circular(23.r);
+    return Material(
+      color: context.surfaceColor(surface),
+      borderRadius: radius,
+      child: InkWell(
+        onTap: widget.item.duaId.isEmpty ? null : _open,
+        borderRadius: radius,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(14.r),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            border: Border.all(color: context.lineColor(surface)),
           ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.isEmpty ? '—' : title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF292A28)),
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 40.r,
+                height: 40.r,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(accent),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(height: 3.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(Colors.white),
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Text(
-                    category.isEmpty ? '—' : category,
-                    style: TextStyle(
-                      color: context.textInkColor(const Color(0xFF4E4E4B)),
-                      fontSize: 8.sp,
+                child: _opening
+                    ? SizedBox.square(
+                        dimension: 18.r,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.menu_book_rounded, color: Colors.white),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title.isEmpty ? '—' : title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.textInkColor(const Color(0xFF292A28)),
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
+                    SizedBox(height: 3.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 3.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor(Colors.white),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Text(
+                        category.isEmpty ? '—' : category,
+                        style: TextStyle(
+                          color: context.textInkColor(const Color(0xFF4E4E4B)),
+                          fontSize: 8.sp,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 5.h),
+                    Text(
+                      widget.item.arabic,
+                      style: TextStyle(
+                        color: context.textInkColor(const Color(0xFF53534D)),
+                        fontSize: 10.sp,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 5.h),
-                Text(
-                  item.arabic,
-                  style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF53534D)),
-                    fontSize: 10.sp,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
+/// The Weekly view. Its week is the last seven days, not a calendar week, so
+/// it never runs on into days that have not happened yet. The strip at the
+/// top reads oldest first and ends on today
+/// (16 → 22 on the 22nd); the day cards below it run the other way, today
+/// at the top down to a week ago at the bottom.
 class _WeeklyHistory extends StatelessWidget {
   const _WeeklyHistory({
     super.key,
     required this.selectedDate,
+    required this.today,
     required this.items,
     required this.loadingMore,
     required this.expandedDates,
     required this.onDateChanged,
     required this.onToggle,
+    required this.onOpenDua,
   });
 
   final DateTime selectedDate;
+  final DateTime today;
   final List<DuaReadingHistoryItem> items;
   final bool loadingMore;
   final Set<String> expandedDates;
   final ValueChanged<DateTime> onDateChanged;
   final ValueChanged<String> onToggle;
+  final _OpenDua onOpenDua;
 
   @override
   Widget build(BuildContext context) {
-    final summaries = _summariesForWeek(items, selectedDate);
+    final days = _trailingWeek(today);
+    // The strip reads forward and ends on today, while the list below leads
+    // with today and works back, so the reading that just happened is the
+    // first card rather than the last.
+    final summaries = _summariesForDays(items, days.reversed);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
-        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        _WeekStrip(
+          days: days,
+          selectedDate: selectedDate,
+          onDateChanged: onDateChanged,
+        ),
         SizedBox(height: 16.h),
         for (final summary in summaries) ...[
           _HistorySummary(
             summary: summary,
             expanded: expandedDates.contains(summary.id),
             onTap: () => onToggle(summary.id),
+            onOpenDua: onOpenDua,
           ),
           SizedBox(height: 11.h),
         ],
@@ -605,6 +742,7 @@ class _MonthlyHistory extends StatelessWidget {
     required this.onMonthChanged,
     required this.onMonthPicked,
     required this.onToggle,
+    required this.onOpenDua,
   });
 
   final DateTime selectedDate;
@@ -617,6 +755,7 @@ class _MonthlyHistory extends StatelessWidget {
   final ValueChanged<DateTime> onMonthChanged;
   final ValueChanged<DateTime> onMonthPicked;
   final ValueChanged<String> onToggle;
+  final _OpenDua onOpenDua;
 
   @override
   Widget build(BuildContext context) {
@@ -650,6 +789,7 @@ class _MonthlyHistory extends StatelessWidget {
             summary: summary,
             expanded: expandedDates.contains(summary.id),
             onTap: () => onToggle(summary.id),
+            onOpenDua: onOpenDua,
           ),
           SizedBox(height: 11.h),
         ],
@@ -694,7 +834,7 @@ class _MonthSelector extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                MaterialLocalizations.of(context).formatMonthYear(month),
+                context.localizedDates.monthYear(month),
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 17.sp,
@@ -830,7 +970,7 @@ class _MonthWheelRow extends StatelessWidget {
                     )
                   : null,
               child: Text(
-                MaterialLocalizations.of(context).formatMonthYear(item),
+                context.localizedDates.monthYear(item),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -848,7 +988,7 @@ class _MonthWheelRow extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                '${item.year}',
+                context.localizedNumbers.integer(item.year),
                 style: TextStyle(
                   color: context.textInkColor(const Color(0xFF5F677A)),
                   fontSize: 15.sp,
@@ -879,29 +1019,27 @@ class _MonthCalendar extends StatelessWidget {
     final firstDay = DateTime(selectedDate.year, selectedDate.month);
     final startOffset = firstDay.weekday % 7;
     final totalCells = startOffset + _daysInMonth(selectedDate);
+    final dates = context.localizedDates;
+    final numbers = context.localizedNumbers;
+    // The grid below starts each month on its Sunday column, so the header
+    // counts from Sunday too; the selected day's own column is the one that
+    // stands out.
+    final selectedColumn = selectedDate.weekday % 7;
     return Column(
       children: [
         Row(
           children: [
-            for (final label in const [
-              'Fri',
-              'Sat',
-              'Sun',
-              'Mon',
-              'Tue',
-              'Wed',
-              'Thu',
-            ])
+            for (var column = 0; column < DateTime.daysPerWeek; column++)
               Expanded(
                 child: Text(
-                  label,
+                  dates.weekdayShort(column),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: label == 'Wed'
+                    color: column == selectedColumn
                         ? context.textInkColor(const Color(0xFF292A27))
                         : context.textInkColor(const Color(0xFF989A92)),
                     fontSize: 9.sp,
-                    fontWeight: label == 'Wed'
+                    fontWeight: column == selectedColumn
                         ? FontWeight.w700
                         : FontWeight.w400,
                   ),
@@ -945,7 +1083,7 @@ class _MonthCalendar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(11.r),
                 ),
                 child: Text(
-                  '${date.day}',
+                  numbers.integer(date.day),
                   style: TextStyle(
                     color: selected
                         ? Colors.white
@@ -980,123 +1118,145 @@ class _HistorySummary extends StatelessWidget {
     required this.summary,
     required this.expanded,
     required this.onTap,
+    required this.onOpenDua,
   });
 
   final _HistorySummaryData summary;
   final bool expanded;
   final VoidCallback onTap;
+  final _OpenDua onOpenDua;
 
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Material(
-        color: context.surfaceColor(Colors.white),
-        borderRadius: BorderRadius.circular(22.r),
-        child: InkWell(
-          onTap: onTap,
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    return Column(
+      children: [
+        Material(
+          color: context.surfaceColor(Colors.white),
           borderRadius: BorderRadius.circular(22.r),
-          child: Container(
-            height: 68.h,
-            padding: EdgeInsets.symmetric(horizontal: 18.w),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: .045),
-                  blurRadius: 16.r,
-                  offset: Offset(0, 5.h),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Text(
-                  MaterialLocalizations.of(
-                    context,
-                  ).formatShortDate(summary.date),
-                  style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF292A28)),
-                    fontSize: 17.sp,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(22.r),
+            child: Container(
+              height: 68.h,
+              padding: EdgeInsets.symmetric(horizontal: 18.w),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .045),
+                    blurRadius: 16.r,
+                    offset: Offset(0, 5.h),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  'Reeded Dua',
-                  style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF242521)),
-                    fontFamily: 'serif',
-                    fontSize: 18.sp,
-                    fontStyle: FontStyle.italic,
+                ],
+              ),
+              // The date and the label share the row's width instead of
+              // being pushed apart by spacers: a Bangla date is written out
+              // in full (`২২ নভেম্বর ২০২৬`), which overflowed the fixed
+              // layout this row had.
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.localizedDates.gregorian(
+                        summary.date,
+                        shortMonth: true,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.textInkColor(const Color(0xFF292A28)),
+                        fontSize: 17.sp,
+                      ),
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  '${summary.items.length}'.padLeft(2, '0'),
-                  style: TextStyle(
-                    color: context.textInkColor(const Color(0xFF292A28)),
-                    fontSize: 14.sp,
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      appText.duaReadDuaLabel,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.textInkColor(const Color(0xFF242521)),
+                        fontFamily: 'serif',
+                        fontSize: 18.sp,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(width: 20.w),
-                Container(
-                  width: 29.r,
-                  height: 29.r,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(const Color(0xFFE0EBB3)),
-                    shape: BoxShape.circle,
+                  SizedBox(width: 8.w),
+                  Text(
+                    context.localizedNumbers.digits(
+                      '${summary.items.length}'.padLeft(2, '0'),
+                    ),
+                    style: TextStyle(
+                      color: context.textInkColor(const Color(0xFF292A28)),
+                      fontSize: 14.sp,
+                    ),
                   ),
-                  child: Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    size: 19.sp,
-                    color: context.inkColor(const Color(0xFF62703D)),
+                  SizedBox(width: 12.w),
+                  Container(
+                    width: 29.r,
+                    height: 29.r,
+                    decoration: BoxDecoration(
+                      color: context.surfaceColor(const Color(0xFFE0EBB3)),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 19.sp,
+                      color: context.inkColor(const Color(0xFF62703D)),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
-      AnimatedSize(
-        duration: const Duration(milliseconds: 180),
-        child: expanded && summary.items.isNotEmpty
-            ? Padding(
-                padding: EdgeInsets.only(left: 33.w, top: 10.h),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 1.w,
-                      height: 132.h,
-                      color: context.lineColor(const Color(0xFFD8E8A7)),
-                    ),
-                    SizedBox(width: 24.w),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          for (
-                            var index = 0;
-                            index < summary.items.length;
-                            index++
-                          ) ...[
-                            _RecitationCard(
-                              item: summary.items[index],
-                              colorIndex: index,
-                            ),
-                            if (index != summary.items.length - 1)
-                              SizedBox(height: 9.h),
-                          ],
-                        ],
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          child: expanded && summary.items.isNotEmpty
+              ? Padding(
+                  padding: EdgeInsets.only(left: 33.w, top: 10.h),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 1.w,
+                        height: 132.h,
+                        color: context.lineColor(const Color(0xFFD8E8A7)),
                       ),
-                    ),
-                  ],
-                ),
-              )
-            : const SizedBox.shrink(),
-      ),
-    ],
-  );
+                      SizedBox(width: 24.w),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            for (
+                              var index = 0;
+                              index < summary.items.length;
+                              index++
+                            ) ...[
+                              _RecitationCard(
+                                item: summary.items[index],
+                                colorIndex: index,
+                                onOpenDua: onOpenDua,
+                              ),
+                              if (index != summary.items.length - 1)
+                                SizedBox(height: 9.h),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
 }
 
 class _EmptyHistory extends StatelessWidget {
@@ -1152,22 +1312,30 @@ List<DuaReadingHistoryItem> _itemsOn(
       ),
     );
 
-List<_HistorySummaryData> _summariesForWeek(
-  List<DuaReadingHistoryItem> items,
-  DateTime selectedDate,
-) {
-  final firstDay = _dateOnly(
-    selectedDate.subtract(Duration(days: selectedDate.weekday % 7)),
+/// The week ending on [today]: six days back first, up to today last (16 →
+/// 22 on the 22nd). The Weekly view runs on this so it ends on today instead
+/// of carrying on into days that are still to come.
+List<DateTime> _trailingWeek(DateTime today) {
+  final firstDay = _dateOnly(today).subtract(const Duration(days: 6));
+  return List.generate(
+    7,
+    (index) => firstDay.add(Duration(days: index)),
+    growable: false,
   );
-  return List.generate(7, (index) {
-    final date = firstDay.add(Duration(days: index));
-    return _HistorySummaryData(
+}
+
+/// One summary per day of [days], in the order [days] runs in.
+List<_HistorySummaryData> _summariesForDays(
+  List<DuaReadingHistoryItem> items,
+  Iterable<DateTime> days,
+) => [
+  for (final date in days)
+    _HistorySummaryData(
       id: date.toIso8601String(),
       date: date,
       items: _itemsOn(items, date),
-    );
-  }).reversed.toList(growable: false);
-}
+    ),
+];
 
 List<_HistorySummaryData> _summariesForMonth(
   List<DuaReadingHistoryItem> items,

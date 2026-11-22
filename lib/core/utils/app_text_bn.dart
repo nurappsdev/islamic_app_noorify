@@ -910,6 +910,8 @@ const Map<String, String> appTextBn = <String, String>{
   'duaMinutesRead': '{n} মিনিট পড়া',
   'duaTimesRead': '{n} বার পড়া',
   'duaDashboardLoadFailed': 'ড্যাশবোর্ড লোড করা যায়নি।',
+  'duaOpenFailed': 'এই দোয়াটি খোলা যায়নি।',
+  'duaReadDuaLabel': 'পঠিত দোয়া',
   'duaDashboardWeekRange': '{from}–{to}',
   'amolReadConfirmMessage': 'আপনি কি এটি পড়েছেন এবং ট্র্যাক করতে চান?',
   'amolUntrackTitle': 'আমল ট্র্যাক বাতিল করবেন?',
