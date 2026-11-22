@@ -249,18 +249,16 @@ class _HistoryTopBar extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 8.w),
-        const _RoundAction(icon: Icons.ios_share_outlined),
       ],
     ),
   );
 }
 
 class _RoundAction extends StatelessWidget {
-  const _RoundAction({required this.icon, this.onTap});
+  const _RoundAction({required this.icon, required this.onTap});
 
   final IconData icon;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => Material(
