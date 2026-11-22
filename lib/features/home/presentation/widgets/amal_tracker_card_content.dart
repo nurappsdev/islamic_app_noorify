@@ -40,11 +40,15 @@ class PrayerBarData {
   /// shown when the prayer isn't [completed].
   final bool isMissed;
 
+  /// Every fardh prayer is worth 2 points, which is how the tracker scores
+  /// them (`GET /amol/tracker/daily` sends `maxPoints: 2` for each, 10 for
+  /// the pillar). The card prefers those served values and falls back to
+  /// these until they arrive.
   static const defaults = [
     PrayerBarData(name: 'Fajr', trackingName: 'Fajr', points: 2),
-    PrayerBarData(name: 'Dhuhr', trackingName: 'Dhuhr', points: 1),
-    PrayerBarData(name: 'Asr', trackingName: 'Asr', points: 1),
-    PrayerBarData(name: 'Magrib', trackingName: 'Magrib', points: 1),
+    PrayerBarData(name: 'Dhuhr', trackingName: 'Dhuhr', points: 2),
+    PrayerBarData(name: 'Asr', trackingName: 'Asr', points: 2),
+    PrayerBarData(name: 'Magrib', trackingName: 'Magrib', points: 2),
     PrayerBarData(name: 'Isha', trackingName: 'Isha', points: 2),
   ];
 }
