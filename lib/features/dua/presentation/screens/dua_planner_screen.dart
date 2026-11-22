@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
@@ -1712,7 +1713,6 @@ class _SelectDateSheetState extends State<_SelectDateSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = MaterialLocalizations.of(context);
     final today = DateUtils.dateOnly(DateTime.now());
 
     return Container(
@@ -1831,10 +1831,8 @@ class _SelectDateSheetState extends State<_SelectDateSheet> {
               firstYear: _firstYear,
               yearCount: _yearSpan * 2 + 1,
               itemExtent: _itemExtent,
-              monthLabel: (month) => localizations
-                  .formatMonthYear(DateTime(_year, month))
-                  .split(' ')
-                  .first,
+              // The app's own month names, not the device locale's.
+              monthLabel: (month) => context.localizedDates.monthName(month),
               onMonth: (month) => _showMonth(month: month),
               onYear: (year) => _showMonth(year: year),
             ),
@@ -1845,7 +1843,9 @@ class _SelectDateSheetState extends State<_SelectDateSheet> {
                   Expanded(
                     child: Center(
                       child: Text(
-                        localizations.narrowWeekdays[weekday],
+                        // The same Sun–Sat wording the planner's own week
+                        // strip uses; `narrowWeekdays` is English here.
+                        context.localized(_shortWeekdays[weekday]),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: context.textInkColor(const Color(0xFF8A9A61)),

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
@@ -544,6 +545,7 @@ class DuaMonthBucket {
     required this.minutes,
     required this.duas,
     this.dayLabel = '',
+    this.dayDate = '',
   });
 
   /// The day the week starts after, so the rows read `0–7`, `7–14`, …
@@ -553,8 +555,13 @@ class DuaMonthBucket {
   final int duas;
 
   /// Set only when the bucket is a single day (see [duaMonthlyBuckets]); the
-  /// server's own `Sat` / `Sun` label for it.
+  /// server's own `Sat` / `Sun` label for it, which is English — pass it
+  /// through [duaLocalizedWeekdayLabel] before showing it.
   final String dayLabel;
+
+  /// That same day's `YYYY-MM-DD`, so its weekday can be written out in the
+  /// app's own language. Empty when the server sent no date.
+  final String dayDate;
 
   bool get isSingleDay => dayLabel.isNotEmpty;
 }
@@ -583,6 +590,7 @@ List<DuaMonthBucket> duaMonthlyBuckets(List<DuaDashboardActivityDay> days) {
           minutes: day.minutes,
           duas: day.duas,
           dayLabel: day.label.isNotEmpty ? day.label : '${day.dayOfMonth}',
+          dayDate: day.date,
         ),
     ];
   }
@@ -611,6 +619,46 @@ int _lastDayOfMonth(List<DuaDashboardActivityDay> dated) {
   final anchor = DateTime.tryParse(dated.first.date);
   if (anchor != null) return DateTime(anchor.year, anchor.month + 1, 0).day;
   return math.max(28, dated.map((day) => day.dayOfMonth).reduce(math.max));
+}
+
+/// English weekday abbreviations, Sunday first — the spellings the reading
+/// dashboard's `dayOfWeek` uses.
+const _serverWeekdayAbbreviations = [
+  'sun',
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+];
+
+/// A chart axis' weekday label in the app's own language.
+///
+/// The dashboard sends `dayOfWeek` in English (`Mon`), so a Bangla UI must
+/// not print it as it stands. [serverLabel] still decides *which* day is
+/// meant — it is the day the server counted, which its own `date` need not
+/// agree with — and only the wording is replaced. [isoDate] is read instead
+/// when no weekday can be made out of the label, and a label that is no
+/// weekday at all (a bare day number, say) keeps its own wording with just
+/// its digits localized.
+String duaLocalizedWeekdayLabel(
+  BuildContext context, {
+  required String serverLabel,
+  required String isoDate,
+}) {
+  final key = serverLabel.trim().toLowerCase();
+  final index = key.length < 3
+      ? -1
+      : _serverWeekdayAbbreviations.indexOf(key.substring(0, 3));
+  if (index >= 0) return context.localizedDates.weekdayShort(index);
+  // `toLocal`, so a timestamp sent in UTC is still named by the day the
+  // reader was reading on.
+  final date = DateTime.tryParse(isoDate)?.toLocal();
+  if (date != null) {
+    return context.localizedDates.weekdayShort(date.weekday % 7);
+  }
+  return context.localizedDigits(serverLabel);
 }
 
 /// The day a server-labelled period ends on (`1-6` -> `6`), which is what
