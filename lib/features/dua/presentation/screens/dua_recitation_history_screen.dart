@@ -10,6 +10,7 @@ import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.
 import 'package:tuhfatul_muslim/features/dua/domain/repositories/dua_repository.dart';
 import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 
 /// Full recitation-history flow opened from the Dua dashboard's "See All"
@@ -515,12 +516,14 @@ class _TimelineGroup extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              for (var index = 0; index < items.length; index++)
+              for (var index = 0; index < items.length; index++) ...[
                 _RecitationCard(
                   item: items[index],
-                  colorIndex: index,
+                  index: index,
                   onOpenDua: onOpenDua,
                 ),
+                if (index != items.length - 1) SizedBox(height: 10.h),
+              ],
             ],
           ),
         ),
@@ -533,18 +536,25 @@ class _TimelineGroup extends StatelessWidget {
 /// has been closed again.
 typedef _OpenDua = Future<void> Function(DuaReadingHistoryItem item);
 
-/// One recitation row. Tapping it reopens the dua in the reader; while the
-/// dua is being fetched the row's book icon becomes a spinner, and a second
-/// tap is ignored until that finishes.
+/// One recitation row, drawn as the numbered [DuaItemTile] a category's dua
+/// list uses, so a dua reads the same here as where it was opened from.
+///
+/// Tapping it reopens the dua in the reader; while the dua is being fetched
+/// the row's chevron becomes a spinner, and a second tap is ignored until
+/// that finishes.
 class _RecitationCard extends StatefulWidget {
   const _RecitationCard({
     required this.item,
-    required this.colorIndex,
+    required this.index,
     required this.onOpenDua,
   });
 
   final DuaReadingHistoryItem item;
-  final int colorIndex;
+
+  /// Position in its day or time group (0-based) — the tile's number and its
+  /// pastel colour both come from this.
+  final int index;
+
   final _OpenDua onOpenDua;
 
   @override
@@ -566,104 +576,18 @@ class _RecitationCardState extends State<_RecitationCard> {
 
   @override
   Widget build(BuildContext context) {
-    const surfaces = [
-      Color(0xFFFFE9E2),
-      Color(0xFFE9E7FF),
-      Color(0xFFFFF3D4),
-      Color(0xFFE6F4EC),
-    ];
-    const accents = [
-      Color(0xFFFF604D),
-      Color(0xFF5B54E8),
-      Color(0xFFE9A51C),
-      Color(0xFF4BA779),
-    ];
-    final surface = surfaces[widget.colorIndex % surfaces.length];
-    final accent = accents[widget.colorIndex % accents.length];
     final title = context.localized(widget.item.title);
+    // The dua's own words make the preview line, as the translation does in
+    // a category's list; a row without Arabic falls back to its category so
+    // the line is never left blank.
+    final arabic = widget.item.arabic.trim();
     final category = context.localized(widget.item.category);
-    final radius = BorderRadius.circular(23.r);
-    return Material(
-      color: context.surfaceColor(surface),
-      borderRadius: radius,
-      child: InkWell(
-        onTap: widget.item.duaId.isEmpty ? null : _open,
-        borderRadius: radius,
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(14.r),
-          decoration: BoxDecoration(
-            borderRadius: radius,
-            border: Border.all(color: context.lineColor(surface)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40.r,
-                height: 40.r,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: context.surfaceColor(accent),
-                  shape: BoxShape.circle,
-                ),
-                child: _opening
-                    ? SizedBox.square(
-                        dimension: 18.r,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.menu_book_rounded, color: Colors.white),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title.isEmpty ? '—' : title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.textInkColor(const Color(0xFF292A28)),
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 3.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 3.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor(Colors.white),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Text(
-                        category.isEmpty ? '—' : category,
-                        style: TextStyle(
-                          color: context.textInkColor(const Color(0xFF4E4E4B)),
-                          fontSize: 8.sp,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 5.h),
-                    Text(
-                      widget.item.arabic,
-                      style: TextStyle(
-                        color: context.textInkColor(const Color(0xFF53534D)),
-                        fontSize: 10.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return DuaItemTile(
+      index: widget.index,
+      name: title.isEmpty ? '—' : title,
+      subtitle: arabic.isEmpty ? category : arabic,
+      busy: _opening,
+      onTap: widget.item.duaId.isEmpty ? null : _open,
     );
   }
 }
@@ -1240,7 +1164,7 @@ class _HistorySummary extends StatelessWidget {
                             ) ...[
                               _RecitationCard(
                                 item: summary.items[index],
-                                colorIndex: index,
+                                index: index,
                                 onOpenDua: onOpenDua,
                               ),
                               if (index != summary.items.length - 1)
