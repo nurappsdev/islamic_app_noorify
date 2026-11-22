@@ -14,6 +14,7 @@ class DuaItemTile extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.busy = false,
+    this.trailing,
   });
 
   /// This tile's position in its list (0-based) — picks its background and
@@ -34,6 +35,11 @@ class DuaItemTile extends StatelessWidget {
   /// chevron becomes a spinner in its place, so the row reports the wait
   /// without changing size.
   final bool busy;
+
+  /// Shown at the end of the row instead of the chevron — the dashboard's
+  /// recitation preview puts a read time there, and its rows do not open
+  /// anything, so a chevron would promise a tap that is not on offer.
+  final Widget? trailing;
 
   static const _palette = [
     _ItemPalette(bg: Color(0xFFFBDCE7), badge: Color(0xFF2E6359)),
@@ -108,22 +114,24 @@ class DuaItemTile extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8.w),
-            SizedBox.square(
-              dimension: 22.sp,
-              child: busy
-                  ? Padding(
-                      padding: EdgeInsets.all(2.r),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: context.inkColor(palette.badge),
-                      ),
-                    )
-                  : Icon(
-                      Icons.chevron_right_rounded,
-                      color: context.inkColor(palette.badge),
-                      size: 22.sp,
-                    ),
-            ),
+            if (busy)
+              SizedBox.square(
+                dimension: 22.sp,
+                child: Padding(
+                  padding: EdgeInsets.all(2.r),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: context.inkColor(palette.badge),
+                  ),
+                ),
+              )
+            else
+              trailing ??
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: context.inkColor(palette.badge),
+                    size: 22.sp,
+                  ),
           ],
         ),
       ),

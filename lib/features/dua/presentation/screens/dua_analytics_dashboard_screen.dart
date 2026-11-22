@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_home_cubit.dart'
     show DuaLoadStatus;
 import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_reading_dashboard_cubit.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
@@ -823,92 +824,63 @@ class _RecitationHistory extends StatelessWidget {
         ),
       );
     }
+    final rows = items.take(5).toList();
     return Column(
-      children: [for (final item in items.take(5)) _HistoryRow(item: item)],
+      children: [
+        for (var index = 0; index < rows.length; index++) ...[
+          _HistoryRow(item: rows[index], index: index),
+          if (index != rows.length - 1) SizedBox(height: 10.h),
+        ],
+      ],
     );
   }
 }
 
+/// One line of the dashboard's recitation preview, drawn as the numbered
+/// [DuaItemTile] the recitation history and a category's dua list use, so the
+/// same dua reads the same wherever it is listed. The chevron gives way to
+/// when it was read and for how long, since these rows open nothing — "See
+/// All" above them leads to the full history.
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({required this.item});
+  const _HistoryRow({required this.item, required this.index});
 
   final DuaReadingHistoryItem item;
+
+  /// Position in the preview (0-based); the tile's number and pastel colour
+  /// both follow from it.
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 9.h),
-      child: Row(
-        children: [
-          Container(
-            width: 31.r,
-            height: 31.r,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: context.lineColor(const Color(0xFFC7D590)),
+    return DuaItemTile(
+      index: index,
+      name: context.localized(item.title),
+      subtitle: _subtitle(context, item),
+      trailing: SizedBox(
+        width: 88.w,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              context.localizedDigits(_time(context, item)),
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 8.5.sp,
+                color: context.textInkColor(const Color(0xFF5D6B44)),
               ),
             ),
-            child: Icon(
-              Icons.menu_book_outlined,
-              color: context.inkColor(const Color(0xFFA6B65B)),
-              size: 17.sp,
+            SizedBox(height: 4.h),
+            Text(
+              context.localizedDigits(_read(appText, item)),
+              style: TextStyle(
+                fontSize: 8.sp,
+                color: context.textInkColor(const Color(0xFF5D6B44)),
+              ),
             ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.localized(item.title),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  _subtitle(context, item),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 8.5.sp,
-                    color: context.textInkColor(const Color(0xFF778060)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8.w),
-          SizedBox(
-            width: 88.w,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  context.localizedDigits(_time(context, item)),
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 8.5.sp,
-                    color: context.textInkColor(const Color(0xFF97A64D)),
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  context.localizedDigits(_read(appText, item)),
-                  style: TextStyle(
-                    fontSize: 8.sp,
-                    color: context.textInkColor(const Color(0xFF778060)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
