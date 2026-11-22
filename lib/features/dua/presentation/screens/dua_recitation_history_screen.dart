@@ -37,6 +37,12 @@ class _DuaRecitationHistoryScreenState
   bool _monthPickerOpen = false;
   late final DuaRepository _repository = widget.repository ?? duaRepository;
   late DateTime _selectedDate = _dateOnly(DateTime.now());
+
+  /// Anchor for the Daily and Weekly views' seven-day window, which ends
+  /// today rather than following the calendar week. Held in state so tapping
+  /// a day in the strip moves the selection without sliding the window along
+  /// with it.
+  late final DateTime _today = _dateOnly(DateTime.now());
   List<DuaReadingHistoryItem> _items = const [];
   bool _loading = true;
   bool _loadingMore = false;
@@ -176,6 +182,7 @@ class _DuaRecitationHistoryScreenState
                           _RecitationPeriod.weekly => _WeeklyHistory(
                             key: const ValueKey('weekly-history'),
                             selectedDate: _selectedDate,
+                            today: _today,
                             items: _items,
                             loadingMore: _loadingMore,
                             expandedDates: _expandedDates,
@@ -350,7 +357,11 @@ class _DailyHistory extends StatelessWidget {
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
-        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        _WeekStrip(
+          days: _calendarWeek(selectedDate),
+          selectedDate: selectedDate,
+          onDateChanged: onDateChanged,
+        ),
         SizedBox(height: 22.h),
         if (selectedItems.isEmpty) const _EmptyHistory(),
         for (final entry in byTime.entries)
@@ -381,18 +392,22 @@ class _HistoryTitle extends StatelessWidget {
   );
 }
 
+/// The seven-day strip above the Daily and Weekly lists. The days it shows
+/// are chosen by the caller — a Sunday-first calendar week for Daily, the
+/// week ending today for Weekly — so the strip only draws them.
 class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({required this.selectedDate, required this.onDateChanged});
+  const _WeekStrip({
+    required this.days,
+    required this.selectedDate,
+    required this.onDateChanged,
+  });
 
+  final List<DateTime> days;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateChanged;
 
   @override
   Widget build(BuildContext context) {
-    final start = selectedDate.subtract(
-      Duration(days: selectedDate.weekday % 7),
-    );
-    final days = List.generate(7, (index) => start.add(Duration(days: index)));
     final dates = context.localizedDates;
     final numbers = context.localizedNumbers;
     return Row(
@@ -648,10 +663,16 @@ class _RecitationCardState extends State<_RecitationCard> {
   }
 }
 
+/// The Weekly view. Its week is the last seven days, not the calendar week
+/// the Daily strip runs on, so it never runs on into days that have not
+/// happened yet. The strip at the top reads oldest first and ends on today
+/// (16 → 22 on the 22nd); the day cards below it run the other way, today
+/// at the top down to a week ago at the bottom.
 class _WeeklyHistory extends StatelessWidget {
   const _WeeklyHistory({
     super.key,
     required this.selectedDate,
+    required this.today,
     required this.items,
     required this.loadingMore,
     required this.expandedDates,
@@ -661,6 +682,7 @@ class _WeeklyHistory extends StatelessWidget {
   });
 
   final DateTime selectedDate;
+  final DateTime today;
   final List<DuaReadingHistoryItem> items;
   final bool loadingMore;
   final Set<String> expandedDates;
@@ -670,14 +692,22 @@ class _WeeklyHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summaries = _summariesForWeek(items, selectedDate);
+    final days = _trailingWeek(today);
+    // The strip reads forward and ends on today, while the list below leads
+    // with today and works back, so the reading that just happened is the
+    // first card rather than the last.
+    final summaries = _summariesForDays(items, days.reversed);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
-        _WeekStrip(selectedDate: selectedDate, onDateChanged: onDateChanged),
+        _WeekStrip(
+          days: days,
+          selectedDate: selectedDate,
+          onDateChanged: onDateChanged,
+        ),
         SizedBox(height: 16.h),
         for (final summary in summaries) ...[
           _HistorySummary(
@@ -1277,22 +1307,41 @@ List<DuaReadingHistoryItem> _itemsOn(
       ),
     );
 
-List<_HistorySummaryData> _summariesForWeek(
-  List<DuaReadingHistoryItem> items,
-  DateTime selectedDate,
-) {
-  final firstDay = _dateOnly(
-    selectedDate.subtract(Duration(days: selectedDate.weekday % 7)),
+/// The calendar week [date] falls in, Sunday first — what the Daily strip
+/// runs on.
+List<DateTime> _calendarWeek(DateTime date) {
+  final firstDay = _dateOnly(date.subtract(Duration(days: date.weekday % 7)));
+  return List.generate(
+    7,
+    (index) => firstDay.add(Duration(days: index)),
+    growable: false,
   );
-  return List.generate(7, (index) {
-    final date = firstDay.add(Duration(days: index));
-    return _HistorySummaryData(
+}
+
+/// The week ending on [today]: six days back first, up to today last (16 →
+/// 22 on the 22nd). The Weekly view runs on this so it ends on today instead
+/// of carrying on into days that are still to come.
+List<DateTime> _trailingWeek(DateTime today) {
+  final firstDay = _dateOnly(today).subtract(const Duration(days: 6));
+  return List.generate(
+    7,
+    (index) => firstDay.add(Duration(days: index)),
+    growable: false,
+  );
+}
+
+/// One summary per day of [days], in the order [days] runs in.
+List<_HistorySummaryData> _summariesForDays(
+  List<DuaReadingHistoryItem> items,
+  Iterable<DateTime> days,
+) => [
+  for (final date in days)
+    _HistorySummaryData(
       id: date.toIso8601String(),
       date: date,
       items: _itemsOn(items, date),
-    );
-  }).reversed.toList(growable: false);
-}
+    ),
+];
 
 List<_HistorySummaryData> _summariesForMonth(
   List<DuaReadingHistoryItem> items,
