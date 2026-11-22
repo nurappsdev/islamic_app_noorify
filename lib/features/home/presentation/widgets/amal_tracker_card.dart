@@ -122,11 +122,26 @@ class _AmalTrackerCardState extends State<AmalTrackerCard> {
       // Each card's backend name takes priority; the profile is only a
       // fallback for older or incomplete highlight-card responses.
       userName: userName,
-      // Only the user's own position shows its rank in the leading tile.
-      leadingText: card.type == 'my_monthly_position'
-          ? _localized(context, card.localizedRank, card.rank?.toString())
-          : null,
+      leadingText: _rankText(context, card),
     );
+  }
+
+  /// The user's own position cards, as `GET /home/dashboard` types them:
+  /// yesterday, this month and last month. These three print the user's rank
+  /// in the leading tile; every other card shows the app logo there.
+  static const _myPositionTypes = {
+    'my_yesterday_position',
+    'my_monthly_position',
+    'my_last_month_position',
+  };
+
+  /// The rank for [card]'s leading tile, or null to leave the logo in place
+  /// — which is what a position card with no rank yet gets, since an empty
+  /// string would draw an empty tile instead.
+  static String? _rankText(BuildContext context, HighlightCard card) {
+    if (!_myPositionTypes.contains(card.type)) return null;
+    final rank = _localized(context, card.localizedRank, card.rank?.toString());
+    return rank.isEmpty ? null : rank;
   }
 
   /// The card's points as the API words them in the app's language, e.g.
