@@ -916,6 +916,8 @@ The Quran reminds believers that Allah is with those who are patient. This gives
   'duaMinutesRead': '{n} mins read',
   'duaTimesRead': '{n} times read',
   'duaDashboardLoadFailed': 'Couldn\'t load the dashboard.',
+  'duaOpenFailed': 'Couldn\'t open this dua.',
+  'duaReadDuaLabel': 'Read Dua',
   'duaDashboardWeekRange': '{from}–{to}',
   'amolReadConfirmMessage':
       'Are you sure you have read this and want to track it?',
