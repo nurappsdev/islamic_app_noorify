@@ -143,6 +143,14 @@ class ProhibitedPrayerWindow {
 
   final PrayerClockTime start;
   final PrayerClockTime end;
+
+  /// Whether [now] falls in this window — from [start] up to, but not
+  /// including, [end]. All three windows sit inside the daylight hours, so
+  /// none of them runs across midnight.
+  bool contains(DateTime now) {
+    final minute = now.hour * 60 + now.minute;
+    return minute >= start.totalMinutes && minute < end.totalMinutes;
+  }
 }
 
 /// The three daily windows during which prayer is disliked/prohibited:
@@ -178,4 +186,17 @@ class ProhibitedPrayerWindows {
   final ProhibitedPrayerWindow sunrise;
   final ProhibitedPrayerWindow zawal;
   final ProhibitedPrayerWindow sunset;
+
+  /// The window running at [now], or `null` when prayer is not prohibited.
+  ProhibitedPrayerWindow? activeAt(DateTime now) {
+    for (final window in [sunrise, zawal, sunset]) {
+      if (window.contains(now)) return window;
+    }
+    return null;
+  }
 }
+
+/// Whether prayer is prohibited at [now] — `true` inside any of
+/// [ProhibitedPrayerWindows]' three windows.
+bool isProhibitedPrayerTime(DateTime now, DailyPrayerTimes times) =>
+    ProhibitedPrayerWindows.fromDailyTimes(times).activeAt(now) != null;

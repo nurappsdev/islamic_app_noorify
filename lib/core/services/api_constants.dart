@@ -1,6 +1,6 @@
 class ApiConstants {
- // static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
-  static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
+  static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
+ // static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
   // local
   //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
@@ -225,4 +225,13 @@ class ApiConstants {
 
   static String notificationReadEndPoint(String notificationId) =>
       "/notifications/$notificationId/read";
+
+  /// `GET`, public: the promo banners an admin has activated, already sorted
+  /// by `displayOrder`. The server counts a view for each banner it returns.
+  static const String promoBannersActiveEndPoint = "/promo-banners/active";
+
+  /// `POST`, public, empty body: records a tap on one banner. Fire and
+  /// forget — navigation must never wait for it.
+  static String promoBannerClickEndPoint(String bannerId) =>
+      "/promo-banners/$bannerId/click";
 }

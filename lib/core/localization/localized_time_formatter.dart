@@ -53,4 +53,15 @@ class LocalizedTimeFormatter {
   String duration({required int hours, required int minutes}) =>
       '${_numbers.integer(hours)} ${_text.hrLabel} '
       '${_numbers.integer(minutes)} ${_text.minLabel}';
+
+  /// [totalMinutes] as a duration, leaving out the part that is zero:
+  /// `2 hr 15 min`, `45 min`, `3 hr` / `২ ঘণ্টা ১৫ মিনিট`, `৪৫ মিনিট`.
+  String minutesDuration(int totalMinutes) {
+    final safe = totalMinutes < 0 ? 0 : totalMinutes;
+    final hours = safe ~/ 60;
+    final minutes = safe % 60;
+    if (hours == 0) return '${_numbers.integer(minutes)} ${_text.minLabel}';
+    if (minutes == 0) return '${_numbers.integer(hours)} ${_text.hrLabel}';
+    return duration(hours: hours, minutes: minutes);
+  }
 }

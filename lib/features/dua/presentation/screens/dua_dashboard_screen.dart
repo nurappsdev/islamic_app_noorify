@@ -76,7 +76,10 @@ class _DuaDashboardView extends StatelessWidget {
                       SizedBox(height: 6.h),
                       DuaPageHeader(
                         title: appText.duaIntroTitle,
-                        showBack: false,
+                        // The Dua dashboard sits one route above the app's
+                        // Home screen (the bottom nav replaces routes rather
+                        // than stacking them), so a plain pop leaves Dua.
+                        onBack: () => Navigator.maybePop(context),
                       ),
                       SizedBox(height: 18.h),
                       _SectionHeader(
