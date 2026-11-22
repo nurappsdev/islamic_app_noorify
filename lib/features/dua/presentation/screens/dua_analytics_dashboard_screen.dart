@@ -457,26 +457,9 @@ class _DashboardHeader extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: InkWell(
-                onTap: () => Navigator.of(context).maybePop(),
-                customBorder: const CircleBorder(),
-                child: Container(
-                  width: 34.r,
-                  height: 34.r,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: context.surfaceColor(const Color(0xFFF1F6E0)),
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 15.sp,
-                    color: context.inkColor(const Color(0xFF83915E)),
-                  ),
-                ),
-              ),
-            ),
+            // No back action: this is the bottom nav's last destination and
+            // therefore a top-level screen, like the Dua dashboard the nav
+            // starts on.
             Text(
               appText.dashboard,
               style: TextStyle(
