@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
+import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_content_cache.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_database.dart';
 
@@ -195,6 +196,41 @@ void main() {
       expect(rows.single['cached_at'], greaterThan(0));
     },
   );
+
+  // A book added on the server has to be reachable from the app: the shelf
+  // caches its list, so a pull-to-refresh asks the API again instead of
+  // redrawing the stored copy.
+  test('a forced refresh goes to the API and stores what it finds', () async {
+    await _source(Adapter(_serve)).getBooks();
+
+    Map<String, Object?> serveTwo(RequestOptions r) {
+      if (r.path != '/hadiths/books/lists') return _serve(r);
+      return _page([
+        {'_id': 'b1', 'title': 'Riyad', 'displayOrder': 1},
+        {'_id': 'b2', 'title': 'Forty Hadith', 'displayOrder': 2},
+      ]);
+    }
+
+    final server = Adapter(serveTwo);
+    final refreshed = await _source(server).getBooks(forceRefresh: true);
+    expect(refreshed.map((b) => b.id), ['b1', 'b2']);
+    expect(_paths(server), ['/hadiths/books/lists']);
+
+    // The new book is now the stored copy, so the next open shows it offline.
+    final offline = _offline();
+    expect((await _source(offline).getBooks()).map((b) => b.id), ['b1', 'b2']);
+    expect(offline.requests, isEmpty);
+  });
+
+  // Each environment keeps its own content: a build pointed at another host
+  // must not answer from the previous host's copy.
+  test('the stored key is scoped to the API host', () {
+    final key = HadithContentCache.keyOf('/hadiths/books/lists', {
+      'limit': 100,
+    });
+    expect(key, startsWith(ApiConstants.baseUrl));
+    expect(key, endsWith('/hadiths/books/lists?limit=100'));
+  });
 
   test('content stored under an older version is dropped', () async {
     await _source(Adapter(_serve)).getBooks();

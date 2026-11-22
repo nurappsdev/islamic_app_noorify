@@ -23,9 +23,11 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   final HadithLibraryRemoteDataSource _remote;
 
   @override
-  Future<Either<Failure, List<HadithLibraryBook>>> getBooks() async {
+  Future<Either<Failure, List<HadithLibraryBook>>> getBooks({
+    bool forceRefresh = false,
+  }) async {
     try {
-      final books = await _remote.getBooks();
+      final books = await _remote.getBooks(forceRefresh: forceRefresh);
       return Right(
         [...books]..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)),
       );
@@ -41,9 +43,11 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
   }
 
   @override
-  Future<Either<Failure, List<Ebook>>> getEbooks() async {
+  Future<Either<Failure, List<Ebook>>> getEbooks({
+    bool forceRefresh = false,
+  }) async {
     try {
-      final ebooks = await _remote.getEbooks();
+      final ebooks = await _remote.getEbooks(forceRefresh: forceRefresh);
       return Right(
         ebooks.where((e) => e.isActive).toList()
           ..sort((a, b) => a.displayOrder.compareTo(b.displayOrder)),
