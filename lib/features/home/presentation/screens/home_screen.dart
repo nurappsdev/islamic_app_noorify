@@ -2259,6 +2259,10 @@ class _SunnahWitrCardState extends State<_SunnahWitrCard> {
 /// glass tiles from the tracker's own `quiz` pillar items (the same
 /// `AmolDailyStore` source the Zikr card reads for its items), when the
 /// server sends them.
+///
+/// The tracker sends the day's quizzes as one item worth them all
+/// (`daily_quiz`, `maxPoints: 2`); its `entry` block holds the per-quiz rule
+/// (`entryPoints: 1`, `maxEntries: 2`), which is what a tile shows.
 class _QuizCard extends StatefulWidget {
   const _QuizCard();
 
@@ -2287,15 +2291,39 @@ class _QuizCardState extends State<_QuizCard> {
 
   /// One diamond tile from a tracked quiz item: its own localized title, and
   /// its earned points once played, otherwise the worth it shows before
-  /// being played.
+  /// being played. Only used when the server splits the day into one item
+  /// per quiz; a single item covering them all goes through [_tilesFromItem].
   QuizTileData _tileFromItem(BuildContext context, AmolItem item) =>
       QuizTileData(
-        title: context.localized(
-          LocalizedText(en: item.title, bn: item.titleBn),
-        ),
+        title: _itemTitle(context, item),
         points: item.isCompleted ? item.points : item.maxPoints,
         completed: item.isCompleted,
       );
+
+  String _itemTitle(BuildContext context, AmolItem item) =>
+      context.localized(LocalizedText(en: item.title, bn: item.titleBn));
+
+  /// Both tiles from the one quiz item that covers the whole day. Its `entry`
+  /// block counts the quizzes ([AmolEntry.maxEntries]) and what each is worth
+  /// ([AmolEntry.entryPoints]), so a tile carries a single quiz's point - not
+  /// the item's total - and is selected once that many quizzes are answered.
+  /// Without an entry block the item is a plain tick-mark, so it stays one
+  /// tile.
+  List<QuizTileData> _tilesFromItem(BuildContext context, AmolItem item) {
+    final entry = item.entry;
+    if (entry == null || entry.maxEntries <= 1) {
+      return [_tileFromItem(context, item)];
+    }
+    final title = _itemTitle(context, item);
+    return [
+      for (var i = 0; i < entry.maxEntries; i++)
+        QuizTileData(
+          title: '$title ${context.localizedDigits('${i + 1}')}',
+          points: entry.entryPoints,
+          completed: i < entry.entries,
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2313,18 +2341,20 @@ class _QuizCardState extends State<_QuizCard> {
       AppText.of(context).categoryLabel('Quiz'),
     );
 
-    // The tracker's `quiz` pillar supplies the two Daily Quiz tiles; without
-    // it the first tile falls back to the Home dashboard's own quiz summary
-    // and the second keeps its default label.
+    // The tracker's `quiz` pillar supplies the Daily Quiz tiles: one item
+    // covering the day splits into a tile per quiz, while a server that
+    // sends an item per quiz maps one to one. Without the tracker the tiles
+    // fall back to the Home dashboard's own quiz summary.
     final trackedItems =
-        AmolDailyStore.instance.pillar('quiz')?.items ?? const [];
-    final firstTile = trackedItems.isNotEmpty
-        ? _tileFromItem(context, trackedItems[0])
-        : quizTileFromPillar(quiz, title: title);
-    final secondTile = trackedItems.length > 1
-        ? _tileFromItem(context, trackedItems[1])
-        : null;
-    final quizTiles = [?firstTile, ?secondTile];
+        AmolDailyStore.instance.pillar('quiz')?.items ?? const <AmolItem>[];
+    final quizTiles = switch (trackedItems) {
+      [] => quizTilesFromPillar(
+        quiz,
+        titleFor: (index) => '$title ${context.localizedDigits('$index')}',
+      ),
+      [final only] => _tilesFromItem(context, only),
+      _ => [for (final item in trackedItems) _tileFromItem(context, item)],
+    };
 
     return HomeGradientShape(
       child: QuizCardContent(
@@ -2336,7 +2366,7 @@ class _QuizCardState extends State<_QuizCard> {
           '',
         ),
         title: title,
-        counter: _pillarCounter(context, quiz, '0/7'),
+        counter: _pillarCounter(context, quiz, '0/$quizTilesPerDay'),
         tiles: quizTiles,
         onOpenTracker: () => _openTracker(context, AmalSection.quiz),
       ),
