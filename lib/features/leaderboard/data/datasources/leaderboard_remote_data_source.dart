@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/network/dio_client.dart';
@@ -14,9 +15,17 @@ import 'package:tuhfatul_muslim/features/leaderboard/data/models/leaderboard_use
 /// [NetworkException] / [ParsingException]; never returns error states.
 abstract interface class LeaderboardRemoteDataSource {
   /// `GET /leaderboard/top?period=daily|weekly|monthly|yearly&limit=N`.
+  ///
+  /// [from] and [to] (`YYYY-MM-DD`, [from] the earlier day) ask the server for
+  /// an explicit window instead of the one it derives from [period] itself.
+  /// Left out, the server picks the window - for `weekly` that is the calendar
+  /// week containing today, which is not what the app wants; see
+  /// `docs/leaderboard-weekly-window-handoff.md`.
   Future<LeaderboardBoardModel> getTop({
     required String period,
     required int limit,
+    String? from,
+    String? to,
   });
 
   /// `GET /leaderboard/users/:userId?period=...&date=...`. [date] is the
@@ -48,26 +57,116 @@ class LeaderboardRemoteDataSourceImpl implements LeaderboardRemoteDataSource {
   Future<LeaderboardBoardModel> getTop({
     required String period,
     required int limit,
-  }) async => LeaderboardBoardModel.fromJson(
-    await _getData(
+    String? from,
+    String? to,
+  }) async {
+    final query = <String, dynamic>{
+      'period': period,
+      'limit': limit,
+      if (from != null && from.isNotEmpty) 'from': from,
+      if (to != null && to.isNotEmpty) 'to': to,
+    };
+    final data = await _getData(
       ApiConstants.leaderboardTopEndPoint,
-      {'period': period, 'limit': limit},
+      query,
       cacheKey: 'top_$period',
-    ),
-  );
+    );
+    _logWindow(ApiConstants.leaderboardTopEndPoint, query, data);
+    return LeaderboardBoardModel.fromJson(data);
+  }
 
   @override
   Future<LeaderboardUserDetailModel> getUserPosition({
     required String userId,
     required String period,
     String? date,
-  }) async => LeaderboardUserDetailModel.fromJson(
-    await _getData(
-      ApiConstants.leaderboardUserEndPoint(userId),
-      {'period': period, if (date != null && date.isNotEmpty) 'date': date},
+  }) async {
+    final path = ApiConstants.leaderboardUserEndPoint(userId);
+    final query = <String, dynamic>{
+      'period': period,
+      if (date != null && date.isNotEmpty) 'date': date,
+    };
+    final data = await _getData(
+      path,
+      query,
       cacheKey: 'user_${userId}_$period',
-    ),
-  );
+    );
+    _logWindow(path, query, data);
+    return LeaderboardUserDetailModel.fromJson(data);
+  }
+
+  /// Debug builds only: prints the parameters a leaderboard call was made
+  /// with and the date window the server resolved them to, so a filter's
+  /// range can be read straight off the console.
+  ///
+  /// The window is the server's own - the app sends nothing but `period` -
+  /// and a `weekly` window that runs past today is the open backend defect in
+  /// `docs/leaderboard-weekly-window-handoff.md`, which is why a future `to`
+  /// is called out here.
+  void _logWindow(
+    String path,
+    Map<String, dynamic> query,
+    Map<String, dynamic> data,
+  ) {
+    if (!kDebugMode) return;
+    final raw = data['period'];
+    final window = raw is Map ? raw : const <dynamic, dynamic>{};
+    final from = DateTime.tryParse(window['from']?.toString() ?? '');
+    final to = DateTime.tryParse(window['to']?.toString() ?? '');
+
+    final span = (from == null || to == null)
+        ? 'from=${window['from']} to=${window['to']}'
+        : '${_day(from)} ... ${_day(to)} '
+              '(${to.difference(from).inDays + 1} days)';
+
+    debugPrint(
+      '[leaderboard] $path params: $query\n'
+      '  window: $span  type=${window['type']} key=${window['key']}\n'
+      '  label: ${window['label']}',
+    );
+
+    // Compared against the device's own civil date, the same clock the rest
+    // of the app reads days from.
+    final today = DateTime.now();
+    final endsAhead = to == null
+        ? 0
+        : DateTime(
+            to.year,
+            to.month,
+            to.day,
+          ).difference(DateTime(today.year, today.month, today.day)).inDays;
+    if (endsAhead > 0) {
+      debugPrint(
+        '[leaderboard] !! window ends $endsAhead day(s) in the future: '
+        'those days cannot hold any points yet. '
+        'See docs/leaderboard-weekly-window-handoff.md',
+      );
+    }
+
+    // Asked for a window and got a different one back: the server does not
+    // honour these parameters, so only it can fix the range.
+    final asked = (
+      from: query['from']?.toString(),
+      to: query['to']?.toString(),
+    );
+    if (asked.from != null && asked.to != null) {
+      final got = (
+        from: window['from']?.toString(),
+        to: window['to']?.toString(),
+      );
+      if (got.from != asked.from || got.to != asked.to) {
+        debugPrint(
+          '[leaderboard] !! asked for ${asked.from} ... ${asked.to} but the '
+          'server answered ${got.from} ... ${got.to}: it ignores from/to. '
+          'See docs/leaderboard-weekly-window-handoff.md',
+        );
+      }
+    }
+  }
+
+  static String _day(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
 
   /// GETs [path] and returns the envelope's `data` object, caching it under
   /// [cacheKey] for [LeaderboardRepositoryImpl]'s offline fallback.

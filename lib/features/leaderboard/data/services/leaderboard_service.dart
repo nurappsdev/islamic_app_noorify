@@ -22,11 +22,14 @@ class LeaderboardService {
   late final GetLeaderboardUserPosition _getUserPosition =
       GetLeaderboardUserPosition(_repository);
 
-  /// Fetches `GET /leaderboard/top?period=[period]&limit=[limit]`.
+  /// Fetches `GET /leaderboard/top?period=[period]&limit=[limit]`, over the
+  /// explicit [from] ... [to] window (`YYYY-MM-DD`) when one is given.
   Future<Either<Failure, LeaderboardBoard>> fetchTop({
     required String period,
     int limit = 10,
-  }) => _getTop(period: period, limit: limit);
+    String? from,
+    String? to,
+  }) => _getTop(period: period, limit: limit, from: from, to: to);
 
   /// Fetches `GET /leaderboard/users/[userId]?period=[period]&date=[date]`.
   Future<Either<Failure, LeaderboardUserDetail>> fetchUserPosition({

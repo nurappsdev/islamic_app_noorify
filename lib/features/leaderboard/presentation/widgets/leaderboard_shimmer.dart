@@ -110,7 +110,9 @@ class LeaderboardLoadingShimmer extends StatelessWidget {
           SizedBox(height: 22.h),
           Row(
             children: [
-              Expanded(child: _ShimmerBox(height: 44.h, radius: 22.r)),
+              Expanded(
+                child: _ShimmerBox(height: 44.h, radius: 22.r),
+              ),
               SizedBox(width: 8.w),
               _ShimmerBox(width: 44.r, height: 44.r, radius: 22.r),
             ],
