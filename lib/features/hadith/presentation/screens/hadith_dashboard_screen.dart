@@ -8,6 +8,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/datasources/hadith_library_remote_data_source.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/repositories/hadith_library_repository_impl.dart';
 import 'package:tuhfatul_muslim/features/hadith/domain/entities/hadith_reading_comparison.dart';
@@ -301,6 +302,8 @@ class _HadithDashboardViewState extends State<_HadithDashboardView> {
                                 _selectedPoint = _selectedPoint == i ? null : i,
                           ),
                         )
+                      : state.period == HadithHistoryPeriod.monthly
+                      ? _MonthlyProgressBars(series: series, appText: appText)
                       : _ReadingChart(
                           series: series,
                           selectedIndex: _selectedPoint,
@@ -1933,4 +1936,88 @@ class _WeeklyBarPainter extends CustomPainter {
       old.dayInk != dayInk ||
       old.valueInk != valueInk ||
       old.gridColor != gridColor;
+}
+
+/// Monthly view: the same horizontal progress bars the Dua reading dashboard
+/// draws for its own monthly filter ([DuaMonthlyBarChart]) — one row per
+/// 5-day group of the window, my minutes in front of the competitor's, the
+/// newest group on top and the minutes axis along the bottom.
+///
+/// The Dua chart widgets are used as they are, so the two dashboards cannot
+/// drift apart; only this screen's monthly branch changed.
+class _MonthlyProgressBars extends StatelessWidget {
+  const _MonthlyProgressBars({required this.series, required this.appText});
+
+  final _ChartSeries series;
+  final AppText appText;
+
+  /// One row per real group of [series]. The zero padding a single group is
+  /// drawn with on the line chart carries an empty label and is not a group,
+  /// so it is left out; [source] keeps each row's place in [series] for the
+  /// tooltip's points.
+  List<({DuaChartBar bar, int source})> get _rows => [
+    for (var i = 0; i < series.read.length; i++)
+      if (series.labels[i].isNotEmpty)
+        (
+          bar: DuaChartBar(
+            label: series.labels[i],
+            mine: series.read[i].round(),
+            competitor: (series.rival?[i] ?? 0).round(),
+          ),
+          source: i,
+        ),
+  ];
+
+  /// `45 min` for a row's minutes. Kept to the bare value, like the Dua
+  /// dashboard's own rows: the reader's name is already the line's label, and
+  /// the longer `Time : 45 min` wording overflows the card's width cap.
+  String _minutes(BuildContext context, double value) =>
+      context.localizedDigits('${_plain(value)} ${appText.minLabel}');
+
+  /// `Point : 4`, or `Point : -` when the group carries no points.
+  String _points(BuildContext context, double? value) =>
+      context.localizedDigits(
+        appText.hadithPointValue.fill({
+          'n': value == null ? '-' : _plain(value),
+        }),
+      );
+
+  /// `45` for a whole number, `45.5` otherwise. Digits are localized by the
+  /// caller, so this stays plain.
+  static String _plain(double v) =>
+      v == v.roundToDouble() ? '${v.round()}' : v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    return DuaMonthlyBarChart(
+      bars: [for (final row in rows) row.bar],
+      tooltipBuilder: (index, bar) {
+        final source = rows[index].source;
+        return DuaChartTooltip(
+          title: context.localizedDigits(bar.title),
+          lines: [
+            DuaTooltipLine.metric(
+              color: DuaChartColors.mine,
+              text: series.myName.isEmpty ? appText.myPosition : series.myName,
+              value: _minutes(context, series.read[source]),
+            ),
+            DuaTooltipLine.note(_points(context, series.points[source])),
+            if (series.rival case final rival?) ...[
+              DuaTooltipLine.metric(
+                color: DuaChartColors.competitor,
+                text: series.rivalName.isEmpty
+                    ? appText.hadithCompetitor
+                    : series.rivalName,
+                value: _minutes(context, rival[source]),
+              ),
+              DuaTooltipLine.note(
+                _points(context, series.rivalPoints?[source]),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
 }

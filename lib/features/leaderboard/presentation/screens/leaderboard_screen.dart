@@ -37,12 +37,38 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     unawaited(_load());
   }
 
+  /// The window the weekly filter asks for: the last seven days, today
+  /// included (today - 6 ... today), as `YYYY-MM-DD`.
+  ///
+  /// Sent because the server's own `weekly` window is the calendar week
+  /// containing today, which on a Monday is today plus six days that haven't
+  /// happened yet. The other periods keep the server's window.
+  /// See `docs/leaderboard-weekly-window-handoff.md`.
+  ({String from, String to})? get _weeklyWindow {
+    if (_period != 'weekly') return null;
+    final now = DateTime.now();
+    final to = DateTime(now.year, now.month, now.day);
+    return (
+      from: _isoDate(to.subtract(const Duration(days: 6))),
+      to: _isoDate(to),
+    );
+  }
+
+  static String _isoDate(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    final result = await LeaderboardService.instance.fetchTop(period: _period);
+    final window = _weeklyWindow;
+    final result = await LeaderboardService.instance.fetchTop(
+      period: _period,
+      from: window?.from,
+      to: window?.to,
+    );
     if (!mounted) return;
     result.fold(
       (failure) => setState(() {
