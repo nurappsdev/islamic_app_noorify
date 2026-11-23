@@ -317,12 +317,15 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
     };
   }
 
-  /// The user's (and the compared user's) minutes per day for the period.
+  /// The user's (and the compared user's) minutes per day for the period,
+  /// with each day's points and exact time alongside - those are read only by
+  /// the card a tapped point opens, not drawn on the chart.
   QuranChartData _chartData(QuranReadingDashboardState state, QuranText t) {
     final days = state.history?.days ?? const [];
     final competitor = state.comparison?.competitor;
     final theirs = competitor?.days ?? const <QuranDailyProgress>[];
     final monthly = state.period == QuranDashboardPeriod.monthly;
+    final paired = theirs.length == days.length && theirs.isNotEmpty;
     return QuranChartData(
       labels: [
         for (final (i, day) in days.indexed)
@@ -333,10 +336,18 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
               : t.weekdayShort(day.date!),
       ],
       mine: [for (final day in days) day.readMinutes],
-      competitor: theirs.length == days.length && theirs.isNotEmpty
-          ? [for (final day in theirs) day.readMinutes]
-          : null,
+      competitor: paired ? [for (final day in theirs) day.readMinutes] : null,
       competitorBadge: _initials(competitor),
+      myPoints: [for (final day in days) day.points],
+      competitorPoints: paired
+          ? [for (final day in theirs) day.points]
+          : const [],
+      mySeconds: [for (final day in days) day.readSeconds],
+      competitorSeconds: paired
+          ? [for (final day in theirs) day.readSeconds]
+          : const [],
+      myName: state.comparison?.currentUser?.name ?? '',
+      competitorName: competitor?.name ?? '',
     );
   }
 
@@ -368,11 +379,22 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
       case QuranDashboardPeriod.daily:
         final data = _chartData(state, t);
         final theirs = data.competitor;
+        final withCompetitor =
+            _showCompetitor && theirs != null && theirs.isNotEmpty;
         return QuranDailyChart(
           mine: data.mine.isEmpty ? 0 : data.mine.last,
-          competitor: theirs == null || theirs.isEmpty ? null : theirs.last,
+          competitor: withCompetitor ? theirs.last : null,
           competitorBadge: data.competitorBadge,
           showCompetitor: _showCompetitor,
+          // The last day is today, which is all this chart plots.
+          readings: data.mine.isEmpty
+              ? const []
+              : quranChartReadings(
+                  data,
+                  t,
+                  data.mine.length - 1,
+                  withCompetitor: withCompetitor,
+                ),
         );
     }
   }

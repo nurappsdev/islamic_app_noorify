@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 
 import '../../quran_text.dart';
 
@@ -32,10 +33,20 @@ class QuranPeriodDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final picked = month;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PopupMenuButton<void>(
-      color: Colors.white,
+      // Was plain white, which stayed white in dark mode under light ink.
+      color: context.surfaceColor(Colors.white),
       padding: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14.r),
+        // The dark card and the page behind it are both near-black, so the
+        // menu needs an outline of its own to read as a card. In light mode
+        // the elevation shadow already does that.
+        side: isDark
+            ? const BorderSide(color: AppColor.darkBorder)
+            : BorderSide.none,
+      ),
       itemBuilder: (_) => [
         PopupMenuItem<void>(
           enabled: false,
@@ -218,11 +229,17 @@ class _QuranMenuRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        color: active ? const Color(0xFFEDF3D6) : Colors.transparent,
+        // Darkening this light green by hue lands within a hair of the menu's
+        // own fill, leaving the picked period unmarked, so dark mode takes the
+        // palette's tint - the same fill every other selected row uses.
+        color: active
+            ? (isDark ? AppColor.darkTint : const Color(0xFFEDF3D6))
+            : Colors.transparent,
         child: Row(
           children: [
             Expanded(
@@ -262,6 +279,7 @@ class _QuranMonthChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       behavior: HitTestBehavior.opaque,
@@ -289,11 +307,13 @@ class _QuranMonthChip extends StatelessWidget {
               fontWeight: FontWeight.w500,
               color: selected
                   ? Colors.white
-                  : context.inkColor(
-                      enabled
-                          ? const Color(0xFF2C3320)
-                          : const Color(0xFFB4B9A6),
-                    ),
+                  : enabled
+                  ? context.inkColor(const Color(0xFF2C3320))
+                  // inkColor leaves a light grey as it is, which on the dark
+                  // card reads brighter than a month you can actually pick.
+                  : isDark
+                  ? AppColor.darkTextPrimary.withValues(alpha: .32)
+                  : const Color(0xFFB4B9A6),
             ),
           ),
         ),
