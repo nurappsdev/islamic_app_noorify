@@ -422,6 +422,14 @@ class QuranText {
   String get dailyGoalMet => _t('Daily goal met', 'আজকের লক্ষ্য পূরণ হয়েছে');
   String pointsOf(double points, double max) =>
       '${_t('Points', 'পয়েন্ট')} ${decimal(points)}/${decimal(max)}';
+
+  /// `Point : 4`, for the card a tapped chart point opens.
+  String pointValue(double points) =>
+      '${_t('Point', 'পয়েন্ট')} : ${decimal(points)}';
+
+  /// Who the chart's two series belong to, when the server names neither.
+  String get myPositionLabel => _t('My Position', 'আমার অবস্থান');
+  String get competitorLabel => _t('Competitor', 'প্রতিযোগী');
   String get streak => _t('Streak', 'ধারাবাহিকতা');
   String get averagePerDay => _t('Avg / day', 'গড় / দিন');
   String get goalDays => _t('Goal met', 'লক্ষ্য পূরণ');
