@@ -125,8 +125,12 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
       context,
     ).pushNamed(RouteNames.hadithCreatePlan);
     // A name comes back when a plan was created: show it in the list.
-    if (result is String && !bloc.isClosed) {
-      bloc.add(const LoadHadithPlans());
+    if (result is! String || bloc.isClosed) return;
+    bloc.add(const LoadHadithPlans());
+    // A new plan is in progress, so it lands in "My Plan": switch there when
+    // it was created from the "My Complete" tab, which will never show it.
+    if (mounted && _showCompletedPlans) {
+      setState(() => _showCompletedPlans = false);
     }
   }
 
@@ -256,32 +260,33 @@ class _HadithPlannerViewState extends State<_HadithPlannerView> {
               alignment: Alignment.bottomCenter,
               child: HadithBottomNav(selectedIndex: 1),
             ),
-            if (!_showCompletedPlans)
-              Positioned(
-                // In line with the right edge of the plan cards (16.w).
-                right: 16.w,
-                bottom: 104.h,
-                child: FilledButton.icon(
-                  onPressed: _createPlan,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFA1AD59),
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(127.w, 48.h),
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.r),
-                    ),
+            // On both tabs: a new plan can be started while looking at the
+            // completed ones too.
+            Positioned(
+              // In line with the right edge of the plan cards (16.w).
+              right: 16.w,
+              bottom: 104.h,
+              child: FilledButton.icon(
+                onPressed: _createPlan,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFA1AD59),
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(127.w, 48.h),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24.r),
                   ),
-                  icon: Icon(Icons.edit_outlined, size: 20.sp),
-                  label: Text(
-                    appText.createPlan,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                icon: Icon(Icons.edit_outlined, size: 20.sp),
+                label: Text(
+                  appText.createPlan,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
