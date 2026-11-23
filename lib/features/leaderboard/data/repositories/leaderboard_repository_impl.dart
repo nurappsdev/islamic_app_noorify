@@ -18,8 +18,11 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
   Future<Either<Failure, LeaderboardBoard>> getTop({
     required String period,
     int limit = 10,
+    String? from,
+    String? to,
   }) => _guard(
-    action: () => _remote.getTop(period: period, limit: limit),
+    action: () =>
+        _remote.getTop(period: period, limit: limit, from: from, to: to),
     cacheKey: 'top_$period',
     fromJson: LeaderboardBoardModel.fromJson,
   );
@@ -47,7 +50,11 @@ class LeaderboardRepositoryImpl implements LeaderboardRepository {
     try {
       return Right(await action());
     } on ServerException catch (e) {
-      return _fallback(ServerFailure(e.message, statusCode: e.statusCode), cacheKey, fromJson);
+      return _fallback(
+        ServerFailure(e.message, statusCode: e.statusCode),
+        cacheKey,
+        fromJson,
+      );
     } on NetworkException catch (e) {
       return _fallback(NetworkFailure(e.message), cacheKey, fromJson);
     } on ParsingException catch (e) {

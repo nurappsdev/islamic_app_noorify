@@ -493,7 +493,9 @@ void main() {
         await settle(tester);
 
         expect(repo.deletes, ['p1']);
-        expect(find.text('Plan not found'), findsOneWidget);
+        // The server's "Plan not found" reaches the user as the app's own
+        // localized wording (`failureQuranPlanNotFound`), period included.
+        expect(find.text('Plan not found.'), findsOneWidget);
         // No reload: nothing changed on the server.
         expect(repo.requests.where((r) => r.status == 'in_progress'), hasLength(1));
         expect(find.text('Plan 1'), findsOneWidget);

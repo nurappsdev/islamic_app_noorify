@@ -10,14 +10,17 @@ PillarCard _quiz({required num points}) => PillarCard(
   pillarKey: 'quiz',
   title: 'Quiz',
   points: points,
-  maxPoints: 7,
+  maxPoints: 2,
   percentage: 33,
   formattedSubtext: '',
 );
 
+List<QuizTileData>? _tilesFrom(PillarCard? pillar, {String title = 'Quiz'}) =>
+    quizTilesFromPillar(pillar, titleFor: (index) => '$title $index');
+
 Future<void> _pump(
   WidgetTester tester,
-  QuizTileData? firstQuiz, {
+  List<QuizTileData>? tiles, {
   AppLanguage language = AppLanguage.english,
 }) async {
   tester.view.physicalSize = const Size(375, 812);
@@ -35,9 +38,7 @@ Future<void> _pump(
             body: SizedBox(
               width: 340,
               height: 380,
-              child: QuizCardContent(
-                tiles: firstQuiz == null ? null : [firstQuiz],
-              ),
+              child: QuizCardContent(tiles: tiles),
             ),
           ),
         ),
@@ -51,46 +52,51 @@ List<QuizGlassCard> _tiles(WidgetTester tester) =>
     tester.widgetList<QuizGlassCard>(find.byType(QuizGlassCard)).toList();
 
 void main() {
-  group('quizTileFromPillar', () {
-    test('no backend quiz: nothing, so the tile keeps its default', () {
-      expect(quizTileFromPillar(null, title: 'Quiz'), isNull);
+  group('quizTilesFromPillar', () {
+    test('no backend quiz: nothing, so the tiles keep their defaults', () {
+      expect(_tilesFrom(null), isNull);
     });
 
-    test('a quiz with points is played: title, points, selected', () {
-      final tile = quizTileFromPillar(_quiz(points: 2.3), title: 'Quiz')!;
-      expect(tile.title, 'Quiz');
-      expect(tile.points, 2.3);
-      expect(tile.completed, isTrue);
+    test('every tile is worth one point, never the pillar total', () {
+      final tiles = _tilesFrom(_quiz(points: 2))!;
+      expect(tiles, hasLength(quizTilesPerDay));
+      expect(tiles.map((t) => t.points), everyElement(quizPointsPerQuiz));
+      expect(tiles.map((t) => t.title), ['Quiz 1', 'Quiz 2']);
     });
 
-    test('a quiz with no points yet is not selected and keeps its worth', () {
-      final tile = quizTileFromPillar(_quiz(points: 0), title: 'Quiz')!;
-      expect(tile.title, 'Quiz');
-      expect(tile.points, 1);
-      expect(tile.completed, isFalse);
+    test('the points earned are the quizzes played: one point, one tile', () {
+      expect(_tilesFrom(_quiz(points: 0))!.map((t) => t.completed), [
+        false,
+        false,
+      ]);
+      expect(_tilesFrom(_quiz(points: 1))!.map((t) => t.completed), [
+        true,
+        false,
+      ]);
+      expect(_tilesFrom(_quiz(points: 2))!.map((t) => t.completed), [
+        true,
+        true,
+      ]);
     });
   });
 
   group('Quiz card', () {
-    testWidgets('the first tile is the backend quiz, selected; the second is '
-        'unchanged', (tester) async {
-      await _pump(
-        tester,
-        quizTileFromPillar(_quiz(points: 2.3), title: 'Quiz'),
-      );
+    testWidgets('one quiz played: that tile is selected, both show one point', (
+      tester,
+    ) async {
+      await _pump(tester, _tilesFrom(_quiz(points: 1)));
 
       final tiles = _tiles(tester);
       expect(tiles, hasLength(2)); // never more than two
       expect(
         (tiles[0].title, tiles[0].points, tiles[0].completed),
-        ('Quiz', 2.3, true),
+        ('Quiz 1', 1, true),
       );
       expect(
         (tiles[1].title, tiles[1].points, tiles[1].completed),
         ('Quiz 2', 1, false),
       );
-      expect(find.text('+2.3'), findsOneWidget);
-      expect(find.text('+1'), findsOneWidget);
+      expect(find.text('+1'), findsNWidgets(2));
     });
 
     testWidgets('without backend data both tiles keep their defaults', (
@@ -104,27 +110,26 @@ void main() {
       expect(find.text('+1'), findsNWidgets(2));
     });
 
-    testWidgets('the backend points are written with Bangla digits in Bangla', (
+    testWidgets('the points are written with Bangla digits in Bangla', (
       tester,
     ) async {
       await _pump(
         tester,
-        quizTileFromPillar(_quiz(points: 2.3), title: 'কুইজ'),
+        _tilesFrom(_quiz(points: 1), title: 'কুইজ'),
         language: AppLanguage.bangla,
       );
 
-      expect(find.text('+২.৩'), findsOneWidget);
-      expect(find.text('কুইজ'), findsOneWidget);
+      expect(find.text('+১'), findsNWidgets(2));
+      expect(find.text('কুইজ 1'), findsOneWidget);
       expect(_tiles(tester), hasLength(2));
     });
 
-    testWidgets('a whole number of points has no trailing zero', (
-      tester,
-    ) async {
-      await _pump(
-        tester,
-        quizTileFromPillar(_quiz(points: 3.0), title: 'Quiz'),
-      );
+    testWidgets('a fractional badge has no trailing zero', (tester) async {
+      await _pump(tester, const [
+        QuizTileData(title: 'Quiz 1', points: 2.3),
+        QuizTileData(title: 'Quiz 2', points: 3.0),
+      ]);
+      expect(find.text('+2.3'), findsOneWidget);
       expect(find.text('+3'), findsOneWidget);
     });
   });

@@ -14,5 +14,7 @@ class GetLeaderboardTop {
   Future<Either<Failure, LeaderboardBoard>> call({
     required String period,
     int limit = 10,
-  }) => _repository.getTop(period: period, limit: limit);
+    String? from,
+    String? to,
+  }) => _repository.getTop(period: period, limit: limit, from: from, to: to);
 }

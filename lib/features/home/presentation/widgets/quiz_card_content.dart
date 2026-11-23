@@ -33,21 +33,36 @@ class QuizTileData {
   final bool completed;
 }
 
-/// The first quiz tile from the backend's `quiz` pillar, or `null` when the
-/// dashboard has none (not loaded, signed out): the tile then keeps its
-/// default. [title] is the pillar's title in the selected language.
+/// How many quizzes the day holds, and so how many tiles the card draws.
+const quizTilesPerDay = 2;
+
+/// What one quiz is worth. Every quiz carries the same single point, so a
+/// tile's badge never shows the day's total.
+const quizPointsPerQuiz = 1;
+
+/// The quiz tiles from the backend's `quiz` pillar, or `null` when the
+/// dashboard has none (not loaded, signed out): the tiles then keep their
+/// defaults. [titleFor] gives tile `index`'s title (1-based) in the selected
+/// language.
 ///
-/// A pillar with points already earned means the quiz has been played, so the
-/// tile shows those points and is selected. Before that it keeps the default
-/// badge (the quiz's worth) and stays unselected.
-QuizTileData? quizTileFromPillar(PillarCard? pillar, {required String title}) {
+/// Used only as a fallback for the tracker's own `quiz` items. Each quiz is
+/// worth [quizPointsPerQuiz], so the pillar's earned points are the number of
+/// quizzes already played: that many tiles are selected, and every tile shows
+/// one quiz's worth rather than the pillar's total.
+List<QuizTileData>? quizTilesFromPillar(
+  PillarCard? pillar, {
+  required String Function(int index) titleFor,
+}) {
   if (pillar == null) return null;
-  final played = pillar.points > 0;
-  return QuizTileData(
-    title: title,
-    points: played ? pillar.points : 1,
-    completed: played,
-  );
+  final played = pillar.points.floor();
+  return [
+    for (var i = 0; i < quizTilesPerDay; i++)
+      QuizTileData(
+        title: titleFor(i + 1),
+        points: quizPointsPerQuiz,
+        completed: i < played,
+      ),
+  ];
 }
 
 /// Content layer for the Quiz card. Draws no background of its own - place it
@@ -80,7 +95,7 @@ class QuizCardContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedTiles = [
-      for (var i = 0; i < 2; i++)
+      for (var i = 0; i < quizTilesPerDay; i++)
         if (tiles != null && i < tiles!.length)
           tiles![i]
         else

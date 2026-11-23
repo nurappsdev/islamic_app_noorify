@@ -9,9 +9,14 @@ abstract interface class LeaderboardRepository {
   /// Fetches `GET /leaderboard/top?period=[period]&limit=[limit]`
   /// (`period` is `daily`, `weekly`, `monthly` or `yearly`). Returns [Right]
   /// with the [LeaderboardBoard], or [Left] with a typed [Failure].
+  ///
+  /// [from] and [to] (`YYYY-MM-DD`, [from] the earlier day) ask for an
+  /// explicit window rather than the one the server derives from [period].
   Future<Either<Failure, LeaderboardBoard>> getTop({
     required String period,
     int limit,
+    String? from,
+    String? to,
   });
 
   /// Fetches one user's standing for [period] (`daily`, `weekly`, `monthly`
