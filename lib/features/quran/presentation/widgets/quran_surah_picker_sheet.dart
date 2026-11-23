@@ -74,6 +74,18 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    const inkColor = Color(0xFF282442);
+    const oliveColor = Color(0xFFA1AE57);
+    const borderColor = Color(0xFFD4E5A8);
+
+    // The design's colors, mapped to the active theme once for the whole
+    // sheet (see ThemeColors: in light mode every call is a no-op).
+    final titleInk = context.textInkColor(inkColor);
+    final mutedInk = context.inkColor(Colors.grey.shade600);
+    final fieldLine = context.lineColor(borderColor);
+    final focusLine = context.lineColor(oliveColor);
+    final selectedInk = context.inkColor(oliveColor);
+
     final t = QuranText.of(context);
     final filtered = _surahs.where((s) {
       if (_query.isEmpty) return true;
@@ -97,7 +109,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
             width: 44.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
+              color: context.lineColor(Colors.grey.shade300),
               borderRadius: BorderRadius.circular(2.r),
             ),
           ),
@@ -114,13 +126,14 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF282442),
+                      color: titleInk,
                     ),
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
+                  color: mutedInk,
                   iconSize: 20.sp,
                 ),
               ],
@@ -130,29 +143,29 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 6.h),
             child: TextField(
               controller: _searchController,
+              style: TextStyle(fontSize: 14.sp, color: titleInk),
+              cursorColor: focusLine,
               decoration: InputDecoration(
                 hintText: t.searchSurahHint,
-                prefixIcon: const Icon(Icons.search_rounded),
+                hintStyle: TextStyle(fontSize: 13.sp, color: mutedInk),
+                prefixIcon: Icon(Icons.search_rounded, color: mutedInk),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16.w,
                   vertical: 10.h,
                 ),
                 filled: true,
-                fillColor: const Color(0xFFF3F6E7),
+                fillColor: context.surfaceColor(const Color(0xFFF3F6E7)),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: Color(0xFFD4E5A8)),
+                  borderSide: BorderSide(color: fieldLine),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: Color(0xFFD4E5A8)),
+                  borderSide: BorderSide(color: fieldLine),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFA1AE57),
-                    width: 1.5,
-                  ),
+                  borderSide: BorderSide(color: focusLine, width: 1.5),
                 ),
               ),
             ),
@@ -160,16 +173,13 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
           Expanded(
             child: _loading
                 ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFA1AE57)),
+                    child: CircularProgressIndicator(color: oliveColor),
                   )
                 : filtered.isEmpty
                 ? Center(
                     child: Text(
                       t.noSurahsFound,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14.sp,
-                      ),
+                      style: TextStyle(color: mutedInk, fontSize: 14.sp),
                     ),
                   )
                 : ListView.separated(
@@ -180,7 +190,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                     itemCount: filtered.length,
                     separatorBuilder: (_, _) => Divider(
                       height: 1,
-                      color: Colors.grey.withValues(alpha: 0.15),
+                      color: context.lineColor(const Color(0xFFE0E0E0)),
                     ),
                     itemBuilder: (context, index) {
                       final surah = filtered[index];
@@ -194,8 +204,8 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFFA1AE57)
-                                : const Color(0xFFF0F5DF),
+                                ? oliveColor
+                                : context.surfaceColor(const Color(0xFFF0F5DF)),
                             shape: BoxShape.circle,
                           ),
                           child: FittedBox(
@@ -205,7 +215,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                               style: TextStyle(
                                 color: isSelected
                                     ? Colors.white
-                                    : const Color(0xFF5D7033),
+                                    : context.inkColor(const Color(0xFF5D7033)),
                                 fontWeight: FontWeight.w600,
                                 fontSize: 12.sp,
                               ),
@@ -218,18 +228,13 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                             fontWeight: isSelected
                                 ? FontWeight.w700
                                 : FontWeight.w500,
-                            color: isSelected
-                                ? const Color(0xFFA1AE57)
-                                : const Color(0xFF282442),
+                            color: isSelected ? selectedInk : titleInk,
                             fontSize: 14.sp,
                           ),
                         ),
                         subtitle: Text(
                           '${t.revelationPlace(surah.revelationPlace)} • ${t.ayahCount(surah.totalAyah)}',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey.shade600,
-                          ),
+                          style: TextStyle(fontSize: 11.sp, color: mutedInk),
                         ),
                         trailing: Text(
                           surah.nameArabic,
@@ -237,7 +242,7 @@ class _QuranSurahPickerSheetState extends State<QuranSurahPickerSheet> {
                             fontFamily: kQuranArabicFontFamily,
                             fontFamilyFallback: appFontFamilyFallback,
                             fontSize: 16.sp,
-                            color: const Color(0xFF4A5A38),
+                            color: context.inkColor(const Color(0xFF4A5A38)),
                           ),
                         ),
                       );
