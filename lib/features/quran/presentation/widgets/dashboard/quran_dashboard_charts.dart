@@ -133,9 +133,10 @@ class QuranPlotArea {
     required this.bottom,
     required this.maxY,
     this.dayStep,
+    this.slots,
   });
 
-  /// The weekly and daily charts' frame: points spread across the full width.
+  /// The daily chart's frame: points spread across the full width.
   factory QuranPlotArea.spread(Size size, double maxY) => QuranPlotArea(
     left: 34,
     top: 34,
@@ -143,6 +144,19 @@ class QuranPlotArea {
     bottom: size.height - 26,
     maxY: maxY,
   );
+
+  /// The weekly chart's frame: the width is cut into [count] equal slots and
+  /// each day's bars stand in the middle of theirs - the same geometry the
+  /// Hadith dashboard's weekly bars use.
+  factory QuranPlotArea.bars(Size size, double maxY, int count) =>
+      QuranPlotArea(
+        left: 34,
+        top: 14,
+        right: size.width - 6,
+        bottom: size.height - 26,
+        maxY: maxY,
+        slots: count,
+      );
 
   /// The monthly chart's: it scrolls, so a point's x is its day index times
   /// [step] and the frame starts at the scrolling content's own left edge.
@@ -165,12 +179,23 @@ class QuranPlotArea {
   /// Set on a scrolling chart: the distance between two days.
   final double? dayStep;
 
+  /// Set on a bar chart: how many equal slots the width is cut into, one per
+  /// day. A day then owns a band of the chart rather than a single x.
+  final int? slots;
+
   double get width => right - left;
   double get height => bottom - top;
+
+  /// One day's share of the width on a bar chart; the whole width otherwise.
+  double get slotWidth {
+    final n = slots;
+    return n != null && n > 0 ? width / n : width;
+  }
 
   double xForIndex(int index, int count) {
     final step = dayStep;
     if (step != null) return index * step + 10.0;
+    if (slots case final n? when n > 0) return left + slotWidth * (index + .5);
     if (count <= 1) return left + width / 2;
     return left + width * (index / (count - 1));
   }
@@ -178,9 +203,13 @@ class QuranPlotArea {
   double yForValue(double value) =>
       maxY <= 0 ? bottom : bottom - height * (value / maxY);
 
-  /// The point nearest to horizontal position [dx].
+  /// The point nearest to horizontal position [dx] - on a bar chart, the day
+  /// whose slot contains it.
   int indexAt(double dx, int count) {
     if (count <= 1) return 0;
+    if (slots case final n? when n > 0) {
+      return ((dx - left) / slotWidth).floor().clamp(0, n - 1);
+    }
     final step = dayStep;
     if (step != null) {
       return step <= 0 ? 0 : ((dx - 10.0) / step).round().clamp(0, count - 1);
@@ -363,9 +392,16 @@ double quranTooltipLeft(double x, double width, {double cardWidth = 190}) =>
     (x - cardWidth / 2).clamp(0.0, math.max(0.0, width - cardWidth));
 
 // ============================================================================
-// 1. WEEKLY CHART
+// 1. WEEKLY CHART - one pair of bars per day
 // ============================================================================
 
+/// The week as bars, the Hadith dashboard's weekly design: one pair of
+/// overlapping rounded bars per day - my minutes and, while the competitor is
+/// shown, theirs, the taller one behind - over dotted gridlines, with the day
+/// the reader leads in the strongest tone under the marker.
+///
+/// Tapping a day opens its card (time and points per reader); tapping it
+/// again closes it.
 class QuranWeeklyChart extends StatefulWidget {
   const QuranWeeklyChart({
     super.key,
@@ -401,8 +437,8 @@ class _QuranWeeklyChartState extends State<QuranWeeklyChart> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        final area = QuranPlotArea.spread(size, data.maxY);
         final count = data.labels.length;
+        final area = QuranPlotArea.bars(size, data.maxY, count);
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
           // Tapping the open day again closes its card.
@@ -455,6 +491,7 @@ class _QuranWeeklyChartState extends State<QuranWeeklyChart> {
   }
 }
 
+/// Draws [QuranWeeklyChart]'s bars, gridlines and labels.
 class _WeeklyChartPainter extends CustomPainter {
   _WeeklyChartPainter({
     required this.data,
@@ -478,22 +515,23 @@ class _WeeklyChartPainter extends CustomPainter {
   List<double> get myValues => data.mine;
   List<double> get competitorValues => data.competitor ?? const [];
 
+  /// A deeper shade of [quranMyColor] for the day the reader leads, so one
+  /// bar carries the week the way the Hadith dashboard's does.
+  static const _peakColor = Color(0xFF42593D);
+
   @override
   void paint(Canvas canvas, Size size) {
     final maxY = data.maxY;
-    final area = QuranPlotArea.spread(size, maxY);
-    final chartLeft = area.left;
-    final chartRight = area.right;
-    final chartTop = area.top;
-    final chartBottom = area.bottom;
+    final count = labels.length;
+    final area = QuranPlotArea.bars(size, maxY, count);
 
-    // 1. Horizontal dotted lines and Y labels
+    // 1. Dotted gridlines and the Y axis numbers.
     for (final level in _levels(maxY)) {
       final y = area.yForValue(level);
       drawChartText(
         canvas,
         _axisLabel(level, number),
-        Offset(chartLeft - 6, y),
+        Offset(area.left - 6, y),
         color: palette.axisInk,
         fontSize: 10.5,
         align: TextAlign.right,
@@ -502,91 +540,66 @@ class _WeeklyChartPainter extends CustomPainter {
       );
       drawChartDottedLine(
         canvas,
-        Offset(chartLeft, y),
-        Offset(chartRight, y),
+        Offset(area.left, y),
+        Offset(area.right, y),
         color: palette.gridLine,
       );
     }
 
-    final count = labels.length;
     if (count == 0 || myValues.length != count) return;
-    double xAt(int i) => area.xForIndex(i, count);
-    double yAt(double v) => area.yForValue(v);
+    final withCompetitor = showCompetitor && competitorValues.length == count;
+    final barWidth = area.slotWidth * .58;
 
-    // 2. Day labels
+    RRect barFor(double cx, double value) => RRect.fromRectAndCorners(
+      Rect.fromLTRB(
+        cx - barWidth / 2,
+        area.yForValue(value),
+        cx + barWidth / 2,
+        area.bottom,
+      ),
+      topLeft: Radius.circular(barWidth * .28),
+      topRight: Radius.circular(barWidth * .28),
+    );
+
+    // The week's best day, and whether the reader was ahead on it: only then
+    // does it earn the strongest tone and the marker.
+    final best = myValues.indexOf(myValues.reduce(math.max));
+    final leads =
+        myValues[best] > 0 &&
+        (!withCompetitor || myValues[best] >= competitorValues[best]);
+
+    // 2. A day label and one pair of bars per slot.
     for (var i = 0; i < count; i++) {
+      final cx = area.xForIndex(i, count);
       drawChartText(
         canvas,
         labels[i],
-        Offset(xAt(i), chartBottom + 8),
+        Offset(cx, area.bottom + 8),
         color: palette.dayInk,
         fontSize: 12,
         anchorCenterX: true,
       );
-    }
 
-    final myPoints = [
-      for (var i = 0; i < count; i++) Offset(xAt(i), yAt(myValues[i])),
-    ];
-
-    final withCompetitor = showCompetitor && competitorValues.length == count;
-
-    // 3. Competitor Area
-    if (withCompetitor) {
-      final compPoints = [
-        for (var i = 0; i < count; i++)
-          Offset(xAt(i), yAt(competitorValues[i])),
-      ];
-      drawSplineArea(
-        canvas: canvas,
-        points: compPoints,
-        lineColor: const Color(0xFF8F9F4A),
-        gradientColors: [
-          const Color(0xFFD6DBFF).withValues(alpha: 0.55),
-          const Color(0xFFEBF0FF).withValues(alpha: 0.20),
-          Colors.transparent,
-        ],
-        chartLeft: chartLeft,
-        chartTop: chartTop,
-        chartRight: chartRight,
-        chartBottom: chartBottom,
-      );
-    }
-
-    // 4. My Position Area
-    drawSplineArea(
-      canvas: canvas,
-      points: myPoints,
-      lineColor: const Color(0xFF5D7858),
-      gradientColors: [
-        const Color(0xFF8EC4E5).withValues(alpha: 0.40),
-        const Color(0xFFC7E5F3).withValues(alpha: 0.16),
-        Colors.transparent,
-      ],
-      chartLeft: chartLeft,
-      chartTop: chartTop,
-      chartRight: chartRight,
-      chartBottom: chartBottom,
-    );
-
-    // 5. My Position node markers. The tapped one is drawn bigger, so the
-    // card that opened plainly belongs to it.
-    for (var i = 0; i < myPoints.length; i++) {
-      drawReadingNode(canvas, myPoints[i], selected: i == selectedIndex);
-    }
-
-    // 6. Competitor badges
-    if (withCompetitor) {
-      final compPoints = [
-        for (var i = 0; i < count; i++)
-          Offset(xAt(i), yAt(competitorValues[i])),
-      ];
-      for (var i = 0; i < compPoints.length; i++) {
-        drawCompetitorBadge(canvas, compPoints[i], data.competitorBadge);
-        if (i == selectedIndex) {
-          drawRivalNode(canvas, compPoints[i]);
-        }
+      // Taller bar behind, shorter in front, so neither hides the other.
+      final bars = [
+        (myValues[i], i == best && leads ? _peakColor : quranMyColor),
+        if (withCompetitor) (competitorValues[i], quranRivalColor),
+      ]..sort((a, b) => b.$1.compareTo(a.$1));
+      for (final (value, color) in bars) {
+        if (value <= 0) continue;
+        canvas.drawRRect(barFor(cx, value), Paint()..color = color);
       }
+    }
+
+    // 3. The marker: on the open day's bar, else on the week's best one.
+    final marked = selectedIndex ?? (leads ? best : null);
+    if (marked != null && marked < count && myValues[marked] > 0) {
+      final at = Offset(
+        area.xForIndex(marked, count),
+        area.yForValue(myValues[marked]) + 14,
+      );
+      canvas.drawCircle(at, 8, Paint()..color = Colors.white);
+      canvas.drawCircle(at, 4, Paint()..color = _peakColor);
     }
   }
 
