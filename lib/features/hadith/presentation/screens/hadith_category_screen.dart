@@ -31,7 +31,7 @@ class HadithCategoryArgs {
 
 /// Per-collection Hadith category list (`GET /hadiths/categories`).
 ///
-/// Reached from a collection card's "Explore" action on the Hadith library
+/// Reached from a collection card's "Categories" action on the Hadith library
 /// screens. Shows the collection's ordered categories, each with its name (in
 /// Bangla and/or the API's `name`), hadith count and reading progress
 /// (`GET /hadiths/reading/progress/categories`, matched by category id).
