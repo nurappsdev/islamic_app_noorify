@@ -25,6 +25,11 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 /// loading.
 const _loadMoreThreshold = 240.0;
 
+/// About as tall as the floating [HadithBottomNav] laid over the list area.
+/// Kept clear at the bottom of a centred state (empty, error) so the block
+/// reads as centred on screen instead of sitting half behind the bar.
+const _navBarExtent = 68.0;
+
 /// Hadith reading planner, reached from index 1 ("Planner") of the Hadith
 /// navigation bar.
 ///
@@ -324,10 +329,7 @@ class _MyPlans extends StatelessWidget {
       );
     }
     if (state.plans.isEmpty) {
-      return Transform.translate(
-        offset: Offset(0, -34.h),
-        child: const _EmptyPlans(),
-      );
+      return _EmptyPlans(message: appText.noPlansYetMessage);
     }
 
     // A page too short to scroll (or scrolling less than the load-more
@@ -430,18 +432,7 @@ class _CompletedPlans extends StatelessWidget {
       );
     }
     if (state.plans.isEmpty) {
-      return Transform.translate(
-        offset: Offset(0, -34.h),
-        child: Text(
-          appText.noCompletedPlansMessage,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: const Color(0xFF989898),
-            fontSize: 13.sp,
-            height: 1.35,
-          ),
-        ),
-      );
+      return _EmptyPlans(message: appText.noCompletedPlansMessage);
     }
 
     // A page too short to scroll (or scrolling less than the load-more
@@ -620,7 +611,7 @@ class _PlanMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, _navBarExtent.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -864,63 +855,74 @@ class _PlanTab extends StatelessWidget {
   }
 }
 
+/// The empty state of either tab: the note illustration over [message].
+///
+/// Centred in the space the plan list is given, with the floating
+/// [HadithBottomNav]'s own height kept clear at the bottom so the block reads
+/// as centred on screen instead of sitting half behind the bar.
 class _EmptyPlans extends StatelessWidget {
-  const _EmptyPlans();
+  const _EmptyPlans({required this.message});
+
+  /// Why the list is empty: no plans yet, or none completed yet.
+  final String message;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 100.w,
-            height: 91.h,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // The note illustration keeps its pale green in both
-                // themes, so the marks on it go black in dark mode rather
-                // than light ink that would vanish into it.
-                Icon(
-                  Icons.sticky_note_2_rounded,
-                  color: const Color(0xFFDDE8BA),
-                  size: 86.sp,
-                ),
-                Positioned(
-                  top: 27.h,
-                  child: Text(
-                    '?',
-                    style: TextStyle(
-                      color: context.onLightInkColor(Color(0xFF84945F)),
-                      fontSize: 31.sp,
-                      fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(32.w, 0, 32.w, _navBarExtent.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 100.w,
+              height: 91.h,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // The note illustration keeps its pale green in both
+                  // themes, so the marks on it go black in dark mode rather
+                  // than light ink that would vanish into it.
+                  Icon(
+                    Icons.sticky_note_2_rounded,
+                    color: const Color(0xFFDDE8BA),
+                    size: 86.sp,
+                  ),
+                  Positioned(
+                    top: 27.h,
+                    child: Text(
+                      '?',
+                      style: TextStyle(
+                        color: context.onLightInkColor(const Color(0xFF84945F)),
+                        fontSize: 31.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 18.h,
-                  left: 6.w,
-                  child: Icon(
-                    Icons.wb_sunny_outlined,
-                    color: context.onLightInkColor(Color(0xFF84945F)),
-                    size: 25.sp,
+                  Positioned(
+                    top: 18.h,
+                    left: 6.w,
+                    child: Icon(
+                      Icons.wb_sunny_outlined,
+                      color: context.onLightInkColor(const Color(0xFF84945F)),
+                      size: 25.sp,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 13.h),
-          Text(
-            AppText.of(context).noPlansYetMessage,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: context.textInkColor(const Color(0xFF989898)),
-              fontSize: 13.sp,
-              height: 1.35,
+            SizedBox(height: 13.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.textInkColor(const Color(0xFF989898)),
+                fontSize: 13.sp,
+                height: 1.35,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
