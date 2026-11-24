@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_share_link.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
@@ -1176,9 +1177,12 @@ class _HadithCardState extends State<_HadithCard> {
     );
   }
 
+  /// Copies [text] with the app's Play Store link under it, so a hadith
+  /// pasted into a chat carries where it came from.
   Future<void> _copyValue(String text) async {
-    if (text.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
+    final message = withAppLink(text, appText.hadithShareInvitation);
+    if (message.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: message));
     _toast(appText.hadithCopied);
   }
 

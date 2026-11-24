@@ -139,6 +139,7 @@ const Map<String, String> appTextEn = <String, String>{
   'hadithSwipeNext': 'Swipe for the next hadith',
   'hadithCopy': 'Copy hadith',
   'hadithCopied': 'Hadith copied',
+  'hadithShareInvitation': 'Read more hadith with Tuhfatul Muslim:',
   'hadithShare': 'Share',
   'hadithCopyTranslation': 'Copy translation',
   'hadithCopyArabic': 'Copy Arabic',
