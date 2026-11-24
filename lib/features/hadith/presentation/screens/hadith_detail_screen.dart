@@ -1199,13 +1199,26 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
         ..writeln()
         ..writeln(translation);
     }
-    if (hadith.takhrij.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln(hadith.takhrij);
-    }
     return buffer.toString().trim();
   }
+
+  /// `Reference: ...`, or empty when the hadith carries none.
+  String get _referenceLine => hadith.takhrij.isEmpty
+      ? ''
+      : '${_appText.hadithBookReference}: ${hadith.takhrij}';
+
+  /// The citation under every copied part — the translation on its own, the
+  /// Arabic on its own, or the whole hadith — so whoever it is sent to can
+  /// tell which hadith it is and where it comes from.
+  String get _citation => hadithCitation(
+    numberLabel: _appText.hadithNoLabel,
+    number: localizeDigits(
+      '${hadith.hadithNumber}',
+      context.read<LanguageBloc>().state.language,
+    ),
+    book: widget.bookName,
+    referenceLine: _referenceLine,
+  );
 
   String get _shareSubject => _pick(hadith.titleBangla, hadith.titleEnglish);
 
@@ -1225,14 +1238,19 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
     );
   }
 
-  /// Copies [text] with the app's Play Store link under it, so a hadith
-  /// pasted into a chat carries where it came from.
+  /// Copies [text] with its citation and the app's Play Store link under it,
+  /// so a hadith pasted into a chat says which hadith it is, where it comes
+  /// from, and which app it was read in.
   Future<void> _copyValue(String text) async {
-    final message = withAppLink(text, _appText.hadithShareInvitation);
-    if (message.isEmpty) return;
-    final copied = _appText.hadithCopied;
+    final body = text.trim();
+    if (body.isEmpty) return;
+    final appText = _appText;
+    final message = withAppLink(
+      [body, _citation].join('\n\n'),
+      appText.hadithShareInvitation,
+    );
     await Clipboard.setData(ClipboardData(text: message));
-    _toast(copied);
+    _toast(appText.hadithCopied);
   }
 
   Future<void> _shareScreenshot() async {
@@ -1266,11 +1284,13 @@ class _HadithDetailCardState extends State<HadithDetailCard> {
     final subject =
         '${appText.hadithReport}: ${widget.bookName} — '
         '${appText.categoryHadith} ${hadith.hadithNumber}';
-    final body =
-        '${appText.hadithReportMessage}'
-        '${appText.hadithBookReference}: ${widget.bookName}\n'
-        '${appText.categoryHadith}: ${hadith.hadithNumber}\n\n'
-        '$_plainText';
+    final body = [
+      '${appText.hadithReportMessage}'
+          '${appText.hadithBookReference}: ${widget.bookName}\n'
+          '${appText.categoryHadith}: ${hadith.hadithNumber}\n\n'
+          '$_plainText',
+      _referenceLine,
+    ].where((part) => part.isNotEmpty).join('\n\n');
     final uri = Uri.parse(
       'mailto:$_reportEmail'
       '?subject=${Uri.encodeComponent(subject)}'
