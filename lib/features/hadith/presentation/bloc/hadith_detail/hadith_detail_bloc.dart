@@ -11,6 +11,7 @@ export 'hadith_detail_state.dart';
 class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   HadithDetailBloc(this._getHadithDetails) : super(const HadithDetailState()) {
     on<LoadHadithDetails>(_onLoad);
+    on<RefreshHadithDetails>(_onRefresh);
     on<LoadMoreHadithDetails>(_onLoadMore);
   }
 
@@ -27,11 +28,23 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
   Future<void> _onLoad(
     LoadHadithDetails event,
     Emitter<HadithDetailState> emit,
-  ) async {
+  ) {
     _subCategoryId = event.subCategoryId;
     _bookId = event.bookId;
     _categoryId = event.categoryId;
     _planId = event.planId;
+    return _loadFirstPage(emit);
+  }
+
+  Future<void> _onRefresh(
+    RefreshHadithDetails event,
+    Emitter<HadithDetailState> emit,
+  ) => _loadFirstPage(emit, forceRefresh: true);
+
+  Future<void> _loadFirstPage(
+    Emitter<HadithDetailState> emit, {
+    bool forceRefresh = false,
+  }) async {
     final generation = ++_generation;
     emit(const HadithDetailState(status: HadithDetailStatus.loading));
     final result = await _getHadithDetails(
@@ -39,6 +52,7 @@ class HadithDetailBloc extends Bloc<HadithDetailEvent, HadithDetailState> {
       bookId: _bookId,
       categoryId: _categoryId,
       planId: _planId,
+      forceRefresh: forceRefresh,
     );
     if (generation != _generation) return;
     result.fold(

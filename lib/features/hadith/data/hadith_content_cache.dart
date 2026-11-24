@@ -21,10 +21,26 @@ class HadithContentCache {
   /// Version of the cached content's format. Bumped to 2 when the API host
   /// became part of [keyOf]'s key: the host-less rows are dropped rather
   /// than left to answer for whichever environment is now configured.
-  static const contentVersion = 2;
+  ///
+  /// Bumped to 3 to drop every row written while empty responses were still
+  /// stored: a book opened before its categories existed had `data: []`
+  /// pinned for a day, and the screen answered "no results" from the device
+  /// without ever reaching the API. Those rows go on first launch; nothing
+  /// stored from now on can be empty (see the data source's `_getList`).
+  static const contentVersion = 3;
 
-  /// Stored content older than this is refreshed in the background.
-  static const refreshAfter = Duration(days: 1);
+  /// How long a stored copy answers on its own. Older content is checked
+  /// against the API before it is shown (the stored copy is the fallback
+  /// when that request fails), so this is the longest the app can be behind
+  /// the server without a pull to refresh.
+  ///
+  /// It is minutes, not a day: hadiths, chapters and categories are added to
+  /// a book over time, and a day-long window meant a chapter read once kept
+  /// showing the hadiths it had then — 2 of 10 — with no request leaving the
+  /// device. Short enough that content added in the dashboard shows up on
+  /// the next visit; long enough that moving back and forth between screens
+  /// stays instant and offline reading keeps working.
+  static const refreshAfter = Duration(minutes: 10);
 
   final HadithDatabase _database;
   final _memory = <String, ({Map<String, dynamic> json, DateTime at})>{};

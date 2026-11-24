@@ -119,6 +119,7 @@ class _FakeRepository implements HadithLibraryRepository {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh = false,
   }) async => Right(
     HadithCategoryPage(
       categories: bookId == 'book-1'

@@ -33,20 +33,23 @@ abstract interface class HadithLibraryRemoteDataSource {
   Future<List<EbookModel>> getEbooks({bool forceRefresh});
 
   /// `GET /hadiths/categories?bookId=...&page=...&limit=...&searchTerm=...`.
+  /// See [getBooks] for [forceRefresh].
   Future<HadithCategoryPageModel> getCategories(
     String bookId, {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh,
   });
 
   /// `GET /hadiths/categories/{categoryId}/subcategories?page=...&limit=...`
-  /// (optionally `&searchTerm=...`).
+  /// (optionally `&searchTerm=...`). See [getBooks] for [forceRefresh].
   Future<HadithSubCategoryPageModel> getSubCategories(
     String categoryId, {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh,
   });
 
   /// `POST /learning/reading/track` (needs the login token): reports the
@@ -139,6 +142,7 @@ abstract interface class HadithLibraryRemoteDataSource {
     String? planId,
     required int page,
     required int limit,
+    bool forceRefresh,
   });
 
   /// `GET /hadiths/reading/read?subCategoryId=...` (or `bookId=`/`planId=`,
@@ -172,7 +176,6 @@ class HadithLibraryRemoteDataSourceImpl
 
   /// The most hadith pages of one scope fetched ahead in the background.
   static const _prefetchPages = 30;
-  final _refreshing = <String>{};
 
   @override
   Future<List<HadithLibraryBookModel>> getBooks({
@@ -205,14 +208,21 @@ class HadithLibraryRemoteDataSourceImpl
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh = false,
   }) async {
-    final envelope = await _getList(ApiConstants.hadithCategoriesEndPoint, {
-      'bookId': bookId,
-      'page': page,
-      'limit': limit,
-      // Matches the category's Bangla, Arabic or English name.
-      if (searchTerm != null && searchTerm.isNotEmpty) 'searchTerm': searchTerm,
-    }, 'Hadith categories');
+    final envelope = await _getList(
+      ApiConstants.hadithCategoriesEndPoint,
+      {
+        'bookId': bookId,
+        'page': page,
+        'limit': limit,
+        // Matches the category's Bangla, Arabic or English name.
+        if (searchTerm != null && searchTerm.isNotEmpty)
+          'searchTerm': searchTerm,
+      },
+      'Hadith categories',
+      forceRefresh: forceRefresh,
+    );
     return HadithCategoryPageModel.fromJson(envelope.items, envelope.meta);
   }
 
@@ -222,14 +232,19 @@ class HadithLibraryRemoteDataSourceImpl
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh = false,
   }) async {
-    final envelope =
-        await _getList(ApiConstants.hadithSubCategoriesEndPoint(categoryId), {
-          'page': page,
-          'limit': limit,
-          if (searchTerm != null && searchTerm.isNotEmpty)
-            'searchTerm': searchTerm,
-        }, 'Hadith sub-categories');
+    final envelope = await _getList(
+      ApiConstants.hadithSubCategoriesEndPoint(categoryId),
+      {
+        'page': page,
+        'limit': limit,
+        if (searchTerm != null && searchTerm.isNotEmpty)
+          'searchTerm': searchTerm,
+      },
+      'Hadith sub-categories',
+      forceRefresh: forceRefresh,
+    );
     return HadithSubCategoryPageModel.fromJson(envelope.items, envelope.meta);
   }
 
@@ -241,6 +256,7 @@ class HadithLibraryRemoteDataSourceImpl
     String? planId,
     required int page,
     required int limit,
+    bool forceRefresh = false,
   }) async {
     if (planId != null) {
       // A plan's hadiths come with their read state, and only for its owner.
@@ -254,13 +270,18 @@ class HadithLibraryRemoteDataSourceImpl
         for (final item in envelope.items) unwrapPlanHadith(item),
       ], envelope.meta);
     }
-    final envelope = await _getList(ApiConstants.hadithsEndPoint, {
-      'subCategoryId': ?subCategoryId,
-      'bookId': ?bookId,
-      'categoryId': ?categoryId,
-      'page': page,
-      'limit': limit,
-    }, 'Hadiths');
+    final envelope = await _getList(
+      ApiConstants.hadithsEndPoint,
+      {
+        'subCategoryId': ?subCategoryId,
+        'bookId': ?bookId,
+        'categoryId': ?categoryId,
+        'page': page,
+        'limit': limit,
+      },
+      'Hadiths',
+      forceRefresh: forceRefresh,
+    );
     return HadithDetailPageModel.fromJson(envelope.items, envelope.meta);
   }
 
@@ -571,9 +592,17 @@ class HadithLibraryRemoteDataSourceImpl
   /// throwing the data-layer exceptions on any failure. Public endpoints need
   /// no token; pass [authenticated] to send the login token.
   ///
-  /// Public, non-search content is offline-first: a stored copy is returned
-  /// at once (refreshed in the background once it is a day old), and only a
-  /// miss goes to the API, whose answer is stored for next time.
+  /// Public, non-search content is offline-first: a copy stored less than
+  /// [HadithContentCache.refreshAfter] ago answers without touching the
+  /// network. Anything older — and every [forceRefresh], i.e. a pull to
+  /// refresh — is revalidated against the API *before* it is shown, so
+  /// content added on the server since is never hidden behind a stale copy;
+  /// if that request fails, the stored copy still answers, so reading works
+  /// offline.
+  ///
+  /// An empty page is never stored: a book whose categories or hadiths are
+  /// still being filled in would otherwise answer "nothing here" from the
+  /// device for a day, with no request reaching the API at all.
   Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})>
   _getList(
     String path,
@@ -584,41 +613,32 @@ class HadithLibraryRemoteDataSourceImpl
   }) async {
     final cache = authenticated || query['searchTerm'] != null ? null : _cache;
     final key = HadithContentCache.keyOf(path, query);
-    if (cache != null && !forceRefresh) {
-      final hit = await cache.read(key);
-      if (hit != null) {
-        if (HadithContentCache.isStale(hit.at)) {
-          unawaited(_refresh(cache, key, path, query));
-        }
-        return _envelopeOf(hit.json, what);
+
+    ({Map<String, dynamic> json, DateTime at})? stored;
+    if (cache != null) {
+      stored = await cache.read(key);
+      if (stored != null &&
+          !forceRefresh &&
+          !HadithContentCache.isStale(stored.at)) {
+        return _envelopeOf(stored.json, what);
       }
     }
 
-    final json = await _fetchJson(path, query, authenticated: authenticated);
+    final Map<String, dynamic> json;
+    try {
+      json = await _fetchJson(path, query, authenticated: authenticated);
+    } catch (_) {
+      // Offline or the API failed: a stored copy keeps the screen readable.
+      if (stored != null) return _envelopeOf(stored.json, what);
+      rethrow;
+    }
     final envelope = _envelopeOf(json, what);
-    if (cache != null && await cache.write(key, json)) {
+    if (cache != null &&
+        envelope.items.isNotEmpty &&
+        await cache.write(key, json)) {
       unawaited(_prefetchRest(cache, path, query, envelope.meta));
     }
     return envelope;
-  }
-
-  /// Re-fetches a stored response in the background; failures keep the copy.
-  Future<void> _refresh(
-    HadithContentCache cache,
-    String key,
-    String path,
-    Map<String, dynamic> query,
-  ) async {
-    if (!_refreshing.add(key)) return;
-    try {
-      final json = await _fetchJson(path, query);
-      _envelopeOf(json, '');
-      await cache.write(key, json);
-    } catch (_) {
-      /* Offline or failed: the stored copy stays in use. */
-    } finally {
-      _refreshing.remove(key);
-    }
   }
 
   /// After the first page of a scope's hadiths, stores the remaining pages
@@ -637,7 +657,7 @@ class HadithLibraryRemoteDataSourceImpl
       if (await cache.read(key) != null) continue;
       try {
         final json = await _fetchJson(path, pageQuery);
-        _envelopeOf(json, '');
+        if (_envelopeOf(json, '').items.isEmpty) return;
         await cache.write(key, json);
       } catch (_) {
         return; // Offline or failed: pages load one by one when reached.

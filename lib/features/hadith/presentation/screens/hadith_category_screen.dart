@@ -31,7 +31,7 @@ class HadithCategoryArgs {
 
 /// Per-collection Hadith category list (`GET /hadiths/categories`).
 ///
-/// Reached from a collection card's "Explore" action on the Hadith library
+/// Reached from a collection card's "Categories" action on the Hadith library
 /// screens. Shows the collection's ordered categories, each with its name (in
 /// Bangla and/or the API's `name`), hadith count and reading progress
 /// (`GET /hadiths/reading/progress/categories`, matched by category id).
@@ -109,6 +109,28 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
     });
   }
 
+  /// Pull to refresh: reloads the categories from the API instead of the
+  /// copy stored on the device, so categories added on the server since show
+  /// up. Completes once the new list (and the progress) is in, so the
+  /// spinner runs for exactly that long.
+  Future<void> _refresh() {
+    // The rings reload alongside, but the spinner follows the list alone:
+    // for a guest the progress bloc never leaves `initial` (it needs the
+    // login token), so waiting on it would spin for good.
+    context.read<HadithReadingProgressBloc>().add(
+      const RefreshHadithReadingProgress(),
+    );
+    final categories = context.read<HadithCategoryBloc>()
+      ..add(const RefreshHadithCategories());
+    // The first state after the event is `loading`, never the old one, so
+    // waiting for "not loading" waits for the fresh result. `orElse` covers
+    // the screen being popped mid-refresh.
+    return categories.stream.firstWhere(
+      (s) => !s.isLoading,
+      orElse: () => categories.state,
+    );
+  }
+
   /// Called when the user comes back from a category's screens (where they
   /// may have read hadiths), so the new percentages show straight away.
   void _refreshProgress() {
@@ -149,6 +171,7 @@ class _HadithCategoryViewState extends State<_HadithCategoryView> {
       title: appText.hadithCategory,
       controller: _scrollController,
       onSearchChanged: _onSearchChanged,
+      onRefresh: _refresh,
       children: [
         if (state.isLoading)
           const _CategorySkeletons(count: 6)

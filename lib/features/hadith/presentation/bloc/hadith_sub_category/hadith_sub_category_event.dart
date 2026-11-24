@@ -9,6 +9,12 @@ class LoadHadithSubCategories extends HadithSubCategoryEvent {
   final String categoryId;
 }
 
+/// Reloads the first page straight from the API (a pull to refresh), keeping
+/// the category and any search term in place.
+class RefreshHadithSubCategories extends HadithSubCategoryEvent {
+  const RefreshHadithSubCategories();
+}
+
 /// Loads the next page; ignored while a load is running or after the last
 /// page.
 class LoadMoreHadithSubCategories extends HadithSubCategoryEvent {

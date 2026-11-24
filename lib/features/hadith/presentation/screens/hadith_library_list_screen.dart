@@ -16,8 +16,8 @@ import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 /// Full "Hadith Library" collection list.
 ///
 /// Reached from the "See All" action next to the Hadith Library section on
-/// [HadithLibraryScreen]. Each card's "Explore" action opens the book reader
-/// for that collection.
+/// [HadithLibraryScreen]. Each card's "Categories" action opens the ordered
+/// category list for that collection.
 class HadithLibraryListScreen extends StatelessWidget {
   const HadithLibraryListScreen({super.key});
 
@@ -117,7 +117,7 @@ class _LibraryCard extends StatelessWidget {
                 onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 15.sp),
-                label: Text(appText.explore),
+                label: Text(appText.categories),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: context.inkColor(Color(0xFF4C5A34)),
                   side: BorderSide(color: context.lineColor(Color(0xFF9BAE6C))),

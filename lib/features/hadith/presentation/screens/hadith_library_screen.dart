@@ -483,7 +483,7 @@ class _CollectionCard extends StatelessWidget {
       width: 218.w,
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
       // The card's gradient is light in both themes, so its title, icon and
-      // Explore button keep the light-mode design and go black in dark mode
+      // Categories button keep the light-mode design and go black in dark mode
       // instead of following the theme into light ink on a light card.
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -517,7 +517,7 @@ class _CollectionCard extends StatelessWidget {
                 onPressed: () => openHadithLibraryBook(context, book),
                 iconAlignment: IconAlignment.end,
                 icon: Icon(Icons.north_east_rounded, size: 13.sp),
-                label: Text(appText.explore),
+                label: Text(appText.categories),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: context.onLightInkColor(Color(0xFF4C5A34)),
                   side: const BorderSide(color: Color(0xFF9BAE6C)),
