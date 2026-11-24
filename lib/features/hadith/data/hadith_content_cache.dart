@@ -35,12 +35,12 @@ class HadithContentCache {
   /// the server without a pull to refresh.
   ///
   /// It is minutes, not a day: hadiths, chapters and categories are added to
-  /// a book over time, and a day-long window meant a chapter read once kept
-  /// showing the hadiths it had then — 2 of 10 — with no request leaving the
-  /// device. Short enough that content added in the dashboard shows up on
-  /// the next visit; long enough that moving back and forth between screens
-  /// stays instant and offline reading keeps working.
-  static const refreshAfter = Duration(minutes: 10);
+  /// and removed from a book over time, and a day-long window meant a
+  /// chapter read once kept showing the hadiths it had then — 2 of 10 — with
+  /// no request leaving the device. Short enough that content changed in the
+  /// dashboard shows up on the next visit; long enough that moving back and
+  /// forth between screens stays instant and offline reading keeps working.
+  static const refreshAfter = Duration(minutes: 2);
 
   final HadithDatabase _database;
   final _memory = <String, ({Map<String, dynamic> json, DateTime at})>{};
@@ -87,6 +87,20 @@ class HadithContentCache {
     }
     _memory[key] = (json: json, at: DateTime.now());
     return true;
+  }
+
+  /// Forgets what was stored for [key], in memory and on the device.
+  ///
+  /// Called when the API answers that a request has no content any more: an
+  /// e-book or a chapter deleted in the dashboard must not keep opening from
+  /// the device, least of all offline, where there is nothing to correct it.
+  Future<void> remove(String key) async {
+    _memory.remove(key);
+    try {
+      await _database.dropCachedContent(key);
+    } catch (_) {
+      /* Storage failures only mean the copy stays; never break loading. */
+    }
   }
 
   static bool isStale(DateTime at) =>

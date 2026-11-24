@@ -137,6 +137,7 @@ const Map<String, String> appTextBn = <String, String>{
   'hadithSwipeNext': 'পরবর্তী হাদিসের জন্য সোয়াইপ করুন',
   'hadithCopy': 'হাদিস কপি করুন',
   'hadithCopied': 'হাদিস কপি হয়েছে',
+  'hadithShareInvitation': 'তুহফাতুল মুসলিম অ্যাপে আরও হাদিস পড়ুন:',
   'hadithShare': 'শেয়ার করুন',
   'hadithCopyTranslation': 'অনুবাদ কপি করুন',
   'hadithCopyArabic': 'আরবি কপি করুন',

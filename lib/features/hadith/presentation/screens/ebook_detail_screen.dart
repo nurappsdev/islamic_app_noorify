@@ -82,9 +82,7 @@ class _WebEbookDetailScreen extends StatelessWidget {
               ),
               SizedBox(height: 18.h),
               FilledButton.icon(
-                onPressed: ebook.pdfFileUrl.isEmpty
-                    ? null
-                    : () => _open(context),
+                onPressed: ebook.hasReadablePdf ? () => _open(context) : null,
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('Open e-book'),
               ),
@@ -304,6 +302,15 @@ class _DownloadButton extends StatelessWidget {
     final appText = AppText.of(context);
     final state = context.watch<EbookDownloadBloc>().state;
 
+    // A record whose `pdfFileUrl` is not a fetchable http(s) URL - the
+    // dashboard has stored browser `blob:` URLs, which point at nothing -
+    // can never download. Say so rather than offer a button that always
+    // fails; a copy saved earlier still opens.
+    if (!ebook.hasReadablePdf &&
+        state.status != EbookDownloadStatus.downloaded) {
+      return _Unavailable(message: appText.failureEbookNoPdf);
+    }
+
     ButtonStyle style() => FilledButton.styleFrom(
       backgroundColor: AppColor.primary,
       foregroundColor: Colors.white,
@@ -407,5 +414,47 @@ class _DownloadButton extends StatelessWidget {
           style: style(),
         );
     }
+  }
+}
+
+/// Shown in place of the download button when the e-book carries no usable
+/// PDF URL, so there is nothing to retry.
+class _Unavailable extends StatelessWidget {
+  const _Unavailable({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(const Color(0xFFF7F9EF)),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: context.lineColor(const Color(0xFFE3E7D3))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 16.sp,
+            color: context.textInkColor(const Color(0xFF9BA85B)),
+          ),
+          SizedBox(width: 8.w),
+          Flexible(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 12.5.sp,
+                height: 1.4,
+                color: context.inkColor(const Color(0xFF5D6B44)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

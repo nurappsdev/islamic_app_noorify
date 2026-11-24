@@ -29,4 +29,18 @@ class Ebook {
   final String reference;
   final int displayOrder;
   final bool isActive;
+
+  /// Whether [pdfFileUrl] is something the app can actually fetch.
+  ///
+  /// A record may carry a `blob:` URL - a handle that only exists inside the
+  /// browser tab that picked the file, so the PDF never reached storage and no
+  /// HTTP client can resolve it. Treat anything that is not an absolute
+  /// http(s) URL as a missing file, so the screen says so instead of offering
+  /// a download that can only fail.
+  bool get hasReadablePdf {
+    final uri = Uri.tryParse(pdfFileUrl.trim());
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
 }

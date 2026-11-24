@@ -59,6 +59,10 @@ Map<String, Object?> _serve(RequestOptions r) {
         page: page,
         totalPage: 3,
       );
+    case '/ebooks':
+      return _page([
+        {'_id': 'e1', 'titleEnglish': 'Advice for the Muslim'},
+      ]);
     case '/hadiths/reading/read':
       return _page([
         {'hadithId': 'h1', 'isRead': true},
@@ -242,6 +246,49 @@ void main() {
     final books = await _source(offline).getBooks();
     expect(books.single.id, 'b1');
     expect(offline.requests, hasLength(1));
+  });
+
+  // Content deleted in the dashboard must not keep opening from the device:
+  // the stored copy is dropped as soon as the API answers that the request
+  // has nothing left, so not even an offline open brings it back.
+  test('a list the API empties is forgotten, not kept', () async {
+    await _source(Adapter(_serve)).getEbooks();
+    // Past the window, so the next open asks the API: what the e-book shelf
+    // does a couple of minutes after an admin deletes the last e-book.
+    await (await HadithDatabase().open()).update('hadith_content_cache', {
+      'cached_at': DateTime.now()
+          .subtract(HadithContentCache.refreshAfter * 2)
+          .millisecondsSinceEpoch,
+    });
+
+    final emptied = Adapter((r) => _page(const []));
+    expect(await _source(emptied).getEbooks(), isEmpty);
+    expect(emptied.requests, hasLength(1));
+
+    // Nothing is left to answer from, online or off.
+    final offline = _offline();
+    await expectLater(
+      _source(offline).getEbooks(),
+      throwsA(isA<NetworkException>()),
+    );
+  });
+
+  // An unknown query parameter is not a way past the API's own cache: the
+  // e-book endpoint passes parameters it does not know into its database
+  // filter, so a request carrying one came back with an empty shelf — and an
+  // empty answer now drops the stored copy, which would clear the shelf on
+  // the device too. A refresh sends the same query as a plain open.
+  test('a forced refresh sends no extra query parameters', () async {
+    final server = Adapter(_serve);
+    final source = _source(server);
+    await source.getEbooks();
+    await source.getEbooks(forceRefresh: true);
+
+    expect(server.requests, hasLength(2));
+    expect(
+      server.requests.last.queryParameters,
+      server.requests.first.queryParameters,
+    );
   });
 
   // The reported bug: a book opened before its categories were added stored
