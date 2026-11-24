@@ -30,21 +30,24 @@ abstract interface class HadithLibraryRepository {
   /// order.
   ///
   /// [searchTerm] filters by the category's Bangla, Arabic or English name.
+  /// See [getBooks] for [forceRefresh].
   Future<Either<Failure, HadithCategoryPage>> getCategories(
     String bookId, {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh,
   });
 
   /// One page of a category's sub-categories
   /// (`GET /hadiths/categories/{categoryId}/subcategories`), in display
-  /// order. [searchTerm] filters by name.
+  /// order. [searchTerm] filters by name. See [getBooks] for [forceRefresh].
   Future<Either<Failure, HadithSubCategoryPage>> getSubCategories(
     String categoryId, {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh,
   });
 
   /// Reports the active reading time of one or more hadiths (`POST
@@ -129,7 +132,8 @@ abstract interface class HadithLibraryRepository {
   /// category (`...&categoryId=...`) or of a whole book (`...&bookId=...`),
   /// in display order; or of one reading plan
   /// (`GET /hadiths/plans/{planId}/hadiths`, needs the login token). Pass one
-  /// of [subCategoryId] / [categoryId] / [bookId] / [planId].
+  /// of [subCategoryId] / [categoryId] / [bookId] / [planId]. See [getBooks]
+  /// for [forceRefresh].
   Future<Either<Failure, HadithDetailPage>> getHadiths({
     String? subCategoryId,
     String? bookId,
@@ -137,6 +141,7 @@ abstract interface class HadithLibraryRepository {
     String? planId,
     required int page,
     required int limit,
+    bool forceRefresh,
   });
 
   /// The ids of the hadiths already marked as read within a scope (`GET

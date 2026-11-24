@@ -110,6 +110,28 @@ class _HadithSubCategoryViewState extends State<_HadithSubCategoryView> {
     });
   }
 
+  /// Pull to refresh: reloads the chapters from the API instead of the copy
+  /// stored on the device, so chapters added on the server since show up.
+  /// Completes once the new list (and the progress) is in, so the spinner
+  /// runs for exactly that long.
+  Future<void> _refresh() {
+    // The rings reload alongside, but the spinner follows the list alone:
+    // for a guest the progress bloc never leaves `initial` (it needs the
+    // login token), so waiting on it would spin for good.
+    context.read<HadithReadingProgressBloc>().add(
+      const RefreshHadithReadingProgress(),
+    );
+    final subCategories = context.read<HadithSubCategoryBloc>()
+      ..add(const RefreshHadithSubCategories());
+    // The first state after the event is `loading`, never the old one, so
+    // waiting for "not loading" waits for the fresh result. `orElse` covers
+    // the screen being popped mid-refresh.
+    return subCategories.stream.firstWhere(
+      (s) => !s.isLoading,
+      orElse: () => subCategories.state,
+    );
+  }
+
   /// Called when the user comes back from a sub-category's hadiths (where they
   /// may have read some), so the new percentages show straight away.
   void _refreshProgress() {
@@ -152,6 +174,7 @@ class _HadithSubCategoryViewState extends State<_HadithSubCategoryView> {
       title: appText.hadithSubCategory,
       controller: _scrollController,
       onSearchChanged: _onSearchChanged,
+      onRefresh: _refresh,
       children: [
         if (state.isLoading)
           const _SubCategorySkeletons(count: 6)

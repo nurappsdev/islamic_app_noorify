@@ -12,6 +12,7 @@ class HadithCategoryBloc
     extends Bloc<HadithCategoryEvent, HadithCategoryState> {
   HadithCategoryBloc(this._getCategories) : super(const HadithCategoryState()) {
     on<LoadHadithCategories>(_onLoad);
+    on<RefreshHadithCategories>(_onRefresh);
     on<SearchHadithCategories>(_onSearch);
     on<LoadMoreHadithCategories>(_onLoadMore);
   }
@@ -33,6 +34,11 @@ class HadithCategoryBloc
     return _loadFirstPage(emit);
   }
 
+  Future<void> _onRefresh(
+    RefreshHadithCategories event,
+    Emitter<HadithCategoryState> emit,
+  ) => _loadFirstPage(emit, forceRefresh: true);
+
   Future<void> _onSearch(
     SearchHadithCategories event,
     Emitter<HadithCategoryState> emit,
@@ -43,10 +49,17 @@ class HadithCategoryBloc
     return _loadFirstPage(emit);
   }
 
-  Future<void> _loadFirstPage(Emitter<HadithCategoryState> emit) async {
+  Future<void> _loadFirstPage(
+    Emitter<HadithCategoryState> emit, {
+    bool forceRefresh = false,
+  }) async {
     final generation = ++_generation;
     emit(const HadithCategoryState(status: HadithCategoryStatus.loading));
-    final result = await _getCategories(_bookId, searchTerm: _searchTerm);
+    final result = await _getCategories(
+      _bookId,
+      searchTerm: _searchTerm,
+      forceRefresh: forceRefresh,
+    );
     if (generation != _generation) return;
     result.fold(
       (failure) => emit(

@@ -12,14 +12,18 @@ class GetHadithCategories {
 
   final HadithLibraryRepository _repository;
 
+  /// [forceRefresh] goes to the API even when a stored copy exists, for a
+  /// pull to refresh: categories added on the server since then show up.
   Future<Either<Failure, HadithCategoryPage>> call(
     String bookId, {
     int page = 1,
     String? searchTerm,
+    bool forceRefresh = false,
   }) => _repository.getCategories(
     bookId,
     page: page,
     limit: pageSize,
     searchTerm: searchTerm,
+    forceRefresh: forceRefresh,
   );
 }
