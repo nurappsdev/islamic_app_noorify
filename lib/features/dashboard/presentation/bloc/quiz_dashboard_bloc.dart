@@ -12,7 +12,14 @@ export 'quiz_dashboard_event.dart';
 export 'quiz_dashboard_state.dart';
 
 /// The dates a dashboard period covers around [date], as the date selector
-/// labels them: the day, its Monday-Sunday week, or its calendar month.
+/// labels them: the day itself, the seven days ending on it, or its calendar
+/// month.
+///
+/// Weekly is a rolling window, not the calendar's Monday-Sunday week: the
+/// selected day is the last of the seven, so the default view is today and
+/// the six days before it. This matches the Hadith dashboard, and means the
+/// week always ends on the day the reader picked rather than jumping to a
+/// Sunday they did not ask for.
 ({DateTime from, DateTime to}) quizDashboardRange(
   QuizDashboardPeriod period,
   DateTime date,
@@ -22,8 +29,7 @@ export 'quiz_dashboard_state.dart';
     case QuizDashboardPeriod.daily:
       return (from: day, to: day);
     case QuizDashboardPeriod.weekly:
-      final monday = day.subtract(Duration(days: day.weekday - 1));
-      return (from: monday, to: monday.add(const Duration(days: 6)));
+      return (from: day.subtract(const Duration(days: 6)), to: day);
     case QuizDashboardPeriod.monthly:
       return (
         from: DateTime(day.year, day.month),

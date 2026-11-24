@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/app_route_observer.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
@@ -16,10 +17,31 @@ import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_failure_message.
 import 'package:tuhfatul_muslim/features/quiz/presentation/quiz_formatters.dart';
 // import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_activity_chart.dart';
 // import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_comparison_card.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_segmented_tabs.dart';
 // import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_stat_grid.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_attempt_card.dart';
 import 'package:tuhfatul_muslim/features/quiz/presentation/widgets/quiz_status_view.dart';
+
+/// The two series colors: the signed-in user and the reader compared against
+/// them. Declared once so the legend, the donut arcs and the points summary
+/// can never drift apart. Both are mid-toned, so the dark mapping keeps them
+/// as they are - they read on a light and a dark background alike.
+const _myColor = Color(0xFF5D896D);
+const _rivalColor = Color(0xFFA9B258);
+
+/// [_myColor] darkened, for the bar the reader has tapped - the shared charts
+/// strengthen the selected layer the way the Dua palette does.
+const _myColorStrong = Color(0xFF466752);
+
+/// What the weekly and monthly bars are drawn in: this screen's own two
+/// colours, so a bar matches the legend that names it ("My Position") rather
+/// than the Dua dashboard's palette.
+const _chartPalette = DuaChartPalette(
+  mine: _myColor,
+  mineStrong: _myColorStrong,
+  competitor: _rivalColor,
+);
 
 /// Performance dashboard opened from the final item in the Quiz navigation.
 /// Reads the [QuizDashboardBloc] (`/quizzes/dashboard` and
@@ -96,9 +118,10 @@ class _QuizDashboardView extends StatelessWidget {
                 SizedBox(height: 20.h),
                 RichText(
                   text: TextSpan(
-                    style: DefaultTextStyle.of(
-                      context,
-                    ).style.copyWith(color: Colors.black, fontSize: 16.sp),
+                    style: DefaultTextStyle.of(context).style.copyWith(
+                      color: context.inkColor(Colors.black),
+                      fontSize: 16.sp,
+                    ),
                     children: [
                       TextSpan(
                         text:
@@ -119,30 +142,7 @@ class _QuizDashboardView extends StatelessWidget {
                 SizedBox(height: 25.h),
                 const _DashboardLegend(),
                 SizedBox(height: 4.h),
-                SizedBox(
-                  height: 293.h,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      _ScoreDonut(
-                        mine: me?.dashboard.totals.totalPoints,
-                        theirs: other?.dashboard.totals.totalPoints,
-                      ),
-                      if (state.comparisonStatus ==
-                          QuizDashboardLoadStatus.loading)
-                        const CircularProgressIndicator(),
-                      if (state.showCompetitor && other != null)
-                        Positioned(
-                          top: 11.h,
-                          right: 6.w,
-                          child: _CompetitorCard(
-                            competitor: other,
-                            onClose: () => bloc.add(const DismissCompetitor()),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                SizedBox(height: 293.h, child: const _PeriodChart()),
                 if (state.comparisonStatus == QuizDashboardLoadStatus.failure)
                   QuizStatusView(
                     message: quizFailureMessage(
@@ -266,11 +266,9 @@ class _DateSelector extends StatelessWidget {
   String _label(AppText appText) {
     final monthNames = appText.monthNames;
     switch (selectedPeriod) {
-      case 1: // Weekly
-        final startOfWeek = selectedDate.subtract(
-          Duration(days: selectedDate.weekday - 1),
-        );
-        final endOfWeek = startOfWeek.add(const Duration(days: 6));
+      case 1: // Weekly - the seven days ending on the selected day.
+        final startOfWeek = selectedDate.subtract(const Duration(days: 6));
+        final endOfWeek = selectedDate;
         final sameMonth = startOfWeek.month == endOfWeek.month;
         final startLabel = sameMonth
             ? '${startOfWeek.day}'
@@ -354,9 +352,13 @@ class _DateArrow extends StatelessWidget {
         height: 36.w,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFA1AD59)),
+          border: Border.all(color: context.lineColor(const Color(0xFFA1AD59))),
         ),
-        child: Icon(icon, color: const Color(0xFFA1AD59), size: 20.sp),
+        child: Icon(
+          icon,
+          color: context.inkColor(const Color(0xFFA1AD59)),
+          size: 20.sp,
+        ),
       ),
     );
   }
@@ -372,11 +374,8 @@ class _DashboardLegend extends StatelessWidget {
       spacing: 27.w,
       runSpacing: 8.h,
       children: [
-        _LegendItem(color: const Color(0xFF5D896D), label: appText.myPosition),
-        _LegendItem(
-          color: const Color(0xFFA9B258),
-          label: appText.myNearestOrCompetitor,
-        ),
+        _LegendItem(color: _myColor, label: appText.myPosition),
+        _LegendItem(color: _rivalColor, label: appText.myNearestOrCompetitor),
       ],
     );
   }
@@ -428,6 +427,10 @@ class _ScoreDonut extends StatelessWidget {
         mine: (mine ?? 0).toDouble(),
         theirs: (theirs ?? 0).toDouble(),
         track: context.surfaceColor(const Color(0xFFF0F0F6)),
+        // Mapped here, not in `paint`: a painter has no BuildContext, and
+        // the legend dots map the same two colors the same way.
+        mineColor: context.surfaceColor(_myColor),
+        theirsColor: context.surfaceColor(_rivalColor),
       ),
     );
   }
@@ -438,23 +441,27 @@ class _ScoreDonutPainter extends CustomPainter {
     required this.mine,
     required this.theirs,
     required this.track,
+    required this.mineColor,
+    required this.theirsColor,
   });
 
   final double mine;
   final double theirs;
   final Color track;
+  final Color mineColor;
+  final Color theirsColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width * .34;
     final green = Paint()
-      ..color = const Color(0xFF5D896D)
+      ..color = mineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * .18
       ..strokeCap = StrokeCap.round;
     final olive = Paint()
-      ..color = const Color(0xFFA9B258)
+      ..color = theirsColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = size.width * .18
       ..strokeCap = StrokeCap.round;
@@ -494,7 +501,9 @@ class _ScoreDonutPainter extends CustomPainter {
   bool shouldRepaint(covariant _ScoreDonutPainter oldDelegate) =>
       oldDelegate.mine != mine ||
       oldDelegate.theirs != theirs ||
-      oldDelegate.track != track;
+      oldDelegate.track != track ||
+      oldDelegate.mineColor != mineColor ||
+      oldDelegate.theirsColor != theirsColor;
 }
 
 class _CompetitorCard extends StatelessWidget {
@@ -557,7 +566,7 @@ class _CompetitorCard extends StatelessWidget {
                 ),
                 icon: Icon(
                   Icons.close_rounded,
-                  color: const Color(0xFFE53935),
+                  color: context.inkColor(const Color(0xFFE53935)),
                   size: 18.r,
                 ),
               ),
@@ -622,8 +631,8 @@ class _PointsSummary extends StatelessWidget {
                 Container(
                   width: 9.w,
                   height: 9.w,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFA9B258),
+                  decoration: BoxDecoration(
+                    color: context.surfaceColor(_rivalColor),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -675,6 +684,319 @@ class _HistoryPreview extends StatelessWidget {
           ],
         );
     }
+  }
+}
+
+/// The window's chart: the donut for Daily, and - as on the Hadith dashboard
+/// - a day-by-day bar chart for Weekly and a four-row one for Monthly.
+///
+/// Daily compares two totals, which a single ring says well. Weekly and
+/// monthly do not: one ring hides which days the points came from, so those
+/// periods use the shared bar charts instead.
+class _PeriodChart extends StatelessWidget {
+  const _PeriodChart();
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<QuizDashboardBloc>().state;
+    final bloc = context.read<QuizDashboardBloc>();
+    final appText = AppText.of(context);
+    final me = state.comparison?.currentUser;
+    final other = state.comparison?.otherUser;
+
+    if (state.period == QuizDashboardPeriod.daily) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          _ScoreDonut(
+            mine: me?.dashboard.totals.totalPoints,
+            theirs: other?.dashboard.totals.totalPoints,
+          ),
+          if (state.comparisonStatus == QuizDashboardLoadStatus.loading)
+            const CircularProgressIndicator(),
+          if (state.showCompetitor && other != null)
+            Positioned(
+              top: 11.h,
+              right: 6.w,
+              child: _CompetitorCard(
+                competitor: other,
+                onClose: () => bloc.add(const DismissCompetitor()),
+              ),
+            ),
+        ],
+      );
+    }
+
+    if (state.comparisonStatus == QuizDashboardLoadStatus.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final days = _dayPoints(state);
+    if (days.isEmpty) {
+      return QuizStatusView(message: appText.noQuizAttemptsYet);
+    }
+    final myName = me?.name ?? '';
+    final rivalName = other?.name ?? '';
+    return state.period == QuizDashboardPeriod.weekly
+        ? _WeeklyPointsChart(
+            days: days,
+            appText: appText,
+            myName: myName,
+            rivalName: rivalName,
+          )
+        : _MonthlyPointsChart(
+            days: days,
+            appText: appText,
+            myName: myName,
+            rivalName: rivalName,
+          );
+  }
+}
+
+/// One date of the window: both readers' points for it, and my attempts.
+///
+/// Unlike the Dua dashboard - which projects its competitor layer from a
+/// single whole-window ratio - the quiz answer carries a real per-day figure
+/// for both readers, so each bar's lighter layer is the rival's own day.
+class _DayPoints {
+  const _DayPoints({
+    required this.date,
+    required this.mine,
+    required this.theirs,
+    required this.attempts,
+  });
+
+  final DateTime date;
+  final double mine;
+  final double? theirs;
+  final int attempts;
+}
+
+/// `YYYY-MM-DD`, so a date matches whichever way the server spelled its own.
+String _dateKey(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
+
+Map<String, QuizDashboardDayMetric> _byDate(
+  List<QuizDashboardDayMetric>? days,
+) => {
+  for (final day in days ?? const <QuizDashboardDayMetric>[])
+    if (DateTime.tryParse(day.date) case final date?) _dateKey(date): day,
+};
+
+/// Every day of the window, in date order, with both readers' points.
+///
+/// Built from the window itself rather than from the answer, because the
+/// server sends a day only for a reader who was active on it. Walking my own
+/// days instead got both of these wrong: a quiet week drew one column rather
+/// than seven, and a day the other reader scored on but I did not vanished
+/// from the chart altogether.
+///
+/// So a day missing from a reader's answer is that reader's real zero.
+/// [_DayPoints.theirs] stays null only when no comparison has loaded at all,
+/// which is what tells the chart to leave the rival layer off entirely -
+/// distinct from a day they genuinely scored nothing on.
+List<_DayPoints> _dayPoints(QuizDashboardState state) {
+  final range = quizDashboardRange(state.period, state.selectedDate);
+  final mine = _byDate(
+    state.comparison?.currentUser?.dashboard.days ?? state.dashboard?.days,
+  );
+  final rivalDays = state.comparison?.otherUser?.dashboard.days;
+  final theirs = _byDate(rivalDays);
+  final span = range.to.difference(range.from).inDays;
+  return [
+    // `DateTime(y, m, d + i)` rather than `add(Duration(days: i))`: it
+    // normalizes the overflow into the next month without a daylight-saving
+    // shift moving a day onto its neighbour.
+    for (var i = 0; i <= span; i++)
+      if (DateTime(range.from.year, range.from.month, range.from.day + i)
+          case final date)
+        _DayPoints(
+          date: date,
+          mine: mine[_dateKey(date)]?.totalPoints.toDouble() ?? 0,
+          theirs: rivalDays == null
+              ? null
+              : theirs[_dateKey(date)]?.totalPoints.toDouble() ?? 0,
+          attempts: mine[_dateKey(date)]?.attempts ?? 0,
+        ),
+  ];
+}
+
+/// Quiz points are fractions - 0.4, 1.2, 2.3 - and [DuaChartBar] carries
+/// whole numbers, so they are scaled by this before being handed over and
+/// divided back out on the axis. Rounding them straight to integers lost the
+/// difference the chart exists to show: 1.2 and 1.4 both became 1, and
+/// anything under half a point became an empty column.
+const _pointScale = 100;
+
+int _scaled(double points) => (points * _pointScale).round();
+
+/// How the bar charts' axis prints a scaled tick, back in points.
+String _pointAxisLabel(int tick) => formatPoints(tick / _pointScale);
+
+/// The card a bar shows when tapped: both readers' points, my attempts under
+/// mine.
+Widget _chartTooltip(
+  BuildContext context, {
+  required AppText appText,
+  required String title,
+  required double mine,
+  required double? theirs,
+  required int attempts,
+  required String myName,
+  required String rivalName,
+}) {
+  return DuaChartTooltip(
+    title: context.localizedDigits(title),
+    lines: [
+      DuaTooltipLine.metric(
+        color: _myColor,
+        text: myName.isEmpty ? appText.myPosition : myName,
+        value: context.localizedDigits(formatPoints(mine)),
+      ),
+      DuaTooltipLine.note(
+        context.localizedDigits('${appText.attemptsLabel} : $attempts'),
+      ),
+      if (theirs != null) ...[
+        DuaTooltipLine.metric(
+          color: _rivalColor,
+          text: rivalName.isEmpty ? appText.myNearestOrCompetitor : rivalName,
+          value: context.localizedDigits(formatPoints(theirs)),
+        ),
+        // The gap, signed, so a day reads as ahead or behind at a glance
+        // instead of leaving the two figures to be subtracted by eye.
+        DuaTooltipLine.note(
+          context.localizedDigits(
+            '${mine >= theirs ? '+' : '-'}'
+            '${formatPoints((mine - theirs).abs())}',
+          ),
+        ),
+      ],
+    ],
+  );
+}
+
+/// One column per day of the selected week, labelled with its weekday.
+class _WeeklyPointsChart extends StatelessWidget {
+  const _WeeklyPointsChart({
+    required this.days,
+    required this.appText,
+    required this.myName,
+    required this.rivalName,
+  });
+
+  final List<_DayPoints> days;
+  final AppText appText;
+  final String myName;
+  final String rivalName;
+
+  @override
+  Widget build(BuildContext context) {
+    return DuaWeeklyBarChart(
+      palette: _chartPalette,
+      axisLabel: _pointAxisLabel,
+      bars: [
+        for (final day in days)
+          DuaChartBar(
+            // Short and Sunday-first, as the bar charts' axis expects:
+            // `weekday % 7` turns Sunday's 7 into 0.
+            label: context.localizedDates.weekdayShort(day.date.weekday % 7),
+            mine: _scaled(day.mine),
+            competitor: _scaled(day.theirs ?? 0),
+          ),
+      ],
+      tooltipBuilder: (index, bar) {
+        final day = days[index];
+        return _chartTooltip(
+          context,
+          appText: appText,
+          title: bar.title,
+          mine: day.mine,
+          theirs: day.theirs,
+          attempts: day.attempts,
+          myName: myName,
+          rivalName: rivalName,
+        );
+      },
+    );
+  }
+}
+
+/// The month in rows of roughly a week - `1-7`, `8-14`, `15-21` and `22-` its
+/// last day - which is how the Hadith dashboard groups its own monthly view.
+/// A row no day of the window falls in is left out rather than drawn empty.
+class _MonthlyPointsChart extends StatelessWidget {
+  const _MonthlyPointsChart({
+    required this.days,
+    required this.appText,
+    required this.myName,
+    required this.rivalName,
+  });
+
+  final List<_DayPoints> days;
+  final AppText appText;
+  final String myName;
+  final String rivalName;
+
+  List<_DayPoints> _rowDays(int from, int to) => [
+    for (final day in days)
+      if (day.date.day >= from && day.date.day <= to) day,
+  ];
+
+  List<({String label, List<_DayPoints> days})> get _rows {
+    if (days.isEmpty) return const [];
+    final month = days.first.date;
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    const starts = [1, 8, 15, 22];
+    final rows = <({String label, List<_DayPoints> days})>[];
+    for (var i = 0; i < starts.length; i++) {
+      final from = starts[i];
+      final to = i + 1 < starts.length ? starts[i + 1] - 1 : lastDay;
+      final rowDays = _rowDays(from, to);
+      if (rowDays.isNotEmpty) {
+        rows.add((label: '$from-$to', days: rowDays));
+      }
+      // A row is skipped only when the window holds no day in it at all -
+      // never because both readers scored nothing, which is a real zero now.
+    }
+    return rows;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = _rows;
+    double mineOf(List<_DayPoints> d) =>
+        d.fold<double>(0, (sum, day) => sum + day.mine);
+    double? theirsOf(List<_DayPoints> d) => d.any((day) => day.theirs != null)
+        ? d.fold<double>(0, (sum, day) => sum + (day.theirs ?? 0))
+        : null;
+
+    return DuaMonthlyBarChart(
+      palette: _chartPalette,
+      axisLabel: _pointAxisLabel,
+      bars: [
+        for (final row in rows)
+          DuaChartBar(
+            label: duaPeriodAxisLabel(row.label),
+            title: row.label,
+            mine: _scaled(mineOf(row.days)),
+            competitor: _scaled(theirsOf(row.days) ?? 0),
+          ),
+      ],
+      tooltipBuilder: (index, bar) {
+        final row = rows[index];
+        return _chartTooltip(
+          context,
+          appText: appText,
+          title: bar.title,
+          mine: mineOf(row.days),
+          theirs: theirsOf(row.days),
+          attempts: row.days.fold<int>(0, (sum, day) => sum + day.attempts),
+          myName: myName,
+          rivalName: rivalName,
+        );
+      },
+    );
   }
 }
 

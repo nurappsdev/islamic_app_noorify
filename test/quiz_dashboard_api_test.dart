@@ -509,20 +509,52 @@ void main() {
     Future<void> settle() =>
         Future<void>.delayed(const Duration(milliseconds: 30));
 
-    test('ranges follow the date selector: day, Mon-Sun week, month', () {
+    test('ranges follow the date selector: day, rolling 7 days, month', () {
       final date = DateTime(2026, 9, 26); // a Saturday
       final day = quizDashboardRange(QuizDashboardPeriod.daily, date);
       final week = quizDashboardRange(QuizDashboardPeriod.weekly, date);
       final month = quizDashboardRange(QuizDashboardPeriod.monthly, date);
       expect((day.from, day.to), (date, date));
+      // The seven days ENDING on the selected day - not its Mon-Sun week,
+      // which would have run 21-27 and included a day after it.
       expect(
         (week.from, week.to),
-        (DateTime(2026, 9, 21), DateTime(2026, 9, 27)),
+        (DateTime(2026, 9, 20), DateTime(2026, 9, 26)),
       );
+      expect(week.to.difference(week.from), const Duration(days: 6));
       expect(
         (month.from, month.to),
         (DateTime(2026, 9), DateTime(2026, 9, 30)),
       );
+    });
+
+    // The reader's own example: standing on the 23rd, a Monday, the weekly
+    // window runs back to the 17th, a Tuesday - seven days, Tue through Mon,
+    // ending on the day they are standing on.
+    test('the weekly window is the 7 days ending on the selected day', () {
+      final week = quizDashboardRange(
+        QuizDashboardPeriod.weekly,
+        DateTime(2026, 11, 23),
+      );
+      expect(week.from, DateTime(2026, 11, 17));
+      expect(week.to, DateTime(2026, 11, 23));
+      expect(week.from.weekday, DateTime.tuesday);
+      expect(week.to.weekday, DateTime.monday);
+    });
+
+    // Stepping back shows the seven days before those, with no overlap and
+    // no gap.
+    test('stepping the weekly window back moves it a whole week', () {
+      final week = quizDashboardRange(
+        QuizDashboardPeriod.weekly,
+        DateTime(2026, 11, 23),
+      );
+      final previous = quizDashboardRange(
+        QuizDashboardPeriod.weekly,
+        DateTime(2026, 11, 23).subtract(const Duration(days: 7)),
+      );
+      expect(previous.to, DateTime(2026, 11, 16));
+      expect(week.from.difference(previous.to), const Duration(days: 1));
     });
 
     test('each period change requests the API again', () async {

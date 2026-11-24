@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tuhfatul_muslim/core/errors/failures.dart';
+import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dashboard/presentation/bloc/quiz_dashboard_bloc.dart';
 import 'package:tuhfatul_muslim/features/dashboard/presentation/screens/quiz_dashboard_screen.dart';
@@ -24,7 +26,20 @@ import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 const _meta = PaginationMeta(page: 1, limit: 7, total: 7, totalPage: 1);
 
-QuizDashboardDayMetric _day(String date, int attempts) =>
+/// `YYYY-MM-DD` for the day [back] days before today.
+///
+/// The dashboard's weekly window is the seven days ENDING TODAY, so a fixture
+/// pinned to a fixed month would fall outside every window the selector ever
+/// shows and every bar would read zero.
+String _isoDaysAgo(int back) {
+  final now = DateTime.now();
+  final date = DateTime(now.year, now.month, now.day - back);
+  return '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+}
+
+QuizDashboardDayMetric _day(String date, int attempts, {num? points}) =>
     QuizDashboardDayMetric(
       date: date,
       attempts: attempts,
@@ -38,7 +53,7 @@ QuizDashboardDayMetric _day(String date, int attempts) =>
       accuracyPercentage: 81.82,
       totalSeconds: 150 * attempts,
       totalMinutes: 2.5 * attempts,
-      totalPoints: 1.88 * attempts,
+      totalPoints: points ?? 1.88 * attempts,
       bestScorePercentage: 75,
       averageScorePercentage: 75,
     );
@@ -63,14 +78,25 @@ const _totals = QuizDashboardTotals(
   averageMinutesPerDay: 1.07,
 );
 
-QuizDashboardData _dashboard() => QuizDashboardData(
-  from: '2026-09-20',
-  to: '2026-09-26',
-  period: QuizDashboardPeriod.weekly,
-  days: [for (var d = 20; d <= 26; d++) _day('2026-09-$d', d.isEven ? 1 : 0)],
-  totals: _totals,
-  meta: _meta,
-);
+QuizDashboardData _dashboard({List<QuizDashboardDayMetric>? days}) =>
+    QuizDashboardData(
+      from: _isoDaysAgo(6),
+      to: _isoDaysAgo(0),
+      period: QuizDashboardPeriod.weekly,
+      days:
+          days ??
+          // 1.2 points on the day before yesterday, as the reader described.
+          [
+            for (var back = 6; back >= 0; back--)
+              _day(
+                _isoDaysAgo(back),
+                back.isEven ? 1 : 0,
+                points: back == 2 ? 1.2 : null,
+              ),
+          ],
+      totals: _totals,
+      meta: _meta,
+    );
 
 QuizComparison _comparison() => QuizComparison(
   from: '2026-09-20',
@@ -90,7 +116,12 @@ QuizComparison _comparison() => QuizComparison(
         name: name,
         avatarUrl: null,
         totalPoints: me ? 120.5 : 3400,
-        dashboard: _dashboard(),
+        // The server sends a day only for a reader active on it, so the
+        // rival answers just the one: 2 points the day before yesterday,
+        // against my 1.2 there.
+        dashboard: me
+            ? _dashboard()
+            : _dashboard(days: [_day(_isoDaysAgo(2), 1, points: 2)]),
       ),
   ],
   difference: const QuizComparisonDifference(
@@ -233,6 +264,7 @@ Future<void> _pump(
   WidgetTester tester,
   Widget screen, {
   bool bangla = false,
+  Brightness? brightness,
 }) async {
   tester.view.physicalSize = const Size(375, 812);
   tester.view.devicePixelRatio = 1;
@@ -245,7 +277,17 @@ Future<void> _pump(
       designSize: const Size(375, 812),
       builder: (context, child) => BlocProvider.value(
         value: language,
-        child: MaterialApp(home: screen),
+        // A `Theme` rather than `MaterialApp.darkTheme`: MaterialApp animates
+        // a theme change, so a single pump would still report light. Omitting
+        // `brightness` leaves the tree exactly as the other tests pump it.
+        child: MaterialApp(
+          home: brightness == null
+              ? screen
+              : Theme(
+                  data: ThemeData(brightness: brightness),
+                  child: screen,
+                ),
+        ),
       ),
     ),
   );
@@ -255,6 +297,26 @@ Future<void> _pump(
     await tester.pump(const Duration(milliseconds: 50));
     if (find.byType(CircularProgressIndicator).evaluate().isEmpty) break;
   }
+}
+
+Widget _noTooltip(int index, DuaChartBar bar) => const SizedBox.shrink();
+
+/// The base color of the period heading ("Today's - Average Score : 75%").
+///
+/// Every [Text] also builds a [RichText], so the screen's own one is picked
+/// out by its shape: two spans, the first of them italic.
+Color? _headingColor(WidgetTester tester) {
+  for (final rich in tester.widgetList<RichText>(find.byType(RichText))) {
+    final span = rich.text;
+    if (span is TextSpan &&
+        span.children?.length == 2 &&
+        span.children!.first is TextSpan &&
+        (span.children!.first as TextSpan).style?.fontStyle ==
+            FontStyle.italic) {
+      return span.style?.color;
+    }
+  }
+  return null;
 }
 
 /// Scrolls [list] down step by step until [target] is built.
@@ -286,6 +348,243 @@ void main() {
     ],
     child: const QuizDashboardScreen(),
   );
+
+  group('period charts', () {
+    // Daily compares two totals, so it keeps the donut; weekly and monthly
+    // show the window day by day with the shared bar charts, as the Hadith
+    // dashboard does.
+    testWidgets('daily keeps the donut, weekly and monthly use bar charts', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+      expect(find.byType(CustomPaint), findsWidgets);
+      expect(find.byType(DuaWeeklyBarChart), findsNothing);
+      expect(find.byType(DuaMonthlyBarChart), findsNothing);
+
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DuaWeeklyBarChart), findsOneWidget);
+      expect(find.byType(DuaMonthlyBarChart), findsNothing);
+
+      await tester.tap(find.text('Monthly'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DuaMonthlyBarChart), findsOneWidget);
+      expect(find.byType(DuaWeeklyBarChart), findsNothing);
+    });
+
+    // The fake answers seven dated days, one bar each, labelled by weekday.
+    testWidgets('the weekly chart draws one bar per day of the week', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<DuaWeeklyBarChart>(
+        find.byType(DuaWeeklyBarChart),
+      );
+      expect(chart.bars.length, 7);
+      // Short, Sunday-first labels - a seven-column axis has no room for
+      // "Wednesday".
+      expect(chart.bars.map((bar) => bar.label), contains('Sun'));
+      expect(chart.bars.every((bar) => bar.label.length <= 3), isTrue);
+      // _day() gives the even dates of 20-26 September one attempt each, so
+      // some bars carry points and some are empty.
+      expect(chart.bars.any((bar) => bar.mine > 0), isTrue);
+    });
+
+    // Every week of the month, not only the weeks the answer happened to
+    // mention: the window decides the rows now, so a quiet week is a real
+    // zero row rather than a missing one.
+    testWidgets('the monthly chart groups the month into week rows', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+      await tester.tap(find.text('Monthly'));
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<DuaMonthlyBarChart>(
+        find.byType(DuaMonthlyBarChart),
+      );
+      final now = DateTime.now();
+      final lastDay = DateTime(now.year, now.month + 1, 0).day;
+      expect(chart.bars.map((bar) => bar.title), [
+        '1-7',
+        '8-14',
+        '15-21',
+        '22-$lastDay',
+      ]);
+      // The axis prints the row's last day; the span is the tooltip title.
+      expect(chart.bars.map((bar) => bar.label), ['7', '14', '21', '$lastDay']);
+    });
+
+    // The reader's report: on a day they scored 1.2 and the other reader
+    // scored 2, the column came out in their colour alone, with no sign of
+    // the gap. Two causes: the series walked only MY days, so a day the
+    // rival scored on carried no rival figure at all, and the fractional
+    // points were rounded to integers, which flattened the difference.
+    testWidgets('a day both readers scored on shows both layers and the gap', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+
+      final chart = tester.widget<DuaWeeklyBarChart>(
+        find.byType(DuaWeeklyBarChart),
+      );
+      // The seven days of the window, not just the days either reader was
+      // active on - the rival's answer carries only one day.
+      expect(chart.bars.length, 7);
+
+      // Index 4 is the day before yesterday: mine 1.2, theirs 2.
+      final day = chart.bars[4];
+      expect(day.mine, 120, reason: '1.2 points, scaled - not rounded to 1');
+      expect(day.competitor, 200, reason: "the rival's own 2 points");
+      expect(
+        day.competitor,
+        greaterThan(day.mine),
+        reason: 'the taller rival layer is what makes the gap visible',
+      );
+
+      // The axis divides the scale back out, so it still reads in points.
+      expect(chart.axisLabel, isNotNull);
+      expect(chart.axisLabel!(200), '2');
+      expect(chart.axisLabel!(50), '0.5');
+
+      // A day only I scored on still carries a real zero for the rival, so
+      // the layer is drawn rather than left off.
+      expect(chart.bars.every((bar) => bar.competitor >= 0), isTrue);
+      expect(chart.bars.where((bar) => bar.competitor > 0), hasLength(1));
+    });
+
+    // Rounding used to drop a day under half a point to an empty column.
+    testWidgets('a fraction of a point still draws a column', (tester) async {
+      await _pump(tester, dashboard());
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+      final chart = tester.widget<DuaWeeklyBarChart>(
+        find.byType(DuaWeeklyBarChart),
+      );
+      // 1.2 would have rounded to 1 against a rival's 2; worse, anything
+      // below 0.5 became 0. Scaled, every fraction survives.
+      expect(chart.bars[4].mine, isNot(1));
+      expect(chart.bars[4].mine, greaterThan(0));
+    });
+
+    // The bars were drawing in the Dua palette while the legend right above
+    // them named this screen's own two colours, so "My Position" meant one
+    // green in the legend and a different one in the chart.
+    testWidgets('the bars are drawn in this screen\'s own legend colours', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+      expect(find.text('My Position'), findsOneWidget);
+
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+      final weekly = tester.widget<DuaWeeklyBarChart>(
+        find.byType(DuaWeeklyBarChart),
+      );
+      expect(weekly.palette.mine.toARGB32(), 0xFF5D896D);
+      expect(weekly.palette.competitor.toARGB32(), 0xFFA9B258);
+      expect(
+        weekly.palette.mine.toARGB32(),
+        isNot(DuaChartColors.mine.toARGB32()),
+        reason: 'not the Dua palette the charts default to',
+      );
+
+      await tester.tap(find.text('Monthly'));
+      await tester.pumpAndSettle();
+      final monthly = tester.widget<DuaMonthlyBarChart>(
+        find.byType(DuaMonthlyBarChart),
+      );
+      expect(monthly.palette.mine.toARGB32(), 0xFF5D896D);
+      expect(monthly.palette.competitor.toARGB32(), 0xFFA9B258);
+    });
+
+    // The override is opt-in: anything that does not pass a palette - the Dua
+    // and Hadith dashboards - keeps the colours it always had.
+    test('the shared charts still default to the Dua palette', () {
+      expect(
+        DuaChartPalette.dua.mine.toARGB32(),
+        DuaChartColors.mine.toARGB32(),
+      );
+      expect(
+        DuaChartPalette.dua.mineStrong.toARGB32(),
+        DuaChartColors.mineStrong.toARGB32(),
+      );
+      expect(
+        DuaChartPalette.dua.competitor.toARGB32(),
+        DuaChartColors.competitor.toARGB32(),
+      );
+      expect(
+        const DuaWeeklyBarChart(
+          bars: [],
+          tooltipBuilder: _noTooltip,
+        ).palette.mine.toARGB32(),
+        DuaChartColors.mine.toARGB32(),
+      );
+      expect(
+        const DuaMonthlyBarChart(
+          bars: [],
+          tooltipBuilder: _noTooltip,
+        ).palette.mine.toARGB32(),
+        DuaChartColors.mine.toARGB32(),
+      );
+    });
+
+    testWidgets('the bar charts render in dark mode too', (tester) async {
+      await _pump(tester, dashboard(), brightness: Brightness.dark);
+      await tester.tap(find.text('Weekly'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DuaWeeklyBarChart), findsOneWidget);
+    });
+  });
+
+  group('dark theme', () {
+    // The heading's base style was a hardcoded `Colors.black`, so in dark mode
+    // the whole line - the period and the average score - rendered black on a
+    // near-black page and read as missing.
+    testWidgets('the period heading uses theme ink, not hardcoded black', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard(), brightness: Brightness.dark);
+      expect(tester.takeException(), isNull);
+
+      final color = _headingColor(tester);
+      expect(color, isNotNull, reason: 'the period heading should be built');
+      expect(
+        color!.toARGB32(),
+        isNot(const Color(0xFF000000).toARGB32()),
+        reason: 'black on a dark page is unreadable',
+      );
+      expect(color.toARGB32(), AppColor.darkTextPrimary.toARGB32());
+    });
+
+    // Light mode must be untouched: every mapper returns its argument when the
+    // brightness is light, so the design color has to come back unchanged.
+    testWidgets('the period heading keeps the design black in light mode', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard(), brightness: Brightness.light);
+      expect(
+        _headingColor(tester)?.toARGB32(),
+        const Color(0xFF000000).toARGB32(),
+      );
+    });
+
+    testWidgets('the dashboard renders in dark mode without overflowing', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard(), brightness: Brightness.dark);
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Leader'), findsWidgets);
+    });
+  });
 
   for (final bangla in [false, true]) {
     final lang = bangla ? 'Bangla' : 'English';
