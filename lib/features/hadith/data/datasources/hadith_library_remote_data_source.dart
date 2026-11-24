@@ -600,9 +600,19 @@ class HadithLibraryRemoteDataSourceImpl
   /// if that request fails, the stored copy still answers, so reading works
   /// offline.
   ///
-  /// An empty page is never stored: a book whose categories or hadiths are
-  /// still being filled in would otherwise answer "nothing here" from the
-  /// device for a day, with no request reaching the API at all.
+  /// An empty page is never stored, and any copy of it already on the device
+  /// is dropped: a book whose categories or hadiths are still being filled
+  /// in would otherwise answer "nothing here" from the device, and an e-book
+  /// deleted in the dashboard would keep opening from a copy nothing
+  /// corrects.
+  ///
+  /// A [forceRefresh] only skips the copy on the device. It cannot get past
+  /// the API's own cache of the library GETs: that cache varies on the query
+  /// string and ignores `Cache-Control`, and an unknown parameter is no way
+  /// around it — `/ebooks` passes query parameters it does not know into its
+  /// database filter, so `&_ts=...` came back with an empty shelf. Content
+  /// deleted in the dashboard therefore keeps being served to every client
+  /// until the API drops its copy; that one is for the server to fix.
   Future<({List<Map<String, dynamic>> items, Map<String, dynamic> meta})>
   _getList(
     String path,
@@ -633,10 +643,12 @@ class HadithLibraryRemoteDataSourceImpl
       rethrow;
     }
     final envelope = _envelopeOf(json, what);
-    if (cache != null &&
-        envelope.items.isNotEmpty &&
-        await cache.write(key, json)) {
-      unawaited(_prefetchRest(cache, path, query, envelope.meta));
+    if (cache != null) {
+      if (envelope.items.isEmpty) {
+        if (stored != null) await cache.remove(key);
+      } else if (await cache.write(key, json)) {
+        unawaited(_prefetchRest(cache, path, query, envelope.meta));
+      }
     }
     return envelope;
   }
