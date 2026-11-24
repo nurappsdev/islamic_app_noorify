@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
+import 'package:tuhfatul_muslim/core/utils/app_share_link.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/features/amol_tracking/presentation/state/amol_daily_store.dart';
 import 'package:tuhfatul_muslim/features/hadith/data/hadith_bookmark_store.dart';
@@ -1138,13 +1139,26 @@ class _HadithCardState extends State<_HadithCard> {
         ..writeln()
         ..writeln(entry.banglaText);
     }
-    if (entry.referencesText.isNotEmpty) {
-      buffer
-        ..writeln()
-        ..writeln('${appText.hadithBookReference}: ${entry.referencesText}');
-    }
     return buffer.toString().trim();
   }
+
+  /// `Reference: ...`, or empty when the hadith carries none.
+  String get _referenceLine => entry.referencesText.isEmpty
+      ? ''
+      : '${appText.hadithBookReference}: ${entry.referencesText}';
+
+  /// The citation under every copied part — the translation on its own, the
+  /// Arabic on its own, or the whole hadith — so whoever it is sent to can
+  /// tell which hadith it is and where it comes from.
+  String get _citation => hadithCitation(
+    numberLabel: appText.hadithNoLabel,
+    number: localizeDigits(
+      '${entry.hadithNo}',
+      context.read<LanguageBloc>().state.language,
+    ),
+    book: widget.bookName,
+    referenceLine: _referenceLine,
+  );
 
   /// Just the Bangla narrator and translation.
   String get _translationText {
@@ -1176,9 +1190,17 @@ class _HadithCardState extends State<_HadithCard> {
     );
   }
 
+  /// Copies [text] with its citation and the app's Play Store link under it,
+  /// so a hadith pasted into a chat says which hadith it is, where it comes
+  /// from, and which app it was read in.
   Future<void> _copyValue(String text) async {
-    if (text.isEmpty) return;
-    await Clipboard.setData(ClipboardData(text: text));
+    final body = text.trim();
+    if (body.isEmpty) return;
+    final message = withAppLink(
+      [body, _citation].join('\n\n'),
+      appText.hadithShareInvitation,
+    );
+    await Clipboard.setData(ClipboardData(text: message));
     _toast(appText.hadithCopied);
   }
 
@@ -1214,11 +1236,13 @@ class _HadithCardState extends State<_HadithCard> {
     final subject =
         '${appText.hadithReport}: $book — '
         '${appText.categoryHadith} ${entry.hadithNo}';
-    final body =
-        '${appText.hadithReportMessage}'
-        '${appText.hadithBookReference}: $book\n'
-        '${appText.categoryHadith}: ${entry.hadithNo}\n\n'
-        '$_plainText';
+    final body = [
+      '${appText.hadithReportMessage}'
+          '${appText.hadithBookReference}: $book\n'
+          '${appText.categoryHadith}: ${entry.hadithNo}\n\n'
+          '$_plainText',
+      _referenceLine,
+    ].where((part) => part.isNotEmpty).join('\n\n');
     final uri = Uri.parse(
       'mailto:$_reportEmail'
       '?subject=${Uri.encodeComponent(subject)}'

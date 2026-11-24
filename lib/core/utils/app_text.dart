@@ -136,6 +136,7 @@ class AppText {
     required this.hadithSwipeNext,
     required this.hadithCopy,
     required this.hadithCopied,
+    required this.hadithShareInvitation,
     required this.hadithShare,
     required this.hadithCopyTranslation,
     required this.hadithCopyArabic,
@@ -1120,6 +1121,10 @@ class AppText {
   final String hadithSwipeNext;
   final String hadithCopy;
   final String hadithCopied;
+
+  /// Offered under hadith text the user copies, above the app's Play
+  /// Store link.
+  final String hadithShareInvitation;
   final String hadithShare;
   final String hadithCopyTranslation;
   final String hadithCopyArabic;
@@ -2500,6 +2505,11 @@ class AppText {
       ),
       hadithCopy: _read(map, 'hadithCopy', fallback?.hadithCopy ?? ''),
       hadithCopied: _read(map, 'hadithCopied', fallback?.hadithCopied ?? ''),
+      hadithShareInvitation: _read(
+        map,
+        'hadithShareInvitation',
+        fallback?.hadithShareInvitation ?? '',
+      ),
       hadithShare: _read(map, 'hadithShare', fallback?.hadithShare ?? ''),
       hadithCopyTranslation: _read(
         map,

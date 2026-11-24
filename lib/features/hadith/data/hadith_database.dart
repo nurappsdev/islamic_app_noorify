@@ -107,6 +107,18 @@ class HadithDatabase {
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  /// Drops the cached response for [key], whatever version it was written
+  /// under. Used when the API answers that a request has no content any
+  /// more, so the device stops holding what the server no longer has.
+  Future<void> dropCachedContent(String key) async {
+    final db = await open();
+    await db.delete(
+      _contentCacheTable,
+      where: 'cache_key = ?',
+      whereArgs: [key],
+    );
+  }
+
   /// Drops cached content written under any other [version].
   Future<void> dropStaleContent(int version) async {
     final db = await open();

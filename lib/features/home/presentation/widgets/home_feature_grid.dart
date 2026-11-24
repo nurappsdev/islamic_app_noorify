@@ -39,18 +39,18 @@ class HomeFeatureGrid extends StatelessWidget {
       routeName: RouteNames.hadith,
     ),
     _HomeFeature(
+      appText.featureDua,
+      Icons.volunteer_activism,
+      const Color(0xFFFF7D67),
+      imagePath: 'assets/homeImg/duaImg.png',
+      routeName: RouteNames.dua,
+    ),
+    _HomeFeature(
       appText.featureQuizAndLearn,
       Icons.quiz_outlined,
       const Color(0xFFFF9D13),
       imagePath: 'assets/homeImg/quizImg.png',
       routeName: RouteNames.winQuiz,
-    ),
-    _HomeFeature(
-      appText.featureAsmaUlHusna,
-      Icons.workspace_premium,
-      const Color(0xFF37C915),
-      imagePath: 'assets/homeImg/asmaImg.png',
-      routeName: RouteNames.asma,
     ),
     _HomeFeature(
       appText.featureDijpr,
@@ -59,13 +59,16 @@ class HomeFeatureGrid extends StatelessWidget {
       imagePath: 'assets/homeImg/zikrImg.png',
       routeName: RouteNames.zikr,
     ),
+
     _HomeFeature(
-      appText.featureDua,
-      Icons.volunteer_activism,
-      const Color(0xFFFF7D67),
-      imagePath: 'assets/homeImg/duaImg.png',
-      routeName: RouteNames.dua,
+      appText.featureAsmaUlHusna,
+      Icons.workspace_premium,
+      const Color(0xFF37C915),
+      imagePath: 'assets/homeImg/asmaImg.png',
+      routeName: RouteNames.asma,
     ),
+
+
   ];
 
   @override
