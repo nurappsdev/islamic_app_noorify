@@ -688,7 +688,7 @@ class _HistoryPreview extends StatelessWidget {
 }
 
 /// The window's chart: the donut for Daily, and - as on the Hadith dashboard
-/// - a day-by-day bar chart for Weekly and a four-row one for Monthly.
+/// - a day-by-day bar chart for Weekly and a five-row one for Monthly.
 ///
 /// Daily compares two totals, which a single ring says well. Weekly and
 /// monthly do not: one ring hides which days the points came from, so those
@@ -922,9 +922,10 @@ class _WeeklyPointsChart extends StatelessWidget {
   }
 }
 
-/// The month in rows of roughly a week - `1-7`, `8-14`, `15-21` and `22-` its
-/// last day - which is how the Hadith dashboard groups its own monthly view.
-/// A row no day of the window falls in is left out rather than drawn empty.
+/// The month in five-day rows, matching the Hadith dashboard: `1-5`, `6-10`,
+/// `11-15`, `16-20`, and the remaining days. Keeping the final row for the
+/// remainder gives every calendar month five compact rows instead of four
+/// overly tall week rows.
 class _MonthlyPointsChart extends StatelessWidget {
   const _MonthlyPointsChart({
     required this.days,
@@ -938,26 +939,24 @@ class _MonthlyPointsChart extends StatelessWidget {
   final String myName;
   final String rivalName;
 
-  List<_DayPoints> _rowDays(int from, int to) => [
-    for (final day in days)
-      if (day.date.day >= from && day.date.day <= to) day,
-  ];
-
   List<({String label, List<_DayPoints> days})> get _rows {
     if (days.isEmpty) return const [];
-    final month = days.first.date;
-    final lastDay = DateTime(month.year, month.month + 1, 0).day;
-    const starts = [1, 8, 15, 22];
     final rows = <({String label, List<_DayPoints> days})>[];
-    for (var i = 0; i < starts.length; i++) {
-      final from = starts[i];
-      final to = i + 1 < starts.length ? starts[i + 1] - 1 : lastDay;
-      final rowDays = _rowDays(from, to);
-      if (rowDays.isNotEmpty) {
-        rows.add((label: '$from-$to', days: rowDays));
-      }
-      // A row is skipped only when the window holds no day in it at all -
-      // never because both readers scored nothing, which is a real zero now.
+    const groupSize = 5;
+    final groupCount = math.max(1, (days.length - 1) ~/ groupSize);
+
+    for (var group = 0; group < groupCount; group++) {
+      final start = group * groupSize;
+      final end = group == groupCount - 1
+          ? days.length - 1
+          : start + groupSize - 1;
+      final rowDays = days.sublist(start, end + 1);
+      rows.add(
+        (
+          label: '${rowDays.first.date.day}-${rowDays.last.date.day}',
+          days: rowDays,
+        ),
+      );
     }
     return rows;
   }

@@ -395,10 +395,10 @@ void main() {
       expect(chart.bars.any((bar) => bar.mine > 0), isTrue);
     });
 
-    // Every week of the month, not only the weeks the answer happened to
-    // mention: the window decides the rows now, so a quiet week is a real
-    // zero row rather than a missing one.
-    testWidgets('the monthly chart groups the month into week rows', (
+    // Five fixed rows of the month, not only periods the answer happened to
+    // mention: the window decides the rows now, so a quiet group is a real
+    // zero row rather than a missing one. This matches the Hadith dashboard.
+    testWidgets('the monthly chart groups the month into five-day rows', (
       tester,
     ) async {
       await _pump(tester, dashboard());
@@ -411,13 +411,20 @@ void main() {
       final now = DateTime.now();
       final lastDay = DateTime(now.year, now.month + 1, 0).day;
       expect(chart.bars.map((bar) => bar.title), [
-        '1-7',
-        '8-14',
-        '15-21',
-        '22-$lastDay',
+        '1-5',
+        '6-10',
+        '11-15',
+        '16-20',
+        '21-$lastDay',
       ]);
       // The axis prints the row's last day; the span is the tooltip title.
-      expect(chart.bars.map((bar) => bar.label), ['7', '14', '21', '$lastDay']);
+      expect(chart.bars.map((bar) => bar.label), [
+        '5',
+        '10',
+        '15',
+        '20',
+        '$lastDay',
+      ]);
     });
 
     // The reader's report: on a day they scored 1.2 and the other reader
