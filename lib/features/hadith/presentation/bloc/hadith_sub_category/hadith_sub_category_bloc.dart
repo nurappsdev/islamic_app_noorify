@@ -13,6 +13,7 @@ class HadithSubCategoryBloc
   HadithSubCategoryBloc(this._getSubCategories)
     : super(const HadithSubCategoryState()) {
     on<LoadHadithSubCategories>(_onLoad);
+    on<RefreshHadithSubCategories>(_onRefresh);
     on<SearchHadithSubCategories>(_onSearch);
     on<LoadMoreHadithSubCategories>(_onLoadMore);
   }
@@ -34,6 +35,11 @@ class HadithSubCategoryBloc
     return _loadFirstPage(emit);
   }
 
+  Future<void> _onRefresh(
+    RefreshHadithSubCategories event,
+    Emitter<HadithSubCategoryState> emit,
+  ) => _loadFirstPage(emit, forceRefresh: true);
+
   Future<void> _onSearch(
     SearchHadithSubCategories event,
     Emitter<HadithSubCategoryState> emit,
@@ -44,12 +50,16 @@ class HadithSubCategoryBloc
     return _loadFirstPage(emit);
   }
 
-  Future<void> _loadFirstPage(Emitter<HadithSubCategoryState> emit) async {
+  Future<void> _loadFirstPage(
+    Emitter<HadithSubCategoryState> emit, {
+    bool forceRefresh = false,
+  }) async {
     final generation = ++_generation;
     emit(const HadithSubCategoryState(status: HadithSubCategoryStatus.loading));
     final result = await _getSubCategories(
       _categoryId,
       searchTerm: _searchTerm,
+      forceRefresh: forceRefresh,
     );
     if (generation != _generation) return;
     result.fold(

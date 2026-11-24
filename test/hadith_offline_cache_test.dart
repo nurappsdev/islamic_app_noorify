@@ -67,6 +67,15 @@ Map<String, Object?> _serve(RequestOptions r) {
   throw StateError('Unexpected ${r.path}');
 }
 
+/// The same server after a second book was added in the dashboard.
+Map<String, Object?> _serveTwoBooks(RequestOptions r) {
+  if (r.path != '/hadiths/books/lists') return _serve(r);
+  return _page([
+    {'_id': 'b1', 'title': 'Riyad', 'displayOrder': 1},
+    {'_id': 'b2', 'title': 'Forty Hadith', 'displayOrder': 2},
+  ]);
+}
+
 /// A server that cannot be reached.
 Adapter _offline() => Adapter(
   (r) => throw DioException(
@@ -177,25 +186,104 @@ void main() {
     );
   });
 
-  test(
-    'day-old content shows at once and refreshes in the background',
-    () async {
-      await _source(Adapter(_serve)).getBooks();
-      final db = await HadithDatabase().open();
-      await db.update('hadith_content_cache', {'cached_at': 0});
+  // The window is short, so a chapter read earlier today does not keep
+  // showing the hadiths it had then: the copy is checked against the API on
+  // the next visit. Without this, a chapter that grew from 2 hadiths to 10
+  // still showed 2 for a whole day.
+  test('a copy past the window is refreshed before it is shown', () async {
+    await _source(Adapter(_serve)).getBooks();
+    final db = await HadithDatabase().open();
+    await db.update('hadith_content_cache', {
+      'cached_at': DateTime.now()
+          .subtract(HadithContentCache.refreshAfter * 2)
+          .millisecondsSinceEpoch,
+    });
 
-      final server = Adapter(_serve);
-      final books = await _source(server).getBooks();
-      expect(books.single.id, 'b1');
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      expect(_paths(server), ['/hadiths/books/lists']);
-      final rows = await db.query(
-        'hadith_content_cache',
-        columns: ['cached_at'],
-      );
-      expect(rows.single['cached_at'], greaterThan(0));
-    },
-  );
+    final server = Adapter(_serveTwoBooks);
+    expect((await _source(server).getBooks()).map((b) => b.id), ['b1', 'b2']);
+    expect(_paths(server), ['/hadiths/books/lists']);
+  });
+
+  // ...while a copy inside the window still opens without the network, so
+  // moving back and forth between screens stays instant.
+  test('a copy inside the window answers without the API', () async {
+    await _source(Adapter(_serve)).getCategories('b1', page: 1, limit: 20);
+
+    final server = Adapter(_serve);
+    await _source(server).getCategories('b1', page: 1, limit: 20);
+    expect(server.requests, isEmpty);
+  });
+
+  // Day-old content is checked against the API *before* it is shown: a copy
+  // served first and refreshed afterwards would hide content added on the
+  // server until the screen was opened a second time.
+  test('day-old content is refreshed before it is shown', () async {
+    await _source(Adapter(_serve)).getBooks();
+    final db = await HadithDatabase().open();
+    await db.update('hadith_content_cache', {'cached_at': 0});
+
+    final server = Adapter(_serveTwoBooks);
+    final books = await _source(server).getBooks();
+    expect(books.map((b) => b.id), ['b1', 'b2']);
+    expect(_paths(server), ['/hadiths/books/lists']);
+    final rows = await db.query('hadith_content_cache', columns: ['cached_at']);
+    expect(rows.single['cached_at'], greaterThan(0));
+  });
+
+  // ...but offline reading survives: when that check cannot be made, the
+  // stored copy still answers.
+  test('day-old content falls back to the stored copy when offline', () async {
+    await _source(Adapter(_serve)).getBooks();
+    await (await HadithDatabase().open()).update('hadith_content_cache', {
+      'cached_at': 0,
+    });
+
+    final offline = _offline();
+    final books = await _source(offline).getBooks();
+    expect(books.single.id, 'b1');
+    expect(offline.requests, hasLength(1));
+  });
+
+  // The reported bug: a book opened before its categories were added stored
+  // `data: []`, and for a day the screen answered "no results" from the
+  // device without a single request reaching the API.
+  test('an empty page is never stored', () async {
+    final empty = Adapter((r) => _page(const []));
+    final before = await _source(empty).getCategories('b2', page: 1, limit: 20);
+    expect(before.categories, isEmpty);
+
+    final server = Adapter(_serve);
+    final after = await _source(server).getCategories('b2', page: 1, limit: 20);
+    expect(after.categories, hasLength(1));
+    expect(_paths(server), ['/hadiths/categories#1']);
+  });
+
+  // The category, chapter and hadith lists refresh like the shelf does.
+  test('a forced refresh of categories goes to the API', () async {
+    await _source(Adapter(_serve)).getCategories('b1', page: 1, limit: 20);
+
+    final cached = Adapter(_serve);
+    await _source(cached).getCategories('b1', page: 1, limit: 20);
+    expect(cached.requests, isEmpty);
+
+    final server = Adapter(_serve);
+    await _source(
+      server,
+    ).getCategories('b1', page: 1, limit: 20, forceRefresh: true);
+    expect(_paths(server), ['/hadiths/categories#1']);
+  });
+
+  test('a forced refresh of a hadith page goes to the API', () async {
+    await _source(
+      Adapter(_serve),
+    ).getHadiths(subCategoryId: 's9', page: 1, limit: 2);
+
+    final server = Adapter(_serve);
+    await _source(
+      server,
+    ).getHadiths(subCategoryId: 's9', page: 1, limit: 2, forceRefresh: true);
+    expect(_paths(server).first, '/hadiths#1');
+  });
 
   // A book added on the server has to be reachable from the app: the shelf
   // caches its list, so a pull-to-refresh asks the API again instead of

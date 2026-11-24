@@ -34,13 +34,15 @@ Future<void> _pumpWeekly(WidgetTester tester, {bool competitor = true}) async {
   await tester.pump();
 }
 
-/// Taps day [index] where the chart actually draws it.
+QuranPlotArea get _area =>
+    QuranPlotArea.bars(_size, _data.maxY, _data.labels.length);
+
+/// Taps day [index] on its bar, where the chart actually draws it.
 Future<void> _tapDay(WidgetTester tester, int index) async {
-  final area = QuranPlotArea.spread(_size, _data.maxY);
   final origin = tester.getTopLeft(find.byType(QuranWeeklyChart));
-  final x = area.xForIndex(index, _data.labels.length);
-  final y = area.yForValue(_data.mine[index]);
-  await tester.tapAt(origin + Offset(x, y));
+  final x = _area.xForIndex(index, _data.labels.length);
+  // Just above the baseline, which is inside the bar however short it is.
+  await tester.tapAt(origin + Offset(x, _area.bottom - 4));
   await tester.pumpAndSettle();
 }
 
@@ -103,6 +105,38 @@ void main() {
       expect(card.right, lessThanOrEqualTo(chart.right + 0.01));
       expect(card.top, greaterThanOrEqualTo(chart.top - 0.01));
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('the week is drawn as bars', () {
+    test('a day owns its whole slot, not just the middle of it', () {
+      const count = 7;
+      final area = QuranPlotArea.bars(_size, _data.maxY, count);
+      for (var i = 0; i < count; i++) {
+        final centre = area.xForIndex(i, count);
+        expect(area.indexAt(centre, count), i);
+        expect(area.indexAt(centre - area.slotWidth / 2 + .5, count), i);
+        expect(area.indexAt(centre + area.slotWidth / 2 - .5, count), i);
+      }
+    });
+
+    testWidgets('a tap anywhere in a day\'s slot opens that day', (
+      tester,
+    ) async {
+      await _pumpWeekly(tester);
+      final origin = tester.getTopLeft(find.byType(QuranWeeklyChart));
+      // The left edge of Tuesday's slot, above its bar rather than on it.
+      await tester.tapAt(
+        origin +
+            Offset(
+              _area.xForIndex(3, 7) - _area.slotWidth / 2 + 1,
+              _area.top + 4,
+            ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tue'), findsOneWidget);
+      expect(find.text('Ilm'), findsOneWidget);
     });
   });
 

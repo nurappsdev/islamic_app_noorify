@@ -19,6 +19,12 @@ class LoadHadithDetails extends HadithDetailEvent {
   final String? planId;
 }
 
+/// Reloads the first page straight from the API (a pull to refresh), for the
+/// scope the last [LoadHadithDetails] set.
+class RefreshHadithDetails extends HadithDetailEvent {
+  const RefreshHadithDetails();
+}
+
 /// Loads the next page; ignored while a load is running or after the last
 /// page.
 class LoadMoreHadithDetails extends HadithDetailEvent {

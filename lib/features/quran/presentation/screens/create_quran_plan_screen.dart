@@ -244,12 +244,94 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
     const oliveColor = Color(0xFF9EAA52);
     const borderColor = Color(0xFFD2E3A8);
     const titleColor = Color(0xFF7A8D49);
+    const labelColor = Color(0xFF282442);
+    const hintColor = Color(0xFFB0BAA5);
+    const chevronColor = Color(0xFF8A9A70);
+
     final t = QuranText.of(context);
+
+    // The design's colors, mapped to the active theme once for the whole
+    // screen (see ThemeColors: in light mode every call is a no-op).
+    final lineColor = context.lineColor(borderColor);
+    final focusColor = context.lineColor(oliveColor);
+    final labelInk = context.textInkColor(labelColor);
+    final hintInk = context.textInkColor(hintColor);
+    final titleInk = context.inkColor(titleColor);
+    final chevronInk = context.inkColor(chevronColor);
+
+    InputDecoration fieldDecoration({
+      required double radius,
+      required double vertical,
+    }) {
+      OutlineInputBorder border(Color color, double width) =>
+          OutlineInputBorder(
+            borderRadius: BorderRadius.circular(radius.r),
+            borderSide: BorderSide(color: color, width: width),
+          );
+
+      return InputDecoration(
+        hintText: t.writeHere,
+        hintStyle: TextStyle(color: hintInk, fontSize: 13.sp),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 20.w,
+          vertical: vertical.h,
+        ),
+        border: border(lineColor, 1),
+        enabledBorder: border(lineColor, 1),
+        focusedBorder: border(focusColor, 1.5),
+      );
+    }
+
+    Widget fieldLabel(String text) => Text(
+      text,
+      style: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w600,
+        color: labelInk,
+      ),
+    );
 
     String surahLabel(SurahSummary? surah, int fallbackNo, String fallback) =>
         surah != null
         ? t.surahTitle(t.surahName(surah.number, surah.name))
         : t.example(t.surahTitle(t.surahName(fallbackNo, fallback)));
+
+    Widget surahPickerField({
+      required SurahSummary? surah,
+      required int fallbackNo,
+      required String fallback,
+      required VoidCallback onTap,
+    }) => InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(28.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28.r),
+          border: Border.all(color: lineColor),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Text(
+                surahLabel(surah, fallbackNo, fallback),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: surah != null ? labelInk : hintInk,
+                  fontSize: 13.sp,
+                  fontWeight: surah != null
+                      ? FontWeight.w600
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: chevronInk, size: 22.sp),
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: context.pageColor(Colors.white),
@@ -285,7 +367,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                   Text(
                     widget.isEditing ? t.editQuranPlan : t.createPlanTitle,
                     style: TextStyle(
-                      color: titleColor,
+                      color: titleInk,
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
@@ -300,130 +382,37 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Field 1: Plan name
-                    Text(
-                      t.planName,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF282442),
-                      ),
-                    ),
+                    fieldLabel(t.planName),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _nameController,
-                      style: TextStyle(fontSize: 14.sp),
-                      decoration: InputDecoration(
-                        hintText: t.writeHere,
-                        hintStyle: TextStyle(
-                          color: const Color(0xFFB0BAA5),
-                          fontSize: 13.sp,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 14.h,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(
-                            color: oliveColor,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
+                      style: TextStyle(fontSize: 14.sp, color: labelInk),
+                      cursorColor: focusColor,
+                      decoration: fieldDecoration(radius: 28, vertical: 14),
                     ),
                     SizedBox(height: 18.h),
 
                     // Field 2: Description
-                    Text(
-                      t.description,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF282442),
-                      ),
-                    ),
+                    fieldLabel(t.description),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _descriptionController,
-                      style: TextStyle(fontSize: 14.sp),
+                      style: TextStyle(fontSize: 14.sp, color: labelInk),
+                      cursorColor: focusColor,
                       maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: t.writeHere,
-                        hintStyle: TextStyle(
-                          color: const Color(0xFFB0BAA5),
-                          fontSize: 13.sp,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 12.h,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                          borderSide: const BorderSide(
-                            color: oliveColor,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
+                      decoration: fieldDecoration(radius: 20, vertical: 12),
                     ),
                     SizedBox(height: 18.h),
 
                     // Field 3: Completion days
-                    Text(
-                      t.completionDays,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF282442),
-                      ),
-                    ),
+                    fieldLabel(t.completionDays),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _daysController,
                       keyboardType: TextInputType.number,
-                      style: TextStyle(fontSize: 14.sp),
-                      decoration: InputDecoration(
-                        hintText: t.writeHere,
-                        hintStyle: TextStyle(
-                          color: const Color(0xFFB0BAA5),
-                          fontSize: 13.sp,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 14.h,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(color: borderColor),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28.r),
-                          borderSide: const BorderSide(
-                            color: oliveColor,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
+                      style: TextStyle(fontSize: 14.sp, color: labelInk),
+                      cursorColor: focusColor,
+                      decoration: fieldDecoration(radius: 28, vertical: 14),
                     ),
                     SizedBox(height: 20.h),
 
@@ -434,9 +423,9 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                         vertical: 10.h,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF7F9F0),
+                        color: context.surfaceColor(const Color(0xFFF7F9F0)),
                         borderRadius: BorderRadius.circular(18.r),
-                        border: Border.all(color: borderColor),
+                        border: Border.all(color: lineColor),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -445,7 +434,9 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                             children: [
                               Icon(
                                 Icons.menu_book_rounded,
-                                color: const Color(0xFF6B8042),
+                                color: context.inkColor(
+                                  const Color(0xFF6B8042),
+                                ),
                                 size: 20.sp,
                               ),
                               SizedBox(width: 10.w),
@@ -454,7 +445,7 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                                 style: TextStyle(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF282442),
+                                  color: labelInk,
                                 ),
                               ),
                             ],
@@ -462,6 +453,15 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                           Switch.adaptive(
                             value: _wholeQuran,
                             activeTrackColor: oliveColor,
+                            inactiveTrackColor: context.surfaceColor(
+                              const Color(0xFFEFF2E4),
+                            ),
+                            inactiveThumbColor: context.surfaceColor(
+                              Colors.white,
+                            ),
+                            trackOutlineColor: WidgetStatePropertyAll(
+                              lineColor,
+                            ),
                             onChanged: (val) {
                               setState(() => _wholeQuran = val);
                             },
@@ -477,114 +477,30 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
                         padding: EdgeInsets.all(16.w),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24.r),
-                          border: Border.all(color: borderColor),
+                          border: Border.all(color: lineColor),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Select Start Sura
-                            Text(
-                              t.selectStartSurah,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF282442),
-                              ),
-                            ),
+                            fieldLabel(t.selectStartSurah),
                             SizedBox(height: 8.h),
-                            InkWell(
+                            surahPickerField(
+                              surah: _startSurah,
+                              fallbackNo: 1,
+                              fallback: 'Al-Fatiha',
                               onTap: _pickStartSurah,
-                              borderRadius: BorderRadius.circular(28.r),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 14.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(28.r),
-                                  border: Border.all(color: borderColor),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        surahLabel(_startSurah, 1, 'Al-Fatiha'),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _startSurah != null
-                                              ? const Color(0xFF282442)
-                                              : const Color(0xFFB0BAA5),
-                                          fontSize: 13.sp,
-                                          fontWeight: _startSurah != null
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.chevron_right_rounded,
-                                      color: const Color(0xFF8A9A70),
-                                      size: 22.sp,
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                             SizedBox(height: 18.h),
 
                             // Select End Sura
-                            Text(
-                              t.selectEndSurah,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF282442),
-                              ),
-                            ),
+                            fieldLabel(t.selectEndSurah),
                             SizedBox(height: 8.h),
-                            InkWell(
+                            surahPickerField(
+                              surah: _endSurah,
+                              fallbackNo: 114,
+                              fallback: 'An-Nas',
                               onTap: _pickEndSurah,
-                              borderRadius: BorderRadius.circular(28.r),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 14.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(28.r),
-                                  border: Border.all(color: borderColor),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        surahLabel(_endSurah, 114, 'An-Nas'),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: _endSurah != null
-                                              ? const Color(0xFF282442)
-                                              : const Color(0xFFB0BAA5),
-                                          fontSize: 13.sp,
-                                          fontWeight: _endSurah != null
-                                              ? FontWeight.w600
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.chevron_right_rounded,
-                                      color: const Color(0xFF8A9A70),
-                                      size: 22.sp,
-                                    ),
-                                  ],
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -594,25 +510,22 @@ class _CreateQuranPlanScreenState extends State<CreateQuranPlanScreen> {
 
                     // Edit mode extra: Status
                     if (widget.isEditing) ...[
-                      Text(
-                        t.planStatus,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF282442),
-                        ),
-                      ),
+                      fieldLabel(t.planStatus),
                       SizedBox(height: 8.h),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(color: borderColor),
+                          border: Border.all(color: lineColor),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
                             value: _status,
                             isExpanded: true,
+                            borderRadius: BorderRadius.circular(16.r),
+                            dropdownColor: context.surfaceColor(Colors.white),
+                            iconEnabledColor: chevronInk,
+                            style: TextStyle(fontSize: 14.sp, color: labelInk),
                             items: [
                               DropdownMenuItem(
                                 value: 'in_progress',

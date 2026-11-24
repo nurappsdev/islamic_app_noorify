@@ -528,6 +528,19 @@ class _HadithDetailViewState extends State<_HadithDetailView>
     }
   }
 
+  /// Pull to refresh: reloads this scope's hadiths from the API instead of
+  /// the copy stored on the device, so hadiths added on the server since
+  /// show up. Completes once the new page is in, so the spinner runs for
+  /// exactly that long. `orElse` covers the screen being popped mid-refresh.
+  Future<void> _refreshHadiths() {
+    final bloc = context.read<HadithDetailBloc>()
+      ..add(const RefreshHadithDetails());
+    return bloc.stream.firstWhere(
+      (s) => !s.isLoading,
+      orElse: () => bloc.state,
+    );
+  }
+
   /// The list area: a skeleton, a failure/empty message, or the hadiths
   /// themselves as a lazily-built [ListView.builder] (this list can run to
   /// hundreds of hadiths, so cards off-screen must not stay built).
@@ -595,6 +608,8 @@ class _HadithDetailViewState extends State<_HadithDetailView>
       child: ListView.builder(
         key: _listKey,
         controller: _scrollController,
+        // Always scrollable, so a pull to refresh works on a short list.
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 4.h, 20.w, 28.h),
         itemCount: hadiths.length + (footer == null ? 0 : 1),
         itemBuilder: (context, index) {
@@ -688,13 +703,18 @@ class _HadithDetailViewState extends State<_HadithDetailView>
         ? widget.title!
         : appText.categoryHadith;
 
-    final listBody = _buildListBody(
-      state: state,
-      appText: appText,
-      hadiths: hadiths,
-      searching: searching,
-      seekingInitial: seekingInitial,
-      title: title,
+    final listBody = RefreshIndicator(
+      color: const Color(0xFF4F7A43),
+      backgroundColor: context.surfaceColor(Colors.white),
+      onRefresh: _refreshHadiths,
+      child: _buildListBody(
+        state: state,
+        appText: appText,
+        hadiths: hadiths,
+        searching: searching,
+        seekingInitial: seekingInitial,
+        title: title,
+      ),
     );
 
     return PopScope(
@@ -976,6 +996,9 @@ class _CenteredList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      // Always scrollable, so a pull to refresh works on these short states
+      // too — the "no results" one above all, which a pull is meant to fix.
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
       children: [child],
     );

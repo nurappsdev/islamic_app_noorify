@@ -69,6 +69,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh = false,
   }) async {
     try {
       return Right(
@@ -77,6 +78,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
           page: page,
           limit: limit,
           searchTerm: searchTerm,
+          forceRefresh: forceRefresh,
         ),
       );
     } on ServerException catch (e) {
@@ -96,6 +98,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     required int page,
     required int limit,
     String? searchTerm,
+    bool forceRefresh = false,
   }) async {
     try {
       return Right(
@@ -104,6 +107,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
           page: page,
           limit: limit,
           searchTerm: searchTerm,
+          forceRefresh: forceRefresh,
         ),
       );
     } on ServerException catch (e) {
@@ -329,6 +333,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
     String? planId,
     required int page,
     required int limit,
+    bool forceRefresh = false,
   }) async {
     try {
       return Right(
@@ -339,6 +344,7 @@ class HadithLibraryRepositoryImpl implements HadithLibraryRepository {
           planId: planId,
           page: page,
           limit: limit,
+          forceRefresh: forceRefresh,
         ),
       );
     } on ServerException catch (e) {

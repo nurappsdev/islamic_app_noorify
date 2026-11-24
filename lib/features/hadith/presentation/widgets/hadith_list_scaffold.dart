@@ -73,6 +73,7 @@ class HadithListScaffold extends StatelessWidget {
     required this.children,
     this.controller,
     this.onSearchChanged,
+    this.onRefresh,
   });
 
   final String title;
@@ -83,6 +84,10 @@ class HadithListScaffold extends StatelessWidget {
 
   /// Called as the search text changes; when null the field does nothing.
   final ValueChanged<String>? onSearchChanged;
+
+  /// Pull to refresh; when null the list does not pull. The returned future
+  /// has to complete when the new content is in, so the spinner stops then.
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -103,16 +108,27 @@ class HadithListScaffold extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            Expanded(
-              child: ListView(
-                controller: controller,
-                padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
-                children: children,
-              ),
-            ),
+            Expanded(child: _buildList(context)),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    final list = ListView(
+      controller: controller,
+      // Always scrollable, so a pull works even on a list that fits.
+      physics: onRefresh == null ? null : const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 28.h),
+      children: children,
+    );
+    if (onRefresh == null) return list;
+    return RefreshIndicator(
+      color: const Color(0xFF4F7A43),
+      backgroundColor: context.surfaceColor(Colors.white),
+      onRefresh: onRefresh!,
+      child: list,
     );
   }
 }

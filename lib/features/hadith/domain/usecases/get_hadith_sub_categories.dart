@@ -12,14 +12,18 @@ class GetHadithSubCategories {
 
   final HadithLibraryRepository _repository;
 
+  /// [forceRefresh] goes to the API even when a stored copy exists, for a
+  /// pull to refresh: chapters added on the server since then show up.
   Future<Either<Failure, HadithSubCategoryPage>> call(
     String categoryId, {
     int page = 1,
     String? searchTerm,
+    bool forceRefresh = false,
   }) => _repository.getSubCategories(
     categoryId,
     page: page,
     limit: pageSize,
     searchTerm: searchTerm,
+    forceRefresh: forceRefresh,
   );
 }
