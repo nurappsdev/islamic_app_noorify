@@ -374,6 +374,26 @@ void main() {
       expect(find.byType(DuaWeeklyBarChart), findsNothing);
     });
 
+    testWidgets('tapping the daily donut shows both point totals', (
+      tester,
+    ) async {
+      await _pump(tester, dashboard());
+
+      await tester.tap(find.byType(CustomPaint).first);
+      await tester.pump();
+
+      final tooltip = tester.widget<DuaChartTooltip>(
+        find.byType(DuaChartTooltip),
+      );
+      expect(tooltip.title, 'Daily');
+      expect(tooltip.lines, hasLength(2));
+      expect(tooltip.lines.map((line) => line.color), const [
+        Color(0xFF5D896D),
+        Color(0xFFA9B258),
+      ]);
+      expect(tooltip.lines.map((line) => line.value), ['5.64', '5.64']);
+    });
+
     // The fake answers seven dated days, one bar each, labelled by weekday.
     testWidgets('the weekly chart draws one bar per day of the week', (
       tester,

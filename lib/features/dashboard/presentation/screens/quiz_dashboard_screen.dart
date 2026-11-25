@@ -153,7 +153,12 @@ class _QuizDashboardView extends StatelessWidget {
                   )
                 else
                   _PointsSummary(
-                    mine: me?.dashboard.totals.totalPoints,
+                    // The standard dashboard loads independently of the
+                    // optional comparison request, so keep my score visible
+                    // even if no competitor is returned.
+                    mine:
+                        me?.dashboard.totals.totalPoints ??
+                        state.dashboard?.totals.totalPoints,
                     theirs: other?.dashboard.totals.totalPoints,
                   ),
                 // Comparison card - hidden for now; uncomment to show it.
@@ -413,24 +418,69 @@ class _LegendItem extends StatelessWidget {
 }
 
 /// The two users' points over the range, each an arc sized by its share.
-class _ScoreDonut extends StatelessWidget {
+///
+/// Like the weekly and monthly bars, the chart reveals its exact values when
+/// tapped. The point tiles below remain useful at a glance; this card keeps
+/// the interaction consistent for someone tapping the daily circle itself.
+class _ScoreDonut extends StatefulWidget {
   const _ScoreDonut({required this.mine, required this.theirs});
 
   final num? mine;
   final num? theirs;
 
   @override
+  State<_ScoreDonut> createState() => _ScoreDonutState();
+}
+
+class _ScoreDonutState extends State<_ScoreDonut> {
+  bool _showPoints = false;
+
+  @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(245.w, 245.w),
-      painter: _ScoreDonutPainter(
-        mine: (mine ?? 0).toDouble(),
-        theirs: (theirs ?? 0).toDouble(),
-        track: context.surfaceColor(const Color(0xFFF0F0F6)),
-        // Mapped here, not in `paint`: a painter has no BuildContext, and
-        // the legend dots map the same two colors the same way.
-        mineColor: context.surfaceColor(_myColor),
-        theirsColor: context.surfaceColor(_rivalColor),
+    final appText = AppText.of(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _showPoints = !_showPoints),
+      child: SizedBox(
+        width: 245.w,
+        height: 245.w,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            CustomPaint(
+              size: Size(245.w, 245.w),
+              painter: _ScoreDonutPainter(
+                mine: (widget.mine ?? 0).toDouble(),
+                theirs: (widget.theirs ?? 0).toDouble(),
+                track: context.surfaceColor(const Color(0xFFF0F0F6)),
+                // Mapped here, not in `paint`: a painter has no BuildContext,
+                // and the legend dots map the same two colors the same way.
+                mineColor: context.surfaceColor(_myColor),
+                theirsColor: context.surfaceColor(_rivalColor),
+              ),
+            ),
+            if (_showPoints)
+              DuaChartTooltip(
+                title: appText.daily,
+                lines: [
+                  DuaTooltipLine.metric(
+                    color: _myColor,
+                    text: appText.myPoints,
+                    value: context.localizedDigits(
+                      formatOptional(widget.mine, formatPoints),
+                    ),
+                  ),
+                  DuaTooltipLine.metric(
+                    color: _rivalColor,
+                    text: appText.myNearestOrCompetitor,
+                    value: context.localizedDigits(
+                      formatOptional(widget.theirs, formatPoints),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -579,7 +629,9 @@ class _CompetitorCard extends StatelessWidget {
               '${formatPoints(competitor.dashboard.totals.totalPoints)}',
             ),
             style: TextStyle(
-              color: context.inkColor(const Color(0xFF5D896D)),
+              // This is the other reader's figure, so it must use the same
+              // olive color as their donut arc, legend marker and chart bar.
+              color: context.inkColor(_rivalColor),
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
             ),
@@ -591,6 +643,11 @@ class _CompetitorCard extends StatelessWidget {
 }
 
 /// Both users' points over the range; `—` until they have loaded.
+///
+/// The daily donut is a visual comparison, while these two tiles make the
+/// exact scores immediately readable. Each tile uses its user's chart color,
+/// so the green and olive values never need to be mentally matched back to
+/// the donut or legend.
 class _PointsSummary extends StatelessWidget {
   const _PointsSummary({required this.mine, required this.theirs});
 
@@ -599,49 +656,94 @@ class _PointsSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 51.h,
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
-      decoration: BoxDecoration(
-        color: context.surfaceColor(Color(0xFFF3F5E4)),
-        borderRadius: BorderRadius.circular(26.r),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.surfaceColor(Color(0xFFDDE8BA)),
-                borderRadius: BorderRadius.circular(26.r),
-              ),
-              child: Text(
-                context.localizedDigits(
-                  '${AppText.of(context).myPoints} : '
-                  '${formatOptional(mine, formatPoints)}',
-                ),
-                style: TextStyle(fontSize: 16.sp),
-              ),
-            ),
+    final appText = AppText.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: _PointTotalTile(
+            color: _myColor,
+            background: const Color(0xFFE4F0E4),
+            label: appText.myPoints,
+            value: formatOptional(mine, formatPoints),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w),
-            child: Row(
-              children: [
-                Container(
-                  width: 9.w,
-                  height: 9.w,
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor(_rivalColor),
-                    shape: BoxShape.circle,
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: _PointTotalTile(
+            color: _rivalColor,
+            background: const Color(0xFFF3F1D9),
+            label: appText.myNearestOrCompetitor,
+            value: formatOptional(theirs, formatPoints),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PointTotalTile extends StatelessWidget {
+  const _PointTotalTile({
+    required this.color,
+    required this.background,
+    required this.label,
+    required this.value,
+  });
+
+  final Color color;
+  final Color background;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(minHeight: 68.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+      decoration: BoxDecoration(
+        color: context.surfaceColor(background),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: context.lineColor(color.withValues(alpha: .38)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8.w,
+                height: 8.w,
+                decoration: BoxDecoration(
+                  color: context.surfaceColor(color),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.inkColor(color),
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.15,
                   ),
                 ),
-                SizedBox(width: 7.w),
-                Text(
-                  context.localizedDigits(formatOptional(theirs, formatPoints)),
-                  style: TextStyle(fontSize: 16.sp),
-                ),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            context.localizedDigits(value),
+            style: TextStyle(
+              color: context.inkColor(color),
+              fontSize: 21.sp,
+              fontWeight: FontWeight.w700,
+              height: 1,
             ),
           ),
         ],
@@ -709,7 +811,9 @@ class _PeriodChart extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           _ScoreDonut(
-            mine: me?.dashboard.totals.totalPoints,
+            mine:
+                me?.dashboard.totals.totalPoints ??
+                state.dashboard?.totals.totalPoints,
             theirs: other?.dashboard.totals.totalPoints,
           ),
           if (state.comparisonStatus == QuizDashboardLoadStatus.loading)
@@ -951,12 +1055,10 @@ class _MonthlyPointsChart extends StatelessWidget {
           ? days.length - 1
           : start + groupSize - 1;
       final rowDays = days.sublist(start, end + 1);
-      rows.add(
-        (
-          label: '${rowDays.first.date.day}-${rowDays.last.date.day}',
-          days: rowDays,
-        ),
-      );
+      rows.add((
+        label: '${rowDays.first.date.day}-${rowDays.last.date.day}',
+        days: rowDays,
+      ));
     }
     return rows;
   }
