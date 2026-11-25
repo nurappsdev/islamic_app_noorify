@@ -26,6 +26,35 @@ abstract final class DuaChartColors {
   static const tooltipInk = Color(0xFF364027);
 }
 
+/// The two series colours a bar chart draws its layers in.
+///
+/// Defaults to [DuaChartColors], so the Dua and Hadith dashboards are
+/// unaffected. A dashboard whose legend names its own colours - the Quiz
+/// dashboard's "My Position" green - passes those instead, so the bars and
+/// the legend above them can never disagree.
+class DuaChartPalette {
+  const DuaChartPalette({
+    required this.mine,
+    required this.mineStrong,
+    required this.competitor,
+  });
+
+  /// The signed-in user's own layer, drawn in front.
+  final Color mine;
+
+  /// That layer while its bar is selected - the same colour, darkened.
+  final Color mineStrong;
+
+  /// The layer behind it: what the user is measured against.
+  final Color competitor;
+
+  static const dua = DuaChartPalette(
+    mine: DuaChartColors.mine,
+    mineStrong: DuaChartColors.mineStrong,
+    competitor: DuaChartColors.competitor,
+  );
+}
+
 /// A chart axis with five evenly spaced, round ticks that covers [rawMax].
 ///
 /// The design draws `0 … 1000`; the real axis follows the data instead, so a
@@ -342,9 +371,23 @@ class DuaWeeklyBarChart extends StatefulWidget {
     super.key,
     required this.bars,
     required this.tooltipBuilder,
+    this.palette = DuaChartPalette.dua,
+    this.axisLabel,
   });
 
   final List<DuaChartBar> bars;
+
+  /// The layer colours; the Dua palette unless a dashboard passes its own.
+  final DuaChartPalette palette;
+
+  /// How the axis writes one of its ticks.
+  ///
+  /// Defaults to the tick itself. [DuaChartBar] carries whole numbers, which
+  /// suits the Dua dashboard's minutes; a dashboard counting something
+  /// fractional - Quiz points run 0.4, 1.2, 2.3 - scales its values up so
+  /// they survive as integers and passes the inverse here, so the axis still
+  /// reads in its own unit.
+  final String Function(int tick)? axisLabel;
 
   /// Builds the card for the bar tapped, given its place in [bars].
   final Widget Function(int index, DuaChartBar bar) tooltipBuilder;
@@ -355,6 +398,8 @@ class DuaWeeklyBarChart extends StatefulWidget {
 
 class _DuaWeeklyBarChartState extends State<DuaWeeklyBarChart> {
   int? _selected;
+
+  String _tick(int value) => widget.axisLabel?.call(value) ?? '$value';
 
   @override
   void didUpdateWidget(covariant DuaWeeklyBarChart old) {
@@ -384,7 +429,7 @@ class _DuaWeeklyBarChartState extends State<DuaWeeklyBarChart> {
               children: [
                 for (final tick in axis.ticks.reversed)
                   Text(
-                    context.localizedDigits('$tick'),
+                    context.localizedDigits(_tick(tick)),
                     style: TextStyle(
                       fontSize: 9.sp,
                       color: context.textInkColor(DuaChartColors.axis),
@@ -407,6 +452,7 @@ class _DuaWeeklyBarChartState extends State<DuaWeeklyBarChart> {
                           Expanded(
                             child: _WeeklyColumn(
                               bar: bars[index],
+                              palette: widget.palette,
                               axisMax: axis.max,
                               selected: _selected == index,
                               onTap: () => setState(
@@ -454,12 +500,14 @@ class _DuaWeeklyBarChartState extends State<DuaWeeklyBarChart> {
 class _WeeklyColumn extends StatelessWidget {
   const _WeeklyColumn({
     required this.bar,
+    required this.palette,
     required this.axisMax,
     required this.selected,
     required this.onTap,
   });
 
   final DuaChartBar bar;
+  final DuaChartPalette palette;
   final double axisMax;
   final bool selected;
   final VoidCallback onTap;
@@ -489,13 +537,11 @@ class _WeeklyColumn extends StatelessWidget {
                 // it — the two colours the tooltip names.
                 _Layer(
                   factor: _factor(bar.competitor),
-                  color: DuaChartColors.competitor,
+                  color: palette.competitor,
                 ),
                 _Layer(
                   factor: _factor(bar.mine),
-                  color: selected
-                      ? DuaChartColors.mineStrong
-                      : DuaChartColors.mine,
+                  color: selected ? palette.mineStrong : palette.mine,
                 ),
               ],
             ),
@@ -679,9 +725,23 @@ class DuaMonthlyBarChart extends StatefulWidget {
     super.key,
     required this.bars,
     required this.tooltipBuilder,
+    this.palette = DuaChartPalette.dua,
+    this.axisLabel,
   });
 
   final List<DuaChartBar> bars;
+
+  /// The layer colours; the Dua palette unless a dashboard passes its own.
+  final DuaChartPalette palette;
+
+  /// How the axis writes one of its ticks.
+  ///
+  /// Defaults to the tick itself. [DuaChartBar] carries whole numbers, which
+  /// suits the Dua dashboard's minutes; a dashboard counting something
+  /// fractional - Quiz points run 0.4, 1.2, 2.3 - scales its values up so
+  /// they survive as integers and passes the inverse here, so the axis still
+  /// reads in its own unit.
+  final String Function(int tick)? axisLabel;
 
   /// Builds the card for the bar tapped, given its place in [bars].
   final Widget Function(int index, DuaChartBar bar) tooltipBuilder;
@@ -692,6 +752,8 @@ class DuaMonthlyBarChart extends StatefulWidget {
 
 class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
   int? _selected;
+
+  String _tick(int value) => widget.axisLabel?.call(value) ?? '$value';
 
   @override
   void didUpdateWidget(covariant DuaMonthlyBarChart old) {
@@ -725,6 +787,7 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
                       Expanded(
                         child: _MonthlyRow(
                           bar: rows[index],
+                          palette: widget.palette,
                           axisMax: axis.max,
                           selected: _selected == index,
                           onTap: () => setState(
@@ -742,7 +805,7 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
                   SizedBox(
                     width: _labelWidth,
                     child: Text(
-                      context.localizedDigits('0'),
+                      context.localizedDigits(_tick(0)),
                       textAlign: TextAlign.right,
                       style: TextStyle(
                         fontSize: 9.5.sp,
@@ -757,7 +820,7 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
                       children: [
                         for (final tick in axis.ticks)
                           Text(
-                            context.localizedDigits('$tick'),
+                            context.localizedDigits(_tick(tick)),
                             style: TextStyle(
                               fontSize: 9.sp,
                               color: context.textInkColor(DuaChartColors.axis),
@@ -788,12 +851,14 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
 class _MonthlyRow extends StatelessWidget {
   const _MonthlyRow({
     required this.bar,
+    required this.palette,
     required this.axisMax,
     required this.selected,
     required this.onTap,
   });
 
   final DuaChartBar bar;
+  final DuaChartPalette palette;
   final double axisMax;
   final bool selected;
   final VoidCallback onTap;
@@ -834,13 +899,11 @@ class _MonthlyRow extends StatelessWidget {
                 ),
                 _WideLayer(
                   factor: _factor(bar.competitor),
-                  color: DuaChartColors.competitor,
+                  color: palette.competitor,
                 ),
                 _WideLayer(
                   factor: _factor(bar.mine),
-                  color: selected
-                      ? DuaChartColors.mineStrong
-                      : DuaChartColors.mine,
+                  color: selected ? palette.mineStrong : palette.mine,
                 ),
               ],
             ),

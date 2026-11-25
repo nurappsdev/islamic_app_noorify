@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
+import 'package:tuhfatul_muslim/features/home/data/home_feature_order_store.dart';
 import 'package:tuhfatul_muslim/features/home/presentation/screens/home_screen.dart';
 import 'package:tuhfatul_muslim/features/zikr/data/zikr_progress_store.dart';
 
+/// The Home Screen's feature shortcuts (Quran, Hadith, Dua, Quiz, Zikr,
+/// Asma-ul-Husna).
+///
+/// The tiles can be rearranged in place: long-press one, drag it onto the
+/// tile whose place it should take, and let go. The order is kept on the
+/// device by [HomeFeatureOrderStore], so it is the same after a restart, and
+/// a plain tap still opens the feature.
 class HomeFeatureGrid extends StatelessWidget {
   const HomeFeatureGrid({
     super.key,
     this.columnMajor = false,
     this.webStyle = false,
+    this.reorderable = true,
   });
 
   /// Web's reference design reads each vertical column top-to-bottom before
@@ -22,6 +32,9 @@ class HomeFeatureGrid extends StatelessWidget {
   /// Uses the reference Web dashboard's six compact, horizontal shortcuts.
   /// Mobile retains its original two-column, portrait cards.
   final bool webStyle;
+
+  /// Long-press-and-drop reordering. Pass `false` for a fixed grid.
+  final bool reorderable;
 
   static List<_HomeFeature> _features(AppText appText) => [
     _HomeFeature(
@@ -67,60 +80,188 @@ class HomeFeatureGrid extends StatelessWidget {
       imagePath: 'assets/homeImg/asmaImg.png',
       routeName: RouteNames.asma,
     ),
-
-
   ];
 
   @override
   Widget build(BuildContext context) {
     final appText = AppText.of(context);
     final baseFeatures = _features(appText);
-    final features = columnMajor
-        ? [
-            // GridView fills left-to-right by rows, so interleave the two
-            // desired columns: Quran/Hadith/Quiz | Asma/Zikr/Dua.
-            baseFeatures[0],
-            baseFeatures[3],
-            baseFeatures[1],
-            baseFeatures[4],
-            baseFeatures[2],
-            baseFeatures[5],
-          ]
-        : baseFeatures;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final webColumns = constraints.maxWidth >= 880 ? 3 : 2;
-        return Column(
-          children: [
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: features.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: webStyle ? webColumns : 2,
-                mainAxisExtent: webStyle ? 128 : 128.h,
-                crossAxisSpacing: webStyle ? 18 : 11.w,
-                mainAxisSpacing: webStyle ? 18 : 12.h,
+    final defaultIds = [for (final feature in baseFeatures) feature.id];
+
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: HomeFeatureOrderStore.instance,
+      builder: (context, _, _) {
+        final byId = {for (final feature in baseFeatures) feature.id: feature};
+        final userOrder = [
+          for (final id in HomeFeatureOrderStore.instance.ordered(defaultIds))
+            byId[id]!,
+        ];
+        // GridView fills left-to-right by rows, so Web's column-first
+        // reference reading order needs the two columns interleaved.
+        final features = columnMajor ? _asColumnMajor(userOrder) : userOrder;
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final webColumns = constraints.maxWidth >= 880 ? 3 : 2;
+            final columns = webStyle ? webColumns : 2;
+            final spacing = webStyle ? 18.0 : 11.w;
+            final tileHeight = webStyle ? 128.0 : 128.h;
+            // The dragged card is painted in the overlay, where the grid's
+            // constraints no longer apply, so its size is measured here.
+            final tileWidth = constraints.maxWidth.isFinite
+                ? (constraints.maxWidth - spacing * (columns - 1)) / columns
+                : 160.0;
+
+            return Column(
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: features.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisExtent: tileHeight,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: webStyle ? 18 : 12.h,
+                  ),
+                  itemBuilder: (context, index) {
+                    final feature = features[index];
+                    final tile = webStyle
+                        ? _WebFeatureTile(feature: feature)
+                        : _FeatureTile(feature: feature);
+                    if (!reorderable) return tile;
+                    return _ReorderableFeatureTile(
+                      feature: feature,
+                      defaultIds: defaultIds,
+                      size: Size(tileWidth, tileHeight),
+                      radius: webStyle ? 18 : 11.r,
+                      child: tile,
+                    );
+                  },
+                ),
+                SizedBox(height: webStyle ? 0 : 12.h),
+                // _LinkTile(
+                //   title: appText.zakatCalculator,
+                //   icon: Icons.price_check,
+                //   iconColor: context.inkColor(Color(0xFF0DA334)),
+                //   onTap: () => _openComingSoon(context, appText.zakatCalculator),
+                // ),
+                // SizedBox(height: 6.h),
+                // _LinkTile(
+                //   title: appText.ageCalculate,
+                //   icon: Icons.calculate,
+                //   iconColor: const Color(0xFFAAB781),
+                //   onTap: () => _openComingSoon(context, appText.ageCalculate),
+                // ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Reads the list down the first column and then down the second, so a
+  /// row-filling GridView still shows it column-first.
+  static List<_HomeFeature> _asColumnMajor(List<_HomeFeature> features) {
+    final rows = (features.length / 2).ceil();
+    return [
+      for (var row = 0; row < rows; row++)
+        for (final index in [row, row + rows])
+          if (index < features.length) features[index],
+    ];
+  }
+}
+
+/// One grid tile that can be picked up and dropped onto another one.
+///
+/// A long press lifts the card; dropping it on a tile puts it in that tile's
+/// place and pushes the others along. The order is written to
+/// [HomeFeatureOrderStore] the instant the finger lifts, and a short tap is
+/// untouched, so navigation still works exactly as before.
+class _ReorderableFeatureTile extends StatelessWidget {
+  const _ReorderableFeatureTile({
+    required this.feature,
+    required this.defaultIds,
+    required this.size,
+    required this.radius,
+    required this.child,
+  });
+
+  final _HomeFeature feature;
+  final List<String> defaultIds;
+  final Size size;
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    // The lifted card lives in the app's overlay, outside this subtree, so
+    // the inherited values it reads (dark-mode colors, text direction) are
+    // captured here and handed to it.
+    final theme = Theme.of(context);
+    final textDirection = Directionality.of(context);
+
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (details) => details.data != feature.id,
+      onAcceptWithDetails: (details) {
+        HomeFeatureOrderStore.instance.moveTo(
+          id: details.data,
+          targetId: feature.id,
+          defaultIds: defaultIds,
+        );
+        HapticFeedback.mediumImpact();
+      },
+      builder: (context, candidates, _) {
+        final isDropTarget = candidates.isNotEmpty;
+        return LongPressDraggable<String>(
+          data: feature.id,
+          delay: const Duration(milliseconds: 220),
+          onDragStarted: HapticFeedback.selectionClick,
+          feedback: Directionality(
+            textDirection: textDirection,
+            child: Theme(
+              data: theme,
+              child: Material(
+                color: Colors.transparent,
+                child: Opacity(
+                  opacity: .94,
+                  child: SizedBox(
+                    width: size.width,
+                    height: size.height,
+                    child: Transform.scale(scale: 1.06, child: child),
+                  ),
+                ),
               ),
-              itemBuilder: (context, index) => webStyle
-                  ? _WebFeatureTile(feature: features[index])
-                  : _FeatureTile(feature: features[index]),
             ),
-            SizedBox(height: webStyle ? 0 : 12.h),
-            // _LinkTile(
-            //   title: appText.zakatCalculator,
-            //   icon: Icons.price_check,
-            //   iconColor: context.inkColor(Color(0xFF0DA334)),
-            //   onTap: () => _openComingSoon(context, appText.zakatCalculator),
-            // ),
-            // SizedBox(height: 6.h),
-            // _LinkTile(
-            //   title: appText.ageCalculate,
-            //   icon: Icons.calculate,
-            //   iconColor: const Color(0xFFAAB781),
-            //   onTap: () => _openComingSoon(context, appText.ageCalculate),
-            // ),
-          ],
+          ),
+          childWhenDragging: Opacity(
+            opacity: .3,
+            child: IgnorePointer(child: child),
+          ),
+          // The highlight is painted over the card instead of around it: a
+          // border would shrink the fixed-height tile and overflow it.
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              child,
+              if (isDropTarget)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(radius),
+                        border: Border.all(
+                          color: theme.colorScheme.primary,
+                          width: 2,
+                        ),
+                        color: theme.colorScheme.primary.withValues(alpha: .06),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -141,6 +282,10 @@ class _HomeFeature {
   final Color color;
   final String? imagePath;
   final String? routeName;
+
+  /// Stable key for the saved order: the route never changes with the
+  /// app language, unlike [title].
+  String get id => routeName ?? title;
 }
 
 class _FeatureTile extends StatelessWidget {
