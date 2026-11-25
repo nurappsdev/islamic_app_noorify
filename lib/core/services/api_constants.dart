@@ -1,6 +1,7 @@
 class ApiConstants {
-  static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
- //static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
+// static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
+ static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
+ //static const String _defaultBaseUrl = 'http://127.0.0.1:5050/api/v1';
   // local
   //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 

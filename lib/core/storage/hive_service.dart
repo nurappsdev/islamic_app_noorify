@@ -35,6 +35,11 @@ class HiveService {
   /// its id.
   static const String zikrPlannerBox = 'zikr_planner_box';
 
+  /// Box that holds the Home Screen's device-local layout choices — right
+  /// now just the user's drag-and-drop order for the feature grid tiles.
+  /// Never synced to the backend.
+  static const String homeLayoutBox = 'home_layout_box';
+
   /// Box that holds the Dua feature's bookmark folders and saved duas
   /// (one entry per dua-in-folder, keyed by `<duaId>::<folder>`, plus one
   /// entry holding the list of user-created empty folders). Device-local
@@ -54,6 +59,7 @@ class HiveService {
     await Hive.openBox<dynamic>(customZikrBox);
     await Hive.openBox<dynamic>(zikrPlannerBox);
     await Hive.openBox<dynamic>(duaBookmarksBox);
+    await Hive.openBox<dynamic>(homeLayoutBox);
     _initialized = true;
   }
 
@@ -80,4 +86,7 @@ class HiveService {
 
   /// Already-opened Dua bookmarks box. Safe to call after [init].
   static Box<dynamic> get duaBookmarks => Hive.box<dynamic>(duaBookmarksBox);
+
+  /// Already-opened Home Screen layout box. Safe to call after [init].
+  static Box<dynamic> get homeLayout => Hive.box<dynamic>(homeLayoutBox);
 }
