@@ -1016,8 +1016,10 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                     top: false,
                     // Capped like the reading column above it, so the bar
                     // sits under the text rather than spanning a desktop
-                    // window edge to edge.
-                    child: DuaContentWidth(
+                    // window edge to edge. DuaBarWidth claims no height:
+                    // this Positioned has no `top`, so a Center would fill
+                    // the page and float the bar in the middle of it.
+                    child: DuaBarWidth(
                       maxWidth: DuaLayout.maxReading,
                       child: _ReciteBar(
                         count: _count,

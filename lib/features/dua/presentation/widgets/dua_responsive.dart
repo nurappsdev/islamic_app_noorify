@@ -30,9 +30,15 @@ abstract final class DuaLayout {
   /// loses its place on a line much wider than this.
   static const maxReading = 820.0;
 
-  /// The floating olive nav pill is sized for a phone. Left to itself it
-  /// would stretch the full width of a desktop window, so it keeps to this.
-  static const maxNav = 560.0;
+  /// The floating olive nav pill lines up with the page content above it,
+  /// rather than sitting as a small pill in the middle of a wide window.
+  ///
+  /// `AppBottomNavBar` carries its own 16px margin either side, which is
+  /// inside this box, so that margin is added back here: the pill itself
+  /// then measures exactly [maxContent] and its edges meet the content
+  /// column's. On a phone the window is far narrower than this, so the cap
+  /// never bites and the bar is unchanged.
+  static const maxNav = maxContent + 32;
 
   /// A form or sheet column - plan create, folder naming - that looks
   /// stretched and empty at full content width.
@@ -74,6 +80,36 @@ class DuaContentWidth extends StatelessWidget {
   Widget build(BuildContext context) => Center(
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth ?? DuaLayout.maxContent),
+      child: child,
+    ),
+  );
+}
+
+/// Caps a bottom-anchored bar's width without claiming any height.
+///
+/// [DuaContentWidth] is the wrong tool for an overlay: its `Center` has no
+/// height factor, so when the parent offers it the whole page - as
+/// `Align(alignment: Alignment.bottomCenter)` and a `Positioned` with no
+/// `top` both do - it expands to fill that height and then centres the bar
+/// inside it, leaving the bar floating in the middle of the page instead of
+/// at its foot.
+///
+/// `heightFactor: 1` keeps this box exactly as tall as the bar, so the
+/// parent's bottom alignment still decides where it sits.
+class DuaBarWidth extends StatelessWidget {
+  const DuaBarWidth({super.key, required this.child, this.maxWidth});
+
+  final Widget child;
+
+  /// Defaults to [DuaLayout.maxNav].
+  final double? maxWidth;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.bottomCenter,
+    heightFactor: 1,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth ?? DuaLayout.maxNav),
       child: child,
     ),
   );

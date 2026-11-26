@@ -204,19 +204,67 @@ void main() {
       expect(right - left, lessThanOrEqualTo(DuaLayout.maxContent + 1));
     });
 
-    testWidgets('the nav pill does not span the whole window', (tester) async {
+    testWidgets('the nav pill stays at the foot of the page', (tester) async {
+      // Regression: capping the pill's width with a `Center` also took the
+      // full page height and centred the pill vertically, leaving it
+      // floating in the middle of the screen.
       await pumpAt(
         tester,
         DuaDashboardScreen(repository: _Repo()),
-        1600,
+        1280,
         webUnits: true,
       );
       expect(tester.takeException(), isNull);
 
-      // The pill itself, not the Center that fills the window around it.
-      final nav = tester.getSize(find.byType(AppBottomNavBar));
-      expect(nav.width, lessThanOrEqualTo(DuaLayout.maxNav + 1));
+      final pill = tester.getRect(find.byType(AppBottomNavBar));
+      final page = tester.getSize(find.byType(MaterialApp)).height;
+      expect(
+        pill.bottom,
+        greaterThan(page - 80),
+        reason:
+            'the pill is at ${pill.top}-${pill.bottom} on a '
+            '${page}px page, not at its foot',
+      );
+      // And it is a bar, not a full-height box.
+      expect(pill.height, lessThan(140));
     });
+
+    for (final width in [900.0, 1280.0, 1920.0]) {
+      testWidgets(
+        'the nav pill lines up with the content at ${width.toInt()}px',
+        (tester) async {
+          await pumpAt(
+            tester,
+            DuaDashboardScreen(repository: _Repo()),
+            width,
+            webUnits: true,
+          );
+          expect(tester.takeException(), isNull);
+
+          // `AppBottomNavBar` carries a 16px margin inside its own box, so the
+          // visible pill is that box inset by 16 either side.
+          final navBox = tester.getRect(find.byType(AppBottomNavBar));
+          final pillLeft = navBox.left + 16;
+          final pillRight = navBox.right - 16;
+
+          // The content column: the first row of category tiles.
+          final tiles = find.byType(DuaCategoryTile);
+          final first = tester.getRect(tiles.first);
+          var contentRight = first.right;
+          for (var i = 0; i < tiles.evaluate().length; i++) {
+            final r = tester.getRect(tiles.at(i));
+            if ((r.top - first.top).abs() < 1 && r.right > contentRight) {
+              contentRight = r.right;
+            }
+          }
+
+          expect(pillLeft, closeTo(first.left, 1));
+          expect(pillRight, closeTo(contentRight, 1));
+          // And it is still capped, not stretched to the window.
+          expect(navBox.width, lessThanOrEqualTo(DuaLayout.maxNav + 1));
+        },
+      );
+    }
   });
 
   // The real safety net: no overflow on any width, in either unit mode.

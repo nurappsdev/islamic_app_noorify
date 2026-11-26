@@ -25,8 +25,9 @@ class DuaBottomNav extends StatelessWidget {
 
     // The pill is sized for a phone; on a desktop browser it would other-
     // wise stretch the whole window and leave the icons swimming in it.
-    return DuaContentWidth(
-      maxWidth: DuaLayout.maxNav,
+    // DuaBarWidth, not DuaContentWidth: the latter's Center would also take
+    // the full page height and strand the pill in the middle of the screen.
+    return DuaBarWidth(
       child: AppBottomNavBar(
         selectedIndex: selectedIndex,
         items: [
