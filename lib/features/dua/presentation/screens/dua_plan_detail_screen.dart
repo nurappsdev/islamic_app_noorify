@@ -13,6 +13,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// One plan's duas (design `devImg/img_7.png`'s "My Plan" entry, opened for
 /// reading), reached by tapping a plan card on [DuaPlannerScreen].
@@ -86,12 +87,17 @@ class _DuaPlanDetailView extends StatelessWidget {
                       ),
                     );
                   }
-                  return ListView.separated(
-                    padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
-                    itemCount: state.entries.length,
-                    separatorBuilder: (_, _) => SizedBox(height: 10.h),
-                    itemBuilder: (context, index) =>
-                        _DuaEntryTile(entry: state.entries[index]),
+                  // A lazy list cannot have its children wrapped, so the
+                  // list itself is centred and capped.
+                  return DuaContentWidth(
+                    maxWidth: DuaLayout.maxReading,
+                    child: ListView.separated(
+                      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 24.h),
+                      itemCount: state.entries.length,
+                      separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                      itemBuilder: (context, index) =>
+                          _DuaEntryTile(entry: state.entries[index]),
+                    ),
                   );
                 },
               ),

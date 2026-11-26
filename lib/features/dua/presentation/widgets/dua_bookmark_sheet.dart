@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_create_folder_sheet.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// "Book Mark" bottom sheet (design `devImg/img_21.png` / `img_22.png`): pick
 /// (or create) the folder a dua is saved into, then Save. Pops with `true`
@@ -72,7 +73,9 @@ class _DuaBookmarkSheetState extends State<DuaBookmarkSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DuaCreateFolderSheet(appText: widget.appText),
+      builder: (_) => DuaWebTypography(
+        child: DuaCreateFolderSheet(appText: widget.appText),
+      ),
     );
     final trimmed = name?.trim() ?? '';
     if (trimmed.isEmpty || !mounted) return;

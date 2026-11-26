@@ -12,6 +12,7 @@ import 'package:tuhfatul_muslim/features/dua/dua_dependencies.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// Full recitation-history flow opened from the Dua dashboard's "See All"
 /// action. Its Daily, Weekly, and Monthly views follow `devImg/img_30.png`
@@ -360,7 +361,14 @@ class _DailyHistory extends StatelessWidget {
     }
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      // Centred and capped on a wide browser; unchanged on a phone.
+      padding: duaPagePadding(
+        context,
+        left: 16.w,
+        top: 10.h,
+        right: 10.w,
+        bottom: 24.h,
+      ),
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
@@ -628,7 +636,14 @@ class _WeeklyHistory extends StatelessWidget {
     final summaries = _summariesForDays(items, days.reversed);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      // Centred and capped on a wide browser; unchanged on a phone.
+      padding: duaPagePadding(
+        context,
+        left: 16.w,
+        top: 10.h,
+        right: 10.w,
+        bottom: 24.h,
+      ),
       children: [
         const _HistoryTitle(),
         SizedBox(height: 22.h),
@@ -686,7 +701,14 @@ class _MonthlyHistory extends StatelessWidget {
     final summaries = _summariesForMonth(items, selectedDate);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16.w, 10.h, 10.w, 24.h),
+      // Centred and capped on a wide browser; unchanged on a phone.
+      padding: duaPagePadding(
+        context,
+        left: 16.w,
+        top: 10.h,
+        right: 10.w,
+        bottom: 24.h,
+      ),
       children: [
         _MonthSelector(
           month: selectedDate,

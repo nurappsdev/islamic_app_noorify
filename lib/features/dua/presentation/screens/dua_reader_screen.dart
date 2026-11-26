@@ -24,6 +24,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bookmark_s
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_text_zoom.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_zoom_control.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/core/theme/app_typography.dart';
@@ -465,10 +466,12 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DuaBookmarkSheet(
-        appText: appText,
-        duaId: _duaId,
-        buildSnapshot: _buildSnapshot,
+      builder: (_) => DuaWebTypography(
+        child: DuaBookmarkSheet(
+          appText: appText,
+          duaId: _duaId,
+          buildSnapshot: _buildSnapshot,
+        ),
       ),
     );
     if (saved == true && mounted) {
@@ -544,7 +547,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _DuaCopySheet(readable: _readable(context)),
+      builder: (_) =>
+          DuaWebTypography(child: _DuaCopySheet(readable: _readable(context))),
     );
     if (copied != true || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -562,7 +566,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _DuaShareSheet(readable: readable),
+      builder: (_) =>
+          DuaWebTypography(child: _DuaShareSheet(readable: readable)),
     );
     if (part == null || !mounted) return;
     await _shareText(_shareTextFor(readable, part), readable.name, appText);
@@ -621,12 +626,14 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => BlocProvider.value(
-        value: settingsBloc,
-        child: _DuaSettingsSheet(
-          onAddToPlan: () {
-            Navigator.of(pageContext).pushNamed(RouteNames.duaPlanCreate);
-          },
+      builder: (_) => DuaWebTypography(
+        child: BlocProvider.value(
+          value: settingsBloc,
+          child: _DuaSettingsSheet(
+            onAddToPlan: () {
+              Navigator.of(pageContext).pushNamed(RouteNames.duaPlanCreate);
+            },
+          ),
         ),
       ),
     );
@@ -667,315 +674,341 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                       (_showReciteBar ? 96.h : 24.h) + bottomInset,
                     ),
                     children: [
-                      SizedBox(height: 36.h),
-                      DuaPageHeader(
-                        // Keep the app-bar title fixed; the dua's full name is
-                        // shown in the reading content below.
-                        title: appText.duaIntroTitle,
-                        titleBesideBack: true,
-                        action: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _HeaderIconButton(
-                              icon: Icons.bookmark_border_rounded,
-                              onTap: _showBookmarkSheet,
+                      // Arabic, transliteration and translation are read
+                      // line by line; a line stretched across a desktop
+                      // window loses the reader's place, so the column
+                      // keeps a reading width.
+                      DuaContentColumn(
+                        maxWidth: DuaLayout.maxReading,
+                        children: [
+                          SizedBox(height: 36.h),
+                          DuaPageHeader(
+                            // Keep the app-bar title fixed; the dua's full name is
+                            // shown in the reading content below.
+                            title: appText.duaIntroTitle,
+                            titleBesideBack: true,
+                            action: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _HeaderIconButton(
+                                  icon: Icons.bookmark_border_rounded,
+                                  onTap: _showBookmarkSheet,
+                                ),
+                                SizedBox(width: 8.w),
+                                _HeaderIconButton(
+                                  icon: Icons.copy_rounded,
+                                  onTap: _showCopySheet,
+                                ),
+                                SizedBox(width: 8.w),
+                                _HeaderIconButton(
+                                  icon: Icons.ios_share_rounded,
+                                  onTap: _showShareSheet,
+                                ),
+                                SizedBox(width: 8.w),
+                                _HeaderIconButton(
+                                  icon: Icons.more_vert_rounded,
+                                  onTap: _showSettingsModal,
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 8.w),
-                            _HeaderIconButton(
-                              icon: Icons.copy_rounded,
-                              onTap: _showCopySheet,
+                          ),
+                          if (_reading case final tracker?)
+                            Padding(
+                              padding: EdgeInsets.only(top: 14.h),
+                              child: Row(
+                                children: [
+                                  _DuaReadingTimerPill(tracker: tracker),
+                                  const Spacer(),
+                                  const _DuaTotalMinutesPill(),
+                                ],
+                              ),
                             ),
-                            SizedBox(width: 8.w),
-                            _HeaderIconButton(
-                              icon: Icons.ios_share_rounded,
-                              onTap: _showShareSheet,
+                          if (readable.categoryLabel.isNotEmpty) ...[
+                            SizedBox(height: 18.h),
+                            _CategoryPill(label: readable.categoryLabel),
+                          ],
+                          SizedBox(height: 16.h),
+                          Text(
+                            readable.name,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 17.sp,
+                              height: 1.4,
+                              fontWeight: FontWeight.w700,
+                              color: context.inkColor(const Color(0xFF2C3320)),
                             ),
-                            SizedBox(width: 8.w),
-                            _HeaderIconButton(
-                              icon: Icons.more_vert_rounded,
-                              onTap: _showSettingsModal,
+                          ),
+                          if (readable.repeatCount != null) ...[
+                            SizedBox(height: 8.h),
+                            Text(
+                              context.localizedDigits(
+                                '${appText.duaRecitePrefix} ${readable.repeatCount} '
+                                '${appText.duaReciteSuffix}',
+                              ),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: context.inkColor(
+                                  const Color(0xFF7C8A63),
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                      if (_reading case final tracker?)
-                        Padding(
-                          padding: EdgeInsets.only(top: 14.h),
-                          child: Row(
-                            children: [
-                              _DuaReadingTimerPill(tracker: tracker),
-                              const Spacer(),
-                              const _DuaTotalMinutesPill(),
-                            ],
-                          ),
-                        ),
-                      if (readable.categoryLabel.isNotEmpty) ...[
-                        SizedBox(height: 18.h),
-                        _CategoryPill(label: readable.categoryLabel),
-                      ],
-                      SizedBox(height: 16.h),
-                      Text(
-                        readable.name,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          height: 1.4,
-                          fontWeight: FontWeight.w700,
-                          color: context.inkColor(const Color(0xFF2C3320)),
-                        ),
-                      ),
-                      if (readable.repeatCount != null) ...[
-                        SizedBox(height: 8.h),
-                        Text(
-                          context.localizedDigits(
-                            '${appText.duaRecitePrefix} ${readable.repeatCount} '
-                            '${appText.duaReciteSuffix}',
-                          ),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: context.inkColor(const Color(0xFF7C8A63)),
-                          ),
-                        ),
-                      ],
-                      if (settings.showNarration &&
-                          (readable.hadithNarration.isNotEmpty ||
-                              readable.instruction.isNotEmpty)) ...[
-                        SizedBox(height: 16.h),
-                        _SectionCard(
-                          icon: Icons.menu_book_rounded,
-                          accent: const Color(0xFF4C5A34),
-                          bg: Colors.white,
-                          border: const Color(0xFFE3E7D3),
-                          title: appText.duaNarrationTitle,
-                          child: Text(
-                            readable.hadithNarration.isNotEmpty
-                                ? readable.hadithNarration
-                                : readable.instruction,
-                            style: TextStyle(
-                              fontSize: 12.5.sp,
-                              height: 1.6,
-                              color: context.inkColor(const Color(0xFF3B4430)),
+                          if (settings.showNarration &&
+                              (readable.hadithNarration.isNotEmpty ||
+                                  readable.instruction.isNotEmpty)) ...[
+                            SizedBox(height: 16.h),
+                            _SectionCard(
+                              icon: Icons.menu_book_rounded,
+                              accent: const Color(0xFF4C5A34),
+                              bg: Colors.white,
+                              border: const Color(0xFFE3E7D3),
+                              title: appText.duaNarrationTitle,
+                              child: Text(
+                                readable.hadithNarration.isNotEmpty
+                                    ? readable.hadithNarration
+                                    : readable.instruction,
+                                style: TextStyle(
+                                  fontSize: 12.5.sp,
+                                  height: 1.6,
+                                  color: context.inkColor(
+                                    const Color(0xFF3B4430),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
-                      if (settings.showArabic &&
-                          readable.segments.any(
-                            (s) => s.arabic.isNotEmpty,
-                          )) ...[
-                        SizedBox(height: 14.h),
-                        _SectionCard(
-                          icon: Icons.auto_awesome_outlined,
-                          accent: const Color(0xFFB07A2E),
-                          bg: const Color(0xFFFBF3DD),
-                          border: const Color(0xFFEBDCA8),
-                          title: appText.duaArabicSectionTitle,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              for (final segment in readable.segments)
-                                if (segment.arabic.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 4.h,
-                                    ),
-                                    child: SelectableText(
-                                      segment.arabic,
-                                      textAlign: TextAlign.right,
-                                      textDirection: TextDirection.rtl,
-                                      // The list keeps every drag: without
-                                      // this the text's own viewport takes
-                                      // them and the page stops scrolling.
-                                      scrollPhysics:
-                                          const NeverScrollableScrollPhysics(),
-                                      style: TextStyle(
-                                        fontFamily: 'Noorehuda',
-                                        fontFamilyFallback:
-                                            appFontFamilyFallback,
-                                        fontSize: _arabicFontSize(settings).sp,
-                                        height: 1.9,
-                                        color: context.inkColor(
-                                          const Color(0xFF283016),
+                          ],
+                          if (settings.showArabic &&
+                              readable.segments.any(
+                                (s) => s.arabic.isNotEmpty,
+                              )) ...[
+                            SizedBox(height: 14.h),
+                            _SectionCard(
+                              icon: Icons.auto_awesome_outlined,
+                              accent: const Color(0xFFB07A2E),
+                              bg: const Color(0xFFFBF3DD),
+                              border: const Color(0xFFEBDCA8),
+                              title: appText.duaArabicSectionTitle,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final segment in readable.segments)
+                                    if (segment.arabic.isNotEmpty)
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 4.h,
+                                        ),
+                                        child: SelectableText(
+                                          segment.arabic,
+                                          textAlign: TextAlign.right,
+                                          textDirection: TextDirection.rtl,
+                                          // The list keeps every drag: without
+                                          // this the text's own viewport takes
+                                          // them and the page stops scrolling.
+                                          scrollPhysics:
+                                              const NeverScrollableScrollPhysics(),
+                                          style: TextStyle(
+                                            fontFamily: 'Noorehuda',
+                                            fontFamilyFallback:
+                                                appFontFamilyFallback,
+                                            fontSize: _arabicFontSize(
+                                              settings,
+                                            ).sp,
+                                            height: 1.9,
+                                            color: context.inkColor(
+                                              const Color(0xFF283016),
+                                            ),
+                                          ),
                                         ),
                                       ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (settings.showTransliteration &&
+                              readable.transliteration.isNotEmpty) ...[
+                            SizedBox(height: 10.h),
+                            SelectableText(
+                              readable.transliteration,
+                              textAlign: TextAlign.center,
+                              scrollPhysics:
+                                  const NeverScrollableScrollPhysics(),
+                              style: TextStyle(
+                                fontSize: _translationFontSize(settings).sp,
+                                height: 1.6,
+                                fontStyle: FontStyle.italic,
+                                color: context.inkColor(
+                                  const Color(0xFF3B4430),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (settings.showTranslation &&
+                              readable.segments.any(
+                                (s) => s.translation.isNotEmpty,
+                              )) ...[
+                            SizedBox(height: 14.h),
+                            _SectionCard(
+                              icon: Icons.translate_rounded,
+                              accent: const Color(0xFFB0527A),
+                              bg: const Color(0xFFFBDFE6),
+                              title: appText.duaTranslationSectionTitle,
+                              trailing: InkWell(
+                                onTap: () {
+                                  final translation = readable.segments
+                                      .map((s) => s.translation)
+                                      .where((t) => t.isNotEmpty)
+                                      .join('\n');
+                                  if (translation.isEmpty) return;
+                                  Clipboard.setData(
+                                    ClipboardData(text: translation),
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(appText.duaCopied),
+                                      duration: const Duration(
+                                        milliseconds: 1200,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Icon(
+                                  Icons.copy_rounded,
+                                  size: 15.sp,
+                                  color: context.inkColor(
+                                    const Color(0xFFB0527A),
+                                  ),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  for (final segment in readable.segments)
+                                    if (segment.translation.isNotEmpty)
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 3.h,
+                                        ),
+                                        child: SelectableText(
+                                          segment.translation,
+                                          scrollPhysics:
+                                              const NeverScrollableScrollPhysics(),
+                                          style: TextStyle(
+                                            fontSize: _translationFontSize(
+                                              settings,
+                                            ).sp,
+                                            height: 1.6,
+                                            color: context.inkColor(
+                                              const Color(0xFF5D4450),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          if (settings.showReference &&
+                              readable.reference.isNotEmpty) ...[
+                            SizedBox(height: 14.h),
+                            _SectionCard(
+                              icon: Icons.verified_rounded,
+                              accent: const Color(0xFF2F6B3C),
+                              bg: const Color(0xFFDCEEC0),
+                              title: appText.duaAuthenticTitle,
+                              trailing: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: context.surfaceColor(Colors.white),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Text(
+                                  appText.duaChainVerifiedBadge,
+                                  style: TextStyle(
+                                    fontSize: 9.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.inkColor(
+                                      const Color(0xFF2F6B3C),
                                     ),
                                   ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (settings.showTransliteration &&
-                          readable.transliteration.isNotEmpty) ...[
-                        SizedBox(height: 10.h),
-                        SelectableText(
-                          readable.transliteration,
-                          textAlign: TextAlign.center,
-                          scrollPhysics: const NeverScrollableScrollPhysics(),
-                          style: TextStyle(
-                            fontSize: _translationFontSize(settings).sp,
-                            height: 1.6,
-                            fontStyle: FontStyle.italic,
-                            color: context.inkColor(const Color(0xFF3B4430)),
-                          ),
-                        ),
-                      ],
-                      if (settings.showTranslation &&
-                          readable.segments.any(
-                            (s) => s.translation.isNotEmpty,
-                          )) ...[
-                        SizedBox(height: 14.h),
-                        _SectionCard(
-                          icon: Icons.translate_rounded,
-                          accent: const Color(0xFFB0527A),
-                          bg: const Color(0xFFFBDFE6),
-                          title: appText.duaTranslationSectionTitle,
-                          trailing: InkWell(
-                            onTap: () {
-                              final translation = readable.segments
-                                  .map((s) => s.translation)
-                                  .where((t) => t.isNotEmpty)
-                                  .join('\n');
-                              if (translation.isEmpty) return;
-                              Clipboard.setData(
-                                ClipboardData(text: translation),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(appText.duaCopied),
-                                  duration: const Duration(milliseconds: 1200),
                                 ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12.r),
-                            child: Icon(
-                              Icons.copy_rounded,
-                              size: 15.sp,
-                              color: context.inkColor(const Color(0xFFB0527A)),
+                              ),
+                              child: Text(
+                                readable.reference,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  height: 1.6,
+                                  color: context.inkColor(
+                                    const Color(0xFF3B4430),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final segment in readable.segments)
-                                if (segment.translation.isNotEmpty)
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: 3.h,
+                          ],
+                          if (readable.virtue.isNotEmpty) ...[
+                            SizedBox(height: 14.h),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(12.r),
+                              decoration: BoxDecoration(
+                                color: context.surfaceColor(
+                                  const Color(0xFFFBF3DD),
+                                ),
+                                borderRadius: BorderRadius.circular(14.r),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.watch_later_outlined,
+                                    size: 15.sp,
+                                    color: context.inkColor(
+                                      const Color(0xFFB07A2E),
                                     ),
-                                    child: SelectableText(
-                                      segment.translation,
-                                      scrollPhysics:
-                                          const NeverScrollableScrollPhysics(),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      readable.virtue,
                                       style: TextStyle(
-                                        fontSize: _translationFontSize(
-                                          settings,
-                                        ).sp,
+                                        fontSize: 11.5.sp,
                                         height: 1.6,
                                         color: context.inkColor(
-                                          const Color(0xFF5D4450),
+                                          const Color(0xFF7C6A3A),
                                         ),
                                       ),
                                     ),
                                   ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (settings.showReference &&
-                          readable.reference.isNotEmpty) ...[
-                        SizedBox(height: 14.h),
-                        _SectionCard(
-                          icon: Icons.verified_rounded,
-                          accent: const Color(0xFF2F6B3C),
-                          bg: const Color(0xFFDCEEC0),
-                          title: appText.duaAuthenticTitle,
-                          trailing: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 3.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: context.surfaceColor(Colors.white),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              appText.duaChainVerifiedBadge,
-                              style: TextStyle(
-                                fontSize: 9.5.sp,
-                                fontWeight: FontWeight.w600,
-                                color: context.inkColor(
-                                  const Color(0xFF2F6B3C),
-                                ),
+                                ],
                               ),
                             ),
-                          ),
-                          child: Text(
-                            readable.reference,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              height: 1.6,
-                              color: context.inkColor(const Color(0xFF3B4430)),
-                            ),
-                          ),
-                        ),
-                      ],
-                      if (readable.virtue.isNotEmpty) ...[
-                        SizedBox(height: 14.h),
-                        Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(12.r),
-                          decoration: BoxDecoration(
-                            color: context.surfaceColor(
-                              const Color(0xFFFBF3DD),
-                            ),
-                            borderRadius: BorderRadius.circular(14.r),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.watch_later_outlined,
-                                size: 15.sp,
-                                color: context.inkColor(
-                                  const Color(0xFFB07A2E),
-                                ),
-                              ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(
-                                  readable.virtue,
-                                  style: TextStyle(
-                                    fontSize: 11.5.sp,
-                                    height: 1.6,
-                                    color: context.inkColor(
-                                      const Color(0xFF7C6A3A),
-                                    ),
+                          ],
+                          if (readable.sunnahTips.isNotEmpty) ...[
+                            SizedBox(height: 14.h),
+                            _SectionCard(
+                              icon: Icons.lightbulb_outline_rounded,
+                              accent: const Color(0xFFB07A2E),
+                              bg: const Color(0xFFFBF3DD),
+                              border: const Color(0xFFEBDCA8),
+                              title: 'Sunnah Tips',
+                              child: Text(
+                                readable.sunnahTips,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  height: 1.6,
+                                  color: context.inkColor(
+                                    const Color(0xFF7C6A3A),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (readable.sunnahTips.isNotEmpty) ...[
-                        SizedBox(height: 14.h),
-                        _SectionCard(
-                          icon: Icons.lightbulb_outline_rounded,
-                          accent: const Color(0xFFB07A2E),
-                          bg: const Color(0xFFFBF3DD),
-                          border: const Color(0xFFEBDCA8),
-                          title: 'Sunnah Tips',
-                          child: Text(
-                            readable.sunnahTips,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              height: 1.6,
-                              color: context.inkColor(const Color(0xFF7C6A3A)),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -987,11 +1020,19 @@ class _DuaReaderViewState extends State<_DuaReaderView>
                   bottom: 0,
                   child: SafeArea(
                     top: false,
-                    child: _ReciteBar(
-                      count: _count,
-                      onIncrement: _incrementCount,
-                      onReset: _resetCount,
-                      onBookmark: _showBookmarkSheet,
+                    // Capped like the reading column above it, so the bar
+                    // sits under the text rather than spanning a desktop
+                    // window edge to edge. DuaBarWidth claims no height:
+                    // this Positioned has no `top`, so a Center would fill
+                    // the page and float the bar in the middle of it.
+                    child: DuaBarWidth(
+                      maxWidth: DuaLayout.maxReading,
+                      child: _ReciteBar(
+                        count: _count,
+                        onIncrement: _incrementCount,
+                        onReset: _resetCount,
+                        onBookmark: _showBookmarkSheet,
+                      ),
                     ),
                   ),
                 ),

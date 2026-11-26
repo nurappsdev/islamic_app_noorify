@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_all_catego
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_pickers.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// `in_progress`, `completed` or `abandoned`, in display order.
 const List<String> _duaPlanStatuses = ['in_progress', 'completed', 'abandoned'];
@@ -167,7 +168,8 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     final note = await showDialog<String>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .28),
-      builder: (_) => _PlanNoteDialog(initialValue: _note),
+      builder: (_) =>
+          DuaWebTypography(child: _PlanNoteDialog(initialValue: _note)),
     );
     if (note != null && mounted) setState(() => _note = note.trim());
   }
@@ -176,8 +178,12 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     FocusScope.of(context).unfocus();
     final category = await Navigator.of(context).push<DuaCategoryModel>(
       MaterialPageRoute(
-        builder: (_) =>
-            DuaAllCategoryScreen(selectMode: true, selectedId: _category?.id),
+        builder: (_) => DuaWebTypography(
+          child: DuaAllCategoryScreen(
+            selectMode: true,
+            selectedId: _category?.id,
+          ),
+        ),
       ),
     );
     if (category == null || !mounted) return;
@@ -208,9 +214,11 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     FocusScope.of(context).unfocus();
     final duas = await Navigator.of(context).push<List<DuaFeaturedModel>>(
       MaterialPageRoute(
-        builder: (_) => DuaPlanDuaPickerScreen(
-          category: category,
-          initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+        builder: (_) => DuaWebTypography(
+          child: DuaPlanDuaPickerScreen(
+            category: category,
+            initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+          ),
         ),
       ),
     );
@@ -366,7 +374,16 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
 
   Widget _buildForm(AppText appText) {
     return ListView(
-      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+      // A form stays a form's width on a desktop window rather than
+      // stretching its fields the whole way across.
+      padding: duaPagePadding(
+        context,
+        left: 20.w,
+        top: 10.h,
+        right: 20.w,
+        bottom: 20.h,
+        maxWidth: DuaLayout.maxForm,
+      ),
       children: [
         Text(
           appText.planNameLabel,
@@ -608,7 +625,16 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
 
   Widget _buildAddedList(AppText appText) {
     return ListView(
-      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+      // A form stays a form's width on a desktop window rather than
+      // stretching its fields the whole way across.
+      padding: duaPagePadding(
+        context,
+        left: 20.w,
+        top: 10.h,
+        right: 20.w,
+        bottom: 20.h,
+        maxWidth: DuaLayout.maxForm,
+      ),
       children: [
         Text(
           _planName.isEmpty ? appText.writeHereHint : _planName,

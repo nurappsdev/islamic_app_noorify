@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_reading_dashb
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/shared/services/app_globals.dart';
@@ -130,14 +131,16 @@ class _DashboardBody extends StatelessWidget {
   final Future<void> Function() onRefresh;
 
   /// Below this the page is one column, as on a phone; at or above it the
-  /// chart and the metric cards sit side by side. Measured in raw pixels,
-  /// not design units: the browser is what gets wide, and ScreenUtil does
-  /// not scale there.
-  static const wideBreakpoint = 720.0;
+  /// chart and the metric cards sit side by side.
+  ///
+  /// These were this screen's own measurements and are now the Dua
+  /// feature's, shared from [DuaLayout] so every Dua route breaks at the
+  /// same width. The names stay as they were for this screen's call sites.
+  static const wideBreakpoint = DuaLayout.wide;
 
   /// A desktop browser is far wider than this page has any use for; beyond
   /// it the content stays put and the window grows around it.
-  static const maxContentWidth = 1100.0;
+  static const maxContentWidth = DuaLayout.maxContent;
 
   @override
   Widget build(BuildContext context) {
