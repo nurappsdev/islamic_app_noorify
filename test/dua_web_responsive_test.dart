@@ -15,6 +15,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_dashboard_
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_featured_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_featured_card.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
@@ -291,6 +292,82 @@ void main() {
           expect(navBox.width, lessThanOrEqualTo(DuaLayout.maxNav + 1));
         },
       );
+    }
+  });
+
+  group('every nav page lines its content up with the pill', () {
+    /// The pill's visible left/right edge at [width]: its box is capped at
+    /// [DuaLayout.maxNav] and it carries a 16px margin inside that.
+    (double, double) pillEdges(double width) {
+      final box = width > DuaLayout.maxNav ? DuaLayout.maxNav : width;
+      final left = (width - box) / 2 + 16;
+      return (left, width - left);
+    }
+
+    /// The side gutters `duaPagePadding` asks for at [width] - the planner,
+    /// the recitation history and plan create are padded with it, and are
+    /// too deep in their dependency graphs to build for a measurement.
+    Future<EdgeInsets> pagePadding(WidgetTester tester, double width) async {
+      late EdgeInsets padding;
+      tester.view.physicalSize = Size(width * 3, 900 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(size: Size(width, 900)),
+          child: Builder(
+            builder: (context) {
+              padding = duaPagePadding(context, left: 16, right: 16);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      return padding;
+    }
+
+    for (final width in [375.0, 600.0, 900.0, 1280.0, 1440.0, 1600.0, 1920.0]) {
+      testWidgets('a self-padding page at ${width.toInt()}px', (tester) async {
+        // The Dua group page: an unpadded list whose sections pad
+        // themselves, so the column is capped at `maxOuter`.
+        await pumpAt(
+          tester,
+          DuaGroupScreen(featured: DuaCatalog.featured.first),
+          width,
+          webUnits: true,
+        );
+        expect(tester.takeException(), isNull);
+
+        final (expectedLeft, expectedRight) = pillEdges(width);
+        final navBox = tester.getRect(find.byType(AppBottomNavBar));
+        expect(navBox.left + 16, closeTo(expectedLeft, 1));
+        expect(navBox.right - 16, closeTo(expectedRight, 1));
+
+        // A dua row is one of those self-padded sections.
+        final tile = tester.getRect(find.byType(DuaItemTile).first);
+        expect(
+          tile.left,
+          closeTo(expectedLeft, 1),
+          reason: 'the rows start inside the pill at ${width}px',
+        );
+        expect(tile.right, closeTo(expectedRight, 1));
+      });
+
+      testWidgets('a padded page at ${width.toInt()}px', (tester) async {
+        final padding = await pagePadding(tester, width);
+        final (left, right) = pillEdges(width);
+        expect(padding.left, closeTo(left, 1), reason: '${width}px');
+        expect(padding.right, closeTo(width - right, 1), reason: '${width}px');
+        // And the column it leaves is the whole cap, never short of it.
+        expect(
+          width - padding.horizontal,
+          closeTo(
+            width > DuaLayout.maxNav ? DuaLayout.maxContent : width - 32,
+            1,
+          ),
+          reason: '${width}px',
+        );
+      });
     }
   });
 

@@ -46,15 +46,26 @@ abstract final class DuaLayout {
   /// number of words as it did, in bigger letters.
   static const maxReading = 1000.0;
 
+  /// The cap for a box that carries its own 16px side gutters inside it,
+  /// rather than being handed them by a page padding.
+  ///
+  /// The content inside such a box then lands exactly where a page padded
+  /// to [maxContent] puts its own - and where the nav pill's edges are - so
+  /// a page keeps one vertical line down each side whichever way it is
+  /// built. On a phone the window is far narrower than this, so the cap
+  /// never bites and nothing moves.
+  ///
+  /// Used by a page whose sections pad themselves (the Dua group and Saved
+  /// pages) and by the nav pill, which does the same.
+  static const maxOuter = maxContent + 32;
+
   /// The floating olive nav pill lines up with the page content above it,
   /// rather than sitting as a small pill in the middle of a wide window.
   ///
-  /// `AppBottomNavBar` carries its own 16px margin either side, which is
-  /// inside this box, so that margin is added back here: the pill itself
-  /// then measures exactly [maxContent] and its edges meet the content
-  /// column's. On a phone the window is far narrower than this, so the cap
-  /// never bites and the bar is unchanged.
-  static const maxNav = maxContent + 32;
+  /// `AppBottomNavBar` carries its own 16px margin either side, so the pill
+  /// is one of the boxes [maxOuter] describes: the pill itself then measures
+  /// exactly [maxContent] and its edges meet the content column's.
+  static const maxNav = maxOuter;
 
   /// A form or sheet column - plan create, folder naming - that looks
   /// stretched and empty at full content width.
@@ -261,7 +272,13 @@ EdgeInsets duaPagePadding(
 }) {
   final width = MediaQuery.of(context).size.width;
   final cap = maxWidth ?? DuaLayout.maxContent;
-  final gutter = width > cap ? (width - cap) / 2 : 0.0;
+  // Measured inside the page's own side padding, which is part of the
+  // content box: a page asking for 16 either side of a [cap]-wide column
+  // wants `16 + gutter`, not `16` plus a gutter that also pays for those
+  // 16s. Getting this wrong left the column 32px narrow and its edge 16px
+  // inside the nav pill's, so the two no longer lined up.
+  final inner = width - left - right;
+  final gutter = inner > cap ? (inner - cap) / 2 : 0.0;
   return EdgeInsets.fromLTRB(left + gutter, top, right + gutter, bottom);
 }
 

@@ -36,6 +36,10 @@ class DuaGroupScreen extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 150.h + bottomInset),
             children: [
               DuaContentColumn(
+                // This page's sections carry their own 16px gutters, so the
+                // column is capped one gutter wider either side; the
+                // sections then line up with the nav pill below them.
+                maxWidth: DuaLayout.maxOuter,
                 children: [
                   _GroupHeader(featured: featured, appText: appText),
                   SizedBox(height: 20.h),

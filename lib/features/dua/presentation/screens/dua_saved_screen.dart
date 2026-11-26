@@ -107,7 +107,13 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
             // The whole page - header, count, search and folder list - keeps
             // one centred column, so nothing drifts to the far edges of a
             // desktop window.
+            //
+            // Capped at [DuaLayout.maxOuter]: every section here pads itself
+            // (21px for the folder cards, 30px for the count), so the column
+            // is one 16px gutter wider either side and those sections keep
+            // the same relation to the nav pill that they have on a phone.
             DuaContentWidth(
+              maxWidth: DuaLayout.maxOuter,
               child: Column(
                 children: [
                   SizedBox(height: 8.h),
