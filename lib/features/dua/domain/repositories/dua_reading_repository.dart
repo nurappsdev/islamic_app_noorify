@@ -53,7 +53,14 @@ abstract interface class DuaReadingRepository {
 
 final _random = Random();
 
+/// The random half's ceiling. Written out rather than as `1 << 32`:
+/// on Web a shift of 32 or more bits is evaluated with 32-bit JS
+/// semantics and yields 0, which made `nextInt` throw a RangeError
+/// ("max must be in range 0 < max <= 2^32, was 0") the moment any
+/// reading screen was built in a browser.
+const _idCeiling = 0xFFFFFFFF;
+
 /// A new id for a dua reading report or session, unique across launches.
 String newDuaReadingId() =>
     '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-'
-    '${_random.nextInt(1 << 32).toRadixString(36)}';
+    '${_random.nextInt(_idCeiling).toRadixString(36)}';

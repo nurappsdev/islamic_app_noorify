@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:tuhfatul_muslim/core/network/auth_refresh_interceptor.dart';
 import 'package:tuhfatul_muslim/core/network/language_header_interceptor.dart';
+import 'package:tuhfatul_muslim/core/network/rate_limit_retry_interceptor.dart';
 import 'package:tuhfatul_muslim/core/errors/exceptions.dart';
 import 'package:tuhfatul_muslim/core/services/api_constants.dart';
 import 'package:tuhfatul_muslim/features/auth/data/datasources/auth_local_data_source.dart';
@@ -128,6 +129,11 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     final dio = Dio(options)
       ..interceptors.add(const LanguageHeaderInterceptor());
     if (kDebugMode) dio.interceptors.add(DuaApiLogInterceptor());
+    // The dashboard asks for featured duas, categories, the reading
+    // summary and the planner at once, which can trip the API's 20
+    // requests-per-second limit; a 429 on these read-only GETs is worth
+    // waiting out rather than showing the user as a failure.
+    dio.interceptors.add(RateLimitRetryInterceptor(dio: dio));
     // Without this, an expired access token makes every planner call fail
     // with 401 ("provide a valid access token") until the user signs in
     // again — the shared `DioClient` has carried it all along, but this
@@ -440,7 +446,19 @@ class DuaRemoteDataSourceImpl implements DuaRemoteDataSource {
     }
     return Options(
       headers: {
-        'X-Timezone': ApiConstants.timezone,
+        // Not sent on Web. `X-Timezone` is not a CORS-safelisted header, so
+        // sending it forces the browser to preflight every dua call, and the
+        // API's `Access-Control-Allow-Headers` does not list it - so Chrome
+        // blocks the request before it leaves the page, reporting only a bare
+        // "XMLHttpRequest onError" with no status. It made every dua endpoint
+        // fail on Web while zikr and quran, which never send this header,
+        // succeeded against the same host.
+        //
+        // Dropping it on Web is safe: no other feature sends it and their
+        // reading dashboards are correct, so the server has a working default.
+        // Once the backend adds `X-Timezone` to the allowed headers, the
+        // `!kIsWeb` guard can go.
+        if (!kIsWeb) 'X-Timezone': ApiConstants.timezone,
         if (token != null) 'Authorization': 'Bearer $token',
       },
     );
