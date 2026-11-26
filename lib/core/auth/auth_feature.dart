@@ -104,6 +104,7 @@ class AuthFeatures {
   static const quizPlanner = 'quiz_planner';
   static const leaderboard = 'leaderboard';
   static const bookmark = 'bookmark';
+  static const support = 'support';
 
   /// The config for [id]; an unknown id gets the general prompt rather than
   /// failing, so a typo can never leave a guest without a login prompt.
@@ -283,6 +284,18 @@ class AuthFeatures {
       purpose: LocalizedText(
         en: 'Signing in lets us add your points and show your rank.',
         bn: 'সাইন-ইন করলে আপনার পয়েন্ট যুক্ত হবে এবং আপনার র‍্যাঙ্ক দেখানো যাবে।',
+      ),
+    ),
+    support: AuthFeature(
+      id: support,
+      featureName: LocalizedText(en: 'Admin support', bn: 'অ্যাডমিন সাপোর্ট'),
+      userAction: LocalizedText(
+        en: 'contact support and send your feedback',
+        bn: 'সাপোর্টে যোগাযোগ করতে ও মতামত পাঠাতে',
+      ),
+      purpose: LocalizedText(
+        en: 'Signing in lets us reply to you and follow up on your message.',
+        bn: 'সাইন-ইন করলে আমরা আপনাকে উত্তর দিতে ও বিষয়টি অনুসরণ করতে পারব।',
       ),
     ),
     bookmark: AuthFeature(

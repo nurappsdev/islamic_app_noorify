@@ -3,6 +3,10 @@ class RouteNames {
   static const profile = '/profile';
   static const settings = '/settings';
   static const appLanguage = '/settings/app-language';
+  static const ourProducts = '/settings/our-products';
+  static const newUpdates = '/settings/new-updates';
+  static const adminSupport = '/settings/admin-support';
+  static const appFeedback = '/settings/feedback';
   static const familyMembers = '/profile/family-members';
   static const winQuiz = '/win-quiz';
   static const quizQuestion = '/win-quiz/question';

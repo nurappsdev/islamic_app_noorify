@@ -1,7 +1,8 @@
 class ApiConstants {
-// static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
- static const String _defaultBaseUrl = 'https://nizam3000.ilmifygroup.com/api/v1';
- //static const String _defaultBaseUrl = 'http://127.0.0.1:5050/api/v1';
+  // static const String _defaultBaseUrl = 'https://api.tuhfatulmuslim.com/api/v1';
+  static const String _defaultBaseUrl =
+      'https://nizam3000.ilmifygroup.com/api/v1';
+  //static const String _defaultBaseUrl = 'http://127.0.0.1:5050/api/v1';
   // local
   //  static const String baseUrl = "https://server-tuhfatulmuslim.ilmifygroup.com/api/v1";
 
@@ -87,6 +88,26 @@ class ApiConstants {
   static const String aboutUsEndPoint = "/settings/about-us";
   static const String termsOfServiceEndPoint = "/settings/terms-of-service";
   static const String privacyPolicyEndPoint = "/settings/privacy-policy";
+
+  /// `GET`, public: the other apps this team publishes, for the Settings ->
+  /// Our Products screen.
+  static const String ourProductsEndPoint = "/settings/our-products";
+
+  /// `GET`, public: the current release notes (`{title, version,
+  /// releaseDate, content}`); `content` is Markdown.
+  static const String newUpdatesEndPoint = "/settings/new-updates";
+
+  /// `GET`, public: the support hotline / e-mail and the published app
+  /// version, shown on the Admin Support screen.
+  static const String settingsOverviewEndPoint = "/settings/overview";
+
+  /// `POST`, needs the login token: opens a support ticket. Body:
+  /// `{ "reason": "...", "description": "..." }`.
+  static const String supportTicketsEndPoint = "/support/tickets";
+
+  /// `POST`, needs the login token: a 1-5 star rating with a comment. Body:
+  /// `{ "rating": 5, "feedbackText": "..." }`.
+  static const String supportFeedbackEndPoint = "/support/feedback";
 
   static const String leaderboardTopEndPoint = "/leaderboard/top";
 

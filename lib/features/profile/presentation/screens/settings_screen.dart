@@ -24,12 +24,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  static void _comingSoon(BuildContext context, AppText appText) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(appText.comingSoon)));
-  }
-
   static List<SettingsOption> _items(
     BuildContext context,
     AppText appText,
@@ -44,7 +38,12 @@ class SettingsScreen extends StatelessWidget {
     SettingsOption(
       appText.ourProducts,
       Icons.eco_outlined,
-      onTap: () => _comingSoon(context, appText),
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.ourProducts),
+    ),
+    SettingsOption(
+      appText.newUpdates,
+      Icons.new_releases_outlined,
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.newUpdates),
     ),
     SettingsOption(
       appText.privacyPolicy,
@@ -59,12 +58,12 @@ class SettingsScreen extends StatelessWidget {
     SettingsOption(
       appText.adminSupport,
       Icons.support_agent_outlined,
-      onTap: () => _comingSoon(context, appText),
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.adminSupport),
     ),
     SettingsOption(
       appText.feedback,
       Icons.feedback_outlined,
-      onTap: () => _comingSoon(context, appText),
+      onTap: () => Navigator.of(context).pushNamed(RouteNames.appFeedback),
     ),
     appLanguageOption(context, appText),
     if (!kIsWeb)
