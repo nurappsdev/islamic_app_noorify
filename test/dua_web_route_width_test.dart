@@ -70,6 +70,24 @@ void main() {
       });
     }
 
+    test('and they are the routes whose type grows with the window', () {
+      // `AppRoutes` wraps a Dua route in `DuaWebTypography` on the browser,
+      // by the same prefix rule; a route outside Dua keeps phone type.
+      for (final name in _duaRoutes) {
+        expect(AppRoutes.isDuaRoute(name), isTrue, reason: name);
+      }
+      for (final name in [
+        RouteNames.home,
+        RouteNames.splash,
+        RouteNames.settings,
+        '/duaa',
+        '/dua-extra',
+        null,
+      ]) {
+        expect(AppRoutes.isDuaRoute(name), isFalse, reason: '$name');
+      }
+    });
+
     test('a new Dua route is covered by the prefix, not a list', () {
       // The rule matches on the `/dua` prefix, so a route added later is
       // responsive by default rather than silently letterboxed.

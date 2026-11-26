@@ -126,8 +126,12 @@ class _DuaDashboardView extends StatelessWidget {
                                   // `.w`, not `.h`: ScreenUtil scales width and text but not
                                   // height, so a fixed `.h` box kept its phone height while its
                                   // text grew and overflowed on a tablet. The browser has scaling
-                                  // off, so both read the same number there.
-                                  height: wide ? 168.w : 150.w,
+                                  // off, so both read the same number there - and the card's own
+                                  // text grew with the window, so the box grows by that factor.
+                                  height: duaScaledExtent(
+                                    context,
+                                    wide ? 168.w : 150.w,
+                                  ),
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
                                     itemCount: featured.length,

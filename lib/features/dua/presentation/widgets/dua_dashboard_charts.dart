@@ -7,6 +7,7 @@ import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 import 'package:tuhfatul_muslim/features/dua/data/models/dua_reading_api_models.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// The palette the three reading-dashboard charts share (`devImg/img_41.png`).
 abstract final class DuaChartColors {
@@ -277,7 +278,7 @@ class _DuaDonutChartState extends State<DuaDonutChart> {
     final fraction = total <= 0 ? 0.0 : mine / total;
 
     return SizedBox(
-      height: 212.h,
+      height: duaScaledExtent(context, 212.h),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -412,13 +413,13 @@ class _DuaWeeklyBarChartState extends State<DuaWeeklyBarChart> {
   @override
   Widget build(BuildContext context) {
     final bars = widget.bars;
-    if (bars.isEmpty) return SizedBox(height: 212.h);
+    if (bars.isEmpty) return SizedBox(height: duaScaledExtent(context, 212.h));
     final axis = duaChartAxis(
       bars.fold<int>(0, (value, bar) => math.max(value, bar.highest)),
     );
 
     return SizedBox(
-      height: 212.h,
+      height: duaScaledExtent(context, 212.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -766,7 +767,7 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
   @override
   Widget build(BuildContext context) {
     final bars = widget.bars;
-    if (bars.isEmpty) return SizedBox(height: 212.h);
+    if (bars.isEmpty) return SizedBox(height: duaScaledExtent(context, 212.h));
     final axis = duaChartAxis(
       bars.fold<int>(0, (value, bar) => math.max(value, bar.highest)),
     );
@@ -774,7 +775,7 @@ class _DuaMonthlyBarChartState extends State<DuaMonthlyBarChart> {
     final rows = bars.reversed.toList(growable: false);
 
     return SizedBox(
-      height: 212.h,
+      height: duaScaledExtent(context, 212.h),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

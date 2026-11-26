@@ -125,10 +125,12 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _SelectDateSheet(
-        initialDate: _selectedDate,
-        statuses: _statusesOf(_cubit.state),
-        onMonthShown: (from, to) => _cubit.loadCalendar(from, to),
+      builder: (_) => DuaWebTypography(
+        child: _SelectDateSheet(
+          initialDate: _selectedDate,
+          statuses: _statusesOf(_cubit.state),
+          onMonthShown: (from, to) => _cubit.loadCalendar(from, to),
+        ),
       ),
     );
     if (picked != null && mounted) _selectDate(DateUtils.dateOnly(picked));
@@ -139,9 +141,11 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: .93,
-        child: const DuaPlanCreateScreen(embedded: true),
+      builder: (_) => DuaWebTypography(
+        child: FractionallySizedBox(
+          heightFactor: .93,
+          child: const DuaPlanCreateScreen(embedded: true),
+        ),
       ),
     );
     if (!mounted) return;
@@ -512,7 +516,9 @@ class _PlanCard extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _PlanSettingsSheet(remindersOn: plan.reminderEnabled),
+      builder: (_) => DuaWebTypography(
+        child: _PlanSettingsSheet(remindersOn: plan.reminderEnabled),
+      ),
     );
     if (!context.mounted || action == null) return;
     final cubit = context.read<DuaPlannerCubit>();
@@ -525,7 +531,9 @@ class _PlanCard extends StatelessWidget {
           context: context,
           backgroundColor: Colors.transparent,
           isScrollControlled: true,
-          builder: (_) => _PlanInfoSheet(plan: plan, repository: repository),
+          builder: (_) => DuaWebTypography(
+            child: _PlanInfoSheet(plan: plan, repository: repository),
+          ),
         );
         return;
       case _PlanSettingsAction.reminders:
@@ -615,9 +623,11 @@ class _PlanCard extends StatelessWidget {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => FractionallySizedBox(
-      heightFactor: .93,
-      child: DuaPlanCreateScreen(embedded: true, editPlan: editPlan),
+    builder: (_) => DuaWebTypography(
+      child: FractionallySizedBox(
+        heightFactor: .93,
+        child: DuaPlanCreateScreen(embedded: true, editPlan: editPlan),
+      ),
     ),
   );
 
@@ -625,7 +635,7 @@ class _PlanCard extends StatelessWidget {
       showModalBottomSheet<bool>(
         context: context,
         backgroundColor: Colors.transparent,
-        builder: (_) => const _DeletePlanSheet(),
+        builder: (_) => DuaWebTypography(child: const _DeletePlanSheet()),
       );
 
   @override
@@ -1862,7 +1872,10 @@ class _SelectDateSheetState extends State<_SelectDateSheet> {
               crossAxisCount: 7,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: .95,
+              // A day cell is as good as square on a phone; on the browser
+              // its date and dot grew with the window, so it is given that
+              // much more height rather than clipping them.
+              childAspectRatio: .95 / DuaTypeScale.of(context),
               children: [
                 for (final date in _cells)
                   if (date == null)

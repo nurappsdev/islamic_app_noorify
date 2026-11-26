@@ -96,7 +96,12 @@ void main() {
         enableScaleText: () => !webUnits,
         builder: (context, child) => BlocProvider(
           create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
-          child: MaterialApp(home: screen),
+          // `DuaWebTypography` is what `AppRoutes` wraps every Dua route in
+          // on the browser: the page's type grows with the window there, so
+          // the widths below are laid out with the type they really carry.
+          child: MaterialApp(
+            home: DuaWebTypography(enabled: webUnits, child: screen),
+          ),
         ),
       ),
     );
@@ -170,6 +175,19 @@ void main() {
       expect(columnsOf(tester, DuaFeaturedCard), 2);
     });
 
+    testWidgets('a full-screen window gets five', (tester) async {
+      // The count follows the content column's own width, which a 1600px
+      // window fills to `DuaLayout.maxContent`.
+      await pumpAt(
+        tester,
+        DuaAllCategoryScreen(repository: _Repo(count: 12)),
+        1600,
+        webUnits: true,
+      );
+      expect(tester.takeException(), isNull);
+      expect(columnsOf(tester, DuaCategoryTile), 5);
+    });
+
     testWidgets('featured cards stay one per row on a phone', (tester) async {
       await pumpAt(
         tester,
@@ -194,14 +212,23 @@ void main() {
       );
       expect(tester.takeException(), isNull);
 
-      final tile = find.byType(DuaCategoryTile).first;
-      final left = tester.getTopLeft(tile).dx;
-      final right = tester
-          .getBottomRight(find.byType(DuaCategoryTile).at(3))
-          .dx;
-      // A margin either side rather than edge to edge.
-      expect(left, greaterThan(150));
-      expect(right - left, lessThanOrEqualTo(DuaLayout.maxContent + 1));
+      // The whole first row, however many columns this width fits.
+      final tiles = find.byType(DuaCategoryTile);
+      final first = tester.getRect(tiles.first);
+      var right = first.right;
+      for (var i = 0; i < tiles.evaluate().length; i++) {
+        final rect = tester.getRect(tiles.at(i));
+        if ((rect.top - first.top).abs() < 1 && rect.right > right) {
+          right = rect.right;
+        }
+      }
+      // A margin either side rather than edge to edge: the window's width
+      // past the cap goes to the margins, and the page keeps its own 16px
+      // gutter inside them. Derived from the cap rather than restating it,
+      // so raising the cap moves this with it.
+      final margin = 16 + (1600 - 32 - DuaLayout.maxContent) / 2;
+      expect(first.left, closeTo(margin, 2));
+      expect(right - first.left, lessThanOrEqualTo(DuaLayout.maxContent + 1));
     });
 
     testWidgets('the nav pill stays at the foot of the page', (tester) async {
@@ -265,6 +292,105 @@ void main() {
         },
       );
     }
+  });
+
+  group('the browser gets bigger type', () {
+    test('a phone-width window is left exactly as it was', () {
+      // Only a window with room to spare grows its type; a phone browser,
+      // and the 600px column other routes still use, are untouched.
+      for (final width in [320.0, 375.0, 430.0, 600.0, 719.0]) {
+        expect(DuaLayout.textScale(width), 1.0, reason: '${width}px');
+      }
+    });
+
+    test('each step up in window width is a step up in type', () {
+      final steps = [
+        DuaLayout.textScale(700),
+        DuaLayout.textScale(DuaLayout.wide),
+        DuaLayout.textScale(DuaLayout.extraWide),
+        DuaLayout.textScale(DuaLayout.ultraWide),
+      ];
+      expect(steps, orderedEquals(<double>[...steps]..sort()));
+      expect(steps.first, 1.0);
+      expect(steps.last, greaterThan(1.2));
+    });
+
+    testWidgets('a category title is bigger on a full-screen window', (
+      tester,
+    ) async {
+      // One line of a tile's title, so the height measured is the type's.
+      Future<double> titleHeight(double width) async {
+        await pumpAt(
+          tester,
+          DuaAllCategoryScreen(repository: _Repo()),
+          width,
+          webUnits: true,
+        );
+        expect(tester.takeException(), isNull);
+        return tester
+            .getSize(find.textContaining('Protection & Ruqyah').first)
+            .height;
+      }
+
+      final phone = await titleHeight(375);
+      final desktop = await titleHeight(1600);
+      expect(
+        desktop,
+        greaterThan(phone * 1.2),
+        reason:
+            'a 13-19px phone type stayed that size on a monitor: '
+            '$phone -> $desktop',
+      );
+    });
+
+    testWidgets('the reader keeps its own font-size setting on top', (
+      tester,
+    ) async {
+      // `DuaWebTypography` multiplies the scaler already in force (the
+      // reader's `appFontScale` preference), so the setting still moves the
+      // type it always moved.
+      late double scaled;
+      tester.view.physicalSize = const Size(1600 * 3, 900 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            size: Size(1600, 900),
+            textScaler: TextScaler.linear(1.2),
+          ),
+          child: DuaWebTypography(
+            enabled: true,
+            child: Builder(
+              builder: (context) {
+                scaled = MediaQuery.textScalerOf(context).scale(10);
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        ),
+      );
+      expect(scaled, closeTo(10 * 1.2 * DuaLayout.textScale(1600), 0.01));
+    });
+
+    testWidgets('a fixed box grows with the type it holds', (tester) async {
+      // A grid tile's height is a fixed extent; left alone it would clip the
+      // bigger title.
+      Future<double> tileHeight(double width) async {
+        await pumpAt(
+          tester,
+          DuaAllCategoryScreen(repository: _Repo()),
+          width,
+          webUnits: true,
+        );
+        expect(tester.takeException(), isNull);
+        return tester.getSize(find.byType(DuaCategoryTile).first).height;
+      }
+
+      final phone = await tileHeight(375);
+      final desktop = await tileHeight(1600);
+      expect(desktop, greaterThan(phone));
+    });
   });
 
   // The real safety net: no overflow on any width, in either unit mode.

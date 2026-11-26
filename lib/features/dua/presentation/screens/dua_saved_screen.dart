@@ -39,7 +39,7 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const _FolderSettingsSheet(),
+      builder: (_) => DuaWebTypography(child: const _FolderSettingsSheet()),
     );
     if (!mounted || action == null) return;
 
@@ -52,7 +52,8 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        builder: (_) => _FolderInfoSheet(details: details),
+        builder: (_) =>
+            DuaWebTypography(child: _FolderInfoSheet(details: details)),
       );
     } else {
       final yes = await _confirmDelete();
@@ -86,14 +87,14 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _EditSheet(initialValue: value),
+      builder: (_) => DuaWebTypography(child: _EditSheet(initialValue: value)),
     );
   }
 
   Future<bool?> _confirmDelete() => showModalBottomSheet<bool>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (_) => const _DeleteSheet(),
+    builder: (_) => DuaWebTypography(child: const _DeleteSheet()),
   );
 
   @override

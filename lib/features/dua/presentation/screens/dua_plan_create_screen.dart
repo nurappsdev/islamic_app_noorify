@@ -168,7 +168,8 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     final note = await showDialog<String>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: .28),
-      builder: (_) => _PlanNoteDialog(initialValue: _note),
+      builder: (_) =>
+          DuaWebTypography(child: _PlanNoteDialog(initialValue: _note)),
     );
     if (note != null && mounted) setState(() => _note = note.trim());
   }
@@ -177,8 +178,12 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     FocusScope.of(context).unfocus();
     final category = await Navigator.of(context).push<DuaCategoryModel>(
       MaterialPageRoute(
-        builder: (_) =>
-            DuaAllCategoryScreen(selectMode: true, selectedId: _category?.id),
+        builder: (_) => DuaWebTypography(
+          child: DuaAllCategoryScreen(
+            selectMode: true,
+            selectedId: _category?.id,
+          ),
+        ),
       ),
     );
     if (category == null || !mounted) return;
@@ -209,9 +214,11 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
     FocusScope.of(context).unfocus();
     final duas = await Navigator.of(context).push<List<DuaFeaturedModel>>(
       MaterialPageRoute(
-        builder: (_) => DuaPlanDuaPickerScreen(
-          category: category,
-          initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+        builder: (_) => DuaWebTypography(
+          child: DuaPlanDuaPickerScreen(
+            category: category,
+            initialSelectedIds: {for (final dua in _pendingDuas) dua.id},
+          ),
         ),
       ),
     );

@@ -146,6 +146,7 @@ import '../../features/dua/presentation/screens/dua_planner_screen.dart';
 import '../../features/dua/presentation/screens/dua_plan_create_screen.dart';
 import '../../features/dua/presentation/screens/dua_plan_detail_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
+import '../../features/dua/presentation/widgets/dua_responsive.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_onboarding_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
@@ -829,13 +830,23 @@ class AppRoutes {
   /// keeps a new Dua route from silently falling back to the mobile canvas.
   @visibleForTesting
   static bool isFullWidthWebRoute(String? name) =>
+      name != null && (_fullWidthWebRoutes.contains(name) || isDuaRoute(name));
+
+  /// A route belonging to the Dua feature, by the same prefix rule as
+  /// [isFullWidthWebRoute]. Its pages also grow their type with the window
+  /// ([DuaWebTypography]).
+  @visibleForTesting
+  static bool isDuaRoute(String? name) =>
       name != null &&
-      (_fullWidthWebRoutes.contains(name) ||
-          name == RouteNames.dua ||
-          name.startsWith('${RouteNames.dua}/'));
+      (name == RouteNames.dua || name.startsWith('${RouteNames.dua}/'));
 
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
-    if (!kIsWeb || isFullWidthWebRoute(settings.name)) return child;
+    if (!kIsWeb) return child;
+    // A Dua page lays itself out against the window and grows its type with
+    // it; every other route keeps the phone-shaped column, at phone type,
+    // until its own responsive work begins.
+    if (isDuaRoute(settings.name)) return DuaWebTypography(child: child);
+    if (isFullWidthWebRoute(settings.name)) return child;
     return WebMobileCanvas(child: child);
   }
 }

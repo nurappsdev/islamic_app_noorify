@@ -121,7 +121,7 @@ class _DuaFeaturedView extends StatelessWidget {
                                         // height, so a fixed `.h` box kept its phone height while its
                                         // text grew and overflowed on a tablet. The browser has scaling
                                         // off, so both read the same number there.
-                                        height: 140.w,
+                                        height: duaScaledExtent(context, 140.w),
                                         child: _card(context, featured[i]),
                                       ),
                                       if (i != featured.length - 1)
@@ -138,8 +138,13 @@ class _DuaFeaturedView extends StatelessWidget {
                                   crossAxisCount: DuaLayout.listColumns(width),
                                   // ScreenUtil units for the same reason as the phone
                                   // column above: a raw 168 is right on the browser but
-                                  // too short on a tablet, where the text scales up.
-                                  mainAxisExtent: 168.w,
+                                  // too short on a tablet, where the text scales up. On
+                                  // the browser the card's type grew with the window, so
+                                  // the row grows by the same factor.
+                                  mainAxisExtent: duaScaledExtent(
+                                    context,
+                                    168.w,
+                                  ),
                                   crossAxisSpacing: 16.w,
                                   mainAxisSpacing: 16.w,
                                 ),

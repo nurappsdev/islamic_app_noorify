@@ -466,10 +466,12 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DuaBookmarkSheet(
-        appText: appText,
-        duaId: _duaId,
-        buildSnapshot: _buildSnapshot,
+      builder: (_) => DuaWebTypography(
+        child: DuaBookmarkSheet(
+          appText: appText,
+          duaId: _duaId,
+          buildSnapshot: _buildSnapshot,
+        ),
       ),
     );
     if (saved == true && mounted) {
@@ -545,7 +547,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _DuaCopySheet(readable: _readable(context)),
+      builder: (_) =>
+          DuaWebTypography(child: _DuaCopySheet(readable: _readable(context))),
     );
     if (copied != true || !mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -563,7 +566,8 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _DuaShareSheet(readable: readable),
+      builder: (_) =>
+          DuaWebTypography(child: _DuaShareSheet(readable: readable)),
     );
     if (part == null || !mounted) return;
     await _shareText(_shareTextFor(readable, part), readable.name, appText);
@@ -622,12 +626,14 @@ class _DuaReaderViewState extends State<_DuaReaderView>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => BlocProvider.value(
-        value: settingsBloc,
-        child: _DuaSettingsSheet(
-          onAddToPlan: () {
-            Navigator.of(pageContext).pushNamed(RouteNames.duaPlanCreate);
-          },
+      builder: (_) => DuaWebTypography(
+        child: BlocProvider.value(
+          value: settingsBloc,
+          child: _DuaSettingsSheet(
+            onAddToPlan: () {
+              Navigator.of(pageContext).pushNamed(RouteNames.duaPlanCreate);
+            },
+          ),
         ),
       ),
     );
