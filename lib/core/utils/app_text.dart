@@ -437,6 +437,7 @@ class AppText {
     required this.sunsetTimePlaceholder,
     required this.dhuhrPrayerTime,
     required this.prohibitedPrayerTimes,
+    required this.prohibitedPrayerNow,
     required this.jawaal,
     required this.periodSubheSadik,
     required this.periodSokal,
@@ -1459,6 +1460,10 @@ class AppText {
   final String sunsetTimePlaceholder;
   final String dhuhrPrayerTime;
   final String prohibitedPrayerTimes;
+
+  /// Shown on the prayer-time card while the clock sits inside one of the
+  /// three prohibited (নিষিদ্ধ) prayer windows.
+  final String prohibitedPrayerNow;
   final String jawaal;
   final String periodSubheSadik;
   final String periodSokal;
@@ -3681,6 +3686,11 @@ class AppText {
         map,
         'prohibitedPrayerTimes',
         fallback?.prohibitedPrayerTimes ?? '',
+      ),
+      prohibitedPrayerNow: _read(
+        map,
+        'prohibitedPrayerNow',
+        fallback?.prohibitedPrayerNow ?? '',
       ),
       jawaal: _read(map, 'jawaal', fallback?.jawaal ?? ''),
       periodSubheSadik: _read(
