@@ -40,6 +40,10 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/app_language_screen.dart';
+import '../../features/settings/presentation/screens/admin_support_screen.dart';
+import '../../features/settings/presentation/screens/app_feedback_screen.dart';
+import '../../features/settings/presentation/screens/new_updates_screen.dart';
+import '../../features/settings/presentation/screens/our_products_screen.dart';
 import '../../features/profile/presentation/screens/family_members_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
@@ -288,6 +292,14 @@ class AppRoutes {
         return _page(const SettingsScreen(), settings);
       case RouteNames.appLanguage:
         return _page(const AppLanguageScreen(), settings);
+      case RouteNames.ourProducts:
+        return _page(const OurProductsScreen(), settings);
+      case RouteNames.newUpdates:
+        return _page(const NewUpdatesScreen(), settings);
+      case RouteNames.adminSupport:
+        return _page(const AdminSupportScreen(), settings);
+      case RouteNames.appFeedback:
+        return _page(const AppFeedbackScreen(), settings);
       case RouteNames.familyMembers:
         return _page(const FamilyMembersScreen(), settings);
       case RouteNames.winQuiz:
