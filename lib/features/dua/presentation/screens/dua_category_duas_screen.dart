@@ -14,6 +14,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_category_duas
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_status_view.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
@@ -103,68 +104,75 @@ class _DuaCategoryDuasViewState extends State<_DuaCategoryDuasView> {
               controller: _scrollController,
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
               children: [
-                SizedBox(height: 6.h),
-                DuaPageHeader(title: appText.duaAllDuaTitle),
-                SizedBox(height: 16.h),
-                Text(
-                  context.localizedDigits(
-                    '${appText.duaTotalDuaLabel} ( $total )',
-                  ),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: context.inkColor(const Color(0xFF5D6B44)),
-                  ),
-                ),
-                SizedBox(height: 12.h),
-                TextField(
-                  controller: _searchController,
-                  onChanged: _onSearch,
-                  decoration: InputDecoration(
-                    hintText: appText.searchHere,
-                    hintStyle: TextStyle(
-                      color: AppColor.authHint,
-                      fontSize: 13.sp,
-                    ),
-                    filled: true,
-                    fillColor: context.surfaceColor(Colors.white),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 14.h,
-                    ),
-                    border: _searchBorder(context),
-                    enabledBorder: _searchBorder(context),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24.r),
-                      borderSide: const BorderSide(color: AppColor.primary),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                if (duas.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(top: 24.h),
-                    child: Text(
-                      appText.noResultsFound,
-                      textAlign: TextAlign.center,
+                // Read line by line, so the list keeps a reading column's
+                // width instead of spreading across a desktop window.
+                DuaContentColumn(
+                  maxWidth: DuaLayout.maxReading,
+                  children: [
+                    SizedBox(height: 6.h),
+                    DuaPageHeader(title: appText.duaAllDuaTitle),
+                    SizedBox(height: 16.h),
+                    Text(
+                      context.localizedDigits(
+                        '${appText.duaTotalDuaLabel} ( $total )',
+                      ),
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: context.inkColor(const Color(0xFF5D6B44)),
                       ),
                     ),
-                  )
-                else
-                  for (var i = 0; i < duas.length; i++) ...[
-                    DuaItemTile(
-                      index: i,
-                      name: context.localized(duas[i].title),
-                      subtitle: context.localized(duas[i].translation),
-                      onTap: () => Navigator.of(context).pushNamed(
-                        RouteNames.duaReader,
-                        arguments: DuaReaderArgs.real(duas[i]),
+                    SizedBox(height: 12.h),
+                    TextField(
+                      controller: _searchController,
+                      onChanged: _onSearch,
+                      decoration: InputDecoration(
+                        hintText: appText.searchHere,
+                        hintStyle: TextStyle(
+                          color: AppColor.authHint,
+                          fontSize: 13.sp,
+                        ),
+                        filled: true,
+                        fillColor: context.surfaceColor(Colors.white),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 14.h,
+                        ),
+                        border: _searchBorder(context),
+                        enabledBorder: _searchBorder(context),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24.r),
+                          borderSide: const BorderSide(color: AppColor.primary),
+                        ),
                       ),
                     ),
-                    if (i != duas.length - 1) SizedBox(height: 10.h),
+                    SizedBox(height: 16.h),
+                    if (duas.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 24.h),
+                        child: Text(
+                          appText.noResultsFound,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(const Color(0xFF5D6B44)),
+                          ),
+                        ),
+                      )
+                    else
+                      for (var i = 0; i < duas.length; i++) ...[
+                        DuaItemTile(
+                          index: i,
+                          name: context.localized(duas[i].title),
+                          subtitle: context.localized(duas[i].translation),
+                          onTap: () => Navigator.of(context).pushNamed(
+                            RouteNames.duaReader,
+                            arguments: DuaReaderArgs.real(duas[i]),
+                          ),
+                        ),
+                        if (i != duas.length - 1) SizedBox(height: 10.h),
+                      ],
                   ],
+                ),
               ],
             );
           },

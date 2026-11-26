@@ -16,6 +16,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_all_catego
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_category_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_pickers.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_plan_status_badge.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// `in_progress`, `completed` or `abandoned`, in display order.
 const List<String> _duaPlanStatuses = ['in_progress', 'completed', 'abandoned'];
@@ -366,7 +367,16 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
 
   Widget _buildForm(AppText appText) {
     return ListView(
-      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+      // A form stays a form's width on a desktop window rather than
+      // stretching its fields the whole way across.
+      padding: duaPagePadding(
+        context,
+        left: 20.w,
+        top: 10.h,
+        right: 20.w,
+        bottom: 20.h,
+        maxWidth: DuaLayout.maxForm,
+      ),
       children: [
         Text(
           appText.planNameLabel,
@@ -608,7 +618,16 @@ class _DuaPlanCreateScreenState extends State<DuaPlanCreateScreen> {
 
   Widget _buildAddedList(AppText appText) {
     return ListView(
-      padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 20.h),
+      // A form stays a form's width on a desktop window rather than
+      // stretching its fields the whole way across.
+      padding: duaPagePadding(
+        context,
+        left: 20.w,
+        top: 10.h,
+        right: 20.w,
+        bottom: 20.h,
+        maxWidth: DuaLayout.maxForm,
+      ),
       children: [
         Text(
           _planName.isEmpty ? appText.writeHereHint : _planName,

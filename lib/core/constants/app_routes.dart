@@ -804,18 +804,33 @@ class AppRoutes {
     );
   }
 
-  /// Responsive Splash, Onboarding, Home, and the Dua reading dashboard may
-  /// consume the full browser viewport — each lays itself out against the
-  /// width it is given. Every other route retains the existing Web mobile
-  /// canvas until its own dedicated responsive work begins.
+  /// Routes that lay themselves out against the width the browser gives
+  /// them, and so may consume the full viewport. Every other route retains
+  /// the existing Web mobile canvas until its own responsive work begins.
+  ///
+  /// The Dua routes listed here share one set of breakpoints and a capped,
+  /// centred content column (`DuaLayout` / `DuaContentColumn`), so they read
+  /// the same from a phone up to a desktop window.
+  static const _fullWidthWebRoutes = <String>{
+    RouteNames.splash,
+    RouteNames.onboardingHadith,
+    RouteNames.home,
+  };
+
+  /// Every Dua route is responsive: they share one set of breakpoints and a
+  /// capped, centred content column (`DuaLayout`, `DuaContentColumn` and
+  /// `duaPagePadding` in `features/dua/presentation/widgets`), so each reads
+  /// the same from a phone up to a desktop window. Matching on the prefix
+  /// keeps a new Dua route from silently falling back to the mobile canvas.
+  @visibleForTesting
+  static bool isFullWidthWebRoute(String? name) =>
+      name != null &&
+      (_fullWidthWebRoutes.contains(name) ||
+          name == RouteNames.dua ||
+          name.startsWith('${RouteNames.dua}/'));
+
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
-    if (!kIsWeb ||
-        settings.name == RouteNames.splash ||
-        settings.name == RouteNames.onboardingHadith ||
-        settings.name == RouteNames.home ||
-        settings.name == RouteNames.duaAnalyticsDashboard) {
-      return child;
-    }
+    if (!kIsWeb || isFullWidthWebRoute(settings.name)) return child;
     return WebMobileCanvas(child: child);
   }
 }

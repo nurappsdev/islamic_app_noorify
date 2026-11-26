@@ -5,6 +5,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_color.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// Intro / "get started" screen for the Dua section (design `devImg/img.png`).
 ///
@@ -61,7 +62,11 @@ class DuaIntroScreen extends StatelessWidget {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: 30.w),
-                      child: Column(
+                      // The title and subtitle are centred text; stretched
+                      // across a desktop window they stop reading as a
+                      // single block.
+                      child: DuaContentColumn(
+                        maxWidth: DuaLayout.maxForm,
                         children: [
                           SizedBox(height: 210.h),
                           Text(
@@ -89,25 +94,31 @@ class DuaIntroScreen extends StatelessWidget {
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(40.w, 12.h, 40.w, 26.h),
-                    child: SizedBox(
-                      height: 52.h,
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(
-                          context,
-                        ).pushNamed(RouteNames.duaDashboard),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28.r),
+                    // A full-width button across a desktop window reads as
+                    // a banner, not a button - so it is capped, not fixed:
+                    // on a phone it still fills the width it is given.
+                    child: DuaContentWidth(
+                      maxWidth: DuaLayout.maxForm,
+                      child: SizedBox(
+                        height: 52.h,
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: () => Navigator.of(
+                            context,
+                          ).pushNamed(RouteNames.duaDashboard),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColor.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28.r),
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          appText.duaIntroStartButton,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
+                          child: Text(
+                            appText.duaIntroStartButton,
+                            style: TextStyle(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

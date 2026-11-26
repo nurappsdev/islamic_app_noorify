@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// Full "All dua" list for a Dua group (design `devImg/img_5.png`), reached
@@ -29,65 +30,76 @@ class DuaAllDuaScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
           children: [
-            SizedBox(height: 6.h),
-            DuaPageHeader(title: appText.duaAllDuaTitle),
-            SizedBox(height: 16.h),
-            Text(
-              context.localizedDigits(
-                '${appText.duaTotalDuaLabel} ( ${duas.length} )',
-              ),
-              style: TextStyle(
-                fontSize: 13.sp,
-                color: context.inkColor(Color(0xFF5D6B44)),
-              ),
+            // A list of dua rows is read line by line, so it keeps a reading
+            // column's width rather than spreading into two columns of thin
+            // rows, where the eye loses the order.
+            DuaContentColumn(
+              maxWidth: DuaLayout.maxReading,
+              children: [
+                SizedBox(height: 6.h),
+                DuaPageHeader(title: appText.duaAllDuaTitle),
+                SizedBox(height: 16.h),
+                Text(
+                  context.localizedDigits(
+                    '${appText.duaTotalDuaLabel} ( ${duas.length} )',
+                  ),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: context.inkColor(Color(0xFF5D6B44)),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: appText.duaSearchDuaHint,
+                    hintStyle: TextStyle(
+                      color: AppColor.authHint,
+                      fontSize: 13.sp,
+                    ),
+                    filled: true,
+                    fillColor: context.surfaceColor(Colors.white),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 14.h,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                      borderSide: BorderSide(
+                        color: context.lineColor(AppColor.authFieldBorder),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                      borderSide: BorderSide(
+                        color: context.lineColor(AppColor.authFieldBorder),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24.r),
+                      borderSide: const BorderSide(color: AppColor.primary),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                for (var i = 0; i < duas.length; i++) ...[
+                  DuaItemTile(
+                    index: i,
+                    name: duas[i].name,
+                    subtitle: duas[i].segments.isEmpty
+                        ? null
+                        : duas[i].segments.first.translation,
+                    onTap: () => Navigator.of(context).pushNamed(
+                      RouteNames.duaReader,
+                      arguments: DuaReaderArgs.mock(
+                        featured: featured,
+                        detail: duas[i],
+                      ),
+                    ),
+                  ),
+                  if (i != duas.length - 1) SizedBox(height: 10.h),
+                ],
+              ],
             ),
-            SizedBox(height: 12.h),
-            TextField(
-              decoration: InputDecoration(
-                hintText: appText.duaSearchDuaHint,
-                hintStyle: TextStyle(color: AppColor.authHint, fontSize: 13.sp),
-                filled: true,
-                fillColor: context.surfaceColor(Colors.white),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16.w,
-                  vertical: 14.h,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.r),
-                  borderSide: BorderSide(
-                    color: context.lineColor(AppColor.authFieldBorder),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.r),
-                  borderSide: BorderSide(
-                    color: context.lineColor(AppColor.authFieldBorder),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24.r),
-                  borderSide: const BorderSide(color: AppColor.primary),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            for (var i = 0; i < duas.length; i++) ...[
-              DuaItemTile(
-                index: i,
-                name: duas[i].name,
-                subtitle: duas[i].segments.isEmpty
-                    ? null
-                    : duas[i].segments.first.translation,
-                onTap: () => Navigator.of(context).pushNamed(
-                  RouteNames.duaReader,
-                  arguments: DuaReaderArgs.mock(
-                    featured: featured,
-                    detail: duas[i],
-                  ),
-                ),
-              ),
-              if (i != duas.length - 1) SizedBox(height: 10.h),
-            ],
           ],
         ),
       ),

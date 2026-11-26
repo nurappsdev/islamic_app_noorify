@@ -5,6 +5,7 @@ import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_saved_folder_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
@@ -102,104 +103,110 @@ class _DuaSavedScreenState extends State<DuaSavedScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            Column(
-              children: [
-                SizedBox(height: 8.h),
-                const _Header(),
-                Expanded(
-                  child: ListenableBuilder(
-                    listenable: _store,
-                    builder: (context, _) {
-                      final query = _search.text.trim().toLowerCase();
-                      final folders = [
-                        for (final folder in _store.folders)
-                          if (query.isEmpty ||
-                              _labelFor(folder).toLowerCase().contains(query))
-                            folder,
-                      ];
-                      final appText = AppText.of(context);
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(30.w, 12.h, 30.w, 0),
-                            child: Text(
-                              appText.duaTotalSaved.replaceAll(
-                                '{n}',
-                                context.localizedDigits(
-                                  '${_store.folders.length}',
+            // The whole page - header, count, search and folder list - keeps
+            // one centred column, so nothing drifts to the far edges of a
+            // desktop window.
+            DuaContentWidth(
+              child: Column(
+                children: [
+                  SizedBox(height: 8.h),
+                  const _Header(),
+                  Expanded(
+                    child: ListenableBuilder(
+                      listenable: _store,
+                      builder: (context, _) {
+                        final query = _search.text.trim().toLowerCase();
+                        final folders = [
+                          for (final folder in _store.folders)
+                            if (query.isEmpty ||
+                                _labelFor(folder).toLowerCase().contains(query))
+                              folder,
+                        ];
+                        final appText = AppText.of(context);
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(30.w, 12.h, 30.w, 0),
+                              child: Text(
+                                appText.duaTotalSaved.replaceAll(
+                                  '{n}',
+                                  context.localizedDigits(
+                                    '${_store.folders.length}',
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: context.textInkColor(
+                                    const Color(0xFF252821),
+                                  ),
                                 ),
                               ),
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
-                                color: context.textInkColor(
-                                  const Color(0xFF252821),
-                                ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                21.w,
+                                10.h,
+                                21.w,
+                                16.h,
+                              ),
+                              child: _SearchField(
+                                controller: _search,
+                                hintText: appText.searchHere,
+                                onChanged: (_) => setState(() {}),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              21.w,
-                              10.h,
-                              21.w,
-                              16.h,
-                            ),
-                            child: _SearchField(
-                              controller: _search,
-                              hintText: appText.searchHere,
-                              onChanged: (_) => setState(() {}),
-                            ),
-                          ),
-                          Expanded(
-                            child: folders.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      appText.noResultsFound,
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        color: context.textInkColor(
-                                          const Color(0xFF5D6B44),
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    padding: EdgeInsets.fromLTRB(
-                                      21.w,
-                                      0,
-                                      21.w,
-                                      100.h,
-                                    ),
-                                    itemCount: folders.length,
-                                    separatorBuilder: (_, _) =>
-                                        SizedBox(height: 10.h),
-                                    itemBuilder: (context, index) {
-                                      final folder = folders[index];
-                                      return _FolderCard(
-                                        name: _labelFor(folder),
-                                        count: _store.countIn(folder),
-                                        onTap: () => Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                DuaSavedFolderScreen(
-                                                  folder: folder,
-                                                ),
+                            Expanded(
+                              child: folders.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        appText.noResultsFound,
+                                        style: TextStyle(
+                                          fontSize: 13.sp,
+                                          color: context.textInkColor(
+                                            const Color(0xFF5D6B44),
                                           ),
                                         ),
-                                        onMenu: () =>
-                                            _openFolderSettings(folder),
-                                      );
-                                    },
-                                  ),
-                          ),
-                        ],
-                      );
-                    },
+                                      ),
+                                    )
+                                  : ListView.separated(
+                                      padding: EdgeInsets.fromLTRB(
+                                        21.w,
+                                        0,
+                                        21.w,
+                                        100.h,
+                                      ),
+                                      itemCount: folders.length,
+                                      separatorBuilder: (_, _) =>
+                                          SizedBox(height: 10.h),
+                                      itemBuilder: (context, index) {
+                                        final folder = folders[index];
+                                        return _FolderCard(
+                                          name: _labelFor(folder),
+                                          count: _store.countIn(folder),
+                                          onTap: () =>
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      DuaSavedFolderScreen(
+                                                        folder: folder,
+                                                      ),
+                                                ),
+                                              ),
+                                          onMenu: () =>
+                                              _openFolderSettings(folder),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const Align(
               alignment: Alignment.bottomCenter,

@@ -18,6 +18,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_plan_create_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_shimmer.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// Dua planner (design `devImg/img_7.png`), reached from index 3 ("Planner")
 /// of [DuaBottomNav].
@@ -322,8 +323,9 @@ class _DuaPlannerScreenState extends State<DuaPlannerScreen> {
     return ListView.separated(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      // Room for the floating "Create Plan" button and the bottom nav.
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 150.h),
+      // Room for the floating "Create Plan" button and the bottom nav,
+      // plus gutters that keep the plan cards centred on a wide browser.
+      padding: duaPagePadding(context, left: 16.w, right: 16.w, bottom: 150.h),
       itemCount: plans.length + (showLoadingMore ? 1 : 0),
       separatorBuilder: (_, _) => SizedBox(height: 12.h),
       itemBuilder: (context, index) {

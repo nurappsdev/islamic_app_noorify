@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/widgets/app_bottom_nav_bar.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 
 /// Navigation bar for the Dua flow (design `devImg/img_35.png`).
 ///
@@ -22,35 +23,40 @@ class DuaBottomNav extends StatelessWidget {
         ? null
         : () => Navigator.of(context).pushReplacementNamed(route);
 
-    return AppBottomNavBar(
-      selectedIndex: selectedIndex,
-      items: [
-        AppBottomNavItem(
-          icon: Icons.home_outlined,
-          label: '${appText.duaIntroTitle} ${appText.home}',
-          onTap: go(0, RouteNames.duaDashboard),
-        ),
-        AppBottomNavItem(
-          icon: Icons.search_rounded,
-          label: appText.duaExplore,
-          onTap: go(1, RouteNames.duaAllCategory),
-        ),
-        AppBottomNavItem(
-          icon: Icons.bookmark_border_rounded,
-          label: appText.saved,
-          onTap: go(2, RouteNames.duaSaved),
-        ),
-        AppBottomNavItem(
-          icon: Icons.auto_stories_outlined,
-          label: appText.planner,
-          onTap: go(3, RouteNames.duaPlanner),
-        ),
-        AppBottomNavItem(
-          icon: Icons.pie_chart_outline_rounded,
-          label: appText.dashboard,
-          onTap: go(4, RouteNames.duaAnalyticsDashboard),
-        ),
-      ],
+    // The pill is sized for a phone; on a desktop browser it would other-
+    // wise stretch the whole window and leave the icons swimming in it.
+    return DuaContentWidth(
+      maxWidth: DuaLayout.maxNav,
+      child: AppBottomNavBar(
+        selectedIndex: selectedIndex,
+        items: [
+          AppBottomNavItem(
+            icon: Icons.home_outlined,
+            label: '${appText.duaIntroTitle} ${appText.home}',
+            onTap: go(0, RouteNames.duaDashboard),
+          ),
+          AppBottomNavItem(
+            icon: Icons.search_rounded,
+            label: appText.duaExplore,
+            onTap: go(1, RouteNames.duaAllCategory),
+          ),
+          AppBottomNavItem(
+            icon: Icons.bookmark_border_rounded,
+            label: appText.saved,
+            onTap: go(2, RouteNames.duaSaved),
+          ),
+          AppBottomNavItem(
+            icon: Icons.auto_stories_outlined,
+            label: appText.planner,
+            onTap: go(3, RouteNames.duaPlanner),
+          ),
+          AppBottomNavItem(
+            icon: Icons.pie_chart_outline_rounded,
+            label: appText.dashboard,
+            onTap: go(4, RouteNames.duaAnalyticsDashboard),
+          ),
+        ],
+      ),
     );
   }
 }
