@@ -656,14 +656,19 @@ class AppRoutes {
         );
       case RouteNames.dua:
         return _page(const DuaEntryScreen(), settings);
+      // The five Dua bottom-nav destinations replace one another in place,
+      // so they use _instantPage like the Home and Hadith tab bars do. With
+      // an animated MaterialPageRoute the outgoing and incoming screen are
+      // both mounted and building for the length of the transition, which
+      // on the browser stalls the page on every tab change.
       case RouteNames.duaDashboard:
-        return _page(const DuaDashboardScreen(), settings);
+        return _instantPage(const DuaDashboardScreen(), settings);
       case RouteNames.duaAnalyticsDashboard:
-        return _page(const DuaAnalyticsDashboardScreen(), settings);
+        return _instantPage(const DuaAnalyticsDashboardScreen(), settings);
       case RouteNames.duaRecitationHistory:
         return _page(const DuaRecitationHistoryScreen(), settings);
       case RouteNames.duaAllCategory:
-        return _page(const DuaAllCategoryScreen(), settings);
+        return _instantPage(const DuaAllCategoryScreen(), settings);
       case RouteNames.duaCategoryDuas:
         final args = settings.arguments as DuaCategoryDuasArgs?;
         return _page(
@@ -687,9 +692,9 @@ class AppRoutes {
             settings.arguments as DuaReaderArgs? ?? DuaReaderArgs.fallback;
         return _page(DuaReaderScreen(args: args), settings);
       case RouteNames.duaSaved:
-        return _page(const DuaSavedScreen(), settings);
+        return _instantPage(const DuaSavedScreen(), settings);
       case RouteNames.duaPlanner:
-        return _page(const DuaPlannerScreen(), settings);
+        return _instantPage(const DuaPlannerScreen(), settings);
       case RouteNames.duaPlanCreate:
         return _page(const DuaPlanCreateScreen(), settings);
       case RouteNames.duaPlanDetail:

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tuhfatul_muslim/core/constants/app_routes.dart';
@@ -27,6 +28,36 @@ const _duaRoutes = <String>[
   RouteNames.duaPlanDetail,
 ];
 
+/// The five destinations on [DuaBottomNav], in its own order.
+const _duaNavDestinations = <String, String>{
+  'Dua Home': RouteNames.duaDashboard,
+  'Explore': RouteNames.duaAllCategory,
+  'Saved': RouteNames.duaSaved,
+  'Planner': RouteNames.duaPlanner,
+  'Dashboard': RouteNames.duaAnalyticsDashboard,
+};
+
+void _expectInstant(String name, {required String label}) {
+  final route = AppRoutes.onGenerateRoute(RouteSettings(name: name));
+  // Only a PageRouteBuilder exposes `transitionDuration` without being
+  // attached to a navigator; MaterialRouteTransitionMixin reads the theme
+  // through `navigator!` and would throw here. So the type check is also
+  // the assertion that this is not an animated Material route.
+  expect(
+    route,
+    isA<PageRouteBuilder<void>>(),
+    reason:
+        '$label animates a full page transition; switching tabs then '
+        'builds the outgoing and incoming screen together and stalls the '
+        'browser. Use _instantPage, as Home and Hadith do.',
+  );
+  expect(
+    (route as PageRouteBuilder<void>).transitionDuration,
+    Duration.zero,
+    reason: '$label should swap in place',
+  );
+}
+
 void main() {
   group('Dua routes use the full browser width', () {
     for (final name in _duaRoutes) {
@@ -43,6 +74,30 @@ void main() {
       // The rule matches on the `/dua` prefix, so a route added later is
       // responsive by default rather than silently letterboxed.
       expect(AppRoutes.isFullWidthWebRoute('/dua/something-new'), isTrue);
+    });
+  });
+
+  group('bottom-nav tabs swap in place, so the browser does not stall', () {
+    _duaNavDestinations.forEach((label, name) {
+      test('$label ($name)', () => _expectInstant(name, label: label));
+    });
+
+    test('they match the Home and Hadith tab bars', () {
+      // The convention this follows; if those ever become animated, the
+      // Dua tabs were not the odd ones out after all.
+      _expectInstant(RouteNames.home, label: 'Home');
+      _expectInstant(RouteNames.hadithLibrary, label: 'Hadith library');
+    });
+
+    test('a Dua detail route still animates', () {
+      // Only the tab destinations swap instantly; pushing a dua to read
+      // keeps the normal page transition.
+      expect(
+        AppRoutes.onGenerateRoute(
+          const RouteSettings(name: RouteNames.duaReader),
+        ),
+        isA<MaterialPageRoute<void>>(),
+      );
     });
   });
 
