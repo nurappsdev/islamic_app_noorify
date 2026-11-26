@@ -40,6 +40,10 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/profile/presentation/screens/app_language_screen.dart';
+import '../../features/settings/presentation/screens/admin_support_screen.dart';
+import '../../features/settings/presentation/screens/app_feedback_screen.dart';
+import '../../features/settings/presentation/screens/new_updates_screen.dart';
+import '../../features/settings/presentation/screens/our_products_screen.dart';
 import '../../features/profile/presentation/screens/family_members_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_categories_screen.dart';
 import '../../features/quiz/presentation/screens/quiz_question_screen.dart';
@@ -146,6 +150,7 @@ import '../../features/dua/presentation/screens/dua_planner_screen.dart';
 import '../../features/dua/presentation/screens/dua_plan_create_screen.dart';
 import '../../features/dua/presentation/screens/dua_plan_detail_screen.dart';
 import '../../features/dua/presentation/dua_route_args.dart';
+import '../../features/dua/presentation/widgets/dua_responsive.dart';
 import '../../features/splash/screens/ramadan_splash_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_onboarding_screen.dart';
 import '../../features/zikr/presentation/screens/zikr_all_screen.dart';
@@ -287,6 +292,14 @@ class AppRoutes {
         return _page(const SettingsScreen(), settings);
       case RouteNames.appLanguage:
         return _page(const AppLanguageScreen(), settings);
+      case RouteNames.ourProducts:
+        return _page(const OurProductsScreen(), settings);
+      case RouteNames.newUpdates:
+        return _page(const NewUpdatesScreen(), settings);
+      case RouteNames.adminSupport:
+        return _page(const AdminSupportScreen(), settings);
+      case RouteNames.appFeedback:
+        return _page(const AppFeedbackScreen(), settings);
       case RouteNames.familyMembers:
         return _page(const FamilyMembersScreen(), settings);
       case RouteNames.winQuiz:
@@ -656,14 +669,19 @@ class AppRoutes {
         );
       case RouteNames.dua:
         return _page(const DuaEntryScreen(), settings);
+      // The five Dua bottom-nav destinations replace one another in place,
+      // so they use _instantPage like the Home and Hadith tab bars do. With
+      // an animated MaterialPageRoute the outgoing and incoming screen are
+      // both mounted and building for the length of the transition, which
+      // on the browser stalls the page on every tab change.
       case RouteNames.duaDashboard:
-        return _page(const DuaDashboardScreen(), settings);
+        return _instantPage(const DuaDashboardScreen(), settings);
       case RouteNames.duaAnalyticsDashboard:
-        return _page(const DuaAnalyticsDashboardScreen(), settings);
+        return _instantPage(const DuaAnalyticsDashboardScreen(), settings);
       case RouteNames.duaRecitationHistory:
         return _page(const DuaRecitationHistoryScreen(), settings);
       case RouteNames.duaAllCategory:
-        return _page(const DuaAllCategoryScreen(), settings);
+        return _instantPage(const DuaAllCategoryScreen(), settings);
       case RouteNames.duaCategoryDuas:
         final args = settings.arguments as DuaCategoryDuasArgs?;
         return _page(
@@ -687,9 +705,9 @@ class AppRoutes {
             settings.arguments as DuaReaderArgs? ?? DuaReaderArgs.fallback;
         return _page(DuaReaderScreen(args: args), settings);
       case RouteNames.duaSaved:
-        return _page(const DuaSavedScreen(), settings);
+        return _instantPage(const DuaSavedScreen(), settings);
       case RouteNames.duaPlanner:
-        return _page(const DuaPlannerScreen(), settings);
+        return _instantPage(const DuaPlannerScreen(), settings);
       case RouteNames.duaPlanCreate:
         return _page(const DuaPlanCreateScreen(), settings);
       case RouteNames.duaPlanDetail:
@@ -804,18 +822,43 @@ class AppRoutes {
     );
   }
 
-  /// Responsive Splash, Onboarding, Home, and the Dua reading dashboard may
-  /// consume the full browser viewport — each lays itself out against the
-  /// width it is given. Every other route retains the existing Web mobile
-  /// canvas until its own dedicated responsive work begins.
+  /// Routes that lay themselves out against the width the browser gives
+  /// them, and so may consume the full viewport. Every other route retains
+  /// the existing Web mobile canvas until its own responsive work begins.
+  ///
+  /// The Dua routes listed here share one set of breakpoints and a capped,
+  /// centred content column (`DuaLayout` / `DuaContentColumn`), so they read
+  /// the same from a phone up to a desktop window.
+  static const _fullWidthWebRoutes = <String>{
+    RouteNames.splash,
+    RouteNames.onboardingHadith,
+    RouteNames.home,
+  };
+
+  /// Every Dua route is responsive: they share one set of breakpoints and a
+  /// capped, centred content column (`DuaLayout`, `DuaContentColumn` and
+  /// `duaPagePadding` in `features/dua/presentation/widgets`), so each reads
+  /// the same from a phone up to a desktop window. Matching on the prefix
+  /// keeps a new Dua route from silently falling back to the mobile canvas.
+  @visibleForTesting
+  static bool isFullWidthWebRoute(String? name) =>
+      name != null && (_fullWidthWebRoutes.contains(name) || isDuaRoute(name));
+
+  /// A route belonging to the Dua feature, by the same prefix rule as
+  /// [isFullWidthWebRoute]. Its pages also grow their type with the window
+  /// ([DuaWebTypography]).
+  @visibleForTesting
+  static bool isDuaRoute(String? name) =>
+      name != null &&
+      (name == RouteNames.dua || name.startsWith('${RouteNames.dua}/'));
+
   static Widget _webRouteChild(Widget child, RouteSettings settings) {
-    if (!kIsWeb ||
-        settings.name == RouteNames.splash ||
-        settings.name == RouteNames.onboardingHadith ||
-        settings.name == RouteNames.home ||
-        settings.name == RouteNames.duaAnalyticsDashboard) {
-      return child;
-    }
+    if (!kIsWeb) return child;
+    // A Dua page lays itself out against the window and grows its type with
+    // it; every other route keeps the phone-shaped column, at phone type,
+    // until its own responsive work begins.
+    if (isDuaRoute(settings.name)) return DuaWebTypography(child: child);
+    if (isFullWidthWebRoute(settings.name)) return child;
     return WebMobileCanvas(child: child);
   }
 }

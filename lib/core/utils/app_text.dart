@@ -989,6 +989,42 @@ class AppText {
     required this.deleteAccountFinalTitle,
     required this.deleteAccountFinalMessage,
     required this.deleteAccountFailureMessage,
+    required this.editProfileLocation,
+    required this.editProfileLocationHint,
+    required this.editProfileDateOfBirth,
+    required this.editProfileDateOfBirthHint,
+    required this.editProfileProfession,
+    required this.editProfileProfessionHint,
+    required this.editProfileCompletionLabel,
+    required this.editProfileCompletionHint,
+    required this.ourProductsSubtitle,
+    required this.ourProductsEmpty,
+    required this.productAppStore,
+    required this.productPlayStore,
+    required this.linkOpenFailed,
+    required this.newUpdates,
+    required this.newUpdatesTitle,
+    required this.newUpdatesEmpty,
+    required this.versionLabel,
+    required this.releaseDateLabel,
+    required this.adminSupportSubtitle,
+    required this.supportHotlineLabel,
+    required this.supportEmailLabel,
+    required this.appVersionLabel,
+    required this.supportCallAction,
+    required this.supportMailAction,
+    required this.supportSendMessageTitle,
+    required this.supportReasonLabel,
+    required this.supportReasonHint,
+    required this.supportDescriptionLabel,
+    required this.supportDescriptionHint,
+    required this.supportTicketSent,
+    required this.feedbackTitle,
+    required this.feedbackRatingQuestion,
+    required this.feedbackRatingRequired,
+    required this.feedbackMessageLabel,
+    required this.feedbackMessageHint,
+    required this.feedbackSent,
   });
 
   final String tuhfatulMuslim;
@@ -2055,6 +2091,42 @@ class AppText {
   final String deleteAccountFinalTitle;
   final String deleteAccountFinalMessage;
   final String deleteAccountFailureMessage;
+  final String editProfileLocation;
+  final String editProfileLocationHint;
+  final String editProfileDateOfBirth;
+  final String editProfileDateOfBirthHint;
+  final String editProfileProfession;
+  final String editProfileProfessionHint;
+  final String editProfileCompletionLabel;
+  final String editProfileCompletionHint;
+  final String ourProductsSubtitle;
+  final String ourProductsEmpty;
+  final String productAppStore;
+  final String productPlayStore;
+  final String linkOpenFailed;
+  final String newUpdates;
+  final String newUpdatesTitle;
+  final String newUpdatesEmpty;
+  final String versionLabel;
+  final String releaseDateLabel;
+  final String adminSupportSubtitle;
+  final String supportHotlineLabel;
+  final String supportEmailLabel;
+  final String appVersionLabel;
+  final String supportCallAction;
+  final String supportMailAction;
+  final String supportSendMessageTitle;
+  final String supportReasonLabel;
+  final String supportReasonHint;
+  final String supportDescriptionLabel;
+  final String supportDescriptionHint;
+  final String supportTicketSent;
+  final String feedbackTitle;
+  final String feedbackRatingQuestion;
+  final String feedbackRatingRequired;
+  final String feedbackMessageLabel;
+  final String feedbackMessageHint;
+  final String feedbackSent;
 
   String categoryLabel(String key) {
     switch (key) {
@@ -5823,6 +5895,170 @@ class AppText {
         'deleteAccountFailureMessage',
         fallback?.deleteAccountFailureMessage ?? '',
       ),
+      editProfileLocation: _read(
+        map,
+        'editProfileLocation',
+        fallback?.editProfileLocation ?? '',
+      ),
+      editProfileLocationHint: _read(
+        map,
+        'editProfileLocationHint',
+        fallback?.editProfileLocationHint ?? '',
+      ),
+      editProfileDateOfBirth: _read(
+        map,
+        'editProfileDateOfBirth',
+        fallback?.editProfileDateOfBirth ?? '',
+      ),
+      editProfileDateOfBirthHint: _read(
+        map,
+        'editProfileDateOfBirthHint',
+        fallback?.editProfileDateOfBirthHint ?? '',
+      ),
+      editProfileProfession: _read(
+        map,
+        'editProfileProfession',
+        fallback?.editProfileProfession ?? '',
+      ),
+      editProfileProfessionHint: _read(
+        map,
+        'editProfileProfessionHint',
+        fallback?.editProfileProfessionHint ?? '',
+      ),
+      editProfileCompletionLabel: _read(
+        map,
+        'editProfileCompletionLabel',
+        fallback?.editProfileCompletionLabel ?? '',
+      ),
+      editProfileCompletionHint: _read(
+        map,
+        'editProfileCompletionHint',
+        fallback?.editProfileCompletionHint ?? '',
+      ),
+      ourProductsSubtitle: _read(
+        map,
+        'ourProductsSubtitle',
+        fallback?.ourProductsSubtitle ?? '',
+      ),
+      ourProductsEmpty: _read(
+        map,
+        'ourProductsEmpty',
+        fallback?.ourProductsEmpty ?? '',
+      ),
+      productAppStore: _read(
+        map,
+        'productAppStore',
+        fallback?.productAppStore ?? '',
+      ),
+      productPlayStore: _read(
+        map,
+        'productPlayStore',
+        fallback?.productPlayStore ?? '',
+      ),
+      linkOpenFailed: _read(
+        map,
+        'linkOpenFailed',
+        fallback?.linkOpenFailed ?? '',
+      ),
+      newUpdates: _read(map, 'newUpdates', fallback?.newUpdates ?? ''),
+      newUpdatesTitle: _read(
+        map,
+        'newUpdatesTitle',
+        fallback?.newUpdatesTitle ?? '',
+      ),
+      newUpdatesEmpty: _read(
+        map,
+        'newUpdatesEmpty',
+        fallback?.newUpdatesEmpty ?? '',
+      ),
+      versionLabel: _read(map, 'versionLabel', fallback?.versionLabel ?? ''),
+      releaseDateLabel: _read(
+        map,
+        'releaseDateLabel',
+        fallback?.releaseDateLabel ?? '',
+      ),
+      adminSupportSubtitle: _read(
+        map,
+        'adminSupportSubtitle',
+        fallback?.adminSupportSubtitle ?? '',
+      ),
+      supportHotlineLabel: _read(
+        map,
+        'supportHotlineLabel',
+        fallback?.supportHotlineLabel ?? '',
+      ),
+      supportEmailLabel: _read(
+        map,
+        'supportEmailLabel',
+        fallback?.supportEmailLabel ?? '',
+      ),
+      appVersionLabel: _read(
+        map,
+        'appVersionLabel',
+        fallback?.appVersionLabel ?? '',
+      ),
+      supportCallAction: _read(
+        map,
+        'supportCallAction',
+        fallback?.supportCallAction ?? '',
+      ),
+      supportMailAction: _read(
+        map,
+        'supportMailAction',
+        fallback?.supportMailAction ?? '',
+      ),
+      supportSendMessageTitle: _read(
+        map,
+        'supportSendMessageTitle',
+        fallback?.supportSendMessageTitle ?? '',
+      ),
+      supportReasonLabel: _read(
+        map,
+        'supportReasonLabel',
+        fallback?.supportReasonLabel ?? '',
+      ),
+      supportReasonHint: _read(
+        map,
+        'supportReasonHint',
+        fallback?.supportReasonHint ?? '',
+      ),
+      supportDescriptionLabel: _read(
+        map,
+        'supportDescriptionLabel',
+        fallback?.supportDescriptionLabel ?? '',
+      ),
+      supportDescriptionHint: _read(
+        map,
+        'supportDescriptionHint',
+        fallback?.supportDescriptionHint ?? '',
+      ),
+      supportTicketSent: _read(
+        map,
+        'supportTicketSent',
+        fallback?.supportTicketSent ?? '',
+      ),
+      feedbackTitle: _read(map, 'feedbackTitle', fallback?.feedbackTitle ?? ''),
+      feedbackRatingQuestion: _read(
+        map,
+        'feedbackRatingQuestion',
+        fallback?.feedbackRatingQuestion ?? '',
+      ),
+      feedbackRatingRequired: _read(
+        map,
+        'feedbackRatingRequired',
+        fallback?.feedbackRatingRequired ?? '',
+      ),
+      feedbackMessageLabel: _read(
+        map,
+        'feedbackMessageLabel',
+        fallback?.feedbackMessageLabel ?? '',
+      ),
+      feedbackMessageHint: _read(
+        map,
+        'feedbackMessageHint',
+        fallback?.feedbackMessageHint ?? '',
+      ),
+      feedbackSent: _read(map, 'feedbackSent', fallback?.feedbackSent ?? ''),
     );
   }
 

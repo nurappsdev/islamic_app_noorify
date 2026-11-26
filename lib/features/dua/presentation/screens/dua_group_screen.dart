@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tuhfatul_muslim/core/theme/theme_colors.dart';
 import 'package:tuhfatul_muslim/core/constants/route_names.dart';
 import 'package:tuhfatul_muslim/core/utils/app_text.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/features/dua/data/dua_catalog.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_bottom_nav.dart';
@@ -34,57 +35,72 @@ class DuaGroupScreen extends StatelessWidget {
           ListView(
             padding: EdgeInsets.only(bottom: 150.h + bottomInset),
             children: [
-              _GroupHeader(featured: featured, appText: appText),
-              SizedBox(height: 20.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      appText.duaAllDuaTitle,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => Navigator.of(context).pushNamed(
-                        RouteNames.duaGroupAllDua,
-                        arguments: featured,
-                      ),
-                      child: Text(
-                        appText.seeAll,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: context.inkColor(Color(0xFF6B7A4A)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                child: Column(
-                  children: [
-                    for (var i = 0; i < duas.length; i++) ...[
-                      DuaItemTile(
-                        index: i,
-                        name: duas[i].name,
-                        onTap: () => Navigator.of(context).pushNamed(
-                          RouteNames.duaReader,
-                          arguments: DuaReaderArgs.mock(
-                            featured: featured,
-                            detail: duas[i],
+              DuaContentColumn(
+                // This page's sections carry their own 16px gutters, so the
+                // column is capped one gutter wider either side; the
+                // sections then line up with the nav pill below them.
+                maxWidth: DuaLayout.maxOuter,
+                children: [
+                  _GroupHeader(featured: featured, appText: appText),
+                  SizedBox(height: 20.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Flexible, so a long title yields to "See All"
+                        // instead of overflowing the row.
+                        Flexible(
+                          child: Text(
+                            appText.duaAllDuaTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      if (i != duas.length - 1) SizedBox(height: 10.h),
-                    ],
-                  ],
-                ),
+                        SizedBox(width: 8.w),
+                        InkWell(
+                          onTap: () => Navigator.of(context).pushNamed(
+                            RouteNames.duaGroupAllDua,
+                            arguments: featured,
+                          ),
+                          child: Text(
+                            appText.seeAll,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: context.inkColor(Color(0xFF6B7A4A)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < duas.length; i++) ...[
+                          DuaItemTile(
+                            index: i,
+                            name: duas[i].name,
+                            onTap: () => Navigator.of(context).pushNamed(
+                              RouteNames.duaReader,
+                              arguments: DuaReaderArgs.mock(
+                                featured: featured,
+                                detail: duas[i],
+                              ),
+                            ),
+                          ),
+                          if (i != duas.length - 1) SizedBox(height: 10.h),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -198,17 +214,27 @@ class _LastReadPill extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            context.localizedDigits('${appText.duaLastRead} :  '),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13.sp,
-              fontStyle: FontStyle.italic,
+          // Both labels are flexible: together with the chevron they were
+          // 38px wider than this pill at every width.
+          Flexible(
+            child: Text(
+              context.localizedDigits('${appText.duaLastRead} :  '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13.sp,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
-          Text(
-            context.localizedDigits('Dua ( $index )'),
-            style: TextStyle(color: Colors.white, fontSize: 14.sp),
+          Flexible(
+            child: Text(
+              context.localizedDigits('Dua ( $index )'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white, fontSize: 14.sp),
+            ),
           ),
           SizedBox(width: 8.w),
           Container(

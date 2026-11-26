@@ -8,6 +8,7 @@ import 'package:tuhfatul_muslim/features/dua/data/dua_bookmark_store.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/dua_route_args.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_item_tile.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_page_header.dart';
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 /// The duas saved under one folder, reached by tapping a folder card on
@@ -36,40 +37,45 @@ class DuaSavedFolderScreen extends StatelessWidget {
             return ListView(
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
               children: [
-                SizedBox(height: 6.h),
-                DuaPageHeader(title: title),
-                SizedBox(height: 16.h),
-                if (items.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(top: 40.h),
-                    child: Text(
-                      appText.noResultsFound,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: context.inkColor(Color(0xFF5D6B44)),
-                      ),
-                    ),
-                  )
-                else
-                  for (var i = 0; i < items.length; i++) ...[
-                    DuaItemTile(
-                      index: i,
-                      name: context.localized(
-                        LocalizedText(
-                          bn: items[i].titleBn,
-                          en: items[i].titleEn,
+                DuaContentColumn(
+                  maxWidth: DuaLayout.maxReading,
+                  children: [
+                    SizedBox(height: 6.h),
+                    DuaPageHeader(title: title),
+                    SizedBox(height: 16.h),
+                    if (items.isEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 40.h),
+                        child: Text(
+                          appText.noResultsFound,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: context.inkColor(Color(0xFF5D6B44)),
+                          ),
                         ),
-                      ),
-                      onTap: () => Navigator.of(context).pushNamed(
-                        RouteNames.duaReader,
-                        arguments: DuaReaderArgs.real(
-                          items[i].toFeaturedModel(),
+                      )
+                    else
+                      for (var i = 0; i < items.length; i++) ...[
+                        DuaItemTile(
+                          index: i,
+                          name: context.localized(
+                            LocalizedText(
+                              bn: items[i].titleBn,
+                              en: items[i].titleEn,
+                            ),
+                          ),
+                          onTap: () => Navigator.of(context).pushNamed(
+                            RouteNames.duaReader,
+                            arguments: DuaReaderArgs.real(
+                              items[i].toFeaturedModel(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    if (i != items.length - 1) SizedBox(height: 10.h),
+                        if (i != items.length - 1) SizedBox(height: 10.h),
+                      ],
                   ],
+                ),
               ],
             );
           },

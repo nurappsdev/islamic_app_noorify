@@ -15,6 +15,8 @@ import 'package:tuhfatul_muslim/features/profile/domain/entities/profile_entity.
 import 'package:tuhfatul_muslim/shared/widgets/profile_avatar_circle.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_validator.dart';
 import 'package:tuhfatul_muslim/core/localization/localized_form_scope.dart';
+import 'package:tuhfatul_muslim/core/localization/localization_context.dart';
+import 'package:tuhfatul_muslim/core/utils/localized_text.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -28,10 +30,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _professionController = TextEditingController();
   final _imagePicker = ImagePicker();
 
   ProfileEntity? _profile;
   String? _selectedGender;
+
+  /// The date of birth as picked or as the API sent it; null when unset.
+  DateTime? _dateOfBirth;
   File? _selectedImage;
   bool _isSaving = false;
 
@@ -55,7 +62,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _nameController.text = profile.name;
       _emailController.text = profile.email;
       _phoneController.text = profile.phone ?? '';
+      _locationController.text = profile.location ?? '';
+      _professionController.text = profile.profession ?? '';
       _selectedGender = profile.gender;
+      // The API sends it as text, either `1998-05-15` or a full ISO stamp.
+      _dateOfBirth = profile.dateOfBirth == null
+          ? null
+          : DateTime.tryParse(profile.dateOfBirth!);
     });
   }
 
@@ -64,6 +77,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _locationController.dispose();
+    _professionController.dispose();
     super.dispose();
   }
 
@@ -135,6 +150,34 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 
+  /// Opens the date picker for the date of birth. Only dates in the past
+  /// are offered, and a far-back first date keeps older users reachable.
+  Future<void> _pickDateOfBirth() async {
+    final today = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _dateOfBirth ?? DateTime(today.year - 20, today.month, today.day),
+      firstDate: DateTime(1920),
+      lastDate: today,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _dateOfBirth = picked);
+  }
+
+  /// `1998-05-15`, the format `PATCH /user/me` expects for `dateOfBirth`.
+  static String _apiDate(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
+  /// Trimmed, or null when the field was left empty - so a blank field is
+  /// simply not sent rather than saved as an empty string.
+  static String? _orNull(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
   Future<void> _save() async {
     final appText = AppText.readOf(context);
     if (_profile == null || !(_formKey.currentState?.validate() ?? false)) {
@@ -164,10 +207,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
 
     final phone = _phoneController.text.trim();
+    final dateOfBirth = _dateOfBirth;
     final result = await ProfileService.instance.updateProfile(
       name: _nameController.text.trim(),
       phone: phone.isEmpty ? null : phone,
       gender: _selectedGender,
+      location: _orNull(_locationController.text),
+      profession: _orNull(_professionController.text),
+      dateOfBirth: dateOfBirth == null ? null : _apiDate(dateOfBirth),
       avatarUrl: avatarUrl,
     );
     if (!mounted) return;
@@ -189,6 +236,15 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       },
     );
   }
+
+  Widget _fieldLabel(String text) => Text(
+    text,
+    style: TextStyle(
+      fontSize: 12.sp,
+      fontWeight: FontWeight.w600,
+      color: context.inkColor(AppColor.authLogo),
+    ),
+  );
 
   InputDecoration _fieldDecoration({
     required String hint,
@@ -257,7 +313,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           onTapGallery: _openGalleryPicker,
                         ),
                       ),
-                      SizedBox(height: 28.h),
+                      SizedBox(height: 18.h),
+                      _CompletionMeter(
+                        percentage: _profile?.profileCompletionPercentage ?? 0,
+                      ),
+                      SizedBox(height: 22.h),
                       Text(
                         appText.enterYourName,
                         style: TextStyle(
@@ -364,11 +424,64 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       TextFormField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.done,
+                        textInputAction: TextInputAction.next,
                         style: TextStyle(fontSize: 13.sp),
                         decoration: _fieldDecoration(
                           hint: appText.phoneNo,
                           prefixIcon: Icons.phone_outlined,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      _fieldLabel(appText.editProfileLocation),
+                      SizedBox(height: 8.h),
+                      TextFormField(
+                        controller: _locationController,
+                        textInputAction: TextInputAction.next,
+                        style: TextStyle(fontSize: 13.sp),
+                        decoration: _fieldDecoration(
+                          hint: appText.editProfileLocationHint,
+                          prefixIcon: Icons.location_on_outlined,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      _fieldLabel(appText.editProfileDateOfBirth),
+                      SizedBox(height: 8.h),
+                      // A picker rather than a text field, so the API always
+                      // gets a valid `yyyy-MM-dd` date.
+                      InkWell(
+                        onTap: _pickDateOfBirth,
+                        borderRadius: BorderRadius.circular(24.r),
+                        child: InputDecorator(
+                          isEmpty: _dateOfBirth == null,
+                          decoration: _fieldDecoration(
+                            hint: appText.editProfileDateOfBirthHint,
+                            prefixIcon: Icons.cake_outlined,
+                            suffixIcon: Icon(
+                              Icons.calendar_month_outlined,
+                              color: AppColor.authIcon,
+                              size: 18.sp,
+                            ),
+                          ),
+                          child: _dateOfBirth == null
+                              ? null
+                              : Text(
+                                  context.localizedDates.gregorian(
+                                    _dateOfBirth!,
+                                  ),
+                                  style: TextStyle(fontSize: 13.sp),
+                                ),
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      _fieldLabel(appText.editProfileProfession),
+                      SizedBox(height: 8.h),
+                      TextFormField(
+                        controller: _professionController,
+                        textInputAction: TextInputAction.done,
+                        style: TextStyle(fontSize: 13.sp),
+                        decoration: _fieldDecoration(
+                          hint: appText.editProfileProfessionHint,
+                          prefixIcon: Icons.work_outline_rounded,
                         ),
                       ),
                       SizedBox(height: 32.h),
@@ -531,6 +644,70 @@ class _ProfileAvatar extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The live profile completion from `GET /user/me`
+/// (`profileCompletionPercentage`), so the user can see filling in Location,
+/// Date of Birth and Profession move them towards 100%.
+class _CompletionMeter extends StatelessWidget {
+  const _CompletionMeter({required this.percentage});
+
+  final int percentage;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    final clamped = percentage.clamp(0, 100);
+    final isComplete = clamped >= 100;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                appText.editProfileCompletionLabel.replaceAll(
+                  '{percent}',
+                  context.localizedDigits('$clamped%'),
+                ),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: context.inkColor(AppColor.authLogo),
+                ),
+              ),
+            ),
+            if (isComplete)
+              Icon(
+                Icons.verified_rounded,
+                size: 16.sp,
+                color: const Color(0xFF22D14B),
+              ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8.r),
+          child: LinearProgressIndicator(
+            value: clamped / 100,
+            minHeight: 7.h,
+            backgroundColor: context.surfaceColor(const Color(0xFFD3E0A4)),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFF22D14B)),
+          ),
+        ),
+        if (!isComplete) ...[
+          SizedBox(height: 6.h),
+          Text(
+            appText.editProfileCompletionHint,
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: context.inkColor(const Color(0xFF6B7551)),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

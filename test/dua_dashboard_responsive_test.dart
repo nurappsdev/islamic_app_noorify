@@ -9,6 +9,7 @@ import 'package:tuhfatul_muslim/features/dua/presentation/bloc/dua_reading_dashb
 import 'package:tuhfatul_muslim/features/dua/presentation/screens/dua_analytics_dashboard_screen.dart';
 import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_dashboard_charts.dart'
     show DuaDonutChart;
+import 'package:tuhfatul_muslim/features/dua/presentation/widgets/dua_responsive.dart';
 import 'package:tuhfatul_muslim/shared/bloc/language/language_bloc.dart';
 
 /// A full answer, so every part of the page has something to lay out.
@@ -139,7 +140,13 @@ void main() {
         builder: (context, child) => BlocProvider(
           create: (_) => LanguageBloc(initialLanguage: AppLanguage.english),
           child: MaterialApp(
-            home: DuaAnalyticsDashboardScreen(repository: _Repo()),
+            // What `AppRoutes` wraps a Dua route in on the browser: the
+            // page's type grows with the window, so these widths are laid
+            // out with the type they really carry there.
+            home: DuaWebTypography(
+              enabled: webUnits,
+              child: DuaAnalyticsDashboardScreen(repository: _Repo()),
+            ),
           ),
         ),
       ),
@@ -192,11 +199,13 @@ void main() {
     testWidgets('the content stops widening past its maximum', (tester) async {
       await pumpAt(tester, 1600, webUnits: true);
       expect(tester.takeException(), isNull);
-      // Capped and centred rather than stretched edge to edge, so a wide
-      // window leaves a margin either side.
+      // Capped and centred rather than stretched edge to edge: a window
+      // wider than the cap puts what is left over into the margins, and the
+      // page keeps its own 16px gutter inside them. Derived from the cap
+      // rather than restating it, so raising the cap moves this with it.
+      final margin = 16 + (1600 - 32 - DuaLayout.maxContent) / 2;
       final left = tester.getTopLeft(find.text('Dua Recitation History')).dx;
-      expect(left, greaterThan(200));
-      expect(left, lessThan(800));
+      expect(left, closeTo(margin, 2));
     });
   });
 
