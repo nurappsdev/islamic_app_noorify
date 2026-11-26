@@ -14,27 +14,48 @@ class _CurrentPrayerBadge extends StatelessWidget {
     String clock(PrayerClockTime t) =>
         localizedPeriodClock(t, times: times, appText: appText, bangla: bangla);
     final period = times == null ? null : currentPrayerPeriod(now, times);
+    // Inside one of the three নিষিদ্ধ windows the badge stops naming a prayer
+    // and says so instead, in light red — praying right now is prohibited.
+    final prohibited = times == null
+        ? null
+        : ProhibitedPrayerWindows.fromDailyTimes(times).activeAt(now);
     final periodName = times == null
         ? '—'
         : (period?.displayName(appText) ?? appText.naflIshraq);
     final label = times == null
         ? periodName
+        : prohibited != null
+        ? appText.prohibitedPrayerNow
         : '$periodName ${appText.namazWord}';
     final rangeText = times == null
         ? '—'
+        : prohibited != null
+        ? '${clock(prohibited.start)} – ${clock(prohibited.end)}'
         : period != null
         ? '${clock(prayerStart(period, times))} – '
               '${clock(prayerEnd(period, times))}'
         : '${clock(times.sunrise)} – '
               '${clock(times.dhuhr)}';
     return Container(
+      key: ValueKey(
+        prohibited != null
+            ? 'current-prayer-badge-prohibited'
+            : 'current-prayer-badge',
+      ),
       width: 190.w,
       height: 66.h,
       padding: EdgeInsets.symmetric(horizontal: 11.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFE4EDB6),
+        color: prohibited != null
+            ? AppColor.lightDangerTint
+            : const Color(0xFFE4EDB6),
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: const Color(0xFFA2B253), width: 1.2),
+        border: Border.all(
+          color: prohibited != null
+              ? const Color(0xFFFF4B4B)
+              : const Color(0xFFA2B253),
+          width: 1.2,
+        ),
       ),
       child: Row(
         children: [
@@ -47,7 +68,16 @@ class _CurrentPrayerBadge extends StatelessWidget {
             ),
             child: Padding(
               padding: EdgeInsets.all(6.r),
-              child: Image.asset('assets/sejdaIcon.png', fit: BoxFit.contain),
+              child: prohibited != null
+                  ? Icon(
+                      Icons.do_not_disturb_on_outlined,
+                      size: 22.sp,
+                      color: const Color(0xFFCC3B3B),
+                    )
+                  : Image.asset(
+                      'assets/sejdaIcon.png',
+                      fit: BoxFit.contain,
+                    ),
             ),
           ),
           SizedBox(width: 14.w),
