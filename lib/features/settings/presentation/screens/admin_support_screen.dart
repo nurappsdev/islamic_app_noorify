@@ -120,16 +120,10 @@ class _AdminSupportViewState extends State<_AdminSupportView> {
               child: ListView(
                 padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
                 children: [
-                  Text(
-                    appText.adminSupportSubtitle,
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: context.inkColor(const Color(0xFF6B7551)),
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
+                  const _SupportIllustration(),
+                  SizedBox(height: 24.h),
                   _ContactDetails(state: state),
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 28.h),
                   Text(
                     appText.supportSendMessageTitle,
                     style: TextStyle(
@@ -174,6 +168,33 @@ class _AdminSupportViewState extends State<_AdminSupportView> {
   }
 }
 
+/// The chat-bubble mark at the top of the page, drawn from a Flutter icon
+/// so the screen carries no artwork asset.
+class _SupportIllustration extends StatelessWidget {
+  const _SupportIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 150.r,
+        height: 150.r,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: context.surfaceColor(AppColor.lightTint),
+        ),
+        child: Icon(
+          // Two overlapping bubbles, the same idea as the design's artwork.
+          Icons.forum_rounded,
+          size: 72.sp,
+          color: context.inkColor(AppColor.primary),
+        ),
+      ),
+    );
+  }
+}
+
 /// The hotline, support e-mail and published app version. Shows a retry when
 /// the overview request failed, and skips a detail the API left out.
 class _ContactDetails extends StatelessWidget {
@@ -204,58 +225,133 @@ class _ContactDetails extends StatelessWidget {
         final hotline = overview.hotline?.trim();
         final email = overview.contactEmail;
         final version = overview.appVersion?.trim();
-        if (overview.isEmpty && (version == null || version.isEmpty)) {
+        final rows = <_ContactRow>[
+          if (hotline != null && hotline.isNotEmpty)
+            _ContactRow(
+              icon: Icons.phone_in_talk_outlined,
+              value: context.localizedDigits(hotline),
+              semanticsLabel: appText.supportHotlineLabel,
+              // `tel:` keeps the digits as dialled, not localized.
+              uri: Uri(scheme: 'tel', path: hotline),
+            ),
+          if (email != null)
+            _ContactRow(
+              icon: Icons.mail_outline_rounded,
+              value: email,
+              semanticsLabel: appText.supportEmailLabel,
+              uri: Uri(scheme: 'mailto', path: email),
+            ),
+          if (version != null && version.isNotEmpty)
+            _ContactRow(
+              icon: Icons.info_outline_rounded,
+              value: context.localizedDigits(version),
+              semanticsLabel: appText.appVersionLabel,
+            ),
+        ];
+        if (rows.isEmpty) {
           return SettingsCard(
             child: SettingsStateView(message: appText.noDataHere),
           );
         }
-        return SettingsCard(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-          child: Column(
-            children: [
-              if (hotline != null && hotline.isNotEmpty)
-                _ContactRow(
-                  icon: Icons.phone_in_talk_outlined,
-                  label: appText.supportHotlineLabel,
-                  value: context.localizedDigits(hotline),
-                  actionLabel: appText.supportCallAction,
-                  // `tel:` keeps the digits as dialled, not localized.
-                  uri: Uri(scheme: 'tel', path: hotline),
-                ),
-              if (email != null)
-                _ContactRow(
-                  icon: Icons.mail_outline_rounded,
-                  label: appText.supportEmailLabel,
-                  value: email,
-                  actionLabel: appText.supportMailAction,
-                  uri: Uri(scheme: 'mailto', path: email),
-                ),
-              if (version != null && version.isNotEmpty)
-                _ContactRow(
-                  icon: Icons.info_outline_rounded,
-                  label: appText.appVersionLabel,
-                  value: context.localizedDigits(version),
-                ),
-            ],
-          ),
-        );
+        return _SupportPanel(rows: rows);
     }
   }
 }
 
+/// The white intro card sitting on top of the green contact strip, the way
+/// the two overlap in the design.
+class _SupportPanel extends StatelessWidget {
+  const _SupportPanel({required this.rows});
+
+  final List<_ContactRow> rows;
+
+  /// How far the card's rounded bottom reaches over the green strip.
+  static const _overlap = 22.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final appText = AppText.of(context);
+    // The strip has to be laid out behind the card, so its height is fixed
+    // here from the row count rather than measured.
+    final stripHeight = rows.length * _ContactRow.height.h + 24.h;
+    return Stack(
+      children: [
+        Positioned(
+          left: 26.w,
+          right: 26.w,
+          bottom: 0,
+          child: Container(
+            height: stripHeight,
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: AppColor.primary,
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Column(children: rows),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(22.w, 22.h, 22.w, 26.h),
+              decoration: BoxDecoration(
+                color: context.surfaceColor(Colors.white),
+                borderRadius: BorderRadius.circular(26.r),
+                border: Border.all(
+                  color: context.lineColor(AppColor.primary),
+                  width: 1.2,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    appText.adminSupport,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w500,
+                      color: context.inkColor(AppColor.primary),
+                    ),
+                  ),
+                  SizedBox(height: 10.h),
+                  Text(
+                    appText.adminSupportSubtitle,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      height: 1.5,
+                      color: context.inkColor(AppColor.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: stripHeight - _overlap.h),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// One line of the green strip: a round icon chip and the value, tappable
+/// when it has a `tel:` / `mailto:` target.
 class _ContactRow extends StatelessWidget {
   const _ContactRow({
     required this.icon,
-    required this.label,
     required this.value,
-    this.actionLabel,
+    required this.semanticsLabel,
     this.uri,
   });
 
+  /// Fixed so [_SupportPanel] can size the strip before laying it out.
+  static const double height = 44;
+
   final IconData icon;
-  final String label;
   final String value;
-  final String? actionLabel;
+  final String semanticsLabel;
 
   /// What tapping the row opens (`tel:` / `mailto:`); null makes it plain.
   final Uri? uri;
@@ -275,65 +371,46 @@ class _ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final row = Padding(
-      padding: EdgeInsets.symmetric(vertical: 12.h),
+    final row = SizedBox(
+      height: height.h,
       child: Row(
         children: [
           Container(
-            width: 36.r,
-            height: 36.r,
+            width: 30.r,
+            height: 30.r,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: context.surfaceColor(const Color(0xFFDCE7AC)),
+              color: Color(0x33FFFFFF),
             ),
-            child: Icon(
-              icon,
-              size: 18.sp,
-              color: context.inkColor(const Color(0xFF7F8F52)),
-            ),
+            child: Icon(icon, size: 15.sp, color: Colors.white),
           ),
           SizedBox(width: 12.w),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: context.inkColor(const Color(0xFF6B7551)),
-                  ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: context.inkColor(AppColor.authLogo),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (actionLabel != null)
-            Text(
-              actionLabel!,
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: AppColor.primary,
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
+          ),
         ],
       ),
     );
-    if (uri == null) return row;
-    return InkWell(
-      onTap: () => _open(context),
-      borderRadius: BorderRadius.circular(14.r),
-      child: row,
+    return Semantics(
+      label: semanticsLabel,
+      button: uri != null,
+      child: uri == null
+          ? row
+          : InkWell(
+              onTap: () => _open(context),
+              borderRadius: BorderRadius.circular(12.r),
+              child: row,
+            ),
     );
   }
 }
