@@ -46,3 +46,12 @@ app.*.map.json
 .widget_preview/
 .gitignore
 branch_structure.json
+
+# Editor configuration (not app config; auto-run tasks are an execution vector)
+.vscode/
+
+# Signing material and local machine paths - never commit
+key.properties
+local.properties
+*.jks
+*.keystore
